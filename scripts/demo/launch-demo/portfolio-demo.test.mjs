@@ -250,12 +250,17 @@ test('mapHeadings picks the first matching template section by order and never m
 
 test('seed.mjs registers portfolio as opt-in: excluded from --pack all exactly like faux', () => {
   const src = readFileSync(path.join(HERE, 'seed.mjs'), 'utf8');
-  assert.match(src, /const PACKS = \['biotech', 'mdx', 'lumen', 'faux', 'portfolio'\];/);
-  assert.match(src, /const OPT_IN = \['faux', 'portfolio'\];/);
+  /* Read the two lists from the source, so a pack added to "all" later (project-management, P-122) does not break
+     this check; what it holds is that portfolio is registered and never part of "all". */
+  const list = (name) => JSON.parse(src.match(new RegExp(`const ${name} = (\\[[^\\]]*\\]);`))[1].replace(/'/g, '"'));
+  const PACKS = list('PACKS');
+  const OPT_IN = list('OPT_IN');
+  assert.ok(PACKS.includes('portfolio'));
+  assert.deepEqual(OPT_IN, ['faux', 'portfolio']);
   assert.match(src, /chosen === 'all' \? PACKS\.filter\(pack => !OPT_IN\.includes\(pack\)\)/);
-  const PACKS = ['biotech', 'mdx', 'lumen', 'faux', 'portfolio'];
-  const OPT_IN = ['faux', 'portfolio'];
-  assert.deepEqual(PACKS.filter((p) => !OPT_IN.includes(p)), ['biotech', 'mdx', 'lumen']);
+  const all = PACKS.filter((p) => !OPT_IN.includes(p));
+  assert.ok(!all.includes('portfolio') && !all.includes('faux'));
+  assert.ok(['biotech', 'mdx', 'lumen'].every((p) => all.includes(p)));
 });
 
 test('CLI refuses portfolio mixed with another pack before connecting', () => {

@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/register-history/qbd-elements/3",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "No change history is kept for /api/cmc/qbd-elements. Registers with one: analytical-methods, change-control, characterization-studies, comparability-studies, container-closures, dissolution-profiles, drug-products, drug-substances, formulation-records, impurity-profiles, manufacturing-processes, material-specs, process-validation, qc-testing, reference-standards, stability-studies."
+    }
+  }
+}

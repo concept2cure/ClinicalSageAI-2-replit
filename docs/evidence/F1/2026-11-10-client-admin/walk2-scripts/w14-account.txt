@@ -1,0 +1,121 @@
+// Walk 2, flow 4 and 2e: the member's own Account: profile, password change, authenticator app. As walk2.manager (own org).
+const c = require('./lib.cjs');
+const { totp } = require('./totp.cjs');
+const EMAIL = 'walk2.manager@example.test';
+const P1 = process.env.WALK_PASSWORD; const P2 = c.fs.readFileSync(c.SCRATCH + '/walk2/.walk_pw2', 'utf8').trim();
+const dlg = (page) => page.locator('[role=dialog]').first();
+async function openAccount(page) {
+  await page.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1000);
+  await page.locator('button', { hasText: 'Mona Manager' }).first().click(); await c.sleep(500);
+  await page.locator('[role=menu]').getByText('Account', { exact: true }).first().click(); await c.sleep(1500);
+}
+const refusal = (page) => dlg(page).locator('[role=alert]').allInnerTexts().then((a) => a.join(' / ').replace(/\n+/g, ' | '));
+const audit = (n = 4) => c.psql(`select action, to_char(occurred_at,'HH24:MI:SS'), coalesce(reason,''), left(new_values::text, 200) from audit_logs where tenant_id=7 and user_id=8 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const ctx = await browser.newContext({ viewport: c.VIEWPORTS.desktop }); const page = await ctx.newPage();
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await c.signIn(page, EMAIL, P1);
+  // a second session of the same account, to see it end when the password changes
+  const ctx2 = await browser.newContext({ viewport: c.VIEWPORTS.desktop }); const page2 = await ctx2.newPage(); await c.signIn(page2, EMAIL, P1);
+
+  await c.step('Account: the panel and the profile', async (s) => {
+    await openAccount(page);
+    s.notes.push((await dlg(page).innerText()).replace(/\n{2,}/g, '\n').slice(0, 1500));
+    s.notes.push('profile inputs: ' + JSON.stringify(await dlg(page).locator('input, select, textarea').evaluateAll(els => els.slice(0, 8).map(e => `${e.id || e.getAttribute('aria-label') || e.name}:${e.readOnly ? 'read-only' : 'editable'}:${e.type === 'password' ? '' : e.value}`))));
+    await c.shot(page, 'w2-40-account-panel-1440.png');
+    await c.tallShot(page, 'w2-40-account-panel-1440-tall.png', 2600);
+  });
+  const pw = async (cur, next, conf) => {
+    const d = dlg(page);
+    await d.getByLabel('Current password').fill(cur); await d.getByLabel('New password', { exact: true }).fill(next); await d.getByLabel('Confirm new password').fill(conf);
+    await d.getByRole('button', { name: 'Change password' }).click(); await c.sleep(1800);
+  };
+  await c.step('password: wrong current password', async (s) => { await pw('not-the-password-1A!', P2, P2); s.notes.push('refusal: ' + await refusal(page)); await dlg(page).getByLabel('Current password').scrollIntoViewIfNeeded(); await c.shot(page, 'w2-41-password-wrong-current.png'); });
+  await c.step('password: weak new passwords', async (s) => {
+    for (const weak of ['short1A!', 'alllowercaseletters', 'Password123456!', 'MonaManager2026!x', P1]) {
+      await pw(P1, weak, weak); s.notes.push(`"${weak === P1 ? '(the current password again)' : weak}" -> ` + await refusal(page));
+    }
+    await c.shot(page, 'w2-41-password-weak.png');
+    await pw(P1, P2, P2 + 'x'); s.notes.push('confirmation differs -> ' + await refusal(page));
+  });
+  await c.step('password: changed; every session of the account ends', async (s) => {
+    await pw(P1, P2, P2);
+    s.notes.push('panel: ' + (await dlg(page).innerText()).split('Password\n').pop().slice(0, 400).replace(/\n+/g, ' | '));
+    await dlg(page).getByText('Password changed').first().scrollIntoViewIfNeeded().catch(() => {});
+    await c.shot(page, 'w2-41-password-changed.png');
+    const other = await c.api(page2, 'GET', '/api/users/me'); s.notes.push('the other session after the change: ' + other.status + ' ' + JSON.stringify(other.body).slice(0, 160));
+    const mine = await c.api(page, 'GET', '/api/users/me'); s.notes.push('this session after the change: ' + mine.status);
+    s.notes.push('audit:\n' + audit(3));
+    s.notes.push('db: ' + c.psql(`select password_changed_at is not null, sessions_ended_at is not null, jsonb_array_length(coalesce(password_history::jsonb,'[]'::jsonb)) from users where id=8`));
+    await dlg(page).getByRole('button', { name: 'Sign in again' }).click(); await c.sleep(2500);
+    s.notes.push('after "Sign in again": ' + page.url());
+  });
+  await c.step('password: the old one is refused at sign-in, the new one works', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.fill('#login-email', EMAIL); await page.fill('#login-password', P1);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await c.sleep(2500);
+    s.notes.push('old password: ' + (await c.textOf(page, 'body')).split('Română').pop().slice(0, 300).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-41-old-password-refused.png');
+    await c.signIn(page, EMAIL, P2);
+    s.notes.push('new password: signed in at ' + page.url());
+  });
+  await c.step('password: going back to the earlier password is refused (history)', async (s) => {
+    await openAccount(page); await pw(P2, P1, P1); s.notes.push('refusal: ' + await refusal(page));
+  });
+
+  let secret = null; let recovery = [];
+  await c.step('authenticator: set up, a wrong code, then the right one', async (s) => {
+    const d = dlg(page);
+    await d.getByRole('button', { name: 'Set up authenticator app' }).click(); await c.sleep(2000);
+    secret = (await d.locator('code.mono').first().innerText()).trim();
+    s.notes.push('setup shown: ' + (await d.innerText()).split('Authenticator app\n').pop().slice(0, 500).replace(secret, '<key>').replace(/\n+/g, ' | '));
+    s.notes.push('QR drawn: ' + await d.locator('img[alt="QR code for the authenticator app"]').count() + ' | key length ' + secret.length);
+    s.notes.push('db before confirming: ' + c.psql(`select mfa_enabled, mfa_method, mfa_secret is not null, mfa_verified_at is not null from users where id=8`));
+    await d.locator('code.mono').first().scrollIntoViewIfNeeded();
+    await c.shot(page, 'w2-42-authenticator-setup.png', { mask: [d.locator('code.mono'), d.locator('img[alt="QR code for the authenticator app"]')] });
+    await d.getByLabel('Code from the app').fill('000000'); await d.getByRole('button', { name: 'Confirm' }).click(); await c.sleep(1500);
+    s.notes.push('wrong code -> ' + await refusal(page));
+    await d.getByLabel('Code from the app').fill(totp(secret)); await d.getByRole('button', { name: 'Confirm' }).click(); await c.sleep(2500);
+    recovery = await d.locator('ul[aria-label="Recovery codes"] li').allInnerTexts();
+    s.notes.push('after: ' + (await d.innerText()).split('Authenticator app\n').pop().slice(0, 600).replace(/\n+/g, ' | ').replace(new RegExp(recovery.join('|') || 'x^', 'g'), '<code>'));
+    s.notes.push('recovery codes shown: ' + recovery.length);
+    await c.shot(page, 'w2-42-authenticator-recovery-codes.png', { mask: [d.locator('ul[aria-label="Recovery codes"]')] });
+    s.notes.push('db: ' + c.psql(`select mfa_enabled, mfa_method, mfa_verified_at is not null, left(mfa_secret, 6) = left('${secret}', 6) as secret_stored_in_clear, length(mfa_secret), left(mfa_backup_codes::text, 12) from users where id=8`));
+    s.notes.push('recovery codes stored in clear: ' + (recovery.length ? c.psql(`select mfa_backup_codes::text like '%${recovery[0]}%' from users where id=8`) : 'n/a'));
+    s.notes.push('audit:\n' + audit(2));
+    await d.getByRole('button', { name: 'Done' }).click().catch(() => {}); await c.sleep(600);
+    s.notes.push('after Done, codes still on screen: ' + await d.locator('ul[aria-label="Recovery codes"]').count());
+  });
+  c.fs.writeFileSync(c.SCRATCH + '/walk2/.totp.json', JSON.stringify({ secret, recovery }), { mode: 0o600 });
+  await c.step('authenticator: sign out, sign in with the app code', async (s) => {
+    await page.keyboard.press('Escape'); await c.sleep(400);
+    await page.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(800);
+    await page.locator('button', { hasText: 'Mona Manager' }).first().click(); await c.sleep(500);
+    await page.locator('[role=menu]').getByText('Log out', { exact: true }).click(); await c.sleep(2500);
+    s.notes.push('after Log out: ' + page.url());
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.fill('#login-email', EMAIL); await page.fill('#login-password', P2);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await page.getByLabel('Digit 1').waitFor({ timeout: 20000 });
+    s.notes.push('challenge: ' + (await c.textOf(page, 'body')).split('Română').pop().slice(0, 400).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-42-signin-authenticator-challenge.png');
+    const type = async (code) => { for (let i = 0; i < 6; i += 1) await page.getByLabel(`Digit ${i + 1}`).fill(code[i]); await c.sleep(500); const v = page.getByRole('button', { name: 'Verify', exact: true }); if (/\/login/.test(page.url()) && await v.isEnabled().catch(() => false)) await v.click().catch(() => {}); await c.sleep(2000); };
+    await type('123456');
+    s.notes.push('wrong code: ' + (await c.textOf(page, 'body')).split('Română').pop().slice(0, 300).replace(/\n+/g, ' | '));
+    const code = totp(secret); await type(code);
+    s.notes.push('right code: ' + page.url());
+    s.notes.push('audit:\n' + audit(3));
+    // the same code a second time, in another browser: is a used code refused?
+    const ctx3 = await browser.newContext(); const p3 = await ctx3.newPage();
+    await p3.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await p3.fill('#login-email', EMAIL); await p3.fill('#login-password', P2);
+    await p3.getByRole('button', { name: 'Sign in', exact: true }).click(); await p3.getByLabel('Digit 1').waitFor({ timeout: 20000 });
+    for (let i = 0; i < 6; i += 1) await p3.getByLabel(`Digit ${i + 1}`).fill(code[i]); await c.sleep(600);
+    const v = p3.getByRole('button', { name: 'Verify', exact: true }); if (/\/login/.test(p3.url()) && await v.isEnabled().catch(() => false)) await v.click().catch(() => {}); await c.sleep(2000);
+    s.notes.push('the same code used again in another browser: ' + (/\/login/.test(p3.url()) ? 'refused: ' + (await c.textOf(p3, 'body')).split('Română').pop().slice(0, 240).replace(/\n+/g, ' | ') : 'ACCEPTED ' + p3.url()));
+    await ctx3.close();
+  });
+  c.report(); c.save('w2-14-account');
+  await ctx.storageState({ path: c.STATE('w2manager') });
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

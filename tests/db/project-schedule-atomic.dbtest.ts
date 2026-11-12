@@ -225,6 +225,8 @@ describe('schedule generation is one native transaction', () => {
 
   it('returns the committed full view, retains plan identity and increments the version once', async () => {
     const first = await generate();
+    // The first generation's response (the INSERT branch) is the committed row too.
+    expect(stableView(await read())).toEqual(stableView(first));
     await addHistory();
     await generate(params({ projectId: 711 }));
     await generate(params({ orgId: 72, projectId: 720 }));

@@ -1764,7 +1764,8 @@ router.post('/runs', async (req: Request, res: Response) => {
         scopeType,
         scopeId,
         clientWorkspaceId,
-        ...(['lifecycle.obligation_calendar', 'compliance.audit_assurance_pack'].includes(reportTypeId) ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
+        // Computed as the person who runs it; the same list is in scheduling/generate-deliver.ts.
+        ...(['lifecycle.obligation_calendar', 'compliance.audit_assurance_pack', 'etmf.completeness_pack'].includes(reportTypeId) ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
         declared: {
           label: type[0].label,
           region: typeof governance.region === 'string' ? governance.region : null,
@@ -2125,7 +2126,11 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
     if (stored.verdict === 'mismatch') return refuseSealMismatch(res, runId, 'shown');
 
     const { rendered } = buildRenderedFromRun(run, reportType);
-    return res.json({ data: rendered });
+    // Whether a finalize would be admitted, from the evaluation the finalize
+    // route itself makes (a final request), so the screen says why before it
+    // asks for a signature rather than after (Reporting use walk, 2026-11-09).
+    const { truthfulness: asFinal } = buildRenderedFromRun(run, reportType, 'final');
+    return res.json({ data: rendered, finalEligibility: { eligible: asFinal.allowedStatus === 'final', reasons: asFinal.reasons } });
   } catch (error: any) {
     return serverError(res, logger, 'loading rendered', error);
   }

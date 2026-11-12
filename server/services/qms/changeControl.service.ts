@@ -277,37 +277,81 @@ export async function getChange(orgId: number, id: number, client: RequestSqlCli
   return rows[0] ? { ...rows[0], learning_review: learningReviewView(rows[0]) } : null;
 }
 
+/**
+ * The states in which a change's content may still be edited: proposed and under assessment. From approval on, the
+ * content is what the approver's signature binds (change-approval-signature.ts computeQmsChangeContentDigest: title,
+ * description, type, classification, risk, reason, impact assessment, implementation plan, target date, document), so
+ * it is fixed, and amending an approved change is a new change request.
+ *
+ * Until 2026-11-10 every state but closed, cancelled and rejected took an edit: an approved, implementing or verifying
+ * change's assessment, plan, title or target could be rewritten under its approval signature, and nothing said so.
+ */
+export const CHANGE_EDITABLE_STATES = ['proposed', 'under_assessment'] as const;
+
+/** Each field an edit may change and the column it sets, in the order the record shows them. */
+const EDIT_COLUMN_OF = { title: 'title', description: 'description', changeType: 'change_type', classification: 'classification',
+  riskLevel: 'risk_level', reason: 'reason', impactAssessment: 'impact_assessment', implementationPlan: 'implementation_plan',
+  targetImplementationDate: 'target_implementation_date', qmsDocumentId: 'qms_document_id', assessedBy: 'assessed_by' } as const;
+
 export async function updateChange(orgId: number, id: number, p: {
   title?: string; description?: string | null; changeType?: string; classification?: string;
   riskLevel?: string | null; reason?: string | null; impactAssessment?: string | null;
   implementationPlan?: string | null; targetImplementationDate?: string | null;
   qmsDocumentId?: number | null; assessedBy?: number | null;
-}, client: RequestSqlClient = pool): Promise<ChangeControlRow | null> {
-  // Build a COALESCE-guarded partial update (only provided fields change).
+}, client: RequestSqlClient = pool): Promise<(ChangeControlRow & { edits: ChangeFieldEdit[] }) | null> {
+  // A partial update: only the fields provided change.
   const sets: string[] = [];
-  const args: unknown[] = [];
-  const add = (col: string, val: unknown) => { args.push(val); sets.push(`${col} = $${args.length}`); };
-  if (p.title !== undefined) add('title', p.title);
-  if (p.description !== undefined) add('description', p.description);
-  if (p.changeType !== undefined) add('change_type', p.changeType);
-  if (p.classification !== undefined) add('classification', p.classification);
-  if (p.riskLevel !== undefined) add('risk_level', p.riskLevel);
-  if (p.reason !== undefined) add('reason', p.reason);
-  if (p.impactAssessment !== undefined) add('impact_assessment', p.impactAssessment);
-  if (p.implementationPlan !== undefined) add('implementation_plan', p.implementationPlan);
-  if (p.targetImplementationDate !== undefined) add('target_implementation_date', p.targetImplementationDate);
-  if (p.qmsDocumentId !== undefined) add('qms_document_id', p.qmsDocumentId);
-  if (p.assessedBy !== undefined) add('assessed_by', p.assessedBy);
-  if (sets.length === 0) return getChange(orgId, id, client);
-  args.push(id, orgId);
-  const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
-    `UPDATE qms_change_controls SET ${sets.join(', ')}, updated_at = clock_timestamp()
-      WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
-        AND status NOT IN ('closed','cancelled','rejected')
-      RETURNING *`,
+  /* The id, the organization and the editable states are bound first, so the statement names them as $1-$3. */
+  const args: unknown[] = [id, orgId, [...CHANGE_EDITABLE_STATES]];
+  for (const [field, col] of Object.entries(EDIT_COLUMN_OF) as Array<[keyof typeof EDIT_COLUMN_OF, string]>) {
+    if (p[field] !== undefined) { args.push(p[field]); sets.push(`${col} = $${args.length}`); }
+  }
+  if (sets.length === 0) {
+    const row = await getChange(orgId, id, client);
+    return row ? { ...row, edits: [] } : null;
+  }
+  /* The row as it was is read and locked in the same statement, so the edit's audit row can say what it replaced
+     (21 CFR 11.10(e); the route records the reason and these edits, WO-16C #133). Both sides are read as JSON, so a
+     date compares as the same text on each. */
+  const { rows } = await queryRowsClient(client).query<ChangeControlRow & { previous: Record<string, unknown>; current: Record<string, unknown> }>(
+    `UPDATE qms_change_controls c SET ${sets.join(', ')}, updated_at = clock_timestamp()
+       FROM (SELECT * FROM qms_change_controls WHERE id = $1 AND organization_id = $2 FOR UPDATE) o
+      WHERE c.id = o.id AND c.organization_id = $2 AND c.deleted_at IS NULL AND c.status = ANY($3::text[])
+      RETURNING c.*, to_jsonb(o) AS previous, to_jsonb(c) AS current`,
     args,
   );
-  return rows[0] ?? null;
+  if (!rows[0]) return null;
+  const { previous, current, ...row } = rows[0];
+  return { ...(row as ChangeControlRow), edits: changeFieldEdits(previous, current) };
+}
+
+/** One field an edit changed (F1, Part 11 review L-2): what it was, and what it is now. */
+export interface ChangeFieldEdit { field: string; before: unknown; after: unknown }
+/** The fields whose value changed between the row as it was and as it is, each before and after. */
+export function changeFieldEdits(previous: Record<string, unknown>, current: Record<string, unknown>): ChangeFieldEdit[] {
+  return Object.values(EDIT_COLUMN_OF).filter(col => JSON.stringify(previous[col] ?? null) !== JSON.stringify(current[col] ?? null))
+    .map(col => ({ field: col, before: previous[col] ?? null, after: current[col] ?? null }));
+}
+
+/**
+ * Why an edit or a removal matched no change: null when the organization has no such change (the route's 404), or the
+ * refusal of a change past assessment, which names its state. An edit is 409 QMS_CHANGE_CONTENT_FIXED and says nothing
+ * was saved (until 2026-11-10 a refused edit answered "not found"); a removal is 409 QMS_CHANGE_KEPT and says the
+ * change is kept on the record and is cancelled through its lifecycle (F1, Part 11 review L-2).
+ */
+export async function changeEditRefusal(orgId: number, id: number, client: RequestSqlClient = pool, act: 'edit' | 'delete' = 'edit'): Promise<{
+  message: string; details: { code: 'QMS_CHANGE_CONTENT_FIXED' | 'QMS_CHANGE_KEPT'; status: string };
+} | null> {
+  const existing = await getChange(orgId, id, client);
+  if (!existing) return null;
+  const state = String(existing.status).replace(/_/g, ' ');
+  if (act === 'delete') return { details: { code: 'QMS_CHANGE_KEPT', status: existing.status },
+    message: `This change is ${state}, so it is kept on the record. Nothing was removed. A change is removed only before `
+      + 'its approval; after that, cancel it through its lifecycle, with a reason.' };
+  const signed = ['approved', 'in_implementation', 'verification', 'closed'].includes(existing.status);
+  return { details: { code: 'QMS_CHANGE_CONTENT_FIXED', status: existing.status },
+    message: `This change is ${state}, so its content is fixed${signed ? ': it is what its approval signed' : ''}. `
+      + 'Nothing was saved. To amend it, raise a new change request.' };
 }
 
 interface ChangeTransitionActor {
@@ -430,11 +474,13 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
 
 /** Soft-delete a change (and, via ON DELETE CASCADE on hard-delete only, its
  *  links — soft-delete keeps links for the audit trail). */
+/** Removes a change only before its approval (proposed or under assessment); after that it is kept on the record and
+ *  is cancelled through its lifecycle (F1, Part 11 review L-2: until 2026-11-10 an approved change could be removed). */
 export async function deleteChange(orgId: number, id: number, client: RequestSqlClient = pool): Promise<boolean> {
   const { rows } = await queryRowsClient(client).query(
     `UPDATE qms_change_controls SET deleted_at = now(), updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL RETURNING id`,
-    [id, orgId],
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = ANY($3::text[]) RETURNING id`,
+    [id, orgId, [...CHANGE_EDITABLE_STATES]],
   );
   return rows.length > 0;
 }
@@ -566,12 +612,12 @@ export async function addLink(orgId: number, changeId: number, p: {
 
 /**
  * Remove a link: it is kept, stamped with who removed it, when and why, and no
- * reader lists it again (MR-12 Stage 8). False when it is not a standing link
- * of this change.
+ * reader lists it again (MR-12 Stage 8). Returns which record it was, for the
+ * audit row; null when it is not a standing link of an open change.
  */
 export async function removeLink(orgId: number, changeId: number, linkId: number,
-  removal: { removedBy: number; reason: string }, client: RequestSqlClient = pool): Promise<boolean> {
-  const { rows } = await queryRowsClient(client).query(
+  removal: { removedBy: number; reason: string }, client: RequestSqlClient = pool): Promise<Pick<ChangeLinkRow, 'link_type' | 'linked_ref'> | null> {
+  const { rows } = await queryRowsClient(client).query<Pick<ChangeLinkRow, 'link_type' | 'linked_ref'>>(
     `WITH changed AS (
        UPDATE qms_change_controls SET updated_at=clock_timestamp()
         WHERE id=$2 AND organization_id=$3 AND deleted_at IS NULL AND status NOT IN ('closed','cancelled','rejected')
@@ -579,10 +625,10 @@ export async function removeLink(orgId: number, changeId: number, linkId: number
         RETURNING id
      ) UPDATE qms_change_links SET removed_at = NOW(), removed_by = $4, removal_reason = $5
       WHERE id = $1 AND change_id = $2 AND organization_id = $3 AND removed_at IS NULL
-        AND EXISTS (SELECT 1 FROM changed) RETURNING id`,
+        AND EXISTS (SELECT 1 FROM changed) RETURNING link_type, linked_ref`,
     [linkId, changeId, orgId, removal.removedBy, removal.reason],
   );
-  return rows.length > 0;
+  return rows[0] ?? null;
 }
 
 // ─── Register summary (KPIs for the Change Control surface) ───────────────────

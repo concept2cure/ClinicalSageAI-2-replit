@@ -1,0 +1,25 @@
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > the eCTD view's sequence QC is served in production > /api/ind-lifecycle/sequence/7/diff 8ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > the eCTD view's sequence QC is served in production > /api/ind-lifecycle/sequence/7/diff?priorId=6 1ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > the eCTD view's sequence QC is served in production > /api/ind-lifecycle/sequence/7/manifest 1ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > the eCTD view's sequence QC is served in production > /api/ind-lifecycle/sequence/:p/diff 1ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > the eCTD view's sequence QC is served in production > /api/ind-lifecycle/sequence/:p/manifest 1ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > the eCTD view's sequence QC is served in production > the PDF render of each is the same deliverable, admitted beneath it 1ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > /api/ind-lifecycle/sequence stays unattributed 0ms
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > /api/ind-lifecycle/sequence/7 stays unattributed 2ms
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > /api/ind-lifecycle/sequence/7/validate stays unattributed 1ms
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > /api/ind-lifecycle/sequence/7/dispatch-gate stays unattributed 0ms
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > /api/ind-lifecycle/sequence/7/dispatch-gate/snapshot stays unattributed 0ms
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > /api/ind-lifecycle/sequence/7/snapshots stays unattributed 0ms
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > nothing else under /sequence is admitted > a parameter is one segment: it never spans two, and never matches an empty one 1ms
+ × server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > a parameter claim beside a plain one > the longer claim wins, as a longer plain prefix does 3ms
+   → expected [ 'plain' ] to deeply equal [ 'param' ]
+ ✓ server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts > a parameter claim beside a plain one > a claim with no parameter matches as it always has 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed | 8 passed (15)

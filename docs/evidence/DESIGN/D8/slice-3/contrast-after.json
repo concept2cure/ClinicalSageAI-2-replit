@@ -1,0 +1,26 @@
+{
+ "05-device-clinical-studies": {
+  "light": [],
+  "dark": []
+ },
+ "06-device-software": {
+  "light": [],
+  "dark": []
+ },
+ "07-device-engineering": {
+  "light": [],
+  "dark": []
+ },
+ "08-device-udi": {
+  "light": [],
+  "dark": []
+ },
+ "09-device-postmarket": {
+  "light": [],
+  "dark": []
+ },
+ "10-device-presub": {
+  "light": [],
+  "dark": []
+ }
+}

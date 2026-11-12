@@ -181,13 +181,14 @@ describe('the real registry, launch scope on', () => {
   it('judges a path as Express routes it, whatever its letter case', async () => {
     for (const p of [
       '/API/mdx/imports', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
-      '/api/mdx/qms/Readiness', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
+      '/api/regulatory/tasks/Dashboard', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
       '/api/concept2cure/projects/ALL', '/api/mdx/Gateways/FDA/esg/transmit', '/api/mdx/Ldt',
     ]) {
       expect(await refused(p), p).toBe(true);
     }
-    // Launch paths are served in any case: Quality (P-48), project risk files (62a8d5e7), and RBM (P-76).
-    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1', '/api/mdx/Rbm-Kris']) expect(await refused(p), p).toBe(false);
+    // Launch paths are served in any case: Quality (P-48), its readiness figures (P-122: reached by Quality's figure
+    // line, so no longer the excluded example above), project risk files (62a8d5e7), and RBM (P-76).
+    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/api/mdx/qms/Readiness', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1', '/api/mdx/Rbm-Kris']) expect(await refused(p), p).toBe(false);
   });
 
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
@@ -508,7 +509,12 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     expect(prefixes.length).toBeGreaterThan(0);
     // A mount root admits every handler mounted under it, called or not.
     expect(prefixes.filter((p) => p === '/api/cmc' || p === '/api/cmc/module3-os')).toEqual([]);
-    const uncalled = prefixes.filter((pre) => !cmcCalls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    /* Every path a CMC screen names, not only those under /api/cmc: since P-122
+       the CMC surface also claims '/api/cmc-changes' (the deferred variation
+       assessment records through it), which /api/cmc/* filtering never sees, so
+       it read as uncalled while CmcVariationAssessment.tsx called it. */
+    const calledByCmc = [...walk.all].filter(([, e]) => e.surfaces.has('cmc'));
+    const uncalled = prefixes.filter((pre) => !calledByCmc.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
     expect(uncalled, `cmc apiPrefixes no CMC screen calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
   });
 });
@@ -625,7 +631,9 @@ describe('the real registry with the IND tools in Submission Center, agency ques
     // A mount root admits every handler mounted under it, called or not.
     expect(prefixes.filter((p) => p === '/api/ind-lifecycle')).toEqual([]);
     const calls = callsOf('ind-checklist');
-    const uncalled = prefixes.filter((pre) => !calls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    // A claim may name a `:param` segment (api-prefix-map.ts, P-122); the walker writes an interpolated one as `:p`.
+    const seg = (p: string) => p.replace(/\/:[A-Za-z_]\w*/g, '/:p');
+    const uncalled = prefixes.filter((pre) => !calls.some(([p]) => seg(p) === seg(pre) || seg(p).startsWith(`${seg(pre)}/`)));
     expect(uncalled, `ind-checklist apiPrefixes no screen of it calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
   });
 

@@ -1,0 +1,13 @@
+ × server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > samples the fit from t = 0 past the shelf life and the observed period, in order 10ms
+   → expected false to be true // Object.is equality
+ × server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > is the regression line and the one-sided lower bound for a decreasing attribute 4ms
+   → r.band is not iterable
+ × server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > meets the specification where the data decided the shelf life 4ms
+   → Cannot read properties of undefined (reading 'find')
+ × server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > is the upper bound for an increasing impurity 1ms
+   → r.band is not iterable
+ × server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > stops at a bounded horizon when the bound never crosses, not the 120-month search limit 1ms
+   → Cannot read properties of undefined (reading 'length')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

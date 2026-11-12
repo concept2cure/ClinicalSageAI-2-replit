@@ -186,7 +186,7 @@ const PII_DETECTOR_DISPOSITION: Record<string, Exclude<ContentPolicyAction, 'all
   regulatory_keyword: 'ignore',
 };
 
-function piiDisposition(match: ClassificationMatch): Exclude<ContentPolicyAction, 'allow'> | 'ignore' {
+export function piiDisposition(match: ClassificationMatch): Exclude<ContentPolicyAction, 'allow'> | 'ignore' {
   const known = PII_DETECTOR_DISPOSITION[match.detector];
   if (known) return known;
   // Unknown detector: fail closed on sensitive classes, ignore the rest.

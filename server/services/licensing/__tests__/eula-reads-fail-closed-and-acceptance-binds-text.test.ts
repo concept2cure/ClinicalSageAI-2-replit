@@ -58,6 +58,10 @@ interface Wiring {
   acceptedByOrg?: string[];
   /** The row `SELECT … FROM license_agreements WHERE id = $1` returns. */
   agreement?: Record<string, unknown>;
+  /** false: the two tables do not exist (2026-11-10: checked before any DDL). */
+  tablesPresent?: boolean;
+  /** false: license_acceptances alone is missing. One table of two is not "set up". */
+  acceptancesPresent?: boolean;
 }
 
 function wire(w: Wiring = {}) {
@@ -65,6 +69,10 @@ function wire(w: Wiring = {}) {
     const s = String(sql);
     if (w.failing?.test(s)) throw new Error(w.error ?? 'connection terminated unexpectedly');
     if (/^(BEGIN|COMMIT|ROLLBACK)$/.test(s)) return { rows: [] };
+    if (/to_regclass/.test(s)) {
+      const present = w.tablesPresent !== false;
+      return { rows: [{ agreements: present, acceptances: present && w.acceptancesPresent !== false }] };
+    }
     if (/CREATE TABLE|WHERE NOT EXISTS \(SELECT 1 FROM license_agreements/.test(s)) return { rows: [] };
     if (/FROM license_agreements WHERE status = 'active'/.test(s)) return { rows: [EULA_ROW] };
     if (/acceptance\.user_id = \$1/.test(s)) {
@@ -130,10 +138,33 @@ describe('agreement reads fail closed', () => {
   });
 
   it('a schema bootstrap the runtime role is refused is a failed read, not an empty one', async () => {
-    // The production shape: DDL is refused before any SELECT runs.
+    // The production shape: the tables are absent and DDL is refused before any
+    // SELECT runs. 2026-11-10 (F1 W1-05): it is said as "not set up", not as the
+    // database's own words.
+    const eula = await load();
+    wire({ tablesPresent: false, failing: /CREATE TABLE/, error: 'permission denied for schema public' });
+    await expect(eula.getOutstandingAgreements(7, 3)).rejects.toMatchObject({
+      code: 'AGREEMENTS_NOT_SET_UP',
+      statusCode: 503,
+    });
+  });
+
+  it('one table of the two is not "set up": the missing one is not skipped over', async () => {
+    // An installation holding license_agreements but not license_acceptances would otherwise read as ready and
+    // then fail on the first acceptance query with the database's own words.
+    const eula = await load();
+    wire({ acceptancesPresent: false, failing: /CREATE TABLE/, error: 'permission denied for schema public' });
+    await expect(eula.getOutstandingAgreements(7, 3)).rejects.toMatchObject({
+      code: 'AGREEMENTS_NOT_SET_UP',
+      statusCode: 503,
+    });
+  });
+
+  it('tables that exist are used without any DDL (2026-11-10: the runtime role is refused even IF NOT EXISTS)', async () => {
     const eula = await load();
     wire({ failing: /CREATE TABLE/, error: 'permission denied for schema public' });
-    await expect(eula.getOutstandingAgreements(7, 3)).rejects.toThrow('permission denied');
+    await expect(eula.getActiveAgreements()).resolves.toHaveLength(1);
+    expect(query.mock.calls.some(([sql]) => /CREATE TABLE/.test(String(sql)))).toBe(false);
   });
 
   it('getAcceptanceHistory rejects: an unreadable ledger is not an empty one', async () => {

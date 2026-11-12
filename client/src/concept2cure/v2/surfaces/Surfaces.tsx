@@ -343,9 +343,13 @@ export function Home({
         </div>
         </section>
         <HomeSetup onNav={onNav} onNewProject={newProject} projects={projects} />
-        <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome}
-          read={projects} onRetry={() => setProjectsEpoch((n) => n + 1)} />
-        <HomeTasks onNav={onNav} />
+        {/* The work, in view (P-122 §3.1): your projects and your open items side by side in one row
+            beneath the composer, so a 1440×900 screen shows both without scrolling. */}
+        <div className="home-work">
+          <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome}
+            read={projects} onRetry={() => setProjectsEpoch((n) => n + 1)} />
+          <HomeTasks onNav={onNav} />
+        </div>
       </div>
     </div>
   );

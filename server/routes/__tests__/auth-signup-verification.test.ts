@@ -266,6 +266,66 @@ describe('POST /api/auth/signup — no session until the address is confirmed', 
   });
 });
 
+/* Client administration walk, 2026-11-10 (docs/evidence/F1/2026-11-10-client-admin/, W1-02 and W1-04): the page made a
+   person accept the Terms of Service, the Privacy Policy and the regulatory acknowledgement, and required a job title,
+   and sent none of them. Nothing recorded that anyone had agreed to anything. */
+describe('POST /api/auth/signup: what the person agreed to, and their job title, are kept', () => {
+  const AGREED = { revision: '2026-11-10', termsOfService: true, privacyPolicy: true, regulatoryAcknowledgement: true };
+  const ACCEPTED = ['terms_of_service', 'privacy_policy', 'regulatory_acknowledgement'];
+  // The sign-up limiter admits five an hour from one address, and this file's other cases use them. Each case here
+  // comes from its own address behind one proxy hop, so the limiter stays real and out of the way.
+  let caller = 0;
+  const signUp = (body: Record<string, unknown>) => {
+    const a = express();
+    a.set('trust proxy', 1);
+    a.use(express.json());
+    a.use('/api/auth', authRoutes);
+    caller += 1;
+    return request(a).post('/api/auth/signup').set('X-Forwarded-For', `198.51.100.${caller}`).send(body);
+  };
+
+  it.each([
+    ['a deployment, where the account waits on its link', false, 'verification_sent'],
+    ['a development server', true, 'dev_no_verification'],
+  ])("records the acceptances and the revision shown on the sign-up's audit event, and keeps the job title (%s)", async (_label, devAuth, reason) => {
+    state.devAuth = devAuth;
+    const r = await signUp({ ...SIGNUP, jobTitle: '  Head of Regulatory Affairs ', agreements: AGREED });
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+    expect(authEvents.recordAuthEvent).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'user_signup', outcome: 'success', reason, agreements: { revision: '2026-11-10', accepted: ACCEPTED },
+    }));
+    expect(userInsert()?.values.title).toBe('Head of Regulatory Affairs');
+  });
+
+  it.each([['termsOfService'], ['privacyPolicy'], ['regulatoryAcknowledgement']])(
+    'refuses a sign-up that says an agreement was not accepted (%s), and creates nothing', async (key) => {
+      const r = await signUp({ ...SIGNUP, agreements: { ...AGREED, [key]: false } });
+      expect(r.status).toBe(400);
+      expect(state.inserts, 'nothing is created for a refused sign-up').toHaveLength(0);
+      expect(authEvents.recordAuthEvent).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'user_signup', outcome: 'success' }));
+    });
+
+  it.each([
+    ['no revision', { termsOfService: true, privacyPolicy: true, regulatoryAcknowledgement: true }],
+    ['an empty revision', { ...AGREED, revision: '  ' }],
+    ['an agreement the product does not have', { ...AGREED, marketingConsent: true }],
+    ['one of the three missing', { revision: '2026-11-10', termsOfService: true, privacyPolicy: true }],
+  ])('refuses an acceptance it cannot record whole (%s)', async (_label, agreements) => {
+    const r = await signUp({ ...SIGNUP, agreements });
+    expect(r.status).toBe(400);
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it('a sign-up that sends no acceptance says so on its audit event: none is invented', async () => {
+    const r = await signUp(SIGNUP);
+    expect(r.status).toBe(201);
+    const event = authEvents.recordAuthEvent.mock.calls.map(c => (c as unknown[])[0] as Record<string, unknown>).find(e => e.action === 'user_signup');
+    expect(event, 'the sign-up is audited').toBeTruthy();
+    expect(event!.agreements, 'no acceptance was sent, so none is recorded').toBeNull();
+    expect(userInsert()?.values.title ?? null, 'no job title was sent').toBeNull();
+  });
+});
+
 describe('POST /api/auth/verify-email', () => {
   it('moves the account from pending to active, once, and never from any other status', async () => {
     state.rows.users = [{ id: 7, email: 'founder@example.test', status: 'pending_verification', name: 'Ada' }];

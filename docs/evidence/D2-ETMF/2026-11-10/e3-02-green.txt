@@ -1,0 +1,44 @@
+E3 green. The E3 tests on the final source.
+
+## server/services/etmf/__tests__/tmf-governed-filing.test.ts
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is undefined
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is null
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is ""
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "   "
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "1234567"
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "  short  "
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is 12345678
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is {"text":"an object is not a reason"}
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a removal with no reason, without looking the filing up
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > takes a reason of exactly 8 characters, trimmed, and never one it composed
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > still refuses an unknown artifact code first
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > goes through the chained writer, on the transaction client, after the write and before COMMIT
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > names the study, the artifact, the document, the reason and who asked from where
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > writes no filing when its audit row cannot be written
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > removes no filing when its audit row cannot be written
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > names the document it replaced, read under the row's lock
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says so when the first filing had no document
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says which removal a filing cleared, and that it replaced no live document
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says so when it takes the place of a row that had no study
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > records who, why and what was filed, and deletes nothing
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > does not find a filing that is already removed, and records nothing more
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > issues no DELETE against the filings table, on any path
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+
+## tests/db/etmf-governed-filing.dbtest.ts  (PostgreSQL 16, runtime role app_service, RLS_ENFORCE=on)
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > refuses a filing with no reason, or one under 8 characters, and writes nothing
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > writes the filing and its audit row in one transaction, on the sequenced chain, naming the study and the document
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > names the document a re-file replaced
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > files a batch under one stated reason, each item with its own audit row
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > refuses a removal with no reason, and leaves the filing
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > marks the row removed with who, when and why, in the audit row's own transaction
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > is served by no reader once removed, and cannot be removed twice
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > files the artifact again on the same row, and its audit row says which removal it cleared
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > has the database refuse a removal that carries no reason
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a filing that takes the place of a row with no study says so > records what the unlinked row held
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > the inspection package is a recorded download > records EXPORT_GENERATED with the SHA-256 of the bytes it sent
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > the inspection package is a recorded download > sends nothing when the download cannot be recorded
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > the audit trail these acts wrote is one intact chain > verifies the organization's chain after filings, a removal, a re-filing and a download
+ Test Files  1 passed (1)
+      Tests  13 passed (13)

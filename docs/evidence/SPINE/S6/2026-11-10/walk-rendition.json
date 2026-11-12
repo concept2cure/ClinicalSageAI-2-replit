@@ -1,0 +1,36 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T07:10:34.922Z",
+  "steps": [
+    {
+      "name": "1. a Word version is uploaded",
+      "title": "Stability note (fictional) 071034",
+      "documentId": "b651a1bc-7b73-4051-8fe3-2e423e6fe4da",
+      "sourceSha256": "ab6e8d3ea77c8c465a88848e1f3d03457079a64d6b539dadca9a90761297e12c"
+    },
+    {
+      "name": "2. \"View as PDF\" frames the rendition",
+      "viewerTitle": "Stability note (fictional) 071034 v1.0 · PDF rendition"
+    },
+    {
+      "name": "3. the rendition is bound to its source",
+      "renditionOfSha256": "ab6e8d3ea77c8c465a88848e1f3d03457079a64d6b539dadca9a90761297e12c",
+      "renditionSha256": "6d8fcbe6f2ddc308e7c86090793ed46e9b3e00ff43e1aa8c8edced809f582f02",
+      "disposition": "inline; filename=\"stability-note.rendition.pdf\""
+    },
+    {
+      "name": "4. the source is unchanged; another format is refused by name",
+      "source": {
+        "status": 200,
+        "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "zip": true,
+        "hash": "ab6e8d3ea77c8c465a88848e1f3d03457079a64d6b539dadca9a90761297e12c"
+      },
+      "refused": {
+        "success": false,
+        "error": "NO_RENDITION_FOR_FORMAT",
+        "message": "A PDF rendition is made from a Word document (.docx). This version is another format; download it to open it."
+      }
+    }
+  ]
+}

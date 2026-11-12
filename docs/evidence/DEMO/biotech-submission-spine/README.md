@@ -78,3 +78,13 @@ Both were extracted unchanged first, so the red is behavioural, then fixed:
 - **In the running app.** `mdx-run.log`: `--pack mdx` exits 0; the program is found where it was (existing), no
   workspace created. `mdx-create-live.log`: the creation path — the sponsor workspace is created and a program created
   with the new body answers 201, recorded in that workspace.
+
+## Superseded on merge with trunk (2026-11-12)
+
+Trunk fixed the same C2C-201 workspace problem independently while this commit waited: `biotech.mjs` records the
+program's `clientWorkspaceId` in `describeProgram` and creates C2C-201 through `sameSponsor(c, program)`, the existing
+explicit-workspace path, tested in `demo-recovery.test.mjs`. On merging trunk into this session's commits, `biotech.mjs`
+takes trunk's version whole and `biotech-program-workspace.test.mjs` is removed, so one mechanism remains (zero
+duplication). What this commit adds and trunk does not have stays: the submission found by the program's own id
+(`biotech-submission.mjs` `canonicalSubmissionFor`, `biotech-submission-spine.test.mjs`), the change controls created
+on their programs, and the MDX program created in its sponsor's workspace.

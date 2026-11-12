@@ -30,6 +30,9 @@ const h = vi.hoisted(() => {
     comparePassword: vi.fn(async (plain: string) => plain === 'right-password'),
     route: null as null | Record<string, unknown>,
     members: [] as Array<Record<string, unknown>>,
+    /** The organisation's members and its settings, as the sole-member and review-rule reads see them (P-116, P-117). */
+    orgMembers: [7, 12] as number[],
+    settings: null as null | Record<string, unknown>,
   };
 });
 
@@ -129,12 +132,16 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.route = null;
   h.members = [];
+  h.orgMembers = [7, 12];
+  h.settings = null;
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: () => undefined }));
   h.clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
     const governance = releaseGovernanceRead(sql);
     if (governance) return governance;
     const s = String(sql);
     if (/^\s*(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return {};
+    if (/SELECT user_id FROM organization_users/i.test(s)) return { rowCount: h.orgMembers.length, rows: h.orgMembers.map((user_id) => ({ user_id })) };
+    if (/AS settings FROM organizations/i.test(s)) return { rowCount: 1, rows: [{ settings: h.settings }] };
     if (/FROM review_routes/i.test(s)) return h.route ? { rowCount: 1, rows: [h.route] } : { rowCount: 0, rows: [] };
     if (/FROM unified_tasks t/i.test(s)) return { rowCount: h.members.length, rows: h.members };
     if (/INSERT INTO frozen_documents/i.test(s)) return { rowCount: 1, rows: [{ version: 'approved', content_hash: (params ?? [])[3] }] };
@@ -209,6 +216,50 @@ describe('P-95: the APPROVER e-signature on the editor\'s document', () => {
   });
 });
 
+/**
+ * P-95 question 1, answered by P-116 (2026-11-10): a reviewer is never the approving signer. The approver
+ * is refused when the route names them as a reviewer, signed or not, before the credential; the
+ * organisation's only member is admitted before this is asked (below).
+ */
+describe('P-116: a reviewer on the route is never the approving signer', () => {
+  const expectReviewerRefused = (res: request.Response) => {
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body?.error?.code).toBe('APPROVER_IS_REVIEWER');
+    expect(res.body?.error?.message).toMatch(/reviewer on this document’s review[\s\S]*Another member approves it\. Nothing was signed\.$/);
+    expect(signed(), 'a refused approval wrote a signature').toBe(false);
+    expect(approved(), 'a refused approval approved the document').toBe(false);
+    expect(h.comparePassword).not.toHaveBeenCalled();
+  };
+
+  it('the E-sign is refused when the approver signed the review, though the review is complete', async () => {
+    h.route = routeRow('complete');
+    h.members = [reviewer(APPROVER_ID, CURRENT), reviewer(13, CURRENT)];
+    expectReviewerRefused(await approve('wrong-password'));
+  });
+
+  it('the E-sign is refused when the approver is named on the route and has not signed', async () => {
+    h.route = routeRow('open');
+    h.members = [reviewer(REVIEWER_ID, CURRENT), reviewer(APPROVER_ID, null)];
+    expectReviewerRefused(await approve());
+  });
+
+  it('the workflow /sign as APPROVER is refused the same way', async () => {
+    h.route = routeRow('complete');
+    h.members = [reviewer(APPROVER_ID, CURRENT), reviewer(13, CURRENT)];
+    expectReviewerRefused(await request(makeApp())
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
+      .set('Authorization', await bearer())
+      .send({ meaning: 'APPROVER', reason: 'final approval', password: 'right-password' }));
+  });
+
+  it('the only member, where the rules allow it, still approves alone', async () => {
+    h.orgMembers = [APPROVER_ID];
+    h.route = routeRow('complete');
+    h.members = [reviewer(APPROVER_ID, CURRENT)];
+    expect((await approve()).status).toBe(200);
+  });
+});
+
 describe('P-95: the workflow /sign as APPROVER', () => {
   it('is refused the same way when the document was never reviewed', async () => {
     const res = await request(makeApp())
@@ -216,5 +267,68 @@ describe('P-95: the workflow /sign as APPROVER', () => {
       .set('Authorization', await bearer())
       .send({ meaning: 'APPROVER', reason: 'final approval', password: 'wrong-password' });
     expectReviewRequired(res, /has not been reviewed/);
+  });
+});
+
+/**
+ * P-116 and P-117 on the editor's document: the organisation's only member may
+ * approve with no reviewer where its review rules allow it, and the audit trail
+ * says so; the reviewer count is the organisation's own setting.
+ */
+describe("P-116, P-117: the organisation's review rules on the APPROVER e-signature", () => {
+  const audited = (operation: string) => h.clientQuery.mock.calls.some((c) => ((c[1] as unknown[] | undefined) ?? []).includes(operation));
+
+  it('the only member approves a document that was never reviewed, and the audit trail records no independent review', async () => {
+    h.orgMembers = [APPROVER_ID];
+    const res = await approve();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(signed()).toBe(true);
+    expect(approved()).toBe(true);
+    expect(audited('APPROVAL_WITHOUT_INDEPENDENT_REVIEW')).toBe(true);
+  });
+
+  it('the only member still gives the password: a wrong one signs nothing', async () => {
+    h.orgMembers = [APPROVER_ID];
+    const res = await approve('wrong-password');
+    expect(res.status).not.toBe(200);
+    expect(signed()).toBe(false);
+  });
+
+  it('with self-approval switched off, the only member is refused REVIEW_REQUIRED as anyone is', async () => {
+    h.orgMembers = [APPROVER_ID];
+    h.settings = { security: { soleMemberSelfApproval: false } };
+    expectReviewRequired(await approve('wrong-password'), /has not been reviewed/);
+    expect(audited('APPROVAL_WITHOUT_INDEPENDENT_REVIEW')).toBe(false);
+  });
+
+  it('an independently reviewed approval writes no such record', async () => {
+    h.route = routeRow('complete');
+    h.members = [reviewer(REVIEWER_ID, CURRENT)];
+    expect((await approve()).status).toBe(200);
+    expect(audited('APPROVAL_WITHOUT_INDEPENDENT_REVIEW')).toBe(false);
+  });
+
+  it('two reviewers required, one named and signed: refused, saying how many more', async () => {
+    h.settings = { security: { independentReviewersRequired: 2 } };
+    h.route = routeRow('complete');
+    h.members = [reviewer(REVIEWER_ID, CURRENT)];
+    expectReviewRequired(await approve(), /ask for 2 independent reviewers, and this review names 1/);
+  });
+
+  it('two reviewers required, two signed: approved', async () => {
+    h.settings = { security: { independentReviewersRequired: 2 } };
+    h.route = routeRow('complete');
+    h.members = [reviewer(REVIEWER_ID, CURRENT), reviewer(13, CURRENT)];
+    expect((await approve()).status).toBe(200);
+  });
+
+  it('the workflow /sign as APPROVER follows the same rule for the only member', async () => {
+    h.orgMembers = [APPROVER_ID];
+    const res = await request(makeApp())
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
+      .set('Authorization', await bearer())
+      .send({ meaning: 'APPROVER', reason: 'final approval', password: 'right-password' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(audited('APPROVAL_WITHOUT_INDEPENDENT_REVIEW')).toBe(true);
   });
 });

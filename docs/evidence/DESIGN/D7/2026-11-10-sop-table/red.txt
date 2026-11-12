@@ -1,0 +1,3 @@
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > is a table with column headers, one body per document 382ms
+   → Unable to find an accessible element with the role "table"
+TestingLibraryElementError: Unable to find an accessible element with the role "table"

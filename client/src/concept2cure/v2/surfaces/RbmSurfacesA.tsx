@@ -18,15 +18,16 @@ import React, { useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
-import { frameworkLabel } from './rbmBoard';
+import { frameworkLabel, siteReadingsFor, type RbmSiteReading } from './rbmBoard';
 import {
-  RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
-  RbmFormModal, GovernedApprovalDialog, type FormField,
+  RbmChip, RbmScore, RbmWhen, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
+  RbmFormModal, GovernedApprovalDialog, AskAna, toleranceWords, type FormField,
 } from './RbmSurfaces';
 import { ErrorState } from '../dataConnect';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { useRbmMutation, useRbmOwners, ownerId, rbmWrite } from './rbmWrites';
 import { RbmIngestDialog } from './RbmIngest';
+import { downloadBlob, safeFileName } from '../download';
 import '../styles/rbm-v2.css';
 
 interface SubProps {
@@ -54,6 +55,13 @@ const KRI_SOURCE_LABEL: Record<string, string> = {
   central_stats: 'Central statistics', manual: 'Manual entry',
 };
 const SCALE = ['1', '2', '3', '4', '5'];
+/* The rbm_qtls.direction values (rbm-engine QTL_DIRECTIONS), as a monitor reads them. */
+const QTL_DIRECTIONS = ['upper', 'lower', 'two_sided'];
+const QTL_DIRECTION_LABEL: Record<string, string> = {
+  upper: 'at or above the limit (higher is worse)',
+  lower: 'at or below the limit (lower is worse)',
+  two_sided: 'outside a range (either end)',
+};
 
 /* ── Board-row → editable view-model coercions ──
    The board is the source of truth; these map its rows into the surfaces' view
@@ -75,6 +83,7 @@ interface QtlView {
   id: number; parameter: string; rationale: string;
   secondary: number | null; threshold: number | null; current: number | null;
   status: string; breachAction: string | null;
+  direction: string; thresholdLower: number | null; secondaryLower: number | null;
 }
 
 function itemView(it: RbmBoardItem): ItemView {
@@ -97,6 +106,7 @@ function qtlView(q: RbmBoardQtl): QtlView {
     id: q.id, parameter: q.parameter, rationale: q.rationale,
     secondary: q.secondary, threshold: q.threshold, current: q.current,
     status: q.status, breachAction: q.breachActionTaken,
+    direction: q.direction ?? 'upper', thresholdLower: q.thresholdLower ?? null, secondaryLower: q.secondaryLower ?? null,
   };
 }
 
@@ -147,7 +157,7 @@ function DataFreshness({ sources, onLoad }: { sources: RbmBoardFreshness[]; onLo
 }
 
 /* 1 -- Overview */
-export function RbmOverview({ board, onTab, onReload }: SubProps) {
+export function RbmOverview({ board, onTab, onReload, onAsk }: SubProps) {
   const [ingesting, setIngesting] = useState(false);
   const S = board.summary;
   // Unevaluated KRIs/QTLs are shown on the tile, not hidden in the remainder:
@@ -180,15 +190,21 @@ export function RbmOverview({ board, onTab, onReload }: SubProps) {
       <div className="rbm-sec-h"><h2>Needs attention now</h2><span className="rbm-sec-sub">Ordered by severity · as of <GovernedTimestamp value={S.asOf} layout="inline" /></span></div>
       <div className="rbm-att">
         {board.attention.map((a, i) => (
-          <button key={i} className="rbm-att-row" data-sev={a.sev} onClick={() => onTab?.(a.nav)}>
-            <RbmChip vocab="severity" value={a.sev} />
-            <span className="rbm-att-kind">{a.kind}</span>
-            <span className="rbm-att-body"><b>{a.t}</b><em>{a.d}</em></span>
-            <span className="rbm-att-go">{I.chevRight}</span>
-          </button>
+          /* The row opens the tab that holds the item, as before; beside it, the same item goes to AnA. */
+          <div key={i} className="rbm-att-row" data-sev={a.sev}>
+            <button type="button" className="rbm-att-main" onClick={() => onTab?.(a.nav)}>
+              <RbmChip vocab="severity" value={a.sev} />
+              <span className="rbm-att-kind">{a.kind}</span>
+              <span className="rbm-att-body"><b>{a.t}</b><em>{a.d}</em></span>
+              <span className="rbm-att-go">{I.chevRight}</span>
+            </button>
+            <AskAna onAsk={onAsk} prompt={`Explain this ${a.kind} item on the monitoring board and what I should do about it: ${a.t}${a.d ? ` (${a.d})` : ''}`} />
+          </div>
         ))}
         {board.attention.length === 0 && <div className="rbm-inbox-empty">Nothing needs attention right now for this study.</div>}
       </div>
+      {/* It stood in the page's header for every tab; it is about the figures, so it sits under them. */}
+      <p className="rbm-foot">Every score on this board is computed by the monitoring engines from the study’s recorded data. The number behind each chip is always shown.</p>
     </div>
   );
 }
@@ -196,6 +212,15 @@ export function RbmOverview({ board, onTab, onReload }: SubProps) {
 /* 2 -- Report */
 export function RbmReport({ board, onAsk }: SubProps) {
   const R = board.report;
+  const [saved, setSaved] = useState<string | null>(null);
+  /* The report as a file. The board has always carried it as text (`reportMarkdown`, from the engine that builds
+     the sections below); the only way to it was to ask AnA to paste it. */
+  const download = () => {
+    if (!board.reportMarkdown || !R) return;
+    const name = `${safeFileName(`risk-review-${R.asOf.slice(0, 10)}`, 'risk-review')}.md`;
+    setSaved(downloadBlob(name, new Blob([board.reportMarkdown], { type: 'text/markdown;charset=utf-8' }))
+      ? `Saved as ${name}.` : 'This browser did not allow the download. The report is unchanged; use Print.');
+  };
   if (!R) {
     return (
       <div className="rbm-report">
@@ -212,10 +237,12 @@ export function RbmReport({ board, onAsk }: SubProps) {
           <div className="rbm-report-m">As of <GovernedTimestamp value={R.asOf} layout="inline" /> — overall risk <RbmChip vocab="band" value={R.overallRisk} /> — {R.attentionCount} attention items — {R.approved ? 'assessment approved' : 'assessment approval pending'}</div>
         </div>
         <div className="rbm-report-acts">
-          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')} title="Sends this request to AnA in the rail — it does not download a file here">{I.sparkles}Ask AnA to export markdown</button>
+          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')} title="Sends this request to AnA, beside the board — it does not download a file here">{I.sparkles}Ask AnA to export markdown</button>
+          {board.reportMarkdown && <button className="rbm-btn" onClick={download} title="Saves this report to your computer as a Markdown file">{I.download}Download</button>}
           <button className="rbm-btn" onClick={() => window.print()}>{I.fileText}Print</button>
         </div>
       </div>
+      {saved && <p className="rbm-foot" role="status">{saved}</p>}
       <p className="rbm-report-headline">{R.headline}</p>
       {R.sections.map((s, i) => (
         <div key={i} className="rbm-report-sec" data-st={s.status}>
@@ -223,7 +250,7 @@ export function RbmReport({ board, onAsk }: SubProps) {
           <ul>{s.items.map((it, j) => <li key={j}>{it}</li>)}</ul>
         </div>
       ))}
-      <div className="rbm-note">{I.info}This report renders the same buildRiskReview output AnA returns from generate_rbm_report — the on-screen and in-chat answers are identical by construction. It is generated live from the current data; it is not yet a versioned, filed review record.</div>
+      <div className="rbm-note">{I.info}This is the same risk review AnA gives when asked for the report: one engine builds both, so the screen and the conversation cannot disagree. It is generated from the current data each time it is opened; it is not yet a versioned, filed review record.</div>
     </div>
   );
 }
@@ -452,8 +479,55 @@ export function RbmRact({ board, onReload }: SubProps) {
   );
 }
 
+/**
+ * An indicator's course at one site across the loads: the line against the indicator's limits, and the same
+ * readings in words for a reader who cannot see it. One reading is not a trend, and says so.
+ */
+function SiteTrend({ reading }: { reading: RbmSiteReading }) {
+  const points = reading.history ?? [];
+  if (points.length < 2) return <span className="mut">One reading</span>;
+  const words = points.map(p => `${p.cutoff ?? 'undated'}: ${p.v}`).join(', ');
+  return (
+    <span className="rbm-kri-trend" title={words}>
+      <Sparkline values={points.map(p => p.v)} amber={reading.amber} red={reading.red} w={96} h={24} />
+      <span className="rbm-sr">Site {reading.site}, {points.length} readings, oldest first: {words}</span>
+    </span>
+  );
+}
+
+/**
+ * An indicator's latest reading at each site, worst first. The sites' risk rows carry the readings
+ * (rbmBoard.ts siteReadingsFor); this tab showed the study-level value only and said a per-site view was not
+ * implemented. Nothing is offered for an indicator no site has read.
+ */
+function KriBySite({ name, readings }: { name: string; readings: RbmSiteReading[] }) {
+  const [open, setOpen] = useState(false);
+  if (readings.length === 0) return null;
+  const anyTrend = readings.some(r => (r.history?.length ?? 0) > 1);
+  return (
+    <div className="rbm-kri-sub">
+      <button className="rbm-linkbtn" aria-pressed={open} aria-expanded={open} onClick={() => setOpen(o => !o)}>{I.network}By site — {readings.length}</button>
+      {open && (
+        <table className="rbm-kri-sites">
+          <caption className="rbm-sr">Latest reading of {name} at each site, with its band</caption>
+          <thead><tr><th scope="col">Site</th><th scope="col">Reading</th><th scope="col">Band</th><th scope="col">Data cut-off</th>{anyTrend && <th scope="col">Over the loads</th>}</tr></thead>
+          <tbody>{readings.map(r => (
+            <tr key={r.site}>
+              <th scope="row" className="mono">{r.site}</th>
+              <td className="mono">{r.value}{r.unit ? ` ${r.unit}` : ''}</td>
+              <td><RbmChip vocab="kri" value={r.status} /></td>
+              <td className="mut">{r.cutoff ?? '—'}</td>
+              {anyTrend && <td><SiteTrend reading={r} /></td>}
+            </tr>
+          ))}</tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 /* 4 -- KRIs */
-export function RbmKris({ board, onReload }: SubProps) {
+export function RbmKris({ board, onReload, onAsk }: SubProps) {
   const kris = board.kris.map(kriView);
   const [tableFor, setTableFor] = useState<Record<number, boolean>>({});
   const [entryFor, setEntryFor] = useState<number | null>(null);
@@ -490,6 +564,9 @@ export function RbmKris({ board, onReload }: SubProps) {
     if (done) setCfg(null);
   };
 
+  const bySite: Record<number, RbmSiteReading[]> = Object.fromEntries(kris.map(k => [k.id, siteReadingsFor(board, k.name)]));
+  const anySiteReading = kris.some(k => bySite[k.id].length > 0);
+
   const cfgFields: FormField[] = [
     { key: 'name', label: 'Indicator name', type: 'text' },
     { key: 'metric', label: 'Metric definition', type: 'textarea' },
@@ -524,17 +601,19 @@ export function RbmKris({ board, onReload }: SubProps) {
             <div className="rbm-kri-v" data-st={k.status}>{k.current ?? '—'}<em>{k.unit}</em></div>
             {tableFor[k.id] ? <TrendTable kri={k} /> : <Sparkline values={k.spark} amber={k.amber} red={k.red} />}
           </div>
-          <div className="rbm-kri-thr">amber {k.amber ?? '—'}{k.unit} — red {k.red ?? '—'}{k.unit} — {k.at ? `evaluated ${k.at}` : 'never evaluated'}</div>
+          <div className="rbm-kri-thr">amber {k.amber ?? '—'}{k.unit} — red {k.red ?? '—'}{k.unit} — {k.at ? <>evaluated <RbmWhen at={k.at} /></> : 'never evaluated'}</div>
           <div className="rbm-kri-acts">
             <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setEntryFor(k.id)}>{I.zap}Add reading</button>
             <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', kri: k })}>{I.penLine}Configure</button>
             <button className="rbm-linkbtn" aria-pressed={!!tableFor[k.id]} onClick={() => setTableFor(t => ({ ...t, [k.id]: !t[k.id] }))}>{I.table}{tableFor[k.id] ? 'Trend' : 'Table'}</button>
+            <AskAna onAsk={onAsk} prompt={`Explain the key risk indicator "${k.name}" for this study: its current reading against its limits, its trend, which sites drive it, and what I should do next.`} />
           </div>
+          <KriBySite name={k.name} readings={bySite[k.id]} />
         </div>
       ))}
         {kris.length === 0 && <div className="rbm-inbox-empty">No key risk indicators for this study yet.</div>}
       </div>
-      <div className="rbm-note">{I.info}KRIs are seeded from the TransCelerate library or defined per study, with fixed amber/red limits. Appending a reading recomputes status server-side via kriStatus() — the UI never bands a value itself. An indicator with no reading, or with no threshold to read against, is <b>not evaluated</b>, never green. Every trend has a data-table equivalent (WCAG 2.2 AA). Thresholds are study-level and fixed: statistically-derived limits and per-site/country drilldown are not implemented.</div>
+      <div className="rbm-note">{I.info}KRIs are seeded from the TransCelerate library or defined per study, with fixed amber and red limits. When a reading is added the monitoring engine sets the status from those limits — this screen never bands a value itself. An indicator with no reading, or with no limit to read against, is <b>not evaluated</b>, never green. Every trend has a table equivalent. {anySiteReading ? 'Where an extract carried site rows, “By site” lists each site’s latest reading against the same limits. ' : 'An indicator shows its readings by site once an extract that carries site rows for it has been loaded. '}Limits are set for the study as a whole and are fixed: limits derived statistically from the data, and readings by country, are not available.</div>
       {entryFor != null && (() => { const k = kris.find(x => x.id === entryFor)!; return (
         <RbmFormModal title={`Add reading — ${k.name}`}
           intro={`Current ${k.current ?? '—'}${k.unit}. Amber ${k.amber ?? '—'}${k.unit}, red ${k.red ?? '—'}${k.unit} (${k.dir === 'higher_worse' ? 'higher is worse' : 'lower is worse'}). The server appends the reading and recomputes status.`}
@@ -555,21 +634,69 @@ export function RbmKris({ board, onReload }: SubProps) {
   );
 }
 
+/* The QTL form, and the body it posts. */
+const QTL_FIELDS: FormField[] = [
+  { key: 'parameter', label: 'Parameter', type: 'text' },
+  { key: 'rationale', label: 'Rationale (required for a QTL)', type: 'textarea' },
+  { key: 'direction', label: 'The limit is breached when the value is', type: 'select', options: QTL_DIRECTIONS, labels: QTL_DIRECTION_LABEL },
+  { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true },
+  { key: 'threshold', label: 'Primary tolerance limit', type: 'number', optional: true, hint: 'For a range, its upper bound.' },
+  { key: 'thresholdLower', label: 'Lower bound (a range only)', type: 'number', optional: true },
+  { key: 'secondaryLower', label: 'Lower early-warning limit (a range only)', type: 'number', optional: true },
+  { key: 'current', label: 'Current value', type: 'number', optional: true, hint: 'Leave blank until the parameter is measured — the QTL then reads "not evaluated" rather than "within".' },
+];
+
+/** The lower bound and its early-warning limit belong to a range only. For the one-sided kinds they are sent as
+ *  null, so a limit changed from a range to one side does not keep a bound that no longer means anything. */
+function qtlBody(f: Record<string, string>) {
+  const range = f.direction === 'two_sided';
+  return {
+    parameter: f.parameter,
+    rationale: f.rationale || null,
+    direction: f.direction,
+    secondaryLimit: optNum(f.secondary),
+    threshold: optNum(f.threshold),
+    thresholdLower: range ? optNum(f.thresholdLower) : null,
+    secondaryLimitLower: range ? optNum(f.secondaryLower) : null,
+    currentValue: optNum(f.current),
+  };
+}
+
+/** A stored limit as the form's starting values; an unset number is an empty field, never a 0. */
+function qtlInitial(q: QtlView): Record<string, string> {
+  const text = (v: number | null) => (v != null ? String(v) : '');
+  return {
+    parameter: q.parameter, rationale: q.rationale ?? '', direction: q.direction,
+    secondary: text(q.secondary), threshold: text(q.threshold),
+    thresholdLower: text(q.thresholdLower), secondaryLower: text(q.secondaryLower), current: text(q.current),
+  };
+}
+
+/** A limit in words, or '' when none is set. */
+function limitWords(q: QtlView): string {
+  return q.threshold != null ? toleranceWords({ ...q, threshold: q.threshold }) : '';
+}
+
+/** Where the value stands against its limits; before it is measured, the limits alone, in words. */
+function QtlLimits({ q }: { q: QtlView }) {
+  if (q.threshold == null || q.current == null) {
+    return <span className="mut">Not yet measured{limitWords(q) ? ` — ${limitWords(q)}` : ''}</span>;
+  }
+  return (
+    <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit=""
+      direction={q.direction} thresholdLower={q.thresholdLower} secondaryLower={q.secondaryLower} status={q.status} />
+  );
+}
+
 /* 5 -- QTLs */
-export function RbmQtls({ board, onReload }: SubProps) {
+export function RbmQtls({ board, onReload, onAsk }: SubProps) {
   const qtls = board.qtls.map(qtlView);
   const [cfg, setCfg] = useState<{ mode: string; qtl?: QtlView } | null>(null);
   const [breach, setBreach] = useState<QtlView | null>(null);
   const mut = useRbmMutation(onReload);
 
   const saveCfg = async (f: Record<string, string>) => {
-    const body = {
-      parameter: f.parameter,
-      rationale: f.rationale || null,
-      secondaryLimit: optNum(f.secondary),
-      threshold: optNum(f.threshold),
-      currentValue: optNum(f.current),
-    };
+    const body = qtlBody(f);
     const done = await mut.run(async () => {
       if (cfg?.mode === 'edit' && cfg.qtl) {
         await rbmWrite('PATCH', `/rbm-qtls/${cfg.qtl.id}`, body);
@@ -600,13 +727,6 @@ export function RbmQtls({ board, onReload }: SubProps) {
     if (done) setBreach(null);
   };
 
-  const cfgFields: FormField[] = [
-    { key: 'parameter', label: 'Parameter', type: 'text' },
-    { key: 'rationale', label: 'Rationale (required for a QTL)', type: 'textarea' },
-    { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true },
-    { key: 'threshold', label: 'Primary tolerance limit', type: 'number', optional: true },
-    { key: 'current', label: 'Current value', type: 'number', optional: true, hint: 'Leave blank until the parameter is measured — the QTL then reads "not evaluated" rather than "within".' },
-  ];
 
   return (
     <div>
@@ -624,39 +744,35 @@ export function RbmQtls({ board, onReload }: SubProps) {
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>
       </div>
       <div className="rbm-card">
-        <table className="rbm-tbl qtl"><thead><tr><th>Parameter</th><th>Rationale</th><th style={{ width: 260 }}>Current vs limits</th><th>Status</th><th></th></tr></thead>
+        <table className="rbm-tbl qtl"><thead><tr><th>Parameter</th><th>Rationale</th><th style={{ width: 220 }}>Current vs limits</th><th>Status</th><th></th></tr></thead>
           <tbody>{qtls.map(q => (
             <tr key={q.id}>
               <td className="fac"><b>{q.parameter}</b></td>
               <td className="mit">{q.rationale}{q.breachAction
                 ? <span className="rbm-control">{I.check}Breach response recorded</span> : null}</td>
-              <td>{q.threshold != null && q.current != null
-                ? <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit="" />
-                : <span className="mut">Not yet measured</span>}</td>
+              <td><QtlLimits q={q} /></td>
               <td><RbmChip vocab="qtl" value={q.status} /></td>
               <td><div className="rbm-qtl-acts">
                 <button className="rbm-rowedit" title="Configure" aria-label="Configure" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
                 {q.status === 'breached' && !q.breachAction && <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setBreach(q)}>Document breach</button>}
+                {(q.status === 'breached' || q.status === 'approaching') && (
+                  <AskAna onAsk={onAsk} prompt={`The quality tolerance limit "${q.parameter}" is ${q.status} for this study. Explain what that means for the study, what ICH E6(R3) expects me to do and document, and what I should do next.`} />
+                )}
               </div></td>
             </tr>
           ))}
           {qtls.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No quality tolerance limits for this study yet.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> — it has not been shown to be within tolerance. Limits are upper-bound only (higher = worse); lower-bound and two-sided QTLs are not supported yet. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
+      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> — it has not been shown to be within tolerance. A limit can bite at or above its value (a dropout rate), at or below it (endpoint data completeness), or at either end of a range (a randomisation ratio); a range with only one bound is not evaluated. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure QTL' : 'New quality tolerance limit'}
-        intro="A QTL governs a study-level parameter. Rationale is mandatory. Status is computed server-side from the current value against the secondary and primary limits."
-        fields={cfgFields}
-        initial={cfg.qtl ? {
-          parameter: cfg.qtl.parameter, rationale: cfg.qtl.rationale ?? '',
-          secondary: cfg.qtl.secondary != null ? String(cfg.qtl.secondary) : '',
-          threshold: cfg.qtl.threshold != null ? String(cfg.qtl.threshold) : '',
-          current: cfg.qtl.current != null ? String(cfg.qtl.current) : '',
-        } : null}
+        intro="A QTL governs a study-level parameter. Rationale is mandatory. Say which way the limit bites: at or above it, at or below it, or outside a range. The monitoring engine sets the status from the current value against those limits."
+        fields={QTL_FIELDS}
+        initial={cfg.qtl ? qtlInitial(cfg.qtl) : null}
         busy={mut.busy} error={mut.error}
         submitLabel={cfg.mode === 'edit' ? 'Save limit' : 'Create QTL'} onCancel={() => { setCfg(null); mut.clearError(); }} onSubmit={saveCfg} />}
       {breach && <RbmFormModal title={`Document breach — ${breach.parameter}`}
-        intro={`${breach.current ?? '—'} exceeds the ${breach.threshold ?? '—'} tolerance. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
+        intro={`${breach.current ?? '—'} is outside the tolerance${limitWords(breach) ? ` (${limitWords(breach)})` : ''}. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
         fields={[{ key: 'justification', label: 'Root-cause justification', type: 'textarea' }, { key: 'evidence', label: 'Supporting evidence (documents, datasets)', type: 'textarea' }, { key: 'capa', label: 'CAPA / corrective action', type: 'textarea' }]}
         busy={mut.busy} error={mut.error}
         submitLabel="Record breach response" onCancel={() => { setBreach(null); mut.clearError(); }} onSubmit={saveBreach} />}

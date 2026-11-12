@@ -1,0 +1,25 @@
+# The Library in the running app (dev server, demo IND project "C2C-101"), 2026-11-12 05:50-05:58 UTC.
+# Script: a Playwright walk signed in through the real form; boxes are getBoundingClientRect() tops in px.
+# "Before" is trunk at 3bd1570070 (the find bar across the tree and the list). "After" is this change.
+
+1280x800 before: find bar 382-575 (two rows of filters); list column 548-856 (308px wide)
+                 folder line 599-638; binder's note 648-707 ("Binder from the filing's outline: <outline> · version ..."
+                 under a folder line that already names the outline); two confirm prompts 717-893
+                 (each: the sentence, then "Confirm 1 suggested in Module 1 · Administrative" on its own lines)
+                 first document 904-1002; 0 of 10 wholly on the first screen
+1280x800 after:  find bar 378-482 across the whole Library (search row and six filters, one row each)
+                 record starts under it at 506; list 506-
+                 folder line 506-545; binder's note 555-574 ("From the filing's outline, version ich-m4-v2.2")
+                 two confirm prompts 584-688 (the sentence and "Confirm…" on one line)
+                 first document 699-797; 1 of 10 wholly on the first screen
+1440x900 before: first document 708; 2 of 10 wholly
+1440x900 after:  find bar 334-438; record 462-; first document 632-694; 3 of 10 wholly
+1920x1080 after: find bar 334-438; first document 610-672; 7 of 10 wholly (was 6)
+390x844 after:   find bar 462-704; first document 894 (was 1013 after the first step, 1131 before it); record is a drawer
+No horizontal scroll at any size; no console error.
+
+# Dark theme (c2c-v2-prefs dark=true), 1440x900, after: the Library, the open confirm form, the place-hold form, the
+# reading drawer, Required documents, Seals & fixity, Governed artifacts, Data catalog and Uploads were opened.
+# No console error; every surface uses the theme's tokens (11-dark-1440x900.png, 12-dark-confirm-form.png).
+# Found and fixed on the way: the confirm form said "Reason for confirming these 1 filings"; it now says
+# "this filing ... recorded on it" for one.

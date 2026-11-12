@@ -49,6 +49,8 @@ export interface BatchApiRow {
   batch_number?: string | null;
   product_name?: string | null;
   status?: string | null;
+  /** The signed disposition: released, conditional or rejected. A rejection leaves `status` as it was. */
+  release_status?: string | null;
   yield_data?: unknown;
   deviations?: unknown;
 }
@@ -116,6 +118,37 @@ export function batchDisposition(status: string | null | undefined): string {
 }
 
 /**
+ * What the row shows: the signed decision first, then the working status.
+ * Until 2026-11-12 the row read `status` alone. A rejection leaves `status`
+ * in-progress and a release sets it to completed, so a batch dispositioned
+ * under signature kept reading "Pending" with a live release control.
+ */
+function shownDisposition(row: Pick<BatchApiRow, 'status' | 'release_status'>): string {
+  const decided = batchDisposition(row.release_status);
+  return decided !== 'pending' ? decided : batchDisposition(row.status);
+}
+
+/**
+ * The batch as the signed disposition left it, read where the route puts it
+ * (`data.batchRecord`; `data` itself on an older answer). Null when the answer
+ * carries no batch, so the caller says so and never shows a row it made up.
+ */
+export function batchFromReleaseAnswer(json: unknown): CmcBatch | null {
+  const data = (json as { data?: unknown } | null)?.data;
+  if (!data || typeof data !== 'object') return null;
+  const nested = (data as { batchRecord?: unknown }).batchRecord;
+  const row = nested && typeof nested === 'object' ? nested : data;
+  const looksLikeBatch = 'batch_number' in (row as object) || 'id' in (row as object);
+  return looksLikeBatch ? batchRowFromApi(row as BatchApiRow) : null;
+}
+
+/** The decision in the words a person signed, for the toast that follows it. */
+export function dispositionWord(st: string): string {
+  if (st === 'conditional') return 'released conditionally';
+  return st;
+}
+
+/**
  * The server's own id for a batch, or undefined when it gave none.
  *
  * A blank string is "none" too: it addresses no row, and letting it through
@@ -138,12 +171,47 @@ export function batchRowFromApi(row: BatchApiRow): CmcBatch {
     stage: row.product_name ?? '',
     yield: yieldPercent(row.yield_data),
     dev: deviationCount(row.deviations),
-    st: batchDisposition(row.status),
+    st: shownDisposition(row),
   };
 }
 
 export function batchRowsFromApi(rows: readonly BatchApiRow[] | null | undefined): CmcBatch[] {
   return Array.isArray(rows) ? rows.map(batchRowFromApi) : [];
+}
+
+/** The edit a logged batch takes: PUT /api/cmc/batch-records/:id (P-122). */
+export interface BatchUpdateBody {
+  batchNumber: string;
+  productName: string;
+  yieldData: { percent: number };
+  deviations: { open: number };
+  /** Reason for change (§11.10(e)): recorded on the audit row beside the diff, not on the batch. */
+  reason: string;
+}
+
+/**
+ * C2CForm values → the edit body. The same four fields the batch was logged
+ * with, in the same shapes `batchCreateBody` writes them, so the round trip
+ * through `batchRowFromApi` reads back what was typed; and the reason the
+ * route records on the audit row. Status and release testing are not sent: a
+ * disposition is the signed release's alone, and the route refuses an edit
+ * that carries one.
+ */
+export function batchUpdateBody(v: Record<string, string>): BatchUpdateBody {
+  return {
+    batchNumber: (v.id ?? '').trim(),
+    productName: (v.stage ?? '').trim(),
+    yieldData: { percent: num(v.yield) },
+    deviations: { open: num(v.dev) },
+    reason: (v.reason ?? '').trim(),
+  };
+}
+
+/** Why a batch cannot be edited, or null when it can. A signed disposition closes the record (services/cmc/signed-record). */
+export function batchEditBlocked(b: Pick<CmcBatch, 'st'>): string | null {
+  return b.st === 'pending'
+    ? null
+    : 'This batch carries a signed disposition and is closed to ordinary edits.';
 }
 
 /** C2CForm values → create body. `productName` is required by the backend; the

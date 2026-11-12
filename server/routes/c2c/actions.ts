@@ -283,6 +283,38 @@ const REAUTH_ERROR: Record<SignerRefused['code'], string> = {
 };
 
 /**
+ * What the signer is told for each refusal, beside the code: the next step, and
+ * that nothing was signed. Moved here from the signature ceremony on 2026-11-12
+ * so that every caller of verifyReauth gets the sentence, not only the
+ * ceremony's. Nine routes answered the code alone, so a CMC signer whose
+ * authenticator code was not accepted read "HTTP 401", and a screen that worded
+ * the status itself said "Sign in again". REAUTH_AUTHENTICATOR_REQUIRED takes
+ * the re-verifier's own sentence (AUTHENTICATOR_REQUIRED_MESSAGE).
+ */
+const REAUTH_MESSAGE: Record<string, string> = {
+  REAUTH_REQUIRED: 'Re-enter your password to sign. Nothing was signed.',
+  REAUTH_PASSWORD_REQUIRED: 'Enter your password to sign. Nothing was signed.',
+  REAUTH_PASSWORD_INVALID: 'The password was not accepted. Nothing was signed.',
+  REAUTH_TOTP_REQUIRED: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.',
+  REAUTH_TOTP_INVALID: 'The authenticator code was not accepted. Nothing was signed.',
+  REAUTH_MFA_STATE_UNKNOWN: 'Your second factor could not be checked, so the signature was refused. Try again. Nothing was signed.',
+  // The account's own refusals (VSR-001 F-27, F-28). Without them a locked
+  // signer was told to re-enter a password that would not be compared.
+  REAUTH_ACCOUNT_LOCKED: 'The account is locked after repeated failed attempts. Try again later. Nothing was signed.',
+  REAUTH_ACCOUNT_STATE_UNKNOWN: 'Your account could not be checked, so the signature was refused. Try again. Nothing was signed.',
+  REAUTH_ACCOUNT_INACTIVE: 'This account is not active. Contact your administrator. Nothing was signed.',
+};
+
+/** verifyReauth's answer. A refusal carries its REAUTH_* code and the sentence the signer is told. */
+export type ReauthVerdict =
+  | { ok: true; error?: undefined; message?: undefined }
+  | { ok: false; error: string; message: string };
+
+function reauthRefused(error: string, reverifierSentence?: string): ReauthVerdict {
+  return { ok: false, error, message: REAUTH_MESSAGE[error] ?? reverifierSentence ?? REAUTH_MESSAGE.REAUTH_REQUIRED };
+}
+
+/**
  * §11.200 re-authentication for every high-risk governed action: the release
  * signature, CMC batch release, Module 3 approval, 510(k) eSTAR filing, gateway
  * transmittals.
@@ -302,17 +334,17 @@ export async function verifyReauth(
   userId: number,
   reauth: ActionEnvelope['reauth'],
   deps: ReverifySignerDeps = signerReverificationDeps(),
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<ReauthVerdict> {
   const verified = await reverifySigner(
     userId,
     { password: reauth?.password, mfaToken: reauth?.totp },
     deps,
   );
-  if (!verified.ok) return { ok: false, error: REAUTH_ERROR[verified.code] };
+  if (!verified.ok) return reauthRefused(REAUTH_ERROR[verified.code], verified.error);
 
   if (reauth?.totp && !verified.secondFactorVerified) {
     const presentedCodeVerifies = await deps.verifyMfaToken(userId, reauth.totp).catch(() => false);
-    if (!presentedCodeVerifies) return { ok: false, error: 'REAUTH_TOTP_INVALID' };
+    if (!presentedCodeVerifies) return reauthRefused('REAUTH_TOTP_INVALID');
   }
   return { ok: true };
 }
@@ -652,7 +684,7 @@ function makeHandler(command: Command) {
       const reauth = await verifyReauth(userId, body.reauth);
       if (!reauth.ok) {
         res.setHeader('WWW-Authenticate', 'ReAuth required');
-        return res.status(401).json({ error: reauth.error ?? 'REAUTH_REQUIRED' });
+        return res.status(401).json({ error: reauth.error, message: reauth.message });
       }
     }
 

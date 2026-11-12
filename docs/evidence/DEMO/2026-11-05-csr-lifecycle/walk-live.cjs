@@ -12,7 +12,7 @@ async function liveVault() {
   const page = PEOPLE.author.page;
   await page.goto(`${BASE}/concept2cure/vault?program=${state.data.programId}`, { waitUntil: 'networkidle' });
   await page.getByText(/^Uploads · \d+/).first().click();
-  await page.locator('main').getByText(DATASETS[0][0], { exact: true }).first().click();
+  await page.locator('main').getByText(DATASETS[0][0], { exact: true }).filter({ visible: true }).first().click(); // the visible row (walk-common.cjs openVersions)
   const list = page.locator('main').getByText(/Module 5 · clinical · (Approved|In review|Not sent for review)/);
   await list.first().waitFor();
   const lines = await list.allInnerTexts();

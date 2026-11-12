@@ -29,8 +29,27 @@ import { writeThroughChangeControl } from '../services/cmc-write-through';
 import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
 import { projectBelongsToTenant } from '../services/cmc/project-membership';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { launchScopeEnforced } from '../services/entitlements/launch-scope';
 
 const router = Router();
+
+/* P-122 (2026-11-10): the CMC surface claims this path, because the deferred
+   variation assessment records a classified change through POST. A claim
+   admits the path in production, and both answers carry post-approval FDA/EMA
+   categories, which P-28 withholds from an IND release. So, as
+   POST /api/cmc/variations/classify does, the route refuses itself while launch
+   scope is on and touches no store: production answers as it did when the
+   path was unclaimed (refused), and a deployment that permits deferred work is
+   unchanged. */
+router.use((_req: Request, res: Response, next: () => void) => {
+  if (!launchScopeEnforced()) return next();
+  return res.status(409).json({
+    error: {
+      code: 'CMC_VARIATIONS_OUT_OF_SCOPE',
+      message: 'Postapproval change control is outside this release. This release composes small-molecule Module 3 for a US IND; a PAS, CBE or international marketing variation does not classify an IND change.',
+    },
+  });
+});
 // A viewer reads change control and writes none of it (the CMC write-role
 // gate's rule, server/api/cmc/cmc-write-role-gate.ts): this router is mounted
 // at /api/cmc-changes, outside /api/cmc, so that gate does not cover it.

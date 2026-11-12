@@ -1,6 +1,6 @@
 {
-  "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at.",
-  "ceiling": 11,
+  "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at. 2026-11-10: the walk follows the path a person can take today (docs/evidence/SPINE/S2/2026-11-10-walk-persons-path/). After AnA drafts, the person rewrites both sections in their own words and cites the Data Room source; the independent check, the review, the seal and the filing follow. The walk therefore no longer proves that text AnA wrote survives to the seal, nor what happens to AnA's source span when a person edits around it (AC-03): no model has passed PQ, so machine text is not released, and those cases return when one has. The entries below that name AC-02, AC-03, LX-06 or LX-08 still fail on the same values; their 'why' says what each observes now. walk-forward/data-room-shows-use was deleted because its check passes: the Data Room counts the person's registered citation. That does not close DR-ANA-14 (a source used only by spans is still 'Not cited yet'; LX-14), which this walk no longer observes. 2026-11-10, later: file-to-vault/filing-names-sealed-version and walk-back/vault-leaf-to-seal were deleted because their checks pass: a sealed document's Vault filing names the frozen version it rendered and that record's content hash, held to the filed text (LX-10's seal half; docs/evidence/SPINE/S2/2026-11-10-vault-filing-names-seal/). LX-10's other halves stay open and are not walked here: the lineage digest (after LX-08) and the Vault alias.",
+  "ceiling": 8,
   "hops": {
     "ana-draft": {
       "tool-accepts-sources": {
@@ -37,7 +37,7 @@
           "LX-08"
         ],
         "observed": "0",
-        "why": "No source span exists to survive (AC-02, LX-06). Once one does, a sentence inserted above the quote retires it into the saver's author_assertion (retireStaleSourceSpans, server/services/clinical-regulatory-evidence/span-lineage.service.ts:813-856; AC-03, LX-08)."
+        "why": "No source span exists on the section. AnA's draft records none (AC-02, LX-06), and the citation the person registers (edit-save/citation-registered) is an authoring_citations row, not a span. Re-examined 2026-11-10: the person now replaces AnA's quoted sentence instead of inserting a sentence above it, because machine text is not released until a model passes PQ. So AC-03's case (a kept quote under an inserted sentence, retired into the saver's author_assertion: retireStaleSourceSpans, server/services/clinical-regulatory-evidence/span-lineage.service.ts:813-856; LX-08) is not walked now. Under this path the check turns green only when a cited sentence records a source span, or when the walk can again keep AnA's quote to the seal."
       },
       "spans-bound-to-revision": {
         "findings": [
@@ -64,19 +64,6 @@
         "why": "frozen_content is {document, sections, approvedBy, documentHash, frozenAt} (server/routes/authoring.router.ts:4055-4061); it names no doc_revisions head, and doc_revisions.inputs carries citations and contributors but no lineage digest (server/services/authoring/authoring-evidence.ts:297-311)."
       }
     },
-    "file-to-vault": {
-      "filing-names-sealed-version": {
-        "findings": [
-          "SUB-7",
-          "AC-14"
-        ],
-        "closedBy": [
-          "LX-10"
-        ],
-        "observed": "false",
-        "why": "The filing records the vault row, the artifact sha256 and the folder (server/services/authoring/authoring-file-to-vault.ts:222-264); neither the vault row, the chained audit row nor the export history names the frozen version or its content hash. The only link is document_code 'authoring-<docId>' (:344)."
-      }
-    },
     "transmit": {
       "transmittal-names-sequence": {
         "findings": [
@@ -90,16 +77,6 @@
       }
     },
     "walk-back": {
-      "vault-leaf-to-seal": {
-        "findings": [
-          "SUB-7"
-        ],
-        "closedBy": [
-          "LX-10"
-        ],
-        "observed": "0",
-        "why": "From the Vault leaf, no recorded key names the seal its bytes were rendered from (see file-to-vault/filing-names-sealed-version). The filing-copy leaf does reach its seal, through coauthor_documents.metadata.sealContentHash."
-      },
       "document-to-source-checksum": {
         "findings": [
           "AC-02",
@@ -111,7 +88,7 @@
           "LX-08"
         ],
         "observed": "0",
-        "why": "The walk back reaches the project, the seal and the authoring document, and stops there: the document's spans cite no cre_evidence_source, so cre_evidence_sources.checksum = sha256(X) is unreachable by a recorded key. Once LX-06 records the span, LX-08 must keep it through the edit."
+        "why": "By span lineage the walk back reaches the project, the seal and the authoring document, and stops there: the document's spans cite no cre_evidence_source (AC-02, LX-06; and see edit-save/source-span-survives for AC-03). Since 2026-11-10 the checksum is reached by another recorded key, the person's registered citation (walk-back/document-to-source-by-citation, green); this entry is the span half, still open."
       }
     },
     "walk-forward": {
@@ -127,19 +104,7 @@
           "LX-08"
         ],
         "observed": "0",
-        "why": "listSpansCitingSource (span-lineage.service.ts:1049) finds nothing citing the source, so the forward walk from the Data Room stops at its first step. From the project's authoring document onward the forward walk to the transmittal holds (walk-forward/document-to-transmittal)."
-      },
-      "data-room-shows-use": {
-        "findings": [
-          "DR-ANA-14"
-        ],
-        "closedBy": [
-          "LX-06",
-          "LX-08",
-          "LX-14"
-        ],
-        "observed": "0",
-        "why": "The Data Room's 'Used in' (GET /api/c2c/projects/:id/sources \u2192 summarizeSourceUsage) counts authoring_citations only (server/services/clinical-regulatory-evidence/source-usage.service.ts:362-400): even once LX-06 records spans, they are invisible to it until LX-14."
+        "why": "listSpansCitingSource (span-lineage.service.ts:1049) finds nothing citing the source, so the forward walk from the Data Room by span lineage stops at its first step. The Data Room's own 'Used in' does report the document since 2026-11-10, through the person's registered citation (walk-forward/data-room-shows-use, green). From the project's authoring document onward the forward walk to the transmittal holds (walk-forward/document-to-transmittal)."
       }
     }
   }

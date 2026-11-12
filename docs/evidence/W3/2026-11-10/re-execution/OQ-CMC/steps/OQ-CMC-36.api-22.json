@@ -1,0 +1,84 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "443e12ca-9d00-4d2a-aef0-06870e02bccc",
+      "productName": "Q1E-planned",
+      "batchNumber": "B-1",
+      "dosageForm": "tablet",
+      "scope": "DP",
+      "climaticZone": "II",
+      "studyType": "long_term",
+      "storageConditions": [
+        "25C/60%RH"
+      ],
+      "duration": 24,
+      "testParameters": [
+        "assay"
+      ],
+      "timePoints": [
+        "0",
+        "3",
+        "6",
+        "12",
+        "24"
+      ],
+      "shelfLife": "24 months at 25C/60%RH",
+      "status": "ACTIVE",
+      "startDate": "2026-01-01T00:00:00.000Z",
+      "stabilityData": null
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 34,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 92,
+        "organizationId": 2,
+        "projectId": "443e12ca-9d00-4d2a-aef0-06870e02bccc",
+        "studyTitle": null,
+        "productName": "Q1E-planned",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "3",
+          "6",
+          "12",
+          "24"
+        ],
+        "stabilityData": null,
+        "notes": null,
+        "shelfLife": "24 months at 25C/60%RH",
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-12T00:55:38.177Z",
+        "updatedAt": "2026-11-12T00:55:38.177Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

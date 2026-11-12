@@ -1,0 +1,19 @@
+# Register width at 1440 in the running app (demo organisation 5, LMN-201 open), measure.cjs
+## With item 2's inline actions, before the scroll box (the actions' right edge past the section's: clipped)
+SOP register {"pane":1344,"table":1344,"maxActRight":1332}
+Change control {"pane":1344,"table":1388,"maxActRight":1376}
+CAPA {"pane":1344,"table":1605,"maxActRight":1593}
+Deviations {"pane":1344,"table":1539,"maxActRight":1527}
+Nonconformances {"pane":1344,"table":1869,"maxActRight":1857}
+Suppliers {"pane":1344,"table":1803,"maxActRight":1791}
+Internal audits {"pane":1344,"table":1727,"maxActRight":1715}
+Management reviews {"pane":1344,"table":1344,"maxActRight":1332}
+## After the scroll box with the pinned actions column
+SOP register {"pane":1344,"table":1344,"maxActRight":1332}
+Change control {"pane":1344,"table":1388,"maxActRight":1332}
+CAPA {"pane":1344,"table":1605,"maxActRight":1332}
+Deviations {"pane":1344,"table":1539,"maxActRight":1332}
+Nonconformances {"pane":1344,"table":1869,"maxActRight":1332}
+Suppliers {"pane":1344,"table":1803,"maxActRight":1332}
+Internal audits {"pane":1344,"table":1727,"maxActRight":1332}
+Management reviews {"pane":1344,"table":1344,"maxActRight":1332}

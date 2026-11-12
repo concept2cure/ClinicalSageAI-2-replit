@@ -18,7 +18,18 @@
  *   GET  /agreements/outstanding    — agreements the current user/org still must accept
  *   POST /agreements/:id/accept     — record acceptance (clickwrap), append-only + audited
  *   GET  /acceptances               — current user's acceptance history
- *   POST /agreements                — publish a new agreement version (admin)
+ *   POST /agreements                — publish a new agreement version (platform staff only, with a reason)
+ *
+ * 2026-11-10 (F1, client administration):
+ * - POST /agreements admitted any caller whose request role was 'admin', which
+ *   is the caller's organisation membership role: every client's own
+ *   administrator could replace the terms every user of every organisation must
+ *   accept, with no reason and no audit row (ADM-01, IAM-ADM-02). It is now the
+ *   platform-staff decision of middleware/requirePlatformAdmin.ts, a reason is
+ *   required, and the service audits the publish in its transaction.
+ * - When the agreement records do not exist on the installation (the hosted
+ *   runtime role may not create them), every route that needs them answered a
+ *   bare 500. They now answer 503 AGREEMENTS_NOT_SET_UP with a sentence (W1-05).
  */
 
 import { Router } from 'express';
@@ -28,7 +39,9 @@ import {
   buildFeatureCatalog,
 } from '../services/licensing/entitlements-service.js';
 import {
+  AgreementPublishReasonRequiredError,
   AgreementPublishTextMissingError,
+  AgreementStoreUnavailableError,
   AgreementTextMissingError,
   getActiveAgreements,
   getOutstandingAgreements,
@@ -38,6 +51,14 @@ import {
   publishAgreement,
 } from '../services/licensing/eula-service.js';
 import { readLicenseInfo } from '../services/license-manager.js';
+import { holdsPlatformRole } from '../middleware/requirePlatformAdmin.js';
+
+/**
+ * Who may publish or replace a platform-wide agreement: the platform's administrators, not its support
+ * staff. A new version is owed by every user of every organisation, so it is held as narrowly as the other
+ * governed platform writes (part11-compliance: the same two roles).
+ */
+const AGREEMENT_PUBLISHER_ROLES = ['super_admin', 'platform_admin'] as const;
 import { createScopedLogger } from '../utils/logger.js';
 import { clientIpOf } from '../utils/client-ip';
 
@@ -53,6 +74,17 @@ function userIdOf(req: Request): number | undefined {
   return v != null ? Number(v) : undefined;
 }
 
+/**
+ * The agreement records are not set up on this installation: say so (503), and
+ * never answer it as a failure of unknown cause or as an empty list. True when
+ * it answered.
+ */
+function refusedNotSetUp(res: Response, error: unknown): boolean {
+  if (!(error instanceof AgreementStoreUnavailableError)) return false;
+  res.status(error.statusCode).json({ error: error.message, code: error.code });
+  return true;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Entitlements
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,6 +98,7 @@ router.get('/entitlements', async (req: Request, res: Response) => {
     if (!summary) return res.status(404).json({ error: 'License not found' });
     return res.json(summary);
   } catch (error) {
+    if (refusedNotSetUp(res, error)) return;
     logger.error('entitlements error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to resolve entitlements' });
   }
@@ -95,6 +128,7 @@ router.get('/agreements/active', async (_req: Request, res: Response) => {
   try {
     return res.json({ agreements: await getActiveAgreements() });
   } catch (error) {
+    if (refusedNotSetUp(res, error)) return;
     logger.error('agreements/active error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load agreements' });
   }
@@ -107,6 +141,7 @@ router.get('/agreements/outstanding', async (req: Request, res: Response) => {
     const outstanding = await getOutstandingAgreements(userId, orgIdOf(req) ?? null);
     return res.json({ outstanding, count: outstanding.length });
   } catch (error) {
+    if (refusedNotSetUp(res, error)) return;
     logger.error('agreements/outstanding error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load outstanding agreements' });
   }
@@ -127,6 +162,7 @@ router.post('/agreements/:id/accept', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ accepted: true, acceptance: record });
   } catch (error) {
+    if (refusedNotSetUp(res, error)) return;
     if (error instanceof LicenseAcceptanceCommitUnconfirmedError) {
       return res.status(error.statusCode).json({ error: error.message, code: error.code, recoveryUrl: error.recoveryUrl });
     }
@@ -147,6 +183,7 @@ router.get('/acceptances', async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: 'Authentication required' });
     return res.json({ acceptances: await getAcceptanceHistory(userId) });
   } catch (error) {
+    if (refusedNotSetUp(res, error)) return;
     logger.error('acceptances error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load acceptance history' });
   }
@@ -154,10 +191,22 @@ router.get('/acceptances', async (req: Request, res: Response) => {
 
 router.post('/agreements', async (req: Request, res: Response) => {
   try {
-    const role = (req as any).user?.role ?? (req as any).userRole;
-    if (role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    const actorUserId = userIdOf(req);
+    if (!actorUserId) return res.status(401).json({ error: 'Authentication required' });
+    // The agreement catalogue is platform-wide: a new version is owed by every
+    // user of every organisation. Platform standing only, never the request
+    // role (the caller's organisation membership role).
+    if (!(await holdsPlatformRole(req, AGREEMENT_PUBLISHER_ROLES))) {
+      logger.warn('agreement publish refused: not platform staff', { userId: actorUserId });
+      return res.status(403).json({
+        error:
+          "Agreements are published by platform staff. An organisation's administrator cannot publish or replace one.",
+      });
+    }
 
-    const { agreementKey, version, title, summary, body, url, scope, required } = req.body || {};
+    // The reason is checked by publishAgreement, before anything is written
+    // (AgreementPublishReasonRequiredError, answered 400 below).
+    const { agreementKey, version, title, summary, body, url, scope, required, reason } = req.body || {};
     if (!agreementKey || !version || !title) {
       return res.status(400).json({ error: 'agreementKey, version, and title are required' });
     }
@@ -171,10 +220,16 @@ router.post('/agreements', async (req: Request, res: Response) => {
       url,
       scope: scope === 'organization' ? 'organization' : 'user',
       required: required !== false,
-      createdBy: String(userIdOf(req) ?? ''),
+      createdBy: String(actorUserId),
+      actorUserId,
+      reason: typeof reason === 'string' ? reason : '',
     });
     return res.status(201).json({ agreement });
   } catch (error) {
+    if (refusedNotSetUp(res, error)) return;
+    if (error instanceof AgreementPublishReasonRequiredError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
     // An agreement with no body or url is the request's fault: nothing was published.
     if (error instanceof AgreementPublishTextMissingError) {
       return res.status(400).json({ error: error.message, code: error.code });

@@ -1,0 +1,4 @@
+ × tests/db/p122-milestone-writes.dbtest.ts > who may not > deleting a milestone > is refused while launch scope is on, with the reason, and the milestone stays 25ms
+   → expected { status: 200, code: undefined } to deeply equal { status: 409, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 24 passed (25)

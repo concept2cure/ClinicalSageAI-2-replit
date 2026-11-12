@@ -1,0 +1,5 @@
+# Fixtures, 2026-11-10 (setup/fixtures.mjs)
+platform role: user:4 platform_admin granted as the database owner
+foreign program: organisation 1 ("Default"), written as the database owner
+the run identity reads the foreign program: 404 (expected a refusal)
+QMS program created by the run identity through POST /api/c2c/projects: 201

@@ -40,6 +40,7 @@ import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
+import { randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
 
 const stubs = vi.hoisted(() => {
@@ -163,8 +164,26 @@ async function upsertMember(who: 'signer' | 'viewer', role: 'admin' | 'viewer'):
   return id;
 }
 
+/** The analytical method every specification row names, and the project its register row is under. */
+const SPEC_METHOD = 'Dbdsc assay (HPLC)';
+
 /** One BLA assessment and one row per CMC register, per case, in this organization. */
 async function makeFixtureRows(): Promise<void> {
+  /* A specification is approved only with a procedure fit to measure its limits
+     (ICH Q2 approval gate, services/cmc/analytical-method-source.ts
+     `specificationMethodVerdict`, fcdc92bf11 and d9060a85e2, 2026-11-08): one
+     that names no method answers 409 METHOD_NOT_NAMED before the password and
+     never reaches the signature. So each specification names a method that this
+     project's register (cmc_source_objects, source_type 'method') records as
+     validated, in the write-through's own payload shape — the same fixture change
+     api/cmc/__tests__/cmc-sign-signature-row.test.ts and the proof-tier contract
+     made. A fresh project per run: the register row's key is unique per project. */
+  const specProject = randomUUID();
+  await owner.query(
+    `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash)
+     VALUES ($1, $2, 'method', 'method:dbdsc', $3::jsonb, $4)`,
+    [ORG, specProject, JSON.stringify({ methodName: SPEC_METHOD, validationStatus: 'validated' }), `${TAG}-method-${BASE}`],
+  );
   for (const c of ROW_CASES) {
     const bla = await owner.query(`INSERT INTO c2c_bla_assessments (org_id, program_id, kind, title, created_by) VALUES ($1, $2, 'comparability', $3, $4) RETURNING id`, [ORG, blaProgramId, `${TAG} ${c}`, signer.id]);
     fixtureRows.set(`bla:${c}`, String(bla.rows[0].id));
@@ -182,8 +201,9 @@ async function makeFixtureRows(): Promise<void> {
       [ORG, `${TAG}-${c}-S1`, `${TAG}-${BASE}-${c}`, String(batch.rows[0].project_id), signer.id],
     );
     const spec = await owner.query(
-      `INSERT INTO quality_specifications (tenant_id, material_type, material_name) VALUES ($1, 'drug_substance', $2) RETURNING id`,
-      [ORG, `${TAG} ${c}`],
+      `INSERT INTO quality_specifications (tenant_id, project_id, material_type, material_name, test_methods)
+       VALUES ($1, $2, 'drug_substance', $3, $4::jsonb) RETURNING id`,
+      [ORG, specProject, `${TAG} ${c}`, JSON.stringify({ method: SPEC_METHOD })],
     );
     fixtureRows.set(`spec:${c}`, String(spec.rows[0].id));
     const closure = await owner.query(
@@ -227,6 +247,7 @@ async function cleanup(): Promise<void> {
   await owner.query('DELETE FROM qc_testing WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM cmc_batch_records WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM cmc_container_closures WHERE organization_id = $1', [ORG]);
+  await owner.query(`DELETE FROM cmc_source_objects WHERE organization_id = $1 AND source_type = 'method'`, [ORG]);
   for (const table of ['irb_submissions', 'iacuc_protocols', 'ibc_registrations']) {
     await owner.query(`DELETE FROM ${table} WHERE organization_id = $1`, [ORG]);
   }

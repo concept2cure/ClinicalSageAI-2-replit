@@ -1,0 +1,11 @@
+# The pack's pins against the providers and compute-run as they stood (the case read tmf_files); trial-master-file-pack.ts present, unwired
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > counts each study of the projects the person can open, from the store's own assessment; it reads no retired table 11ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > is refused with no person named: a trial master file is read as someone 11ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > is computed for one project or this organization, and refuses any other scope or an unverified project 2ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > a project run reads only that project's studies 1ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > no study and no filing are each said as what they are, never as zeros 1ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > a study read that fails is an error, never a study left out of the count 5ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > a project at the study list's cap is refused, not truncated 2ms
+ × server/services/report-os/__tests__/trial-master-file-pack.test.ts > the trial master file pack reads the deployed store, as the person who runs it > a run with no person is answered as a report not computed, not as an error or an empty register 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed (8)

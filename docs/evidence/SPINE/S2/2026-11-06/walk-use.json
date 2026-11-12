@@ -1,0 +1,72 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "phase": "use",
+  "startedAt": "2026-11-10T01:17:52.296Z",
+  "steps": [
+    {
+      "name": "1440: \"Use in this project\" on the other project's capture"
+    },
+    {
+      "name": "1440: this project's Data room lists what it uses first",
+      "text": "Used in this project · 1 zx-102-clinical-study-report-synopsis.txt Grade C · 71 From [Demo · MDX] NeuroPanel-Dx 510(k) · added 11/10/2026 Remove"
+    },
+    {
+      "name": "1440: recorded on the project",
+      "evidence": [
+        {
+          "kind": "data_room",
+          "ref": "161",
+          "title": "zx-102-clinical-study-report-synopsis.txt",
+          "dataRoom": {
+            "grade": "C",
+            "checksum": "89ad5d855339c0216c0ff186b016150bcd14f9b8a55930848b824ab3759327f0",
+            "gradedAt": "2026-11-10T01:16:36.893931+00:00",
+            "sourceId": 161,
+            "isCurrent": true,
+            "projectId": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+            "gradeScore": 71,
+            "projectName": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+            "extractionStatus": "extracted"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1440: Remove takes it off the project"
+    },
+    {
+      "name": "390: \"Use in this project\" on the other project's capture"
+    },
+    {
+      "name": "390: this project's Data room lists what it uses first",
+      "text": "Used in this project · 1 zx-102-clinical-study-report-synopsis.txt Grade C · 71 From [Demo · MDX] NeuroPanel-Dx 510(k) · added 11/10/2026 Remove"
+    },
+    {
+      "name": "390: recorded on the project",
+      "evidence": [
+        {
+          "kind": "data_room",
+          "ref": "161",
+          "title": "zx-102-clinical-study-report-synopsis.txt",
+          "dataRoom": {
+            "grade": "C",
+            "checksum": "89ad5d855339c0216c0ff186b016150bcd14f9b8a55930848b824ab3759327f0",
+            "gradedAt": "2026-11-10T01:16:36.893931+00:00",
+            "sourceId": 161,
+            "isCurrent": true,
+            "projectId": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+            "gradeScore": 71,
+            "projectName": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+            "extractionStatus": "extracted"
+          }
+        }
+      ]
+    },
+    {
+      "name": "390: Remove takes it off the project"
+    }
+  ],
+  "apiErrors": [],
+  "ok": true,
+  "finishedAt": "2026-11-10T01:18:10.017Z"
+}

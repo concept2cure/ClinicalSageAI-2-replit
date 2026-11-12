@@ -1,0 +1,115 @@
+{
+  "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+  "records": {
+    "drugSubstance": 64,
+    "drugProduct": 21,
+    "analyticalMethod": 23,
+    "specification": "8bd38043-3a49-4517-b3fc-6cb03df085a1",
+    "batchRecord": "285e5faa-1d21-428e-8613-8de7da5de719",
+    "stabilityStudy": 83,
+    "containerClosureDrugSubstance": 13,
+    "containerClosureDrugProduct": 14,
+    "referenceStandard": 4,
+    "characterizationStructural": 10,
+    "characterizationPhysicochemical": 11,
+    "characterizationBiological": 12,
+    "impurityDrugSubstance": 7,
+    "impurityDrugProduct": 8,
+    "qcDrugSubstance": 7,
+    "qcDrugProduct": 8,
+    "specificationDrugProduct": "1245b54c-8991-4b6f-8bf0-a7340ef0a271",
+    "excipientCellulose": 19,
+    "excipientGelatin": 20,
+    "formulation": 4,
+    "processDrugSubstance": "fb35f146-dc80-4623-958c-c7eb92a6754c",
+    "processDrugProduct": "8a410ea3-f2c9-4aea-940e-c34623f9d393",
+    "stabilityDrugProduct": 84
+  },
+  "sections": [
+    {
+      "sectionKey": "3.1",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.A.1",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.A.2",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.A.3",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.1",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.2",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.3",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.4",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.5",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.6",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.7",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.P.8",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.R.1.US",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.1",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.2",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.3",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.4",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.5",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.6",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.2.S.7",
+      "completeness": 100
+    },
+    {
+      "sectionKey": "3.3",
+      "completeness": 100
+    }
+  ],
+  "incomplete": []
+}

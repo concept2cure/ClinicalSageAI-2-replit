@@ -69,6 +69,33 @@ afterEach(() => {
 });
 
 const SOURCE_ACTOR = { organizationId: 7, userId: 3, projectId: 42, programId: '10000000-0000-4000-8000-000000000001' };
+describe('the input-tier wall judges the copy that is dispatched (founder decision, 2026-11-09)', () => {
+  // The app's default policy has piiDetection on (gateway.ts DEFAULT policy); this harness's gateway does not.
+  const withPiiDetection = () => {
+    const parts = instrumented();
+    const internals = parts.gw as unknown as { config: { policy: { piiDetection: boolean } }; policyEngine: { updateConfig(p: { piiDetection: boolean }): void } };
+    internals.config.policy.piiDetection = true; internals.policyEngine.updateConfig({ piiDetection: true });
+    return parts;
+  };
+  const sent = (dispatch: ReturnType<typeof instrumented>['dispatch']) =>
+    JSON.stringify(((dispatch.mock.calls[0] as unknown[] | undefined)?.[1] as GatewayRequest | undefined)?.messages ?? null);
+  it('an email the PII pass removes, and a phone number it sends by design, no longer refuse a Tier 1 turn', async () => {
+    const { gw, dispatch } = withPiiDetection();
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      await gw.route({ taskType: 'chat', messages: [{ role: 'user', content: 'Ask rhea.reviewer@example.com to review it, or call 301-796-0000.' }] } as GatewayRequest)
+        .catch((error: Error) => { expect(error.message).not.toContain('DENY_INPUT_TIER'); });
+    });
+    expect(dispatch).toHaveBeenCalled();
+    expect(sent(dispatch)).not.toContain('rhea.reviewer@example.com');
+  });
+  it('a medical record number still never reaches the provider', async () => {
+    const { gw, dispatch } = withPiiDetection();
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      await expect(gw.route({ taskType: 'chat', messages: [{ role: 'user', content: 'Patient MRN: 00123456, DOB: 01/02/1960.' }] } as GatewayRequest)).rejects.toThrow();
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
 describe('private per-run source ceilings and current-source checkpoints', () => {
   it('fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK', async () => {
     const { gw, placement, dispatch } = instrumented();

@@ -1,0 +1,50 @@
+{
+  "manifest": {
+    "exportId": "COMPLIANCE-REPORT-1794281949008-2870f27e",
+    "kind": "compliance-report",
+    "report": {
+      "id": "electronic-signatures",
+      "title": "Electronic signature register",
+      "version": 1
+    },
+    "organizationId": 2,
+    "period": {
+      "from": "2026-08-12",
+      "to": "2026-11-10",
+      "kind": "range"
+    },
+    "generatedAt": "2026-11-10T03:39:09.008Z",
+    "generatedBy": "oq-runner@validation.local",
+    "generatedByRole": "admin",
+    "format": "json",
+    "sections": [
+      {
+        "key": "signatures",
+        "rowCount": 49,
+        "truncated": false
+      }
+    ],
+    "dataHash": "035c3b908130035b3f5a3e2c7e76f6ff9c46c87892fc2219e0175d40596a09e0",
+    "hashAlgorithm": "SHA-256",
+    "chainAtGeneration": {
+      "ok": null,
+      "scope": "not-checked",
+      "reason": "This report does not verify the audit chain. The audit trail integrity attestation does."
+    },
+    "basis": [
+      "21 CFR 11.50",
+      "21 CFR 11.70",
+      "21 CFR 11.100",
+      "21 CFR 11.200",
+      "EU GMP Annex 11 §14"
+    ],
+    "compliance": {
+      "standard": "21 CFR Part 11",
+      "section": "§11.10(e)",
+      "description": "Compliance report generated from the organisation's records, sealed with the platform's audit export key"
+    },
+    "manifestVersion": 2,
+    "signingKeyId": "jwt-secret-fallback"
+  },
+  "signatureLength": 64
+}

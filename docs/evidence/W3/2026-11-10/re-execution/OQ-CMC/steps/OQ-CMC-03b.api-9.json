@@ -1,0 +1,61 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/container-closures",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scope": "drug_product",
+      "systemName": "PVC/PVDC-aluminium blister",
+      "containerDescription": "Clear PVC/PVDC 250/60 forming film blister, 10 tablets per card",
+      "closureDescription": "20 micron hard-temper aluminium lidding foil with heat-seal lacquer",
+      "suitabilityJustification": "Moisture barrier shown adequate by 6 months at 40C/75%RH; materials meet 21 CFR 177",
+      "extractablesLeachables": {
+        "studyType": "Controlled extraction",
+        "result": "No extractable above the analytical evaluation threshold"
+      },
+      "integrityTesting": {
+        "method": "Dye ingress, blue dye at -60 kPa for 10 min",
+        "result": "No ingress in 30 of 30 blisters"
+      },
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 42,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 14,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "scope": "drug_product",
+        "systemName": "PVC/PVDC-aluminium blister",
+        "componentType": "primary",
+        "containerDescription": "Clear PVC/PVDC 250/60 forming film blister, 10 tablets per card",
+        "closureDescription": "20 micron hard-temper aluminium lidding foil with heat-seal lacquer",
+        "materialsOfConstruction": null,
+        "compendialStandards": null,
+        "suitabilityJustification": "Moisture barrier shown adequate by 6 months at 40C/75%RH; materials meet 21 CFR 177",
+        "extractablesLeachables": {
+          "result": "No extractable above the analytical evaluation threshold",
+          "studyType": "Controlled extraction"
+        },
+        "integrityTesting": {
+          "method": "Dye ingress, blue dye at -60 kPa for 10 min",
+          "result": "No ingress in 30 of 30 blisters"
+        },
+        "supplier": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-12T00:34:41.173Z",
+        "updatedAt": "2026-11-12T00:34:41.173Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

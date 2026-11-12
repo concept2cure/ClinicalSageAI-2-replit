@@ -3,7 +3,7 @@
  * launch-demo/seed.mjs — build the end-to-end demonstration data for the launch
  * catalog through the product's own API.
  *
- *   node scripts/demo/launch-demo/seed.mjs --pack biotech|mdx|lumen|faux|portfolio|all [--purge]
+ *   node scripts/demo/launch-demo/seed.mjs --pack biotech|mdx|lumen|faux|project-management|portfolio|all [--purge]
  *     [--base-url http://localhost:5200] [--email founder@example.com]
  *     [--organization-id <id>] [--client-workspace-id <id>] (workspace: biotech only)
  *     [--plan enterprise]  (platform owner: open every demo work area to the organisation)
@@ -36,7 +36,10 @@ const opt = (name, dflt) => {
 };
 const flag = (name) => args.includes(`--${name}`);
 
-const PACKS = ['biotech', 'mdx', 'lumen', 'faux', 'portfolio'];
+/* project-management (P-122 defects, 2026-11-10) writes the Schedule, roll-up and "at risk" engines' records on the
+   biotech and Lumen packs' projects, so it runs after them: "all" keeps this order. portfolio is opt-in (OPT_IN
+   below) and never part of "all". */
+const PACKS = ['biotech', 'mdx', 'lumen', 'faux', 'project-management', 'portfolio'];
 const chosen = opt('pack', 'all');
 // Faux Biotech is a dedicated fictional ORGANIZATION, not another pack in a
 // shared tenant. Never include it in a blanket "--pack all" invocation.

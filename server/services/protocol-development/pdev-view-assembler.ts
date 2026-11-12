@@ -7,7 +7,7 @@
  * of assessments (with the SoA engine's validation as `issues`), risks, milestones,
  * amendments, deviations, budget (with the budget engine's summary), reviews
  * (each disposition's signature), the finalization signature (both read from
- * electronic_signatures), consent (the latest linked consent form's elements),
+ * electronic_signatures), consent (the project's consent document, P-130),
  * the study team, the cover-page sponsor / principal investigator, completeness — is mapped from the
  * same tables the CRUD routes and the AnA protocol tools write. Children are fetched in bulk (one query per table via ANY($docIds)),
  * so the whole surface for an org is a bounded, small number of queries regardless
@@ -21,6 +21,7 @@ import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic'
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
 import { mapAmendments, mapDeviations, mapReviewComments, mapReviews } from './pdev-view-registers';
 import { milestoneBucket } from '../protocol-milestones/protocol-milestones-logic';
+import { consentViewFor, loadProjectConsentDocuments } from './pdev-view-consent';
 import { summarizeRiskRegister, type RiskImpact, type RiskLikelihood, type RiskRegisterSummary } from '../protocol-risks/protocol-risks-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
@@ -358,7 +359,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
   const [
     sections, objectives, eligibility, visits, risks, milestones, amendments,
     deviations, budgetItems, budgetParams, reviewAssignments, reviewComments,
-    soaAssessments, soaCells, team, consentForms,
+    soaAssessments, soaCells, team,
   ] = await Promise.all([
     q(`SELECT id, protocol_document_id, section_key, title, content, required, status, order_index, updated_at FROM protocol_sections WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`),
     q(`SELECT id, protocol_document_id, objective_type, objective, endpoint, timepoint FROM protocol_objectives WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`),
@@ -386,28 +387,22 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
        as '' and the roster (six seeded members on the demo protocol) was
        invisible. */
     q(`SELECT id, protocol_document_id, member_name, role, responsibilities FROM protocol_team_members WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY CASE role WHEN 'principal_investigator' THEN 0 ELSE 1 END, id`),
-    /* Consent forms soft-link to the protocol (consent_forms.protocol_document_id);
-       the write path is /api/protocol-consent. `consent: []` used to be
-       hard-coded here, so the tab read "0 of 0" whatever had been authored. */
-    q(`SELECT id, protocol_document_id, title, version, status, updated_at FROM consent_forms WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC, id DESC`),
   ]);
 
   // Amendment changes + deviation CAPA are keyed by their parent, not the document.
   const amendmentIds = amendments.rows.map((a) => Number(a.id));
   const deviationIds = deviations.rows.map((d) => Number(d.id));
-  const consentFormIds = consentForms.rows.map((f) => Number(f.id));
   const signedTargets = [...ids.map(finalizationTarget), ...reviewAssignments.rows.map((r) => dispositionTarget(str(r.id)))];
-  const [amendChanges, capa, consentElements, signatureOf] = await Promise.all([
+  const [amendChanges, capa, signatureOf, consentByProgram] = await Promise.all([
     amendmentIds.length
       ? queryExecutor.query(`SELECT amendment_id, section_ref, change_description, previous_text, proposed_text FROM protocol_amendment_changes WHERE amendment_id = ANY($1)`, [amendmentIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     deviationIds.length
       ? queryExecutor.query(`SELECT id, deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1) ORDER BY id`, [deviationIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
-    consentFormIds.length
-      ? queryExecutor.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
-      : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     readSignatureFacets(orgId, signedTargets, executor),
+    /* P-130: the Consent tab reads the protocol's project's consent document (pdev-view-consent.ts). */
+    loadProjectConsentDocuments(queryExecutor, orgId, docs.map((d) => str(d.program_id))),
   ]);
 
   const byDoc = {
@@ -425,7 +420,6 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
     soaAssessments: groupBy(soaAssessments.rows, (r) => r.protocol_document_id),
     soaCells: groupBy(soaCells.rows, (r) => r.protocol_document_id),
     team: groupBy(team.rows, (r) => r.protocol_document_id),
-    consentForms: groupBy(consentForms.rows, (r) => r.protocol_document_id),
   };
   /* The design-as-data spine, for the protocols that name one. Tenant-scoped,
      and the verdict is validateDesign()'s — see loadBoundDesigns. */
@@ -435,7 +429,6 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
     queryExecutor,
   );
 
-  const elementsByForm = groupBy(consentElements.rows, (r) => r.consent_form_id);
   const paramsByDoc = groupBy(budgetParams.rows, (r) => r.protocol_document_id);
   const changesByAmend = groupBy(amendChanges.rows, (r) => r.amendment_id);
   const capaByDev = groupBy(capa.rows, (r) => r.deviation_id);
@@ -485,8 +478,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       { targetEnrollment: Number(params?.target_enrollment ?? 0), sponsorPaymentPerSubject: params?.sponsor_payment_per_subject == null ? null : Number(params.sponsor_payment_per_subject), indirectRatePct: params?.indirect_rate_pct == null ? null : Number(params.indirect_rate_pct) },
     );
 
-    const latestConsentForm = g(byDoc.consentForms, id)[0];
-    const consentEls = latestConsentForm ? g(elementsByForm, Number(latestConsentForm.id)) : [];
+    const consentView = consentViewFor(consentByProgram.get(str(d.program_id)));
 
     /* The bound study design. `null` — not an empty report — when the protocol
        names no design, so the surface says "no design is bound" rather than
@@ -544,10 +536,8 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       /* Who finalized it, from the signature row; `none` on a finalized
          protocol is a finalization with no signature on record. */
       finalization: signatureOf(finalizationTarget(id)),
-      consent: consentEls.map((e) => ({ id: str(e.id), el: str(e.title), key: str(e.element_key), required: bool(e.required), present: bool(e.present) })),
-      consentForm: latestConsentForm
-        ? { id: str(latestConsentForm.id), title: str(latestConsentForm.title), version: str(latestConsentForm.version), status: str(latestConsentForm.status), formsLinked: g(byDoc.consentForms, id).length }
-        : null,
+      /* P-130: the project's consent document and the editor's gate on its text. */
+      ...consentView,
       completenessFindings: findings.map((f) => ({ sev: str((f as { severity?: unknown }).severity), text: str((f as { message?: unknown }).message) })),
       ruleFindings: ruleFindingsFor({
         kind: str(d.protocol_kind), phase: d.phase, designType: d.design_type,

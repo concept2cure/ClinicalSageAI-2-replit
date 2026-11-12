@@ -1,102 +1,62 @@
 /**
- * ChangeFlow — the change-control lifecycle flowchart.
+ * ChangeFlow — the change log's lifecycle stage filter.
  *
- * Renders the controlled change pipeline (proposed → under assessment →
- * approved → in implementation → verification → closed) as a horizontal chain
- * of nodes, each showing how many changes currently sit at that stage — the
- * "ongoing maintenance of the change control log" made visible. Terminal
- * off-ramps (rejected / cancelled) are shown beneath. Every node is a button
- * that filters the register to that stage; the whole thing is keyboard- and
- * screen-reader-navigable.
+ * The controlled change pipeline (proposed → under assessment → approved → in
+ * implementation → verification → closed, and the rejected and cancelled
+ * off-ramps), each with how many changes sit at it, as one segmented control
+ * that filters the log. "All" is the clear.
+ *
+ * Until 2026-11-10 (D7-B) this was a boxed "flowchart": six count tiles joined
+ * by arrows, each with a coloured dot from its own hex palette and an orange
+ * selected state, two off-ramp chips beneath, and an "Explain the pipeline"
+ * link to AnA. Stat tiles and a second accent are retired patterns
+ * (ONE_DESIGN_PLAN §2); the counts and the filter are the same, said quietly.
+ * Every stage keeps its accessible name ("Proposed: 1 change. Change request
+ * raised."). AnA's read-out of the pipeline is the tab's first starter.
  *
  * @module client/src/concept2cure/quality/ChangeFlow
  */
 
 import * as React from 'react';
-import { I } from '../v2/icons';
 import { FLOW_STEPS, STATE_LABEL, type ChangeState } from './changeData';
 
 export interface ChangeFlowProps {
-  /** Live per-stage counts (how many changes sit at each lifecycle state). */
+  /** Live per-stage counts (how many changes currently sit at each lifecycle state). */
   counts: Record<ChangeState, number>;
-  /** Currently-filtered stage, if any — highlights that node. */
+  /** The stage the log is filtered to, or 'all'. */
   activeStage?: ChangeState | 'all';
-  /** Select a stage (filters the register). */
+  /** Select a stage (filters the log); 'all' clears. */
   onSelectStage: (stage: ChangeState | 'all') => void;
-  /** Ask AnA about the flow / a stage. */
-  onAsk: (q: string) => void;
 }
 
-export function ChangeFlow({ counts, activeStage = 'all', onSelectStage, onAsk }: ChangeFlowProps) {
-  const rejected = counts.rejected ?? 0;
-  const cancelled = counts.cancelled ?? 0;
+const OFF_RAMPS: { key: ChangeState; label: string; blurb: string | null }[] = [
+  { key: 'rejected', label: STATE_LABEL.rejected, blurb: null },
+  { key: 'cancelled', label: STATE_LABEL.cancelled, blurb: null },
+];
 
+export function ChangeFlow({ counts, activeStage = 'all', onSelectStage }: ChangeFlowProps) {
+  const stages = [...FLOW_STEPS.map((s) => ({ key: s.key, label: s.label, blurb: s.blurb as string | null })), ...OFF_RAMPS];
   return (
-    <div className="qcc-flow" role="group" aria-label="Change-control lifecycle">
-      <div className="qcc-flow-track">
-        {FLOW_STEPS.map((step, i) => {
-          const n = counts[step.key] ?? 0;
-          const on = activeStage === step.key;
-          return (
-            <React.Fragment key={step.key}>
-              <button
-                type="button"
-                className="qcc-node"
-                data-on={on || undefined}
-                data-empty={n === 0 || undefined}
-                aria-pressed={on}
-                aria-label={`${step.label}: ${n} ${n === 1 ? 'change' : 'changes'}. ${step.blurb}.`}
-                onClick={() => onSelectStage(on ? 'all' : step.key)}
-              >
-                <span className="qcc-node-top">
-                  <span className="qcc-node-dot" data-stage={step.key} />
-                  <span className="qcc-node-count">{n}</span>
-                </span>
-                <span className="qcc-node-label">{step.label}</span>
-                <span className="qcc-node-blurb">{step.blurb}</span>
-              </button>
-              {i < FLOW_STEPS.length - 1 && (
-                <span className="qcc-arrow" aria-hidden="true">{I.arrowRight}</span>
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-
-      <div className="qcc-flow-foot">
-        <div className="qcc-offramps">
+    <div className="seg qcc-stages" role="group" aria-label="Lifecycle stage">
+      <button type="button" className="seg-b" aria-pressed={activeStage === 'all'} onClick={() => onSelectStage('all')}>
+        All
+      </button>
+      {stages.map((step) => {
+        const n = counts[step.key] ?? 0;
+        const on = activeStage === step.key;
+        return (
           <button
+            key={step.key}
             type="button"
-            className="qcc-offramp"
-            data-on={activeStage === 'rejected' || undefined}
-            onClick={() => onSelectStage(activeStage === 'rejected' ? 'all' : 'rejected')}
+            className="seg-b"
+            aria-pressed={on}
+            aria-label={`${step.label}: ${n} ${n === 1 ? 'change' : 'changes'}.${step.blurb ? ` ${step.blurb}.` : ''}`}
+            onClick={() => onSelectStage(on ? 'all' : step.key)}
           >
-            <span className="qcc-offramp-dot" data-stage="rejected" />
-            {STATE_LABEL.rejected} · {rejected}
+            {step.label} <span className="qcc-stage-n">{n}</span>
           </button>
-          <button
-            type="button"
-            className="qcc-offramp"
-            data-on={activeStage === 'cancelled' || undefined}
-            onClick={() => onSelectStage(activeStage === 'cancelled' ? 'all' : 'cancelled')}
-          >
-            <span className="qcc-offramp-dot" data-stage="cancelled" />
-            {STATE_LABEL.cancelled} · {cancelled}
-          </button>
-        </div>
-        <button
-          type="button"
-          className="qms-link"
-          onClick={() =>
-            onAsk(
-              'Walk me through the change-control lifecycle — where every open change sits right now, ' +
-                'what is blocking the ones in assessment, and which are overdue for implementation.',
-            )
-          }
-        >
-          {I.sparkles} Explain the pipeline
-        </button>
-      </div>
+        );
+      })}
     </div>
   );
 }

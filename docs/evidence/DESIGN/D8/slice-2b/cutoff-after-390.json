@@ -1,0 +1,88 @@
+{
+ "01-device-510k": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "RTA / AI-Hold 0 Agency / NB queries",
+    "left": 287,
+    "right": 418,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   },
+   {
+    "name": "Approvals Your pending e-sign · all projects",
+    "left": 418,
+    "right": 609,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   },
+   {
+    "name": "Files Full filesystem",
+    "left": 609,
+    "right": 710,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   }
+  ]
+ },
+ "02-device-pma": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Day-100 0 Agency / NB queries",
+    "left": 264,
+    "right": 395,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   },
+   {
+    "name": "Approvals Your pending e-sign · all projects",
+    "left": 395,
+    "right": 586,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   },
+   {
+    "name": "Files Full filesystem",
+    "left": 586,
+    "right": 687,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   }
+  ]
+ },
+ "03-device-cer": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "04-device-diagnostics": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "NB / GSPR 0 Agency / NB queries",
+    "left": 296,
+    "right": 428,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   },
+   {
+    "name": "Approvals Your pending e-sign · all projects",
+    "left": 428,
+    "right": 619,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   },
+   {
+    "name": "Files Full filesystem",
+    "left": 619,
+    "right": 720,
+    "top": 145,
+    "reachableByScrolling": "pwt-bar"
+   }
+  ]
+ }
+}

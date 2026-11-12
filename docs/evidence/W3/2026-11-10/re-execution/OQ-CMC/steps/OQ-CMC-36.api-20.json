@@ -1,0 +1,111 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-008 Q1E planned 20261112003432",
+      "productName": "Q1E-planned",
+      "programType": "ind",
+      "productType": "drug",
+      "applicationNumber": "7734327",
+      "primaryAgency": "FDA",
+      "priority": "high",
+      "indication": "Q1E verdict"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 152,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "443e12ca-9d00-4d2a-aef0-06870e02bccc",
+        "title": "OQ-008 Q1E planned 20261112003432",
+        "ws": "Biotech",
+        "pathway": "ind",
+        "code": "OQ-008-6N8D",
+        "stage": "Planning",
+        "status": "active",
+        "lead": "oq-runner@validation.local",
+        "due": "—",
+        "due_date": null,
+        "activity": "Updated Nov 12",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "description": null,
+        "indication": "Q1E verdict",
+        "agency": "FDA",
+        "program_type": "ind",
+        "readiness": 0,
+        "readinessState": "measured"
+      },
+      "program": {
+        "id": "443e12ca-9d00-4d2a-aef0-06870e02bccc",
+        "code": "OQ-008-6N8D",
+        "name": "OQ-008 Q1E planned 20261112003432",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "high",
+        "description": null,
+        "product_name": "Q1E-planned",
+        "indication": "Q1E verdict",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-11-12T00:55:37.500Z",
+        "updated_at": "2026-11-12T00:55:37.500Z",
+        "application_number": "7734327",
+        "product_type": "drug",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "registry_id": "US_IND",
+        "submission_type_id": null,
+        "riskBasedMonitoring": false,
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0,
+        "readinessState": "measured",
+        "readinessAsOf": "2026-11-12T00:55:37.613Z"
+      },
+      "meta": {
+        "created": true,
+        "organizationId": 2,
+        "actorUserId": 1,
+        "clientWorkspaceId": 2,
+        "clientWorkspaceName": "Concept2Cure Therapeutics",
+        "documentId": "doc_9a3445ad34604af29354cdab5d55257a",
+        "scaffoldedSections": 92,
+        "marketSupport": {
+          "tier": "build_and_sequence",
+          "label": "Build and sequence",
+          "reason": "Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.",
+          "appliesTo": [
+            "US_IND",
+            "US_IND_AMENDMENT"
+          ]
+        },
+        "submissionId": 110,
+        "submissionCreated": true,
+        "projectAnchorId": 105,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

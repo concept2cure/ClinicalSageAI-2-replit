@@ -110,3 +110,35 @@ describe('Raise change request — the project a change belongs to', () => {
     expect(posted()).not.toHaveProperty('programId');
   });
 });
+
+/* C14 (QP3): the summary route reads the whole organisation and takes no project, so a log scoped to the open
+   project counts its own rows, by the server's definitions. Since P-122 the log is scoped only when the person narrows
+   Quality to the project (`?quality=project`); the organisation's log is the default. */
+describe('a change log scoped to the open project', () => {
+  beforeEach(() => { window.history.replaceState(null, '', '/concept2cure/quality?quality=project'); });
+  afterEach(() => { window.history.replaceState(null, '', '/concept2cure/quality'); });
+  it('counts its own rows, not the organisation summary', () => {
+    H.shell = { id: PROGRAM, title: 'Current program' };
+    render(
+      <ChangeControl onAsk={() => {}} stage="all" onStageChange={() => {}} openId={null} onOpenIdChange={() => {}}
+        changes={CHANGE_ROWS.slice(0, 2)} loading={false} onRetry={() => {}} />,
+    );
+    expect(screen.getByTestId('change-figures').textContent).toMatch(/^2 open of 2 in the log; 1 awaiting approval; 1 in implementation/);
+    // C18a: the sentence is the line under the head.
+    const line = screen.getByTestId('change-figures');
+    expect(line.tagName, 'the sentence is its own line').toBe('P');
+    expect(line.previousElementSibling?.classList.contains('pj-sec-h'), 'directly under the section head').toBe(true);
+    H.shell = null;
+  });
+
+  it('says the project has no change, not that the log is empty', () => {
+    H.shell = { id: PROGRAM, title: 'Current program' };
+    render(
+      <ChangeControl onAsk={() => {}} stage="all" onStageChange={() => {}} openId={null} onOpenIdChange={() => {}}
+        changes={[]} loading={false} onRetry={() => {}} />,
+    );
+    expect(screen.getByText('No change is filed under Current program.')).toBeTruthy();
+    expect(screen.queryByText('No changes in the log yet.')).toBeNull();
+    H.shell = null;
+  });
+});

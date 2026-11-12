@@ -1,0 +1,12 @@
+# The same test, mounted.
+  ✓ cross-references and letters of authorization > lists every file the IND relies on, with the server's LOA-coverage verdict in its own counts
+  ✓ cross-references and letters of authorization > records a cross-reference, and reads the register again
+  ✓ cross-references and letters of authorization > files the letter as the m1.4.1 leaf of a new sequence
+  ✓ cross-references and letters of authorization > marks a letter on file, and removes a row only when asked twice
+  ✓ cross-references and letters of authorization > a refusal is the server's own sentence, and nothing is said to have changed
+  ✓ cross-references and letters of authorization > an empty register says so in one sentence, with its one action
+  ✓ cross-references and letters of authorization > a register that cannot be read says so, never "none recorded"
+  ✓ cross-references and letters of authorization > calls no IND safety-report or ICSR register (P-32)
+  ✓ they are part of the IND screen > the IND screen shows its registers, for the submission it is working
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

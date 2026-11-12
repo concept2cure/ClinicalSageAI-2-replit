@@ -103,14 +103,57 @@ function StudyBuildRow({ source, outcome, disabled, busy, onStart }: {
 
 type Decision = 'submit' | 'approve' | 'send_back';
 
+/** A draft the requester may send for review: saved, intact, and not template text with data missing. */
+const sendable = (h: CsrBoardHeading): boolean => h.state === 'draft' && !h.placeholder && !h.integrityFailure && !!h.contentHash;
+
+/**
+ * Every draft sent for review in one act (2026-11-12, the Lumen walk: 69 drafted headings, one click each). Sending
+ * is not a judgement on the text; the approval is, and it stays one heading at a time, after the exact saved text
+ * was read. This sends the same decision the row's own button does, once per heading and bound to that heading's
+ * saved text, in report order. It stops at the first heading the server refuses and says how far it got and why.
+ */
+/** What a one-act send said: a refusal part of the way is an alert, a completed send a status. */
+export interface CsrSendNotice { alert: boolean; text: string }
+
+function useSendDrafts(jobId: number, drafts: CsrBoardHeading[], onChanged: () => void, onNotice?: (notice: CsrSendNotice | null) => void) {
+  const [sending, setSending] = useState(false);
+  const [held, setHeld] = useState<CsrSendNotice | null>(null);
+  // A host that empties and re-reads the list after a decision takes this review down with it, so that host holds
+  // what the act said (CsrRunBuilds.tsx). Without one, it is held here.
+  const setOutcome = onNotice ?? setHeld;
+  const outcome = onNotice ? null : held;
+  const send = async () => {
+    setSending(true); setOutcome(null);
+    let sent = 0;
+    let refusal: string | null = null;
+    for (const heading of drafts) {
+      const result = await apiCall('POST', `${JOBS}/${jobId}/sections/${encodeURIComponent(heading.num)}/review`,
+        { decision: 'submit', expectedContentHash: heading.contentHash });
+      if (!result.ok) { refusal = `§${heading.num} was not: ${apiErrorText(result, 'the decision was not recorded.')}`; break; }
+      sent += 1;
+    }
+    setSending(false);
+    setOutcome(refusal
+      ? { alert: true, text: `${sent} of ${drafts.length} headings ${sent === 1 ? 'was' : 'were'} sent for review. ${refusal}` }
+      : { alert: false, text: `${sent} headings were sent for review.` });
+    if (sent) onChanged();
+  };
+  return { sending, outcome, send };
+}
+
 /** The job's headings with their review state, and the review actions. The CSR document's own panel imports the
  * approved headings into that document (CsrRunBuilds.tsx); the csr-workflow board imports them as a working copy. */
-export function CsrHeadingReview({ jobId, headings, onChanged, onImport, importLabel = 'Import approved sections into Authoring' }: {
+export function CsrHeadingReview({ jobId, headings, onChanged, onImport, importLabel = 'Import approved sections into Authoring', onSendNotice }: {
   jobId: number; headings: CsrBoardHeading[]; onChanged: () => void;
   onImport: (sectionNumbers: string[]) => void; importLabel?: string;
+  /** Given by a host that re-reads the list after a decision: it shows what "Send N drafts for review" said. */
+  onSendNotice?: (notice: CsrSendNotice | null) => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [deciding, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const drafts = headings.filter(sendable);
+  const all = useSendDrafts(jobId, drafts, onChanged, onSendNotice);
+  const busy = deciding || all.sending;
   const approved = headings.filter(h => h.state === 'approved' && !h.integrityFailure).map(h => h.num);
   // A template row (saved text that still holds a data placeholder, the server's `placeholder`) is not drafted (F2).
   const drafted = headings.filter(h => h.state !== 'not_drafted' && !h.placeholder && !h.integrityFailure).length;
@@ -129,11 +172,15 @@ export function CsrHeadingReview({ jobId, headings, onChanged, onImport, importL
       <strong>Section review</strong>
       <span>{drafted} of {headings.length} ICH E3 headings drafted{templates > 0
         ? ` · ${templates} ${templates === 1 ? 'is' : 'are'} template text with data missing` : ''} · {approved.length} approved</span>
+      {drafts.length > 1 && <button type="button" className="btn" disabled={busy} onClick={() => void all.send()}>
+        {I.send} {all.sending ? 'Sending for review…' : `Send ${drafts.length} drafts for review`}
+      </button>}
       <button type="button" className="btn" disabled={busy || approved.length === 0} onClick={() => onImport(approved)}>
         {I.fileCheck} {importLabel}
       </button>
     </div>
     {error && <p role="alert">{error}</p>}
+    {all.outcome && <p role={all.outcome.alert ? 'alert' : 'status'}>{all.outcome.text}</p>}
     <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>
       {headings.map(h => <HeadingRow key={`${h.num}:${h.contentHash ?? ''}`} jobId={jobId} heading={h} busy={busy} onDecide={(d, r) => void decide(h, d, r)} />)}
     </ul>
@@ -217,6 +264,12 @@ function HeadingActions({ heading, busy, inspected, sendingBack, onDecide, onSen
 }
 
 /** The read button, a failed read, and the saved text once read. */
+/** A heading's prose, saved or being written (CsrRunBuilds.tsx LiveDraft), in the page's own type on a quiet ground:
+ * it is a report to read, not a log. Until 2026-11-10 the saved text was shown in small monospace. */
+export const CSR_PROSE_STYLE = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', margin: 0,
+  padding: 16, font: 'inherit', lineHeight: 1.6, color: 'var(--text-100)', background: 'var(--bg-000)',
+  border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' } as const;
+
 function SavedSectionText({ heading, busy, read }: {
   heading: CsrBoardHeading; busy: boolean; read: ReturnType<typeof useSavedSectionText>;
 }) {
@@ -225,8 +278,7 @@ function SavedSectionText({ heading, busy, read }: {
       {read.reading ? 'Reading saved section…' : 'Read saved section text'}
     </button>}
     {read.readError && <p role="alert">{read.readError}</p>}
-    {read.inspected && read.savedText && <pre aria-label={`Saved text for §${heading.num}`}
-      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', padding: 12 }}>
+    {read.inspected && read.savedText && <pre aria-label={`Saved text for §${heading.num}`} style={CSR_PROSE_STYLE}>
       {read.savedText.text}
     </pre>}
   </>;

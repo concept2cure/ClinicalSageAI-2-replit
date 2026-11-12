@@ -11,7 +11,19 @@
 # Offline: the AWS provider is mocked. Run from this module's directory:
 #   terraform init -backend=false && terraform test
 
-mock_provider "aws" {}
+mock_provider "aws" {
+  # The flow log (main.tf, MR-04 Stage 3) validates its destination and role
+  # as ARNs; a mock's random strings are not.
+  mock_resource "aws_kms_key" {
+    defaults = { arn = "arn:aws:kms:us-east-1:123456789012:key/flow-logs" }
+  }
+  mock_resource "aws_iam_role" {
+    defaults = { arn = "arn:aws:iam::123456789012:role/flow-logs" }
+  }
+  mock_resource "aws_cloudwatch_log_group" {
+    defaults = { arn = "arn:aws:logs:us-east-1:123456789012:log-group:/aws/vpc/c2c/flow-logs" }
+  }
+}
 
 variables {
   eks_workloads_sg = "sg-0123456789abcdef0"

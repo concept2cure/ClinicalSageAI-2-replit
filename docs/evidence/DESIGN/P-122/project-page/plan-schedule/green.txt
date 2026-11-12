@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > the Plan step shows section owners, deadlines and milestones > owners and what each holds, and the dated sections and milestones, from the project's own id 514ms
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > the Plan step shows section owners, deadlines and milestones > no tracked section says so, and a failed read says it failed with a retry 186ms
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > a reply without the engine's shape > is a failed read, said in its place, and the rest of the page still renders 237ms
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > the Plan step shows the milestone tasks > in milestone order, with the server's counts 124ms
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > the Plan step shows the milestone tasks > with none, what the filing type's milestones are, and they are added only after the person confirms 139ms
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > the Plan step shows the project hierarchy's roll-up > its work projects and the tasks across the hierarchy, as counted by the server, and no risk or progress figure 118ms
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx > the Plan step shows the project hierarchy's roll-up > a project with no verified record says why there is no schedule, and reads nothing for it 90ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  12:51:40
+   Duration  7.29s (transform 3.97s, setup 271ms, import 4.70s, tests 1.41s, environment 630ms)
+

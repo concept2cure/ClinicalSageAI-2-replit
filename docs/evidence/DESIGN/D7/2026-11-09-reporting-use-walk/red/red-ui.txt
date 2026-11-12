@@ -1,0 +1,14 @@
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — finalization belongs to the displayed run > does not attribute a signature that completes after a program change to the replacement report
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a member, who writes reports but may not finalize them, is offered Export and no Finalize
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a report the gate holds below final is refused with its reasons, and nothing is shown as sealed
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a password the server does not accept is said in the dialog, and nothing is sealed
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed
+ × client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is offered only where a finalize can be admitted > says why a held run cannot be finalized, and offers no signature
+   → expected <button type="button" …(1)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is offered only where a finalize can be admitted > still offers Finalize where the run can be finalized
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is offered only where a finalize can be admitted > says nothing of eligibility to a reader who may not finalize
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected <button type="button" …(1)>…(1)</button> to be null
+      Tests  1 failed | 9 passed (10)

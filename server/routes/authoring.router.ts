@@ -39,7 +39,7 @@ import { writeChainedAuditRow } from '../services/auditService';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import {
-  assertSignerIsNotAuthor,
+  assertSignerIsNotAuthor, organizationReviewPolicy, soleMemberMayApprove, SOLE_MEMBER_RECORD,
   SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
 } from '../services/governance/separation-of-duties.js';
@@ -116,6 +116,7 @@ import { importSourceDocument } from '../services/authoring/authoring-source-imp
 import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload, rollbackAuthoringTransaction, settleAuthoringTransactionFailure, type AuthoringTransactionState } from '../services/authoring/authoring-create-outcome';
 import { AuthoringSectionWriteOutcomeError, authoringSectionRecoveryPayload } from '../services/authoring/authoring-section-outcome';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
+import { consentApprovalVerdict, consentDocumentGate, isConsentDocument } from '../services/protocol-consent/protocol-consent-logic';
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
@@ -4553,6 +4554,64 @@ function consistencyField(check: DocumentConsistencyCheck | null): { document_fi
   return check ? { document_figure_consistency: check } : {};
 }
 
+/**
+ * P-102: on an informed-consent document, the 21 CFR 50.25 required elements and which of them
+ * the document satisfies, by the same gate the consent record is held to. An empty object for any
+ * other document, and when the sections could not be read: an absent field says nothing, where an
+ * empty checklist would read as "nothing is required".
+ */
+async function consentElementsField(docId: unknown, tenantId: unknown, doc: { template_id?: unknown; product_code?: unknown }): Promise<{ consent_elements?: Record<string, unknown> }> {
+  if (!isConsentDocument(doc)) return {};
+  try {
+    const rows = await pool.query(
+      `SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index ASC, code ASC`,
+      [docId, tenantId],
+    );
+    const gate = consentDocumentGate(rows.rows.map((r: { code: string | null; content: string | null }) => ({ code: String(r.code ?? ''), text: sectionReadableText(r.content) })));
+    return {
+      consent_elements: {
+        basis: '21 CFR 50.25; 45 CFR 46.116',
+        required_total: gate.requiredTotal,
+        required_complete: gate.requiredComplete,
+        ready: gate.readyToApprove,
+        findings: gate.findings,
+        elements: gate.elements,
+        applicable_clinical_trial_note:
+          'The ClinicalTrials.gov statement (21 CFR 50.25(c)) is required for an applicable clinical trial, so it is counted here. If the study is not one, the approver says so when approving, and that is recorded with the approval.',
+      },
+    };
+  } catch {
+    return {};
+  }
+}
+
+/** The CTD-shaped heuristics the section check does not run on an informed-consent form, and why. */
+const CONSENT_SKIPPED_HEURISTICS: ReadonlySet<string> = new Set(['content_length', 'module_keywords', 'data_presence', 'structure']);
+const CONSENT_SKIP_REASON =
+  'Not run on an informed consent form, which is short plain language with no tables. It is checked against the 21 CFR 50.25 elements instead.';
+/** Why no keyword profile ran. A document with no module is said to have none, not quoted as `""`. */
+function keywordProfileAbsentReason(moduleLabel: string): string {
+  return moduleLabel
+    ? `No heuristic keyword profile is defined for document module "${moduleLabel}".`
+    : 'This document has no CTD module, so no keyword profile applies.';
+}
+
+/**
+ * What the section must contain. An informed-consent form's requirement is the 21 CFR 50.25 elements, which the
+ * check reports below (`consent_elements`); the CTD guidance record has no entry for its section codes, and saying
+ * only that read as if nothing were required.
+ */
+function sectionRequirementsFor(code: unknown, doc: { template_id?: unknown; product_code?: unknown }): RecordRequirements {
+  return isConsentDocument(doc)
+    ? { indexed: false, reason: 'This is an informed consent form. What it must contain is the 21 CFR 50.25 elements of informed consent, checked below.' }
+    : recordRequirementsFor(code);
+}
+
+/** The heuristics not run on a document of this template, or null when all of them apply. */
+function heuristicsNotRunOn(doc: { template_id?: unknown; product_code?: unknown }): ReadonlySet<string> | null {
+  return isConsentDocument(doc) ? CONSENT_SKIPPED_HEURISTICS : null;
+}
+
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
 router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res: Response) => {
   try {
@@ -4562,7 +4621,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
 
     // Get section content
     const sectionResult = await pool.query(
-      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.template_id, d.product_code
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
@@ -4579,6 +4638,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
     // One engine run over every section of the open document, before the heuristics below.
     const documentConsistency = await documentFigureConsistency(section.doc_id, tenantId, section.code);
+    const consentElements = await consentElementsField(section.doc_id, tenantId, section);
 
     // Perform deficiency analysis
     const deficiencies: Array<Record<string, unknown>> = [];
@@ -4596,7 +4656,15 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
        to trust a bare number. */
     const checks: Array<{ id: string; flagged: boolean }> = [];
     const checksSkipped: Array<{ id: string; reason: string }> = [];
+    /* 2026-11-12 (F1): three heuristics below are written for CTD sections. On an informed-consent form, which is
+       meant to be short plain language with no tables, they told the author a correct section was "insufficient",
+       had "no data tables" and "lacked structure". There they are skipped, saying why; the 50.25 elements are its check. */
+    const notForThisType = heuristicsNotRunOn(section);
     const runCheck = (id: string, fn: () => void) => {
+      if (notForThisType?.has(id)) {
+        checksSkipped.push({ id, reason: CONSENT_SKIP_REASON });
+        return;
+      }
       const before = deficiencies.length;
       fn();
       checks.push({ id, flagged: deficiencies.length > before });
@@ -4657,7 +4725,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         });
       });
     } else {
-      checksSkipped.push({ id: 'module_keywords', reason: `No heuristic keyword profile is defined for document module "${moduleLabel}".` });
+      checksSkipped.push({ id: 'module_keywords', reason: keywordProfileAbsentReason(moduleLabel) });
     }
 
     /* CTD required-element check, migrated from POST /ai/validate-compliance.
@@ -4773,12 +4841,14 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
            present: an omitted field reads as "nothing required", which is the
            one thing this must never say. It is not a check and not counted as
            one — see recordRequirementsFor above. */
-        record_requirements: recordRequirementsFor(section.code),
+        record_requirements: sectionRequirementsFor(section.code, section),
         /* Whether the open DOCUMENT agrees with itself: the same figure stated
            twice in two sections with two different values. Absent when the
            sections could not be read — never an empty result, which would read
            as "it agrees". Not a check and not counted as one. */
         ...consistencyField(documentConsistency),
+        /* P-102: the consent document's required elements. Not counted in the score above. */
+        ...consentElements,
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
@@ -5056,8 +5126,7 @@ async function approvalRefused(
   current: Awaited<ReturnType<typeof lockedSigningContent>>,
   ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
 ): Promise<boolean> {
-  if (await signingRefused(client, req, res, ids)) return true;
-  if (await reviewRefused(client, req, res, current, ids)) return true; // P-95
+  if (await approverIndependenceRefused(client, req, res, current, ids)) return true; // P-18, P-95, P-116, P-117
   const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
   if (openCommentCount > 0 || pendingEdits > 0) {
     if (req.body?.acknowledgeUnresolved !== true) {
@@ -5068,7 +5137,8 @@ async function approvalRefused(
       `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
       { openCommentCount, pendingEdits, acknowledged: true }, client);
   }
-  return figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' });
+  if (await figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' })) return true; // P-89
+  return consentRefused(client, req, res, current, ids); // P-102
 }
 
 /* ── P-95: A REGULATED DOCUMENT IS APPROVED ONLY AFTER ITS REVIEW ──
@@ -5089,12 +5159,76 @@ async function reviewRefused(
   current: Awaited<ReturnType<typeof lockedSigningContent>>,
   ids: { docId: string | string[] | undefined; tenantId: number },
 ): Promise<boolean> {
+  const signer = Number(getActorId(req));
   const refusal = await authoringApprovalReviewRefusal(client, {
     tenantId: ids.tenantId, docId: String(current.doc?.id ?? ids.docId), digest: sectionsDigest(current.sections),
+    reviewersRequired: (await organizationReviewPolicy(client, ids.tenantId)).independentReviewersRequired, // P-117
+    signerId: Number.isSafeInteger(signer) && signer > 0 ? signer : null, // P-116: never one of the route's reviewers
   });
   if (!refusal) return false;
   res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
   return true;
+}
+
+/**
+ * What makes an APPROVER signature independent, on both its doors (E-sign and
+ * the workflow /sign): the seal refusal, then the signer is not an author
+ * (P-18) and the document's review is complete (P-95). One exception, founder
+ * decisions P-116 and P-117: the organisation's only member, where its review
+ * rules allow it, approves with no reviewer, and this transaction's audit trail
+ * says no independent review took place. The record is written before the
+ * credential, on the signing transaction, so it exists only if the signature does.
+ */
+async function approverIndependenceRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await sealRefusedForFiling(client, res, ids.docId, ids.tenantId)) return true;
+  if (await soleMemberMayApprove(client, ids.tenantId, Number(getActorId(req)))) {
+    await createAuditTrail(req, ids.docId, null, 'APPROVAL_WITHOUT_INDEPENDENT_REVIEW', null, null, SOLE_MEMBER_RECORD,
+      { independentReview: 'none' }, client);
+    return false;
+  }
+  if (await separationOfDutiesRefused(client, req, res, ids)) return true;
+  return reviewRefused(client, req, res, current, ids);
+}
+
+/* ── P-102: AN INFORMED-CONSENT FORM IS APPROVED ONLY OVER ITS 21 CFR 50.25 ELEMENTS ──
+ *
+ * The founder, 2026-11-05: "informed consent is one record", its checklist the
+ * editor's checks for that type and its approval the editor's one signing. The
+ * editor's Check showed the gate (slice 1, 2026-11-12) and nothing read it at
+ * signing, so a consent form with no risks section was approved and frozen.
+ *
+ * An APPROVER signature on an informed-consent document (by its template, the
+ * only record of its type) is refused, 409, while an element 50.25(a) requires
+ * is not met. Nothing lifts that. The ClinicalTrials.gov statement (50.25(c))
+ * is owed only by an applicable clinical trial and no record holds a study's
+ * status, so its absence refuses until the approver states the study is not
+ * one (`notApplicableClinicalTrial`); the statement is then written on this
+ * transaction, and the act's own chained row names it. Before the credential.
+ */
+async function consentRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined },
+): Promise<boolean> {
+  if (!isConsentDocument(current.doc)) return false;
+  const gate = consentDocumentGate(current.sections.map((s: { code: unknown; content: string | null }) => ({
+    code: String(s.code ?? ''), text: sectionReadableText(s.content ?? ''),
+  })));
+  const verdict = consentApprovalVerdict(gate, req.body?.notApplicableClinicalTrial === true);
+  if (verdict.kind === 'clear') return false;
+  if (verdict.kind === 'refused') {
+    res.status(409).json({ success: false, error: { code: verdict.code, message: verdict.message }, consentElements: { incomplete: verdict.elements } });
+    return true;
+  }
+  current.consentTrialStatus = { applicableClinicalTrial: false, statedBy: getActorEmail(req) ?? 'unknown' };
+  await createAuditTrail(req, ids.docId, null, 'CONSENT_NOT_APPLICABLE_CLINICAL_TRIAL_STATED', null, null,
+    `Approved without the ClinicalTrials.gov statement (21 CFR 50.25(c)): ${getActorEmail(req)} stated that the study is not an applicable clinical trial.`,
+    { act: 'approve', element: 'clinicaltrials_gov', applicableClinicalTrial: false, documentHash: sectionsDigest(current.sections) }, client);
+  return false;
 }
 
 /* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
@@ -5320,7 +5454,9 @@ async function lockedSigningContent(client: Queryable, req: Request, docId: stri
   const current = { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
     actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) },
     /** Set by figuresRefused when the signer acknowledged unverified figures (P-89); the act's chained row names it. */
-    figuresAcknowledged: null as { digest: string; count: number } | null };
+    figuresAcknowledged: null as { digest: string; count: number } | null,
+    /** Set by consentRefused when the approver stated the study is not an applicable clinical trial (P-102). */
+    consentTrialStatus: null as { applicableClinicalTrial: false; statedBy: string } | null };
   await assertIndependentCheckRelease(client, current);
   return current;
 }
@@ -5798,7 +5934,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         // signatureId: §11.70's link from this audit row to the signature it
         // records — what the audit-trail ledger joins on to show the row as
         // signed, with the signer's meaning (#24).
-        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(current.consentTrialStatus ? { consentTrialStatus: current.consentTrialStatus } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');
@@ -7780,9 +7916,10 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          around it. If evidence later shows reviewers blocked by a divergence
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
-      if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
-      if (meaning === 'APPROVER' && await reviewRefused(client, req, res, current, { docId, tenantId })) return; // P-95
+      if (meaning === 'APPROVER' ? await approverIndependenceRefused(client, req, res, current, { docId, tenantId, meaning }) // P-18, P-95, P-116, P-117
+        : await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
       if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
+      if (meaning === 'APPROVER' && await consentRefused(client, req, res, current, { docId })) return; // P-102
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
@@ -7871,7 +8008,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
+        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(current.consentTrialStatus ? { consentTrialStatus: current.consentTrialStatus } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');

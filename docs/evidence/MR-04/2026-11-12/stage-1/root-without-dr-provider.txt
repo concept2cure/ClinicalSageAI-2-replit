@@ -1,0 +1,15 @@
+# terraform/environments/staging with 'aws.dr = aws.dr' removed from module "stack"'s providers
+
+Error: Missing required provider configuration
+
+  on main.tf line 64:
+  64: module "stack" {
+
+The child module requires an additional configuration for provider
+hashicorp/aws, with the local name "aws.dr".
+
+Refer to the module's documentation to understand the intended purpose of
+this additional provider configuration, and then add an entry for aws.dr in
+the "providers" meta-argument in the module block to choose which provider
+configuration the module should use for that purpose.
+exit 1

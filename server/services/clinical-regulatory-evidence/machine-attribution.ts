@@ -102,8 +102,8 @@ import type { SentenceSpan } from '../sentenceTraceabilityService';
 import { normalizeForMatch } from './source-attribution';
 import { hashSpanText, SpanLineageError, type LiveMachineSpan, type SpanUsage } from './span-lineage.service';
 import { mappedFormattingCarryForwardRanges, formattingSafety, type FormattingReaders, type FormattingCarryRange, type FormattingSafety } from './machine-attribution-formatting';
-import { subtractAttributedRanges } from './machine-attribution-formatting';
-export { subtractAttributedRanges } from './machine-attribution-formatting';
+import { subtractAttributedRanges, wordsKept } from './machine-attribution-formatting';
+export { contentOutsideSpans, subtractAttributedRanges } from './machine-attribution-formatting';
 
 /** Text a reviewer accepted from a machine author in one editing session. */
 export interface AcceptedMachineText {
@@ -560,6 +560,11 @@ export function formattingCarryForwardRanges(
 
 export function formattingCarryForwardSafety(previousContent: string, content: string): FormattingSafety {
   return formattingSafety(previousContent, content, formattingReaders);
+}
+
+/** Whether any sentence of a prior machine span is still in the content a save credits to its saver: see wordsKept. */
+export function machineWordsKept(prior: string, saverContent: string): boolean {
+  return wordsKept(prior, saverContent, formattingReaders);
 }
 
 /* ── Attribution ───────────────────────────────────────────────────────────── */

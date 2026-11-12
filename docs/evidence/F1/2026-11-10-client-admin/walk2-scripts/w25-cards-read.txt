@@ -1,0 +1,25 @@
+// Walk 2, flow 6a: the validation kit card, PDF/A requirement, company documents and profile card on Settings (own org): as found.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const seen = []; page.on('response', (r) => { if (r.url().includes('/api/') && r.status() < 400 && /validation-kit|organizations\/|industry-profile|company-documents|pdfa|pdf-a/.test(r.url())) seen.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '').slice(0, 110)}`); });
+  await c.step('Settings: the four cards as found', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200);
+    await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(4000);
+    s.notes.push('reads: ' + JSON.stringify([...new Set(seen)]));
+    const t = await c.mainText(page, 60000);
+    const cut = (from, to) => { const i = t.indexOf(from); if (i < 0) return `(no "${from}")`; const j = to ? t.indexOf(to, i + from.length) : -1; return t.slice(i, j > 0 ? j : i + 3500); };
+    s.notes.push('--- PDF/A ---\n' + cut('Submission files', 'Vault — records retention'));
+    s.notes.push('--- company documents ---\n' + cut('Organization documents', 'Validation').slice(0, 5000));
+    s.notes.push('--- tail of the tab ---\n' + t.slice(-3800));
+    for (const label of ['Organization profile', 'Validation', 'Submission files']) {
+      const sec = page.locator('main section, main .txw-set-card').filter({ hasText: label }).last();
+      s.notes.push(`section "${label}" found: ` + await sec.count());
+    }
+    s.notes.push('section labels: ' + JSON.stringify(await page.locator('main section[aria-label], main [role=region][aria-label]').evaluateAll(els => els.map(e => e.getAttribute('aria-label')))));
+    s.notes.push('headings: ' + JSON.stringify(await page.locator('main h2, main h3').allInnerTexts()));
+  });
+  c.report(); c.save('w2-25-cards-read');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

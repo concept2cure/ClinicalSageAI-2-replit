@@ -13,9 +13,16 @@ terraform {
 
   required_providers {
     # The same bounds as the roots, whose lock files pin the exact builds.
+    # aws.dr: the disaster-recovery region, where the replicas of the
+    # database, vault and release-signing keys live (MR-04 Stage 1). Each root
+    # configures it from its required dr_region variable and passes it in
+    # `providers`; a root that does not is refused at validate. Validating the
+    # stack on its own therefore needs a DR provider, which terraform-tests.yml
+    # writes for that one step.
     aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.93"
+      source                = "hashicorp/aws"
+      version               = "~> 5.93"
+      configuration_aliases = [aws.dr]
     }
     random = {
       source  = "hashicorp/random"
@@ -23,3 +30,4 @@ terraform {
     }
   }
 }
+

@@ -33,6 +33,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { isLaunchSurface } from '@shared/constants/launch-scope';
+import { noteRecentProject, publishShellProject, readShellProject } from '../shellProject';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const authRoles = vi.hoisted(() => ({ current: ['admin'], permissions: ['governed:write', 'billing:admin'] as string[] }));
@@ -129,11 +130,89 @@ async function mountRail(segment = 'biopharma', collapsed = false) {
   return { onNav, setSegment, rail, scroll };
 }
 
+/** A project this account had open before, remembered but not currently open. */
+function rememberLastProject() {
+  sessionStorage.setItem('trialsage_user', JSON.stringify({ id: '7', email: '7@example.com' }));
+  publishShellProject({ id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4', title: 'LMN-101 — IND' });
+  sessionStorage.removeItem('c2c.shell-project');
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = undefined;
+}
+
 /** Where every entry in the rail's list goes, in order, by pressing each. */
 function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): string[] {
   for (const b of Array.from(scroll.querySelectorAll('button'))) fireEvent.click(b);
   return onNav.mock.calls.map((c) => c[0] as string);
 }
+
+describe('a work area opens from the rail', () => {
+  /* The remembered project lives in localStorage and the account in
+     sessionStorage, so a case that seeds one must clear it: otherwise the next
+     case's work area reopens it and the "Open a project" notice never fires. */
+  afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = undefined;
+    noteRecentProject(null);
+  });
+
+  /**
+   * Clicking Biostatistics has to OPEN Biostatistics.
+   *
+   * On 2026-11-09 its navigation target became `scope: 'project'` so that a
+   * project-less visit could not seed a pharma-oncology preset for a device
+   * organisation. That was right about the preset and wrong about the door: a
+   * project-scoped target with nothing open resolves to Projects
+   * (routing.ts destinationFor), so the rail entry became a dead end and the
+   * founder could not find the screen at all.
+   *
+   * `shellProject.reopenLastProject()` exists for exactly this and nothing
+   * called it — `railOpensWithoutProject.test.ts` states the rule in prose ("a
+   * project screen reopens the last project the signed-in account opened") and
+   * no code implemented it. The rail now reopens it before navigating, so the
+   * work area opens on the project the person last worked in. Someone who has
+   * never opened a project still lands on Projects, which is the one case where
+   * that is the right answer.
+   */
+  /* A PROJECT-SCOPED work area reopens the last project this account had open,
+     instead of dropping the person on Projects. CMC is the subject because it
+     is project-scoped; Biostatistics is global and opens directly, which
+     railOpensWithoutProject.test.ts records and a browser run proved. */
+  it('CMC reopens the last project so the work area actually opens', async () => {
+    rememberLastProject();
+    expect(readShellProject(), 'the case must start with no project open').toBeNull();
+    const { scroll } = await mountRail();
+    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('CMC'));
+    expect(entry, 'no CMC entry on the rail').toBeTruthy();
+    fireEvent.click(entry!);
+    expect(readShellProject(), 'the rail did not reopen the last project, so the entry lands on Projects').toMatchObject({
+      id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4',
+    });
+  });
+
+  it('Biostatistics needs no project to open, so it reopens none', async () => {
+    const { scroll, onNav } = await mountRail();
+    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('Biostatistics'));
+    expect(entry, 'no Biostatistics entry on the rail').toBeTruthy();
+    fireEvent.click(entry!);
+    expect(onNav.mock.calls.map((c) => c[0])).toContain('biostatistics');
+  });
+
+  /* A fresh browser has nothing remembered: the founder's demo, 2026-11-09, where CMC opened Projects.
+     The rail's Recents read already names this account's most recent project, so CMC opens on it. */
+  it('with no project ever opened, CMC opens on the most recent project the rail lists', async () => {
+    sessionStorage.setItem('trialsage_user', JSON.stringify({ id: '7', email: '7@example.com' }));
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (m: string, url: string, ...rest: unknown[]) => (url.startsWith('/api/c2c/projects')
+      ? ok([{ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND', code: 'C2C-101' }, { id: 'e00d4d40-5378-41dc-b85e-e49662afe6a6', title: 'LMN-201 — IND' }])
+      : base(m, url, ...rest)));
+    const { scroll, onNav } = await mountRail();
+    expect(readShellProject(), 'the rail must not open a project just by listing it').toBeNull();
+    fireEvent.click(within(scroll).getByRole('button', { name: /CMC/ }));
+    expect(onNav).toHaveBeenCalledWith('cmc');
+    expect(readShellProject(), 'CMC landed on Projects: nothing was reopened').toMatchObject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND' });
+    expect(screen.queryByText(/Open a project to see/)).toBeNull();
+  });
+});
 
 // Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
 const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
@@ -185,8 +264,8 @@ describe('the rail lists the places, then the work areas', () => {
     const menu = screen.getByRole('menu');
     expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
     expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
-    // The catalog is an administrator's licensing view, not a member's place.
-    expect(within(menu).queryByRole('menuitem', { name: 'Subscription & features' })).toBeNull();
+    // The catalog is every member's since P-122 (2026-11-10): a member sees the features they may open.
+    expect(within(menu).getByRole('menuitem', { name: 'Subscription & features' })).toBeTruthy();
   });
 
   it('every entry opens a screen in this release', async () => {

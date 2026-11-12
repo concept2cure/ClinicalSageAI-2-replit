@@ -17,7 +17,7 @@ import * as React from 'react';
 import { createHash, webcrypto } from 'node:crypto';
 import { stableStringify } from '@shared/canonical-json';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 
 const H = vi.hoisted(() => ({
   apiRequest: vi.fn(),
@@ -25,6 +25,7 @@ const H = vi.hoisted(() => ({
   signed: null as unknown,
   asked: [] as string[],
   program: null as string | null,
+  userId: undefined as string | undefined,
   owner: { actor: '7:8', key: 1, sameRevision: () => true },
 }));
 vi.mock('../../v2/editor/authoringCurrentRead', async original => ({ ...await original<typeof import('../../v2/editor/authoringCurrentRead')>(), useAuthoringReadSession: () => H.owner }));
@@ -35,8 +36,10 @@ vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY: FIXTURE_SUMMARY } = await import('./changeRows');
   return { useChangeSummary: () => ({ summary: FIXTURE_SUMMARY, loading: false, error: null }) };
 });
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
-vi.mock('@/lib/queryClient', () => ({
+vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver', id: H.userId }) }));
+// C4: the shared failure panel (ErrorState) redacts internals through this module, so keep the real one underneath.
+vi.mock('@/lib/queryClient', async (original) => ({
+  ...(await original<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
 }));
@@ -82,7 +85,7 @@ beforeEach(() => {
   H.refresh.mockReset();
   H.signed = null;
   H.asked = [];
-  H.program = null; H.owner = { actor: '7:8', key: 1, sameRevision: () => true };
+  H.program = null; H.userId = undefined; H.owner = { actor: '7:8', key: 1, sameRevision: () => true };
   vi.stubGlobal('crypto', webcrypto);
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -94,6 +97,21 @@ describe('ChangeControl — approving a change is a signature taken here', () =>
     expect(approves).toHaveLength(FIXTURE_CHANGES.filter((c) => c.status === 'under_assessment').length);
   });
 
+  // C8: the server refuses the proposer's approval (the two-person rule), so the row does not offer it to them.
+  it("offers Approve to anyone but the change's proposer", () => {
+    const assessed = FIXTURE_CHANGES.find((c) => c.status === 'under_assessment')!;
+    H.userId = '7';
+    const { unmount } = renderLog(FIXTURE_CHANGES.map((c) => (c.id === assessed.id ? { ...c, proposedBy: 7 } : c)));
+    const row = screen.getByText(assessed.changeNumber).closest('tbody') as HTMLElement;
+    expect(within(row).queryByRole('button', { name: /^Approve$/ })).toBeNull();
+    // Their next step is the unsigned moves the server lists (reject, cancel).
+    expect(within(row).getByRole('button', { name: 'Advance' })).toBeTruthy();
+    unmount();
+    renderLog(FIXTURE_CHANGES.map((c) => (c.id === assessed.id ? { ...c, proposedBy: 8 } : c)));
+    const other = screen.getByText(assessed.changeNumber).closest('tbody') as HTMLElement;
+    expect(within(other).getByRole('button', { name: /^Approve$/ })).toBeTruthy();
+  });
+
   it('opens the e-signature dialog with the approval meaning only, and posts to the signed route', async () => {
     H.apiRequest.mockResolvedValue({
       status: 200,
@@ -103,6 +121,11 @@ describe('ChangeControl — approving a change is a signature taken here', () =>
     renderLog();
     fireEvent.click(screen.getAllByRole('button', { name: /^Approve$/ })[0]);
     expect(screen.getByRole('dialog', { name: 'Approve change' }).getAttribute('data-meanings')).toBe('approval');
+    // C9: what the signature binds is read inside the ceremony, before signing.
+    const record = screen.getByTestId('change-approval-record');
+    expect(record.textContent).toContain('What you approve');
+    expect(record.textContent).toContain('Filter qualification and an extractables study; no filing change.');
+    expect(record.textContent).toContain('Qualify the second source, then update the aseptic fill batch record.');
     fireEvent.click(screen.getByText('stub-sign'));
 
     await waitFor(() => expect(H.signed).toBeTruthy());
@@ -111,9 +134,19 @@ describe('ChangeControl — approving a change is a signature taken here', () =>
       password: 'pw',
       meaning: 'APPROVED',
       reason: 'Impact assessment reviewed and accepted.',
+      // The approval signs the content the dialog showed, by the register's digest of it.
+      expectedContentDigest: 'd'.repeat(64),
     });
     expect(H.signed).toMatchObject({ signedAt: '2026-09-25T09:00:00.000Z' });
     expect(H.refresh).toHaveBeenCalled();
+  });
+
+  it('signs nothing when the row carries no digest of its content', () => {
+    renderLog(FIXTURE_CHANGES.map((c) => (c.status === 'under_assessment' ? { ...c, contentDigest: null } : c)));
+    fireEvent.click(screen.getAllByRole('button', { name: /^Approve$/ })[0]);
+    expect(screen.getByRole('alert').textContent).toMatch(/could not be read for signing/);
+    expect((screen.getByText('stub-sign') as HTMLButtonElement).disabled).toBe(true);
+    expect(H.apiRequest.mock.calls.filter((call) => call[0] === 'POST')).toEqual([]);
   });
 
   it('no longer tells AnA to capture an e-signature it cannot capture', () => {

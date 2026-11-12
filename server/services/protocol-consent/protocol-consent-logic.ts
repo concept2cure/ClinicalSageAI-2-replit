@@ -195,3 +195,180 @@ export function evaluateConsentCompleteness(elements: ConsentElementView[], opts
   const readyToApprove = requiredTotal > 0 && missingRequired.length === 0;
   return { requiredPresentPct, requiredTotal, requiredPresent, missingRequired, findings, readyToApprove };
 }
+
+/** What a read-only screen shows of a consent form: the approval gate's own verdict. */
+export interface ConsentGateView {
+  requiredTotal: number;
+  requiredComplete: number;
+  /** Null when nothing is required: there is then no ratio. */
+  pct: number | null;
+  readyToApprove: boolean;
+  /** Why each incomplete required element is incomplete, in the gate's words. */
+  findings: string[];
+  /** Element keys the gate counts as not satisfied. */
+  incomplete: string[];
+  /** For an approved or superseded form: required elements added to the platform's requirements after it. */
+  predates: string[];
+}
+
+/**
+ * The gate's verdict for display (2026-11-11, F1). The protocol's consent tab
+ * computed "% complete" from the `present` ticks, so a form approval would
+ * refuse — no content, no FDA-inspection wording, an element not yet on the
+ * form — read "100% complete". A screen shows this instead: the same
+ * evaluateConsentCompleteness the approve path enforces.
+ */
+export function consentGateView(elements: ConsentElementView[], status: string): ConsentGateView {
+  const expected = consentElementTemplates();
+  /* The gate names an element by its key, which is what the approve path's
+     refusal and the audit row carry. A person reads its title. */
+  const titleOf = (key: string): string =>
+    canonicalKeysFor(key).map((k) => byId.get(k)?.label).filter(Boolean).join('; ') || key;
+  const readable = (message: string): string =>
+    message.replace(/^Required consent element "([^"]+)"/, (_m, key: string) => `"${titleOf(key)}"`);
+  const r = evaluateConsentCompleteness(elements, { expected });
+  const signed = status === 'approved' || status === 'superseded';
+  return {
+    requiredTotal: r.requiredTotal,
+    requiredComplete: r.requiredPresent,
+    pct: r.requiredPresentPct,
+    readyToApprove: r.readyToApprove,
+    findings: r.findings.filter((f) => f.severity === 'critical').map((f) => readable(f.message)),
+    incomplete: r.missingRequired,
+    predates: signed ? missingTemplateElements(elements, expected).filter((t) => t.required).map((t) => t.title) : [],
+  };
+}
+
+// ─── The informed-consent document in the one editor (P-102) ─────────────────
+
+/**
+ * The built-in templates an informed-consent document is drafted from
+ * (builtinAuthoringTemplateId of `component:informed_consent` and
+ * `registry:ICH_ICF`; pinned by consent-document-gate.test.ts). A document's
+ * type is its stored template id: `authoring_documents` has no type column.
+ */
+export const CONSENT_TEMPLATE_IDS: readonly string[] = [
+  '7386a0c6-57e7-5b2e-a07a-ffe07c4b0996', // component:informed_consent
+  '185d820d-34fc-5a2a-8a11-c9890c249694', // registry:ICH_ICF
+];
+
+/** Whether a stored template id is one of the built-in informed-consent templates. */
+export const isConsentTemplateId = (value: unknown): boolean =>
+  typeof value === 'string' && CONSENT_TEMPLATE_IDS.includes(value.toLowerCase());
+
+/**
+ * The recorded document types of an informed-consent document (P-130). AnA's
+ * draft_authoring_document records its type as `product_code`, and the filing
+ * catalog's legacy alias for the type is `ich_icf`.
+ */
+export const CONSENT_DOCUMENT_TYPES: readonly string[] = ['informed_consent', 'ich_icf'];
+
+/**
+ * Whether an authoring document is an informed-consent document (P-130): by its
+ * built-in template, or by its recorded type. A document drafted by AnA has no
+ * template, so the template alone missed every consent form AnA wrote.
+ */
+export function isConsentDocument(doc: { template_id?: unknown; product_code?: unknown } | null | undefined): boolean {
+  if (!doc) return false;
+  if (isConsentTemplateId(doc.template_id)) return true;
+  return typeof doc.product_code === 'string' && CONSENT_DOCUMENT_TYPES.includes(doc.product_code.trim().toLowerCase());
+}
+
+/**
+ * The section of the consent outline each required element is drafted in
+ * (ICF_SECTIONS, shared/regulatory/project-bootstrap.ts). Section 1 carries
+ * the research statement and the purpose.
+ */
+const CONSENT_DOCUMENT_SECTION: Readonly<Record<string, string>> = Object.freeze({
+  research_statement: '1', purpose: '1', procedures: '2', risks: '3', benefits: '4', alternatives: '5',
+  confidentiality: '6', compensation_injury: '7', voluntary: '8', contacts: '9', clinicaltrials_gov: '11',
+});
+
+export interface ConsentDocumentElement {
+  key: string;
+  title: string;
+  /** The outline section it is drafted in; empty for the when-appropriate elements, which share one section. */
+  section: string;
+  required: boolean;
+  complete: boolean;
+  citation: string;
+}
+
+export interface ConsentDocumentGate extends ConsentGateView {
+  elements: ConsentDocumentElement[];
+}
+
+/**
+ * The approval gate's verdict on an informed-consent DOCUMENT (P-102: one
+ * record). The same evaluateConsentCompleteness the structured form is held
+ * to, read over the document's sections: an element is included when its
+ * section has text, and complete when the gate accepts that text. Pure.
+ */
+export function consentDocumentGate(sections: { code: string; text: string }[]): ConsentDocumentGate {
+  const textOf = new Map(sections.map((s) => [s.code.trim(), s.text]));
+  const templates = consentElementTemplates();
+  const rows: ConsentElementView[] = templates.filter((t) => t.required).map((t) => {
+    const text = textOf.get(CONSENT_DOCUMENT_SECTION[t.elementKey] ?? '') ?? '';
+    return { elementKey: t.elementKey, required: true, present: text.trim().length > 0, content: text };
+  });
+  const view = consentGateView(rows, 'draft');
+  const incomplete = new Set(view.incomplete);
+  return {
+    ...view,
+    elements: templates.filter((t) => t.required).map((t) => ({
+      key: t.elementKey,
+      title: t.title,
+      section: CONSENT_DOCUMENT_SECTION[t.elementKey] ?? '',
+      required: true,
+      complete: !incomplete.has(t.elementKey),
+      citation: t.basis,
+    })),
+  };
+}
+
+/** What the gate means for an approval of an informed-consent document (P-102). */
+export type ConsentApprovalVerdict =
+  | { kind: 'clear' }
+  /** The approver stated the study is not an applicable clinical trial; the approval records it. */
+  | { kind: 'stated_not_applicable' }
+  | { kind: 'refused'; code: 'CONSENT_INCOMPLETE' | 'CONSENT_TRIAL_STATUS_REQUIRED'; message: string; elements: string[] };
+
+const CTGOV = 'clinicaltrials_gov';
+
+/**
+ * The approval's verdict from the document's gate (P-102, slice 2). An element
+ * 21 CFR 50.25(a) requires refuses the approval and nothing lifts it. The
+ * ClinicalTrials.gov statement (50.25(c)) is owed only by an applicable
+ * clinical trial, and no record holds a study's status, so the approver is
+ * asked; `statedNotApplicable` is their answer, which the caller records on the
+ * approval. Pure.
+ */
+export function consentApprovalVerdict(gate: ConsentDocumentGate, statedNotApplicable: boolean): ConsentApprovalVerdict {
+  const open = gate.elements.filter((e) => !e.complete);
+  if (open.length === 0) return { kind: 'clear' };
+  const basic = open.filter((e) => e.key !== CTGOV);
+  const ctgovOpen = open.length > basic.length;
+  if (basic.length > 0) {
+    const n = basic.length;
+    return {
+      kind: 'refused',
+      code: 'CONSENT_INCOMPLETE',
+      elements: basic.map((e) => e.key),
+      message:
+        `Not approved — this informed consent form does not yet meet ${n} required element${n === 1 ? '' : 's'} of informed consent ` +
+        `(21 CFR 50.25(a)): ${basic.map((e) => e.title).join('; ')}. ` +
+        (ctgovOpen ? 'The ClinicalTrials.gov statement is also missing; it is required for an applicable clinical trial. ' : '') +
+        'The editor’s Check says what each one lacks. Nothing was signed.',
+    };
+  }
+  if (statedNotApplicable) return { kind: 'stated_not_applicable' };
+  return {
+    kind: 'refused',
+    code: 'CONSENT_TRIAL_STATUS_REQUIRED',
+    elements: [CTGOV],
+    message:
+      'Not approved — this informed consent form has no ClinicalTrials.gov statement, which 21 CFR 50.25(c) requires for an ' +
+      'applicable clinical trial. Add it, or, if this study is not an applicable clinical trial, say so and approve again: ' +
+      'that statement is recorded with your approval. Nothing was signed.',
+  };
+}

@@ -278,10 +278,10 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(inlineRoutes).toContain("app.use('/api/registrations', authMiddleware, registrationsStandardsRoutes)");
     expect(inlineRoutes).toContain("app.use('/api/validation-kit', authMiddleware, validationKitRoutes)");
 
-    // eTMF collapsed to a single gateway (both route families, one auth pass).
-    expect(inlineRoutes).toContain('const etmfGateway = express.Router();');
-    expect(inlineRoutes).toContain('etmfGateway.use(etmfCompletenessModule.default);');
-    expect(inlineRoutes).toContain('etmfGateway.use(etmfGovernedModule.default);');
+    // eTMF: one route family, one mount, one auth pass. The second family (routes/etmf.ts, a store no deploy creates)
+    // was deleted on 2026-11-12 (eTMF convergence E4 step 4; etmf-one-store.routes.test.ts pins what is served).
+    expect(inlineRoutes).toContain("app.use('/api/etmf', authMiddleware, etmfModule.default);");
+    expect(inlineRoutes).not.toContain("import('../routes/etmf')");
 
     // The HAQ store is retired (2026-10-18): agency questions are answered on the inbox (routes/c2c/agency-responses.ts).
     expect(docRoutes).not.toContain("app.use('/api/haq-manager'");

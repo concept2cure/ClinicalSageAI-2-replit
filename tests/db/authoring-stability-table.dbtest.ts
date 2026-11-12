@@ -96,6 +96,8 @@ let docId: string;
 let auth: string;
 /** The project the document is created in: a document belongs to a project (PF-07). */
 let programId: string;
+/** That program's anchor row in `projects`, which the current read scope requires. */
+let anchorProjectId: number | undefined;
 
 /**
  * A REAL signed token, not a stubbed req.user.
@@ -233,6 +235,43 @@ beforeAll(async () => {
   );
   programId = String(program.rows[0].id);
 
+  /* The program's project record — its one anchor row in `projects` — as
+     production intake writes it, through the canonical anchor writer
+     (ensureProgramProjectAnchor, idempotent: a re-run links, never forks).
+     Since cc1607c3a3 (2026-10-18) the sections read (GET /docs/:id/sections)
+     admits a document only through its program's current project access
+     (authoring-read-scope.ts → getCurrentAccessibleProgramScope), and a program
+     with no anchor is in nobody's scope: the bare program this suite used to
+     seed answered 404 AUTHORING_DOCUMENT_NOT_FOUND on the reload, although the
+     create, freeze and export all succeeded. Production cannot produce that
+     shape — intake refuses a program it cannot anchor (P-19) — so the fixture
+     now has the record every real program has. */
+  const workspace = await owner.query(
+    `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
+       VALUES ($1, $2, $3, 'active', $4)
+     ON CONFLICT (organization_id, slug) DO UPDATE SET status = 'active'
+     RETURNING id`,
+    [orgId, 'dbtest-w11 workspace', 'dbtest-w11-workspace', userId],
+  );
+  const { ensureProgramProjectAnchor } = await import('../../server/services/c2c/program-project-anchor');
+  const anchorClient = await owner.connect();
+  try {
+    await anchorClient.query('BEGIN');
+    const anchor = await ensureProgramProjectAnchor({
+      client: anchorClient, orgId, userId, programId, name: 'dbtest-w11 program',
+      code: 'DBTEST-W11-STABILITY', priority: 'medium', clientWorkspaceId: Number(workspace.rows[0].id),
+    });
+    expect(anchor.skipped, `program anchor: ${anchor.detail ?? ''}`).toBeUndefined();
+    expect(anchor.projectId, 'the program has its project record').toBeTruthy();
+    anchorProjectId = Number(anchor.projectId);
+    await anchorClient.query('COMMIT');
+  } catch (err) {
+    await anchorClient.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    anchorClient.release();
+  }
+
   await cleanupProbeRows();
   app = await buildApp();
   auth = await bearer();
@@ -240,6 +279,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await cleanupProbeRows().catch(() => undefined);
+  if (anchorProjectId) await owner?.query('DELETE FROM projects WHERE organization_id = $1 AND id = $2', [orgId, anchorProjectId]).catch(() => undefined);
   await owner?.query('DELETE FROM regulatory_programs WHERE organization_id = $1 AND code = $2', [orgId, 'DBTEST-W11-STABILITY']).catch(() => undefined);
   await owner?.end().catch(() => undefined);
 });

@@ -1,0 +1,14 @@
+Success! The configuration is valid.
+
+tests/detective_controls.tftest.hcl... in progress
+  run "the_vpc_records_all_traffic_under_the_environments_name"... pass
+  run "every_request_the_load_balancer_takes_is_logged"... pass
+  run "the_alb_log_bucket_is_private_encrypted_and_bounded"... pass
+  run "only_the_regions_load_balancers_may_write_and_only_their_prefix"... pass
+  run "a_shorter_access_log_retention_is_refused"... pass
+  run "cloudfront_and_the_buckets_log_to_the_access_log_bucket"... pass
+  run "the_access_log_bucket_admits_only_its_writers"... pass
+tests/detective_controls.tftest.hcl... tearing down
+tests/detective_controls.tftest.hcl... pass
+
+Success! 7 passed, 0 failed.

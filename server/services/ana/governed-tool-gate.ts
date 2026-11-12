@@ -46,7 +46,7 @@ import type { MandatorySkillGate } from '../account-skill-bundles.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { isProposeOnlyCommand } from '../ana-ri/command-rbac.js';
 import { governedTierOf } from '../ana-ri/part11-governance.js';
-import { REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
+import { reasonRequiredFor } from './stated-reason-input.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 
 /** The tool that carries a platform command in its input. */
@@ -104,7 +104,7 @@ export function classifyToolCall(call: ClassifiableToolCall, gates?: ToolSkillGa
   if (!approval) return base;
   if (base.kind === 'NEEDS_APPROVAL') return { ...base, skillPolicyApproval: approval };
   const params = asRecord(call.input);
-  return params ? { kind: 'NEEDS_APPROVAL', command: call.name, params, tier: registeredToolTier(call.name), skillPolicyApproval: approval }
+  return params ? { kind: 'NEEDS_APPROVAL', command: call.name, params, tier: registeredToolTier(call.name, params), skillPolicyApproval: approval }
     : { kind: 'UNDECIDABLE', why: 'the policy-gated call carried no arguments object' };
 }
 
@@ -148,8 +148,8 @@ function classifyBaseToolCall(call: ClassifiableToolCall): ToolGateVerdict {
  * model wrote into the call (D5, 2026-09-29). Every other write is a yes.
  * The confirmation route reads the same answer (routes/ana-ri/utility.ts).
  */
-export function registeredToolTier(name: string): ApprovalTier {
-  return REASON_REQUIRED_TOOLS.has(name) ? 'reason' : 'confirm';
+export function registeredToolTier(name: string, input: unknown): ApprovalTier {
+  return reasonRequiredFor(name, input) ? 'reason' : 'confirm';
 }
 
 /** A tool other than the command carrier, judged by the register. */
@@ -164,7 +164,7 @@ function classifyRegisteredTool(call: ClassifiableToolCall): ToolGateVerdict {
   // What a person is asked to confirm is the call itself, so it must be readable.
   const toolInput = asRecord(call.input);
   if (!toolInput) return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
-  return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: registeredToolTier(call.name) };
+  return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: registeredToolTier(call.name, toolInput) };
 }
 
 

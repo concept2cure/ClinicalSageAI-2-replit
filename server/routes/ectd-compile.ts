@@ -40,6 +40,7 @@ import { promises as fs } from 'node:fs';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { retainRequestDbClient } from '../db/requestDbLease';
 import { isFiledDispatchStatus } from '../services/submission-service/filed-dispatch';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
@@ -653,6 +654,94 @@ function packageDtdFindings(pkg: CompiledPackage): ValidationResult[] {
 // POST /:projectIdent/compile — Full eCTD compilation
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * A compile that answers 202 and goes on (MR-03 Stage 6 steps 4–6, OPS-17).
+ *
+ * Behind CloudFront and the ALB a request unanswered for 60 s is cut with a 504,
+ * and the compile goes on and is recorded: the person sees a failure, and a
+ * retry records a second compilation. A 200-leaf IND of 80-page documents
+ * compiled in p95 59.3 s on four cores (docs/evidence/D1/2026-11-12-edge-timeouts/).
+ *
+ * A caller that sends `Prefer: respond-async` (RFC 7240), as the compile screen
+ * does, gets 202 with a job id once every refusal above has been decided. The
+ * same compileFromSpine then runs in the same request scope, holding the
+ * request's database connection until it ends (retainRequestDbClient), and its
+ * full result is stored on the job (artifact_compute_jobs, computeService.ts).
+ * GET /:projectIdent/jobs/:jobId reads it, for this organization only. A caller
+ * that does not ask keeps the synchronous answer. A program with no tracking
+ * project, which a job row needs, is compiled synchronously too.
+ */
+function asksForAsync(req: Request): boolean {
+  return /(^|[,;\s])respond-async([,;\s]|$)/i.test(String(req.headers.prefer ?? ''));
+}
+
+async function trackingProjectIdFor(anchor: CompileAnchor, orgId: number): Promise<number | null> {
+  if (anchor.numericProjectId != null) return anchor.numericProjectId;
+  if (!anchor.programId) return null;
+  const { rows } = await pool.query(
+    'SELECT id FROM projects WHERE regulatory_program_id = $1::uuid AND organization_id = $2 ORDER BY id LIMIT 1',
+    [anchor.programId, orgId],
+  );
+  const id = Number(rows[0]?.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+async function compileAsJob(
+  req: Request,
+  res: Response,
+  args: Parameters<typeof compileFromSpine>[1],
+): Promise<boolean> {
+  if (!asksForAsync(req)) return false;
+  const projectId = await trackingProjectIdFor(args.anchor, args.orgId);
+  if (projectId == null) return false;
+  const { startRouteJob, finishRouteJob } = await import('../services/compute/computeService');
+  const userId = resolveUserId(req);
+  const jobId = await startRouteJob(pool, {
+    organizationId: args.orgId,
+    projectId,
+    surfaceKey: 'ectd-compile',
+    intentType: 'ectd_compile',
+    requestedById: Number.isInteger(userId) && (userId as number) > 0 ? (userId as number) : null,
+    payload: { programId: args.anchor.programId, sequenceId: args.spine.sequence?.id ?? null, submissionType: args.submissionType, priorState: args.priorState },
+  });
+  // The work outlives the response: it keeps the request's connection, with its tenant session, until it ends.
+  const releaseDb = retainRequestDbClient(req);
+  res.setHeader('Preference-Applied', 'respond-async');
+  res.status(202).json({ jobId, status: 'running', poll: `/api/ectd-compile/${encodeURIComponent(args.ident)}/jobs/${jobId}` });
+  void (async () => {
+    try {
+      const result = await compileFromSpine(req, args);
+      await finishRouteJob(pool, jobId, args.orgId, { status: 'completed', result });
+    } catch (error) {
+      log.error('the compile job failed', { jobId, projectIdent: args.ident, error: error instanceof Error ? error.message : String(error) });
+      await finishRouteJob(pool, jobId, args.orgId, {
+        status: 'failed',
+        error: `The compile failed on the server and was not recorded. Reference ${jobId}.`,
+      }).catch((err) => log.error('the failed compile job could not be recorded', { jobId, error: err instanceof Error ? err.message : String(err) }));
+    } finally {
+      await releaseDb?.().catch(() => undefined);
+    }
+  })();
+  return true;
+}
+
+router.get('/:projectIdent/jobs/:jobId', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const jobId = String(req.params.jobId ?? '');
+  if (!/^rjob_[0-9]+_[0-9a-f]{16}$/.test(jobId)) {
+    return res.status(404).json({ error: { code: 'JOB_NOT_FOUND', message: 'No such compile job.' } });
+  }
+  try {
+    const { readRouteJob } = await import('../services/compute/computeService');
+    const job = await readRouteJob(pool, jobId, resolved.orgId, 'ectd-compile');
+    if (!job) return res.status(404).json({ error: { code: 'JOB_NOT_FOUND', message: 'No such compile job.' } });
+    return res.json(job);
+  } catch (error) {
+    return serverError(res, log, 'reading the compile job', error, { projectIdent: resolved.ident });
+  }
+});
+
 router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
   // Org from auth context, then the ident resolved org-scoped (404 on a miss) —
   // never compile against an unresolved project.
@@ -724,7 +813,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           },
         });
       }
-      return await compileFromSpine(req, res, {
+      const spineArgs = {
         orgId,
         anchor,
         ident,
@@ -732,8 +821,10 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
         submissionType: recordedType ?? String(submissionType),
         moduleFilter,
         required,
-        priorState: req.body?.rehearsal === true ? 'rehearsal' : 'filed',
-      });
+        priorState: (req.body?.rehearsal === true ? 'rehearsal' : 'filed') as 'rehearsal' | 'filed',
+      };
+      if (await compileAsJob(req, res, spineArgs)) return;
+      return res.json(await compileFromSpine(req, spineArgs));
     }
     if (req.body?.rehearsal === true) {
       return res.status(400).json({
@@ -1067,7 +1158,6 @@ function moduleStatusesFromLeaves(
  */
 async function compileFromSpine(
   req: Request,
-  res: Response,
   args: {
     orgId: number;
     anchor: CompileAnchor;
@@ -1080,7 +1170,7 @@ async function compileFromSpine(
      *  sequences — for an agency validator only (package-from-core). */
     priorState: 'filed' | 'rehearsal';
   },
-): Promise<void> {
+): Promise<CompilationResult> {
   const { orgId, anchor, ident, spine, submissionType, moduleFilter, required, priorState } = args;
   const seq = spine.sequence!;
   const startedAt = new Date().toISOString();
@@ -1381,7 +1471,7 @@ async function compileFromSpine(
       (packageSha256 ? ` | sha256 ${packageSha256.slice(0, 12)}…` : ''),
   );
 
-  res.json(result);
+  return result;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1576,6 +1666,25 @@ router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => 
 // POST /:projectIdent/validate — Pre-compile validation only
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// GA-D7-10: the rule set Validate runs, by name, and the one that decides dispatch.
+const VALIDATE_RULE_SET = {
+  name: "Compile's placement and package checks",
+  otherRuleSet: 'Submission readiness, in Submit',
+} as const;
+
+function ruleSetFinding(): ValidationResult {
+  return {
+    rule: 'VALIDATION_RULE_SET',
+    severity: 'info',
+    message:
+      `These findings come from ${VALIDATE_RULE_SET.name}: where each document is placed in the sequence ` +
+      `and what the package must name. ${VALIDATE_RULE_SET.otherRuleSet}, checks the same sequence against ` +
+      `a separate rule set, so its count of errors can differ from this one. Its verdict is the one that ` +
+      `decides dispatch.`,
+    fix: 'Open Submission readiness in Submit to see the dispatch verdict for this sequence.',
+  };
+}
+
 router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
@@ -1638,6 +1747,8 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
     const errorCount = results.filter(r => r.severity === 'error').length;
+    // Last, outside the counts.
+    results.push(ruleSetFinding());
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1645,6 +1756,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
       programId: anchor.programId,
       valid: errorCount === 0,
       requiredSectionSource: required.provenance,
+      ruleSet: VALIDATE_RULE_SET,
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
     });

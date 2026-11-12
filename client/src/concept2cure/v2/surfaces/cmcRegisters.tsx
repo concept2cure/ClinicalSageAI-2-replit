@@ -10,7 +10,6 @@ import {
   methodForm, methodBody,
   qcTestForm, qcTestBody, qcReviewForm, qcReviewBody,
   processValidationForm, processValidationBody,
-  changeControlForm, changeControlBody,
   drugSubstanceForm, drugSubstanceBody,
   drugProductForm, drugProductBody,
   comparabilityForm, comparabilityBody,
@@ -53,6 +52,8 @@ import { useAuth } from '@/services/portal/authService';
 import { reportCmcLinkage } from './CmcRegisterLinks';
 import { RecordHistoryPanel } from './cmcRecordHistory';
 import { keepsRegisterHistory } from '@shared/constants/cmc-register-history';
+/* Two engines on their registers (P-122): the impurity verdicts and dissolution f2. */
+import { DissolutionCompare, ImpurityVerdictCell, useImpurityAssessments } from './cmcRegisterEngines';
 
 /* ═══════════════════════════════════════════════════════════════════
    CMC registers — real org-scoped data, read AND written honestly.
@@ -160,7 +161,7 @@ export function cmcStatusTone(value: unknown): string {
 }
 
 /** Status chip. Renders the backend's own wording — never a relabelled value. */
-function chip(value: unknown, fallback = '--') {
+export function chip(value: unknown, fallback = '--') {
   const text = value == null || value === '' ? fallback : String(value);
   return <span className={'rd-chip tone-' + cmcStatusTone(value)}>{text}</span>;
 }
@@ -171,7 +172,7 @@ function chip(value: unknown, fallback = '--') {
  * cmcStatusTone, which would have rendered a high-risk change as a neutral grey
  * chip because "high" is in none of its lists.
  */
-function riskChip(level: unknown): React.ReactNode {
+export function riskChip(level: unknown): React.ReactNode {
   const v = String(level ?? '').toLowerCase();
   if (!v) return '--';
   const tone = v === 'high' ? 'err' : v === 'medium' || v === 'med' ? 'warn' : v === 'low' ? 'ok' : 'dim';
@@ -179,14 +180,14 @@ function riskChip(level: unknown): React.ReactNode {
 }
 
 /** A timestamp rendered as a plain date, or "--" when absent/unparseable. */
-function fmtDate(value: unknown): string {
+export function fmtDate(value: unknown): string {
   if (value == null || value === '') return '--';
   const d = new Date(String(value));
   return Number.isNaN(d.getTime()) ? '--' : d.toLocaleDateString();
 }
 
 /** Plain text cell that degrades to an em dash rather than "null"/"undefined". */
-function text(value: unknown, fallback = '--'): React.ReactNode {
+export function text(value: unknown, fallback = '--'): React.ReactNode {
   return value == null || value === '' ? fallback : String(value);
 }
 
@@ -697,6 +698,43 @@ export interface QcTestApiRow {
   certificateOfAnalysis?: string | null;
   analyst?: number | null;
   reviewedBy?: number | null;
+  /**
+   * The server's comparison of the recorded value with the recorded
+   * criterion (services/cmc/batch-release-evidence.ts, recordedResultVerdict),
+   * when it sends one. Absent means not compared, never "within".
+   */
+  conformance?: 'within' | 'outside' | 'not-comparable' | null;
+}
+
+/**
+ * A recorded "pass" the recorded result contradicts (GA-DEMO-02, 2026-11-10).
+ * DS-2502-R2 is recorded as a pass at 97.4 % against 98.0 - 102.0 %, and this
+ * register printed "pass"; batch release now refuses it, and the register says
+ * the same thing release does.
+ */
+export function qcPassContradicted(r: QcTestApiRow): boolean {
+  return qcRecordedPass(r) && r.conformance === 'outside';
+}
+
+/** A recorded pass, in either word batch release accepts ("pass" or "passed"). */
+function qcRecordedPass(r: QcTestApiRow): boolean {
+  const word = String(r.passFailStatus || '').trim().toLowerCase();
+  return word === 'pass' || word === 'passed';
+}
+
+/** The recorded disposition, or the contradiction when the result disagrees with it. */
+function qcDisposition(r: QcTestApiRow): React.ReactNode {
+  if (qcPassContradicted(r)) {
+    return (
+      <span
+        className="rd-chip tone-err"
+        title="Recorded as a pass, but the recorded result is outside its recorded acceptance criterion. The batch cannot be released while the record contradicts itself."
+      >
+        pass, contradicted by its result
+      </span>
+    );
+  }
+  return chip(r.passFailStatus, 'pending');
 }
 
 /** The recorded measurement, rendered with its unit, or an em dash. */
@@ -724,10 +762,13 @@ export function CmQcTesting() {
       path="/api/cmc/qc-testing"
       title="QC testing"
       meta={(rows) => {
-        const pass = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'pass').length;
+        const contradicted = rows.filter(qcPassContradicted).length;
+        const pass = rows.filter(qcRecordedPass).length - contradicted;
         const fail = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'fail').length;
         const awaiting = rows.filter((r) => !r.reviewedBy).length;
-        return `${rows.length} samples — ${pass} pass / ${fail} fail — ${awaiting} awaiting review`;
+        return `${rows.length} samples — ${pass} pass / ${fail} fail` +
+          (contradicted ? ` — ${contradicted} contradicted` : '') +
+          ` — ${awaiting} awaiting review`;
       }}
       icon={I.microscope}
       loadingTitle="Loading QC testing records…"
@@ -767,94 +808,10 @@ export function CmQcTesting() {
         { header: 'Method', render: (r) => r.testMethod },
         { header: 'Result', render: qcResultValue },
         { header: 'Specification', render: (r) => text(r.specifications?.acceptanceCriteria) },
-        { header: 'Disposition', render: (r) => chip(r.passFailStatus, 'pending') },
+        { header: 'Disposition', render: qcDisposition },
         { header: 'Reviewed', render: (r) => (r.reviewedBy ? <span className="rd-chip tone-ok">verified</span> : <span className="rd-chip tone-warn">awaiting</span>) },
         { header: 'Tested', render: (r) => fmtDate(r.testDate) },
         { header: 'Released', render: (r) => fmtDate(r.releaseDate) },
-      ]}
-    />
-  );
-}
-
-/* ═══════════ Change control — GET /api/cmc/change-control ═══════════ */
-
-export interface ChangeControlApiRow {
-  id: number;
-  changeNumber: string;
-  changeType: string | null;
-  description: string | null;
-  justification?: string | null;
-  regulatoryFiling: string | null;
-  status: string | null;
-  riskAssessment?: { level?: string } | null;
-  impactAssessment?: { summary?: string; impactedSections?: string[] } | null;
-  implementationDate?: string | null;
-}
-
-/** An API change row → the edit form's defaults. */
-function changeDefaults(r: ChangeControlApiRow) {
-  return {
-    changeNumber: r.changeNumber ?? '',
-    changeType: r.changeType ?? '',
-    description: r.description ?? '',
-    justification: r.justification ?? '',
-    regulatoryFiling: r.regulatoryFiling ?? '',
-    status: r.status ?? 'draft',
-    riskAssessment: { level: r.riskAssessment?.level ?? 'medium' },
-    impactAssessment: {
-      summary: r.impactAssessment?.summary,
-      impactedSections: r.impactAssessment?.impactedSections ?? [],
-    },
-    implementationDate: r.implementationDate ?? undefined,
-  };
-}
-
-/**
- * The changes actually logged for the organization (cmc_change_control).
- * The simulator alongside this computes a what-if filing path over canonical
- * SUPAC / ICH Q12 rules; this is the real register behind it.
- */
-export function CmChangeRegister() {
-  const CLOSED = ['approved', 'implemented', 'closed', 'rejected'];
-  return (
-    <RegisterCard<ChangeControlApiRow>
-      path="/api/cmc/change-control"
-      title="Change-control register"
-      meta={(rows) => {
-        const open = rows.filter((r) => !CLOSED.includes(String(r.status || '').toLowerCase())).length;
-        return `organization-wide — ${open} open — ICH Q12`;
-      }}
-      icon={I.gitBranch}
-      loadingTitle="Loading change-control records…"
-      emptyTitle="No change-control records yet"
-      emptyHint="Logged CMC changes — with their type, filing category and status — appear here. Use the simulator above to model a change, then Raise change to put it under control."
-      errorTitle="Couldn’t load change-control records"
-      errorHint="The org-scoped change-control register didn’t load. Sign in and try again."
-      rowKey={(r) => r.id}
-      create={{
-        label: 'Raise change',
-        subject: 'change record',
-        path: '/api/cmc/change-control',
-        form: () => changeControlForm(null),
-        toBody: (v, projectId) => changeControlBody(v, projectId),
-      }}
-      rowActions={[
-        {
-          label: 'Update',
-          subject: 'change record',
-          form: (r) => changeControlForm(changeDefaults(r)),
-          path: (r) => `/api/cmc/change-control/${r.id}`,
-          toBody: (v, _r, projectId) => changeControlBody(v, projectId),
-        },
-      ]}
-      columns={[
-        { header: 'Change', render: (r) => r.changeNumber, mono: true, bold: true },
-        { header: 'Type', render: (r) => text(r.changeType) },
-        { header: 'Description', render: (r) => text(r.description) },
-        { header: 'Risk', render: (r) => riskChip(r.riskAssessment?.level) },
-        { header: 'Filing', render: (r) => (r.regulatoryFiling ? r.regulatoryFiling : <span className="cm-meta">not set</span>) },
-        { header: 'Implementation', render: (r) => fmtDate(r.implementationDate) },
-        { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
   );
@@ -1539,6 +1496,9 @@ function impurityLevel(r: ImpurityProfileApiRow): React.ReactNode {
  */
 export function CmImpurityProfiles() {
   const projectId = cmcProjectUuid();
+  /* Each impurity against the guideline that governs it (P-122): the verdict
+     §3.2.S.3.2 composes from, on the row it is about. */
+  const assessed = useImpurityAssessments(projectId);
   return (
     <RegisterCard<ImpurityProfileApiRow>
       path={`/api/cmc/impurity-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
@@ -1631,6 +1591,7 @@ export function CmImpurityProfiles() {
           },
         },
         { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
+        { header: 'Against the guideline', render: (r) => <ImpurityVerdictCell id={r.id} read={assessed} /> },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
@@ -1675,7 +1636,11 @@ function profileDepth(r: DissolutionProfileApiRow): React.ReactNode {
  */
 export function CmDissolutionProfiles() {
   const projectId = cmcProjectUuid();
+  const path = `/api/cmc/dissolution-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`;
+  /* The same list the card reads, for the f2 comparison under it (P-122). */
+  const profiles = useLiveRows<DissolutionProfileApiRow>(path);
   return (
+    <>
     <RegisterCard<DissolutionProfileApiRow>
       path={`/api/cmc/dissolution-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
       title="Dissolution profiles"
@@ -1723,6 +1688,8 @@ export function CmDissolutionProfiles() {
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
+    <DissolutionCompare profiles={profiles.loading || profiles.error ? [] : profiles.rows} />
+    </>
   );
 }
 

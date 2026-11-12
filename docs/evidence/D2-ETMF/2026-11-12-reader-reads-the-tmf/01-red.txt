@@ -1,0 +1,26 @@
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > takes the studyId that GET /api/study-design lists, and says which study the answer is about 7141ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > refuses a name that is no study the caller can open, on every route, and writes nothing 193ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > lets a member shared on the project read and file its study, and no other project's 365ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > stores the study and the study's own id string, one row per study and artifact 33ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > never serves a row with no study as a study's filing, even when its free text equals the study's id 59ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > holds a filing's study to the filing's own organization, in the database 3ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > keeps a filing on record, detached, when its study design is deleted 40ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > refuses a document of another project, absent, or of another organization, with one code, and writes nothing 83ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > still refuses a path built from the trial and the artifact code 3ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > reports each item of a batch, and files only what is in the project 29ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > counts a filing as verified only while its document is a live document of the study's project 21ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the inspection package is the study's > names the study in its manifest and its file name, and lists only the study's filings 69ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is removed only by someone who can write its study's project > answers 404 for a filing of a project the caller cannot open, and leaves it 36ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the list says what each filing's document is (E3b) > names each Vault document of the study's project, and gives null for any other reference 209ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the list says what each filing's document is (E3b) > follows the document: a version added later makes the filed one no longer current 83ms
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the list says what each filing's document is (E3b) > says the document's review stage, as the Library reads it: a record's state is its document's (P-124 item 5) 44ms
+ × tests/db/etmf-study-binding.dbtest.ts > a person who may read the project's Vault reads its trial master file, and writes nothing > reads the reference model, the study's filings, its readiness and its inspection package 28ms
+ × tests/db/etmf-study-binding.dbtest.ts > a person who may read the project's Vault reads its trial master file, and writes nothing > is refused every write, and a study of a project it cannot open is not found 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 403 to be 200 // Object.is equality
+- Expected
++ Received
+AssertionError: expected 403 to be 404 // Object.is equality
+- Expected
++ Received
+      Tests  2 failed | 16 passed (18)

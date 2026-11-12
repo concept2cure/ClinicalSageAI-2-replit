@@ -304,3 +304,16 @@ describe('GET /pyramids/by-project?refs= — the portfolio line', () => {
     expect(res.body.data.lines).toBeTruthy();
   });
 });
+
+// GA: the read says what the dates rest on, for the plan and for the Projects card.
+describe('the schedule says what its dates rest on', () => {
+  it('marks a 510(k) plan and its portfolio line hours-only, and an IND mixed', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: '510k', target: '2027-06-04' }]);
+    expect((await request(app()).get(PATH)).body.data.schedule.durations).toBe('hours-only');
+    expect((await request(app()).get(`/api/v1/pyramids/by-project?refs=${PROGRAM}`)).body.data.lines[PROGRAM].durations).toBe('hours-only');
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    expect((await request(app()).get(PATH)).body.data.schedule.durations).toBe('mixed');
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: null }]);
+    expect((await request(app()).get(`/api/v1/pyramids/by-project?refs=${PROGRAM}`)).body.data.lines[PROGRAM].durations).toBeNull();
+  });
+});

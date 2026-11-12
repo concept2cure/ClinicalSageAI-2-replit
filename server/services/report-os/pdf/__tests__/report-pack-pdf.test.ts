@@ -48,7 +48,7 @@ describe('complete retained report PDF packets', () => {
     const pdf = await readPdf(out.bytes);
     expect(pdf.text.indexOf('RETAINED-BODY-42')).toBeLessThan(pdf.text.indexOf('RETAINED-BODY-41'));
     for (const text of ['日本語', '中文报告', '한국어', 'تقرير الامتثال', 'דוח תאימות', 'LAST-RECORDED-DATA', 'Recorded: 3',
-      'Source: qa_fixture #42; audit qa-audit', 'Recorded calculation evidence', '"measured": 3', 'Signed by Dana Reyes as approval', 'Seal verification at export: intact.']) expect(pdf.text).toContain(text);
+      'Source: qa_fixture #42; audit qa-audit', 'Recorded calculation evidence', '"measured": 3', 'Signed by Dana Reyes, meaning Approval', 'Seal verification at export: intact.']) expect(pdf.text).toContain(text);
     expect(pdf.text).toContain('This packet contains non-final reports');
     expect(pdf.text).toContain('has no separate approval or signature');
     expect(out.replacedCharacters).toBe(0);
@@ -94,7 +94,7 @@ describe('complete retained report PDF packets', () => {
     const pdf = await readPdf(out.bytes);
     expect(pdf.text).toContain('Their reconstructed copies are marked UNVERIFIED FINAL COPY.');
     expect(pdf.text).toContain('The sealed content cannot be verified.');
-    expect(pdf.text).toContain('Signed by not recorded as not recorded, not recorded (UTC).');
+    expect(pdf.text).toContain('Signed by not recorded, meaning not recorded, signing time not recorded.');
     expect(pdf.text).toContain('Seal verification at export: not-verifiable.');
     expect(pdf.text).not.toContain('Seal verification at export: intact.');
     const range = out.constituents[0];

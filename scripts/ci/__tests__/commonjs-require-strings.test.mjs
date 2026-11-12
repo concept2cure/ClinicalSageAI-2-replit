@@ -105,3 +105,33 @@ for (const [name, src] of [
     assert.match(r.out, /server\/services\/executable\.ts:1\b/);
   });
 }
+
+/**
+ * The sweep must reach a file directly under server/, shared/, workers/ or
+ * services/ — not only one inside a subdirectory.
+ *
+ * Git's pathspec globs let `*` cross '/', so 'server/*.ts' is already the whole
+ * recursive tree, while 'server/**' requires at least one directory level. The
+ * gate used the '**' form, so 56 top-level files were invisible to it —
+ * `shared/canonical-json.ts` among them. Its dynamic `require('crypto')` is
+ * this gate's exact defect; it broke the only CMC path that reaches a §11.50
+ * signature (batch release answered 500 ReferenceError from inside a hash),
+ * and the gate that exists for that class never looked at the file.
+ * `server/openai-service.ts` was another: a `require('fs')` shadowing the
+ * module's own static `import fs`.
+ */
+for (const file of ['shared/canonical-json.ts', 'server/openai-service.ts', 'services/capability-unavailable.ts']) {
+  test(`a require() in ${file}, directly under its top-level directory, is reported`, () => {
+    const src = `export function hash(s) { return ${REQ}'crypto').createHash('sha256').update(s).digest('hex'); }\n`;
+    const r = run({ [file]: src });
+    assert.equal(r.code, 1, r.out);
+    assert.ok(r.out.includes(`${file}:${lineOf(src, REQ)}`), r.out);
+  });
+}
+
+test('and a file one directory deeper is still reported, so widening the glob lost nothing', () => {
+  const src = `export const load = () => ${REQ}'legacy');\n`;
+  const r = run({ 'shared/cmc/qc-sample-types.ts': src });
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.out.includes(`shared/cmc/qc-sample-types.ts:${lineOf(src, REQ)}`), r.out);
+});

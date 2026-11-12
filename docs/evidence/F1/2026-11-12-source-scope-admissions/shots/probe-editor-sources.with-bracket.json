@@ -1,0 +1,47 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "reads",
+      "alone": [
+        {
+          "status": 200,
+          "ms": 5650,
+          "code": null,
+          "n": 176
+        },
+        {
+          "status": 200,
+          "ms": 4924,
+          "code": null,
+          "n": 176
+        }
+      ],
+      "together": [
+        {
+          "status": 200,
+          "ms": 4921,
+          "code": null,
+          "n": 176
+        },
+        {
+          "status": 200,
+          "ms": 9670,
+          "code": null,
+          "n": 176
+        },
+        {
+          "status": 200,
+          "ms": 14402,
+          "code": null,
+          "n": 176
+        }
+      ]
+    },
+    {
+      "name": "probe-editor-sources",
+      "ok": true
+    }
+  ]
+}

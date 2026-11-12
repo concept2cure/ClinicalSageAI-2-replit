@@ -1,0 +1,58 @@
+{
+  "base": "http://localhost:5267",
+  "label": "before",
+  "steps": [
+    "schedule"
+  ],
+  "at": "2026-11-10T16:17:00.067Z",
+  "runs": [
+    {
+      "key": "1440-light",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "before-schedule-1440-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027"
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "1440-dark",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "before-schedule-1440-dark.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027"
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "390-light",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "before-schedule-390-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027"
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "390-dark",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "before-schedule-390-dark.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027"
+        }
+      ],
+      "failed": []
+    }
+  ]
+}

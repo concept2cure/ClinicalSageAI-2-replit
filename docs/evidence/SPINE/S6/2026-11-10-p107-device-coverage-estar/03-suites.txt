@@ -1,0 +1,186 @@
+# 03-suites: the existing suites that cover this slice's files, run on the final tree (2026-11-10)
+#
+# No fixture or assertion of any of them was changed. Per file: tests passed / failed.
+
+## The eSTAR folder and its neighbours, the outline contract tests, and the other readers of the flag (default vitest project)
+   npx vitest run server/services/pathway-engines tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts server/routes/__tests__/mdx-engineering.contract.test.ts server/routes/__tests__/mdx-engineering-per-product.test.ts server/services/vault/__tests__/vault-coverage.test.ts server/services/vault/__tests__/vault-folders.test.ts server/services/medical-device/__tests__
+
+     14 / 0  server/routes/__tests__/mdx-engineering-per-product.test.ts
+     19 / 0  server/routes/__tests__/mdx-engineering.contract.test.ts
+      6 / 0  server/services/medical-device/__tests__/classify-medical-device-states-no-class-without-facts.test.ts
+      5 / 0  server/services/medical-device/__tests__/clinical-evidence-not-determined-without-deciding-facts.test.ts
+     12 / 0  server/services/medical-device/__tests__/device-verdicts-need-the-facts-that-decide-them.test.ts
+     13 / 0  server/services/medical-device/__tests__/pathway-decisions.test.ts
+     11 / 0  server/services/medical-device/__tests__/plan-device-submission.test.ts
+      5 / 0  server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts
+      1 / 0  server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts
+      8 / 0  server/services/pathway-engines/__tests__/dispatcher.test.ts
+     12 / 0  server/services/pathway-engines/__tests__/pathway-manifest.test.ts
+     21 / 0  server/services/pathway-engines/__tests__/source-aware-manifest.test.ts
+      3 / 0  server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts
+      4 / 0  server/services/pathway-engines/__tests__/technical-file-manifest.test.ts
+      6 / 0  server/services/pathway-engines/__tests__/technical-file-packager.test.ts
+     19 / 0  server/services/pathway-engines/ctis/__tests__/ctis-mapper.test.ts
+     15 / 0  server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts
+     38 / 0  server/services/pathway-engines/estar/__tests__/estar-administrative-data.governed-homes.test.ts
+     33 / 0  server/services/pathway-engines/estar/__tests__/estar-administrative-data.test.ts
+     11 / 0  server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts
+     27 / 0  server/services/pathway-engines/estar/__tests__/estar-attachment-acceptance.test.ts
+     45 / 0  server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+     29 / 0  server/services/pathway-engines/estar/__tests__/estar-attachment-slots.test.ts
+      9 / 0  server/services/pathway-engines/estar/__tests__/estar-catalog.test.ts
+     31 / 0  server/services/pathway-engines/estar/__tests__/estar-content-leaves.test.ts
+     11 / 0  server/services/pathway-engines/estar/__tests__/estar-contradictions.test.ts
+     39 / 0  server/services/pathway-engines/estar/__tests__/estar-declaration-entity.test.ts
+     11 / 0  server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts
+     23 / 0  server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts
+     13 / 0  server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts
+     45 / 0  server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+     20 / 0  server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts
+      4 / 0  server/services/pathway-engines/estar/__tests__/estar-registration-service.test.ts
+      6 / 0  server/services/pathway-engines/estar/__tests__/estar-registration.test.ts
+      5 / 0  server/services/pathway-engines/estar/__tests__/estar-submission-events.pglite.test.ts
+      5 / 0  server/services/pathway-engines/estar/__tests__/estar-submission-project.test.ts
+     13 / 0  server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+     11 / 0  server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts
+     17 / 0  server/services/pathway-engines/estar/__tests__/estar-vault-attachment-access.pglite.test.ts
+     10 / 0  server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts
+      9 / 0  server/services/pathway-engines/estar/__tests__/estar-versions.test.ts
+      6 / 0  server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts
+      5 / 0  server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts
+      7 / 0  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts
+      2 / 0  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts
+     53 / 0  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts
+      3 / 0  server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-asks-the-filing.pglite.test.ts
+     23 / 0  server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts
+     20 / 0  server/services/pathway-engines/pma/__tests__/pma-mapper.test.ts
+     21 / 0  server/services/pathway-engines/pmda/__tests__/pmda-shonin.test.ts
+     14 / 0  server/services/pathway-engines/prestar/__tests__/prestar-mapper.test.ts
+     19 / 0  server/services/vault/__tests__/vault-coverage.test.ts
+      6 / 0  server/services/vault/__tests__/vault-folders.test.ts
+      7 / 0  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+      9 / 0  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts
+
+   existing files: 55; tests passed: 834; failed: 0
+   (the run also held this slice's new suite, 52 tests, counted in 02-green.txt)
+   vitest: Test Files  56 passed (56) | Tests  886 passed (886)
+
+## The Vault route suites (default vitest project)
+   npx vitest run server/routes/c2c/__tests__/*vault*.test.ts   (without this slice's new file)
+
+      7 / 0  server/routes/c2c/__tests__/project-vault-branches.test.ts
+      3 / 0  server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts
+     15 / 0  server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+      8 / 0  server/routes/c2c/__tests__/project-vault-completion.test.ts
+      3 / 0  server/routes/c2c/__tests__/project-vault-document-count.test.ts
+      3 / 0  server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+      4 / 0  server/routes/c2c/__tests__/project-vault-governed-artifacts.pglite.test.ts
+     15 / 0  server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+     34 / 0  server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+     17 / 0  server/routes/c2c/__tests__/project-vault-saved-views.pglite.integration.test.ts
+      8 / 0  server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+     12 / 0  server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+      5 / 0  server/routes/c2c/__tests__/vault-document-details-route.test.ts
+      4 / 0  server/routes/c2c/__tests__/vault-document-history-route.test.ts
+      5 / 0  server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+      6 / 0  server/routes/c2c/__tests__/vault-download-integrity.test.ts
+      9 / 0  server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+
+   existing files: 17; tests passed: 158; failed: 0
+   vitest: Test Files  17 passed (17) | Tests  158 passed (158)
+
+## The device routes and engines that read the mapper, the content leaves and the device answers (default vitest project)
+   npx vitest run tests/routes/estar-*.test.ts tests/routes/510k-device-routes.test.ts tests/routes/device-cockpit.test.ts server/routes/__tests__/510k-*.test.ts tests/golden-journeys/device-510k-estar.journey.test.ts server/services/market-specs/__tests__ server/services/device-ivd-cockpit/__tests__ server/services/ana-advisory/__tests__/device-market-advisor.test.ts server/services/__tests__/validate-completeness-canonical.test.ts
+
+     10 / 0  server/routes/__tests__/510k-device-profile-estar-fields.test.ts
+      5 / 0  server/routes/__tests__/510k-estar-attachment-export.pglite.test.ts
+     12 / 0  server/routes/__tests__/510k-estar-attachment-slots.test.ts
+      4 / 0  server/routes/__tests__/510k-estar-entitlement.test.ts
+     46 / 0  server/services/__tests__/validate-completeness-canonical.test.ts
+     14 / 0  server/services/ana-advisory/__tests__/device-market-advisor.test.ts
+      6 / 0  server/services/device-ivd-cockpit/__tests__/cockpit.test.ts
+      8 / 0  server/services/market-specs/__tests__/biocompatibility-matrix.test.ts
+      6 / 0  server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts
+      8 / 0  server/services/market-specs/__tests__/cer-structure.test.ts
+      9 / 0  server/services/market-specs/__tests__/combination-products.test.ts
+      6 / 0  server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts
+     12 / 0  server/services/market-specs/__tests__/device-blueprint.test.ts
+     59 / 0  server/services/market-specs/__tests__/device-classification.test.ts
+      6 / 0  server/services/market-specs/__tests__/device-global-strategy.test.ts
+     24 / 0  server/services/market-specs/__tests__/device-labeling-ivd.test.ts
+      8 / 0  server/services/market-specs/__tests__/device-labeling.test.ts
+     14 / 0  server/services/market-specs/__tests__/device-readiness-scorecard.test.ts
+      6 / 0  server/services/market-specs/__tests__/device-shadow-reviewer.test.ts
+     94 / 0  server/services/market-specs/__tests__/document-preparation.test.ts
+     41 / 0  server/services/market-specs/__tests__/document-template-library.test.ts
+      9 / 0  server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts
+      7 / 0  server/services/market-specs/__tests__/electrical-safety.test.ts
+      3 / 0  server/services/market-specs/__tests__/estar-advisory-formatting.test.ts
+     10 / 0  server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts
+     10 / 0  server/services/market-specs/__tests__/market-formatting-validator.test.ts
+     46 / 0  server/services/market-specs/__tests__/market-formatting-verdict.test.ts
+      8 / 0  server/services/market-specs/__tests__/market-submission-specs.test.ts
+      7 / 0  server/services/market-specs/__tests__/pathway-eligibility.test.ts
+      9 / 0  server/services/market-specs/__tests__/per-structure.test.ts
+     10 / 0  server/services/market-specs/__tests__/post-submission-changes.test.ts
+      6 / 0  server/services/market-specs/__tests__/quality-system.test.ts
+      2 / 0  server/services/market-specs/__tests__/regional-template-source-selection.test.ts
+      4 / 0  server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts
+      7 / 0  server/services/market-specs/__tests__/regulatory-timelines.test.ts
+     28 / 0  server/services/market-specs/__tests__/risk-management-structure.test.ts
+     10 / 0  server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts
+     20 / 0  server/services/market-specs/__tests__/software-documentation-level.test.ts
+     10 / 0  server/services/market-specs/__tests__/software-lifecycle.test.ts
+      5 / 0  server/services/market-specs/__tests__/soup-items-uncounted-vulnerabilities-are-not-zero.test.ts
+      6 / 0  server/services/market-specs/__tests__/sterilization.test.ts
+      5 / 0  server/services/market-specs/__tests__/stored-cer-assessment.test.ts
+     17 / 0  server/services/market-specs/__tests__/submission-requirements.test.ts
+     12 / 0  server/services/market-specs/__tests__/udi-validator.test.ts
+     32 / 0  server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts
+      1 / 0  tests/golden-journeys/device-510k-estar.journey.test.ts
+     48 / 0  tests/routes/510k-device-routes.test.ts
+      3 / 0  tests/routes/device-cockpit.test.ts
+      9 / 0  tests/routes/estar-build-pma-package.test.ts
+      9 / 0  tests/routes/estar-entitlement-precheck.test.ts
+     20 / 0  tests/routes/estar-export-governance.test.ts
+      7 / 0  tests/routes/estar-filing-row-gate.test.ts
+     46 / 0  tests/routes/estar-official-pdf.test.ts
+     11 / 0  tests/routes/estar-registration-correspondent.test.ts
+     11 / 0  tests/routes/estar-submission-filing.test.ts
+
+   existing files: 55; tests passed: 846; failed: 0
+   vitest: Test Files  55 passed (55) | Tests  846 passed (846)
+
+## The Vault read on real PostgreSQL 16, as app_service under RLS (vitest.db.config.ts, database platform_ci_vault_fixture_s6v2)
+   npx vitest run --config vitest.db.config.ts tests/db/vault-data-room-file.dbtest.ts tests/db/vault-filing-attribution.dbtest.ts tests/db/vault-hold-notice.dbtest.ts tests/db/vault-placement-batch.dbtest.ts tests/db/vault-coverage.dbtest.ts tests/db/project-vault-parent-access.dbtest.ts tests/db/project-vault-secondary-access.dbtest.ts tests/db/vault-where-used.dbtest.ts
+
+     42 / 0  tests/db/project-vault-parent-access.dbtest.ts
+      1 / 0  tests/db/vault-coverage.dbtest.ts
+      6 / 0  tests/db/vault-data-room-file.dbtest.ts
+      3 / 0  tests/db/vault-filing-attribution.dbtest.ts
+      2 / 0  tests/db/vault-hold-notice.dbtest.ts
+      5 / 0  tests/db/vault-placement-batch.dbtest.ts
+      8 / 0  tests/db/vault-where-used.dbtest.ts
+
+   existing files: 7; tests passed: 67; failed: 0
+   vitest: Test Files  1 failed | 7 passed (8) | Tests  67 passed | 18 skipped (85)
+
+   tests/db/project-vault-secondary-access.dbtest.ts did not run: its beforeAll refuses any database but
+   platform_ci_native_recheck_20261013 (or CI's), before any application code ("Use matching declared isolated QA
+   connections and the restricted application role."). It is the "1 failed" file and its 18 tests are the "skipped"
+   above. It is not a failure of this change; it cannot be run on the database this task was given.
+
+## Total: 134 existing files, 1905 tests passed, 0 failed.
+
+## Gates
+
+   node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+     -> "no file changed its warning count since HEAD." (it lints the tracked files changed in the tree:
+        project-vault.ts, estar-mapper.ts, estar-content-leaves.ts, and two client files of another session)
+   npx eslint on this slice's new files (estar-outline-requirements.ts and the three new suites): no warnings, no errors
+   server/routes/c2c/project-vault.ts, ESLint with and without this slice's hunks: 6 warnings both ways. The Vault
+     read handler's complexity is 45 both ways; it is one line longer (269 -> 270).
+   npm run -s ci:sql-interpolation              -> OK, no new value interpolated into SQL text (this slice adds no SQL)
+   node scripts/ci/check-unrun-tests.mjs        -> OK, every test file is reachable by a runner
+   node scripts/ci/check-db-test-isolation.mjs  -> OK
+   tsc: not run here (the lead session runs it).

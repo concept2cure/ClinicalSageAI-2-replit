@@ -22,6 +22,9 @@ import type { PoolClient } from 'pg';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import { isKnownSampleType } from '../../shared/cmc/qc-sample-types';
+/* The source types' labels are shared with the CMC screens, which say a missing source record in the same words
+   (P-122 defects, 2026-11-10): see shared/cmc/module3-input-words.ts. */
+import { CMC_SOURCE_TYPE_LABELS } from '../../shared/cmc/module3-input-words';
 import {
   FINISHED_PRODUCT,
   NON_BATCH_SAMPLE_TYPES,
@@ -104,30 +107,6 @@ interface WriteThroughInput {
   /** Numeric project ID for the unified task system (concept2cure projects table) */
   numericProjectId?: number;
 }
-
-/** Human-readable labels for CMC source types */
-const SOURCE_TYPE_LABELS: Record<string, string> = {
-  drug_substance: 'Drug Substance',
-  drug_product: 'Drug Product',
-  method: 'Analytical Method',
-  stability: 'Stability Study',
-  specification: 'Specification',
-  batch: 'Batch Record',
-  change_control: 'Change Control',
-  comparability: 'Comparability Assessment',
-  process_validation: 'Process Validation',
-  manufacturing_process: 'Manufacturing Process',
-  characterization: 'Characterization',
-  reference_standard: 'Reference Standard',
-  container_closure: 'Container Closure',
-  excipient: 'Excipient',
-  impurity_profile: 'Impurity Profile',
-  dissolution_profile: 'Dissolution Profile',
-  material_spec: 'Material Specification',
-  qc_result: 'QC Result',
-  raw_material_spec: 'Raw Material Specification',
-  formulation_record: 'Formulation Record',
-};
 
 // ── Mapping helpers: legacy CMC record → canonical source payload ─────────
 
@@ -342,6 +321,13 @@ export function mapDrugProductPayload(record: Record<string, any>): Record<strin
  * every registered method composed as "Not specified / Pending" and the ICH
  * Q2 record the UI captures (ichQ2Parameters, validationDate) was dropped.
  */
+/** One characteristic's recorded evidence from the method's Q2 record, or null when none is recorded. */
+function q2Evidence(record: Record<string, any>, characteristic: string): string | null {
+  const q2 = record.ichQ2Parameters || record.ich_q2_parameters;
+  const text = q2 && typeof q2 === 'object' ? (q2 as { evidence?: Record<string, unknown> }).evidence?.[characteristic] : undefined;
+  return typeof text === 'string' && text.trim() ? text.trim() : null;
+}
+
 export function mapAnalyticalMethodPayload(record: Record<string, any>): Record<string, any> {
   return {
     methodName: alias(record, 'methodName', 'method_name', 'title'),
@@ -365,10 +351,14 @@ export function mapAnalyticalMethodPayload(record: Record<string, any>): Record<
        (`specificationMethodVerdict`). The date was already here. */
     validatedBy: alias(record, 'validatedBy', 'validated_by'),
     validation_data: record.validation_data || record.ichQ2Parameters || record.ich_q2_parameters || null,
-    specificity_data: record.specificity_data || null,
-    linearity_data: record.linearity_data || null,
-    accuracy_data: record.accuracy_data || null,
-    precision_data: record.precision_data || null,
+    /* The register's table has no column per characteristic: its evidence is
+       kept in the Q2 record (ichQ2Parameters.evidence), and was read from
+       nowhere, so the ICH Q2 check named every characteristic missing for
+       every method it holds (walked 2026-11-12). */
+    specificity_data: record.specificity_data || q2Evidence(record, 'specificity'),
+    linearity_data: record.linearity_data || q2Evidence(record, 'linearity'),
+    accuracy_data: record.accuracy_data || q2Evidence(record, 'accuracy'),
+    precision_data: record.precision_data || q2Evidence(record, 'precision'),
     robustness_data: record.robustness_data || null,
     system_suitability: record.system_suitability || record.systemSuitability || null,
     status: record.status || '',
@@ -1449,7 +1439,7 @@ async function createReviewTaskFor(
   staleSections: string[],
 ): Promise<void> {
   const { orgId, sourceType, sourceKey } = input;
-  const label = SOURCE_TYPE_LABELS[sourceType] || sourceType;
+  const label = CMC_SOURCE_TYPE_LABELS[sourceType] || sourceType;
   try {
     await unifiedTaskService.createUnifiedTask({
       moduleType: 'CMC',

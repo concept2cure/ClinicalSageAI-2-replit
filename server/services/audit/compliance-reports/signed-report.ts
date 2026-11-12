@@ -68,7 +68,7 @@ export interface SignedReportOptions {
  */
 export const VERIFY_INSTRUCTION =
   'The seal is an HMAC-SHA256 under an audit export key the platform holds; manifest.signingKeyId names the key, and ' +
-  'manifest.dataHash is the SHA-256 of data. To verify a saved file, a signed-in member of the organisation sends ' +
+  'manifest.dataHash is the SHA-256 of data. To verify a saved file, a signed-in administrator or manager of the organisation sends ' +
   '{ data, manifest, signature } to POST /api/audit/export/verify. For a CSV, data is the CSV text exactly as saved, and ' +
   'manifest and signature come from the .manifest.json saved with it. An inspector verifies through the organisation.';
 

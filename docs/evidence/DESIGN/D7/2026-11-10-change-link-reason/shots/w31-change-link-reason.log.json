@@ -1,0 +1,57 @@
+{
+  "apiErrors": [
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 422,
+      "url": "/api/mdx/qms/changes/23/links",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "changes",
+      "assessing": "CC-C9-268139:under_assessment",
+      "approved": "CC-SIGN-873701:approved"
+    },
+    {
+      "name": "drawer",
+      "reasonField": 1,
+      "required": "true",
+      "desc": 1
+    },
+    {
+      "name": "no-reason",
+      "stillOpen": 1,
+      "invalid": "true"
+    },
+    {
+      "name": "linked",
+      "toast": "VP-W31-49398 was linked to CC-C9-268139.",
+      "ref": "VP-W31-49398"
+    },
+    {
+      "name": "approved-no-reason",
+      "status": 422,
+      "error": "This change is approved, so a link states why it is added (a reason of at least 8 characters). Nothing was linked."
+    },
+    {
+      "name": "proposed-no-reason",
+      "status": 201,
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    },
+    {
+      "name": "ids",
+      "assessing": 12,
+      "proposed": 29
+    },
+    {
+      "name": "w31-change-link-reason",
+      "ok": true
+    }
+  ]
+}

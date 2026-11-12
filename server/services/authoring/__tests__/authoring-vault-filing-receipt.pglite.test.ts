@@ -5,7 +5,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { writeChainedAuditRow } from '../../auditService';
-import { readAuthoringVaultFilingReceipt } from '../authoring-vault-filing-receipt';
+import { readAuthoringVaultFilingReceipt, renderedFromOf } from '../authoring-vault-filing-receipt';
 
 const ORG = 17;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
@@ -182,5 +182,83 @@ describe('each filed section names the revision it rendered (LX-10, 2026-11-01)'
   it('a malformed revision head is not projected as provenance', async () => {
     await record({ sourceVersion: 'v1.0', sourceSectionsSha256: 'b'.repeat(64), sectionRevisions: [{ ...HEAD, chainSha256: 'not-a-hash' }] });
     expect(await readAuthoringVaultFilingReceipt(q, input)).toEqual({ status: 'unverified', reason: 'receipt_malformed' });
+  });
+});
+
+describe('a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10)', () => {
+  const SEAL = { sealVersion: 'approved', sealContentHash: 'd'.repeat(64) };
+  const base = { sourceVersion: 'v1.0', sourceSectionsSha256: 'b'.repeat(64) };
+  const source = async () => {
+    const result = await readAuthoringVaultFilingReceipt(q, input);
+    expect(result.status).toBe('recorded');
+    return (result as { source: Record<string, unknown> }).source;
+  };
+
+  it('a receipt that records the seal projects its version and content hash onto the derivation', async () => {
+    await record({ ...base, ...SEAL });
+    expect(await source()).toMatchObject({ sealedVersion: { version: 'approved', contentHash: 'd'.repeat(64) } });
+  });
+
+  it('a receipt that records the seal did not cover the filed text says so, and names no seal', async () => {
+    await record({ ...base, sealUnverified: 'SOURCE_ALTERED_SINCE_SEAL' });
+    const projected = await source();
+    expect(projected).toMatchObject({ sealUnverified: 'SOURCE_ALTERED_SINCE_SEAL' });
+    expect(projected).not.toHaveProperty('sealedVersion');
+  });
+
+  it('a working draft’s receipt, or one recorded before this, states neither', async () => {
+    await record(base);
+    const projected = await source();
+    expect(projected).not.toHaveProperty('sealedVersion');
+    expect(projected).not.toHaveProperty('sealUnverified');
+  });
+
+  it.each([
+    ['a content hash that is not one', { ...SEAL, sealContentHash: 'not-a-hash' }],
+    ['a version with no content hash', { sealVersion: 'approved' }],
+    ['a content hash with no version', { sealContentHash: 'd'.repeat(64) }],
+    ['an empty version', { ...SEAL, sealVersion: ' ' }],
+    ['a seal named and called unverified at once', { ...SEAL, sealUnverified: 'SOURCE_NOT_SEALED' }],
+    ['an unverified reason that is not text', { sealUnverified: true }],
+  ])('%s is not projected as a seal', async (_name, payload) => {
+    await record({ ...base, ...payload });
+    expect(await readAuthoringVaultFilingReceipt(q, input)).toEqual({ status: 'unverified', reason: 'receipt_malformed' });
+  });
+});
+
+/* 2026-11-12 (the document path walked in the running app): the Vault record showed the Authoring signatures a filed
+   version carries, and nothing of the sealed version it was rendered from, which the receipt records since
+   2026-11-10. renderedFromOf is what the Vault's versions read shows of it. */
+describe('what the Vault shows of where a version was rendered from', () => {
+  const base = { sourceVersion: 'v1.0', sourceSectionsSha256: 'b'.repeat(64) };
+  const shown = async () => renderedFromOf(await readAuthoringVaultFilingReceipt(q, input));
+
+  it('a sealed filing: the Authoring document and the seal it rendered', async () => {
+    await record({ ...base, sealVersion: 'approved', sealContentHash: 'd'.repeat(64) });
+    expect(await shown()).toEqual({ authoringDocumentId: SOURCE, sealVersion: 'approved', sealContentHash: 'd'.repeat(64) });
+  });
+
+  it('a sealed filing whose seal did not hold: the reason, and no seal', async () => {
+    await record({ ...base, sealUnverified: 'SOURCE_ALTERED_SINCE_SEAL' });
+    expect(await shown()).toEqual({ authoringDocumentId: SOURCE, sealUnverified: 'SOURCE_ALTERED_SINCE_SEAL' });
+  });
+
+  it('a working draft, or a receipt recorded before the seal was named: the Authoring document only', async () => {
+    await record(base);
+    expect(await shown()).toEqual({ authoringDocumentId: SOURCE });
+  });
+
+  it('a version with no filing receipt (a native upload) shows nothing', async () => {
+    expect(await shown()).toBeNull();
+  });
+
+  it('a receipt that does not verify is said to be unverified, never shown as a source', async () => {
+    await record(base);
+    await q.query(`UPDATE audit_logs SET new_values = jsonb_set(new_values::jsonb, '{sourceVersion}', '"tampered"')::json`);
+    expect(await shown()).toEqual({ notEstablished: 'unverified' });
+  });
+
+  it('a receipt that could not be read is said to be unread', () => {
+    expect(renderedFromOf({ status: 'unavailable', reason: 'read_failed' })).toEqual({ notEstablished: 'unread' });
   });
 });

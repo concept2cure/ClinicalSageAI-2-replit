@@ -103,6 +103,8 @@
     "ci:unapproved-model-pins": "node scripts/ci/check-unapproved-model-pins.mjs",
     "ci:unapproved-model-pins:selftest": "node scripts/ci/check-unapproved-model-pins.mjs --self-test",
     "ci:client-ip-single-source": "node scripts/ci/check-client-ip-single-source.mjs",
+    "ci:sse-heartbeat": "node scripts/ci/check-sse-heartbeat.mjs",
+    "ci:sse-heartbeat:selftest": "node scripts/ci/check-sse-heartbeat.mjs --self-test",
     "ci:image-document-runtime": "node scripts/ci/check-image-document-runtime.mjs",
     "ci:db-test-isolation:selftest": "node --test scripts/ci/__tests__/db-test-isolation.test.mjs",
     "ci:client-ip-single-source:selftest": "node scripts/ci/check-client-ip-single-source.mjs --self-test",
@@ -300,6 +302,7 @@
     "ci:eslint-ratchet": "node scripts/ci/check-eslint-warning-ratchet.mjs",
     "ci:pushed-lint-errors": "node scripts/ci/check-pushed-lint-errors.mjs",
     "ci:pushed-lint-warnings": "node scripts/ci/check-pushed-lint-warnings.mjs",
+    "ci:pushed-lint-gates": "node scripts/ci/check-pushed-lint-gates.mjs",
     "ci:pushed-typecheck": "node scripts/ci/check-pushed-typecheck.mjs",
     "ci:untracked-imports": "node scripts/ci/check-untracked-imports.mjs",
     "ci:untracked-imports:selftest": "node scripts/ci/check-untracked-imports.selftest.mjs",
@@ -756,6 +759,9 @@
     "linkify-it": "^5.0.2",
     "postcss": {
       "nanoid": "3.3.18"
+    },
+    "pptxgenjs": {
+      "image-size": "2.0.4"
     },
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "^3.15.1"

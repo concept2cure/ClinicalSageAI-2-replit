@@ -23,6 +23,7 @@ import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '../../../../shared/constants/md
 import {
   LAUNCH_APPS,
   LAUNCH_MODULE_IDS,
+  LAUNCH_SHELL_SURFACES,
   LAUNCH_SURFACE_IDS,
   isLaunchSurface,
 } from '../../../../shared/constants/launch-scope';
@@ -172,9 +173,17 @@ describe('the scope list itself', () => {
   it.each([
     ['ana-command', 'enterprise-only, and says runs are recorded that are not'],
     ['ana-memory', 'shows a store nothing writes, not the memory AnA loads'],
-    ['training', 'no path, lesson or certification exists'],
   ])('the shell no longer carries %s — %s', (surface) => {
     expect(isLaunchSurface(surface)).toBe(false);
+  });
+  // Training left the shell on 2026-10-08 (no path, lesson or certification)
+  // and returned as Help & training by P-127 (2026-11-12, 1207a3c307): the Help
+  // Center, courses and support requests, for every member. It is a shell
+  // surface, not an app, and not GxP training (that is the QMS read-and-understood record).
+  it('the shell carries Help & training again — P-127', () => {
+    expect(isLaunchSurface('training')).toBe(true);
+    expect(LAUNCH_SHELL_SURFACES.training).toMatch(/P-127/);
+    for (const a of LAUNCH_APPS) expect(a.surfaces, a.id).not.toContain('training');
   });
   it('every app keeps a screen a client can work in', () => {
     for (const a of LAUNCH_APPS) expect(a.surfaces.length).toBeGreaterThan(0);
@@ -202,8 +211,11 @@ describe('the folded Artifacts center and device vault', () => {
        module; an existing grant is kept, deprecated, by the catalogue. */
     const vault = LAUNCH_APPS.find((app) => app.id === 'vault')!;
     const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
-    expect(vault.surfaces).toEqual(['vault']);
+    // The trial master file is a section of the Vault since the eTMF's admission (2026-11-12, P-124 item 6); its
+    // module stays its own, in the professional band (P-75), and is not a launch module.
+    expect(vault.surfaces).toEqual(['vault', 'etmf']);
     expect(vault.modules).toEqual(['vault']);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('etmf');
     expect(projects.surfaces).not.toContain('device-vault');
     expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-vault');
     for (const id of ['artifacts-center', 'device-vault']) {

@@ -229,9 +229,12 @@ export function EsignModal({
   // enrolled, so the signing endpoint will require its code. The caller may say
   // so up front with `requireMfa`; when it does not know, the server does.
   const [mfaEnrolled, setMfaEnrolled] = React.useState(false);
-  const needCode = requireMfa || mfaEnrolled;
   // The server's statement, read each time the dialog opens; null until it answers.
   const posture = useSigningPosture(open);
+  // An enrolled signer is asked for the code with the password, not after a
+  // first attempt the server sends back for it (GA-D4-12 production walk: the
+  // reviewer entered a password, pressed Sign and was then asked for a code).
+  const needCode = requireMfa || mfaEnrolled || posture?.authenticatorEnrolled === true;
   const mustEnrol = posture?.authenticatorRequired === true && !posture.authenticatorEnrolled;
   const [phase, setPhase] = React.useState<'form' | 'committing' | 'signed'>('form');
   const [manifest, setManifest] = React.useState<EsigSignedManifest | null>(null);
@@ -461,7 +464,8 @@ export function EsignModal({
               </div>
               {manifest.hash ? (
                 <div className="es-manifest-row">
-                  <span>Chain</span>
+                  {/* What the governed action returned to seal: a content or record hash, not the audit chain's link. */}
+                  <span>Integrity hash</span>
                   <span className="es-mono">{manifest.hash}</span>
                 </div>
               ) : null}

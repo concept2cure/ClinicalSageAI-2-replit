@@ -1,0 +1,16 @@
+1440 version row offers: View version 1.0 of [Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled
+1440 frames on the page: 1
+1440 framed in: the reading drawer, 1040px wide; frame 1039x835px
+1440 drawer title: Reading [Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled v1.0
+1440 hash line: SHA-256 44cf3a1bedc69fc4… — verified against the vault record before it was served
+1440 frames after close: 0
+1440 console errors: []
+1440 responses >= 400: []
+390 version row offers: View version 1.0 of [Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled
+390 frames on the page: 1
+390 framed in: the reading drawer, 390px wide; frame 390x739px
+390 drawer title: Reading [Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled v1.0
+390 hash line: SHA-256 44cf3a1bedc69fc4… — verified against the vault record before it was served
+390 frames after close: 0
+390 console errors: []
+390 responses >= 400: []

@@ -1,0 +1,9 @@
+After the at-risk change (working tree on 7a34155c0); projectCreationDoors.contract fails at HEAD too (Vault.tsx, another lane)
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > one click reads Sentinel’s open findings, the blockers and the work due within 7 days 353ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > an empty register says what was looked at, never "no risk" 71ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > lists the blockers and the due work the server returned 100ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > a failed read is said, never shown as an empty answer 86ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > closes, and asks again on the next click 101ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > leaves no client code that lists the organization's blockers or names the retired screen 267ms
+ Test Files  17 passed (17)
+      Tests  93 passed (93)

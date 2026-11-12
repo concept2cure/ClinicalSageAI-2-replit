@@ -1,0 +1,6 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx   (the Library as it stood)
+ × client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > holds the search, saved views, the two scopes and every filter, outside the list’s column 5064ms
+ × client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > spans the grid, and its filters share the row (the stylesheet; jsdom applies none) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

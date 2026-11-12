@@ -1,0 +1,65 @@
+{
+  "at": "2026-11-10T14:59:20.048Z",
+  "organizationId": "5",
+  "projects": {
+    "C2C-101": {
+      "projectId": 2,
+      "sectionsTracked": 107,
+      "sectionsWithOwner": 8,
+      "sectionsOverdue": 1,
+      "sectionOwners": 4,
+      "timeline": {
+        "sectionDeadlines": 8,
+        "milestones": 3
+      },
+      "milestoneTasks": 12,
+      "tasksByStatus": {
+        "done": 1,
+        "in_progress": 1,
+        "todo": 10
+      },
+      "rollup": {
+        "workProjects": 2,
+        "tasksAcrossHierarchy": 14,
+        "done": 1,
+        "blocked": 1,
+        "overdue": 0,
+        "worstRiskLevel": "medium"
+      }
+    },
+    "LMN-201": {
+      "projectId": 5,
+      "sectionsTracked": 107,
+      "sectionsWithOwner": 6,
+      "sectionsOverdue": 1,
+      "sectionOwners": 4,
+      "timeline": {
+        "sectionDeadlines": 6,
+        "milestones": 3
+      },
+      "milestoneTasks": 12,
+      "tasksByStatus": {
+        "done": 3,
+        "in_progress": 1,
+        "todo": 7,
+        "blocked": 1
+      },
+      "rollup": {
+        "workProjects": 2,
+        "tasksAcrossHierarchy": 13,
+        "done": 3,
+        "blocked": 1,
+        "overdue": 0,
+        "worstRiskLevel": "medium"
+      }
+    }
+  },
+  "atRisk": {
+    "sentinelOpenFindings": 11,
+    "blockers": 0,
+    "dueOrOverdueIn7Days": [
+      "Task: Check the ileal delivery figures against the CDI01 study report (due 2026-11-08)",
+      "Task: Confirm the week-12 cure definition matches the protocol (due 2026-11-13)"
+    ]
+  }
+}

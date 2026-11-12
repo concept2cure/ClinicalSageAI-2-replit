@@ -1,0 +1,10 @@
+ ✓ reading a document from its record > a PDF is offered View beside Download, and opens in a reading drawer through the audited route 497ms
+ ✓ reading a document from its record > a Word document is offered View as PDF, which asks for its rendition and says what it is 370ms
+ ✓ reading a document from its record > a file that is neither is offered no view 340ms
+ ✓ reading a document from its record > bytes that are not a PDF are downloaded, no drawer opens, and the record says why 297ms
+ ✓ reading a document from its record > a refusal says what the Vault said, in the record 261ms
+ × reading an earlier version from the record’s Versions section > opens in the same wide reading drawer as the record’s own View, and frames nothing inside the record 5156ms
+ ✓ reading an earlier version from the record’s Versions section > a refusal is said in the Versions section, where the View was pressed, and not under the record’s actions 174ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find role="dialog" and name `/^Reading stability-summary-24m v1\.0/`
+      Tests  1 failed | 6 passed (7)

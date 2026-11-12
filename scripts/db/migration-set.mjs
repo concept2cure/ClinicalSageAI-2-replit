@@ -2911,6 +2911,19 @@ export const C2C_MIGRATION_FILES = [
   // by design (install-fresh's surface list, tenantColumn: null). Above the
   // final pair because ci:migration-set-order pins those last.
   // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
+  //
+  // The Report OS foundation, ahead of the seed and of both tenant installers
+  // (its header: "the canonical child-parent and integer tenant policy installers
+  // run after this foundation"). Amended in place 2026-10-13 (0e4ccf46f4) so a
+  // program group's membership records its organisation, and Run history,
+  // project access and scope ownership read `gp.organization_id` since. But it was
+  // on no deploy path: install-fresh reads `migrations/`, deploy-migrate does
+  // not. So a database installed before 2026-10-13 never got the column, and Run
+  // history answered 500 (Reporting use walk, 2026-11-09). Every statement is
+  // IF NOT EXISTS or guarded; its preflight refuses a membership whose group and
+  // project disagree and rewrites nothing; it drops nothing. Its prerequisites are
+  // drizzle base tables. Evidence docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/.
+  'migrations/0014_report_os_foundation.sql',
   'migrations/20260930_report_type_registry_seed.sql',
   'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
   'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
@@ -3805,6 +3818,41 @@ export const C2C_MIGRATION_FILES = [
   // parent_task_id with its FK, a not-self check (each added only when absent, by name) and an index. Additive,
   // replay-safe, drops nothing; no new table, so the sweeps below have nothing new to policy.
   'migrations/20261109_unified_tasks_parent_task.sql',
+  // The data room's grade and subscription (S2, 2026-11-06): five nullable grade columns on
+  // cre_evidence_sources (a deterministic engine's grade and its basis) and 'data_room' admitted by
+  // c2c_pinned_ev_kind_check, replaced only when its live definition differs. Additive; no table.
+  'migrations/20261106_data_room_grade.sql',
+  // A TMF filing names its study, and a removal stays on record (D2, eTMF convergence E2 and E3,
+  // P-74 and P-75, 2026-11-10): study_ref on tmf_artifact_filings with a NOT VALID same-org key
+  // to cdisc_prm_studies (id, tenant_id), ON DELETE SET NULL (study_ref), the 20261008d shape;
+  // removed_at, removed_by, removal_reason and a CHECK that a removal carries its reason. After
+  // the table's creator (20260615), 20260926b and 20261008d. Each statement runs only when its
+  // object is absent; no DROP; no new table, so the sweeps below have nothing new to policy.
+  // Amended in place 2026-11-12 (P-124 item 5): not_applicable_reason and the CHECK that a
+  // declaration names no document and carries a reason, each only when absent.
+  'migrations/20261110_tmf_filings_study_ref.sql',
+  // P-122 defects, item 2 (2026-11-10): projects.risk_level loses its DEFAULT 'medium', a risk nobody assessed that
+  // the hierarchy roll-up reported as one. Conditional on the column still having a default; changes no row; no table.
+  // Its only creator is push, and shared/schema.ts drops the default in the same change (RULE 1).
+  'migrations/20261110_projects_risk_level_not_defaulted.sql',
+  // Support requests (P-127, S13, 2026-11-12): the four support tables, until now applied by install-fresh only.
+  // Public with organization_id INTEGER NOT NULL, so the sweep below gives each its tenant policy;
+  // support_ticket_messages gains that column from its ticket and a same-organisation key, amended in place in the
+  // creating file (RULE 1). Every statement is guarded; no DROP.
+  'migrations/0007_support_admin.sql',
+  // The Vault catalog record carries a dataset's profile (S2, the data catalog, 2026-11-12): two nullable columns on
+  // vault.document_catalog (dataset_profile, dataset_profiled_at), so a dataset filed in the Vault is graded for CDISC
+  // conformance as a captured one is. ADD COLUMN IF NOT EXISTS only; no table, constraint, trigger or DROP.
+  'migrations/20261112_vault_catalog_dataset_profile.sql',
+  // Rate limits counted across API tasks (P-129, MR-03 Stage 7, 2026-11-12): public.rate_limit_counters, organization
+  // 0 and the system scope only, as session_activity. New table and index, IF NOT EXISTS; no DROP. Public with
+  // organization_id INTEGER NOT NULL, so the sweep below gives it its tenant policy.
+  'migrations/20261112b_rate_limit_counters.sql',
+  // The eTMF module moves to the professional band on its admission to the Vault (P-75, P-124 item 6, 2026-11-12).
+  // Data only: the band on available_modules, and an explicit grant for an organisation below it that already held
+  // filings. After every catalog writer (20260814j inserts the row with tiers [] and does nothing on conflict), so
+  // the band is the final word on each deploy. No table, column or DROP.
+  'db/migrations/20261112_etmf_module_professional_tier.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

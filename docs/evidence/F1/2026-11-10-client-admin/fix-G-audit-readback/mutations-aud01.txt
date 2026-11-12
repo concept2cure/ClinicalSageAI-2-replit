@@ -1,0 +1,13 @@
+KILLED M5 ledger: target stays the reference | Tests  7 failed | 2 passed (9) | restored sha256 ok
+KILLED M6 ledger: no reason fallback to the stored values | Tests  2 failed | 7 passed (9) | restored sha256 ok
+KILLED M7 words: settings values ignored (as before) | Tests  3 failed | 10 passed (13) | restored sha256 ok
+KILLED M8 words: a missing value is not said | Tests  1 failed | 8 passed (9) | restored sha256 ok
+KILLED M9 words: a missing reason is not said | Tests  1 failed | 8 passed (9) | restored sha256 ok
+KILLED M10 words: unnamed person shown as nothing (falls back to reference) | Tests  1 failed | 8 passed (9) | restored sha256 ok
+KILLED M11 export: stored values not selected | Tests  4 failed (4) | restored sha256 ok
+KILLED M12 export: words not added | Tests  2 failed | 2 passed (4) | restored sha256 ok
+KILLED M13 export CSV: columns dropped | Tests  1 failed | 3 passed (4) | restored sha256 ok
+KILLED M14 words: role words lost (raw enum shown) | Tests  2 failed | 7 passed (9) | restored sha256 ok
+10/10 mutations killed
+KILLED M15 audit.export row named by its type again | Tests  1 failed | 9 passed (10) | restored sha256 ok
+1/1 mutations killed

@@ -1,0 +1,73 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/batch-records",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "batchNumber": "B2-20261112003432",
+      "productName": "Drug substance",
+      "status": "in-progress",
+      "yieldData": {
+        "percent": 94
+      },
+      "deviations": {
+        "open": 0
+      },
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 31,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "285e5faa-1d21-428e-8613-8de7da5de719",
+        "organization_id": 2,
+        "project_id": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "batch_number": "B2-20261112003432",
+        "batch_type": null,
+        "material_type": null,
+        "scale": null,
+        "site": null,
+        "manufacturing_date": null,
+        "expiry_date": null,
+        "batch_size": null,
+        "batch_size_unit": null,
+        "yield": null,
+        "yield_unit": null,
+        "purpose": null,
+        "process_version": null,
+        "deviations": {
+          "open": 0
+        },
+        "disposition": null,
+        "linked_analyses": null,
+        "linked_stability_study_id": null,
+        "specification_compliance": null,
+        "oos_events": null,
+        "created_at": "2026-11-12T00:34:40.322Z",
+        "updated_at": "2026-11-12T00:34:40.322Z",
+        "product_name": "Drug substance",
+        "manufacturing_site": null,
+        "status": "in-progress",
+        "process_parameters": null,
+        "in_process_controls": null,
+        "yield_data": {
+          "percent": 94
+        },
+        "release_testing": null,
+        "release_status": null,
+        "released_by": null,
+        "released_at": null,
+        "tenant_id": "2"
+      },
+      "message": "Batch record created successfully",
+      "timestamp": "2026-11-12T00:34:40.332Z",
+      "module3Linked": true
+    }
+  }
+}

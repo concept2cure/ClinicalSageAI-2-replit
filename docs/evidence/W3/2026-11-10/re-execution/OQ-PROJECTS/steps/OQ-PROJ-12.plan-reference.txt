@@ -1,0 +1,19 @@
+Reference guide
+
+Authored filing-family guidance. Clinical-trial authorization.
+
+This is general catalog reference, not this project’s status, deadline or agency commitment. Applicable requirements and timelines need to be checked for the filing and jurisdiction.
+
+Use recorded agency requirements and correspondence for the steps and dates of your filing. Platform support is stated separately in the filing offer.
+
+Timing examples: IND: 30-day default review -- IDE: 30-day FDA decision
+
+Pre-IND meeting
+Assemble IND/IDE
+Submit
+30-day safety review
+Trial may proceed
+Amendments & safety reports
+Ongoing
+
+If it comes back: Clinical Hold. FDA may place a full or partial clinical hold within 30 days. Resolve every hold issue in a complete response; the trial resumes only on FDA's written removal of the hold.

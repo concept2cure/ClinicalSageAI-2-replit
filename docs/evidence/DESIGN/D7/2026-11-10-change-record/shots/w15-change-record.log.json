@@ -1,0 +1,98 @@
+{
+  "apiErrors": [
+    {
+      "who": "author",
+      "width": 1440,
+      "status": 409,
+      "url": "/api/mdx/qms/changes/13",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "read-proposed",
+      "facts": [
+        [
+          "Current state → proposed state",
+          "One gasket supplier → two qualified suppliers."
+        ],
+        [
+          "Reason for the change",
+          "Walk C9: single-source risk on the fill-line gasket."
+        ],
+        [
+          "Risk",
+          "Medium"
+        ],
+        [
+          "Impact assessment",
+          "Extractables comparison; no filing change."
+        ],
+        [
+          "Implementation plan",
+          "Qualify the second supplier."
+        ]
+      ]
+    },
+    {
+      "name": "assessed",
+      "toast": "The assessment of CC-C9-313681 was saved."
+    },
+    {
+      "name": "read-assessed",
+      "facts": [
+        [
+          "Current state → proposed state",
+          "One gasket supplier → two qualified suppliers."
+        ],
+        [
+          "Reason for the change",
+          "Walk C9: single-source risk on the fill-line gasket."
+        ],
+        [
+          "Risk",
+          "Medium"
+        ],
+        [
+          "Impact assessment",
+          "Extractables comparison; no filing change."
+        ],
+        [
+          "Implementation plan",
+          "Qualify the second supplier; update the fill-line batch record."
+        ]
+      ]
+    },
+    {
+      "name": "under-assessment",
+      "status": 200
+    },
+    {
+      "name": "ceremony-record",
+      "text": "What you approveCurrent state → proposed stateOne gasket supplier → two qualified suppliers.Reason for the changeWalk C9: single-source risk on the fill-line gasket.RiskMediumImpact assessmentExtractables comparison; no filing change.Implementation planQualify the second supplier; update the fill-line batch record."
+    },
+    {
+      "name": "manifest",
+      "text": "ActionApprove changeClassificationMinorCurrent state → proposed stateOne gasket supplier → two qualified suppliers.Reason for the changeWalk C9: single-source risk on the fill-line gasket.RiskMediumImpact assessmentExtractables comparison; no filing change.Implementation planQualify the second supplier; update the fill-line batch record.Target implementation dateNot recorded yet.Signed byQuinn Approver · approver@qs.testMeaningApprovalReasonWalk C9: approved as assessed.When2026-11-10 05:42:08 UTCNov 10, 2026, 05:42 · UTCChain1ed77355f81a50eb745e9f7ef51891b0b5a5578cf1594a8e68585e80d6d63a05"
+    },
+    {
+      "name": "approved-row",
+      "status": "approved"
+    },
+    {
+      "name": "approved-more",
+      "group": "Link a recordAsk AnA"
+    },
+    {
+      "name": "approved-edit",
+      "status": 409,
+      "error": "This change is approved, so its content is fixed: it is what its approval signed. Nothing was saved. To amend it, raise a new change request.",
+      "stored": "Qualify the second supplier; update the fill-line batch record."
+    },
+    {
+      "name": "w15-change-record",
+      "ok": true
+    }
+  ]
+}

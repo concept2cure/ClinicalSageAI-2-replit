@@ -1,0 +1,10 @@
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed register read as a failure, with no count and no all-clear
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > claims nothing while the register is still loading
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed training read as a failure, not "no training-controlled documents"
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows no training compliance figure when nothing is training-controlled, instead of a red 0%
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box
+ × client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > an assigned document shows how many of the people assigned are current, and the reader's own line; the KPI is the server's average
+ × client/src/concept2cure/v2/__tests__/sopRegisterReadHonesty.test.tsx > SopRegister — a register read and empty > does not call it all current, and states no overdue count
+ × client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > gives an all-clear only where training is assigned, and none where nothing is or that is unknown
+ Test Files  5 failed | 24 passed (29)
+      Tests  8 failed | 321 passed (329)

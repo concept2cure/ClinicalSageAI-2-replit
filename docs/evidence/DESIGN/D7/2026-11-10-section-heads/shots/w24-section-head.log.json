@@ -1,0 +1,124 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "sop-1440",
+      "title": 308,
+      "titleLines": 1,
+      "actions": [
+        "AllEffectiveUnder reviewDraft@303",
+        "New controlled document@305"
+      ],
+      "sentence": "P@347: 9 controlled documents: 1 in force, 3 in review, 5 draft; none overdue for review.",
+      "pageScroll": false,
+      "dates": [
+        "2026-11-10:16px",
+        "—:16px",
+        "—:16px"
+      ]
+    },
+    {
+      "name": "Change control-1440",
+      "title": 305,
+      "titleLines": 1,
+      "actions": [
+        "Raise change request@303"
+      ],
+      "sentence": "P@343: 9 open of 9 in the log; 2 awaiting approval; none in implementation; none overdue.",
+      "pageScroll": false,
+      "dates": []
+    },
+    {
+      "name": "CAPA-1440",
+      "title": 305,
+      "titleLines": 1,
+      "actions": [
+        "Raise CAPA@303"
+      ],
+      "sentence": "P@343: The 100 most recently updated CAPAs: Open CAPAs: 100 (0 closed) · Past target close: 0 · H",
+      "pageScroll": false,
+      "dates": []
+    },
+    {
+      "name": "sop-1280",
+      "title": 308,
+      "titleLines": 1,
+      "actions": [
+        "AllEffectiveUnder reviewDraft@303",
+        "New controlled document@305"
+      ],
+      "sentence": "P@347: 9 controlled documents: 1 in force, 3 in review, 5 draft; none overdue for review.",
+      "pageScroll": false,
+      "dates": [
+        "2026-11-10:16px",
+        "—:16px",
+        "—:16px"
+      ]
+    },
+    {
+      "name": "Change control-1280",
+      "title": 305,
+      "titleLines": 1,
+      "actions": [
+        "Raise change request@303"
+      ],
+      "sentence": "P@343: 9 open of 9 in the log; 2 awaiting approval; none in implementation; none overdue.",
+      "pageScroll": false,
+      "dates": []
+    },
+    {
+      "name": "CAPA-1280",
+      "title": 305,
+      "titleLines": 1,
+      "actions": [
+        "Raise CAPA@303"
+      ],
+      "sentence": "P@343: The 100 most recently updated CAPAs: Open CAPAs: 100 (0 closed) · Past target close: 0 · H",
+      "pageScroll": false,
+      "dates": []
+    },
+    {
+      "name": "sop-390",
+      "title": 286,
+      "titleLines": 1,
+      "actions": [
+        "AllEffectiveUnder reviewDraft@319",
+        "New controlled document@351"
+      ],
+      "sentence": "P@391: 9 controlled documents: 1 in force, 3 in review, 5 draft; none overdue for review.",
+      "pageScroll": false,
+      "dates": [
+        "2026-11-10:16px",
+        "—:16px",
+        "—:16px"
+      ]
+    },
+    {
+      "name": "Change control-390",
+      "title": 286,
+      "titleLines": 1,
+      "actions": [
+        "Raise change request@319"
+      ],
+      "sentence": "P@359: 9 open of 9 in the log; 2 awaiting approval; none in implementation; none overdue.",
+      "pageScroll": false,
+      "dates": []
+    },
+    {
+      "name": "CAPA-390",
+      "title": 286,
+      "titleLines": 1,
+      "actions": [
+        "Raise CAPA@319"
+      ],
+      "sentence": "P@359: The 100 most recently updated CAPAs: Open CAPAs: 100 (0 closed) · Past target close: 0 · H",
+      "pageScroll": false,
+      "dates": []
+    },
+    {
+      "name": "w24-section-head",
+      "ok": true
+    }
+  ]
+}

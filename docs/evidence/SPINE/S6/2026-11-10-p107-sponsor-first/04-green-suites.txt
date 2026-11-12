@@ -1,0 +1,24 @@
+# Green, on the tree merged with trunk (1df7d0b48 plus the picker and the refused listing's words)
+## The Vault's server and client suites, the eSTAR and converter suites, the company and commitment screens
+ Test Files  208 passed (208)
+      Tests  2578 passed (2578)
+
+## The picker, the refused listing, trunk's sponsor question
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a CRO's sponsors never mix in the governed artifacts listing > inside a project, reads its sponsor's projects only, and the heading names the sponsor 
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a CRO's sponsors never mix in the governed artifacts listing > with no project open, each row says whose project it is 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open and several sponsors, the Vault asks which sponsor first > lists the sponsors, and reads and shows nothing of any sponsor until o
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open and several sponsors, the Vault asks which sponsor first > once chosen, lists that sponsor's projects only and reads its artifact
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a listing the server refuses until a client is chosen > says the artifacts are listed one client at a time, with no retry and no claim that the read f
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a listing the server refuses until a client is chosen > tells AnA the same, not that a read failed 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > the picker searches one client at a time > asks which client when the library search is refused, then searches that client's Vaults only 63ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > a CRO's sponsors never mix in one list > inside a project, the library is its sponsor's projects, and the headline names the sponsor once 108ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > a CRO's sponsors never mix in one list > across every project, each row says whose project it is 9ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultSponsors.test.ts > the sponsors of the projects a person can open > groups projects by sponsor, in name order, with the unanchored last 8ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultSponsors.test.ts > the sponsors of the projects a person can open > asks which sponsor when there is more than one, and shows nothing of any until one is chosen 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultSponsors.test.ts > the sponsors of the projects a person can open > a sponsor that is no longer in the list is asked for again, never widened to all 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultSponsors.test.ts > the sponsors of the projects a person can open > one sponsor needs no question, and is anchored all the same 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultSponsors.test.ts > the sponsors of the projects a person can open > reads the sponsor from the client workspace, never from the segment (found walking: ws is "Biotech", "MDX"
+
+## Real PostgreSQL (RLS on): tests/db/vault-library-search.dbtest.ts, tests/db/vault-estar-required-sections.dbtest.ts
+ Test Files  2 passed (2)
+      Tests  21 passed (21)

@@ -1,0 +1,42 @@
+[
+ {
+  "viewport": 1440,
+  "url": "http://127.0.0.1:5240/concept2cure/device-510k?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "doorOnProjectPage": 0,
+  "line": "The openFDA clearance lookup could not run. The FDA's public clearance database could not be reached from this server. Try again later.",
+  "rawFetchFailed": false,
+  "json": false,
+  "overflowX": 0,
+  "rec": {
+   "http": [
+    "ana 503 GET /api/predicate-intelligence/candidates?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED",
+    "ana 503 GET /api/predicate-intelligence/se-matrix?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED"
+   ],
+   "console": [
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "pageErrors": []
+  }
+ },
+ {
+  "viewport": 390,
+  "url": "http://127.0.0.1:5240/concept2cure/device-510k?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "doorOnProjectPage": 0,
+  "line": "The openFDA clearance lookup could not run. The FDA's public clearance database could not be reached from this server. Try again later.",
+  "rawFetchFailed": false,
+  "json": false,
+  "overflowX": 0,
+  "rec": {
+   "http": [
+    "ana 503 GET /api/predicate-intelligence/candidates?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED",
+    "ana 503 GET /api/predicate-intelligence/se-matrix?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED"
+   ],
+   "console": [
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "pageErrors": []
+  }
+ }
+]

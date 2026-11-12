@@ -1,0 +1,20 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > the Quality projection says in the log why it was unavailable > logs the cause of a failed projection with the project and the error code, and still answers 503
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts:57:20
+     55|     await expect(syncQualityProjectSources({ organizationId: 7, progra…
+     56|       .rejects.toMatchObject({ status: 503, code: 'QUALITY_SOURCE_PROJ…
+     57|     expect(h.warn).toHaveBeenCalledTimes(1);
+       |                    ^
+     58|     const [message, context] = h.warn.mock.calls[0];
+     59|     expect(message).toMatch(/Quality source projection/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  03:04:16
+   Duration  2.26s (transform 1.09s, setup 91ms, import 1.85s, tests 23ms, environment 0ms)
+

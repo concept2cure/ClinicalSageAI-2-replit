@@ -14,7 +14,11 @@ import express from 'express';
 import request from 'supertest';
 
 const eula = vi.hoisted(() => ({ getOutstandingAgreements: vi.fn() }));
-vi.mock('../../services/licensing/eula-service.js', () => eula);
+// The real error class: the gate tells "not set up" apart by it (F1, 2026-11-10).
+vi.mock('../../services/licensing/eula-service.js', async original => ({
+  AgreementStoreUnavailableError: (await original<typeof import('../../services/licensing/eula-service')>()).AgreementStoreUnavailableError,
+  getOutstandingAgreements: eula.getOutstandingAgreements,
+}));
 
 import { requireLicenseAcceptance } from '../requireLicenseAcceptance';
 
@@ -62,6 +66,16 @@ describe('requireLicenseAcceptance', () => {
     const res = await request(appFor(USER)).get('/gated');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ reached: true });
+  });
+
+  it('says plainly that agreements are not set up when their records do not exist (F1, 2026-11-10, W1-05)', async () => {
+    const { AgreementStoreUnavailableError } = await import('../../services/licensing/eula-service.js');
+    eula.getOutstandingAgreements.mockRejectedValue(new AgreementStoreUnavailableError());
+    const res = await request(appFor(USER)).get('/gated');
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    expect(res.body.error).toMatch(/not set up/i);
+    expect(res.body).not.toHaveProperty('reached');
   });
 
   it('answers 401 without a user (control)', async () => {

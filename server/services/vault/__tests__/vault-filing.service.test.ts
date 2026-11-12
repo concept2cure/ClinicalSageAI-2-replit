@@ -413,3 +413,66 @@ describe('the classifier note names the folder a person sees', () => {
     expect(c.rationale).not.toMatch(/\bcorresp\b|biotech view/);
   });
 });
+
+/* Decided as the subject-matter expert under the founder's instruction of 2026-11-10 ("you decide as the SME would"):
+   in a pharma or biotech Vault a "Risk management plan" is the dossier's own document (the EU RMP, Module 1.8.2), and
+   the device rule for the ISO 14971 risk file does not claim it there. In a device Vault the same name is part of the
+   risk management file, as before. Evidence: docs/evidence/SPINE/S6/2026-11-10-rmp-classifier/. */
+describe('a Risk management plan belongs to the dossier in a pharma or biotech Vault', () => {
+  const RMP_NAMES = ['Risk management plan.pdf', 'Risk-Management-Plan-v2.docx', 'EU Risk Management System.pdf'];
+
+  it("is proposed for Module 1 at its region's heading, the same answer the name RMP already gets", () => {
+    for (const view of ['pharma', 'biotech'] as const) {
+      for (const fileName of RMP_NAMES) {
+        const eu = classifyForFiling({ fileName, view, jurisdiction: 'EU', applicationKind: 'maa' });
+        expect(eu, `${view} ${fileName}`).toMatchObject({ folderId: 'module-1', ctdSection: '1.8.2', needsReview: false });
+        expect(eu.rationale, fileName).toMatch(/Module 1 follows the project's region: EU 1\.8\.2/);
+        expect(classifyForFiling({ fileName, view, jurisdiction: 'JP', applicationKind: 'jnda' }).ctdSection, fileName).toBe('1.11');
+        // No region given (the US record, which gives an RMP no single heading): Module 1, and a person confirms where.
+        expect(classifyForFiling({ fileName, view }), fileName).toEqual(classifyForFiling({ fileName: 'RMP draft.pdf', view }));
+      }
+    }
+  });
+
+  it('is never told it is a device risk file, or a quality-system record', () => {
+    for (const fileName of RMP_NAMES) {
+      const c = classifyForFiling({ fileName, view: 'pharma' });
+      expect(c.rationale, fileName).not.toMatch(/engineering|DHF|risk file|Quality module/i);
+      expect(c.folderId, fileName).toBe('module-1');
+    }
+  });
+
+  it('in a device or IVD Vault the same name is still part of the risk management file', () => {
+    for (const view of ['device', 'ivd'] as const) {
+      for (const fileName of RMP_NAMES.slice(0, 2)) {
+        expect(classifyForFiling({ fileName, view }), `${view} ${fileName}`).toMatchObject({ folderId: 'eng', evidenceKind: 'report', needsReview: false });
+      }
+    }
+  });
+
+  it("a device risk file's own names are not claimed for the dossier", () => {
+    for (const fileName of ['Risk management file ISO 14971.pdf', 'ISO 14971 risk management plan.pdf', 'Device risk management plan.pdf', 'RMF risk analysis report.pdf', 'FMEA.xlsx']) {
+      const c = classifyForFiling({ fileName, view: 'pharma', jurisdiction: 'EU', applicationKind: 'maa' });
+      expect(c, fileName).toMatchObject({ folderId: null, ctdSection: null, needsReview: true, evidenceKind: 'report' });
+      expect(c.rationale, fileName).toMatch(/^Matched engineering \/ DHF \/ risk file, but the pharma vault has no folder for that kind/);
+    }
+  });
+});
+
+describe('a kind with no folder in this Vault says only what is true of it', () => {
+  it('says quality-system records live in the Quality module for a quality-system record only', () => {
+    expect(classifyForFiling({ fileName: 'SOP-021-document-control.docx', view: 'pharma' }).rationale)
+      .toBe('Matched quality-system record, but the pharma vault has no folder for that kind. Quality-system records live in the Quality module, not the dossier: review where it belongs.');
+    for (const [fileName, view, label] of [
+      ['Design verification report.pdf', 'pharma', 'engineering / DHF / risk file'],
+      ['PSUR 2026.pdf', 'biotech', 'post-market vigilance record'],
+      ['510k predicate comparison.pdf', 'pharma', '510(k) / eSTAR submission artifact'],
+      ['ectd sequence 0003 index.xml', 'device', 'eCTD sequence artifact'],
+    ] as const) {
+      const c = classifyForFiling({ fileName, view });
+      expect(c, fileName).toMatchObject({ folderId: null, needsReview: true, confidence: 'none' });
+      expect(c.rationale, fileName).toBe(`Matched ${label}, but the ${view} vault has no folder for that kind. Review where it belongs.`);
+      expect(c.rationale, fileName).not.toMatch(/Quality module/);
+    }
+  });
+});

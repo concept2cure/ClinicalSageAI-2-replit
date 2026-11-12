@@ -1,0 +1,136 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "before",
+      "complaints": 2,
+      "mdr": 1
+    },
+    {
+      "name": "complaint-form",
+      "sub": "Recorded in C11, the project you have open, as new. Its number and its preliminary reportability are the server’s."
+    },
+    {
+      "name": "complaint-recorded",
+      "toast": "CMP-2026-0003 was recorded.",
+      "refusal": []
+    },
+    {
+      "name": "complaints-after",
+      "count": 3,
+      "mine": {
+        "facts": [
+          "CMP-2026-0003",
+          "Walk 39: gasket seal failed in use, device stopped (43855).",
+          "2026-11-10",
+          "No harm",
+          "FDA: reportable · EU: not reportable",
+          "New"
+        ],
+        "actions": [
+          "Move",
+          "Record MDR decision",
+          "Ask AnA about this record"
+        ]
+      }
+    },
+    {
+      "name": "complaint-moved",
+      "offered": [
+        "Select…",
+        "Triaged",
+        "Escalated to CAPA",
+        "Escalated to MDR",
+        "Closed"
+      ],
+      "toast": "CMP-2026-0003 was recorded.",
+      "refusal": []
+    },
+    {
+      "name": "mdr-form",
+      "sub": "In the complaint's project. Preliminary reportability: FDA: reportable · EU: not reportable.",
+      "narrativePrefilled": true
+    },
+    {
+      "name": "mdr-recorded",
+      "toast": "CMP-2026-0003 moved to Triaged.",
+      "refusal": []
+    },
+    {
+      "name": "mdr-after",
+      "withoutReload": true,
+      "count": 2,
+      "mine": {
+        "facts": [
+          "MDR-2026-0002",
+          "Walk 39: gasket seal failed in use, device stopped (43855).",
+          "FDA",
+          "FDA 30-day",
+          "2026-11-10",
+          "2026-12-10",
+          "Open"
+        ],
+        "actions": [
+          "Move",
+          "Ask AnA about this record"
+        ]
+      },
+      "complaint": {
+        "facts": [
+          "CMP-2026-0003",
+          "Walk 39: gasket seal failed in use, device stopped (43855).",
+          "2026-11-10",
+          "No harm",
+          "FDA: reportable · EU: not reportable",
+          "Triaged"
+        ],
+        "actions": [
+          "Move",
+          "Ask AnA about this record"
+        ]
+      }
+    },
+    {
+      "name": "mdr-moved",
+      "offered": [
+        "Select…",
+        "Preparing",
+        "Closed"
+      ],
+      "labels": [
+        "Move to*",
+        "Reason for this move*",
+        "FDA report number (when filed)",
+        "EU report number (when filed)"
+      ],
+      "toast": "MDR-2026-0002 was recorded from CMP-2026-0003.",
+      "refusal": []
+    },
+    {
+      "name": "timeline",
+      "events": [
+        "Complaint triaged2026-11-12Walk 39: triaged as a device malfunction without injury.",
+        "Complaint received2026-11-10"
+      ],
+      "empty": [],
+      "alerts": []
+    },
+    {
+      "name": "figures",
+      "line": "1 document in force · 0 due for review within 120 days · 10 open changes · 101 open CAPAs · 0 nonconformances awaiting disposition · 3 open complaints · 0 MDR reports overdue · 1 critical supplier not approved · 1 open internal audit · 0 lapsed acknowledgements",
+      "registers": [
+        "Open: 3 (0 closed) · Serious injury or death, open: 0 · Reportability not determined: 0",
+        "Open: 2 (0 closed) · Overdue, not filed: 0 · Filed: 0"
+      ]
+    },
+    {
+      "name": "phone",
+      "pageScrolls": false
+    },
+    {
+      "name": "w39-complaint-to-mdr",
+      "ok": true
+    }
+  ]
+}

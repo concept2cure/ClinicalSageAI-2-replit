@@ -1,0 +1,106 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > recording a commitment > names this organisation's submission, or none, and never another tenant's 16ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission has one live project in its own organisation, or none that can admit a write 9ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a meeting's submission is read in its own organisation only 3ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission is readable in no program, or in a program of the reader’s scope 6ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with no scope given, lists as the screens always have: every commitment of the organisation 6ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with a reader’s program scope, lists those that name no submission, one in no program, or one in scope 9ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > never another organisation's, whatever the scope 5ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > names its submission and its meeting for admission, in its own organisation only 3ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > a project's own commitment is not the organisation's door's to admit 3ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > is listed for a reader who can open the meeting's submission, and not for one who cannot 8ms
+stderr | server/routes/__tests__/commitment-fulfil-route.test.ts
+
+stderr | server/routes/__tests__/commitment-fulfil-route.test.ts
+{
+  "timestamp": "2026-11-12T03:36:11.887Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape 5ms
+stderr | server/routes/__tests__/ha-interactions-commitment-admission.test.ts
+
+stderr | server/routes/__tests__/ha-interactions-commitment-admission.test.ts
+{
+  "timestamp": "2026-11-12T03:36:13.844Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ha-interactions-commitment-admission.test.ts > GET /api/ha-interactions/commitments > a scope that cannot be read is an error, never an unscoped list
+{
+  "timestamp": "2026-11-12T03:36:14.923Z",
+  "level": "error",
+  "message": "[commitment-fulfil-route] recording or reading a commitment fulfilment failed",
+  "context": {
+    "err": "sharing policy unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > is refused, with nothing recorded, when it names a submission whose project the person may not change 32ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > is refused the same way when it names a meeting on such a submission 5ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > refuses a submission that is in no project here: no edit right could admit it 3ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > records it when the project admits the write 3ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > a commitment that names neither is the organisation's own: recorded with no project asked 3ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > GET /api/ha-interactions/commitments > lists for the reader: the list is bound to the projects this person can open 4ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > GET /api/ha-interactions/commitments > a scope that cannot be read is an error, never an unscoped list 3ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > refuses a milestone on a commitment whose project the person may not change, with nothing recorded 4ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > refuses its fulfilment before the fulfilment route is reached 5ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > answers a refused read of what could fulfil it as not found, never confirming the commitment 3ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > a commitment made at a meeting is admitted by that meeting's submission 2ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > when the project admits it, the milestone is recorded and the fulfilment route is reached 5ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > the organisation's own commitment, naming neither, asks no project 2ms
+ ✓ server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > a commitment that is not here is left to the route, which says so in its own words 2ms
+stderr | server/routes/__tests__/ha-interactions-meeting-admission.test.ts
+
+stderr | server/routes/__tests__/ha-interactions-meeting-admission.test.ts
+{
+  "timestamp": "2026-11-12T03:36:15.891Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ha-interactions-meeting-admission.test.ts > POST /api/ha-interactions/interactions > is refused, with nothing recorded, when the person may not change the submission's project 28ms
+ ✓ server/routes/__tests__/ha-interactions-meeting-admission.test.ts > POST /api/ha-interactions/interactions > records it when the project admits the write 5ms
+ ✓ server/routes/__tests__/ha-interactions-meeting-admission.test.ts > POST /api/ha-interactions/interactions > refuses a submission that is not one of a project here, and a date that is not a date 7ms
+ ✓ server/routes/__tests__/ha-interactions-meeting-admission.test.ts > a meeting's questions and readiness > refuses a question on a meeting whose project the person may not change, with nothing recorded 5ms
+ ✓ server/routes/__tests__/ha-interactions-meeting-admission.test.ts > a meeting's questions and readiness > answers a refused read of its readiness as not found, never confirming the meeting 3ms
+stderr | server/routes/__tests__/ha-interactions-error-containment.test.ts
+
+stderr | server/routes/__tests__/ha-interactions-error-containment.test.ts
+{
+  "timestamp": "2026-11-12T03:36:17.674Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-11-12T03:36:18.453Z",
+  "level": "error",
+  "message": "[ha-interactions] handling the health-authority interaction request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 21ms
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 4ms
+
+ Test Files  5 passed (5)
+      Tests  43 passed (43)
+   Start at  03:36:07
+   Duration  11.42s (transform 1.55s, setup 145ms, import 8.01s, tests 2.42s, environment 0ms)
+

@@ -47,6 +47,8 @@ import { SURFACE_VIEWS } from '../surfaceViews';
 import { RAIL_CORE } from '../registryModel';
 import { NAVIGATION_TARGETS } from '@shared/navigation';
 import { CALCULATORS } from '../surfaces/biostatCalculators';
+import { __resetSurfaceActionBus, applySurfaceAction } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
 const Surface = Biostatistics as unknown as React.ComponentType<Record<string, unknown>>;
 const RETIRED = 'biostat-workbench';
@@ -113,6 +115,27 @@ describe('zero capability loss — the ledger', () => {
     for (const c of CALCULATORS) {
       expect(screen.getAllByRole('button', { name: c.title }).length, `no way to open ${c.title}`).toBeGreaterThan(0);
     }
+  });
+
+  /* The ledger's "AnA opening an engine by name" row, on the mounted surface.
+     The action bus holds ONE registration, so the section registering its own
+     under `biostatistics` was replaced by the surface's (effects run child
+     first): the action answered "This screen does not support" on the screen
+     that lists it, and a design named while the list loaded was answered the
+     same way before the list arrived (heldScreenActions.test.tsx). */
+  it('lets AnA open a design engine by name on the one surface', async () => {
+    quietServer();
+    __resetSurfaceActionBus();
+    render(<Surface onAsk={() => {}} onNav={() => {}} />);
+    await waitFor(() => expect(screen.getByText('Design calculators')).toBeTruthy());
+    const target = CALCULATORS[CALCULATORS.length - 1];
+    const res = resolveSurfaceAction('biostatistics.select-calculator', { calculator: target.id });
+    if (!res.ok) throw new Error('biostatistics.select-calculator does not resolve');
+    expect(applySurfaceAction(res.directive, vi.fn())).toEqual({ status: 'applied', detail: `Opened ${target.title}` });
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: target.title }).some((b) => b.getAttribute('aria-pressed') === 'true')).toBe(true),
+    );
+    __resetSurfaceActionBus();
   });
 
   it('still carries what it already had: the adaptive monitoring and precedent panels', async () => {

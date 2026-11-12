@@ -24,7 +24,9 @@
  * a session the limit ended kept working on the other task, and the limit
  * counted per task (U20). A session with no record is still measured from its
  * token's issue. Memory is the fallback when the store cannot be reached: the
- * session is then judged by what this process has seen, as before.
+ * session is then judged by what this process has seen, as before. That state
+ * is not a quiet one: in production /readyz reads the same table and reports
+ * the task not ready (startup/readyz.ts, `sessions`; MR-03 Stage 7 step 4).
  *
  * A concurrent-session limit, the tenant's `settings.security.maxConcurrentSessions`
  * (DEFAULT_MAX_CONCURRENT_SESSIONS when unset): every sign-in registers its

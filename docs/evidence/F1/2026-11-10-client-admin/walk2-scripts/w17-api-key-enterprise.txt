@@ -1,0 +1,51 @@
+// Walk 2, flow 3b: the positive use of an API key, on a plan that includes the public API. Done in the seeded
+// organisation by this walk's own administrator account there (walk2.admin); the key is revoked in the same run.
+const c = require('./lib.cjs');
+const http = (path, headers = {}) => fetch(c.BASE + path, { headers }).then(async (r) => ({ status: r.status, headers: Object.fromEntries([...r.headers.entries()].filter(([k]) => /^x-(rate|weekly|quota)/i.test(k))), body: (await r.text()).slice(0, 400) }));
+const dlg = (page) => page.locator('[role=dialog]').first();
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2admin', 'walk2.admin@example.test', { fresh: true });
+  const tab = async () => { await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200); await page.getByRole('tab', { name: 'API keys' }).or(page.getByRole('button', { name: 'API keys', exact: true })).first().click(); await c.sleep(1500); };
+  let key = null; let keyId = null;
+  await c.step('create a documents:read key (seeded organisation, enterprise plan)', async (s) => {
+    s.notes.push('in: ' + (await page.locator('button', { hasText: 'Wanda Walker' }).first().innerText()).replace(/\n+/g, ' | '));
+    await tab();
+    await page.getByRole('button', { name: 'Create API key' }).click(); await c.sleep(600);
+    await dlg(page).getByLabel(/Key name/).fill('Walk 2 documents reader (revoked in the same run)');
+    await dlg(page).getByLabel('documents:read').check();
+    await dlg(page).getByLabel(/Requests per minute/).fill('3');
+    await dlg(page).getByLabel(/Reason/).fill('F1 walk 2: confirm a key reaches the route in its scope; revoked immediately after');
+    await dlg(page).getByRole('button', { name: /Create API key/ }).click(); await c.sleep(2500);
+    key = await dlg(page).getByLabel('API key secret').inputValue();
+    await dlg(page).getByRole('button', { name: /Done/ }).click(); await c.sleep(1200);
+    keyId = Number(c.psql(`select id from api_keys where organization_id=2 and status='active' order by id desc limit 1`));
+    s.notes.push('key id ' + keyId + ' ' + c.psql(`select key_prefix, scopes, rate_limit, status from api_keys where id=${keyId}`));
+  });
+  await c.step('use it', async (s) => {
+    const k = { 'X-API-Key': key };
+    const strip = (r) => `${r.status} ${JSON.stringify(r.headers)} ${r.body.split(key).join('<the key>').slice(0, 260)}`;
+    s.notes.push('in scope: GET /api/v1/documents?limit=2 -> ' + strip(await http('/api/v1/documents?limit=2', k)));
+    s.notes.push('out of scope: GET /api/v1/csr/search?q=oncology -> ' + strip(await http('/api/v1/csr/search?q=oncology', k)));
+    s.notes.push('another organisation\'s document id: GET /api/v1/documents/00000000-0000-0000-0000-000000000000 -> ' + strip(await http('/api/v1/documents/00000000-0000-0000-0000-000000000000', k)));
+    for (let i = 0; i < 4; i += 1) s.notes.push(`rate limit 3/min, call ${i + 3}: ` + strip(await http('/api/v1/documents?limit=1', k)));
+    s.notes.push('per-use records: api_usage_logs ' + c.psql(`select count(*) from api_usage_logs where organization_id=2`) + ' | audit_logs naming the key ' + c.psql(`select count(*) from audit_logs where tenant_id=2 and (target like 'api_key:${keyId}%' or new_values::text like '%"keyId":${keyId}%' or new_values::text like '%api_key%') and action not in ('api_key_created','api_key_revoked')`) + ' | usage_records ' + c.psql(`select count(*) from usage_records where organization_id=2`));
+    s.notes.push('the key row: ' + c.psql(`select request_count, last_used_at is not null from api_keys where id=${keyId}`));
+    s.notes.push('audit actions in the seeded organisation since the key was made: ' + c.psql(`select string_agg(action, ', ') from (select action from audit_logs where tenant_id=2 and occurred_at > now() - interval '1 minute' order by occurred_at) x`));
+  });
+  await c.step('usage in the console, then revoke, then use again', async (s) => {
+    await tab();
+    await page.getByRole('button', { name: /^Usage for Walk 2/ }).first().click(); await c.sleep(1500);
+    s.notes.push('usage: ' + (await dlg(page).innerText()).replace(/\n+/g, ' | '));
+    await dlg(page).getByRole('button', { name: 'Done' }).click(); await c.sleep(500);
+    const row = page.locator('main').getByText('Walk 2 documents reader (revoked in the same run)').first().locator('xpath=ancestor::*[.//button[contains(., "Revoke")]][1]');
+    await row.getByRole('button', { name: /Revoke/ }).first().click(); await c.sleep(600);
+    s.notes.push('confirm: ' + (await dlg(page).innerText()).split('\n')[1]);
+    await dlg(page).getByRole('button', { name: 'Revoke key' }).click(); await c.sleep(2000);
+    s.notes.push('row: ' + c.psql(`select id, status, revoked_at is not null from api_keys where id=${keyId}`));
+    const r = await http('/api/v1/documents?limit=1', { 'X-API-Key': key }); s.notes.push('after revoke: ' + r.status + ' ' + r.body.split(key).join('<the key>').slice(0, 160));
+    s.notes.push('active keys left in the seeded organisation from this walk: ' + c.psql(`select count(*) from api_keys where organization_id=2 and status='active' and name like 'Walk 2%'`));
+  });
+  c.report(); c.save('w2-17-api-key-enterprise');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -1,0 +1,85 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "productName": "BX-702 5 mg film-coated tablet",
+      "batchNumber": "P2-20261110130629",
+      "dosageForm": "tablet",
+      "scope": "DP",
+      "climaticZone": "II",
+      "studyType": "long_term",
+      "storageConditions": [
+        "LT",
+        "25C/60%RH"
+      ],
+      "duration": 24,
+      "testParameters": [
+        "assay"
+      ],
+      "timePoints": [
+        "0",
+        "3",
+        "6",
+        "12",
+        "24"
+      ],
+      "status": "ACTIVE",
+      "startDate": "2026-01-15T00:00:00.000Z",
+      "shelfLife": "24 months when stored at or below 25 C",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 38,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 66,
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "studyTitle": null,
+        "productName": "BX-702 5 mg film-coated tablet",
+        "batchNumber": "P2-20261110130629",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "LT",
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "3",
+          "6",
+          "12",
+          "24"
+        ],
+        "stabilityData": null,
+        "notes": null,
+        "shelfLife": "24 months when stored at or below 25 C",
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-15T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-10T13:06:42.424Z",
+        "updatedAt": "2026-11-10T13:06:42.424Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

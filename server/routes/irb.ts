@@ -25,8 +25,9 @@ import {
   createSubmissionTx,
   setSubmissionStatusTx,
   setSubmissionContextTx,
+  linkSubmissionTx,
   IRB_CONTEXT_FIELDS,
-  type IrbContextField,
+  type IrbContextInput,
   recordReviewTx,
   addSiteTx,
   addConsentDocumentTx,
@@ -34,6 +35,7 @@ import {
   addReportableEventTx,
   listSubmissions,
   getCompletenessInput,
+  getSubmissionRecord,
   getPackageManifest,
   getLifecycleStatus,
 } from '../services/irb/irb-service';
@@ -202,6 +204,9 @@ const contextSchema = z
     isIndStudy: z.boolean().nullable().optional(),
     usesPhi: z.boolean().nullable().optional(),
     usesRecruitmentMaterial: z.boolean().nullable().optional(),
+    // 45 CFR 46.111(b): the same three answers, and the safeguards documented (2026-11-12).
+    involvesVulnerablePopulations: z.boolean().nullable().optional(),
+    vulnerablePopulationProtections: z.string().max(4000).nullable().optional(),
     reason,
   })
   .strict();
@@ -214,13 +219,33 @@ router.patch('/submissions/:id/context', async (req, res) => {
   /* Picked by name rather than by spreading everything-but-reason: the
      service distinguishes a field that is ABSENT from one that is `null`, so
      what reaches it has to be exactly the facts this request mentioned. */
-  const facts: Partial<Record<IrbContextField, boolean | null>> = {};
+  const facts: IrbContextInput = {};
   for (const [field] of IRB_CONTEXT_FIELDS) {
     if (field in parsed.data) facts[field] = parsed.data[field] ?? null;
   }
+  if ('vulnerablePopulationProtections' in parsed.data) facts.vulnerablePopulationProtections = parsed.data.vulnerablePopulationProtections ?? null;
   await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
     const out = await setSubmissionContextTx(client, orgId, id, facts);
     return { target: `irb-submission:${id}`, payload: { recorded: out.recorded }, body: out };
+  });
+});
+
+/*
+ * Linking an existing IRB submission to its Submission Center submission (D1).
+ * Creation was the only way to set the link, so a submission recorded without
+ * one never had a package. Strict, so a typo is a 400. The service refuses
+ * another organization's submission and refuses to move a link that exists.
+ */
+const linkSchema = z.object({ submissionId: z.number().int().positive(), reason }).strict();
+
+router.patch('/submissions/:id/link', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = linkSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    const out = await linkSubmissionTx(client, orgId, id, parsed.data.submissionId);
+    return { target: `irb-submission:${id}`, payload: { linkedSubmissionId: out.submissionId }, body: out };
   });
 });
 
@@ -318,6 +343,17 @@ router.post('/submissions/:id/reportable-events', async (req, res) => {
   });
 });
 
+/* What is on file for the submission: determinations, sites, consent documents,
+   amendments and reportable events. Each had a write and no read, so nothing a
+   person recorded could be shown back to them (2026-11-12). Read-only. */
+router.get('/submissions/:id/record', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try { res.json(await getSubmissionRecord(orgId, id)); } catch (err) { fail(res, err); }
+});
+
 /* The package manifest (docs/design/IRB_SUBMISSION.md step 3): which artifacts
    a board expects of THIS submission, and which its linked Submission Center
    submission actually carries. Read-only; it records no governed action,
@@ -359,9 +395,9 @@ router.get('/submissions/:id/completeness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const client = await pool.connect();
   try {
-    const input = await getCompletenessInput(client, orgId, id);
+    // Through the pool, inside the tenant scope: a bare connection carries none (2026-11-12).
+    const input = await getCompletenessInput(orgId, id);
     const completeness = evaluateIrbCompleteness(input);
     const rec = recommendReviewType({ riskLevel: input.riskLevel });
     /* `continuingReview` used to be served here from continuingReviewStatus,
@@ -375,8 +411,6 @@ router.get('/submissions/:id/completeness', async (req, res) => {
     res.json({ completeness, lifecycle, recommendedReview: rec });
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 

@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/drug-substances",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "7b6a70be-a800-4013-80ad-b52a0b6626e4",
+      "substanceName": "Q1E-within-DS",
+      "modality": "small_molecule",
+      "status": "development",
+      "developmentPhase": "phase1",
+      "manufacturingProcess": {
+        "route": "Three-step chemical synthesis; final crystallisation from ethanol"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 39,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 68,
+        "organizationId": 2,
+        "projectId": "7b6a70be-a800-4013-80ad-b52a0b6626e4",
+        "substanceName": "Q1E-within-DS",
+        "structuralFormula": null,
+        "molecularFormula": null,
+        "molecularWeight": null,
+        "casNumber": null,
+        "inn": null,
+        "manufacturingProcess": {
+          "route": "Three-step chemical synthesis; final crystallisation from ethanol"
+        },
+        "specifications": null,
+        "impuritiesProfile": null,
+        "stability": null,
+        "controlOfMaterials": null,
+        "modality": "small_molecule",
+        "biologicalOrigin": null,
+        "sourceOrganism": null,
+        "cellLine": null,
+        "viralSafetyEvaluation": null,
+        "tseStatus": null,
+        "status": "development",
+        "developmentPhase": "phase1",
+        "createdAt": "2026-11-12T00:55:31.960Z",
+        "updatedAt": "2026-11-12T00:55:31.960Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

@@ -14,6 +14,11 @@
  *                          drafting versions the key can see (none: blocked).
  * --probe-openai-usage   : EXPLICIT, BILLABLE one-response API smoke; may
  *                          identify quota/billing without claiming CSR PQ.
+ * --probe-anthropic-usage: EXPLICIT, BILLABLE one-response Messages request to
+ *                          the first of --expect-anthropic-models that answers.
+ *                          The model list is free and is answered for an account
+ *                          with no credit; only a real request shows whether the
+ *                          key can draft.
  * --check-app            : requests existing http://127.0.0.1:5000/readyz.
  * --json                 : machine-readable results (no secrets).
  */
@@ -314,6 +319,74 @@ export async function checkAnthropic({ env, fetcher, timeoutMs = 10000, expected
   }
 }
 
+/**
+ * One small, billable Messages request to an approved drafting model: the only check that shows the key can draft.
+ *
+ * The model list (checkAnthropic) is answered for an account with no credit and for a key whose workspace cannot
+ * call a model it can see, so "key accepted; drafting models available" was printed at a Codespace's start while
+ * every drafting call was refused (2026-11-10). `models` is the approved drafting versions, in ladder order; a model
+ * the account cannot use (404) is passed over for the next, and any other refusal ends the probe, since it would be
+ * the same on every model. The request is the surface the app's gateway sends these models: no sampling parameter,
+ * no thinking budget, effort in output_config. Neither the key nor the provider's own error text is returned.
+ */
+export async function checkAnthropicDrafting({ env, fetcher, models = [], timeoutMs = 60000 }) {
+  if (!secretSet(env.ANTHROPIC_API_KEY)) {
+    return { status: 'missing', code: 'ANTHROPIC_KEY_MISSING',
+      explanation: 'Set ANTHROPIC_API_KEY in GitHub Codespaces secrets for this repository, then stop and start the Codespace.' };
+  }
+  if (!models.length) {
+    return { status: 'blocked', code: 'ANTHROPIC_DRAFTING_MODELS_NOT_NAMED',
+      explanation: 'Name the approved drafting versions with --expect-anthropic-models=a,b; no request was sent.' };
+  }
+  const headers = {
+    'x-api-key': env.ANTHROPIC_API_KEY,
+    // The version the app's SDK sends, so the probe is refused or served as the app's own calls are.
+    'anthropic-version': '2023-06-01',
+    'Content-Type': 'application/json',
+    ...(secretSet(env.ANTHROPIC_WORKSPACE_ID) ? { 'anthropic-workspace-id': env.ANTHROPIC_WORKSPACE_ID } : {}),
+  };
+  const modelsRefused = [];
+  try {
+    for (const model of models) {
+      const response = await fetcher('https://api.anthropic.com/v1/messages', {
+        method: 'POST', headers, signal: AbortSignal.timeout(timeoutMs),
+        body: JSON.stringify({ model, max_tokens: 64, output_config: { effort: 'low' },
+          messages: [{ role: 'user', content: 'Reply with the single word OK.' }] }),
+      });
+      const body = await response.json().catch(() => null);
+      if (response.ok) {
+        return { status: 'passed', code: 'ANTHROPIC_DRAFTING_CALL_ACCEPTED', httpStatus: response.status,
+          model, modelsRefused, authenticationVerified: true, billingVerified: true,
+          explanation: 'One small billable request to ' + model + ' was answered: this key can reach an approved drafting model. ' +
+            'This does not qualify the model (PQ) or any draft.' };
+      }
+      const type = typeof body?.error?.type === 'string' ? body.error.type.toLowerCase() : '';
+      if (response.status === 404 || type === 'not_found_error') { modelsRefused.push(model); continue; }
+      const code = classifyAnthropicResponse(response.status, body);
+      return { status: 'blocked', code, httpStatus: response.status, model, modelsRefused,
+        authenticationVerified: !['ANTHROPIC_KEY_INVALID', 'ANTHROPIC_WORKSPACE_OR_POLICY'].includes(code),
+        billingVerified: false,
+        explanation: code === 'ANTHROPIC_QUOTA_OR_BILLING'
+          ? 'The key is valid, but its Anthropic account has no credit for API requests, so every drafting call is refused. Add credit in the Anthropic Console (Billing) for the workspace this key belongs to.'
+          : code === 'ANTHROPIC_KEY_INVALID' ? 'Anthropic refused the key. Replace it in the Codespaces secret, then stop and start the Codespace.'
+          : code === 'ANTHROPIC_WORKSPACE_OR_POLICY' ? 'Anthropic refused the request for this key\'s workspace. Check the workspace\'s permissions and limits in the Anthropic Console.'
+          : code === 'ANTHROPIC_RATE_LIMIT' ? 'The request was rate limited; this is not proof of exhausted credit. Run the check again in a minute.'
+          : code === 'ANTHROPIC_REQUEST_REJECTED' ? 'Anthropic rejected the request itself (400). The app sends these models the same request shape, so report this.'
+          : 'Anthropic did not answer the request. Check its status and this Codespace\'s outbound network.' };
+    }
+    return { status: 'blocked', code: 'ANTHROPIC_DRAFTING_MODELS_NOT_AVAILABLE', httpStatus: 404, modelsRefused,
+      authenticationVerified: true, billingVerified: false,
+      explanation: 'The key was accepted, but Anthropic serves none of the approved drafting versions (' + models.join(', ') +
+        ') to it. Give the key\'s workspace access to one of them in the Anthropic Console.' };
+  } catch (error) {
+    // Never echo a network/client error containing a credential or URL.
+    return { status: 'blocked', code: String(error?.name) === 'TimeoutError'
+      ? 'ANTHROPIC_NETWORK_TIMEOUT' : 'ANTHROPIC_NETWORK_FAILURE', modelsRefused,
+      authenticationVerified: false, billingVerified: false,
+      explanation: 'Codespaces could not reach the Anthropic Messages endpoint; check DNS/networking.' };
+  }
+}
+
 /** Run the existing, exhaustive schema/grant audit AS the request-serving role. */
 export async function probeDatabase({ config, connectDb }) {
   if (!config.ok) return { status: 'blocked', code: 'DB_CONFIGURATION_INVALID' };
@@ -455,6 +528,7 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
   const expectArg = args.find(a => a.startsWith('--expect-anthropic-models='));
   const expectedModels = expectArg ? expectArg.slice(expectArg.indexOf('=') + 1).split(',').map(x => x.trim()).filter(Boolean) : [];
   if (args.includes('--probe-anthropic')) report.anthropic = await checkAnthropic({ env, fetcher, expectedModels });
+  if (args.includes('--probe-anthropic-usage')) report.anthropicDrafting = await checkAnthropicDrafting({ env, fetcher, models: expectedModels });
   if (args.includes('--check-app')) report.application = await checkApplication({
     fetcher, port: Number(env.PORT) || 5000 });
   const required = [
@@ -464,6 +538,7 @@ export async function runCodespacesDoctor({ env = process.env, args = [], fetche
   ];
   if (args.includes('--probe-openai') || args.includes('--probe-openai-usage')) required.push(report.openai.status === 'passed');
   if (args.includes('--probe-anthropic')) required.push(report.anthropic.status === 'passed');
+  if (args.includes('--probe-anthropic-usage')) required.push(report.anthropicDrafting.status === 'passed');
   if (args.includes('--check-app')) required.push(report.application.status === 'passed');
   report.prerequisitesVerified = required.every(Boolean);
   report.applicationVerified = args.includes('--check-app') && report.application.status === 'passed';

@@ -26,10 +26,12 @@
  *   DEMO_BASE_URL=http://localhost:5400 node scripts/demo/launch-demo/seed.mjs --pack mdx --purge
  */
 import { must, findDemo, sha256, connectSigner, makeMultiPagePdfBuffer } from '../lib.mjs';
-import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
+import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, NEUROPANEL_OBJECTIVE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, rowsOf, latin1, probe, finding } from './mdx-shared.mjs';
+import { connectApprover } from './lumen-vault.mjs';
+import { seedFiling, removeProbeLeaf } from './mdx-filing.mjs';
 import { qmsDocs, seedQms } from './mdx-qms.mjs';
-import { makeTally } from './biotech-shared.mjs';
+import { ensureObjective, makeTally, pastReview } from './biotech-shared.mjs';
 import { ensureTasks } from './work-areas.mjs';
 
 /** NeuroPanel-Dx's 510(k) work on the task board (fictional device; planning values). */
@@ -224,12 +226,28 @@ async function ensureAuthoringDoc(ctx, spec, programId) {
 const reviewerOf = (signer, identity) =>
   signer
     ? { id: Number(signer.userId), name: signer.session.user?.displayName ?? signer.email, email: signer.email }
-    : { id: Number(identity.userId), name: identity.email, email: identity.email };
+    : { id: Number(identity?.userId), name: identity?.email, email: identity?.email };
 
-async function ensureReviewRequested({ api }, docId, reviewer) {
-  const reviews = must(await api('GET', `/api/authoring/documents/${docId}/reviews`), 200, 'list reviews').reviews ?? [];
+/**
+ * Who reviews the 510(k) Summary and who approves it. Where an organisation has more than one member, the person
+ * who reviewed a version does not approve it (P-95 as clarified 2026-11-09, P-116). Until 2026-11-12 the second
+ * signer did both, which the product does not refuse yet (GA-ADV-01), so the seed worked and would have stopped the
+ * day it does. The reviewer is the third person (OQ_APPROVER_*, lumen-vault.mjs connectApprover, as the Codespace
+ * supplies its reviewer); the approver is the second signer (OQ_SIGNER_*). With two people the second reviews and
+ * seals, and nobody approves.
+ */
+export function summaryPeople(signer, third) {
+  return { reviewer: third ?? signer ?? null, approver: third ? signer ?? null : null };
+}
+const REVIEWER_CANNOT_APPROVE =
+  'not executed — the second signer reviewed this version, and the person who reviewed a version does not approve it; supply a third person (OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD) to review';
+
+export async function ensureReviewRequested({ api }, doc, reviewer) {
+  const reviews = must(await api('GET', `/api/authoring/documents/${doc.id}/reviews`), 200, 'list reviews').reviews ?? [];
   if (reviews.some((x) => x.reviewer_email === reviewer.email)) return false;
-  must(await api('POST', `/api/authoring/documents/${docId}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
+  // A previous run took it past review; the server refuses a request on it (AUTHORING_DOCUMENT_IMMUTABLE).
+  if (pastReview(doc.status)) return false;
+  must(await api('POST', `/api/authoring/documents/${doc.id}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
   return true;
 }
 
@@ -257,11 +275,13 @@ async function settleSummaryComment({ api, run }, doc) {
   return `comment ${comment.id} ${created ? 'created and ' : ''}resolved`;
 }
 
-async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
+/** The reviewer (a signed-in person other than the author) is asked, signs the review and seals v1.0. */
+export async function reviewAndFreezeSummary({ api, run }, doc, signer) {
   // Independent review: the server refuses the author as their own reviewer
   // (REVIEWER_IS_AUTHOR), so without a second person review and freeze wait.
   if (!signer) return `review and freeze not executed — ${SIGNER_ABSENT}`;
-  const requested = await ensureReviewRequested({ api }, doc.id, reviewer);
+  const reviewer = reviewerOf(signer);
+  const requested = await ensureReviewRequested({ api }, doc, reviewer);
   const review = await signReview({ run }, doc, signer);
   let workflow = 'existing';
   if (doc.status === 'DRAFT') {
@@ -290,7 +310,7 @@ async function signReview({ run }, doc, signer) {
   return `review signed by ${signer.email}`;
 }
 
-/** A freeze is a signature (DP-35), so the second signer, the QA reviewer, seals v1.0 for approval as REVIEWER. */
+/** A freeze is a signature (DP-35), so the QA reviewer seals v1.0 for approval as REVIEWER. */
 export async function freezeSummary({ api, run }, doc, signer) {
   let frozen = await api('GET', `/api/authoring/docs/${doc.id}/frozen`);
   let how = 'already frozen';
@@ -312,8 +332,14 @@ export async function freezeSummary({ api, run }, doc, signer) {
   return `${how} (${String(f.contentHash).slice(0, 12)}…)`;
 }
 
-export async function signSummary({ api, run }, docId, signer) {
+export async function signSummary({ api, run }, docId, signer, people = null) {
   const sigs = must(await api('GET', `/api/authoring/docs/${docId}/signatures`), 200, 'list signatures').signatures ?? [];
+  // Two people: the second signer reviewed, so nobody approves, unless an approval is already on record.
+  if (!signer && people?.reviewer && !sigs.some((s) => s.meaning === 'APPROVER')) {
+    run.note(`Authoring e-sign: ${REVIEWER_CANNOT_APPROVE}`);
+    run.record('authoring.summarySignature', { executed: false, note: REVIEWER_CANNOT_APPROVE, signaturesPresent: sigs.length });
+    return REVIEWER_CANNOT_APPROVE;
+  }
   // The approval, not the signer's REVIEWER signature on the freeze.
   const isApproval = (s) => s.signer_email === signer?.email && s.meaning === 'APPROVER';
   const already = signer ? sigs.find(isApproval) : null;
@@ -347,9 +373,10 @@ async function ensureOpenComment({ api }, doc) {
   }), [200, 201], 'comment on section').comment;
 }
 
-async function seedAuthoring(ctx, programId, signer) {
+async function seedAuthoring(ctx, programId, signer, third = null) {
   const { run, identity } = ctx;
-  const reviewer = reviewerOf(signer, identity);
+  const people = summaryPeople(signer, third);
+  const reviewer = reviewerOf(people.reviewer, identity);
   const out = {};
   await run.step('Authoring: 510(k) Summary (sections per 21 CFR 807.92)', async () => {
     out.summary = await ensureAuthoringDoc(ctx, AUTHORING.summary, programId);
@@ -357,8 +384,8 @@ async function seedAuthoring(ctx, programId, signer) {
     return `${out.summary.id} (${out.summary.created ? 'created' : 'existing'}, ${out.summary.sections.length} sections)`;
   });
   await run.step('Authoring: reviewer comment on the 510(k) Summary, resolved', () => settleSummaryComment(ctx, out.summary));
-  await run.step('Authoring: request review, submit to workflow, freeze v1.0', () => submitAndFreezeSummary(ctx, out.summary, reviewer, signer));
-  await run.step('Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER)', () => signSummary(ctx, out.summary.id, signer));
+  await run.step('Authoring: request review, submit to workflow, freeze v1.0', () => reviewAndFreezeSummary(ctx, out.summary, people.reviewer));
+  await run.step('Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER)', () => signSummary(ctx, out.summary.id, people.approver, people));
   await run.step('Authoring: Substantial Equivalence Discussion (draft with an open comment)', async () => {
     out.se = await ensureAuthoringDoc(ctx, AUTHORING.se, programId);
     const open = await ensureOpenComment(ctx, out.se);
@@ -368,9 +395,9 @@ async function seedAuthoring(ctx, programId, signer) {
   await run.step('Authoring: Cybersecurity and Interoperability Summary (review requested)', async () => {
     out.cyber = await ensureAuthoringDoc(ctx, AUTHORING.cyber, programId);
     // Independent review needs a second person (REVIEWER_IS_AUTHOR otherwise).
-    if (signer) await ensureReviewRequested(ctx, out.cyber.id, reviewer);
+    if (people.reviewer) await ensureReviewRequested(ctx, out.cyber, reviewer);
     run.record('authoring.cyber', { id: out.cyber.id, title: out.cyber.title, status: out.cyber.status || 'DRAFT', created: out.cyber.created, boundToProgram: out.cyber.bound, sections: out.cyber.sections.map((s) => s.code), reviewRequestedFrom: signer ? reviewer.email : null });
-    return `${out.cyber.id} (${out.cyber.sections.length} sections), ${signer ? `review → ${reviewer.email}` : `review ${SIGNER_ABSENT}`}`;
+    return `${out.cyber.id} (${out.cyber.sections.length} sections), ${people.reviewer ? `review → ${reviewer.email}` : `review ${SIGNER_ABSENT}`}`;
   });
   await run.step('Authoring: does the Review board list the requested reviews? (probe)', async () => {
     const r = probe(run, 'reviewBoard', await ctx.api('GET', '/api/review/board'), 'GET /api/review/board after request-review on two documents');
@@ -416,7 +443,11 @@ async function seedSubmission(ctx, program, vaultDocs) {
     const r = probe(run, 'estarLeafProbe', await api('PUT', `/api/submissions/sequences/${out.sequence.id}/leaves`, {
       sectionCode: d.leaf.estar, title: vaultDocs[d.key].title, documentTable: 'vault_documents', documentUuid: vaultDocs[d.key].id, documentType: d.leaf.documentType, lifecycleOp: 'new', reason: 'Placed by the launch demo pack',
     }), `PUT leaves with sectionCode "${d.leaf.estar}" (an eSTAR slot id) on the 510(k) sequence`);
-    if (r.status === 200) return 'HTTP 200: the leaf route now takes the eSTAR section code; the CTD placements below stay as well';
+    if (r.status === 200) {
+      // The probe asked a question; its leaf is not a placement (GA-DEMO-12: it stayed as a seventh leaf).
+      const removed = await removeProbeLeaf({ api }, out.sequence.id, d.leaf.estar);
+      return `HTTP 200: the leaf route takes the eSTAR section code; the probe's leaf was removed again (${removed}); the six CTD placements below are the filing's`;
+    }
     finding(run, `Submission Center: the sequence/leaf model is the eCTD one. PUT /api/submissions/sequences/:id/leaves refuses a non-CTD-shaped sectionCode — "${d.leaf.estar}" answered HTTP ${r.status} ${String(r.json?.error?.message ?? '').slice(0, 220)} — and the builder presents eCTD modules. There is no eSTAR section vocabulary on the leaf route, so this pack files the device documents at the closest CTD codes (3.2.P.1, 3.2.R, 5.3.1.4, 5.3.5.2, 1.16, 1.14) with eSTAR documentType tokens; an authoring document cannot be placed as a leaf at all (authoring_documents is not a placeable table).`);
     return `HTTP ${r.status} (recorded as a finding); CTD codes used instead`;
   });
@@ -531,10 +562,15 @@ export async function seed(ctx) {
     program = await seedProgram(ctx);
     return program.summary;
   });
+  await ensureObjective({ ...ctx, tally: makeTally(run) }, program, NEUROPANEL_OBJECTIVE);
   const vaultDocs = await seedVault(ctx, program.id);
   const signer = await connectSigner({ baseUrl: ctx.baseUrl, authorEmail: identity.email });
   run.record('signer', signer ? { email: signer.email, userId: signer.userId } : { supplied: false, note: SIGNER_ABSENT });
-  const authoring = await seedAuthoring(ctx, program.id, signer);
+  // The third person reviews, so the second signer's approval is not of a version that person reviewed.
+  const third = await connectApprover({ baseUrl: ctx.baseUrl, excludeEmails: [identity.email, signer?.email].filter(Boolean) });
+  run.record('reviewer', third ? { email: third.email, userId: third.userId } : { supplied: false });
+  const authoring = await seedAuthoring(ctx, program.id, signer, third);
+  await run.step('Authoring: the dossier text is written into the 510(k) filing (its editing copy, saved with a reason)', () => seedFiling(ctx, program.id));
   const sub = await seedSubmission(ctx, program, vaultDocs);
   await seedReadiness(ctx, program.id, sub);
   const sops = await seedQms({ ...ctx, programId: program.id }, signer, vaultDocs, identity);

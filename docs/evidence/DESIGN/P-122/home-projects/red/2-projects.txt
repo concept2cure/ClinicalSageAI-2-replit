@@ -1,0 +1,18 @@
+HEAD 46712cea6 (Projects.tsx as at HEAD)
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > in the default grid view, above the cards: active projects and filings due within 60 days 367ms
+   → the figures are shown in grid view: expected null to be truthy
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > shows the server’s counts, not the loaded page’s recount, and no browser-computed average 24ms
+   → .toMatch() expects to receive a string, but got undefined
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > a read that carries no server figures says so, and is not recounted from its rows 24ms
+   → .toMatch() expects to receive a string, but got undefined
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > in list view the same figures sit above the table 111ms
+   → expected '1234 active projects42% average readi…' to contain '1,234 active projects'
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > each card says its readiness, stage, lead and status (P-122 §3.2) > a measured project: its dossier readiness, stage, lead and status, in words 36ms
+   → expected 'Program alphaPlanning · Lead Rae Okaf…' to contain 'Dossier readiness 42%'
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > each card says its readiness, stage, lead and status (P-122 §3.2) > no figure is "Not recorded", no lead is said, and a blocked status names its missing cause 20ms
+   → expected 'Program betaDesignBET-2 · Updated Nov…' to contain 'Dossier readiness Not recorded'
+ × client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > the grid or list choice is remembered (P-122 §3.2) > opens in the view the person chose last time 141ms
+   → expected 'false' to be 'true' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed (7)

@@ -1,0 +1,7 @@
+[ci:trivy-inline-ignores] OK — 6 inline exception(s), each on the block it names:
+  AWS-0053 → resource "aws_lb" "this"  (modules/alb/main.tf:23)
+  AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "frontend"  (modules/cloudfront/main.tf:73)
+  AWS-0104 → egress  (modules/ecs-fargate/main.tf:127)
+  AWS-0104 → egress  (modules/embedding-service/main.tf:73)
+  AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs"  (stack/access_logs.tf:51)
+  AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "access_logs"  (stack/access_logs.tf:156)

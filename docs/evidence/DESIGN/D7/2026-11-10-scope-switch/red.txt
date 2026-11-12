@@ -1,0 +1,53 @@
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the exact notification record even when the register has no matching row 448ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the training reader, not the editor, for a training notice (qmsIntent read) 286ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > preserves a refused exact notification target without opening a different register row 150ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a notification target that is not there was not found, and offers no Try again 66ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a version history that is not there was not found, naming the document 152ms
+   → expected 'Not found in your organizationThis pr…' to match /This document's version history was n…/
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > queues a new notification target while the current canonical editing copy remains open 106ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > shows the exact unbound controlled record before offering its explicit authored revision 62ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 155ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 102ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads 101ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 50ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says an editor read refused for this role as that, and offers the controlled text in the reader 50ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens a legacy entry under review to its inline controlled text, not to an editor with no copy 37ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 77ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > Send for review opens the review route form; nothing is sent until it is complete (RR4) 42ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 91ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content 147ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 124ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 66ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 128ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 418ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 109ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > names the open project, and widens to the whole organisation and back 405ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > lists no periodic review for a project whose documents are not read yet 59ms
+   → expected 'Periodic reviewnone overdue; 1 due wi…' not to contain 'QS-SOP-001'
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > lists for periodic review only the project's documents, and says training is the organisation's 52ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open 73ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > has one title, the rail label, and no second topbar or eyebrow 40ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > puts the registers as tabs below the header, with no icons, and keeps arrow keys 101ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > asks AnA through at most three starters, one of them the pre-inspection check 85ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > shows no stat tiles and no per-document-type cards (RULE 4) 23ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps the document types in "New controlled document", each with its number prefix and description 129ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > opens "New controlled document" in the one drawer, and holds AnA off the screen while it is open 108ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out 141ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > a register row shows its next step and More, and More reveals every other action in the row 101ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > does not offer its author an approval the server refuses: the author's next step is the review route 36ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box 74ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > is a table with column headers, one body per document 68ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > states the register in one sentence above its rows 15ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the open project, and the whole organisation when the person widens it 32ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > with no project open, reads the whole organisation and offers no choice, whatever the URL says 5ms
+ × client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > never shows the previous scope's rows as the new scope's while the new read loads 15ms
+   → expected [ { id: 1, …(19) } ] to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Periodic reviewnone overdue; 1 due wi…' not to contain 'QS-SOP-001'
+ ❯ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx:79:36
+AssertionError: expected 'Not found in your organizationThis pr…' to match /This document's version history was n…/
+ ❯ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx:116:32
+AssertionError: expected [ { id: 1, …(19) } ] to be null
+ ❯ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx:66:38
+ Test Files  3 failed (3)
+      Tests  3 failed | 38 passed (41)

@@ -1,0 +1,16 @@
+# Item 1 green: Quality's suites and the AnA wave-4 suite after registerContext.ts reads the organisation by default
+# base fc0eb748d 2026-11-10T11:59:48Z
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > reads the organisation's CAPAs with a project open, until the person narrows Quality to the project 29ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > narrowed, reads the open project's CAPAs and nonconformances, and says the other registers are the organisation's 35ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > files a new nonconformance under the open project by default 53ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > reads the whole organisation with a project open, narrows to the project and back 578ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > narrowed to the project, lists for periodic review only the project's documents, and says training is the organisation's 50ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open 94ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > counts its own rows, not the organisation summary 20ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > says the project has no change, not that the log is empty 6ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the whole organisation with a project open, and the project's records only when the person narrows it 35ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > keeps a narrowed link: a reload of ?quality=project reads the project 6ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > a link from before P-122 (?quality=organisation) reads the organisation, as the default does 6ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > with no project open, reads the whole organisation and offers no choice, whatever the URL says 7ms
+ Test Files  29 passed (29)
+      Tests  374 passed (374)

@@ -11,7 +11,36 @@
  *     (2017) — labeling, technology/engineering/performance, materials flows
  *   - FDA "Deciding When to Submit a 510(k) for a Software Change" (2017)
  *   - EU MDCG 2020-3 / IVDR Article 110(3) — "significant change" criteria
+ *
+ * 2026-11-12 (P-122): every input is a question a person answers yes or no, and neither engine checked one. An
+ * unanswered question read as "no": with no answers at all the FDA engine returned letter_to_file and the EU engine
+ * significant: false, and 'false' (text) read as yes. Each is now refused by field (ComputationRefusal), as the
+ * other IVD lifecycle engines refuse an unstated input. The questions are the shared vocabulary's
+ * (shared/regulatory/change-control-taxonomy.ts DEVICE_CHANGE_QUESTIONS), and each engine's rules carry a version.
  */
+
+import { refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { DEVICE_CHANGE_QUESTIONS, type DeviceChangeFact } from '../../../shared/regulatory/change-control-taxonomy';
+
+/** A only when A and B are the same set of keys: a list typed with it does not compile once they differ. */
+type Exactly<A, B> = [A] extends [B] ? ([B] extends [A] ? A : never) : never;
+
+/** Refuses, naming each one, the questions with no yes-or-no answer. Nothing stands in for an answer. */
+function refuseUnanswered(fn: string, input: unknown, facts: readonly string[]): void {
+  const given = (input ?? {}) as Partial<Record<string, unknown>>;
+  refuseUnlessStated(fn, facts.map((field) => ({
+    field, value: given[field], ok: typeof given[field] === 'boolean', expected: 'true or false',
+  })), 'assessed');
+}
+
+/**
+ * The version of each engine's rules, kept with a verdict wherever one is recorded (a Quality change record keeps
+ * it, server/services/qms/changeControl.service.ts). It names the guidance and the revision of these rules.
+ * __tests__/change-assessment.test.ts pins every answer set's outcome to it: a decision, rationale or trigger that
+ * changes without a new version fails there.
+ */
+export const FDA_CHANGE_RULES = 'fda-510k-change-2017/1';
+export const EU_CHANGE_RULES = 'mdcg-2020-3/1';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FDA 510(k) change decision
@@ -46,8 +75,13 @@ export interface FdaChangeResult {
   triggers: string[];
 }
 
+/** The engine's inputs: exactly the questions asked of a person for the US, in the order they are asked. */
+export const FDA_CHANGE_FACTS: readonly Exactly<keyof FdaChangeInput, DeviceChangeFact<'us'>>[] =
+  DEVICE_CHANGE_QUESTIONS.us.map((q) => q.key);
+
 /** Apply the FDA "Deciding When to Submit a 510(k) for a Change" logic. */
 export function assessFdaChange(input: FdaChangeInput): FdaChangeResult {
+  refuseUnanswered('assessFdaChange', input, FDA_CHANGE_FACTS);
   const triggers: string[] = [];
 
   if (input.affectsIndicationsForUse) {
@@ -131,10 +165,15 @@ export interface EuSignificantChangeResult {
   triggers: string[];
 }
 
+/** The engine's inputs: exactly the questions asked of a person for the EU, in the order they are asked. */
+export const EU_CHANGE_FACTS: readonly Exactly<keyof EuSignificantChangeInput, DeviceChangeFact<'eu'>>[] =
+  DEVICE_CHANGE_QUESTIONS.eu.map((q) => q.key);
+
 /** Apply EU MDCG 2020-3 significant-change logic (transitional-provision lens). */
 export function assessEuSignificantChange(
   input: EuSignificantChangeInput
 ): EuSignificantChangeResult {
+  refuseUnanswered('assessEuSignificantChange', input, EU_CHANGE_FACTS);
   const triggers: string[] = [];
   if (input.changesIntendedPurpose) triggers.push('Change of intended purpose.');
   if (input.changesDesignOrPerformanceOutsideSpec) {

@@ -560,13 +560,15 @@ licensed equivalent.
 
 The active item takes a soft fill.
 
-**Home.** A centred serif greeting and one large rounded composer (radius about 20 px, a hairline border, a soft
-shadow, attach, and an orange send button). A few quiet starter suggestions sit below. Nothing else is above the
-fold.
+**Home.** A compact serif greeting and one large rounded composer (radius about 20 px, a hairline border, a soft
+shadow, attach, and an orange send button), with a few quiet starter suggestions. Beneath them, and visible at
+1440×900 without scrolling, are the person's projects and their due tasks (P-122).
 
-**Projects.** The page holds the title, a search field, one "New project" button and a grid of calm cards. Each card
-shows the name, a one-line description and when it was updated. Filters stay quiet. There are no readiness bars and
-no stat strip.
+**Projects.** The page holds the title, a search field, one "New project" button, the portfolio figures (active
+projects, average readiness, filings due within 60 days) and a grid of calm cards. Each card shows the name, a
+one-line description, its readiness, stage, lead and status, and when it was updated. These are shown by default, in
+grid and list, and the figures come from the server. Filters stay quiet. "Which projects are at risk this week?" is
+one click, answered by the server's risk engines (P-122).
 
 **A project.** This is Claude's project page:
 - **Main column:** the name, a one-line description, the composer ("How can I help with this project?") and the
@@ -576,6 +578,11 @@ no stat strip.
 - **The regulatory work:** Plan, Evidence, Author, Review, Submit and Respond, documents, filing state and the work
   areas. All of it stays one click away, in a quiet segmented control and sections below the composer, never as
   banners above it.
+- **Shown, not hidden (P-122):**
+  - the open step says what to do next;
+  - Records and Activity are open sections;
+  - the Review step lists its approvals and the server's readiness;
+  - section owners, deadlines and milestones are on the Plan step.
 
 **Conversation.** A centred reading column. AnA's prose is set in the serif, the person's turns are quiet, and
 artifacts and citations appear inline.
@@ -617,6 +624,10 @@ Quality, RBM and Reporting share one page pattern:
 workflow, verdict and action a removed element gave stays reachable: through the conversation, an inspector, a quiet
 section or ⌘K. Each package files a ledger of every removed element and where it now lives.
 
+**Enforced since P-122 (2026-11-10).** A ledger entry is not enough. Nothing a screen showed is removed, hidden, moved
+below the fold or put behind a closed disclosure without a founder decision. A fold is admitted only with a test
+that opens the target and shows the same outcome.
+
 ## 3. The work packages
 
 There is one ledger, `docs/design/one-design-plan.json`, and the gate reads it. A package's **status** decides
@@ -636,6 +647,7 @@ whether work may be committed under it:
 | D5 | **Work areas I.** CMC / Module 3 and Biostatistics on the one page pattern. | — | open |
 | D6 | **Work areas II.** Tasks, Communication and Vault. | — | open |
 | D7 | **Work areas III.** Submission Center, Quality, Risk-based monitoring, and Reporting & analytics. | — | open |
+| D8 | **Device and diagnostics screens** (P-128). §2's design on the existing device screens (`client/src/concept2cure/mdx/**`), the shared look first. Nothing a screen shows is removed (P-122). Moving the per-type device screens into the one editor is not in this package. | — | open |
 | R1 | **Reach.** Every server capability with no UI caller is reached in its package's screen, or retired by a founder decision. The inventory and each reach are filed under `docs/evidence/DESIGN/R1/`. | — | open |
 | F1 | **Repairs.** Defects in shipped behaviour, such as the 2026-10-31 running-app audit findings. Repairs add no screen, mount or table. | — | open |
 | L1 | **Launch rows** D1–D10 of `docs/LAUNCH_DEFINITION_OF_DONE.md`, as defined there. | — | open |
@@ -658,7 +670,7 @@ Each spine package (S1–S8) starts with its "What already exists" section (RULE
 own searches, filed under `docs/evidence/SPINE/<ID>/`. Its UI work is done on the §2 design. When a screen is in a
 queued design package's files, the S package changes only behaviour there, never the layout.
 
-Each design package (D0–D7) runs its own work in this order:
+Each design package (D0–D8) runs its own work in this order:
 1. **Spec.** Append `## <ID> spec` to `.design/claude-convergence/<ID>.md`. For each screen it says what the screen
    is today, Claude's pattern, the change (by file), the capabilities kept, and the acceptance checks.
 2. **Build.**
@@ -673,6 +685,36 @@ Each design package (D0–D7) runs its own work in this order:
 Each session records what it delivered here, under its package, while the coordinator is unavailable. An entry is
 facts only: commits by SHA, evidence by path, what was found, and what is next. It changes no package's scope,
 status or ownership; closing a package stays §3 step 5.
+
+#### S2 — the data catalog across projects, graded, used in a project (2026-11-06 to 2026-11-10)
+
+The founder, 2026-11-06: see the data room as a catalog organized into folders and buckets, graded, and subscribed
+to by a project; AnA in control of it. 2026-11-10: "I can not see the data catalog / data room from anywhere in the
+UI": the 2026-11-06 commits had been refused by the pre-push gates and never pushed, and the catalog sat four clicks
+deep. Evidence and the "What already exists" survey: `docs/evidence/SPINE/S2/2026-11-06/README.md`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| 1. The catalog across projects | `7a2cfe34` (S2: `data-room-search.ts` reads the person's accessible projects of the open project's sponsor, with facets by project, study, kind, CTD section, Vault folder), `1b4d3c12` (R1: `GET /api/c2c/projects/:id/sources?scope=catalog`) | Vault → **Data catalog** (`cef3d557`, S6); the project page's Data room → **Open the data catalog** (`08927463`, R1); Project files → Data room → All my projects |
+| 2. The grade | `7a2cfe34` (`data-room-grade.ts`: provenance, integrity with the Vault copy's fixity, currency, processing, verification by a person, CDISC conformance for datasets; stored on the capture, `migrations/20261106_data_room_grade.sql`), `c04ba737` (a native record graded by its snapshot and its register) | each item's *Grade A–D · score*, its basis criterion by criterion |
+| 3. Use in this project | `1b4d3c12` (the pinned-evidence routes take `data_room`, checked against the person's catalog, audited), `c04ba737` (the panel) | **Use in this project** / **Remove**; the project's Data room lists **Used in this project** first |
+| 3b. Used data feeds the CSR | "S3: the CSR's study-data chooser lists first the data this project uses" (S3: the CSR document's study-data chooser lists the Vault source of a used capture first, "used in this project"; walked on the CDISC pilot CSR) | the CSR editor's "Build from the study's data" chooser |
+| 4. AnA over it | "S4: AnA reads the data catalog with its grades, and files a data-room capture into the Vault" (S4: `list_project_documents` with `catalog: true` reads the catalog, its grades and what the project uses; `file_chat_upload_to_vault` with `source_id` files a capture through the data room's filing; AnA proposes "Use in this project", the person confirms). Not run in a live conversation: no model key where it was built | in AnA's answers |
+
+**Next** (the README's "Not done yet"): AnA's step 4 walked in a conversation with a model key; whether a used
+capture of another project may be assembled into, or filed for, this project's documents (a governance decision for
+the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
+"S2: the walk of the CSR example and AnA's tools, recorded".
+
+**2026-11-11, for GA** ("R1: the data catalog lists the Vault's documents, graded and usable, beside the captures",
+`docs/evidence/SPINE/S2/2026-11-11-ga-surface-walk/`). Walked at head, the catalog was Quality records and almost no
+files: documents and study data are filed in the project's Vault, and the catalog read captures only. It now also
+lists the Vault's current documents of the same projects (step 2 of §1: items get in "from Vault"), organized by Vault
+folder, graded by the same engine from the Vault's facts, with **Use in this project** (kind `vault_doc`, checked
+against the person's catalog), and AnA's catalog tool answers them. A read only: **LX-03** (every Vault version a
+data-room source) still needs the founder's decision. Also fixed: the project's "what this project uses" read failed
+for any pinned item that was not a capture. 2026-11-10: the project's data room lists files first and shows a Quality
+record as a record (`docs/evidence/SPINE/S2/2026-11-10-quality-records/`).
 
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
@@ -979,6 +1021,82 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
   - It gained a verified way to show §11.1 and §11.4 live without freezing.
 - **Blocked**: drafting, the scientific review of drafted text, e-sign and placement. They need a model key, which
   this environment does not have.
+
+- **Demo-day UI sweep** (2026-11-06), `f05919e54`, `docs/evidence/D2-CSR/2026-11-06-demo-day-ui-sweep/`.
+  - Every screen was walked as author, reviewer and approver, with no page error.
+  - The AI paths reach the provider.
+  - The founder's "model not approved" in the Codespace was a key that never reached the app. The Codespace
+    session fixed its start script (`11b191038`).
+  - The docked composer's overflow was fixed by the design lead.
+
+**DATA: the Lumen demonstration data** (2026-11-06 to 11-10, at the founder's request: "faux seeded demo examples …
+RBM, QMS and more; Vault … and tasking too")
+
+- **Tasks, review, information request, sequence and reports**, `4fad016a5`:
+  - LMN-201's board has 16 tasks across every column, with a critical path;
+  - the Investigator's Brochure is out for review;
+  - a FICTIONAL FDA information request sits in Communication and Respond;
+  - LMN-201 has sequence 0000;
+  - four computed reports have run.
+- **Quality** `dff867c6f`, **risk-based monitoring** `91d6a97da`, **Vault** `893451f02`:
+  - every Quality register;
+  - RBM: RACT, KRIs, QTLs, signals, the plan and site actions;
+  - 25 synthetic documents filed, reviewed, approved and sealed.
+
+  All through the screens' own routes, and idempotent.
+- **Task owners by role and a third person**, `893451f02`; **a named demonstration organisation** in
+  `seed-admin.mjs`, `98e664c40`.
+- **Not finished, handed over:**
+  - the founder's Lumen account in the Codespace (design agreed with the Codespace session: identities only from
+    secrets);
+  - the Vault re-filing on each run;
+  - the QMS approver designation;
+  - the biotech/mdx QMS signer 409;
+  - two RBM product defects;
+  - the CSR study's package identity.
+
+  Each is in `docs/evidence/DEMO/2026-11-10-lumen-data-handoff/README.md`.
+- **The Lumen account in the Codespace** (2026-11-10, the founder: "Make sure it's set up in the Codespace"),
+  `92f589838`.
+  - The Codespace creates "Lumen Bioscience (demo)" with its lead, reviewer and approver. The people come from
+    Codespaces secrets, with fictional defaults.
+  - It seeds the Lumen pack there first, and "Demo access" lands on it.
+  - The Vault seed now records an artifact's review before its approval (P-95).
+  - Run end to end against a fresh local database; `codespaces:doctor:test` 50/50.
+- **"Demo access" chooses who** (2026-11-10, the founder: "a selection of users … tied to demo accounts and various
+  scenarios and according to role … this must work in Codespace"), `2a3cb63a6`.
+  - The login's existing button gains "Sign in as": every demo person, grouped by account and labelled by role.
+  - The Codespace supplies the list from its two rosters (`VITE_DEMO_ACCOUNTS`).
+  - Signed in through it in the running app as two people, one in each account.
+- **The Vault seed no longer re-files on each run** (2026-11-10): it reads each document's own filing record.
+- **The showcase pass on the Lumen account** (2026-11-10, the founder: "get everything ready for a sales showcase of
+  the entire platform"). Record: `docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`.
+  - Swept as the lead, the reviewer and the approver: every step, rail destination and tab. No failed request except
+    the Module 3 refusals for a biologic.
+  - Completed through the screens' own routes: the protocol workspace and the sequence's 5 leaves (`7d9112e60`); the
+    project teams, a report bundle and two in-platform schedules (`80f5b7c41`).
+  - Its own defect, found by reading the screen: the Lumen protocol carried the psoriasis study's eligibility
+    criteria. Fixed, with a repair for a copy already seeded (`34ecd2981`).
+  - L1: the Codespace installs the fonts report PDFs embed (`4a473cffe`). Before, every PDF export in Reporting
+    answered 503 there.
+  - Open: the other system packages a Codespace lacks beside the production image (LibreOffice, Ghostscript,
+    veraPDF, `xmllint`, python-docx). Not exercised.
+- **Risk-based monitoring, the two defects the GA map lists under S8** (2026-11-11, the founder: "focus entirely
+  on getting what we built surfaced correctly on the UI and working for GA"). Record:
+  `docs/evidence/SPINE/S8/2026-11-11-site-risk-from-study-data/README.md`.
+  - GA-S8-01, "New KRI" answered 500 from the screen and from AnA: one KRI INSERT, typed (`c7f797d89`).
+  - GA-S8-02, Site risk and Site oversight read "0 sites": a study's sites are scored from its own site-level
+    indicator readings where Site Intelligence holds none (`e9fad2163`). The rule is stated on the screen and on
+    every row. A load that carries site rows rescores the sites.
+  - The Lumen seed scores LMN-201's eight sites, and no longer stops on an indicator a person added
+    (`bcf2b595f`).
+  - "Run central monitoring" compares each site-level indicator across the study's sites, and Critical signals
+    list first (`7e4284cc5`). On LMN-201 it raises two Critical signals for site 104.
+  - Open: clinical operations has not confirmed the scoring weights; a change to a KRI's limits does not rescore;
+    Site Intelligence itself stays unreached and needs a founder decision to reach or retire.
+- **AnA's three agency-commitment tools are in scope in production** (2026-11-11, `7994dc8f1`; reach map section 4
+  rank 7). They write the store Communication writes. A PMR, PMC or REMS is still fulfilled only by a person's
+  signature (P-41). Record: `docs/evidence/DESIGN/R1/2026-11-11-ana-commitment-tools/README.md`.
 
 **Finding shared with the design lead**
 
@@ -1295,6 +1413,187 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 1. Answers to the founder questions above, which decide this lane's next slices.
 
+**2026-11-10: P-107 item 3, and what this lane withdrew.** The coordinating session decided this lane's six
+questions as P-107 item 3 (2026-11-08). While this lane built them, the session holding the Vault's folders
+(`…01QoxbLZMS`) landed three of the same decisions on trunk: the page asks which sponsor first (`47a306700`), a seal
+says when a version was superseded (`0a65d9191`), and a Word version's PDF rendition (`ed9f5d36d`, `b5bb39ce8`). One
+implementation stands: this lane withdrew its own copies before they reached trunk (`e2c4162ec`) and kept only what
+trunk did not have.
+
+- **The server refuses a read that would span clients** (F1, `6dac0b836`; S6, `cc1af9221`;
+  `docs/evidence/SPINE/S6/2026-11-10-p107-sponsor-first/`). A governed-artifacts listing or a library search with no
+  project is one client's, or `409 CLIENT_REQUIRED` with the clients named. The document picker asks which client;
+  a refused listing says why. Red on real PostgreSQL first.
+- **One rule for which sections a 510(k) or De Novo requires** (F1, `9cff33fe4`;
+  `…/2026-11-10-p107-device-coverage-estar/`). The Library asks the eSTAR mapper, as filing readiness does, with the
+  project's device answers. The D4 and D6 disagreement is gone on the read side; the pack's data is not changed.
+- **The converter does not request what a Word file links to** (F1, `4cc352ccf`;
+  `…/2026-11-10-p107-renditions/`). Measured with the real converter: an uploaded Word file made the server call an
+  address. Trunk's rendition hands uploads to it, so this is its only protection (P-121 item 4, open).
+- **A Risk management plan in a drug project is the dossier's** (S6, `8e5f7cd0b`; `…/2026-11-10-rmp-classifier/`).
+  P-121 item 1.
+- **Assessed, not built.** Retention (P-107, FD3 (c)) holds today: the database refuses to delete or re-point a
+  version, and the sweep only tombstones. Nothing names who may delete stored bytes; the smallest pin is the writers
+  gate (`scripts/ci/check-vault-document-writers.mjs`) listing the six `delete` call sites. Binders: folders and the
+  cabinet meet three of the decision's four properties; a version-pinned view is the seal, which could group what it
+  holds by folder.
+
+**Next: the TMF inside the Vault.** The founder, 2026-11-10: "I don't see the TMF on the vault UI anywhere." It was
+decided on 2026-10-30 (P-74, P-75: the eTMF lives inside the Vault and files against the project's study) and
+designed (`docs/design/ETMF_CONVERGENCE_2026-10-30.md`, slices E1 to E6). Only E1 landed (`3fa2b6febc`). No session
+holds it. This lane takes E2 on, with the screen brought into the Vault's own views (RULE 4) and not admitted as a
+screen of its own.
+
+**2026-11-10, later: the trial master file is in the app; the retention pin** (session `…01KnUGoX3g`, under the
+founder's permission, P-100; decisions in P-124).
+
+- **E2 and E3, the server** (F1, `64e4bcca0a`; `docs/evidence/D2-ETMF/2026-11-10/`). A trial master file belongs to
+  a study of a project (`/api/etmf/trials/:studyId`, the study's `study_id`); a filing's document is a live document
+  of that project's Vault. Filing and removing need a reason and a Vault-write role and write the chained audit row
+  in the same transaction; a removal stays on the row. The inspection package is a recorded download. One additive
+  migration (`20261110_tmf_filings_study_ref.sql`). 38 cases on PostgreSQL with RLS on, 182 unit and route cases.
+- **The page** (F1, `8c84dd5fb4` and `0113bd0d2b`; `docs/evidence/D2-ETMF/2026-11-10-vault-section/`). The
+  Vault's button reads "Trial master file" and opens the study's essential records by zone: filed against which
+  document and version, or missing; file with a reason, remove with a reason, download the package. One client of
+  `/api/etmf`: the section `surfaces/VaultTrialMasterFile.tsx`, hosted by the thin page `surfaces/Etmf.tsx`. The old
+  screen (a typed trial id bound to nothing, filing with no reason) is retired onto it. **Under P-122 everything
+  that screen showed is carried**: the essential/all choice, the figures, each record's code and zone, upload and
+  file in one step (now with a reason), the package shown as a document, and asking AnA. Not carried, by P-124: the
+  report built in the browser when the package failed (an export with no record). Opened and used in the running
+  app on PostgreSQL; two defects only the running app showed were fixed (the reason field's height; a record name
+  cut on a phone).
+- **Where the founder's sentence stands.** It is answered where the eTMF can be opened: the demo, a development
+  installation, a professional-tier one. In a release the page is locked, as the old screen was, until admission
+  (P-74: one store, a URS, an OQ). At admission the section moves into the Vault's Required documents view; the
+  change is kept ready in `docs/evidence/D2-ETMF/2026-11-10-vault-section/held/`.
+- **Retention, the bytes** (F1, `23e1296daa`; `docs/evidence/SPINE/S6/2026-11-10-retention-byte-deleters/`). The
+  writers gate (`ci:vault-document-writers`) now also names every file that can delete stored bytes: ten, none of
+  which deletes a recorded version's bytes during a tenant's life. A new one fails until a person names it. This
+  closes the pin the entry above left open.
+- **A trunk red repaired** (F1, `303d019f09`): the project-doors contract named the hook the Vault used before
+  P-107's sponsor change.
+
+**Next, in this order** (the E4 plan, with every caller by path: `docs/design/ETMF_CONVERGENCE_E4_PLAN_2026-11-10.md`).
+
+1. **E4, one store.** The report pack `etmf.completeness_pack` reads the deployed store; AnA's `get_tmf_view` and
+   the trial master file part of `search_all_documents` read it (**a defect in production today**: on a deployed
+   database the second store's tables do not exist, so that search answers "unavailable" for the TMF on every call);
+   `classify_tmf_artifact` files through it; `create_tmf`, `seed_tmf`, `update_tmf_artifact_status` and
+   `review_tmf_completeness` retire onto it; then the second store's routes, service, schema and migration go
+   (amended in place, RULE 1). `server/services/ana/AnaToolDefinitions.ts` is held by RIM: see the coordination row.
+2. **"Not applicable", with a reason**, and a record's state read from its document's lifecycle stage (P-124
+   item 5).
+3. **The URS and OQ** for the eTMF (`docs/validation/**` is held by Validation for GA; the design's URS-008 number is
+   now Reporting's).
+4. **Admission**: the Vault app gains the `etmf` surface as a professional-tier module, and the held change is
+   applied.
+
+**2026-11-11 and 2026-11-12: the Vault shows the work** (the founder, 2026-11-11: "focus entirely on getting what we
+built surfaces correctly on the UI and working for GA"; P-122, P-125). Session `…01KnUGoX3g`, under P-100. Each was
+measured or used in the running app on PostgreSQL, red first; evidence under `docs/evidence/SPINE/S6/2026-11-1*`.
+
+- **Names are read whole** (F1, `2ac13d961e`). At 1440px the Library cut 102 of 118 folder names, 6 of 10 document
+  titles and 5 of 10 field lines to an ellipsis. They wrap, and on a wide screen the Vault's page grows to 1520px.
+  After: none cut at 1280, 1440, 1920 or 390px.
+- **Required documents names each section** (F1, `5c45ed2100`). The view listed what a filing owes by number alone
+  ("1.12.14 No confirmed document"). It now says the heading's name from the filing's outline: 33 of 33 on the
+  demo's IND. Where the outline has no heading, the number alone; no name is made up.
+- **A document is read from its record** (F1, `fd60d97c87`, `b58a2c421c`). The viewer existed and was reached only
+  inside the record's closed Versions section, 328px wide. The record offers View (a PDF) or View as PDF (a Word
+  file's rendition) beside Download, and the same viewer opens in a drawer 1040px wide. Same audited route, same
+  bytes rule.
+- **"Place legal hold" is on the record** (F1, `5319818bad`; P-125 point 8, handed to this lane). For everyone the
+  hold routes admit: the routes' rule is one exported function (`mayManageLegalHolds`), and the Vault read reports
+  it. Lifting, and a project-wide hold, stay in Admin › Settings.
+- **Documents are on the Library's first screen** (F1, `9d80501d23`). The search and the six filters moved, as they
+  are, into a bar across the tree and the list. At 1440 by 900 two documents are wholly visible where none was.
+
+- **The first document is on the first screen at 1280 by 800 too** (F1, `4424c05e21`). The find bar spans the whole
+  Library, the record included, so the search and the six filters take one row each. The binder's note names the
+  outline once, and the confirm prompt's control reads "Confirm…" beside the sentence that names its folder. The
+  first document moves from 904px to 699px and is wholly visible. At 1440 by 900, 3 documents are (was 2). The dark
+  theme was walked over every Library view: no defect but "these 1 filings", now "this filing".
+- **A trial master file record can be declared not applicable to its study** (F1, `790706d7c3`; P-124 item 5,
+  carried before admission). The declaration has a reason, says who and when, is written with its chained audit
+  row, and names no document (a CHECK holds it). It counts as neither filed nor missing, and the verdict, figures,
+  package and index say how many were declared. A filed record is not declared over (409). A document filed against
+  a declared record ends the declaration. Withdrawing it is a removal with a reason. The store's file was amended in
+  place (RULE 1). Walked on a deploy-migrated database. Evidence `docs/evidence/D2-ETMF/2026-11-12-not-applicable/`.
+- **A filed record says its document's review stage** (F1, `d35c89ed05`; P-124 item 5's other half, "a record's
+  status is its document's"). The stage is the one the Library reads for the same document, e.g. "Review:
+  Approved.". Readiness is unchanged.
+
+- **With no project open, nothing is offered that needs a project** (F1, `c2670e8ef2`, `e7695ef607`). The header
+  offered Trial master file, three disabled write buttons and three starters about "this filing", above the one
+  question the page asks: which sponsor. Each now returns with the project. The empty state's sentence said "the
+  governed artifacts of every project you can open"; no view spans sponsors, and it now says what the page does
+  while it asks and once a sponsor is chosen. Evidence `docs/evidence/SPINE/S6/2026-11-12-vault-no-project-header/`.
+
+- **A filing's outline is shown once** (F1, `41d18d0b85`; P-123 item 8, `4d69f24af8`). The Library listed every
+  filing's outline twice, as the filing binder and as the authored filing document's sections, with the same headings
+  and different counts (the 510(k) and both demo INDs). Each authored section now sits in the binder heading with its
+  code, with its requirement, state, owner and door to the editor. A section the binder has no heading for stays
+  under its document. Evidence `docs/evidence/SPINE/S6/2026-11-12-one-outline-per-filing/`.
+- **A person who may read the project's Vault reads its trial master file** (F1, `9fd75d2fcc`; P-124 item 7,
+  `4c5c9ef4ec`). Every eTMF route required the regulatory-author role, reads included, so a viewer met a failed read
+  under the section's own view-only notice. The four reads now admit a viewer; every write keeps the writer's role.
+  Proven on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-reader-reads-the-tmf/`.
+
+Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
+administration's restoration order); on a phone the first document is below the first screen (the shared page
+header takes four lines); an authored section's door opens the editor only once its filing has a working copy (the
+editor says so, and offers "Create editing copy"; unchanged, and the editor's).
+
+**E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
+deployed store as the person who runs it, one project or every project they can open. Each figure is the store's
+own assessment of a study. It counted the retired store's tables organization-wide, and failed on a deployed
+database. The type id is kept; its label is "Trial master file filings and readiness", and its scopes are project
+and account (L-3). It was run in the app on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step1-report-pack/`.
+**Step 2 is done** (F1, `76185b6434`). AnA's `get_tmf_view`, `review_tmf_completeness` and the trial master file part
+of `search_all_documents` read the deployed store, held to the projects the person can open. On a deployed database
+the search had named the trial master file store unavailable on every call. Evidence
+`docs/evidence/D2-ETMF/2026-11-12-e4-step2-ana-reads/`. **Step 3 is done** (F1, `1c08a054a9`). `create_tmf`,
+`seed_tmf`, `update_tmf_artifact_status` and `review_tmf_completeness` retire, each onto what now answers it.
+`classify_tmf_artifact` files through the deployed store with the person's confirmation and reason (L-1(a)). No tool is
+added. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step3-ana-writes/`. **Step 4 is done** (F1, `1bcc069d3f`). The
+second store's eight routes (`server/routes/etmf.ts`) and its metrics are deleted. `/api/etmf` mounts the one router,
+and two baselines shrank by hand. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step4-routes-metrics/`. **Step 5 is
+done, and so is E4** (F1, `2ccfe707cb`). The second store's service and schema model are deleted, `etmf-logic.ts` is
+the classifier only, and the seed skeleton is gone. `migrations/20260610_etmf.sql` creates nothing: it is amended in
+place with a dated header (RULE 1) and keeps its deploy-path baseline entry (R6). install-fresh on a blank database
+completes with neither table. `ci:orm-reachability` and `ci:unbacked-tables` were each seen to refuse the case they
+exist for. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step5-service-schema/`. Before it (F1, `e37936ad31`), the
+retired verdict's one guard was carried onto the deployed store. A study whose every required record is declared not
+applicable had read "ready" with nothing filed, in AnA, on the inspection package's cover and in the report pack. It
+now has no readiness verdict. "Not applicable" (P-124 item 5) is on the deployed store, so step 3's retirement of
+`update_tmf_artifact_status` has the declaration to point to. **The URS and OQ are drafted for Validation for GA**
+(F1, `ed03906b8f`; `docs/evidence/D2-ETMF/2026-11-12-urs-oq-draft/`). Validation holds `docs/validation/**` and
+`tests/validation/**`, and this lane's ask of 2026-11-10 is unanswered. The drafts mirror URS-007 and OQ-008: twenty
+requirements, each traced to its source and to the suites that prove it today, and thirty-seven steps. The proposed
+numbers are URS-009 and OQ-009. Validation numbers, files and runs them; then admission. One question is for the
+founder (URS draft §3): a read-only identity cannot read a trial master file today, because every route requires
+the regulatory-author role. The `etmf` surface's row named an AnA tool that does not exist; it now names its two
+(F1, `fc1f474db4`). The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+`classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
+`code: null` stands.
+
+**Admission is done, 2026-11-12** (F1 `2dc105c1b7`; P-124 item 6, `df170752d8`). The trial master file is a
+section of the Vault's Required documents view, after the coverage, and the header's "Trial master file" brings it into
+view. Both appear only where the organisation can use the eTMF: in the release and in its plan. While that view is
+open, the Vault tells AnA what the section read. The `etmf` page is the door: it opens the Vault there, or with no
+project says so.
+- **The release:** the Vault app's surfaces are `vault` and `etmf`; its module stays `vault`.
+- **The catalogue:** `etmf` is in the professional band (P-75), by a migration in the set after every catalogue
+  writer. An organisation below the band keeps it only if it held filings before admission. On the replayed fixture
+  that is 57 of the 199 organisations below the band. Two catalogue migrations are amended in place (RULE 1): one had retired the row on every replay, and the
+  other refused a module with no tier.
+- **AnA:** `get_tmf_view` and `classify_tmf_artifact` are admitted. The three inspection tools that were filed beside
+  them stay withheld, under `qmp`: they write inspections, which no screen shows.
+- **Validation:** the eTMF is admitted as CMC was, with its URS and before its OQ is executed. It is not described as
+  validated until the OQ is executed and filed (Validation for GA).
+
+Evidence `docs/evidence/D2-ETMF/2026-11-12-admission/`.
+
 #### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
 
 Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just
@@ -1302,7 +1601,7 @@ like Veeva … templates and folders for the full IND pyramid of potential filin
 and regions … Anna needs to have autonomous control over all of this, agentically."* Evidence:
 `docs/evidence/SPINE/S6/2026-11-06/` (README with "What already exists", before/after screenshots, walks, audit rows).
 
-**Delivered: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+**Delivered 2026-11-06: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
 
 - **Folders a person makes.** `public.document_folders` (it existed, reached only by the uncalled legacy `/api/folders`)
   gains `program_id` and `parent_key` (`migrations/20261106_document_folders_project_scope.sql`, additive, in the set
@@ -1319,33 +1618,70 @@ and regions … Anna needs to have autonomous control over all of this, agentica
   (`uf:12`). A row filed to a module preset shows at its CTD heading. With no pack, the folders stop at module level
   and the cabinet says why (`note`).
 
-**Not done, for the next session** (holds released in `.design/claude-convergence/COORDINATION.md`):
+**Continued 2026-11-10: steps 2–4 landed, and a multi-tenant repair** (the founder: "the UI doesn't reflect all the
+Vault features yet … this is a multi tenant environment").
 
-1. **Step 2's walk.** Projects exist for it on a fresh Codespace only if made again: NDA, MAA, EU MDR and EU IVDR were
-   created through `POST /api/c2c/projects` (`clientWorkspaceId` required when several workspaces exist). The app
-   refuses a J-NDA (PMDA requires eCTD 4.0) and a Health Canada NDS (no outline), so neither binder can be shown in a
-   project yet; the J-NDA pack exists. Shoot each binder; restart the app first (the leaf's folder label fix in
-   `filingCabinet`, `nameLeafFolders`, is not yet seen in the running app; the record pane read `uf:5`).
-2. **Step 3, the pyramid in Vault.** Design settled, not built: extend `vault.open-folder`
-   (`shared/navigation/surface-actions.ts`, handler in `Vault.tsx`) with an exact `folderId` resolved to the nearest
-   binder heading; in `Pyramid.tsx` `PyTaskSheet` add "Open in Vault" beside each Document-binding code (wired in
-   `PyramidProject.tsx` through `applySurfaceAction`, Plan: S11); in the Vault, read
-   `GET /api/v1/pyramids/by-project/:id` once and list under a binder folder the tasks whose `ctd` codes fall in it.
-3. **Step 4, AnA.** Extend `place_project_document` (`server/services/ana/document-catalog-tool-defs.ts`,
-   `document-placement-tools.ts`, Plan: S4) so `folder_id` names a binder heading or a person's folder, and add an
-   input that makes a folder through `createProgramFolder` with AnA's provenance (`anaToolProvenance`); let
-   `list_project_documents` return the folder index. A document AnA places stays a suggestion a person confirms.
-4. **Duplicates to converge:** the legacy `/api/folders` route (`server/routes/folder-management.js`) writes the same
-   table with no project; retire it onto `project-vault.ts` with its contract test
-   (`server/__tests__/security/tenant-isolation-folders.contract.test.ts`).
-5. **Running the gates here:** `ci:typecheck-no-regression` does not complete on a 15 GB machine with the app running;
-   stop the app before `git push`. `ci:check-css-selector-shadowing` is red on trunk (`journey-v2.css`,
-   `protocol-dev-editing.css`), not from this work.
+- **Step 2, walked** (`walk-binders.cjs`): an IND, NDA, MAA, 510(k), EU MDR and EU IVDR project each open on their own
+  binder, now **first in the tree** (it was below every authored document's draft outline), with the outline and its
+  version named. An EU MDR file no longer lists the empty US "510(k) submissions" and "PMA submissions" folders.
+  The record pane names a binder or person's folder, not its id. (R1 `844b7de191`, S6 `d208ba8f68`.)
+- **Step 3, the pyramid in Vault** (S6 `d208ba8f68`, R1 `844b7de191`, S11 `a36449dd90`): a binder folder lists the plan
+  tasks bound to it with their status (`VaultPlanWork.tsx`, from `GET /api/v1/pyramids/by-project/:id`); a plan task's
+  CTD binding opens its binder folder in the Vault (`vault.open-folder` takes an exact `folderId`). Walked both ways.
+- **Step 4, AnA** (S6 `c80d21ae3b`, S4 `7d918fe90e`): `list_project_documents` returns the project's folders;
+  `place_project_document` files into any of them and can make a folder first (`new_folder`), through the Vault's
+  governed writer with AnA's provenance. Her filing stays a suggestion a person confirms. Run live on the database
+  under RLS (`ana-step4-live.txt`); not walked through a conversation here, which has no model key.
+- **Multi-tenant repair** (F1 `9d01cdb37b`): the organization-wide `/api/folders` route listed, renamed and deleted
+  folders by organization alone, so once projects had folders a CRO member (a viewer included) could see another
+  sponsor's project folder names, or rename or delete one with no audit row. It now never reaches a project's folders.
+  Shown red first. Project folders are reached only through the project's Vault route, under that project's access.
+
+**Continued 2026-11-10, second pass** (the founder: "Fix all and then prepare for GA"):
+
+- **A person's folder is moved and removed**: Move and Remove beside Rename; POST
+  `/:id/folders/:folderId/move` and `/remove`. Remove takes only an empty folder. Found live: with no person in the
+  database scope, row security hid a folder's file and it counted as empty; removal now refuses unless the database
+  confirms the session can read the project's documents. Walked (`walk-folder-moves.cjs`).
+- **Search's folder filter** takes binder headings and people's folders; it refused all but presets.
+- **Two trunk reds repaired** (F1): `.qms-rowacts` declared twice (`ci:check-css-selector-shadowing`);
+  `project-settings.pglite.test.ts` injected its failures on a connection the route no longer takes (38 of 38 now).
+- **Readiness for GA** is written down in `docs/evidence/SPINE/S6/2026-11-06/GA-READINESS.md`: what is proven in this
+  lane (154 server files / 2,683 tests, 76 client files / 850 tests, the two-tenant row-security check on
+  `document_folders`), and the 18 blockers `ga-readiness-report.mjs` reports (8 of 42 ready), none of which this lane
+  can close: deploy secrets and switches, licences, model qualification, and the founder's rows D1, D9, D10.
+
+**Continued 2026-11-10, third pass: the Vault decisions of P-107 item 3** (`docs/evidence/SPINE/S6/2026-11-10/`):
+
+- **A seal says when its version has been superseded**: "Superseded by version n on date", read from the version
+  chain beside the seal's signed record, never in place of it. Red first; walked.
+- **With no project open, the Vault asks which sponsor first**; nothing of any sponsor is listed or read until then,
+  and afterwards the server narrows from the verified sponsor. Red first; walked. Found walking: the list's `ws` is
+  the segment, not the sponsor.
+- **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
+- **A Word version is viewed as a PDF rendition** through the one converter, bound to the source's SHA-256, audited
+  with both hashes, made on request and never stored, so it is never filed in place of its source. Red first; walked.
+- **Device coverage follows the eSTAR registry**: landed on trunk by session `01KnUGoX3g…`
+  (`estar-outline-requirements.ts`); this session's copy was withdrawn unpushed. This session decided what that slice
+  left open (P-123, 2026-11-10): a 510(k)'s risk management follows FDA's template and reads "When applicable" (a
+  Special 510(k)), no longer required of every 510(k). Red first; walked on the 510(k) demo project.
+- **The organisation-wide `/api/folders` route is retired (P-123).** Folders are a project's, through its Vault.
+- **Decided, not built (P-123):** renditions stay Word to PDF; search filters stay one value each.
+
+**Open, for the next session:**
+
+1. AnA over folders walked in a conversation, once a model key is present.
+2. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
+3. A 510(k)'s kind (Traditional, Special, Abbreviated) is not recorded at intake; until it is, risk management reads
+   "When applicable" (P-123 item 2; the device lane's).
+4. The library search's project filter (`programId=`) is never sent.
+5. Stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
-Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. The holds are in COORDINATION.md, in the row "CSR drafting
-with the person in control".
+Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. **Handed off on 2026-11-08.** The note for whoever
+picks this up is `docs/evidence/D2-CSR-DRAFT-CONTROL/HANDOFF.md`: what landed, the open work in order, the blockers, how
+to verify and walk, and what was handed on. Its row in COORDINATION.md holds no file.
 
 **Delivered** (2026-11-06)
 
@@ -1398,11 +1734,24 @@ All were proven by tests. Until this walk, none was opened in the running app.
 - Real drafting needs a model key, and this environment has none.
 - The account's monthly spend limit stopped this session's agents on 2026-11-06.
 
-**Next**
+**Next** (in order; details, files and the binding decisions are in the hand-off note)
 
-1. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
-2. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1, with revise and passage
-   alternatives.
+1. With a model key, walk the figure gate live on an imported CSR's §11.4.1, with revise and passage alternatives. No
+   cloud environment here has a key; the Codespace lane runs with the founder's.
+2. Slice 4b, adding a paragraph after an existing one: a block-boundary insert in `editor/suggestions.ts`, which is
+   D4's editor.
+3. Slices 5 (review by keyboard, after an accessibility review of the keys), 6 (progressive arrival) and 7 (citations
+   for chosen paragraphs).
+4. P-72 slices 2–7. Before slice 6, the tenant chain verdict must walk in the tenant's own scope.
+5. The purge-residue classification (design only), and the independent re-checks of P-72 slice 1a and CSR slices
+   3–4.
+
+**Handed on, open at hand-off** (re-check first):
+- the seeded C2C-101 QOS drafting hold (`authoring-draft-region-projection.ts`);
+- five workbench suites red since `53b179b99`, 46 tests at `f9631c065`;
+- D4's two layout issues and `onReviewSection`.
+
+At `f9631c065`, every suite of this lane passes.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 
@@ -1483,6 +1832,169 @@ first.
    Plan. Evidence gains Protocol, lifting the records read. Author shows Module completion without the ring. Submit
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
+
+#### F1 — the project page's walk findings, closed (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+The D3-4 session's acceptance walk handed four findings to other owners. None of their files is held, so this
+session took them under F1.
+- **The inbox's "Draft response with AnA" is a quiet button**, `d4a3934b7`,
+  `docs/evidence/F1/2026-11-10-inbox-draft-button-quiet/`. The list is one component in Communication, the HAQ
+  manager and Respond, and it put a filled orange button on every open letter. It is now `cc-btn sm` like its
+  neighbours. It was red on trunk and is green (42 tests); in the running app each view keeps one orange.
+- **"install-fresh refuses `ctd_cross_references`" does not reproduce on trunk.**
+  `docs/evidence/F1/2026-11-10-install-fresh-ctd-cross-references/`: on an empty database the install and then
+  deploy-migrate both exit 0, and the table is policied through `csr_studies`. The report fits a partial install
+  with pgvector absent. No code change.
+- **Already fixed on trunk, by others:** Tasks hands a project task to Plan (`stage: 'plan'` in
+  `TaskBoard.tsx` `publishNativeTaskHome`), and the `documents` alias follows Vault (`projectDestination`,
+  `projectCreationDoors.contract`: 32 of 32 pass).
+- **Left with its owner:** the demo seed's Lumen pack recorded on other projects' data rooms (DATA).
+
+#### L1 (row D4) — the validation package re-executed at head for GA (session session_01QoxbLcnW5jPvJSjjKQtvTA, 2026-11-10)
+
+Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/VSR-001-VALIDATION-SUMMARY-REPORT.md`
+§21. Nothing was added to the product and no product file was changed.
+- **Executed on a fresh installation** (`c2c_oq_w3_20261110`), RLS enforced as `app_service`, launch scope enforced,
+  unattributed API paths refused as in production, no AI provider, a development build. IQ-001: 12 pass, 0 fail,
+  3 deviation.
+- **First execution**, at `83e61866d3` (`673987be66`): OQ 99 pass, 26 fail, 6 deviation, 31 not executed of 162.
+  Every failure classified (`cea8c9976f`).
+- **Whole-package re-execution**, server at `97a0fec5cf` (`1907e5c241`): 143 / 8 / 8 / 3. The eight classified, four
+  protocols revised and re-run (`cf2706d5cf`).
+- **Final: 170 pass, 0 fail, 8 deviation, 2 not executed, of 180 steps**, over eight protocols. All 34 failures of the
+  two executions were a step overtaken by a recorded decision or a runner defect. No product regression was found.
+- **OQ-007, Reporting & analytics**, the seventh launch app, which had no URS or protocol (`445c79bf90`):
+  `docs/validation/URS-008-REPORTING-ANALYTICS.md`, `docs/validation/OQ-007-REPORTING-ANALYTICS.md`,
+  `tests/validation/oq/reporting/`. 17 pass, 0 fail, 1 deviation.
+- **TM-001** regenerated: 132 requirements, 120 pass, 4 partial, 0 fail, 6 open, 2 uncovered. RA-001 v0.25 assesses
+  Reporting (`4c7ded950c`).
+- **Later on 2026-11-10: the CMC protocol executes an approvable Module 3 end to end** (`345b5fef0a`, OQ-008 v0.13,
+  VSR-001 §21.8). **41 pass, 0 fail, 2 deviation, 0 not executed, of 43**; the package is 175 / 0 / 6 / 0 of 181;
+  TM-001 124 pass, 2 partial, 4 open, 2 uncovered.
+  - A second programme's 23 records, each entered through its register route, compose 21 complete sections. Every
+    section is approved by the second signer, the final-export gate passes, and Module 3 is placed into the IND
+    sequence. The critical finding, the release signature and the dispatch verdict are observed as URS-007 states
+    them. OQ-CMC-17, -19, -27 and -28 ran for the first time.
+  - Two of those steps had been calling routes the product does not serve. No product regression; no product file
+    changed.
+  - For the CMC owner: a repeat of an identical placement writes 21 new filing documents and stops a release
+    signature clearing the sequence, although no content changed.
+- **D4 stays red.** The package is unsigned and is not ready for signature. It still needs: execution on a production
+  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; one fixture (an
+  organisation on a lower plan; the two CMC fixtures exist since v0.13); the
+  URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
+  URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
+  owner's signature.
+
+#### F1 — the document path and CMC / Module 3 walked in the running app (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-12)
+
+At the founder's direction to surface what is built and make it work for GA. Both paths were driven through the real
+screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-ui-walk/`.
+
+- **An approved, sealed document can be placed into a sequence** (`705ff05e7a`). The editor and the Builder both
+  refused it 409 although its checks were current. The chain verifier hashed a timestamp as the drizzle driver hands
+  it over (text), so the gate read every ledger row as broken. Only PostgreSQL shows it. Red first, then proven live.
+- **Placing an unchanged Module 3 again writes nothing** (`efafdc077a`). It had rewritten every filing document and
+  stopped a release signature clearing the sequence. OQ-008 v0.14 asserts it: 41 pass, 0 fail, 2 deviation, of 43.
+- **Two compiled sentences were untrue and are corrected**: §3.2.P.3 named a rejected batch as representative and
+  called its rejection a release; §3.1 named the product as the drug substance.
+- **The export gate says stale drafts need a compile**, and "stale after approval" only of approved sections.
+- **Found, for the screens** (not yet repaired): a person cannot record the product's shelf-life claim; a signed batch
+  rejection never shows; a placement shows no result; a citation reads as a file name outside the Section view; no
+  screen shows the sealed version a Vault copy was rendered from. Hand-offs to the lanes that hold the other screens
+  are in COORDINATION.
+- **For the founder:** whether the independent checks are required before a review approval (the reviewer's screen
+  calls them optional; once run they block); a document edited during review cannot be signed or re-requested.
+- **Screen repairs made from the walk, each used in the running app** (`feea54cae6`, `e523113df9`): a person can
+  record the drug product's proposed shelf life, at registration or on a running study, without closing the study
+  out; a refused close-out says the edit was saved; a signed batch rejection (or release) shows on its row; a
+  placement says what it wrote and keeps saying it; the Vault's version line names the sealed version its file was
+  rendered from. The real-PostgreSQL suites around the Vault, CMC evidence and signing were run on a disposable,
+  deploy-shaped database: 13 files, 188 of 188.
+- **Landed later the same day, each used in the running app** (evidence `docs/evidence/F1/2026-11-12-ui-walk/` 08–14):
+  a refused signature says why on every route that verifies a signer (the ceremony's sentences moved to
+  `verifyReauth`); the QC sample type says where a result is filed; a method's ICH Q2 evidence can be recorded and
+  reaches the check; a stale Module 3 section says so on the Overview and is not offered for approval; the Overview
+  re-reads the export verdict after an approval; CMC refusals end once; a citation reads as its number in the Document
+  view; the Builder verifies a placed Module 3 leaf through its CMC section, and a Vault PDF filed from a sealed
+  document through the seal its filing receipt names (LX-10). Two trunk reds in a held file were repaired with them
+  (`ci:success-before-ok`, the retired-name ratchet).
+- **Handed on:** the reviewer's copy of a document still shows a citation as a file name (one prop, in a file Wave B
+  holds); three report-PDF suites are red on trunk (Reporting).
+
+#### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+**Update, later on 2026-11-10: the walk is 15 of 15** (`60b1d53767`,
+`docs/evidence/SPINE/S2/2026-11-10-walk-persons-path/`). It follows the path a person can take before a model is
+qualified: AnA drafts; the person rewrites both sections in their own words and cites the Data Room source; the
+independent check is run; the reviewer decides the earlier finding, approves and signs; then freeze, approval,
+filing and transmit. A new check states that AnA's draft is not signed as drafted (409). The approval now carries
+to the Vault copy (FD5 (c)), because the document is reviewed (P-95). Baseline 11 → 10. The walk no longer proves
+that text AnA wrote survives to the seal, nor AC-03: both wait for a PQ-passed model. Found, not fixed: the review
+route answers `INDEPENDENT_CHECK_REQUIRED` as 503 `REVIEW_UNAVAILABLE` (`authoring.router.ts:3075`).
+
+When this entry was first written the walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) was 6 of 15: its
+seal hop was refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it did not run. Read from the code
+and run, not inferred:
+
+- **No model has passed PQ, so nothing AnA writes can be released.** Every entry of
+  `server/services/ai-governance/approved-models.ts` reads `pq: { status: 'pending' }`. A document holding
+  machine-written text is signed for review, frozen or approved only with a gateway receipt naming a PQ-passed model
+  pin (`governed-machine-claims.ts` `ordinaryMachineGenesisMayRelease`, RULE 2). Production refuses high-risk
+  drafting for the same reason. This is the gate working, not a defect.
+- **What stands before a PQ run**, from `npx tsx server/eval/pq/run-pq.ts --preflight`:
+  - `PROTOCOL_NOT_APPROVED`: PQ-DRAFT-001 needs the founder's signature (P-31);
+  - the RAG bank holds 18 of 30 positive items, none with reviewed source evidence, and 5 open gold checks;
+  - 18 source versions and 4 publishers' terms are unverified;
+  - a product provider key.
+- **The source review is blocked on network access.** `server/eval/rag/guidance-corpus-manifest.json` verifies a
+  source by downloading the issuer's own file. Every issuer host is refused from a cloud session, by curl (403 on
+  CONNECT) and by web-fetch (seen again 2026-11-10 for `database.ich.org`, `www.ich.org`, `www.fda.gov`,
+  `www.ema.europa.eu`). The hosts are `database.ich.org`, `www.ich.org`, `www.fda.gov`, `www.govinfo.gov`,
+  `www.ecfr.gov`, `uscode.house.gov`, `eur-lex.europa.eu`, `www.ema.europa.eu`, `ema.europa.eu` and `ask.gpo.gov`.
+  The session's environment must allow them, or the review is done from a machine that reaches them.
+
+**Delivered**
+
+- **A registered citation grounds the figure it is cited for** (`eee0aaa0be`,
+  `docs/evidence/F1/2026-11-10-registered-citation-grounds/`). The independent check reads a citation as
+  `[citation: <name>, <locator>]`. No pattern matched it, and the sentence splitter cut the label apart, so the
+  product's own citation grounded nothing while a typed `[1]` did. The figure stayed a hard finding nobody could
+  resolve. Red first (5 cases), then 61 of 61; 686 pass across the 26 suites that use the checker. A citation in
+  another sentence, an empty label, and a citation not registered to its section still ground nothing.
+
+- **A person can replace a machine-written sentence in a section that holds a citation** (`f3567a6f03`,
+  `docs/evidence/F1/2026-11-10-cited-section-rewrite/`). A cited section let no machine sentence be rewritten or
+  deleted, and a sentence could not be rewritten and cited in one save: the lineage gate refused each with
+  "unsupported markup". It now accepts a prior machine span whose words are gone or still the machine's. Red first
+  (4 cases), then 24 of 24; 557 pass across the 30 suites around the gate.
+
+- **A sealed document's Vault filing names the seal it rendered** (`46d849a026`,
+  `docs/evidence/SPINE/S2/2026-11-10-vault-filing-names-seal/`; LX-10's seal half, rows D5 and D7). From a Vault
+  leaf, nothing reached the frozen record its bytes were rendered from; the filing-copy leaf of the same document did.
+  The chained filing row and the export history now record the frozen version and its content hash, held to the
+  filed text by the seal check the filing copy uses, and the receipt reader carries it into the package's governance
+  record. Red first (13 cases), then 52 of 52; 440 pass across the 32 suites around the filing. The walk's baseline
+  10 → 8, still 15 of 15. **For the founder:** when a sealed document's seal does not hold, the filing records why
+  and names none; the filing copy refuses in that state. Whether the Vault filing should refuse too is not decided.
+
+**Found, not fixed here**
+
+- A person still cannot put a citation into a sentence AnA wrote and keep the sentence (422
+  `MACHINE_LINEAGE_FORMATTING_UNVERIFIED`). That is deliberate and is pinned by five tests: the machine's words do
+  not become a person's by a citation.
+- A deletion that leaves an unchanged machine sentence of the same span unmatched is still refused (the pinned limit
+  in the same evidence).
+- The check does not read the figure spans `draft_authoring_document` records from its Vault receipts
+  (`sourceReferences`), so a figure AnA verified against its source still reads as uncited (LX-06's remaining half).
+- `server/services/ana/__tests__/sub-agent-toolset.test.ts` "no input of any child tool or check names a path" fails
+  on trunk. **→ Anna runtime (`01KZK3…`).**
+
+**Next, in order**
+
+1. The founder: approve PQ-DRAFT-001 or say what it still lacks; supply the provider key; allow the issuer hosts.
+2. D4: finish the RAG bank and the source review once the hosts are reachable, then run the PQ.
+3. ~~The walk follows the path a person can take before a model is qualified.~~ Done (`60b1d53767`), above.
 
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 
@@ -1730,6 +2242,31 @@ no screen, route, service, table or component file.
     - Red first: the route test 2 of 28, and the new client test 9 of 9. Green: 62 files, 633 tests. Type check 0.
     - Walked at 1440 and 390, light and dark, over five projects (four created through the API). It **found** the
       review clock painted solid, in the Plan step too, and fixed it in `3707064475`.
+  - **Reporting used in the running app** (`docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/`). The walk ran a
+    report from the Catalog, exported, finalized, opened Run history, bundled a pack and scheduled. It found five defects,
+    each fixed red first:
+    1. Finalize was offered on a run the gate always refuses, and refused only after the password. `b2d51f911c` (F1):
+       the rendered read returns `finalEligibility`, and the reason stands in Finalize's place.
+    2. Run history answered 500 on a database installed before 2026-10-13: `0014_report_os_foundation.sql` was on no
+       deploy path. `22256c6750` and `76c6f63c3a` (L1) put it in the set. It was proved on the earlier-installed
+       database and on a blank one, each replayed.
+    3. A schedule showed a type id and a database id. `e710bc3d3f` (D7).
+    4. Twenty Catalog buttons were each named "Run", and the same for Open and Pause. `8a1feba597` (D7).
+    5. Run history and Schedules overflowed the page at 390. `2135d3f9dd` (D7).
+  - **A finalize that succeeds, walked** (the Research Administration Scorecard, the one report here a finalize admits).
+    It found two more defects:
+    6. The signature's meaning was a stored token on the screen and in the PDF, with a raw ISO time in the PDF.
+       `39d5f74d32` (D7) and `0e5706a308` (F1): the dialog's meaning names, and the canonical manifestation time.
+    7. A reopened sealed run showed no seal line. `e8e3c63093` (D7): it shows the line when its seal verifies.
+    8. Opening your own Account panel reset Reporting with an "original account" notice. `52f0b562b9` (D7) fixes the
+       words. The same-account reload belongs to the shared session hook and `authService.refreshUser`, and is routed
+       to their holders.
+  - **The pack ZIP's legal chooser, walked with a registered original:** it refuses a letter whose Vault version is not
+    yet approved, and says why. Approving it through Vault and the ZIP with it are not walked.
+  - **The production pre-deploy step** for 0014 is written into the evidence and pointed at from
+    `docs/runbooks/protected-release-setup.md` (`3964cb4b64`, `f681dfb1a8`).
+  - **Held, not pushed:** all of the above, at the coordinating session's request, until its demo freeze lifts after
+    23:00 UTC. 0014's preflight would stop a Codespace start on a group membership whose group and project disagree.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 
@@ -2036,6 +2573,307 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
   - the `mdx` pack writes into the filing;
   - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
     (M7), and the IVD 510(k) outline (M6(a)).
+
+#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
+
+Facts only; no package's scope, status or ownership changes here. Committed under P-100, as P-107 item 6 allows.
+
+**Where testers run it (L1).**
+- `docker-compose.beta.yml` and the self-host `docker-compose.yml` now run:
+  - TLS on their database;
+  - a provision step;
+  - the self-hosted embeddings lane;
+  - `SETUP_TOKEN` for the first administrator;
+  - loopback-only ports (`27720c8221`, `1847807cb0`).
+- `scripts/db/provision.mjs` skips install-fresh over a complete database.
+- Walked from empty volumes in production mode, through sign-in with an emailed code
+  (`docs/evidence/HUMAN-TEST/2026-11-06-beta-stack/`).
+
+**AnA's CSR path, up to the model** (`docs/evidence/HUMAN-TEST/ANA-CSR/2026-11-06/`). No model key reached the
+session, so no model output was produced or claimed.
+
+| Commit | What it does |
+|---|---|
+| `1d129897b4` | The conversation pins `draft_authoring_document`, so a drafted document reaches the canvas. |
+| `9d7624d9fd` | The CSR builder's title page and synopsis print one field per line (the PDF's title page ran on). |
+| `0e18147b2b` | A refused key, an account with no credit or quota, and a model the account cannot use each say so: `PROVIDER_KEY_REFUSED`, `PROVIDER_ACCOUNT_REFUSED`. |
+| `5aa8aae4d3` | With only an OpenAI key, the refusal names the providers approved for drafting. |
+| `ad3d977314` | A refused turn offers no next steps. |
+| `dbc080553c` | The conversation docked beside the CSR fits its column. |
+| `c0181112ad`, `839efe9471` | Two layout fixes: the editor's filings line, and the protocol head at 390 px. |
+
+**The founder's decisions of 2026-11-06, as said in the session.**
+- Vault is reachable from the rail at all times. With no project open, it lists the projects' Vaults. The editor's
+  "Project files" is "Vault".
+- Biostatistics is a rail work area. The founder's words are recorded in `scripts/ci/one-product-baseline.json`
+  `founderDecisions` as `rail:biostatistics` (`5144702d21`, `adb1c00cba`). P-107 item 1 confirms it.
+- The Vault change broke two contract tests, `projectCreationDoors.contract` and `projectDestination`. The project
+  page's session repaired them (`d50c5f07e9`, `aeedd1b86e`). All 46 pass on trunk at 2026-11-10.
+
+**The Codespace click-through** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-06/`, with its rerun scripts,
+`0a617f4cd4`, `0ca1f5f4`).
+- **Ran on:** the founder's Codespace data, built here by `.devcontainer`'s own scripts. The CSR study preparation
+  passed.
+- **Fixed:** Manage billing (`1f97ae5495`, `3a473d045e`).
+- **Landed elsewhere:** the demo organisation now signs out after 120 idle minutes, not 15 (`fe3bdced33`, the
+  Codespace session). The Lumen organisation follows when R1's founder-organisation change lands.
+- **Open:**
+  - the CSR study's filing identity, for the inspection copy (sent to R1's DATA; no change for it found on trunk at
+    2026-11-10);
+  - RBM's "Generate from RACT" 409, not yet checked.
+- **Coverage is incomplete.** The last run's results were lost when the container was replaced. Rerun it to the end.
+
+**Started for the founder's Vault and data request** (2026-11-06; the surveys' "What already exists" is in each
+session's brief). Each records its own progress here; as reported to this session:
+- `session_01QoxbLZMScz1c2iFESBLn9J`, **S6**: step 1 landed (`b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+  A project's Vault has "New folder", Rename and "Move to…", each audited. Its cabinet is the filing's binder from the
+  active rule pack. Steps 2 to 4 landed 2026-11-10 (`d208ba8f68`, `844b7de191`, `a36449dd90`, `c80d21ae3b`,
+  `7d918fe90e`, `f9643421e9`, `84004c287e`): IND, NDA, MAA, 510(k), EU MDR and EU IVDR each open on their own binder; a
+  binder folder lists the plan tasks that feed it; AnA files into folders as suggestions a person confirms (not walked
+  in a conversation: no model key). With it, `9d01cdb37b` stops `/api/folders` reaching another sponsor's project
+  folders.
+- `session_01QoxbLdTrwYyiaSgLDxgHQJ`, **S2**: landed (`c15afd47`..`07a1c645`). Vault has a "Data catalog" tab with
+  a grade A to D per item and its basis, and "Use in this project". Open: the CSR study-data chooser putting used items
+  first (S3), and AnA over the catalog.
+- **S12** (work projects) was declined by `01QoxbLcnW…`. Under P-107 item 7 it is with a project-page session, after
+  D3-4 (`d50c5f07e9`).
+
+**2026-11-10, launch row D2: the Codespace click-through's second run**
+(`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`). The founder's Codespace was rebuilt from an empty
+database with trunk's own `.devcontainer` scripts, then clicked through as Ana Author and as the Lumen lead.
+
+| Commit | What it does |
+|---|---|
+| `8c4a9e5a8a`, `912ec3cf35` | Approving a controlled document no longer makes every project Vault in the organisation answer 500. The Vault checks only its own project's sources and refreshes its captured Quality records first. The data room no longer counts those records as files awaiting a classifier. |
+| `11aa491184`, `ff49ebed77` | The Codespace's demo seed signs its two-person steps: the approver is the second signer, designated QMS approver through the governed route. From an empty database every SOP approval, method validation and the RACT's approval run. |
+| `7aeecfc654`, `c9a3680a24` | The seed re-runs over its own data: a document already frozen or approved is found, and two people's same-titled acknowledgement tasks do not stop it. |
+| `44f25b3fdb` | Biostatistics "Save as a working document" saved nothing (503) on every project: the sign-in token carries the organisation as text. |
+| `1c26e6aed8` | Biostatistics names an unfilled field beside "Assess defensibility", not as a red error. |
+| `cc06768a51` | The CSR study is prepared as an open IND with a clearly fictional sponsor (P-115 item 4), so its package identity is complete. |
+| `a3c57ccdf5` | A refused "Close letter" ends its message with one full stop. |
+| `70ec16da36` (the CSR walk session, from this run's finding) | A fresh Codespace's CSR study preparation finishes. |
+
+- **Coverage:** runs A (projects and authoring, 120 clicks) and C (work areas and administration, 265 clicks) finished
+  with nothing further. B, D and E: see the next entry. The crawler resumes from its log and restarts its browser
+  every 20 clicks.
+- **Found and handed on:** every sign-in mints the token's organisation and user ids as strings (platform owner); a
+  page open reads the session six times and the project five (shell owner); `lumen-vault`'s 24 review, approval and
+  seal steps want a third person in the development organisation (the Codespace session, DATA).
+- **Seen red on trunk, not this lane's:** `section-sources-unverifiable-native.pglite` (3),
+  `tests/routes/chat-governed-upload` (1).
+- **GA readiness** (`scripts/ops/ga-readiness-report.mjs`, 8 of 42 ready, 18 blockers): none is code in this lane.
+  They are production secrets, SMTP for the sign-in code, the PQ protocol's approval and run, a production restore
+  rehearsal and the AWS apply (rows D1, D5, D6, D9, D10).
+
+**2026-11-10 to 2026-11-12, launch row D2: the click-through's later findings, and the screens as a release serves
+them** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`, findings M to Q, and
+`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-11-release-gate/README.md`, finding R).
+
+| Commit | What it does |
+|---|---|
+| `73ebee2233`, `68db67431e`, `0768226bb8`, `a8eeed8bd3` | "Download an inspection copy" works on the demo projects: each carries its open IND's applicant identity, and its study documents are placed with their study id and file tag. One implementation in the demo packs (DATA's and this lane's were merged). |
+| `1a60f41481` | A package the packager refuses for a filing reason answers 422 with its findings, not 500 "eCTD operation failed". |
+| `a19a92eab7` | Compliance reports' "Run attestation" works in a Codespace (it mints its own signing key); where an installation has no key the panel says so and offers no retry. |
+| `273d33e131` | A document opened from a seal, or a version viewed in the Vault, is brought into view. It was framed below the seal's list, so the click looked as if it had done nothing. |
+| `137af324e3` | Browsing the Vault, the project page and Quality no longer uses up the 20-a-minute document limit. Three reads a screen makes as it opens were counted in it, and after about a minute of clicking the catalog record and Download answered 429. Measured at a person's pace; the limits are the same in a release. |
+| `3ac31fe6fb`, `3b030ecea2` | The click-through crawler skips controls that mint a new control each time, and opens a collapsed section before it clicks inside it. |
+
+- **Coverage, final:** A and C finished. B (1,343 clicks), D (906) and E (308) were stopped when the sandbox's memory
+  was needed for a push's typecheck, with finding Q and nothing else new.
+- **The release's gate** (`LAUNCH_SCOPE_ENFORCE=on`, unattributed paths refused): all 134 screens and tabs the
+  click-through reached as Ana Author open with it on, none refused. The doors to the two screens outside the release
+  that launch screens lead to (the trial master file, the source tracer) are not shown, and a direct link says "not in
+  this release". Every server route was given the gate's verdict and searched for in the client as a relative path
+  through a base constant, which is the static gate's blind spot: nothing found.
+- **The Lumen account with the gate on:** 277 of its 307 screens and tabs opened, none refused.
+- **For R1 and RBM's screens:** three RBM routes are built and no screen calls them (the load history, the scored
+  patient profiles list, site oversight); a release refuses them, because no launch surface claims their prefix.
+- **2026-11-12, push slots, proposed and withdrawn.** While fifteen sessions lost ref races, this session proposed an
+  eight-minute slot for each, and first wrote that the founder had made it the manager across the sessions. That was
+  wrong (the founder's sentence went to every session) and is corrected. The slots were withdrawn once trunk was quiet
+  (`.design/claude-convergence/COORDINATION.md`, "Push slots of 2026-11-12").
+- **2026-11-12, the device demo pack** (`docs/evidence/DEMO/2026-11-12-device-pack/`): the 510(k) Summary is reviewed
+  by a third person and approved by the second; the pack writes its text into the project's filing, so the seeded
+  510(k) export answers 200 instead of 422; the eSTAR probe leaves no seventh leaf (`GA-DEMO-10`, `-11`, `-12`).
+- **2026-11-12, the built client under the policy a release enforces** (`d08bbd2340`, same evidence folder, findings S
+  and T): all 134 screens open with no error and nothing refused that a screen uses. Two violations were reported on
+  every page and broke nothing; both are repaired (the template's inline style gets the nonce; Zod does not probe for
+  `eval`).
+- **2026-11-12, phone width and dark:** S11's audit is the record
+  (`docs/evidence/HUMAN-TEST/PHONE-DARK/2026-11-12/`). This session duplicated part of it by not reading S11's row,
+  and filed only what its wider measurement adds (`…/CLICK-THROUGH/2026-11-12-phone-dark/`): the admin console
+  (repaired, `98c974321a`) and three RBM tabs scroll sideways at 390 px.
+
+**Open for the founder:**
+- `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
+- the PQ decision for production drafting (every model is `pending`);
+- whether the client types read "medical device and diagnostics, biotech, pharma, CROs/consultants".
+
+#### L1 (row D1) — ready to run on AWS: re-measured at head, the WAF, cheaper readiness (session `session_01QoxbLaF89iYd7wC96owa7t`, 2026-11-10)
+
+**What already exists.**
+- Work order: `docs/work-orders/MR-03-first-deploy-staging-to-production.md`. Stages 1–4 had landed.
+- Infrastructure: `terraform/` (one stack, two roots, tested modules), `deploy-aws.yml` (staging, promote, rollback) and
+  `provision-database.yml`.
+- CI's image jobs.
+- P-11, the WAF, decided but never built.
+
+**Delivered**
+- **Re-measured at head.** Evidence: `docs/evidence/D1/2026-11-10-aws-readiness/`.
+  - Terraform: 121/121 offline tests pass, every root validates, and the deploy preflight proof holds.
+  - The deploy contracts pass.
+  - On GitHub: the production image boot, blank-DB provisioning, boot smoke, Security Scan and Codespace jobs pass.
+- **P-11, the WAF**, `4e697a5381`: an `aws_wafv2_web_acl` on the distribution.
+  - The IP-reputation and known-bad-inputs groups block, and a per-IP rate rule blocks.
+  - The common rule set counts for two weeks; its 8 KB body rule counts on every path.
+  - The region precondition is in, and the Trivy exception is deleted.
+  - Red 11/1 failed, then green 15/15.
+- **OPS-22**, `5e8a7317ce` and `37d030e109`'s chain: `/readyz` runs its database query and Vault-store probe at most once
+  per 5 s, and in production the public body is `{ ready }` alone. Green 81/81.
+- **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
+- **MR-03**, `999efec84a`: re-confirmed at head, with the founder's first-apply checklist in order.
+
+**What blocks a deploy, in order**
+1. **Trunk CI is red**, and `deploy-aws.yml` runs only a SHA whose whole `ci.yml` run passed. The MR-02 lanes own it:
+   - Secret scan: 8 findings, 3 credentials live;
+   - Lint;
+   - Integration;
+   - Test: 447 of 79,560 failing.
+2. **The founder's inputs**, listed in MR-03's 2026-11-10 checklist:
+   - accounts, region, domain and certificates;
+   - SMTP;
+   - the Anthropic key, and its placement entry (B4);
+   - error reporting (NEW-3);
+   - Vault retention;
+   - revoking the live credentials;
+   - the apply.
+
+**Next, engineering, no founder input**
+- Wire `READYZ_TOKEN` into the task definition and the smoke test.
+- MR-03 Stage 6 (OPS-17).
+- Stage 7 steps 2–4 and 8.
+- Switch the common rule set to block two weeks after the first apply.
+
+#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-12)
+
+The founder: "We don't have apps anymore. We just have the core product… The quality is a major part of the product. I
+just don't want separate apps or cards." Quality is one work area: a header, AnA's starters, its registers as tabs,
+quiet sections, no tiles or type cards. The sweep plan is C1–C18, each with its findings. The evidence for each step is
+under `docs/evidence/DESIGN/D7/`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| The work area | `a65f886a7` | Quality: one header, three starters, registers as tabs |
+| Rows: one next step and More | `606a9a302`, `63ff5b495`, `b02be8a1d`, `8a0e2836a` | Each register row |
+| Change control as one log section | `6f651cc23` | The Change control tab: stage filter as one segmented control, procedure in a closed disclosure |
+| C1–C2: the SOP tab's quiet sections, honest dates and all-clears | `0561109d1` | SOP register, Periodic review, Training |
+| C3–C5: toasts; refusals said as refusals; every Open reaches the one editor | `ff2a66369`, `3f2ab6ad1`, `1a69d42a1` | Every Quality write and read |
+| Independent review of C1–C5: 23 confirmed findings repaired | `58bed0a70` | `2026-11-10-review-repairs/` |
+| C6: the SOP register is D0's table | `62c7f0031` | SOP register (the 390 sideways scroll found and fixed) |
+| C8: the change log is D0's table, one next step per change, no Approve for the proposer | `ea1d59957` | Change control log |
+| F1: an approved change's signed content cannot be rewritten (409, not 404) | `c555f4a2a`, `faa4b737e` | `PATCH /api/mdx/qms/changes/:id`; checked first by three independent readers |
+| C9: the change record is read and assessed in its row, and read inside the approval ceremony | `135394180` | A change's row; "Edit assessment"; "What you approve" in the signature dialog |
+| F1: a change's approval signs the content the approver read | `c284f3cb4`, `78e9705ef` | The signature is refused, and nothing signed, when the change was edited after the dialog opened |
+| C10: change-control documents open the one "New controlled document" door | `b61c5b088` | Change control: Change-control documents and forms |
+| C11: the records registers are D0's table, one next step per record | `33682ac65` | CAPA, Deviations, Nonconformances, Suppliers, Internal audits, Management reviews |
+| C12: a capped read says so; the figures keep the facts the tiles carried | `646b855fe` | "The 100 most recently updated CAPAs: …"; "not all read" in a record's CAPA column |
+| C13: CAPA and review action items are a table; their moves are named by the act | `72178e7a2` | A CAPA's or a management review's action items |
+| C14: Quality reads the open project and says whose records it lists | `e39cc0d59` | Quality from a project: "Show the whole organisation"; "Organisation-wide" on the registers kept for the organisation |
+| C15: Quality's dialogs are the product's one drawer | `c9e9fdefd` | New controlled document, Record periodic review, Job roles, Who must train, Version history |
+| C16–C17: the training reader and the review route are the drawer; Reassign is the shared sheet | `91baf7d96` | Read and acknowledge; Review route; Reassign |
+| F1, found walking C17: a QMS document's route reads are record reads, so Reassign is not refused 429; an empty picker says no one can be chosen | `b4129366a` | Reassign right after editing and sending for review |
+| C18a: a register's sentence is the line under its head; dates stay on one line | `e3131458b` | Every register's head at 1440 and 1280 |
+| C18: Quality's root and type are the product's | `df4e7013a` | Quality in dark mode: the product's #262624; no Quality-only buttons |
+| F1: the GA ledger row L97 cites the evidence that now proves it | `e9876d85e` | `docs/GA_COMPLETION_LEDGER_2026-08.md` |
+| L1 (MR-12 Stage 4, slice 5): the per-person view lists who has not yet acknowledged, overdue first | `4bea9553d` | "Training overdue, due or lapsing" |
+| F1 (Part 11 review L-2): a change's edit records its reason and each field before and after; an approved change is kept | `ea718c177`, `a27e6b061`, `d435eeead` | "Edit assessment"; `DELETE /qms/changes/:id` answers 409 `QMS_CHANGE_KEPT` past assessment |
+| Independent review of 2026-11-10, repaired, each red first and walked: | | |
+| — F1: only the topmost open dialog answers Escape and Tab | `c17711527` | A reason sheet over the review route |
+| — F1: every disabled drawer button reads as disabled | `f5d5bd8e0` | New job role while an act is open; Cancel while a write saves |
+| — D7: a training drawer holds while its act saves; focus goes into the act and back; a disabled Delete says why | `098e99e17`, `36d498ed5` | Job roles; Who must train; the change log's drawers |
+| — L1: the training all-clear says only what was assessed, and speaks for a reader who sees only their own rows | `edff941e1` | "Training overdue, due or lapsing" |
+| — D7: a scoped Quality never shows another scope's rows; periodic review waits for the project's documents | `d9b10b751` | Show the whole organisation, and back |
+| — F1: a record linked to a change past proposal says why; the audit row keeps how it relates | `979554ff6` | "Link a record": Why it is linked |
+| — F1: a record's 404 names the record in the one refusal panel (`readSubject`); Quality's two local 404 overrides converge onto it | `94c4c6699` | Version history, notification target, editing copy, CAPA action items |
+| — D7: the capped CAPA figures read as one line | `c9c0b5409` | The CAPA register's figures |
+| Under P-122 (2026-11-11 and 2026-11-12), the merged Quality walked in the running app, each repair red first: | | |
+| — D7: a record's facts are never covered by its actions (the actions are the line under the facts); the tabs wrap instead of clipping | `c83219951` | Every register, at 1440, 1280, 1024 and 390 |
+| — D7: a confirmed write re-reads the figure line and the register beside it | `dd14af400` | Record a complaint: "open complaints" follows with no reload |
+| — R1: a record linked to a change can be removed from it, with its reason; why a record was linked is shown | `94450dd2c` | A change's row: Remove |
+| — D7 (P-122 rule 2): the change procedure and the coverage method are open again, the procedure's steps numbered; three unruled classes carry a rule | `9d1f8ea22` | Change control; the SOP tab's training section |
+| — D7: who is due to train, coverage and the review schedule follow a confirmed write; a controlled document walked end to end | `dd8f5488d` | "Training overdue, due or lapsing" after an assignment or an acknowledgement |
+| — F1: a failed Quality projection logs its cause; a project's sources read measured on a project of Quality records. The per-source admission repair was made twice the same hour: the data room lane's (`f51844891`) stands and this lane's is withdrawn | `df1a57ef1`, withdrawn at the merge | The server log on a 503; `docs/evidence/F1/2026-11-12-source-scope-admissions/` |
+| — D7: a write the server did not confirm says so, and says to check before trying again | `c446043c2` | Any Quality drawer with the connection down |
+
+The sweep's C1–C18 are done, except C7. Every other `readWhat` in the product names a project-scoped read (CMC's
+registers, the data room, the project team, its records), for which "this project" is the right subject, so no other
+caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence is under
+`docs/evidence/DESIGN/D7/2026-11-10-*`, `docs/evidence/MR-12/2026-11-10-training-assessed/` and
+`docs/evidence/F1/2026-11-10-not-found-words/`. The P-122 repairs' evidence is under
+`docs/evidence/DESIGN/D7/2026-11-11-*` and `2026-11-12-*`, `docs/evidence/DESIGN/R1/2026-11-12-change-link-removal/`
+and `docs/evidence/F1/2026-11-12-source-scope-admissions/`.
+
+**Open:**
+- C7 waits on a decision: 48 px rows. The routine signature line and the route line would leave the row, and MR-12
+  Stage 5 and RR4 §2.12 placed them there.
+- dialogs-3 waits on a decision: "Edit controlled text", a second editor inside the reader.
+- A change's `assessed_by` is set by any edit, even one that changes only the target date. The edit's audit row says
+  exactly what changed and by whom; the column's meaning is what is off.
+- In this lane's files, found walking: the suppliers register is wider than its box at 1024; a complaint's row does
+  not name its MDR report (the server returns the report's id, not its number).
+- Outside D7, found walking:
+  - any other `ErrorState` whose read is of a record still says "this project" on a 404 until its caller passes
+    `readSubject` (found by `readWhat=` naming a record);
+  - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
+    and its eyebrow; the Vault's test asserts it;
+  - the editor's project-sources read is still 6.6 to 7 s for a project of 183 Quality records, and answers 503
+    `SOURCE_READ_ACCESS_CHANGED` when a Quality record is written while it runs. What remains is measured in
+    `docs/evidence/F1/2026-11-12-source-scope-admissions/`; the Quality evidence reader's share is this lane's next
+    change, and the retry is handed to the coordinating session in `.design/claude-convergence/COORDINATION.md`;
+  - the editor's save toast on a controlled document speaks of a filing the document is never bound to (handed on in
+    the same place).
+
+
+#### R1 and F1 — client administration, and the open screen work (2026-11-10 to 2026-11-12)
+
+The founder, 2026-11-10: "Continue across all client onboarding, setup, licensing, admin, client security settings in
+their client admin", and "add user roles per biotech, pharma, CRO, cmc". 2026-11-11: "Continue and focus entirely on
+getting what we built surfaces correctly on the UI and working for GA. Stay aligned with our roadmap and rules."
+Session `…01T2wooCZu`. Decisions: P-119 (job roles by client type) and P-125 (P-122 applied to client administration).
+
+| What | Commits | Evidence |
+|---|---|---|
+| Sign-up can be typed into; a refusal is tied to its field; the acceptances and the job title are kept | `8a65a6f3a`, `452ea0ac6` | `docs/evidence/F1/2026-11-10-client-admin/fix-signup/` |
+| P-119 slice 1: 53 standard job roles by client type, as data | `7649a63be` | `…/2026-11-10-client-admin/job-roles/`, `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md` |
+| A platform-wide agreement is published by platform administrators, with a reason and an audit row | `e44b0c0b8`, `1ec422033`, `a341aff77` | `…/2026-11-10-client-admin/fix-S1a-agreements/` |
+| The walk and audit of client administration: 162 findings in twelve lanes | `a4711c1db` | `docs/evidence/F1/2026-11-10-client-admin/README.md` |
+| The GA and sales readiness map: 246 open items at HEAD | `bf04c749c` | `docs/evidence/GA-READINESS/2026-11-10/` |
+| The whole-platform sales rehearsal: a run of show per client type, an avoid list, 17 lanes | `1be270c1a` | `docs/evidence/DEMO/2026-11-10-sales-rehearsal/` |
+| The fifth P-122 inventory: 66 capabilities of client administration, 30 restorations | `d5cad6366`, `20511f85e` | `docs/evidence/DESIGN/P-122/inventory/administration.md` |
+
+**What was found.**
+- The security findings came first: any client administrator could publish a platform-wide agreement (fixed);
+  a client administrator could set their own seats and weekly limits; approval granted modules outside the plan; any
+  member could set budgets; provisioning attached accounts without consent (each fixed in a lane, in repair).
+- In client administration little was deleted. The losses are reach and truth: twelve settings cards in one column
+  under a tab that does not open by default, and single sign-on status, seats and groups shown that the server never
+  recorded.
+- Across the other four inventories and the rehearsal, read row by row against trunk on 2026-11-11 (204 rows): 68
+  restored, 13 held by another session, 77 open and unheld, 20 waiting on the founder.
+- Two sessions fixed the same finding twice in one day (the Quality-record titles in the data room; the eSTAR
+  section requirement). In both the later copy was withdrawn unpushed. A claim that is not pushed is not a claim.
+
+**In flight** (held in `COORDINATION.md`): the 21 fix lanes of the walk and the map, each verified by a second agent,
+repaired and re-checked, then the restoration for its own screen (P-125); the Administration chain, which carries
+P-119 slices 2 and 3 (job roles in Administration and in the account); and eight lanes over unheld files, led by the
+spine's centre: a frozen, signed document that answers 409 when placed into a filing.
+
+**Next.** Land each lane as its re-check passes; file each restoration's before and after under
+`docs/evidence/DESIGN/P-122/administration/`; then the rows the scout left for a later wave, which wait on these
+lanes' files (the IND registers and forms, the Part 11 chain view, the CMC client rows, an IVD lane).
+
+**For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
+`COORDINATION.md` row): the first six decide the most.
 
 ## 4. How everyone works
 

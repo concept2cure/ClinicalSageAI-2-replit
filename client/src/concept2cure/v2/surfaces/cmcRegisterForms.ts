@@ -33,7 +33,7 @@
  * is a section Module 3 composition has nothing to say about.
  */
 
-import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
+import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES, FINISHED_PRODUCT, NON_BATCH_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
 import type { C2CFormConfig, C2CFormFieldOption } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
@@ -128,10 +128,12 @@ export interface AnalyticalMethodBody {
   matrix: string;
   technique: string;
   status: string;
-  ichQ2Parameters: { characteristics: string[]; summary?: string };
+  ichQ2Parameters: { characteristics: string[]; summary?: string; evidence?: Partial<Record<Q2EvidenceKey, string>> };
   validationDate?: string;
   projectId?: string;
 }
+
+export type Q2EvidenceKey = 'specificity' | 'linearity' | 'accuracy' | 'precision';
 
 export function methodForm(row?: Partial<AnalyticalMethodBody> | null): C2CFormConfig {
   return {
@@ -146,24 +148,57 @@ export function methodForm(row?: Partial<AnalyticalMethodBody> | null): C2CFormC
       { key: 'analyte', label: 'Analyte', type: 'text', required: true, half: true, default: row?.analyte ?? '', placeholder: 'What is measured, e.g. Acidic variants' },
       { key: 'matrix', label: 'Matrix', type: 'select', options: METHOD_MATRICES, required: true, half: true, default: row?.matrix ?? 'Drug substance' },
       { key: 'purpose', label: 'Purpose', type: 'select', options: METHOD_PURPOSES, required: true, half: true, default: row?.purpose ?? '' },
-      /* 'validated' is NOT a status a save may choose: it is the ICH Q2
-         conclusion, recorded with a signature on the Validate action
-         (POST /api/cmc/analytical-methods/:id/validate). A method already
-         validated keeps the word through an edit, which is what
-         statusOptionsFor is for — offering only the ungoverned statuses would
-         send 'development' on every Save and strand validated_by and
+      /* Neither 'validated' nor 'phase-appropriate' is a status a save may
+         choose: both are ICH Q2 conclusions, recorded with a signature on the
+         Validate action (POST /api/cmc/analytical-methods/:id/validate). A
+         method already signed as either keeps that word through an edit, which
+         is what statusOptionsFor is for — offering only the ungoverned statuses
+         would send 'development' on every Save and strand validated_by and
          validation_date on a record that no longer claimed them. */
-      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(METHOD_STATUSES, row?.status, 'validated'), required: true, half: true, default: statusDefaultFor(METHOD_STATUSES, row?.status, 'validated'), desc: 'Validated is recorded with a signature, on the Validate action' },
+      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(METHOD_STATUSES, row?.status, METHOD_SIGNED_STATES), required: true, half: true, default: statusDefaultFor(METHOD_STATUSES, row?.status, METHOD_SIGNED_STATES), desc: 'Validated, or suitable for its phase, is recorded with a signature on the Validate action' },
       { key: 'characteristics', label: 'ICH Q2 characteristics evaluated', type: 'text', default: (row?.ichQ2Parameters?.characteristics ?? []).join(', '), placeholder: ICH_Q2_CHARACTERISTICS.slice(0, 4).join(', ') },
       { key: 'summary', label: 'Validation summary', type: 'textarea', default: row?.ichQ2Parameters?.summary ?? '', placeholder: 'Outcome against the acceptance criteria for each characteristic…' },
+      ...q2EvidenceFields(row?.ichQ2Parameters?.evidence),
     ],
   };
 }
 
-/** The statuses an ordinary save may set. 'validated' is reached only by the
- *  signature, so it is absent here and re-offered by statusOptionsFor to a
- *  record that already holds it. */
+/** The characteristics the ICH Q2 check asks a procedure's record to carry data for (ich-compliance-q2.ts). */
+export const Q2_EVIDENCE: ReadonlyArray<{ key: Q2EvidenceKey; label: string; placeholder: string }> = [
+  { key: 'specificity', label: 'Specificity: what was shown', placeholder: 'e.g. No interference from placebo, impurities or degradants at the analyte peak' },
+  { key: 'linearity', label: 'Linearity and range: what was shown', placeholder: 'e.g. r² 0.9998 over 50–150% of the target concentration' },
+  { key: 'accuracy', label: 'Accuracy: what was shown', placeholder: 'e.g. Mean recovery 99.6% (98.9–100.4%) at three levels' },
+  { key: 'precision', label: 'Precision: what was shown', placeholder: 'e.g. Repeatability RSD 0.4% (n = 6); intermediate precision RSD 0.7%' },
+];
+
+/* Walked 2026-11-12: the form had no place for a characteristic's result, so
+   the ICH Q2 check, which asks each record for specificity, linearity,
+   accuracy and precision data, could not be cleared from the screen. */
+function q2EvidenceFields(evidence?: Partial<Record<Q2EvidenceKey, string>>): C2CFormConfig['fields'] {
+  return Q2_EVIDENCE.map(({ key, label, placeholder }) => ({
+    key: `q2_${key}`, label, type: 'textarea' as const, default: evidence?.[key] ?? '', placeholder,
+  }));
+}
+
+function q2EvidenceOf(v: Record<string, string>): Partial<Record<Q2EvidenceKey, string>> | undefined {
+  const given = Q2_EVIDENCE.flatMap(({ key }) => (opt(v[`q2_${key}`]) ? [[key, opt(v[`q2_${key}`]) as string] as const] : []));
+  return given.length ? Object.fromEntries(given) : undefined;
+}
+
+/** The statuses an ordinary save may set. Neither signed state is reached by a
+ *  save, so both are absent here and re-offered by statusOptionsFor to a record
+ *  that already holds one. */
 export const METHOD_STATUSES = ['development', 'validation', 'retired'];
+
+/**
+ * The two states the method signature writes (P-110), as the register stores
+ * them. The Validate drawer offers the same pair with its labels
+ * (METHOD_VALIDATION_OUTCOMES); this is the plain list the edit drawer needs to
+ * recognise a signed record. The server's own list is
+ * `SIGNED_REGISTERS.analyticalMethods` (signedValue + signedOutcomes), and
+ * `server/services/cmc/__tests__/signed-outcome.test.ts` holds them together.
+ */
+export const METHOD_SIGNED_STATES: readonly string[] = ['validated', 'phase-appropriate'];
 
 export function methodBody(v: Record<string, string>, projectId?: string): AnalyticalMethodBody {
   const body: AnalyticalMethodBody = {
@@ -178,6 +213,7 @@ export function methodBody(v: Record<string, string>, projectId?: string): Analy
     ichQ2Parameters: {
       characteristics: csvToArray(v.characteristics),
       ...(opt(v.summary) ? { summary: opt(v.summary) } : {}),
+      ...(q2EvidenceOf(v) ? { evidence: q2EvidenceOf(v) } : {}),
     },
   };
   if (projectId) body.projectId = projectId;
@@ -198,6 +234,34 @@ export function methodBody(v: Record<string, string>, projectId?: string): Analy
    VALUES are the shared vocabulary's, which is the point; the array's own
    mutability is a detail of C2CFormConfig. */
 export const QC_SAMPLE_TYPES: string[] = [...SHARED_QC_SAMPLE_TYPES];
+
+const SAMPLE_TYPE_WORDS: Record<string, string> = {
+  'raw-material': 'Raw material',
+  'in-process': 'In-process',
+  'finished-product': 'Finished product',
+  stability: 'Stability',
+  'reference-standard': 'Reference standard',
+  'cleaning-verification': 'Cleaning verification',
+};
+
+/**
+ * Each sample type with where a result of it is filed, read from the shared
+ * rule the write-through applies (cmc-write-through.ts: a finished-product
+ * result is drug product batch analyses, the other recognised types drug
+ * substance, and the two non-batch types neither). Walked 2026-11-12: the
+ * select offered "raw-material", "in-process"… and no word said which of them
+ * is drug substance evidence. The stored values are unchanged.
+ */
+export function qcSampleTypeOptions(): C2CFormFieldOption[] {
+  return QC_SAMPLE_TYPES.map((value) => {
+    const filed = NON_BATCH_SAMPLE_TYPES.includes(value)
+      ? 'not a batch analysis'
+      : value === FINISHED_PRODUCT
+        ? 'drug product, §3.2.P.5.4'
+        : 'drug substance, §3.2.S.4.4';
+    return { value, label: `${SAMPLE_TYPE_WORDS[value] ?? value} (${filed})` };
+  });
+}
 
 export interface QcTestBody {
   sampleId: string;
@@ -226,7 +290,8 @@ export function qcTestForm(): C2CFormConfig {
     fields: [
       { key: 'sampleId', label: 'Sample ID', type: 'text', required: true, half: true, placeholder: 'e.g. S-2407-118' },
       { key: 'batchNumber', label: 'Batch', type: 'text', half: true, placeholder: 'e.g. B-24-007 — the batch this sample represents', desc: 'Batch analyses are reported by batch, and process capability is computed across batches' },
-      { key: 'sampleType', label: 'Sample type', type: 'select', options: QC_SAMPLE_TYPES, required: true, half: true, default: 'finished-product' },
+      /* Full width: each option names the section it files into, and at half width the select cut that off. */
+      { key: 'sampleType', label: 'Sample type', type: 'select', options: qcSampleTypeOptions(), required: true, default: 'finished-product' },
       { key: 'testMethod', label: 'Test method', type: 'text', required: true, default: '', placeholder: 'Method code or title, e.g. AM-014 icIEF' },
       { key: 'testDate', label: 'Test date', type: 'date', required: true, half: true },
       { key: 'passFailStatus', label: 'Result', type: 'seg', options: ['pending', 'pass', 'fail'], default: 'pending', half: true },
@@ -346,6 +411,8 @@ export const STABILITY_STATUSES = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CA
 
 export interface StabilityStudyBody {
   studyTitle?: string;
+  /** The shelf life the study proposes; the claim §3.2.P.8 (or the retest period §3.2.S.7) prints. */
+  shelfLife?: string;
   productName: string;
   batchNumber: string;
   dosageForm: string;
@@ -392,6 +459,9 @@ export function stabilityForm(): C2CFormConfig {
       { key: 'timePoints', label: 'Pull points (months)', type: 'text', required: true, default: '0, 3, 6, 9, 12, 18, 24', placeholder: '0, 3, 6, 12…' },
       { key: 'testParameters', label: 'Parameters tested at each pull', type: 'text', required: true, default: 'Appearance, Assay, Related substances, Water content', placeholder: 'Appearance, Assay, …' },
       { key: 'status', label: 'Status', type: 'select', options: STABILITY_STATUSES, required: true, half: true, default: 'ACTIVE' },
+      /* Not required: a study is registered before its data support a claim. Until 2026-11-12 no form offered
+         it at all, so §3.2.P.8 could be completed only by closing the study out under signature. */
+      { key: 'shelfLife', label: 'Proposed shelf life', type: 'text', half: true, placeholder: 'e.g. 24 months at or below 25 °C', desc: 'The claim §3.2.P.8 prints, or the retest period §3.2.S.7 prints. Leave it blank until the data support one.' },
       { key: 'notes', label: 'Notes', type: 'textarea', placeholder: 'Container closure on stability, orientation, bracketing/matrixing design…' },
     ],
   };
@@ -424,6 +494,8 @@ export function stabilityBody(v: Record<string, string>, projectId?: string): St
   if (strength) body.strength = strength;
   const notes = opt(v.notes);
   if (notes) body.notes = notes;
+  const shelfLife = opt(v.shelfLife);
+  if (shelfLife) body.shelfLife = shelfLife;
   // Planned end is derivable, and deriving it is honest: it is start + the
   // duration the study was registered for, not an invented commitment.
   const start = isoDate(v.startDate);
@@ -434,6 +506,28 @@ export function stabilityBody(v: Record<string, string>, projectId?: string): St
   }
   if (projectId) body.projectId = projectId;
   return body;
+}
+
+/**
+ * The shelf life a running study proposes, set by the ordinary (audited) edit
+ * the register takes. The study stays open: closing it out, which fixes the
+ * shelf life, is the separate signed act (stabilityCloseoutForm).
+ */
+export function stabilityShelfLifeForm(current: { shelfLife?: string | null; scope?: string | null }): C2CFormConfig {
+  const section = current.scope === 'DS' ? '§3.2.S.7' : '§3.2.P.8';
+  return {
+    eyebrow: 'Stability programme — proposed shelf life',
+    title: current.shelfLife ? 'Change the proposed shelf life' : 'Set the proposed shelf life',
+    sub: `${section} prints it at the next compile. The study stays open; closing it out is a separate, signed act.`,
+    submitLabel: 'Save shelf life',
+    fields: [
+      { key: 'shelfLife', label: 'Proposed shelf life', type: 'text', required: true, default: current.shelfLife ?? '', placeholder: 'e.g. 24 months at or below 25 °C' },
+    ],
+  };
+}
+
+export function stabilityShelfLifeBody(v: Record<string, string>): { shelfLife: string } {
+  return { shelfLife: req(v.shelfLife) };
 }
 
 /* ── Stability pull-point results ──
@@ -953,36 +1047,53 @@ export const CONTAINER_COMPONENT_TYPES = ['primary', 'secondary', 'administratio
  * ungoverned statuses sent 'draft' on every Update, which reverted the
  * signature while leaving qualified_by and qualification_date populated.
  */
+/**
+ * Which of a register's signed states `current` holds, in the register's own
+ * casing, or null.
+ *
+ * Both sides lowercased: the stability vocabulary is upper-case (DRAFT, ACTIVE,
+ * PAUSED, COMPLETED) while every other register's is lower-case, and a raw
+ * comparison left a closed-out study's drawer opening on 'draft'.
+ *
+ * A LIST, not a word, because a register can sign more than one outcome.
+ * P-110 gave analytical methods two — `validated` and `phase-appropriate` —
+ * and a single word meant a method signed phase-appropriate opened its drawer
+ * on 'development', which the server then refused with 409: the exact shape of
+ * the validated-process defect the parameter was added to fix, one register
+ * over. `signedStateOf` on the server is the same function.
+ */
+function signedStateHeld(current: string | null | undefined, signedValues: string | readonly string[]): string | null {
+  const v = String(current ?? '').trim().toLowerCase();
+  if (!v) return null;
+  const all = typeof signedValues === 'string' ? [signedValues] : signedValues;
+  return all.find((s) => s.toLowerCase() === v) ?? null;
+}
+
 export function statusOptionsFor(
   statuses: string[],
   current?: string | null,
-  /* The signed value differs by register: a reference standard is `qualified`,
-     a manufacturing process is `validated`. The server generalised its guard on
-     the same axis; hard-coding the word here meant a VALIDATED process opened
-     its drawer on a status the server then refused, so the record was
-     permanently uneditable through the product — no step could ever be added to
-     a validated process. */
-  signedValue = 'qualified',
+  /* The signed states differ by register: a reference standard is `qualified`,
+     a manufacturing process is `validated`, an analytical method is `validated`
+     OR `phase-appropriate`. The server generalised its guard on the same axis;
+     hard-coding the word here meant a VALIDATED process opened its drawer on a
+     status the server then refused, so the record was permanently uneditable
+     through the product — no step could ever be added to a validated process. */
+  signedValues: string | readonly string[] = 'qualified',
 ): string[] {
-  /* Both sides lowercased, and the register's own casing returned: the
-     stability vocabulary is upper-case (DRAFT, ACTIVE, PAUSED, COMPLETED) while
-     every other register's is lower-case, and a raw comparison would have left
-     a closed-out study's drawer opening on 'draft' — the same shape as the
-     validated-process defect this parameter exists to fix. */
-  const v = String(current ?? '').trim().toLowerCase();
-  const signed = signedValue.toLowerCase();
+  const signed = signedStateHeld(current, signedValues);
+  if (!signed) return statuses;
   const base = statuses[0] ?? 'draft';
-  return v === signed ? [signedValue, ...statuses.filter((s) => s.toLowerCase() !== base.toLowerCase())] : statuses;
+  return [signed, ...statuses.filter((s) => s.toLowerCase() !== base.toLowerCase())];
 }
 
 /** The status an edit drawer opens on: the stored one where it is offerable. */
 export function statusDefaultFor(
   statuses: string[],
   current?: string | null,
-  signedValue = 'qualified',
+  signedValues: string | readonly string[] = 'qualified',
 ): string {
-  const v = String(current ?? '').trim().toLowerCase();
-  if (v === signedValue.toLowerCase()) return signedValue;
+  const signed = signedStateHeld(current, signedValues);
+  if (signed) return signed;
   return current && statuses.includes(current) ? current : (statuses[0] ?? 'draft');
 }
 

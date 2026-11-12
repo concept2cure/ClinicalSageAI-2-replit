@@ -1,0 +1,15 @@
+# npm run ci:migration-guard-order, 2026-11-10 ~14:38Z, with the key repair first placed in
+# db/migrations/20260730_project_milestones_reconciliation.sql (copied from the terminal; that placement was then
+# withdrawn with `git checkout --` and the repair moved into the table's creator, 20260220_ind_section_tracking.sql)
+
+[ci:migration-guard-order] FAIL — 1 guard(s) are ordered before the file that creates the table.
+  public.project_milestones: constraint attached by db/migrations/20260730_project_milestones_reconciliation.sql (index 46), created by db/migrations/20260220_ind_section_tracking.sql (index 47).
+
+  Every file in C2C_MIGRATION_FILES re-runs on every deploy, in order. A guard on a
+  table that does not exist yet self-guards and NO-OPS, so it arrives only on the
+  deploy AFTER the one that creates the table — and in between, the table exists and
+  the guard does not. Move the creator ABOVE the guard. If the order is genuinely
+  required, add it to scripts/ci/migration-guard-order-baseline.json WITH A REASON.
+
+# The same gate on HEAD (before any change): exit 0.
+# The same gate after the move: see ci-migration-drop-safety.txt in this folder (OK, 0 baselined).

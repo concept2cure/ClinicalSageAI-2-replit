@@ -1,0 +1,165 @@
+▶ 1/5 Preflight — database already provisioned?
+▶ 2/5 Acquire migration lock
+▶ 3/5 Apply migrations
+      [NOTICE] [kg-tenant] knowledge_graph_nodes policied
+      [NOTICE] [kg-tenant] knowledge_graph_edges policied
+      [NOTICE] [kg-tenant] lumen_knowledge_graph_edges policied
+      [NOTICE] [kg-tenant] citation_chains policied
+      [NOTICE] [uuid-rls] policied regulatory_intel.crl_trigger_patterns on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.crl_trajectory_records on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.rtf_trigger_patterns on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.ema_question_patterns on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.advisory_committee_patterns on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.precedent_application_rules on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.confidence_calibration_log on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.cross_jurisdictional_frameworks on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.jurisdictional_divergence_map on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.reliance_pathways on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_intel.filing_sequence_strategies on organization_id
+      [NOTICE] [uuid-rls] policied regulatory_harmonization.canonical_products on tenant_id
+      [NOTICE] [uuid-rls] policied regulatory_harmonization.canonical_adverse_events on tenant_id
+      [NOTICE] [uuid-rls] policied regulatory_harmonization.export_jobs on tenant_id
+      [NOTICE] [uuid-rls] policied regulatory_harmonization.gdpr_processing_records on tenant_id
+      [NOTICE] [uuid-rls] policied regulatory_harmonization.tenant_data_residency on tenant_id
+      [NOTICE] [child-rls] ai_generation_runs already policied — leaving it alone
+      [NOTICE] [child-rls] ai_messages already policied — leaving it alone
+      [NOTICE] [child-rls] ai_retrieval_chunks already policied — leaving it alone
+      [NOTICE] [child-rls] approval_checkpoints already policied — leaving it alone
+      [NOTICE] [child-rls] audit_trail already policied — leaving it alone
+      [NOTICE] [child-rls] c2c_document_sections already policied — leaving it alone
+      [NOTICE] [child-rls] cer_exports already policied — leaving it alone
+      [NOTICE] [child-rls] chat_messages already policied — leaving it alone
+      [NOTICE] [child-rls] cmc_document_versions already policied — leaving it alone
+      [NOTICE] [child-rls] coauthor_document_versions already policied — leaving it alone
+      [NOTICE] [child-rls] csr_details already policied — leaving it alone
+      [NOTICE] [child-rls] document_versions already policied — leaving it alone
+      [NOTICE] [child-rls] fda_510k_stage_progress already policied — leaving it alone
+      [NOTICE] [child-rls] program_milestones already policied — leaving it alone
+      [NOTICE] [child-rls] rag_chunks already policied — leaving it alone
+      [NOTICE] [child-rls] csr_adverse_events already policied — leaving it alone
+      [NOTICE] [child-rls] csr_biomarkers already policied — leaving it alone
+      [NOTICE] [child-rls] csr_dose_response already policied — leaving it alone
+      [NOTICE] [child-rls] csr_eligibility_criteria already policied — leaving it alone
+      [NOTICE] [child-rls] csr_endpoints already policied — leaving it alone
+      [NOTICE] [child-rls] csr_pharmacokinetics already policied — leaving it alone
+      [NOTICE] [child-rls] csr_populations already policied — leaving it alone
+      [NOTICE] [child-rls] csr_references already policied — leaving it alone
+      [NOTICE] [child-rls] csr_safety_summaries already policied — leaving it alone
+      [NOTICE] [child-rls] csr_sections already policied — leaving it alone
+      [NOTICE] [child-rls] csr_statistical_analyses already policied — leaving it alone
+      [NOTICE] [child-rls] csr_tables_and_figures already policied — leaving it alone
+      [NOTICE] [child-rls] csr_treatment_arms already policied — leaving it alone
+      [NOTICE] [child-rls] ctd_nonclinical_studies already policied — leaving it alone
+      [NOTICE] [child-rls] ctd_quality_data already policied — leaving it alone
+      [NOTICE] [child-rls] ctd_submissions already policied — leaving it alone
+      [NOTICE] [child-rls] csr_knowledge_edges already policied — leaving it alone
+      [NOTICE] [child-rls] ctd_cross_references already policied — leaving it alone
+      [WARNING] [child-rls] complaints → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+      [NOTICE] [child-rls] complaints already policied — leaving it alone
+      [WARNING] [child-rls] mdr_events → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+      [NOTICE] [child-rls] mdr_events already policied — leaving it alone
+      [WARNING] [child-rls] vigilance_events → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+      [NOTICE] [child-rls] vigilance_events already policied — leaving it alone
+      [WARNING] [child-rls] drafting_tasks → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+      [NOTICE] [child-rls] drafting_tasks already policied — leaving it alone
+      [WARNING] [child-rls] capa_records → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+      [NOTICE] [child-rls] capa_records already policied — leaving it alone
+      [WARNING] [child-rls] q_submissions → regulatory_programs: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+      [NOTICE] [child-rls] q_submissions already policied — leaving it alone
+      [NOTICE] [child-rls] activity_reactions already policied — leaving it alone
+      [NOTICE] [child-rls] agency_validation_results already policied — leaving it alone
+      [NOTICE] [child-rls] ai_ml_modifications already policied — leaving it alone
+      [NOTICE] [child-rls] c2c_ana_conversation_turns already policied — leaving it alone
+      [NOTICE] [child-rls] c2c_milestone_sections already policied — leaving it alone
+      [NOTICE] [child-rls] cer_clinical_evidence already policied — leaving it alone
+      [NOTICE] [child-rls] cer_compliance_checks already policied — leaving it alone
+      [NOTICE] [child-rls] cer_essential_requirements already policied — leaving it alone
+      [NOTICE] [child-rls] cer_faers_data already policied — leaving it alone
+      [NOTICE] [child-rls] cer_literature already policied — leaving it alone
+      [NOTICE] [child-rls] cer_sections already policied — leaving it alone
+      [NOTICE] [child-rls] cer_version_history already policied — leaving it alone
+      [NOTICE] [child-rls] cer_workflows already policied — leaving it alone
+      [NOTICE] [child-rls] charter_sections already policied — leaving it alone
+      [NOTICE] [child-rls] cognitive_hitl_breakpoints already policied — leaving it alone
+      [NOTICE] [child-rls] cognitive_reasoning_traces already policied — leaving it alone
+      [NOTICE] [child-rls] cognitive_thread_messages already policied — leaving it alone
+      [NOTICE] [child-rls] cognitive_workflow_checkpoints already policied — leaving it alone
+      [NOTICE] [child-rls] context_members already policied — leaving it alone
+      [NOTICE] [child-rls] dlt_events already policied — leaving it alone
+      [NOTICE] [child-rls] document_attachments already policied — leaving it alone
+      [NOTICE] [child-rls] document_audit_logs already policied — leaving it alone
+      [NOTICE] [child-rls] document_comments already policied — leaving it alone
+      [NOTICE] [child-rls] document_locks already policied — leaving it alone
+      [NOTICE] [child-rls] doe_analysis_results already policied — leaving it alone
+      [NOTICE] [child-rls] doe_experiments already policied — leaving it alone
+      [NOTICE] [child-rls] doe_factors already policied — leaving it alone
+      [NOTICE] [child-rls] doe_responses already policied — leaving it alone
+      [NOTICE] [child-rls] dose_cohorts already policied — leaving it alone
+      [NOTICE] [child-rls] dose_levels already policied — leaving it alone
+      [NOTICE] [child-rls] ind_narrative_sections already policied — leaving it alone
+      [NOTICE] [child-rls] ind_package_plan_documents already policied — leaving it alone
+      [NOTICE] [child-rls] ind_package_plan_modalities already policied — leaving it alone
+      [NOTICE] [child-rls] ind_package_plan_regions already policied — leaving it alone
+      [NOTICE] [child-rls] ind_package_plan_requirements already policied — leaving it alone
+      [NOTICE] [child-rls] ind_package_plan_timelines already policied — leaving it alone
+      [NOTICE] [child-rls] leaf_citations already policied — leaving it alone
+      [NOTICE] [child-rls] leaf_patches already policied — leaving it alone
+      [NOTICE] [child-rls] obligation_updates already policied — leaving it alone
+      [NOTICE] [child-rls] pdev_program_activities already policied — leaving it alone
+      [NOTICE] [child-rls] pdev_readiness_snapshots already policied — leaving it alone
+      [NOTICE] [child-rls] pkpd_compartments already policied — leaving it alone
+      [NOTICE] [child-rls] project_predictions already policied — leaving it alone
+      [NOTICE] [child-rls] report_details already policied — leaving it alone
+      [NOTICE] [child-rls] report_program_group_projects already policied — leaving it alone
+      [NOTICE] [child-rls] risk_detections already policied — leaving it alone
+      [NOTICE] [child-rls] section_patches already policied — leaving it alone
+      [NOTICE] [child-rls] sharepoint_comments already policied — leaving it alone
+      [NOTICE] [child-rls] sharepoint_file_versions already policied — leaving it alone
+      [NOTICE] [child-rls] sharepoint_locks already policied — leaving it alone
+      [NOTICE] [child-rls] sharepoint_shares already policied — leaving it alone
+      [NOTICE] [child-rls] simple_document_versions already policied — leaving it alone
+      [NOTICE] [child-rls] species_comparisons already policied — leaving it alone
+      [NOTICE] [child-rls] timeline_phases already policied — leaving it alone
+      [NOTICE] [child-rls] validation_findings already policied — leaving it alone
+      [NOTICE] [child-rls] validation_harmonization_opportunities already policied — leaving it alone
+      [NOTICE] [child-rls] validation_issues already policied — leaving it alone
+      [NOTICE] [child-rls] workflow_approvals already policied — leaving it alone
+      [NOTICE] [child-rls] workflow_history already policied — leaving it alone
+      [NOTICE] [child-rls] workflow_steps already policied — leaving it alone
+      [NOTICE] [child-rls] 9 policied, 99 skipped
+      [NOTICE] [child-rls] public.ai_claims already policied — leaving it alone
+      [NOTICE] [child-rls] public.ai_claim_citations already policied — leaving it alone
+      [NOTICE] [child-rls] public.c2c_document_section_evidence already policied — leaving it alone
+      [NOTICE] [child-rls] public.c2c_document_section_versions already policied — leaving it alone
+      [NOTICE] [child-rls] public.section_propagations already policied — leaving it alone
+      [NOTICE] [child-rls] public.capa_actions already policied — leaving it alone
+      [NOTICE] [child-rls] public.q_sub_meetings already policied — leaving it alone
+      [NOTICE] [child-rls] public.q_sub_questions already policied — leaving it alone
+      [NOTICE] [child-rls] public.q_sub_timeline_entries already policied — leaving it alone
+      [NOTICE] [child-rls] public.q_sub_commitments already policied — leaving it alone
+      [NOTICE] [child-rls] public.csr_endpoint_results already policied — leaving it alone
+      [NOTICE] [child-rls] public.ctd_module_sections already policied — leaving it alone
+      [NOTICE] [child-rls] public.ctd_documents already policied — leaving it alone
+      [NOTICE] [child-rls] ai.risk_assessments already policied — leaving it alone
+      [NOTICE] [child-rls] audit.config_bundles already policied — leaving it alone
+      [NOTICE] [child-rls] audit.dataset_snapshots already policied — leaving it alone
+      [NOTICE] [child-rls] audit.idempotency_keys already policied — leaving it alone
+      [NOTICE] [child-rls] audit.purge_requests already policied — leaving it alone
+      [NOTICE] [child-rls] audit.purge_approvals already policied — leaving it alone
+      [NOTICE] [child-rls] audit.tombstones already policied — leaving it alone
+      [NOTICE] [child-rls] core.entities already policied — leaving it alone
+      [NOTICE] [child-rls] ectd.project_folders already policied — leaving it alone
+      [NOTICE] [child-rls] global_dossier.content_versions already policied — leaving it alone
+      [NOTICE] [child-rls] global_dossier.dossier_branches already policied — leaving it alone
+      [NOTICE] [child-rls] global_dossier.dossier_sync_events already policied — leaving it alone
+      [NOTICE] [child-rls] global_dossier.regulatory_comments already policied — leaving it alone
+      [NOTICE] [child-rls] manufacturing.rtrt_predictions already policied — leaving it alone
+      [NOTICE] [child-rls] chained: 5 policied, 27 skipped
+      [NOTICE] [child-rls] csr_endpoint_results is policied — leaving deny-all alone
+      [NOTICE] [child-rls] ctd_module_sections is policied — leaving deny-all alone
+      [NOTICE] [child-rls] ctd_documents is policied — leaving deny-all alone
+▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+▶ 5/5 Verify readiness contract
+  tenant_isolation_policy: 19/19 tables policied
+✅ Schema migration complete — safe to roll services.
+EXIT 0

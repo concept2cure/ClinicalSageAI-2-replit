@@ -69,7 +69,7 @@ describe('company presentation on canonical governed report PDFs', () => {
       finalization: { reason: 'Reviewed original retained content', priorStatus: 'completed', meaning: 'approval' }, verification: { verdict: 'intact', checks: [] } };
     const before = JSON.parse(JSON.stringify(input));
     const text = (await read((await buildRunPdf({ ...input, companyBranding: company() })).bytes)).text;
-    for (const value of ['Sponsor Pharma', 'ORIGINAL-REPORT-BODY', 'Signed by Dana Reyes as approval', 'Reviewed original retained content', 'Seal: sha256 ' + 'a'.repeat(64), 'Seal verification at export: intact.']) expect(text).toContain(value);
+    for (const value of ['Sponsor Pharma', 'ORIGINAL-REPORT-BODY', 'Signed by Dana Reyes, meaning Approval', 'Reviewed original retained content', 'Seal: sha256 ' + 'a'.repeat(64), 'Seal verification at export: intact.']) expect(text).toContain(value);
     expect(text).not.toContain('NOT FINAL');
     expect(input).toEqual(before);
   });

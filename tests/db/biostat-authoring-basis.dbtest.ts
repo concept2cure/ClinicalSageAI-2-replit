@@ -26,8 +26,14 @@ let studyRef: number;
 let design: StudyDesign;
 const sourceInput = () => studyDesignToStatisticalInput(design).input!;
 const sourceBasis = () => ({ kind: 'study_design', studyId: design.id, designInputsSha256: hashInputs(sourceInput()) });
+/* The first case requires the CREATE audit row's HMAC seal. The writer seals only
+ * when AUDIT_HMAC_KEY is configured (server/services/audit/chain.ts maybeSeal), as
+ * a deployment is; CI's real-database job sets no key, so the suite supplies a
+ * synthetic one, as the CAPA, IND and read-receipt suites do, and restores it. */
+const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
 
 beforeAll(async () => {
+  process.env.AUDIT_HMAC_KEY ??= 'synthetic-biostat-authoring-audit-hmac-key-no-production-use';
   owner = new Pool({ connectionString: databaseUrl, max: 3 });
   await assertVaultFixtureDatabase(owner);
   const org = (await owner.query("INSERT INTO organizations(name,slug,status) VALUES($1,$2,'active') RETURNING id,uuid", [PREFIX, PREFIX])).rows[0];
@@ -61,7 +67,10 @@ beforeAll(async () => {
   [org.id, design.id, `${PREFIX}-protocol`, programId, JSON.stringify({ kind: 'c2c.studyDesign.v1', design })])).rows[0].id);
   await withNativeCatalogClient(actor, async () => undefined);
 }, 60_000);
-afterAll(async () => { await owner?.end(); await closeVaultFixtureRuntime(); });
+afterAll(async () => {
+  if (priorAuditHmacKey === undefined) delete process.env.AUDIT_HMAC_KEY; else process.env.AUDIT_HMAC_KEY = priorAuditHmacKey;
+  await owner?.end(); await closeVaultFixtureRuntime();
+});
 
 function document(input: Partial<StatisticalInput> = sourceInput()) {
   const result = anaBiostatsOrchestrator.quickCompute(input);

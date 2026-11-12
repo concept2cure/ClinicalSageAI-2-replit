@@ -177,3 +177,23 @@ describe('the global schedule in Reporting & analytics', () => {
     await waitFor(() => expect(rows()).toHaveLength(3));
   });
 });
+
+// GA (S11, 2026-11-11): hours laid end to end are a floor. The chart names the rows whose dates are minimums.
+describe('the global schedule says which rows are minimum dates', () => {
+  it('names the hours-only projects, and says nothing when there are none', async () => {
+    const before = { ...LINES };
+    try {
+      LINES['p-510k'] = { ...(LINES['p-510k'] as object), durations: 'hours-only' };
+      LINES['p-ind'] = { ...(LINES['p-ind'] as object), durations: 'mixed' };
+      const { unmount } = render(<GlobalSchedule projects={projects} />);
+      expect((await screen.findByTestId('global-schedule-minimum')).textContent)
+        .toMatch(/^Earliest possible dates, not a forecast: WALK-510K\. Typical task durations are not on record for this filing type yet/);
+      unmount();
+      LINES['p-510k'] = before['p-510k'];
+      render(<GlobalSchedule projects={projects} />);
+      await screen.findByTestId('global-schedule');
+      expect(screen.queryByTestId('global-schedule-minimum')).toBeNull();
+    } finally { Object.assign(LINES, before); }
+  });
+});
+

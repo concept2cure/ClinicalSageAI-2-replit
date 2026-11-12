@@ -1,3 +1,29 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure — the module catalogue (Apps catalog and entitlements)
+-- Compliance: 21 CFR Part 11 (auditability), ALCOA+ principles
+-- Purpose: Reconcile available_modules with the apps the product ships; retire,
+--          never delete, a row that names no app.
+--
+-- eCTD/CTD Context:
+--   - Module(s): cross-cutting (commercial packaging; not a security boundary)
+--   - Integrity Risk Addressed: a catalogue row for a retired app staying live,
+--     and a live app's row being retired on every replay
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Data only, one transaction, no DDL. Idempotent on every deploy.
+--
+-- Notes:
+--   - Header added 2026-11-12 with the eTMF amendment below; the file's earlier
+--     dated notes follow it unchanged.
+-- =============================================================================
+-- AMENDED IN PLACE 2026-11-12 — the eTMF is admitted to the Vault (P-74 item 1, P-75, P-124 item 6; CLAUDE.md Rule 1).
+-- 'etmf' is added to step 1's keep-list. migrations/20260814j_catalog_missing_product_surfaces.sql inserts its row,
+-- and step 1 had retired that row on every replay, so the module the Vault now hosts would have had no live
+-- catalogue row. Not added to step 2's upsert: the row is 20260814j's, and its band (professional, P-75) is set
+-- after every catalog writer by db/migrations/20261112_etmf_module_professional_tier.sql, which also clears the
+-- `deprecated` flag earlier replays left. Evidence: docs/evidence/D2-ETMF/2026-11-12-admission/.
 -- AMENDED IN PLACE 2026-11-09 — biostat-workbench retired into biostatistics (CLAUDE.md Rule 1).
 -- The two biostatistics surfaces merged on 2026-11-09, carrying out the decision of
 -- docs/SURFACE_CONSOLIDATION_2026-08.md §5 ("Survivor: `biostatistics`. Fold the workbench in as a tab").
@@ -403,6 +429,7 @@ UPDATE available_modules
    'document-authoring',
    'ectd-coauthor',
    'ectd-compile',
+   'etmf',
    'evidence-search',
    'gateway-transmittals',
    'global-ri',

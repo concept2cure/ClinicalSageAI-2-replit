@@ -1,0 +1,16 @@
+# The step 3 pins against the tools as they stood at e2c514a827 (the eight sources reverted; tests as changed)
+ × server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > files the record the name is, for the study, against the Vault document, with the person's reason 5ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > a record noted with no document is said not to count as filed 1ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > "holiday-photos-notes" is no record of the reference model: refused, nothing filed, AnA asks which record 2ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > "Monitoring visit report site 04" is no record of the reference model: refused, nothing filed, AnA asks which record 1ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > a refusal of the store is passed on with its code 3ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > create_tmf is no longer defined, registered, authorised, in the launch scope or asked a stated reason 6ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > seed_tmf is no longer defined, registered, authorised, in the launch scope or asked a stated reason 1ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > update_tmf_artifact_status is no longer defined, registered, authorised, in the launch scope or asked a stated reason 1ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > review_tmf_completeness is no longer defined, registered, authorised, in the launch scope or asked a stated reason 1ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > "how complete is the trial master file for this study" still offers get_tmf_view, and none of the retired tools 6ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > "which TMF gaps would an inspector raise before the inspection" still offers get_tmf_view, and none of the retired tools 6ms
+ × server/services/ana/__tests__/tmf-tools-retired.test.ts > four trial master file tools retire with the store they wrote > "review TMF completeness for the phase 2 study" still offers get_tmf_view, and none of the retired tools 5ms
+ × server/services/ana/__tests__/classify-tmf-artifact-tool-def-says-an-unmatched-name-needs-a-zone.test.ts > classify_tmf_artifact > says an unmatched name is unclassified and not filed, and to ask the user which record it is 5ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 13 passed (26)

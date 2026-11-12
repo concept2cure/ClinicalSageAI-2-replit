@@ -1,0 +1,1063 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-10T12:23:50.121Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path) 162ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves 13ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > does not leak one submission's org docs into a sibling submission with no leaves 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > returns [] for an org with no IND submission, and never crosses tenants 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > excludes soft-deleted submissions 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > ignores non-IND submissions 5ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > resolves the org's RECORDED target_submission_date by identity match 49ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > matches on the program name/code when product names differ 85ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when the matching program records no target date 40ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when no program matches the submission identity 39ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > never resolves across tenants, program type, or soft-deleted programs 31ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state 30ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a leaf whose file belongs to another organisation does not complete the form 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > an attached form whose recorded check found required fields missing is not complete 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > an attached form with no check recorded (a server render, or attached before the check) is not complete 27ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a form leaf with no document behind it (awaiting the sponsor's file) does not complete the form 25ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND > still reports the IND, with honest empty sections, when coauthor_documents is absent 32ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to frozen, never signed or complete; another approval cannot hide current unsigned content 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > two spellings of one section are one section, with the least complete current document 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > a section the blueprint does not model keeps the document’s own name, never an invented title 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not call three forms and a single approved section a complete IND 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > uses the recorded program ID and its date despite duplicate names and a rename 25ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not guess a date between two same-named unlinked programs 39ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist authoritative readiness and program identity > does not borrow a name-matched date when a recorded link cannot be resolved 26ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > does not hide a later draft behind an earlier approval in the same section 12ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > removes a named withdrawn leaf without removing another document in that section 31ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > a withdrawn authored FDA form is no longer complete, including when sequence IDs are out of order 19ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > a unique section-only withdrawal removes the old content; a later new placement remains current 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist current lifecycle inventory > does not mistake a named withdrawal of an unknown document for a section withdrawal 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > a withdrawn sponsor-completed form does not remain complete merely because its retained file still exists 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > an ambiguous section withdrawal blocks readiness and preserves the documents instead of guessing 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > a replacement without a matching document identity blocks readiness 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist lifecycle refusals and retained form history > an append to the same document identity remains current once, while deleted sequences do not withdraw it 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > an approved Form 356h placed at 1.1 does not satisfy m1.1, and is not listed as the forms section 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > m1.1 is complete when the IND's own forms are, whatever else sits at the heading 23ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-11-10T12:24:02.225Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+{
+  "timestamp": "2026-11-10T12:24:09.688Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:24:09.688Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+{
+  "timestamp": "2026-11-10T12:24:09.689Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records no DUNS, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a malformed DUNS, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a partial contact, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes jp captured market facts through the existing assembler without FDA identifiers
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes ema captured market facts through the existing assembler without FDA identifiers
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses a missing recorded market number before assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses an unrecognized actual sequence region before assembly
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > names the application number, the bound sponsor and its D-U-N-S first, and where to record them
+[eCTD Compile] Program BX-204: failed | 3/5 modules complete | 8 errors, 1 warnings
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 2977ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > names the organisation’s recorded name as the applicant, never a placeholder 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when no agency number is recorded, nothing is assembled: a failed compilation that says so — the program code is never used 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the recorded number is only whitespace, nothing is assembled: a failed compilation that says so — the program code is never used 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the organisation has no name on record, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records no DUNS, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a malformed DUNS, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the sponsor records a partial contact, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > when the FDA number has a pathway prefix, nothing is assembled: a failed compilation that says so — the program code is never used 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 10ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 8ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes jp captured market facts through the existing assembler without FDA identifiers 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > passes ema captured market facts through the existing assembler without FDA identifiers 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses a missing recorded market number before assembly 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — recorded regional release identity > refuses an unrecognized actual sequence region before assembly 2ms
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > says nothing internal: no store, id-space or contract wording in any error, finding or blocker
+[eCTD Compile] Program BX-204: failed | 3/5 modules complete | 8 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > with the application and the applicant recorded, the first error says nothing is placed and where to place it
+[eCTD Compile] Program BX-204: failed | 3/5 modules complete | 4 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-spine.test.ts > documents placed, applicant identity missing: the same actionable lines as with nothing placed > compile: the application number, the bound sponsor and its D-U-N-S lead, each saying where to record it
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > names the application number, the bound sponsor and its D-U-N-S first, and where to record them 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > says nothing internal: no store, id-space or contract wording in any error, finding or blocker 6ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > with the application and the applicant recorded, the first error says nothing is placed and where to place it 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > documents placed, applicant identity missing: the same actionable lines as with nothing placed > compile: the application number, the bound sponsor and its D-U-N-S lead, each saying where to record it 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > documents placed, applicant identity missing: the same actionable lines as with nothing placed > validate: the identity gaps are errors too, so Validate never reads cleaner than Compile 1ms
+stderr | tests/routes/ectd-compile-ident.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-ident.test.ts
+{
+  "timestamp": "2026-11-10T12:24:12.712Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 22 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 22 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code
+[eCTD Compile] Program BX-204: failed | 0/5 modules complete | 22 errors, 1 warnings
+
+stdout | tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it
+[eCTD Compile] Project 7: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-11-10T12:24:13.705Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-11-10T12:24:13.706Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+stderr | tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read
+{
+  "timestamp": "2026-11-10T12:24:13.707Z",
+  "level": "error",
+  "message": "[ectd-compile] Project compilation applicability could not be read",
+  "context": {
+    "orgId": 7,
+    "ident": "42",
+    "err": {}
+  }
+}
+
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > keeps the numeric legacy path: sections load by project id, org-scoped 6ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program UUID org-scoped and reports the unlinked section store honestly 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > resolves a program CODE ident (non-UUID, non-numeric) 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 404s an ident outside the caller org without leaking data 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/status — ident resolution > 401s without an org context before any resolution 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/validate — program idents get the unlinked-store finding > prepends SECTION_STORE_UNLINKED as a blocking error 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — program idents compile honestly (failed, with reasons) > records the compilation under the program label and returns failed + blockers 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > GET /:projectIdent/history — program idents filter by the program label > reads history org-scoped with the resolved label 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > uses the recorded agency number when the program has one 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > with no number recorded, says it is unassigned — never the program code 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > POST /:projectIdent/compile — the draft backbone names the application honestly > a legacy numeric project does not get an IND-shaped number invented for it 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'hde'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'compile' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'mdl'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_licence'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'shonin'/'validate' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ninsho'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'status' resolves the real tenant anchor then refuses without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'todokede'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'compile' resolves the real tenant anchor then refuses without writes 2ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'ivd_approval'/'validate' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'compile' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'status' resolves the real tenant anchor then refuses without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > 'jp_cdx'/'validate' resolves the real tenant anchor then refuses without writes 5ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > regional device working projects cannot enter eCTD compilation or validation > imported validator reports cannot bypass the regional-device refusal 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'compile' checks the actual bridge before refusing without writes 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'hde'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'mdl'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_licence'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'shonin'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ninsho'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'todokede'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'ivd_approval'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'compile' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'status' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'jp_cdx'/'validate' checks the actual bridge before refusing without writes 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'compile' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'status' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric 'validate' fails closed if the bridge cannot be read 1ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'a foreign or missing project' 0ms
+ ✓ tests/routes/ectd-compile-ident.test.ts > numeric project anchors cannot hide a linked regional device filing > numeric compilation refuses 'an unresolved, foreign or deleted lin…' 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > every lifecycle-spine type exists in the registry 18ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > every lifecycle-spine type is at least buildable (real structure, not generic) 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > the four named regions are represented on the spine 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > US IND, NDA, BLA and EU MAA are production-ready (dedicated section + task blueprints) 42ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > biotech lifecycle spine > Canada NDS and Japan marketing approval are production-ready 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > US IND requires forms 1571/1572/3674 and they are FDA-registry backed and implemented 13ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > US IND is reported form-backed: all three required editions now fill officially 13ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > and stops being form-backed the moment the official editions are not installed 3ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > the named regions have an eCTD backbone reference 17ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > per-entry coverage > returns null for an unknown id 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CSR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_PROTOCOL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_IB has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SAP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_QOS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DP has a real (non-generic) section blueprint 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_SR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_ANNUAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_DSUR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSUR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_REMS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RMP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_SUPP has a real (non-generic) section blueprint 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BLA_SUPP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_CBE has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_ANNUAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_FAST_TRACK has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BTD has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_RMAT has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ORPHAN has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ORPHAN has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_DMF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ASMF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_MF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_MF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IB has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_II has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_PARTIAL_CHANGE has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_SUPPLEMENT has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_SNDS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PIP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PSP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_351K has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ACCEL_APPROVAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_CMA has a real (non-generic) section blueprint 2ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_MA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_MA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_NEW has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_NDA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_MAA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_MA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT1 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICSR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_BENEFIT_RISK has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_CTA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_CTA_A has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CTA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_CTA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_IND has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_DEEC has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_ANDS has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_GENERIC has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_GDA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_SCIENTIFIC_ADVICE has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PRIME has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RENEWAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSMF has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_COMPARABILITY has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT06 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT07 has a real (non-generic) section blueprint 1ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT11 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT18 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT19 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT21 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PMR has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ICSR_15DAY has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PADER has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EUA has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_IRP has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_VARIATION has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_RENEWAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SIGNAL has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_SUPAC has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT2 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M1 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M2 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M3 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M4 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M5 has a real (non-generic) section blueprint 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CSR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_PROTOCOL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_IB reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SAP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_QOS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_M3_DP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_SR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_IND_ANNUAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_DSUR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSUR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_REMS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RMP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_SUPP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BLA_SUPP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_CBE reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_NDA_ANNUAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_FAST_TRACK reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_BTD reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_RMAT reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ORPHAN reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ORPHAN reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_DMF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_ASMF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_MF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_MF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_IB reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_VARIATION_II reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > JP_PARTIAL_CHANGE reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_SUPPLEMENT reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_SNDS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PIP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PSP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_351K reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ACCEL_APPROVAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_CMA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_MA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_MA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_NEW reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_NDA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_MAA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_MA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT1 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_ICSR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_BENEFIT_RISK reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_CTA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_CTA_A reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CTA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CH_CTA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_IND reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > BR_DEEC reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CA_ANDS reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > KR_MA_GENERIC reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > SG_GDA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_SCIENTIFIC_ADVICE reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PRIME reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_RENEWAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > EU_PSMF reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_COMPARABILITY reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT06 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT07 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT11 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT18 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT19 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > IN_CT21 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PMR reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_ICSR_15DAY reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_PADER reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_EUA reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_IRP reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > UK_VARIATION reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > CN_RENEWAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_SIGNAL reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > US_SUPAC reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > AU_CAT2 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M1 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M2 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M3 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M4 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > ICH_CTD_M5 reports a readiness its governed path can deliver 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > clinical / CMC / lifecycle document blueprints > the CSR blueprint follows the ICH E3 structure (efficacy + safety evaluation) 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > accounts for every active registry entry exactly once 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > has a meaningful production-ready core 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > every active document type resolves to a real (non-generic) authoring structure 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > reports the startability gap rather than showing none 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > every active document type resolves to a real, family-appropriate task plan 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > Registry coverage > portfolio report > every region on the report reconciles its readiness buckets to its total 0ms
+ ✓ tests/regulatory/registryCoverage.test.ts > human review is reported separately from integrity-backed fill > names the reviewer per form, treats an empty reviewer as none, and does not claim review across the filing 6ms
+ ✓ tests/regulatory/registryCoverage.test.ts > human review is reported separately from integrity-backed fill > claims human review for the filing only when every required form names a reviewer 2ms
+ ✓ tests/regulatory/registryCoverage.test.ts > human review is reported separately from integrity-backed fill > a form with no manifest at all has no reviewer 1ms
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts
+{
+  "timestamp": "2026-11-10T12:24:18.272Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+{
+  "timestamp": "2026-11-10T12:24:22.991Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:24:22.994Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+{
+  "timestamp": "2026-11-10T12:24:22.995Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it 2483ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit 6ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf 5ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out 4ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so 3ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal 7ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled 1ms
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only 3ms
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+{
+  "timestamp": "2026-11-10T12:24:25.862Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+{
+  "timestamp": "2026-11-10T12:24:30.610Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:24:30.611Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+{
+  "timestamp": "2026-11-10T12:24:30.611Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record 3452ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation 44ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics 22ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check 6ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check 7ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check 11ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check 5ms
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check 5ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters 6ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report 2ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 0 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 1 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 2 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 3 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 4 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 5 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with empty proof 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with duplicate proof 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with not-ran proof 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with missing-integrity proof 0ms
+stderr | tests/routes/ectd-compile-sequence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-sequence.test.ts
+{
+  "timestamp": "2026-11-10T12:24:32.745Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+{
+  "timestamp": "2026-11-10T12:24:36.774Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:24:36.775Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+{
+  "timestamp": "2026-11-10T12:24:36.775Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with no number recorded for the EU market, nothing is assembled, and the refusal names the market
+[eCTD Compile] Program ONC-221: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with the EU market's number recorded, the MAA compiles under it, never the project's
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > the project's own NDA sequence still compiles under the project's number
+[eCTD Compile] Program ONC-221: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the MAA sequence id compiles the MAA, not the NDA project's latest NDA sequence 2593ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > another project's sequence (or none) is 404, and nothing is assembled 4ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a malformed sequence id is refused, not read as "none named" 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > a named sequence with nothing placed in it is refused, not compiled from another store 1ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > with no sequence named, the spine rule stands: the NDA sequence compiles 5ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence (F14) > the status read names the sequence asked for, with its recorded region 2ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with no number recorded for the EU market, nothing is assembled, and the refusal names the market 4ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > with the EU market's number recorded, the MAA compiles under it, never the project's 4ms
+ ✓ tests/routes/ectd-compile-sequence.test.ts > compile carries the sequence's own market's number (P-44) > the project's own NDA sequence still compiles under the project's number 4ms
+stderr | tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+[eCTD Validate] eValidator import not recorded: audit_logs unavailable
+
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 60ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 16ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 1ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > a replaced report stays listed on the one that replaces it, and the import record names it 2ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 3ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 4ms
+ ✓ tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-10T12:24:43.164Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts > a sponsor-attached Module 1 form counts only when the uploader attested it is the completed, signed form > checked complete but not attested: "attached — not attested", not done, and not counted by readiness 73ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts > a sponsor-attached Module 1 form counts only when the uploader attested it is the completed, signed form > the same file, attested by the uploader, completes the form and counts toward readiness 26ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts > a sponsor-attached Module 1 form counts only when the uploader attested it is the completed, signed form > an unattested attachment does not raise readiness %; the attested one does 32ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts > a sponsor-attached Module 1 form counts only when the uploader attested it is the completed, signed form > attested, but the forms engine found required fields missing or could not check it: still not done 13ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts > a sponsor-attached Module 1 form counts only when the uploader attested it is the completed, signed form > a form with no file placed reports no attachment 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-attached-form-only-when-attested.pglite.integration.test.ts > a sponsor-attached Module 1 form counts only when the uploader attested it is the completed, signed form > one attested, complete copy among the form’s attachments completes it, and is the one reported 17ms
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-10T12:24:54.940Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > the placed Investigator's Brochure and QOS read "placed", never "not started" and never approved 49ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > the module card counts a placed section as in progress, not approved 26ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > a leaf naming another organisation's document, a missing one or a deleted one places nothing 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > a co-authored document at the same code still governs when it is less advanced 26ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > has the fixture it needs 18ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a manifest whose sha256 no longer matches the bytes on disk 269ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a source that is not an https fda.gov URL 18ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a manifest with no edition recorded 17ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a field map with a blank target path 27ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > still trusts the untouched, genuinely-backed asset 18ms
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-10T12:25:03.355Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts > an authored IND form counts only when signed with a signature record > approved with no signature: not done, reported "authored — not signed" 30ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts > an authored IND form counts only when signed with a signature record > locked with no signature: not done, reported "authored — not signed" 27ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts > an authored IND form counts only when signed with a signature record > an approved document whose source carries an approval signature is still not the form's signature 9ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts > an authored IND form counts only when signed with a signature record > 'signed' with no signature record is not done 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts > an authored IND form counts only when signed with a signature record > 'signed' with a signature record on its source completes the form 17ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-counts-an-authored-form-only-when-signed.pglite.integration.test.ts > an authored IND form counts only when signed with a signature record > no document at the form: authored is null 10ms
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-11-10T12:25:10.382Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+{
+  "timestamp": "2026-11-10T12:25:12.070Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:25:12.071Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+{
+  "timestamp": "2026-11-10T12:25:12.071Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 1206ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 5ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 3ms
+ ✓ server/services/ind-forms/__tests__/ind-form-acroform-fill.test.ts > official AcroForm fill path > fills the official template when present (usedOfficialTemplate=true) 47ms
+ ✓ server/services/ind-forms/__tests__/ind-form-acroform-fill.test.ts > official AcroForm fill path > falls back to the labeled PDF when no template is present 45ms
+ ✓ server/services/ind-forms/__tests__/ind-form-acroform-fill.test.ts > official AcroForm fill path > fails closed when the asset manifest checksum is not valid 15ms
+ ✓ server/services/ind-forms/__tests__/ind-form-acroform-fill.test.ts > official AcroForm fill path > fails closed when a REQUIRED field mapping is missing 26ms
+ ✓ server/services/ind-forms/__tests__/ind-form-acroform-fill.test.ts > official AcroForm fill path > still fills officially when only a NON-REQUIRED field is unmapped 22ms
+stderr | tests/routes/ectd-compile-placement.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-placement.test.ts
+{
+  "timestamp": "2026-11-10T12:25:13.964Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a sequence with nothing placed is a measured 0, counted as placement (at head: "approved") 9ms
+ ✓ tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > an EU sequence of an NDA/FDA program is measured against the EMA set, not FDA’s 3ms
+ ✓ tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a module with nothing required has no figure and is not "ready" (at head: 0% and ready) 2ms
+ ✓ tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a market whose agency has no required set is unavailable, with the reason, and no figure 1ms
+ ✓ tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status with no sequence > a program with no sequence has no figure and says so (at head: a measured-looking 0) 1ms
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-10T12:25:16.256Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a replace by a later version supersedes the current earlier version without a blocker 57ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a later version placed as new replaces the current earlier version, so a withdrawal of it leaves nothing current 42ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > a withdrawal naming the later version withdraws the earlier version on record 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-version-lineage.pglite.integration.test.ts > IND checklist — Vault versions bound through recorded lineage > does not follow a predecessor link the database rules refuse 40ms
+stderr | tests/routes/ectd-compile-sent-sequence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-sent-sequence.test.ts
+{
+  "timestamp": "2026-11-10T12:25:22.416Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of the program's latest sequence when it is sent, and records nothing 19ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of the program's latest sequence when it is acknowledged, and records nothing 3ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of a named sequence that is sent, the same way 7ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile while a send of the sequence is unresolved (transmitting) 2ms
+stdout | tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is not recorded
+{
+  "timestamp": "2026-11-10T12:25:24.169Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:25:24.170Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is not recorded
+{
+  "timestamp": "2026-11-10T12:25:24.170Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is not recorded
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is pending
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is rejected
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > a rehearsal of a sent sequence is not refused as on file: it is recorded as a rehearsal, never as what was sent
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is not recorded 1235ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is pending 4ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is rejected 19ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > a rehearsal of a sent sequence is not refused as on file: it is recorded as a rehearsal, never as what was sent 5ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 5ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 1ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 2ms
+ ✓ server/services/ind-forms/__tests__/sponsor-boxes-unreadable-template.test.ts > requiredBoxesLeftToSponsor distinguishes "none" from "unknown" > answers the real boxes while the asset verifies (control) 239ms
+ ✓ server/services/ind-forms/__tests__/sponsor-boxes-unreadable-template.test.ts > requiredBoxesLeftToSponsor distinguishes "none" from "unknown" > REFUSES rather than answering [] when the asset fails its digest check 58ms
+ ✓ server/services/ind-forms/__tests__/sponsor-boxes-unreadable-template.test.ts > requiredBoxesLeftToSponsor distinguishes "none" from "unknown" > REFUSES when the manifest is unreadable 39ms
+ ✓ server/services/ind-forms/__tests__/sponsor-boxes-unreadable-template.test.ts > requiredBoxesLeftToSponsor distinguishes "none" from "unknown" > REFUSES when the asset is present but its bytes are not a usable template 34ms
+ ✓ server/services/ind-forms/__tests__/sponsor-boxes-unreadable-template.test.ts > requiredBoxesLeftToSponsor distinguishes "none" from "unknown" > still answers [] for a form with genuinely NO vendored asset 37ms
+ ✓ server/services/ind-forms/__tests__/sponsor-boxes-unreadable-template.test.ts > requiredBoxesLeftToSponsor distinguishes "none" from "unknown" > still throws for an unsupported form id 32ms
+stderr | tests/routes/ectd-compile-recorded-type.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-recorded-type.test.ts
+{
+  "timestamp": "2026-11-10T12:25:28.242Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+{
+  "timestamp": "2026-11-10T12:25:30.373Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:25:30.374Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+{
+  "timestamp": "2026-11-10T12:25:30.374Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0001 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an amendment compiled with no type stated is recorded as an amendment 1415ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > an original is recorded in the history’s word for it, initial 7ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a stated type that contradicts the recorded one is refused, and nothing is assembled 8ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > a sequence that records no type keeps the stated one 5ms
+ ✓ tests/routes/ectd-compile-recorded-type.test.ts > a compile is recorded as its sequence’s recorded type > the status read names the type the compile will be recorded as 5ms
+stderr | server/routes/__tests__/ectd-compile-validate-rule-set.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ectd-compile-validate-rule-set.test.ts
+{
+  "timestamp": "2026-11-10T12:25:31.617Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ectd-compile-validate-rule-set.test.ts > POST /:projectIdent/validate names its rule set and says the other exists > the response names the rule set it ran and the one Submission readiness runs 6ms
+ ✓ server/routes/__tests__/ectd-compile-validate-rule-set.test.ts > POST /:projectIdent/validate names its rule set and says the other exists > a person reads it as a finding: which rules ran, that another set exists, and which one gates dispatch 2ms
+ ✓ server/routes/__tests__/ectd-compile-validate-rule-set.test.ts > POST /:projectIdent/validate names its rule set and says the other exists > the identity gaps still lead, so Validate never reads cleaner than Compile 1ms
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts
+{
+  "timestamp": "2026-11-10T12:25:33.770Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row
+{
+  "timestamp": "2026-11-10T12:25:36.485Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:25:36.490Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row
+{
+  "timestamp": "2026-11-10T12:25:36.490Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row 1958ms
+
+ Test Files  22 passed (22)
+      Tests  437 passed (437)
+   Start at  12:23:46
+   Duration  110.35s (transform 10.10s, setup 558ms, import 57.62s, tests 46.14s, environment 3ms)
+

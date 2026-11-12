@@ -59,3 +59,49 @@ describe('regional catalog unavailable states retain existing UI treatment', () 
     expect(onRun).not.toHaveBeenCalled();
   });
 });
+
+/* ONE_DESIGN_PLAN §2 retires ids and enum values on screen. The registry's region codes are not
+   uniform (US, USA_FDA, fda, USA_OLAW) and its reporting roles are ids (ra_lead, qa): the catalog
+   printed both as stored, on each card and in its two filters. */
+describe('the catalog says a region and a reporting role in words, never as the registry stores them', () => {
+  const withRoles = () => render(<CatalogPanel canRun onRun={onRun} programLabel="LMN-201" projectId={11} types={[
+    { ...row('iacuc.protocol_status', 'IACUC Protocol Status Summary', 'available', '', 'USA_OLAW'), allowedPersonas: ['iacuc_coordinator', 'ra_lead', 'qa'] },
+    { ...row('usa_fda.ind_safety', 'FDA IND assessment', 'available', '', 'fda'), allowedPersonas: ['pv_lead'] },
+    { ...row('ema.maa', 'EMA MAA assessment', 'available', '', 'EU_EMA') },
+    { ...row('global.matrix', 'Cross-region matrix', 'available', '', 'Global'), allowedPersonas: ['reg_strategy', 'pm'] },
+  ]} />);
+  const card = (title: string) => Array.from(document.querySelectorAll('.rl-card')).find(c => c.textContent?.includes(title)) as HTMLElement;
+
+  it('on a card: the country and the agency, then who the report is for', () => {
+    withRoles();
+    expect(card('IACUC Protocol Status Summary').textContent).toContain('US · OLAW · For IACUC coordinator, regulatory affairs lead, quality assurance');
+    expect(card('FDA IND assessment').textContent).toContain('US · FDA · For pharmacovigilance lead');
+    expect(card('EMA MAA assessment').textContent).toContain('EU · EMA');
+    expect(card('Cross-region matrix').textContent).toContain('Global · For regulatory strategy, project manager');
+    for (const c of Array.from(document.querySelectorAll('.rl-card'))) expect(c.textContent).not.toMatch(/USA_|EU_EMA|\bra lead\b|\bqa\b|\bpv lead\b/);
+  });
+
+  it('in the Region and Reporting role filters: words to read, the stored value to filter by', () => {
+    withRoles();
+    const region = screen.getByRole('combobox', { name: 'Region' });
+    expect(within(region).getAllByRole('option').map(o => o.textContent)).toEqual(['All', 'EU · EMA', 'Global', 'US · FDA', 'US · OLAW']);
+    expect((within(region).getByRole('option', { name: 'US · OLAW' }) as HTMLOptionElement).value).toBe('USA_OLAW');
+    const role = screen.getByRole('combobox', { name: 'Reporting role' });
+    expect(within(role).getAllByRole('option').map(o => o.textContent)).toEqual(
+      ['All', 'IACUC coordinator', 'Pharmacovigilance lead', 'Project manager', 'Quality assurance', 'Regulatory affairs lead', 'Regulatory strategy']);
+    // Filtering still works by the stored value.
+    fireEvent.change(region, { target: { value: 'USA_OLAW' } });
+    expect(document.querySelectorAll('.rl-card')).toHaveLength(1);
+  });
+});
+
+describe('a report that is not offered is named once', () => {
+  it('shows the server’s sentence as it is when it opens with the report’s name', () => {
+    const reason = 'EMA MAA assessment assesses an EU filing. This project is recorded as an IND, so it was not assessed under this market’s name.';
+    render(<CatalogPanel canRun onRun={onRun} programLabel="LMN-201" projectId={11}
+      types={[row('ema.maa_readiness_assessment', 'EMA MAA assessment', 'not-applicable', reason, 'EU_EMA')]} />);
+    const note = screen.getByRole('note');
+    expect(note.textContent?.trim()).toBe(reason);
+    expect(note.textContent?.match(/EMA MAA assessment/g)).toHaveLength(1);
+  });
+});

@@ -1,0 +1,1909 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/compile/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 460,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "compiledCount": 21,
+      "sections": [
+        {
+          "sectionKey": "3.2.S.1",
+          "sectionPath": "3.2.S.1",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.1",
+            "sourceTypes": [
+              "drug_substance"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug substance is BX-701, manufactured by Acme Fine Chemicals. This section provides nomenclature (INN, CAS number) and structure (molecular formula, molecular weight) from the recorded drug-substance register. General properties (§3.2.S.1.3) is not recorded and is not established by this section.",
+          "tables": [
+            {
+              "title": "Drug Substance General Information",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Drug Substance Name",
+                  "BX-701"
+                ],
+                [
+                  "INN",
+                  "bexanistat"
+                ],
+                [
+                  "CAS Number",
+                  "1234-56-7"
+                ],
+                [
+                  "Molecular Formula",
+                  "C17H19N3O2"
+                ],
+                [
+                  "Molecular Weight",
+                  "297.36"
+                ],
+                [
+                  "Manufacturer",
+                  "Acme Fine Chemicals"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.2",
+          "sectionPath": "3.2.S.2",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.2",
+            "sourceTypes": [
+              "drug_substance",
+              "manufacturing_process",
+              "process_validation",
+              "raw_material_spec"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug substance is manufactured via Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water. ",
+          "tables": [
+            {
+              "title": "Manufacturing Process Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Synthetic Route",
+                  "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water"
+                ]
+              ]
+            }
+          ],
+          "completeness": 50,
+          "missingInputs": [
+            "processControls",
+            "manufacturingProcessComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.3",
+          "sectionPath": "3.2.S.3",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.3",
+            "sourceTypes": [
+              "drug_substance",
+              "characterization",
+              "impurity_profile"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Structural elucidation of the drug substance was confirmed by [methods not specified]. No impurity is recorded for the drug substance; the impurity profile is not established by this section. ",
+          "tables": [
+            {
+              "title": "Characterisation Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "structuralElucidation",
+            "physicochemicalProperties",
+            "biologicalActivity",
+            "drugSubstanceImpurityProfileComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.4",
+          "sectionPath": "3.2.S.4",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.4",
+            "sourceTypes": [
+              "specification",
+              "method",
+              "impurity_profile",
+              "qc_result"
+            ],
+            "sourceObjects": [
+              {
+                "type": "specification",
+                "payload": {
+                  "testMethods": {
+                    "method": "RP-HPLC Assay"
+                  },
+                  "materialName": "BX-701",
+                  "materialType": "drug_substance",
+                  "justification": "Batch history n=12 supports the limits",
+                  "approvalStatus": "draft",
+                  "impurityLimits": null,
+                  "testParameters": null,
+                  "regulatoryBasis": {
+                    "ich": "ICH Q6A"
+                  },
+                  "releaseCriteria": null,
+                  "validationStatus": "",
+                  "shelfLifeCriteria": null,
+                  "acceptanceCriteria": {
+                    "shelf": "95.0-105.0%",
+                    "release": "98.0-102.0%"
+                  }
+                }
+              },
+              {
+                "type": "method",
+                "payload": {
+                  "matrix": "drug substance",
+                  "status": "development",
+                  "analyte": "BX-701",
+                  "purpose": "assay",
+                  "principle": "",
+                  "procedure": "",
+                  "technique": "HPLC",
+                  "methodCode": "AM-20261112003432",
+                  "methodName": "RP-HPLC Assay",
+                  "methodType": "HPLC",
+                  "validatedBy": "",
+                  "accuracy_data": null,
+                  "linearity_data": null,
+                  "precision_data": null,
+                  "validationDate": null,
+                  "ichQ2Parameters": {
+                    "range": "50-150% of nominal",
+                    "accuracy": "98.0-102.0% recovery at 80, 100 and 120%",
+                    "linearity": "r >= 0.999 over 50-150% of nominal",
+                    "precision": "Repeatability RSD <= 1.0% (n=6); intermediate precision RSD <= 2.0%",
+                    "specificity": "No interference from placebo, impurities or degradants at the BX-701 retention time"
+                  },
+                  "robustness_data": null,
+                  "validation_data": {
+                    "range": "50-150% of nominal",
+                    "accuracy": "98.0-102.0% recovery at 80, 100 and 120%",
+                    "linearity": "r >= 0.999 over 50-150% of nominal",
+                    "precision": "Repeatability RSD <= 1.0% (n=6); intermediate precision RSD <= 2.0%",
+                    "specificity": "No interference from placebo, impurities or degradants at the BX-701 retention time"
+                  },
+                  "specificity_data": null,
+                  "validationStatus": "development",
+                  "acceptanceCriteria": "",
+                  "system_suitability": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug substance specification defines acceptance criteria for quality attributes. Analytical methods are development. 2 test(s) are defined in the specification. No impurity is recorded for the drug substance; the impurity profile is not established by this section. ",
+          "tables": [
+            {
+              "title": "Drug Substance Specification — Acceptance Criteria",
+              "headers": [
+                "Quality Attribute",
+                "Test Method",
+                "Acceptance Criteria",
+                "Validation Status"
+              ],
+              "rows": [
+                [
+                  "BX-701",
+                  "RP-HPLC Assay",
+                  "98.0-102.0%",
+                  "development"
+                ]
+              ]
+            },
+            {
+              "title": "Analytical Methods",
+              "headers": [
+                "Method",
+                "Technique",
+                "Validation Status",
+                "Validated"
+              ],
+              "rows": [
+                [
+                  "RP-HPLC Assay",
+                  "HPLC",
+                  "development",
+                  "—"
+                ]
+              ]
+            }
+          ],
+          "completeness": 50,
+          "missingInputs": [
+            "drugSubstanceBatchAnalyses",
+            "drugSubstanceImpurityProfileComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "265c8e5e-6e01-48ac-b79e-34c2ecade920",
+              "sourceHashAtCompile": "02872f6d21219c87b39b177144d292f44543296c4e62fcee233fff456ce64805"
+            },
+            {
+              "sourceObjectId": "2b845480-6c3c-49ee-a690-51df52148124",
+              "sourceHashAtCompile": "23c233d83d0207de1922d8b07ea1469292c9f0419bb148c948590ad569789900"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.5",
+          "sectionPath": "3.2.S.5",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.5",
+            "sourceTypes": [
+              "drug_substance",
+              "reference_standard"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "No reference standard is recorded for the drug substance. The standard against which drug substance test results are reported, and the qualification of that standard, are not established by this section.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceReferenceStandard",
+            "drugSubstanceReferenceStandardCoA",
+            "drugSubstanceReferenceStandardComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.6",
+          "sectionPath": "3.2.S.6",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.6",
+            "sourceTypes": [
+              "container_closure"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.S.6 has no source data available. Required inputs: drugSubstanceContainerDescription, drugSubstanceClosureDescription, drugSubstanceSuitabilityJustification, drugSubstanceContainerClosureComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceContainerDescription",
+            "drugSubstanceClosureDescription",
+            "drugSubstanceSuitabilityJustification",
+            "drugSubstanceContainerClosureComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.S.7",
+          "sectionPath": "3.2.S.7",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.7",
+            "sourceTypes": [
+              "stability"
+            ],
+            "sourceObjects": [
+              {
+                "type": "stability",
+                "payload": {
+                  "status": "ACTIVE",
+                  "results": null,
+                  "duration": 24,
+                  "studyName": "",
+                  "studyType": "long_term",
+                  "timePoints": [
+                    "0",
+                    "3",
+                    "6",
+                    "12",
+                    "24"
+                  ],
+                  "startedDate": "2026-01-01T00:00:00.000Z",
+                  "completedDate": null,
+                  "batchesStudied": [
+                    "B-20261112003432"
+                  ],
+                  "shelfLifeClaim": null,
+                  "stabilityScope": "drug_substance",
+                  "testParameters": [
+                    "assay"
+                  ],
+                  "containerClosure": "",
+                  "storageCondition": "LT, 25C/60%RH",
+                  "shelfLifeAccepted": false,
+                  "shelfLifeSignedAt": null,
+                  "storageConditions": [
+                    "LT",
+                    "25C/60%RH"
+                  ],
+                  "stabilityParameters": [
+                    "assay"
+                  ],
+                  "packagingConfiguration": null,
+                  "drugSubstanceTimePoints": [
+                    "0",
+                    "3",
+                    "6",
+                    "12",
+                    "24"
+                  ],
+                  "drugProductShelfLifeClaim": null,
+                  "drugSubstanceStorageCondition": "LT, 25C/60%RH"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Stability studies for the drug substance were conducted under LT, 25C/60%RH at time points: 0, 3, 6, 12, 24 months. 1 batch(es) were placed on stability. No stability results are recorded on the drug substance studies. The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section. Trend not assessed: no recorded pull-point results.",
+          "tables": [
+            {
+              "title": "Stability Study Design — Drug Substance",
+              "headers": [
+                "Parameter",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Storage Condition",
+                  "LT, 25C/60%RH"
+                ],
+                [
+                  "Time Points (months)",
+                  "0, 3, 6, 12, 24"
+                ],
+                [
+                  "Batches Studied",
+                  "B-20261112003432"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "a1c6185a-cd35-4e97-8178-b4134a67996d",
+              "sourceHashAtCompile": "46e45dce45afb1459787805a72c70aca320a6b35b118e41a0366acf67e633bfb"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.1",
+          "sectionPath": "3.2.P.1",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.1",
+            "sourceTypes": [
+              "drug_product",
+              "formulation_record"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug product is a Film-coated tablet with a strength of 5 mg. No formulation record is on file; the composition is not established by this section. Composition: BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg.",
+          "tables": [
+            {
+              "title": "Drug Product Description and Composition",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Dosage Form",
+                  "Film-coated tablet"
+                ],
+                [
+                  "Strength",
+                  "5 mg"
+                ],
+                [
+                  "Composition",
+                  "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg"
+                ]
+              ]
+            }
+          ],
+          "completeness": 75,
+          "missingInputs": [
+            "formulationCompositionComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.2",
+          "sectionPath": "3.2.P.2",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.2",
+            "sourceTypes": [
+              "drug_product",
+              "drug_substance",
+              "comparability",
+              "formulation_record",
+              "dissolution_profile",
+              "container_closure",
+              "characterization",
+              "manufacturing_process"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Pharmaceutical development studies were conducted to support the proposed formulation and manufacturing process. No development dissolution profile is recorded. ",
+          "tables": [
+            {
+              "title": "Pharmaceutical Development Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "formulationDevelopment",
+            "manufacturingProcessDev",
+            "containerClosureStudies"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            },
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.3",
+          "sectionPath": "3.2.P.3",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.3",
+            "sourceTypes": [
+              "drug_product",
+              "batch",
+              "change_control",
+              "process_validation",
+              "manufacturing_process"
+            ],
+            "sourceObjects": [
+              {
+                "type": "batch",
+                "payload": {
+                  "scale": "",
+                  "status": "in-progress",
+                  "batchSize": "",
+                  "batchType": "",
+                  "oosEvents": null,
+                  "yieldData": {
+                    "percent": 94
+                  },
+                  "deviations": {
+                    "open": 0
+                  },
+                  "expiryDate": null,
+                  "releasedAt": null,
+                  "releasedBy": "",
+                  "batchNumber": "B-20261112003432",
+                  "disposition": "",
+                  "formulation": null,
+                  "productName": "Drug substance",
+                  "materialType": "",
+                  "batchSizeUnit": "",
+                  "releaseStatus": "",
+                  "processVersion": "",
+                  "releaseTesting": null,
+                  "inProcessControls": null,
+                  "manufacturingDate": null,
+                  "manufacturingSite": "",
+                  "processParameters": null,
+                  "specificationCompliance": null
+                }
+              },
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug product is manufactured according to the batch formula described below. Representative batch: B-20261112003432. ",
+          "tables": [
+            {
+              "title": "Batch Formula",
+              "headers": [
+                "Parameter",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Formulation",
+                  "[not specified]"
+                ],
+                [
+                  "Batch Number",
+                  "B-20261112003432"
+                ]
+              ]
+            }
+          ],
+          "completeness": 33,
+          "missingInputs": [
+            "formulation",
+            "drugProductProcessComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "4184dd59-b68e-48b5-9344-5199cf4b2f80",
+              "sourceHashAtCompile": "31a6bfcab3b89f6a77a2f14bf15e9ac66d4df09480bc4096d211888117e6de7d"
+            },
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.4",
+          "sectionPath": "3.2.P.4",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.4",
+            "sourceTypes": [
+              "excipient"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.P.4 has no source data available. Required inputs: excipientSpecifications, excipientAnalyticalProcedures, excipientControlComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "excipientSpecifications",
+            "excipientAnalyticalProcedures",
+            "excipientControlComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.P.5",
+          "sectionPath": "3.2.P.5",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.5",
+            "sourceTypes": [
+              "specification",
+              "method",
+              "dissolution_profile",
+              "impurity_profile",
+              "qc_result"
+            ],
+            "sourceObjects": [
+              {
+                "type": "specification",
+                "payload": {
+                  "testMethods": {
+                    "method": "RP-HPLC Assay"
+                  },
+                  "materialName": "BX-701",
+                  "materialType": "drug_substance",
+                  "justification": "Batch history n=12 supports the limits",
+                  "approvalStatus": "draft",
+                  "impurityLimits": null,
+                  "testParameters": null,
+                  "regulatoryBasis": {
+                    "ich": "ICH Q6A"
+                  },
+                  "releaseCriteria": null,
+                  "validationStatus": "",
+                  "shelfLifeCriteria": null,
+                  "acceptanceCriteria": {
+                    "shelf": "95.0-105.0%",
+                    "release": "98.0-102.0%"
+                  }
+                }
+              },
+              {
+                "type": "method",
+                "payload": {
+                  "matrix": "drug substance",
+                  "status": "development",
+                  "analyte": "BX-701",
+                  "purpose": "assay",
+                  "principle": "",
+                  "procedure": "",
+                  "technique": "HPLC",
+                  "methodCode": "AM-20261112003432",
+                  "methodName": "RP-HPLC Assay",
+                  "methodType": "HPLC",
+                  "validatedBy": "",
+                  "accuracy_data": null,
+                  "linearity_data": null,
+                  "precision_data": null,
+                  "validationDate": null,
+                  "ichQ2Parameters": {
+                    "range": "50-150% of nominal",
+                    "accuracy": "98.0-102.0% recovery at 80, 100 and 120%",
+                    "linearity": "r >= 0.999 over 50-150% of nominal",
+                    "precision": "Repeatability RSD <= 1.0% (n=6); intermediate precision RSD <= 2.0%",
+                    "specificity": "No interference from placebo, impurities or degradants at the BX-701 retention time"
+                  },
+                  "robustness_data": null,
+                  "validation_data": {
+                    "range": "50-150% of nominal",
+                    "accuracy": "98.0-102.0% recovery at 80, 100 and 120%",
+                    "linearity": "r >= 0.999 over 50-150% of nominal",
+                    "precision": "Repeatability RSD <= 1.0% (n=6); intermediate precision RSD <= 2.0%",
+                    "specificity": "No interference from placebo, impurities or degradants at the BX-701 retention time"
+                  },
+                  "specificity_data": null,
+                  "validationStatus": "development",
+                  "acceptanceCriteria": "",
+                  "system_suitability": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug product specification defines release and shelf-life acceptance criteria. Primary analytical method: RP-HPLC Assay. No release specification dissolution profile is recorded. No impurity is recorded for the drug product; the impurity profile is not established by this section. Validation status: development. ",
+          "tables": [
+            {
+              "title": "Drug Product Specification",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Analytical Method",
+                  "RP-HPLC Assay"
+                ],
+                [
+                  "Validation Status",
+                  "development"
+                ]
+              ]
+            },
+            {
+              "title": "Analytical Methods",
+              "headers": [
+                "Method",
+                "Technique",
+                "Validation Status",
+                "Validated"
+              ],
+              "rows": [
+                [
+                  "RP-HPLC Assay",
+                  "HPLC",
+                  "development",
+                  "—"
+                ]
+              ]
+            }
+          ],
+          "completeness": 25,
+          "missingInputs": [
+            "releaseCriteria",
+            "drugProductBatchAnalyses",
+            "drugProductImpurityProfileComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "265c8e5e-6e01-48ac-b79e-34c2ecade920",
+              "sourceHashAtCompile": "02872f6d21219c87b39b177144d292f44543296c4e62fcee233fff456ce64805"
+            },
+            {
+              "sourceObjectId": "2b845480-6c3c-49ee-a690-51df52148124",
+              "sourceHashAtCompile": "23c233d83d0207de1922d8b07ea1469292c9f0419bb148c948590ad569789900"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.6",
+          "sectionPath": "3.2.P.6",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.6",
+            "sourceTypes": [
+              "drug_product",
+              "reference_standard"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "No reference standard is recorded for the drug product. The standard against which drug product test results are reported, and the qualification of that standard, are not established by this section.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductReferenceStandard",
+            "drugProductReferenceStandardCoA",
+            "drugProductReferenceStandardComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.7",
+          "sectionPath": "3.2.P.7",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.7",
+            "sourceTypes": [
+              "container_closure"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.P.7 has no source data available. Required inputs: drugProductContainerDescription, drugProductClosureDescription, drugProductSuitabilityJustification, drugProductContainerClosureComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductContainerDescription",
+            "drugProductClosureDescription",
+            "drugProductSuitabilityJustification",
+            "drugProductContainerClosureComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.P.8",
+          "sectionPath": "3.2.P.8",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.8",
+            "sourceTypes": [
+              "stability",
+              "comparability"
+            ],
+            "sourceObjects": [
+              {
+                "type": "stability",
+                "payload": {
+                  "status": "ACTIVE",
+                  "results": null,
+                  "duration": 24,
+                  "studyName": "",
+                  "studyType": "long_term",
+                  "timePoints": [
+                    "0",
+                    "3",
+                    "6",
+                    "12",
+                    "24"
+                  ],
+                  "startedDate": "2026-01-01T00:00:00.000Z",
+                  "completedDate": null,
+                  "batchesStudied": [
+                    "B-20261112003432"
+                  ],
+                  "shelfLifeClaim": null,
+                  "stabilityScope": "drug_substance",
+                  "testParameters": [
+                    "assay"
+                  ],
+                  "containerClosure": "",
+                  "storageCondition": "LT, 25C/60%RH",
+                  "shelfLifeAccepted": false,
+                  "shelfLifeSignedAt": null,
+                  "storageConditions": [
+                    "LT",
+                    "25C/60%RH"
+                  ],
+                  "stabilityParameters": [
+                    "assay"
+                  ],
+                  "packagingConfiguration": null,
+                  "drugSubstanceTimePoints": [
+                    "0",
+                    "3",
+                    "6",
+                    "12",
+                    "24"
+                  ],
+                  "drugProductShelfLifeClaim": null,
+                  "drugSubstanceStorageCondition": "LT, 25C/60%RH"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "No drug product stability study is present in this section; a shelf life and the stability of the drug product are not established here.",
+          "tables": [
+            {
+              "title": "Stability Summary — Drug Product",
+              "headers": [
+                "Parameter",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Shelf Life Claim",
+                  "[not specified]"
+                ],
+                [
+                  "Comparability Status",
+                  "[not specified]"
+                ]
+              ]
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductShelfLifeClaim"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "a1c6185a-cd35-4e97-8178-b4134a67996d",
+              "sourceHashAtCompile": "46e45dce45afb1459787805a72c70aca320a6b35b118e41a0366acf67e633bfb"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.1",
+          "sectionPath": "3.1",
+          "structuredPayload": {
+            "sectionKey": "3.1",
+            "sourceTypes": [
+              "drug_substance",
+              "drug_product"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "This section provides a table of contents and introductory overview for Module 3 — Quality. The drug substance is BX-701. The drug product is formulated as a Film-coated tablet. Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.",
+          "tables": [
+            {
+              "title": "Module 3 — Table of Contents",
+              "headers": [
+                "Section",
+                "Title"
+              ],
+              "rows": [
+                [
+                  "3.2.S.1",
+                  "General Information"
+                ],
+                [
+                  "3.2.S.2",
+                  "Manufacture (Drug Substance)"
+                ],
+                [
+                  "3.2.S.3",
+                  "Characterisation"
+                ],
+                [
+                  "3.2.S.4",
+                  "Control of Drug Substance"
+                ],
+                [
+                  "3.2.S.5",
+                  "Reference Standards (Drug Substance)"
+                ],
+                [
+                  "3.2.S.6",
+                  "Container Closure System (Drug Substance)"
+                ],
+                [
+                  "3.2.S.7",
+                  "Stability (Drug Substance)"
+                ],
+                [
+                  "3.2.P.1",
+                  "Description and Composition"
+                ],
+                [
+                  "3.2.P.2",
+                  "Pharmaceutical Development"
+                ],
+                [
+                  "3.2.P.3",
+                  "Manufacture (Drug Product)"
+                ],
+                [
+                  "3.2.P.4",
+                  "Control of Excipients"
+                ],
+                [
+                  "3.2.P.5",
+                  "Control of Drug Product"
+                ],
+                [
+                  "3.2.P.6",
+                  "Reference Standards (Drug Product)"
+                ],
+                [
+                  "3.2.P.7",
+                  "Container Closure System (Drug Product)"
+                ],
+                [
+                  "3.2.P.8",
+                  "Stability (Drug Product)"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            },
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.3",
+          "sectionPath": "3.3",
+          "structuredPayload": {
+            "sectionKey": "3.3",
+            "sourceTypes": [
+              "drug_substance",
+              "drug_product",
+              "reference_standard"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "This section provides literature references cited throughout Module 3 for the drug substance (BX-701 5 mg film-coated tablet) and drug product (Film-coated tablet). References include pharmacopoeial monographs, ICH guidelines, and published literature supporting the quality dossier.",
+          "tables": [
+            {
+              "title": "Key References",
+              "headers": [
+                "Category",
+                "Reference"
+              ],
+              "rows": [
+                [
+                  "Pharmacopoeia",
+                  "USP/NF, Ph. Eur., JP (as applicable)"
+                ],
+                [
+                  "ICH Guidelines",
+                  "Q1A-Q1E (Stability), Q2 (Validation), Q3A-Q3D (Impurities), Q6A/Q6B (Specifications)"
+                ],
+                [
+                  "Regulatory",
+                  "FDA Guidance for Industry, EMA Guidelines"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            },
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.1",
+          "sectionPath": "3.2.A.1",
+          "structuredPayload": {
+            "sectionKey": "3.2.A.1",
+            "title": "Facilities and Equipment",
+            "sourceTypes": [
+              "manufacturing_process",
+              "drug_substance",
+              "drug_product",
+              "container_closure"
+            ],
+            "optional": false,
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and related controls used in the manufacture of the drug substance and drug product. Manufacturing operations are performed at Basel. The manufacturing route is: Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water. \n\nPrimary container closure equipment and packaging components used during manufacture and storage are not yet specified. \n\nFacility cleaning, equipment qualification, changeover, cross-contamination controls, environmental monitoring and utilities (HVAC, water, compressed gases) are governed by the site's own quality system and are evidenced by its GMP documentation, which this register does not hold; this section therefore makes no statement about their content or their compliance status. ",
+          "tables": [
+            {
+              "title": "Facilities Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Manufacturing Site",
+                  "Basel"
+                ],
+                [
+                  "Synthetic/Manufacturing Route",
+                  "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water"
+                ]
+              ]
+            },
+            {
+              "title": "Primary Equipment / Container Closure",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 50,
+          "missingInputs": [
+            "containerDescription"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            },
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.2",
+          "sectionPath": "3.2.A.2",
+          "structuredPayload": {
+            "sectionKey": "3.2.A.2",
+            "title": "Adventitious Agents Safety Evaluation",
+            "sourceTypes": [
+              "drug_substance",
+              "characterization",
+              "manufacturing_process"
+            ],
+            "optional": true,
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "1234-56-7",
+                  "inn": "bexanistat",
+                  "name": "BX-701",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "Acme Fine Chemicals",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "297.36",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "C17H19N3O2",
+                  "manufacturingSite": "Basel",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. \n\nNo biological origin, source organism, cell line or fermentation step is recorded against BX-701, whose recorded manufacturing route is: Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water. On that record this section does not apply to the drug substance itself. \n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and §3.2.A.3, and this section neither reads nor certifies them. Any future change to a biologically-derived starting material would trigger re-assessment of this section.",
+          "tables": [
+            {
+              "title": "Adventitious Agents Safety Evaluation",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Applicability",
+                  "Does not apply to the drug substance — no biological origin is recorded"
+                ],
+                [
+                  "Drug Substance",
+                  "BX-701"
+                ],
+                [
+                  "Manufacturing Route",
+                  "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water"
+                ],
+                [
+                  "Biological Origin",
+                  "None recorded"
+                ],
+                [
+                  "Raw Material Origin",
+                  "Recorded in §3.2.S.2.3 — not assessed by this section"
+                ],
+                [
+                  "Excipient Origin",
+                  "Recorded in §3.2.A.3 — not assessed by this section"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.3",
+          "sectionPath": "3.2.A.3",
+          "structuredPayload": {
+            "sectionKey": "3.2.A.3",
+            "title": "Excipients",
+            "sourceTypes": [
+              "excipient",
+              "drug_product",
+              "formulation_record"
+            ],
+            "optional": true,
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "BX-701 5 mg film-coated tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) summarizes the controls applied to excipients derived from human or animal sources used in the drug product formulation. \n\nPotential human- or animal-origin excipient(s) have been flagged by a name-based heuristic and require confirmation. Where confirmed, each component must be qualified through (i) a documented origin / country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of Suitability — CEP), and (iii) viral safety evaluation where applicable. Whether these components are of human or animal origin is NOT established by this section: the flag rests on their names, and no origin is recorded for them. Components identified as plant, mineral, or synthetic in origin should be re-tagged via the structured origin field to suppress this flag. \n\nThe specification, analytical procedure and supplier recorded for each excipient are reported in 3.2.P.4 (Control of Excipients).",
+          "tables": [
+            {
+              "title": "Excipients of Human or Animal Origin — POTENTIAL (Review Required)",
+              "headers": [
+                "Excipient",
+                "Function / Role",
+                "Origin",
+                "TSE/BSE Certification"
+              ],
+              "rows": [
+                [
+                  "(Per composition statement)",
+                  "—",
+                  "Potential human/animal-origin material — review required",
+                  "Confirm CEP/TSE certification with supplier"
+                ]
+              ]
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "Whether these components are of human or animal origin is NOT established by this section: the flag rests on their names, and no origin is recorded for them."
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.R.1.US",
+          "sectionPath": "3.2.R.1.US",
+          "structuredPayload": {
+            "sectionKey": "3.2.R.1.US",
+            "title": "Regional Information — United States (FDA IND)",
+            "region": "US"
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States carries the FDA-specific chemistry, manufacturing and controls information for this Investigational New Drug application, under 21 CFR 312.23(a)(7). The amount of information is scaled to the phase of investigation, the proposed duration, the dosage form and the information otherwise available (21 CFR 312.23(a)(7)(i)). The drug product is a Film-coated tablet (5 mg). \n\nThe table below lists each IND regional item, the regulation that requires it and where this dossier stands on it. The investigator labeling and the environmental analysis are filed in Module 1. Module 3 does not carry Module 1, so this section states those requirements and does not attest that they have been met. Marketing-application items (executed batch records, Form FDA 356h, patent and exclusivity information) do not apply to an IND and are not listed.\n\nComposition statement: BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg.",
+          "tables": [
+            {
+              "title": "US Regional Information — Submission Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Region",
+                  "United States — FDA"
+                ],
+                [
+                  "Submission Type",
+                  "IND (21 CFR Part 312)"
+                ],
+                [
+                  "Dosage Form",
+                  "Film-coated tablet"
+                ],
+                [
+                  "Strength",
+                  "5 mg"
+                ],
+                [
+                  "Manufacturing Site",
+                  "Basel"
+                ]
+              ]
+            },
+            {
+              "title": "US IND Regional Items (21 CFR 312.23(a)(7))",
+              "headers": [
+                "Item",
+                "Regulatory basis",
+                "Status in this dossier"
+              ],
+              "rows": [
+                [
+                  "Manufacturer name and address (drug substance and drug product) — Basel",
+                  "21 CFR 312.23(a)(7)(iv)(a)–(b)",
+                  "Cross-referenced to 3.2.S.2.1 / 3.2.P.3.1 of this dossier"
+                ],
+                [
+                  "Placebo: composition, manufacture and control",
+                  "21 CFR 312.23(a)(7)(iv)(c)",
+                  "Not recorded in this dossier — required only if a placebo is used in a controlled trial"
+                ],
+                [
+                  "Labels and labeling provided to each investigator",
+                  "21 CFR 312.23(a)(7)(iv)(d); 21 CFR 312.6",
+                  "Required in Module 1 (1.14 Labeling) — outside Module 3; not verified by this section"
+                ],
+                [
+                  "Environmental analysis: claim of categorical exclusion, or an environmental assessment",
+                  "21 CFR 312.23(a)(7)(iv)(e); 21 CFR 25.31(e)",
+                  "Required in Module 1 (1.12.14 Environmental analysis) — outside Module 3; not verified by this section"
+                ],
+                [
+                  "Chemistry or manufacturing signals of potential human risk (phase 1)",
+                  "FDA guidance: Content and Format of INDs for Phase 1 Studies (1995)",
+                  "Not recorded in this dossier"
+                ],
+                [
+                  "Relation of the clinical drug product to the material used in the toxicology studies (phase 1)",
+                  "FDA guidance: Content and Format of INDs for Phase 1 Studies (1995)",
+                  "Not recorded in this dossier"
+                ],
+                [
+                  "CMC changes as development proceeds",
+                  "21 CFR 312.31 (information amendments); 21 CFR 312.33 (annual report)",
+                  "Filed as \"Information Amendment: Chemistry, Manufacturing, and Control\" when they occur"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
+              "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
+            },
+            {
+              "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
+              "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
+            }
+          ]
+        }
+      ],
+      "bridgedArtifacts": [
+        {
+          "sectionKey": "3.2.S.1",
+          "artifactId": "m3-3.2.S.1-e9276e78",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.2",
+          "artifactId": "m3-3.2.S.2-39076d83",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.3",
+          "artifactId": "m3-3.2.S.3-06d6d049",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.4",
+          "artifactId": "m3-3.2.S.4-3000bee4",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.5",
+          "artifactId": "m3-3.2.S.5-e3ae1882",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.6",
+          "artifactId": "m3-3.2.S.6-22943236",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.7",
+          "artifactId": "m3-3.2.S.7-bb1570c5",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.1",
+          "artifactId": "m3-3.2.P.1-898c2eec",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.2",
+          "artifactId": "m3-3.2.P.2-b194ae16",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.3",
+          "artifactId": "m3-3.2.P.3-c82c53b3",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.4",
+          "artifactId": "m3-3.2.P.4-f8f37091",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.5",
+          "artifactId": "m3-3.2.P.5-9fe6c4fd",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.6",
+          "artifactId": "m3-3.2.P.6-18ae1119",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.7",
+          "artifactId": "m3-3.2.P.7-e7d3c6e2",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.8",
+          "artifactId": "m3-3.2.P.8-4ed2bd76",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.1",
+          "artifactId": "m3-3.1-3c48f3b2",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.3",
+          "artifactId": "m3-3.3-f99f9d4a",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.A.1",
+          "artifactId": "m3-3.2.A.1-b2448ade",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.A.2",
+          "artifactId": "m3-3.2.A.2-90f8b9da",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.A.3",
+          "artifactId": "m3-3.2.A.3-1132fb41",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.R.1.US",
+          "artifactId": "m3-3.2.R.1.US-aff56bae",
+          "isNew": true
+        }
+      ],
+      "bridgeSkips": []
+    }
+  }
+}

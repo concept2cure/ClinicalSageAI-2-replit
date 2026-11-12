@@ -1,0 +1,66 @@
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > opens study and protocol design from the project's work-area doors, beside the steps, in one click 405ms
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 183ms
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a started deliverable opens this project’s working copy; the rest start from their template 143ms
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a failed catalogue read is a failure with a retry, never an empty plan 93ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 196ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 75ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 66ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > an unreadable assignment list is said, and Assign still works 80ms
+ ✓ projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a small-molecule US IND: Module 3 in CMC, Module 1 in the IND forms, QA on Submit 113ms
+ ✓ projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 108ms
+ ✓ projectHomePlan.test.tsx > other filings > a device project’s Plan is its workstreams, each assignable 234ms
+ ✓ projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list 93ms
+ ✓ projectHomePlan.test.tsx > the assignment model > keys tasks by this project’s deliverable; the newest wins; another project’s and cancelled tasks are ignored 0ms
+ ✓ projectHomePlan.test.tsx > the assignment model > never Number()s the program UUID: the project id is the verified numeric one 1ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > while the project record is read, Plan says so, and never that the filing has no list 59ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > does not offer project initiation for a returned record belonging to another project 96ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a filing with no list is not told to "see every document": its suggestion asks which documents it needs 85ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 103ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a working copy titled as its template counts as started 85ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > an unconfirmed Assign reads the lists again, so they say what is there 228ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 98ms
+ × projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > opens with what is due for the signed-in person, from the plan's tasks, by date 72ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > says nothing is assigned rather than leaving the section out 67ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > shows no due-for-you list without a signed-in person 52ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > names, beside each IND document, the work-breakdown task that produces it, its due date and owner 42ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > says a producing task without an owner is the task's, not the document's 46ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > reads the project pyramid once for the whole Plan step 42ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > reads the project's own pyramid and states its progress from the project's statuses 155ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > records a task's status on the project's route 32ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > reverts a refused status and says it was not saved 41ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says a filing has no work breakdown, and invents none 5ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > names the filing in words, never its key: a 510(k) for IVD 5ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says the plan could not be read when the read fails 4ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > says the schedule is built back from the target date, when the work starts, what is behind, and who owns what 23ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > puts each task's owner and due date on its row, with a word when it is behind 33ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > makes an owner's task through the existing Assign, under the pyramid task's own origin, due on the schedule's date 138ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > shows the owner's task and says when the schedule has moved since it was assigned 79ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > does not offer to move a task already due on the schedule's date, or a finished one 152ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > gives no due dates when no target date is recorded, and says where to set one 17ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > reads the schedule again when the project's target date changes 14ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > keeps a deliverable's tasks and a work-breakdown task's apart 0ms
+ ✓ projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > reads a catalogue document's producing task from its id, and only from the catalogue's two shapes 0ms
+ ✓ projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > lists only the person's open tasks of this project's plan, by due date, none last 1ms
+ ✓ projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > says a past-due task in words, and an unread list as unread 5ms
+ ✓ projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > lists one row per workstream: lead, tasks done, completion date and a status word 13ms
+ ✓ projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says Blocked when a task is recorded blocked, and Not scheduled without a target date 15ms
+ ✓ projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > opens a workstream to its own tasks only 14ms
+ ✓ projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says, under a device plan, that its workstreams have no work-breakdown key 12ms
+ ✓ projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > draws the schedule: phase completions as dots, the submission, the review clock and today, the critical path darker 10ms
+ ✓ projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says when the engines hold no review clock for the filing 10ms
+ ✓ projectProgramPlan.test.tsx > the client's schedule rule matches the engine's > pyStanding equals taskStanding on every combination 201ms
+ ✓ projectProgramPlan.test.tsx > the client's schedule rule matches the engine's > pyWorkStatus gives the engine's summary status for a whole pyramid 6ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > says none is recorded, and offers to state it 15ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > says there is no objective either, when nothing is recorded 2ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > shows the recorded strategy and the version it was recorded with 2ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > says a failed read as a failure, never as no strategy 2ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > records the strategy as a new version of the objective of record, keeping the objective and its sources, with the reason 5ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > keeps a recorded strategy when the objective is edited from the block under the name 237ms
+ × planStrategyAndReschedule.test.tsx > Use the schedule's date > sends tasking's governed reschedule: the schedule's day, the date shown, and the reason 2ms
+ × planStrategyAndReschedule.test.tsx > Use the schedule's date > says a refusal, with nothing changed, and does not claim the move 1ms
+ × planStrategyAndReschedule.test.tsx > Use the schedule's date > reads the task again when the save could not be confirmed 2ms
+ × planStrategyAndReschedule.test.tsx > Use the schedule's date > is not offered to a viewer 1ms
+ × planStrategyAndReschedule.test.tsx > Use the schedule's date > sends no expected date for a task that had none 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  13 failed | 50 passed (63)

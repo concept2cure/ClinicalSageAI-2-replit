@@ -6,6 +6,18 @@ variable "region" {
   default = "us-east-1"
 }
 
+# The disaster-recovery region: where the key replicas live (MR-04 Stage 1)
+# and, from Stage 6, where backups are copied. The founder's decision (NEW-2);
+# no default, so no apply can pick one silently. us-west-2 is the work order's
+# recommendation: it keeps the data in the US.
+variable "dr_region" {
+  type = string
+  validation {
+    condition     = can(regex("^[a-z]{2}(-gov)?-[a-z]+-[0-9]+$", var.dr_region)) && var.dr_region != var.region
+    error_message = "dr_region must be an AWS region name (for example us-west-2) other than the primary region."
+  }
+}
+
 variable "vpc_cidr" {
   type    = string
   default = "10.9.0.0/16"
@@ -181,6 +193,14 @@ variable "tags" {
     Project     = "concept2cure"
     Environment = "staging"
   }
+}
+
+# Who is paged when an alarm fires (MR-04 Stage 2, NEW-1): each address is
+# subscribed to the alarm topic by email and must confirm the subscription.
+variable "alarm_emails" {
+  type = list(string)
+  # Staging may run without subscribers; its alarms still record state.
+  default = []
 }
 
 variable "sentry_dsn" {

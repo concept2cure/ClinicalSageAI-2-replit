@@ -212,8 +212,14 @@ describe('QMS bound released training and retained private access',()=>{
     expect(ack.status,JSON.stringify(ack.body)).toBe(201);expect(ack.body.data.documentVersion).toBe('1.0');
     expect(ack.body.meta.auditTrail).toMatchObject({persisted:true,chained:true});
     expect((await owner.query(`SELECT id FROM audit_logs WHERE tenant_id=$1 AND action='mdx.qms.training.acknowledge' AND record_id=$2`,[org,String(documentId)])).rows).toHaveLength(1);
+    // P-49 (4f5972e64f): coverage counts the people assigned. Assigned to nobody, the release has no figure, never
+    // 0 of N, while the author's receipt of it counts; assigned by name, that receipt is the one current person.
+    const unassigned=await call(author,'get','/training/compliance');expect(unassigned.status,JSON.stringify(unassigned.body)).toBe(200);
+    expect(unassigned.body.data).toContainEqual(expect.objectContaining({id:documentId,assignment:'not_assigned',current:null,of:null,me:{assigned:false,countsNow:true}}));
+    const assigned=await call(author,'post',`/documents/${documentId}/training-assignments`,{userId:author.id,reason:'Assign the native proof author by name'});
+    expect(assigned.status,JSON.stringify(assigned.body)).toBe(201);
     const training=await call(author,'get','/training/compliance');expect(training.status,JSON.stringify(training.body)).toBe(200);
-    expect(training.body.data).toContainEqual(expect.objectContaining({id:documentId,current:1}));
+    expect(training.body.data).toContainEqual(expect.objectContaining({id:documentId,assignment:'assigned',current:1,of:1,me:{assigned:true,countsNow:true}}));
     const readiness=await call(author,'get','/readiness');expect(readiness.status,JSON.stringify(readiness.body)).toBe(200);
     expect(readiness.body.data.training.available).toBe(true);
   });

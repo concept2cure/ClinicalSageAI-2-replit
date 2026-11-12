@@ -1,0 +1,7 @@
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-117: the review rules are the organisation's own settings > two reviewers required, one has approved: refused 409 REVIEW_REQUIRED, naming the organisation's rule 16ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-117: the review rules are the organisation's own settings > two reviewers required, two have approved: approved 37ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-117: the review rules are the organisation's own settings > self-approval switched off: the only member cannot approve what they wrote, and nothing is written 12ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-117: the review rules are the organisation's own settings > self-approval switched off, and the only member did not write it: still refused, because no one reviewed it 12ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-117: the review rules are the organisation's own settings > a stored value outside the bounds never lowers the floor below one reviewer 9ms
+ Test Files  1 passed (1)
+      Tests  78 passed (78)

@@ -124,6 +124,9 @@ describe('qtlRangeError', () => {
   it('rejects a two-sided limit missing a bound, or inverted', () => {
     expect(qtlRangeError({ direction: 'two_sided', threshold: 1.1, thresholdLower: null })).toMatch(/both bounds/);
     expect(qtlRangeError({ direction: 'two_sided', threshold: 0.9, thresholdLower: 1.1 })).toMatch(/below/);
+    // The form shows these to a monitor now, so each leads with words and keeps the field names for an API caller.
+    expect(qtlRangeError({ direction: 'two_sided', threshold: 0.9, thresholdLower: 1.1 })).toBe('The lower bound of a range must be below its upper limit (thresholdLower below threshold).');
+    expect(qtlRangeError({ direction: 'two_sided', threshold: 1.1 })).toBe('A range needs both bounds: the upper limit (threshold) and the lower bound (thresholdLower).');
     expect(qtlRangeError({ direction: 'two_sided', threshold: 1.1, thresholdLower: 0.9 })).toBeNull();
   });
 });

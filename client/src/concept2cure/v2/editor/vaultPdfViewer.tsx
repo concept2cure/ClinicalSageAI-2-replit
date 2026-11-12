@@ -33,7 +33,7 @@ export interface ViewableFile { title: string; hash?: string | null }
 /** One audited download, classified: a PDF for the viewer, bytes for the
  *  browser with the reason they were not shown, or the Vault's refusal. */
 export type OpenedFile =
-  | { kind: 'pdf'; blob: PdfViewerBlob; hash: string | null }
+  | { kind: 'pdf'; blob: PdfViewerBlob; hash: string | null; /** For a rendition: the SHA-256 of the version it was made from. */ renditionOf?: string | null }
   | { kind: 'download'; blob: Blob; name: string; why: string }
   | { kind: 'refused'; message: string };
 
@@ -59,8 +59,9 @@ export function downloadNameFor(res: Response, title: string): string {
 
 /** One download through the Vault's audited route, classified, so the caller
  *  decides what to do with the file without re-reading headers and types. */
-export async function downloadVaultFile(programId: string, docId: string, file: ViewableFile): Promise<OpenedFile> {
-  const path = `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download`;
+export async function downloadVaultFile(programId: string, docId: string, file: ViewableFile, as?: 'rendition'): Promise<OpenedFile> {
+  // `as: 'rendition'` asks the same audited route for the version's PDF rendition (P-107), served with its own hash.
+  const path = `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download${as === 'rendition' ? '?rendition=pdf' : ''}`;
   const res = await apiRequest('GET', path);
   if (!res.ok) {
     const j = await res.json().catch(() => null);
@@ -68,7 +69,10 @@ export async function downloadVaultFile(programId: string, docId: string, file: 
   }
   const bytes = new Uint8Array(await res.arrayBuffer());
   const pdf = pdfViewerBlob(bytes);
-  if (pdf) return { kind: 'pdf', blob: pdf, hash: responseHeader(res, 'X-Content-SHA256') ?? file.hash ?? null };
+  if (pdf) {
+    return { kind: 'pdf', blob: pdf, hash: responseHeader(res, 'X-Content-SHA256') ?? file.hash ?? null,
+      ...(as === 'rendition' ? { renditionOf: responseHeader(res, 'X-Rendition-Of-SHA256') } : {}) };
+  }
   const mime = responseHeader(res, 'Content-Type') ?? '';
   const name = downloadNameFor(res, file.title);
   // What the file claims: its served type, its title, or the name the Vault serves it under.

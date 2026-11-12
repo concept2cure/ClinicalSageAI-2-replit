@@ -8,7 +8,7 @@
  * classified view; POST 400 on invalid input. (The full store round-trip is proven in
  * cmc-change-control-service.pglite.integration.test.ts.)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
@@ -193,6 +193,37 @@ describe('POST /api/cmc-changes', () => {
       title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up', cmcProjectId: OWN,
     });
     expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(createCmcChange).not.toHaveBeenCalled();
+    expect(writeThroughChangeControl).not.toHaveBeenCalled();
+  });
+});
+
+/* ── P-122: claimed for the CMC surface, refused while launch scope is on ──
+   The deferred variation assessment records a classified change through POST
+   /api/cmc-changes, so the CMC surface claims the path (ci:launch-scope-api).
+   A claim admits it in production, and both answers carry post-approval
+   FDA/EMA categories, which P-28 withholds from an IND release. So the route
+   refuses itself while launch scope is on, as POST /api/cmc/variations/classify
+   does, and touches no store: production answers as it did when the path was
+   unclaimed, and a deployment that permits deferred work is unchanged. */
+describe('/api/cmc-changes while launch scope is enforced', () => {
+  const prior = process.env.LAUNCH_SCOPE_ENFORCE;
+  beforeEach(() => { process.env.LAUNCH_SCOPE_ENFORCE = 'on'; });
+  afterEach(() => { if (prior === undefined) delete process.env.LAUNCH_SCOPE_ENFORCE; else process.env.LAUNCH_SCOPE_ENFORCE = prior; });
+
+  it('GET is refused 409 and reads nothing', async () => {
+    const res = await request(appWith(9)).get('/api/cmc-changes');
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('CMC_VARIATIONS_OUT_OF_SCOPE');
+    expect(listCmcChanges).not.toHaveBeenCalled();
+  });
+
+  it('POST is refused 409 and writes nothing', async () => {
+    const res = await request(appWith(9)).post('/api/cmc-changes').send({
+      title: 'New scale-up', dosageFormFamily: 'immediate_release_oral_solid', changeCategory: 'scale_up', cmcProjectId: OWN,
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('CMC_VARIATIONS_OUT_OF_SCOPE');
     expect(createCmcChange).not.toHaveBeenCalled();
     expect(writeThroughChangeControl).not.toHaveBeenCalled();
   });

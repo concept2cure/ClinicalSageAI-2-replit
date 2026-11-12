@@ -409,6 +409,19 @@ export function signedStateOf(register: SignedRegister, storedStatus: unknown): 
   return null;
 }
 
+/**
+ * Every state this register counts as signed, for a refusal to name. One word
+ * for eight of the nine registers; analytical methods have two, because P-110
+ * made suitability a signed outcome of its own ("validated or
+ * phase-appropriate").
+ */
+export function signedStateNames(register: SignedRegister): string {
+  const names = [register.signedValue, ...(register.signedOutcomes ?? []).map((o) => o.value)]
+    .filter((v, i, all) => all.indexOf(v) === i);
+  if (names.length === 1) return names[0];
+  return names.slice(0, -1).join(', ') + ' or ' + names[names.length - 1];
+}
+
 /** Whether a patch asks only to retire the record (with or without a reason). */
 export function isRetirement(register: SignedRegister, patch: Record<string, unknown>): boolean {
   const keys = Object.keys(patch).filter((k) => k !== 'reason' && patch[k] !== undefined);
@@ -451,7 +464,7 @@ export async function retireSignedRecord(a: {
 }): Promise<{ ok: true } | Refusal> {
   const reason = requireGovernedReason(a.reason);
   if (!reason.ok) return refuse(422, 'REASON_REQUIRED', reason.error);
-  const { table, statusColumn, signedValue, noun } = a.register;
+  const { table, statusColumn, noun } = a.register;
   return inRefusableTransaction(async (client: PoolClient) => {
     const { rows } = await client.query(
       `SELECT id, project_id, ${statusColumn} AS status FROM ${table}
@@ -460,12 +473,18 @@ export async function retireSignedRecord(a: {
     );
     const row = rows[0];
     if (!row) return refuse(404, 'NOT_FOUND', `That ${noun} was not found.`);
-    /* Both sides lowercased — see `isSigned`: a register keeps its own casing
-       (the stability vocabulary is upper-case), and a raw comparison here would
-       refuse to retire a closed-out stability study with "that study is not
-       COMPLETED" while it plainly is. */
-    if (String(row.status ?? '').toLowerCase() !== signedValue.toLowerCase()) {
-      return refuse(409, 'NOT_SIGNED', `That ${noun} is not ${signedValue}; retire it with an ordinary edit.`);
+    /* Through `signedStateOf`, which lowercases both sides and reads EVERY
+       signed outcome, not just `signedValue`. Lowercasing: a register keeps its
+       own casing (the stability vocabulary is upper-case), and a raw comparison
+       would refuse to retire a closed-out stability study with "that study is
+       not COMPLETED" while it plainly is. Every outcome: P-110 made suitability
+       a signed outcome of its own, so a method signed `phase-appropriate` is as
+       signed as a `validated` one — comparing to `signedValue` alone refused to
+       retire it, leaving it with no way out of its signature at all. */
+    const signed = signedStateOf(a.register, row.status);
+    if (!signed) {
+      return refuse(409, 'NOT_SIGNED',
+        `That ${noun} is not ${signedStateNames(a.register)}; retire it with an ordinary edit.`);
     }
     await client.query(
       `UPDATE ${table} SET ${statusColumn} = 'retired', updated_at = NOW() WHERE id = $1 AND organization_id = $2`,
@@ -479,7 +498,7 @@ export async function retireSignedRecord(a: {
       resourceId: String(row.id),
       ipAddress: a.ipAddress,
       userAgent: a.userAgent,
-      details: { projectId: row.project_id ?? null, from: signedValue, to: 'retired', reason: reason.reason },
+      details: { projectId: row.project_id ?? null, from: signed, to: 'retired', reason: reason.reason },
     });
     return { ok: true as const };
   });

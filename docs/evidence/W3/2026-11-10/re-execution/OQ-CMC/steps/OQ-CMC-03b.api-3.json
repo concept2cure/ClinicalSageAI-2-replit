@@ -1,0 +1,51 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/drug-products",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "productName": "BX-702 5 mg film-coated tablet",
+      "dosageForm": "Film-coated tablet",
+      "strength": "5 mg",
+      "routeOfAdministration": "oral",
+      "composition": "BX-702 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+      "batchFormula": {
+        "description": "Per 100,000 tablets: BX-702 0.500 kg; microcrystalline cellulose PH-102 8.000 kg; gelatin 0.300 kg; film coat 0.300 kg"
+      },
+      "status": "development",
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 21,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "productName": "BX-702 5 mg film-coated tablet",
+        "dosageForm": "Film-coated tablet",
+        "strength": "5 mg",
+        "routeOfAdministration": "oral",
+        "composition": "BX-702 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+        "manufacturingProcess": null,
+        "batchFormula": {
+          "description": "Per 100,000 tablets: BX-702 0.500 kg; microcrystalline cellulose PH-102 8.000 kg; gelatin 0.300 kg; film coat 0.300 kg"
+        },
+        "processControls": null,
+        "specifications": null,
+        "packagingMaterials": null,
+        "stability": null,
+        "status": "development",
+        "createdAt": "2026-11-12T00:34:39.463Z",
+        "updatedAt": "2026-11-12T00:34:39.463Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

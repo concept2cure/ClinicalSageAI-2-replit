@@ -20,6 +20,9 @@ describe('Accessible company letterhead review', () => {
   it('supports keyboard-addressable scroll, zoom and a readable text view without editing the design', () => {
     const saved = profile(); render(<CompanyLetterheadPreview profile={saved} />);
     expect(screen.getByRole('region', { name: 'Scrollable letterhead visual preview' }).tabIndex).toBe(0);
+    // The preview pictures a page; it is not the screen's main content. A second `main` landmark inside the
+    // Shell's own was on Admin console → Settings (walked 2026-11-11).
+    expect(screen.queryByRole('main')).toBeNull();
     fireEvent.change(screen.getByLabelText('Preview zoom'), { target: { value: '200' } });
     expect(screen.getByLabelText('Letterhead preview').style.width).toBe('200%');
     fireEvent.click(screen.getByRole('button', { name: 'Readable text' }));

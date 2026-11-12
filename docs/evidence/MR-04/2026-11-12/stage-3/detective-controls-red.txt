@@ -1,0 +1,61 @@
+╷
+│ Warning: Invalid override target
+│ 
+│   on tests/detective_controls.tftest.hcl line 98, in override_resource:
+│   98:   target = aws_s3_bucket.access_logs
+│ 
+│ The override target aws_s3_bucket.access_logs does not exist within the
+│ configuration under test. This could indicate a typo in the target address
+│ or an unnecessary override.
+╵
+Success! The configuration is valid, but there were some
+validation warnings as shown above.
+
+tests/detective_controls.tftest.hcl... in progress
+  run "the_vpc_records_all_traffic_under_the_environments_name"... fail
+
+Error: Unsupported attribute
+
+  on tests/detective_controls.tftest.hcl line 157, in run "the_vpc_records_all_traffic_under_the_environments_name":
+ 157:     condition     = module.vpc.flow_log.traffic_type == "ALL" && module.vpc.flow_log.log_group == "/aws/vpc/c2c-production/flow-logs" && module.vpc.flow_log.retention_in_days >= 365
+    ├────────────────
+    │ module.vpc is object with 5 attributes
+
+This object does not have an attribute named "flow_log".
+
+Error: Unsupported attribute
+
+  on tests/detective_controls.tftest.hcl line 157, in run "the_vpc_records_all_traffic_under_the_environments_name":
+ 157:     condition     = module.vpc.flow_log.traffic_type == "ALL" && module.vpc.flow_log.log_group == "/aws/vpc/c2c-production/flow-logs" && module.vpc.flow_log.retention_in_days >= 365
+    ├────────────────
+    │ module.vpc is object with 5 attributes
+
+This object does not have an attribute named "flow_log".
+
+Error: Unsupported attribute
+
+  on tests/detective_controls.tftest.hcl line 157, in run "the_vpc_records_all_traffic_under_the_environments_name":
+ 157:     condition     = module.vpc.flow_log.traffic_type == "ALL" && module.vpc.flow_log.log_group == "/aws/vpc/c2c-production/flow-logs" && module.vpc.flow_log.retention_in_days >= 365
+    ├────────────────
+    │ module.vpc is object with 5 attributes
+
+This object does not have an attribute named "flow_log".
+  run "every_request_the_load_balancer_takes_is_logged"... skip
+  run "the_alb_log_bucket_is_private_encrypted_and_bounded"... skip
+  run "only_the_regions_load_balancers_may_write_and_only_their_prefix"... skip
+  run "a_shorter_access_log_retention_is_refused"... skip
+  run "cloudfront_and_the_buckets_log_to_the_access_log_bucket"... skip
+  run "the_access_log_bucket_admits_only_its_writers"... skip
+tests/detective_controls.tftest.hcl... tearing down
+tests/detective_controls.tftest.hcl... fail
+
+Warning: Invalid override target
+
+  on tests/detective_controls.tftest.hcl line 98, in override_resource:
+  98:   target = aws_s3_bucket.access_logs
+
+The override target aws_s3_bucket.access_logs does not exist within the
+configuration under test. This could indicate a typo in the target address or
+an unnecessary override.
+
+Failure! 0 passed, 1 failed, 6 skipped.

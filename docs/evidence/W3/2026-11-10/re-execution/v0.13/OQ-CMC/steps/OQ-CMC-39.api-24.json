@@ -1,0 +1,47 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/material-specs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "materialName": "OQ excipient 20261110130629b",
+      "materialRole": "excipient",
+      "grade": "USP"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 34,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 15,
+        "organizationId": 2,
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "materialRole": "excipient",
+        "materialName": "OQ excipient 20261110130629b",
+        "functionInFormulation": null,
+        "grade": "USP",
+        "compendialMonograph": null,
+        "compendialCompliance": null,
+        "supplier": null,
+        "manufacturerSite": null,
+        "origin": null,
+        "originDetail": null,
+        "tseCertificate": null,
+        "testParameters": null,
+        "analyticalProcedures": null,
+        "novelExcipient": false,
+        "novelExcipientJustification": null,
+        "status": "draft",
+        "createdAt": "2026-11-10T13:26:22.244Z",
+        "updatedAt": "2026-11-10T13:26:22.244Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

@@ -102,8 +102,9 @@ describe('a tool that records a reason for change is proposed at the reason tier
     // governedTierOf knows commands; for a tool name it answers confirm. The
     // card opens on data.tier, so a reason tool proposed at "confirm" would be
     // a click the confirmation route then refuses.
-    expect(governedTierOf('seed_tmf')).toBe('confirm');
-    const out = buildHumanConfirmationRequiredResult('seed_tmf', { reason: 'x' }, registeredToolTier('seed_tmf'));
+    // log_inspection_finding stands for a reason tool (seed_tmf did until it retired, 2026-11-12, eTMF E4 step 3).
+    expect(governedTierOf('log_inspection_finding')).toBe('confirm');
+    const out = buildHumanConfirmationRequiredResult('log_inspection_finding', { reason: 'x' }, registeredToolTier('log_inspection_finding', { reason: 'x' }));
     expect(out.data).toMatchObject({ tier: 'reason', reasonRequired: true, signatureRequired: false });
     expect(out.message).toMatch(/your reason for the change is recorded/);
   });

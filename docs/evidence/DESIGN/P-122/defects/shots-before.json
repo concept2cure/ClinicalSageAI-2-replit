@@ -1,0 +1,127 @@
+{
+  "base": "http://localhost:5266",
+  "label": "before",
+  "at": "2026-11-10T14:35:01.286Z",
+  "runs": [
+    {
+      "key": "1440-light",
+      "views": [
+        {
+          "name": "schedule-c2c101",
+          "file": "before-schedule-c2c101-1440-light.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "schedule-lmn201",
+          "file": "before-schedule-lmn201-1440-light.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "cmc-approvals",
+          "file": "before-cmc-approvals-1440-light.png",
+          "sideways": 0,
+          "text": "Section approvals\ngoverned, 21 CFR Part 11\nAdvance the next section\nOpen the Module 3 build board\nSection\tPath\tCompleteness\tState\tAction\n3.1\t3.1\t100%\tDraft\nApprove section\n3.2.A.1\t3.2.A.1\t100%\tDraft\nApprove section\n3.2.A.2\t3.2.A.2\t100%\tDraft\nApprove section\n3.2.A.3\t3.2.A.3\t100%\tDraft\nApprove section\n3.2.P.1\t3.2.P.1\t75%\nmissing: formulationCompositionComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.2\t3.2.P.2\t33%\nmissing: manufacturingProcessDev, containerClosureStudies\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.3\t3.2.P.3\t100%\tDraft\nApprove section\n3.2.P.4\t3.2.P.4\t100%\tDraft\nApprove section\n3.2.P.5\t3.2.P.5\t100%\tDraft\nApprove section\n3.2.P.6\t3.2.P.6\t33%\nmissing: drugProductReferenceStandardCoA, drugProductReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.7\t3.2.P.7\t100%\tDraft\nApprove section\n3.2.P.8\t3.2.P.8\t100%\tDraft\nApprove section\n3.2.R.1.US\t3.2.R.1.US\t100%\tDraft\nApprove section\n3.2.S.1\t3.2.S.1\t100%\tDraft\nApprove section\n3.2.S.2\t3.2.S.2\t100%\tDraft\nApprove section\n3.2.S.3\t3.2.S.3\t75%\nmissing: biologicalActivity\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.4\t3.2.S.4\t100%\tDraft\nApprove section\n3.2.S.5\t3.2.S.5\t33%\nmissing: drugSubstanceReferenceStandardCoA, drugSubstanceReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.6\t3.2.S.6\t50%\nmissing: drugSubstanceSuitabilityJustification, drugSubstanceContainerClosureComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.7\t3.2.S.7\t100%\tDraft\nApprove section\n3.3\t3.3\t100%\tDraft\nApprove section\nModule 3 doc\nVault\nTask\nDiscuss"
+        },
+        {
+          "name": "projects-at-risk",
+          "file": "before-projects-at-risk-1440-light.png",
+          "sideways": 0,
+          "text": "Which projects are at risk this week\nAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.\nRisks Sentinel found\n11 open findings, most severe first.\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion\n1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion\n0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion\n0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion\n8/26 tasks done, 1 blocked, 2 overdue. · Found Nov 10\nHigh · Cross project\nMo Member is spread across 6 active projects\nResource over-allocation: 10 open tasks across 6 projects. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 11 overdue. · Found Nov 10\nHigh · Deadline risk\n11 overdue tasks in \"RR5 acceptance IND (synthetic)\"\n11 tasks past due date. 0 are critical priority. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 0 overdue. · Found Oct 30\nMedium · Cross project\nRae Reviewer is spread across 5 active projects\nResource over-allocation: 12 open tasks across 5 projects. · Found Nov 10\nMedium · Cross project\nAvery Author is spread across 5 active projects\nResource over-allocation: 20 open tasks across 5 projects. · Found Nov 10\nMedium · Deadline risk\n2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\"\n2 tasks past due date. 0 are critical priority. · Found Nov 10\nBlockers\nNo blockers recorded.\nDue or overdue in the next 7 days\nNothing is due or overdue in the next 7 days."
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "1440-dark",
+      "views": [
+        {
+          "name": "schedule-c2c101",
+          "file": "before-schedule-c2c101-1440-dark.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "schedule-lmn201",
+          "file": "before-schedule-lmn201-1440-dark.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "cmc-approvals",
+          "file": "before-cmc-approvals-1440-dark.png",
+          "sideways": 0,
+          "text": "Section approvals\ngoverned, 21 CFR Part 11\nAdvance the next section\nOpen the Module 3 build board\nSection\tPath\tCompleteness\tState\tAction\n3.1\t3.1\t100%\tDraft\nApprove section\n3.2.A.1\t3.2.A.1\t100%\tDraft\nApprove section\n3.2.A.2\t3.2.A.2\t100%\tDraft\nApprove section\n3.2.A.3\t3.2.A.3\t100%\tDraft\nApprove section\n3.2.P.1\t3.2.P.1\t75%\nmissing: formulationCompositionComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.2\t3.2.P.2\t33%\nmissing: manufacturingProcessDev, containerClosureStudies\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.3\t3.2.P.3\t100%\tDraft\nApprove section\n3.2.P.4\t3.2.P.4\t100%\tDraft\nApprove section\n3.2.P.5\t3.2.P.5\t100%\tDraft\nApprove section\n3.2.P.6\t3.2.P.6\t33%\nmissing: drugProductReferenceStandardCoA, drugProductReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.7\t3.2.P.7\t100%\tDraft\nApprove section\n3.2.P.8\t3.2.P.8\t100%\tDraft\nApprove section\n3.2.R.1.US\t3.2.R.1.US\t100%\tDraft\nApprove section\n3.2.S.1\t3.2.S.1\t100%\tDraft\nApprove section\n3.2.S.2\t3.2.S.2\t100%\tDraft\nApprove section\n3.2.S.3\t3.2.S.3\t75%\nmissing: biologicalActivity\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.4\t3.2.S.4\t100%\tDraft\nApprove section\n3.2.S.5\t3.2.S.5\t33%\nmissing: drugSubstanceReferenceStandardCoA, drugSubstanceReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.6\t3.2.S.6\t50%\nmissing: drugSubstanceSuitabilityJustification, drugSubstanceContainerClosureComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.7\t3.2.S.7\t100%\tDraft\nApprove section\n3.3\t3.3\t100%\tDraft\nApprove section\nModule 3 doc\nVault\nTask\nDiscuss"
+        },
+        {
+          "name": "projects-at-risk",
+          "file": "before-projects-at-risk-1440-dark.png",
+          "sideways": 0,
+          "text": "Which projects are at risk this week\nAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.\nRisks Sentinel found\n11 open findings, most severe first.\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion\n1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion\n0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion\n0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion\n8/26 tasks done, 1 blocked, 2 overdue. · Found Nov 10\nHigh · Cross project\nMo Member is spread across 6 active projects\nResource over-allocation: 10 open tasks across 6 projects. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 11 overdue. · Found Nov 10\nHigh · Deadline risk\n11 overdue tasks in \"RR5 acceptance IND (synthetic)\"\n11 tasks past due date. 0 are critical priority. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 0 overdue. · Found Oct 30\nMedium · Cross project\nRae Reviewer is spread across 5 active projects\nResource over-allocation: 12 open tasks across 5 projects. · Found Nov 10\nMedium · Cross project\nAvery Author is spread across 5 active projects\nResource over-allocation: 20 open tasks across 5 projects. · Found Nov 10\nMedium · Deadline risk\n2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\"\n2 tasks past due date. 0 are critical priority. · Found Nov 10\nBlockers\nNo blockers recorded.\nDue or overdue in the next 7 days\nNothing is due or overdue in the next 7 days."
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "390-light",
+      "views": [
+        {
+          "name": "schedule-c2c101",
+          "file": "before-schedule-c2c101-390-light.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "schedule-lmn201",
+          "file": "before-schedule-lmn201-390-light.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "cmc-approvals",
+          "file": "before-cmc-approvals-390-light.png",
+          "sideways": 0,
+          "text": "Section approvals\ngoverned, 21 CFR Part 11\nAdvance the next section\nOpen the Module 3 build board\nSection\tPath\tCompleteness\tState\tAction\n3.1\t3.1\t100%\tDraft\nApprove section\n3.2.A.1\t3.2.A.1\t100%\tDraft\nApprove section\n3.2.A.2\t3.2.A.2\t100%\tDraft\nApprove section\n3.2.A.3\t3.2.A.3\t100%\tDraft\nApprove section\n3.2.P.1\t3.2.P.1\t75%\nmissing: formulationCompositionComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.2\t3.2.P.2\t33%\nmissing: manufacturingProcessDev, containerClosureStudies\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.3\t3.2.P.3\t100%\tDraft\nApprove section\n3.2.P.4\t3.2.P.4\t100%\tDraft\nApprove section\n3.2.P.5\t3.2.P.5\t100%\tDraft\nApprove section\n3.2.P.6\t3.2.P.6\t33%\nmissing: drugProductReferenceStandardCoA, drugProductReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.7\t3.2.P.7\t100%\tDraft\nApprove section\n3.2.P.8\t3.2.P.8\t100%\tDraft\nApprove section\n3.2.R.1.US\t3.2.R.1.US\t100%\tDraft\nApprove section\n3.2.S.1\t3.2.S.1\t100%\tDraft\nApprove section\n3.2.S.2\t3.2.S.2\t100%\tDraft\nApprove section\n3.2.S.3\t3.2.S.3\t75%\nmissing: biologicalActivity\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.4\t3.2.S.4\t100%\tDraft\nApprove section\n3.2.S.5\t3.2.S.5\t33%\nmissing: drugSubstanceReferenceStandardCoA, drugSubstanceReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.6\t3.2.S.6\t50%\nmissing: drugSubstanceSuitabilityJustification, drugSubstanceContainerClosureComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.7\t3.2.S.7\t100%\tDraft\nApprove section\n3.3\t3.3\t100%\tDraft\nApprove section\nModule 3 doc\nVault\nTask\nDiscuss"
+        },
+        {
+          "name": "projects-at-risk",
+          "file": "before-projects-at-risk-390-light.png",
+          "sideways": 0,
+          "text": "Which projects are at risk this week\nAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.\nRisks Sentinel found\n11 open findings, most severe first.\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion\n1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion\n0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion\n0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion\n8/26 tasks done, 1 blocked, 2 overdue. · Found Nov 10\nHigh · Cross project\nMo Member is spread across 6 active projects\nResource over-allocation: 10 open tasks across 6 projects. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 11 overdue. · Found Nov 10\nHigh · Deadline risk\n11 overdue tasks in \"RR5 acceptance IND (synthetic)\"\n11 tasks past due date. 0 are critical priority. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 0 overdue. · Found Oct 30\nMedium · Cross project\nRae Reviewer is spread across 5 active projects\nResource over-allocation: 12 open tasks across 5 projects. · Found Nov 10\nMedium · Cross project\nAvery Author is spread across 5 active projects\nResource over-allocation: 20 open tasks across 5 projects. · Found Nov 10\nMedium · Deadline risk\n2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\"\n2 tasks past due date. 0 are critical priority. · Found Nov 10\nBlockers\nNo blockers recorded.\nDue or overdue in the next 7 days\nNothing is due or overdue in the next 7 days."
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "390-dark",
+      "views": [
+        {
+          "name": "schedule-c2c101",
+          "file": "before-schedule-c2c101-390-dark.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "schedule-lmn201",
+          "file": "before-schedule-lmn201-390-dark.png",
+          "sideways": 0,
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\nNo CTD sections are tracked on this project yet.\nNo section deadline or milestone is recorded.\nMilestone tasks\nNo milestone tasks on this project yet.\nAn IND's milestones: Pre-IND Meeting Request · Pre-IND Briefing Document · Pre-IND Meeting · Module 1 Administrative · Module 2 Summaries · Module 3 Quality (CMC) · Module 4 Nonclinical · Module 5 Clinical · IND Compilation & QC · IND Submission to FDA · 30-Day Safety Review · Study May Proceed.\nAdd the 12 IND milestones\nProject roll-up\nNo work projects under this project.\nNo project tasks across the hierarchy."
+        },
+        {
+          "name": "projects-at-risk",
+          "file": "before-projects-at-risk-390-dark.png",
+          "sideways": 0,
+          "text": "Which projects are at risk this week\nAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.\nRisks Sentinel found\n11 open findings, most severe first.\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion\n1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion\n0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10\nCritical · Quality drift\nQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion\n0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion\n8/26 tasks done, 1 blocked, 2 overdue. · Found Nov 10\nHigh · Cross project\nMo Member is spread across 6 active projects\nResource over-allocation: 10 open tasks across 6 projects. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 11 overdue. · Found Nov 10\nHigh · Deadline risk\n11 overdue tasks in \"RR5 acceptance IND (synthetic)\"\n11 tasks past due date. 0 are critical priority. · Found Nov 10\nHigh · Quality drift\nQuality drift: \"RR5 acceptance IND (synthetic)\" at 45% task completion\n9/20 tasks done, 0 blocked, 0 overdue. · Found Oct 30\nMedium · Cross project\nRae Reviewer is spread across 5 active projects\nResource over-allocation: 12 open tasks across 5 projects. · Found Nov 10\nMedium · Cross project\nAvery Author is spread across 5 active projects\nResource over-allocation: 20 open tasks across 5 projects. · Found Nov 10\nMedium · Deadline risk\n2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\"\n2 tasks past due date. 0 are critical priority. · Found Nov 10\nBlockers\nNo blockers recorded.\nDue or overdue in the next 7 days\nNothing is due or overdue in the next 7 days."
+        },
+        {
+          "name": "cmc-approvals",
+          "file": "before-cmc-approvals-390-dark.png",
+          "sideways": 0,
+          "text": "Section approvals\ngoverned, 21 CFR Part 11\nAdvance the next section\nOpen the Module 3 build board\nSection\tPath\tCompleteness\tState\tAction\n3.1\t3.1\t100%\tDraft\nApprove section\n3.2.A.1\t3.2.A.1\t100%\tDraft\nApprove section\n3.2.A.2\t3.2.A.2\t100%\tDraft\nApprove section\n3.2.A.3\t3.2.A.3\t100%\tDraft\nApprove section\n3.2.P.1\t3.2.P.1\t75%\nmissing: formulationCompositionComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.2\t3.2.P.2\t33%\nmissing: manufacturingProcessDev, containerClosureStudies\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.3\t3.2.P.3\t100%\tDraft\nApprove section\n3.2.P.4\t3.2.P.4\t100%\tDraft\nApprove section\n3.2.P.5\t3.2.P.5\t100%\tDraft\nApprove section\n3.2.P.6\t3.2.P.6\t33%\nmissing: drugProductReferenceStandardCoA, drugProductReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.P.7\t3.2.P.7\t100%\tDraft\nApprove section\n3.2.P.8\t3.2.P.8\t100%\tDraft\nApprove section\n3.2.R.1.US\t3.2.R.1.US\t100%\tDraft\nApprove section\n3.2.S.1\t3.2.S.1\t100%\tDraft\nApprove section\n3.2.S.2\t3.2.S.2\t100%\tDraft\nApprove section\n3.2.S.3\t3.2.S.3\t75%\nmissing: biologicalActivity\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.4\t3.2.S.4\t100%\tDraft\nApprove section\n3.2.S.5\t3.2.S.5\t33%\nmissing: drugSubstanceReferenceStandardCoA, drugSubstanceReferenceStandardComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.6\t3.2.S.6\t50%\nmissing: drugSubstanceSuitabilityJustification, drugSubstanceContainerClosureComplete\n\tDraftIncomplete\nApprove section\nOpen the build board\n3.2.S.7\t3.2.S.7\t100%\tDraft\nApprove section\n3.3\t3.3\t100%\tDraft\nApprove section\nModule 3 doc\nVault\nTask\nDiscuss"
+        }
+      ],
+      "failed": []
+    }
+  ]
+}

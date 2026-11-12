@@ -1,0 +1,19 @@
+The mutation: `modality` removed from the drug-substances projection — which is
+what the route looked like all day, and what shipped the defect.
+
+-        modality: drugSubstances.modality,
+
+$ npx vitest run server/api/cmc/__tests__/register-projection-covers-its-columns.contract.test.ts
+
+ × /drug-substances omits only what is written down 7ms
+   → expected [ 'controlOfMaterials', …(4) ] to deeply equal [ 'controlOfMaterials', …(3) ]
+ × projects the drug substance's §3.2.A.2 columns, including the modality P-110 refuses over 2ms
+   → modality: expected [ 'id', 'substanceName', …(17) ] to include 'modality'
+
+      Tests  2 failed | 5 passed (7)
+
+Reverted. 7 passed.
+
+Two cases fail on purpose: the set difference catches ANY column dropped or
+added without a written reason, and the named case says which field, so the
+next person reads "modality" rather than a diff of two sorted arrays.

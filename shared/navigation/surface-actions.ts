@@ -284,6 +284,11 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         required: true,
         description: 'The folder name as shown in the vault tree (case-insensitive; partial names resolve when unambiguous).',
       },
+      {
+        name: 'folderId',
+        required: false,
+        description: 'Optional exact folder: a binder heading "bn:<CTD or section code>" (opens that heading, or the nearest one above it), or a folder id from the tree. Takes precedence over the name.',
+      },
     ],
   },
   {
@@ -668,13 +673,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'quality',
     label: 'Open a quality tab',
     description:
-      'On the quality surface, switch between its tabs: the SOP register, change control, CAPA, deviations, nonconformances, suppliers, internal audits and management reviews. Approving, revising, or retiring a controlled document, raising or advancing a change, recording a quality record or its disposition, and recording training are governed acts a person does on the screen — never driven from here.',
+      'On the quality surface, switch between its tabs: the SOP register, change control, CAPA, complaints and MDR reports, deviations, nonconformances, suppliers, internal audits and management reviews. Approving, revising, or retiring a controlled document, raising or advancing a change, recording a quality record or its disposition, and recording training are governed acts a person does on the screen — never driven from here.',
     params: [
       {
         name: 'tab',
         required: true,
         description: 'The tab to open.',
-        enum: ['sop', 'change', 'capa', 'deviations', 'nonconforming', 'suppliers', 'audits', 'reviews'],
+        enum: ['sop', 'change', 'capa', 'complaints', 'deviations', 'nonconforming', 'suppliers', 'audits', 'reviews'],
       },
     ],
   },

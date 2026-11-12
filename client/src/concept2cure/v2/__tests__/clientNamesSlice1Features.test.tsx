@@ -20,6 +20,8 @@ vi.mock('@/services/portal/authService', () => ({
     user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['admin', 'user'] },
     logout: vi.fn(),
   }),
+  // The catalog reads the viewer to decide a member's view (P-122); this suite reads the administrator's.
+  useAuthUser: () => ({ firstName: 'Ada', lastName: 'Rowe', roles: ['admin', 'user'] }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant: null, organizationId: 7, currentOrganization: null }),

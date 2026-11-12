@@ -1,0 +1,16 @@
+# tests/db/ind-audit-outcomes.dbtest.ts as HEAD (its submissions have no project), after the annual-report admission: a register write on a submission with no project is refused 409. Its fixture now anchors each submission to a project its member owns (green-audit-outcomes.txt).
+  × IND draft and filing audit outcomes > annual returns its real draft and filed record for none, without a false 500
+  × IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-refusal, without a false 500
+  × IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-thrown, without a false 500
+  × IND snapshots and admission > denies anonymous, viewer and forged membership before a register write
+  × IND snapshots and admission > reports an actual PostgreSQL business refusal without an audit or a saved row, then recovers
+ FAIL  tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for none, without a false 500
+ FAIL  tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-refusal, without a false 500
+ FAIL  tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-thrown, without a false 500
+AssertionError: {"error":{"code":"UNANCHORED_SUBMISSION","message":"This submission needs a verified project anchor."}}: expected 409 to be 201 // Object.is equality
+ FAIL  tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > denies anonymous, viewer and forged membership before a register write
+AssertionError: {"error":{"code":"UNANCHORED_SUBMISSION","message":"This submission needs a verified project anchor."}}: expected 409 to be 201 // Object.is equality
+ FAIL  tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > reports an actual PostgreSQL business refusal without an audit or a saved row, then recovers
+AssertionError: expected undefined to be '42501' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed | 10 passed (15)

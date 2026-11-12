@@ -406,8 +406,9 @@ describe("the Plan step's due-for-you and the content plan's join", () => {
     mount();
     const plan = await openPlan();
     const due = await within(plan).findByTestId('pj-due-for-you');
-    // First in the step.
-    expect(plan.firstElementChild).toBe(due);
+    // The strategy opens the step (THE_PROGRAM §8 item 1), then what is due for the person (item 2).
+    expect(plan.firstElementChild?.getAttribute('data-testid')).toBe('pj-plan-strategy');
+    expect(plan.children[1]).toBe(due);
     await waitFor(() => expect(due.querySelectorAll('.pj-due-row')).toHaveLength(2));
     const rows = Array.from(due.querySelectorAll('.pj-due-row')).map((r) => r.textContent);
     expect(rows[0]).toMatch(/^Prepare: Regulatory pathway assessmentDocumentDue Nov 3, 2026/);

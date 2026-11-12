@@ -272,3 +272,32 @@ describe('SoftwareSurface — a score over the tracked records is not the whole 
     expect(screen.getByText('Approved lifecycle records over the 5 required records.')).toBeTruthy();
   });
 });
+
+/* D8 slice 3 (P-128): the figures are one line at the register's figure size, so a word in a figure takes that size
+   too. The documentation level and "Not determined" each carried an inline 18 px from when a figure was 28 px serif,
+   and the level was title-cased by a style ("Not Determined"). ONE_DESIGN_PLAN §2: sentence case. */
+describe('SoftwareSurface — a word in a figure is sentence case, at the figure size', () => {
+  const figureNamed = (container: HTMLElement, label: string): HTMLElement => {
+    const card = [...container.querySelectorAll<HTMLElement>('.metric-card')].find((c) => c.querySelector('.metric-label')?.textContent === label);
+    const val = card?.querySelector<HTMLElement>('.metric-val');
+    if (!val) throw new Error(`no figure labelled "${label}"`);
+    return val;
+  };
+
+  it('an undetermined level reads "Not determined", in the figure size, with no style of its own', async () => {
+    const { container } = render(<SoftwareSurface program={PROGRAM} onAskAna={() => {}} />);
+    await waitFor(() => expect(container.querySelector('.metric-card')).toBeTruthy());
+    for (const label of ['Documentation level', 'Completeness']) {
+      const val = figureNamed(container, label);
+      expect(val.textContent).toBe('Not determined');
+      expect(val.getAttribute('style') ?? '').toBe('');
+    }
+  });
+
+  it('a determined level is written with its first letter capital, not by a style', async () => {
+    summaryBody = ALL_TRACKED_APPROVED_SUMMARY;
+    const { container } = render(<SoftwareSurface program={PROGRAM} onAskAna={() => {}} />);
+    await waitFor(() => expect(figureNamed(container, 'Documentation level').textContent).toBe('Basic'));
+    expect(figureNamed(container, 'Documentation level').getAttribute('style') ?? '').toBe('');
+  });
+});

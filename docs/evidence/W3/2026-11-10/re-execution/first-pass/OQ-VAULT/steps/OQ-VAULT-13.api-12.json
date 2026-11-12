@@ -1,0 +1,171 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/082cde6c-fdaa-4083-9692-72ba333f94d1/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 171,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "082cde6c-fdaa-4083-9692-72ba333f94d1",
+            "version": "2.0",
+            "contentHash": "0f119702af25cdb8d3461d6678c2ce8648fc5f5e09c1b1f51b3669fdb0de289d",
+            "fileSize": 622,
+            "fileName": "next-version.pdf",
+            "uploader": "oq-runner@validation.local",
+            "uploaderId": 1,
+            "createdAt": "2026-11-10T02:45:51.687Z",
+            "current": true,
+            "link": "verified",
+            "restoredFrom": null,
+            "lifecycle": {
+              "canonicalId": "5d0908f6-ca17-48a0-bdc2-9fdde20541ef",
+              "stage": "in_review",
+              "creatorId": 1,
+              "review": {
+                "printedName": "OQ Signer",
+                "meaning": "REVIEWED",
+                "signedAt": "2026-11-10T02:46:00.640Z",
+                "signatureRef": "esig:8",
+                "signerId": 2
+              },
+              "approval": null,
+              "reviewSignOffs": [
+                {
+                  "printedName": "OQ Signer",
+                  "meaning": "REVIEWED",
+                  "signedAt": "2026-11-10T02:46:00.640Z",
+                  "signatureRef": "esig:8",
+                  "signerId": 2
+                }
+              ],
+              "approvalSignOffs": null,
+              "round": {
+                "route": {
+                  "id": "fdc3fec3-d3e3-4f56-b5ef-28bbfeb208c1",
+                  "round": 1,
+                  "senderId": 1,
+                  "senderName": "oq-runner@validation.local",
+                  "order": "parallel",
+                  "status": "open",
+                  "statusReason": null,
+                  "statusBy": null,
+                  "statusAt": null,
+                  "contentDigest": "0f119702af25cdb8d3461d6678c2ce8648fc5f5e09c1b1f51b3669fdb0de289d",
+                  "reviewDueAt": "2026-11-17T23:59:59.999Z",
+                  "approvalDueAt": "2026-11-24T23:59:59.999Z",
+                  "createdAt": "2026-11-10T02:45:56.561Z"
+                },
+                "members": [
+                  {
+                    "taskId": "ROUTE-fdc3fec3-2",
+                    "userId": 2,
+                    "role": "reviewer",
+                    "step": 1,
+                    "printedName": "OQ Signer",
+                    "outcome": "signed",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-17T23:59:59.999Z",
+                    "signature": {
+                      "id": 8,
+                      "printedName": "OQ Signer",
+                      "meaning": "REVIEWED",
+                      "signedAt": "2026-11-10T02:46:00.640Z"
+                    },
+                    "actId": null
+                  },
+                  {
+                    "taskId": "ROUTE-fdc3fec3-3",
+                    "userId": 3,
+                    "role": "approver",
+                    "step": 2,
+                    "printedName": "OQ Approver",
+                    "outcome": "pending",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-24T23:59:59.999Z",
+                    "signature": null,
+                    "actId": null
+                  }
+                ],
+                "reviewComplete": true,
+                "approvalComplete": false,
+                "history": [
+                  {
+                    "action": "send",
+                    "at": "2026-11-10T02:45:56.606Z",
+                    "actorId": 1,
+                    "actorName": "oq-runner@validation.local",
+                    "reason": "OQ-002 step 13: sent for review for validation",
+                    "members": [
+                      {
+                        "userId": 2,
+                        "role": "reviewer",
+                        "printedName": "OQ Signer"
+                      },
+                      {
+                        "userId": 3,
+                        "role": "approver",
+                        "printedName": "OQ Approver"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "roundUnread": false
+            },
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "in_review, not approved"
+          },
+          {
+            "id": "5b6ec540-1e05-4a62-a551-fe759774ffe7",
+            "version": "1.0",
+            "contentHash": "268a6daa904ab94417ef2cfba4978536f9f7adb7a4d062a3a105750aa861794d",
+            "fileSize": 611,
+            "fileName": "OQ-002-Protocol-20261110024537.pdf",
+            "uploader": "oq-runner@validation.local",
+            "uploaderId": 1,
+            "createdAt": "2026-11-10T02:45:40.110Z",
+            "current": false,
+            "link": "none",
+            "restoredFrom": null,
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "superseded by a later version"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "OQ Approver"
+            },
+            {
+              "id": 2,
+              "name": "OQ Signer"
+            },
+            {
+              "id": 1,
+              "name": "oq-runner@validation.local"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

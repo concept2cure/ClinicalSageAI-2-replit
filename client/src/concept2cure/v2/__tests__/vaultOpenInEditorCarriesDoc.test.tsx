@@ -230,6 +230,26 @@ describe('Vault exact governed filing identity', () => {
   });
 });
 
+/* P-123 item 8 (2026-11-12): an authored section now sits in the filing binder's heading, beside the files placed there,
+   no longer under its filing document's folder. It carries that filing's identity itself, and the editor door reads it. */
+describe('a section placed in the binder carries its own filing identity', () => {
+  const binderTree = (section: Record<string, unknown>) => [{ id: 'cabinet', code: '', label: 'Filing binder · CER',
+    children: [{ id: 'cab-bn:II.6', code: 'II.6', label: 'Binder heading', kind: 'binder',
+      children: [{ ...leaf('recorded-section', 'display-code', 'Recorded section'), filingSectionKey: 'II.6', ...section }] }] }];
+
+  it('opens the editor at its filing and section, though no folder above it names the filing', async () => {
+    useTree(binderTree({ filingDocumentId: 'doc_exact_cer', filingFamily: 'CER' }));
+    mount(); await openInEditor('Recorded section', 'Binder heading');
+    expect(peekEditorTarget()).toMatchObject({ filingDocumentId: 'doc_exact_cer', docType: 'cer', sectionCode: 'II.6', programId: PROJECT_ID });
+  });
+
+  it('refuses one whose own filing identity is not valid, as a folder\'s would be', async () => {
+    useTree(binderTree({ filingDocumentId: '../invalid-filing', filingFamily: 'CER' }));
+    mount(); await openInEditor('Recorded section', 'Binder heading');
+    expect(peekEditorTarget()).toBeNull(); expect(navigated).toEqual([]);
+  });
+});
+
 describe('Vault whole document and exact section intents', () => {
   it('carries whole-filing intent without a presentation code or title', async () => {
     useTree(filingTree({ filingDocumentId: 'doc_exact_cer' }, { filingSectionKey: null }));

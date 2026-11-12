@@ -8,6 +8,7 @@ import {
 } from '@shared/schema';
 import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
+import { reviewPolicyRefusal } from '@shared/artifact-governance';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
@@ -472,7 +473,11 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       ? { ...defaultSettings, ...organization.settings }
       : defaultSettings;
 
-    res.json({ success: true, settings: generalSettingsView(settings) });
+    // Credentials are withheld from every reader; the integrations and the network allowlist are an
+    // administrator's (or platform staff's) to read. tenant-settings-writer.ts generalSettingsView.
+    const role = (req as any).userRole ?? (req as any).user?.role;
+    const administrator = role === 'admin' || role === 'owner' || await isPlatformStaff(req);
+    res.json({ success: true, settings: generalSettingsView(settings, { administrator }) });
   } catch (error) {
     console.error('Error fetching organization settings:', error);
     res.status(500).json({
@@ -541,6 +546,9 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // requireOrgAdmin admits an administrator, so a body naming it is refused
     // whole, before anything is read (P1-49 fix round); the writer below
     // refuses any change to it from this door as well.
+    // A review rule outside its bounds is refused, never stored and clamped (P-117).
+    const reviewRefusal = reviewPolicyRefusal(settingsUpdate);
+    if (reviewRefusal) return res.status(400).json({ success: false, error: reviewRefusal });
     const managedRefusal = namedManagedSettingsRefusal(settingsUpdate);
     if (managedRefusal) return res.status(403).json({ success: false, error: managedRefusal });
 
@@ -565,7 +573,8 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     res.json({
       success: true,
       message: 'Organization settings updated successfully',
-      settings: settingsUpdate,
+      // What was changed, with any credential in it withheld as a read withholds it.
+      settings: generalSettingsView(settingsUpdate),
       auditTrail: { persisted: true, chained: true },
     });
   } catch (error) {

@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes one JobSucceeded line, in embedded metric format, when the run finishes and is recorded 8ms
+   → expected [] to deeply equal [ { _aws: { …(2) }, …(2) } ]
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when the job throws 1ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when this window was already claimed 0ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when another task holds the lease 0ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when the finish could not be recorded 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes one JobSucceeded line, in embedded metric format, when the run finishes and is recorded
+AssertionError: expected [] to deeply equal [ { _aws: { …(2) }, …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "JobName": "retention-sweep",
+-     "JobSucceeded": 1,
+-     "_aws": {
+-       "CloudWatchMetrics": [
+-         {
+-           "Dimensions": [
+-             [
+-               "JobName",
+-             ],
+-           ],
+-           "Metrics": [
+-             {
+-               "Name": "JobSucceeded",
+-               "Unit": "Count",
+-             },
+-           ],
+-           "Namespace": "C2C/Jobs",
+-         },
+-       ],
+-       "Timestamp": Any<Number>,
+-     },
+-   },
+- ]
++ []
+
+ ❯ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts:68:27
+     66|     const out = await runScheduledOncePerWindow('retention-sweep', '86…
+     67|     expect(out).toEqual({ ran: true, value: 'done' });
+     68|     expect(metricLines()).toEqual([
+       |                           ^
+     69|       {
+     70|         _aws: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  19:11:54
+   Duration  412ms (transform 106ms, setup 126ms, import 37ms, tests 13ms, environment 4ms)
+

@@ -190,3 +190,114 @@ for (const command of ['dev', 'dev:local']) {
     } finally { rmSync(directory, { recursive: true, force: true }); }
   });
 }
+
+// 2026-11-10: without a second signer every two-person demo step (QMS approvals, method validation, the RACT's
+// approval, review requests) was recorded "not executed", so RBM's "Generate from RACT" was refused on every project.
+// The packs route a draft to review before approving it (158323d776), so the approver, never the author, signs.
+test('the demo seed is given the approver as its second signer', () => {
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const start = code.indexOf('DEMO_MANIFEST_ROOT=');
+  assert.ok(start >= 0, 'the demo seed step is present');
+  const seed = code.slice(start, code.indexOf('demo:seed', start));
+  assert.match(seed, /OQ_SIGNER_EMAIL="\$DEMO_APPROVER_EMAIL"/);
+  assert.match(seed, /OQ_SIGNER_PASSWORD="\$DEMO_SIGNER_PASSWORD"/);
+  assert.doesNotMatch(seed, /OQ_SIGNER_EMAIL="\$(DEMO_SEED_EMAIL|DEMO_AUTHOR_EMAIL)"/);
+});
+
+// 2026-11-10, a fresh Codespace: every demo person is an administrator, and with no QMS approver designated only the
+// Approver role approves, so the QMS packs' approvals by the second signer were refused (MEMBER_NOT_QMS_APPROVER) and
+// the seed never finished. The approver is designated first, through the governed route an administrator uses.
+test('the approver is designated as the QMS approver, through the governed route, before the demo seed', () => {
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const call = code.indexOf('c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"');
+  assert.ok(call >= 0, 'the designation is called for the approver, as the seeding administrator');
+  assert.ok(call < code.indexOf('npm run --silent demo:seed -- --pack all'), 'before the demo seed');
+  const fn = code.slice(code.indexOf('c2c_designate_qms_approver() {'), call);
+  assert.match(fn, /\/api\/tenant-users\/" \+ org \+ "\/" \+ person\.id \+ "\/qms-approver"/);
+  assert.match(fn, /method: "PUT"/);
+  assert.match(fn, /designated: true, reason: "/);
+  assert.match(fn, /\/api\/auth\/logout/, 'the administrator signs out, so the session does not hold a slot');
+});
+
+// 2026-11-10, the showcase pass, in a Codespace-shaped stack: every report and bundle PDF export answered 503
+// REPORT_PDF_FONTS_UNAVAILABLE, a document's "Download, PDF" answered 503 PDF_RENDERER_UNAVAILABLE, and Compile said
+// "xmllint not available". Only the production image and CI installed the fonts, LibreOffice and xmllint.
+test('the Codespace installs what the document exports need, and a failed install never blocks the start', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-export-tools-'));
+  try {
+    const bin = join(dir, 'bin'); mkdirSync(bin);
+    const calls = join(dir, 'apt-calls');
+    const script = (name, body) => { writeFileSync(join(bin, name), `#!/bin/bash\n${body}\n`); chmodSync(join(bin, name), 0o755); };
+    const fakeApt = (body) => script('apt-get', `echo "$@" >> "${calls}"\n${body}`);
+    script('sudo', 'while [[ "$1" == -* ]]; do shift; done\nexec "$@"');
+    const font = join(dir, 'NotoSans-Regular.ttf');
+    // Only this directory and the shell's own tools: no libreoffice or xmllint from the machine running the test.
+    const tools = join(dir, 'tools'); mkdirSync(tools);
+    for (const name of ['bash', 'tr', 'cat', 'touch', 'dirname', 'id', 'sed', 'grep', 'date', 'git', 'env']) {
+      const found = spawnSync('bash', ['-c', `command -v ${name}`], { encoding: 'utf8' }).stdout.trim();
+      if (found) script(name, `exec ${found} "$@"`);
+    }
+    const run = () => spawnSync('bash', ['-c', `source "${postCreate}"; c2c_install_export_tools; echo "rc=$?"; echo "missing=[$(c2c_export_tools_missing | tr '\\n' ' ')]"`], {
+      cwd: root, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${tools}`, C2C_REPORT_FONT: font } });
+
+    fakeApt('exit 100');
+    const failed = run();
+    assert.match(failed.stdout, /rc=0/, 'a failed install returns success: ' + failed.stdout + failed.stderr);
+    assert.match(failed.stdout + failed.stderr, /could not be installed/);
+    assert.match(failed.stdout, /missing=\[fonts-noto-core fonts-noto-cjk libreoffice-writer libreoffice-common fonts-liberation libxml2-utils \]/);
+
+    writeFileSync(calls, '');
+    fakeApt(`if [[ "$1" == install ]]; then touch "${font}"; for t in libreoffice xmllint; do printf '#!/bin/bash\\n' > "${bin}/$t"; chmod +x "${bin}/$t"; done; fi\nexit 0`);
+    const installed = run();
+    assert.match(installed.stdout, /rc=0/);
+    assert.match(readFileSync(calls, 'utf8'),
+      /install -y -qq --no-install-recommends fonts-noto-core fonts-noto-cjk libreoffice-writer libreoffice-common fonts-liberation libxml2-utils/);
+    assert.match(installed.stdout + installed.stderr, /Document export tools installed/);
+    assert.match(installed.stdout, /missing=\[\]/);
+
+    writeFileSync(calls, '');
+    const present = run();
+    assert.match(present.stdout, /rc=0/);
+    assert.equal(readFileSync(calls, 'utf8'), '', 'everything already there: apt is not called');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const call = code.indexOf('\nc2c_install_export_tools\n');
+  assert.ok(call >= 0, 'post-start installs them: an existing Codespace never re-runs post-create');
+  assert.ok(call < code.indexOf('npm run --silent demo:seed -- --pack all'), 'before the long demo seed');
+  assert.doesNotMatch(code, /c2c_install_export_tools \|\|/, 'never a blocking step');
+});
+
+// Showcase walk, 2026-11-10: with a key the provider refuses and no embeddings key, /readyz names only the search
+// lane, and the start printed "ANTHROPIC_API_KEY: BLOCKED ANTHROPIC_KEY_INVALID" followed by "AnA in the running app
+// answers and drafts with the Anthropic key". The second line is said only when the drafting call was answered.
+test('the start says AnA answers and drafts only when the drafting call with this key was answered', () => {
+  const post = readFileSync(postStart, 'utf8');
+  const lane = post.slice(post.indexOf('embedding_lane_down|no_embedding_lane)'), post.indexOf('*) c2c_log "AnA in the running app: $C2C_APP_ANA.'));
+  assert.match(lane, /if \[\[ "\$\{C2C_DRAFTING_LINE:-\}" == "answered by"\* \]\]; then\n\s+c2c_log "AnA in the running app answers and drafts with the Anthropic key/);
+  assert.match(lane, /else\n\s+c2c_log "AnA in the running app cannot answer or draft yet: see the ANTHROPIC_API_KEY lines above\."/);
+  assert.match(lane, /Search is off \(\$C2C_APP_ANA\)/);
+  assert.equal((post.match(/answers and drafts with the Anthropic key/g) ?? []).length, 1);
+});
+
+// 2026-11-10: Compliance reports' "Run attestation" answered 503 in every Codespace, because nothing gave the app an
+// attestation signing key. The Codespace mints its own, like its JWT secrets: in app.env when the state is first
+// written, and added by a start to an app.env made before this (so an existing Codespace gets one too).
+test('the Codespace app has an attestation signing key of its own, on a new and on an existing state', () => {
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const ensured = code.indexOf('c2c_ensure_attestation_key');
+  assert.ok(ensured >= 0 && ensured < code.indexOf('c2c_start_app() {'), 'every start ensures the key before the app starts');
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-attest-'));
+  try {
+    const env = `${dir}/state/app.env`;
+    const script = `set -e; export C2C_CODESPACE_STATE=${dir}/state; source ${postCreate}; c2c_write_state; ` +
+      `grep -c '^AUDIT_ATTESTATION_KEY=' ${env}; first=$(grep '^AUDIT_ATTESTATION_KEY=' ${env}); ` +
+      `c2c_ensure_attestation_key; [ "$first" = "$(grep '^AUDIT_ATTESTATION_KEY=' ${env})" ] && echo kept; ` +
+      `sed -i '/^AUDIT_ATTESTATION_KEY/d' ${env}; c2c_ensure_attestation_key; ` +
+      `grep -c '^AUDIT_ATTESTATION_KEY=' ${env}; grep -c '^AUDIT_ATTESTATION_KEY_ID=' ${env}; stat -c %a ${env}`;
+    const run = spawnSync('bash', ['-c', script], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    assert.deepEqual(run.stdout.trim().split('\n'), ['1', 'kept', '1', '1', '600'],
+      'minted with the state, kept on a later start, restored to an app.env that lacks it, and still private');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

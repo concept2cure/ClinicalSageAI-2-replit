@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > slugifies study ids to folder-safe names 1ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > computes the common directory of package paths 0ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > generates a per-study stf-<study-id>.xml in each study folder, cross-linked to that study's leaves 406ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > is a no-op when there are no study leaves (bundle.stf undefined) 96ms
+ × server/services/submission-gateways/__tests__/stf-packaging.test.ts > a study leaf the STF cannot describe refuses the package > a nonclinical report tagged "study-report" is a ValidationError naming the leaf and the right tag 69ms
+   → expected Error: ICH eCTD STF Specification v2.6.1,… to be an instance of ValidationError
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > a study leaf the STF cannot describe refuses the package > the right tag packages 93ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/stf-packaging.test.ts > a study leaf the STF cannot describe refuses the package > a nonclinical report tagged "study-report" is a ValidationError naming the leaf and the right tag
+AssertionError: expected Error: ICH eCTD STF Specification v2.6.1,… to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/stf-packaging.test.ts:152:17
+    150|   it('a nonclinical report tagged "study-report" is a ValidationError …
+    151|     const err = await packageWith({ stfFileTag: 'study-report' });
+    152|     expect(err).toBeInstanceOf(ValidationError);
+       |                 ^
+    153|     expect((err as Error).message).toMatch(/"study-report" is not a de…
+    154|     expect((err as Error).message).toMatch(/tagged "pre-clinical-study…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  15:52:24
+   Duration  1.76s (transform 610ms, setup 115ms, import 787ms, tests 669ms, environment 0ms)
+

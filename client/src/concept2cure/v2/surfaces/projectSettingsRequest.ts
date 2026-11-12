@@ -39,35 +39,56 @@ function failure(write: ProjectSettingsWrite | undefined, status?: number, body?
 export type ProjectArchiveAnswer =
   | { kind: 'archived' }
   | { kind: 'refused' | 'unconfirmed' | 'retired'; message: string; status?: number };
-const archiveUnknown = (): ProjectArchiveAnswer => ({ kind: 'unconfirmed',
-  message: 'Whether the project was archived could not be confirmed. Reload the project before trying again; it may have been archived.' });
-function archiveFailure(status?: number, body?: unknown, codeHint?: string): ProjectArchiveAnswer {
+export type ProjectRestoreAnswer =
+  | { kind: 'restored' }
+  | { kind: 'refused' | 'unconfirmed' | 'retired'; message: string; status?: number };
+type CloseOutFailure = { kind: 'refused' | 'unconfirmed' | 'retired'; message: string; status?: number };
+
+/** The two close-out routes a person reaches from the UI, and what each says when it is not confirmed. */
+const CLOSE_OUT = {
+  archive: { unknown: 'Whether the project was archived could not be confirmed. Reload the project before trying again; it may have been archived.', refused: 'The project was not archived.' },
+  unarchive: { unknown: 'Whether the project was restored could not be confirmed. Reload the projects before trying again; it may have been restored.', refused: 'The project was not restored.' },
+} as const;
+type CloseOut = keyof typeof CLOSE_OUT;
+function closeOutFailure(action: CloseOut, status?: number, body?: unknown, codeHint?: string): CloseOutFailure {
   const code = errorCode(body) ?? codeHint;
-  if (mutationUnconfirmed(status, code)) return archiveUnknown();
-  return { kind: 'refused', status, message: serverMessage(body) || 'The project was not archived.' };
+  if (mutationUnconfirmed(status, code)) return { kind: 'unconfirmed', message: CLOSE_OUT[action].unknown };
+  return { kind: 'refused', status, message: serverMessage(body) || CLOSE_OUT[action].refused };
 }
 
 /**
- * Archive the project: the existing close-out route, POST /api/c2c/projects/:id/archive
- * (server/routes/c2c/projects.ts), which checks the person may change the project and
- * writes the chained audit row. The reason the person gave travels in the body. The
- * answer is confirmed only when the route names this project; anything else that may
- * have completed is said so, never reported as done or as refused.
+ * One of the project's close-out routes, POST /api/c2c/projects/:id/archive or
+ * /unarchive (server/routes/c2c/projects.ts), which check the person may change the
+ * project and write the chained audit row. The reason the person gave travels in the
+ * body. The answer is confirmed only when the route names this project; anything else
+ * that may have completed is said so, never reported as done or as refused.
  */
-export async function requestProjectArchive(scope: ProjectSettingsScope, isCurrent: () => boolean, reason: string): Promise<ProjectArchiveAnswer> {
+async function requestCloseOut(action: CloseOut, scope: ProjectSettingsScope, isCurrent: () => boolean, reason: string): Promise<{ kind: 'done' } | CloseOutFailure> {
   const headers = projectSettingsHeaders(scope, isCurrent);
   if (!headers) return { kind: 'retired', message: RETIRED_WORDS };
   try {
-    const res = await apiRequest('POST', `/api/c2c/projects/${encodeURIComponent(scope.programId)}/archive`, { reason }, headers);
+    const res = await apiRequest('POST', `/api/c2c/projects/${encodeURIComponent(scope.programId)}/${action}`, { reason }, headers);
     const body: unknown = await res.json().catch(() => null);
     if (!projectSettingsHeaders(scope, isCurrent)) return { kind: 'retired', message: RETIRED_WORDS };
-    if (!res.ok) return archiveFailure(res.status, body);
+    if (!res.ok) return closeOutFailure(action, res.status, body);
     const named = object(body) && body.ok === true && String(body.projectId ?? '').toLowerCase() === scope.programId.toLowerCase();
-    return named ? { kind: 'archived' } : archiveUnknown();
+    return named ? { kind: 'done' } : { kind: 'unconfirmed', message: CLOSE_OUT[action].unknown };
   } catch (error) {
     if (!projectSettingsHeaders(scope, isCurrent)) return { kind: 'retired', message: RETIRED_WORDS };
-    return error instanceof ApiRequestError ? archiveFailure(error.status, error.payload, error.code) : archiveUnknown();
+    return error instanceof ApiRequestError ? closeOutFailure(action, error.status, error.payload, error.code) : { kind: 'unconfirmed', message: CLOSE_OUT[action].unknown };
   }
+}
+
+/** Archive the project (Project settings). */
+export async function requestProjectArchive(scope: ProjectSettingsScope, isCurrent: () => boolean, reason: string): Promise<ProjectArchiveAnswer> {
+  const answer = await requestCloseOut('archive', scope, isCurrent, reason);
+  return answer.kind === 'done' ? { kind: 'archived' } : answer;
+}
+
+/** Restore an archived project to active (Projects, P-122 §3.5): the unarchive route had no caller. */
+export async function requestProjectUnarchive(scope: ProjectSettingsScope, isCurrent: () => boolean, reason: string): Promise<ProjectRestoreAnswer> {
+  const answer = await requestCloseOut('unarchive', scope, isCurrent, reason);
+  return answer.kind === 'done' ? { kind: 'restored' } : answer;
 }
 
 /** Retain the full scoped and audited envelope; the shared guard owns its wire. */

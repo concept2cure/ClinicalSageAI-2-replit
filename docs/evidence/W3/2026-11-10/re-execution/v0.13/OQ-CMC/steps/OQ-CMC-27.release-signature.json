@@ -1,0 +1,22 @@
+{
+  "unsigned": {
+    "required": true,
+    "verdict": "unsigned",
+    "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:14",
+    "cleared": false
+  },
+  "signed": {
+    "required": true,
+    "verdict": "signed",
+    "signatureId": 109,
+    "detail": "signed for dispatch on ectd-sequence:14, bound to the current leaf manifest",
+    "cleared": true
+  },
+  "afterFurtherPlacement": {
+    "required": true,
+    "verdict": "invalid",
+    "signatureId": 109,
+    "detail": "the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content",
+    "cleared": false
+  }
+}

@@ -1,0 +1,37 @@
+Run on trunk's filing service and receipt reader (fa348aa4eb), with only the new test cases added.
+Command: npx vitest run server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+
+ × server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > LX-10: a sealed document’s Vault filing names the seal it rendered > approved and sealed: the chained row, the export history and the receipt name the frozen version and its content hash
+ × server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > LX-10: a sealed document’s Vault filing names the seal it rendered > sealed twice: the filing names the seal now in force, the later one
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > LX-10: a sealed document’s Vault filing names the seal it rendered > a working draft names no seal, and is not called unverified
+ × server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > LX-10: a sealed document’s Vault filing names the seal it rendered > no sealed record stands behind the status: the filing says so and names no seal
+ × server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > LX-10: a sealed document’s Vault filing names the seal it rendered > the sealed record is of other text: the filing says so and names no seal
+ × server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > LX-10: a sealed document’s Vault filing names the seal it rendered > the sealed record does not match its own hash: the filing says so and names no seal
+ ✓ server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > each filed section names the revision it rendered (LX-10, 2026-11-01) > a receipt that records them projects them onto the derivation the package carries
+ ✓ server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > each filed section names the revision it rendered (LX-10, 2026-11-01) > a receipt recorded before them states none, rather than an empty list
+ ✓ server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > each filed section names the revision it rendered (LX-10, 2026-11-01) > a malformed revision head is not projected as provenance
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a receipt that records the seal projects its version and content hash onto the derivation
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a receipt that records the seal did not cover the filed text says so, and names no seal
+ ✓ server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a working draft’s receipt, or one recorded before this, states neither
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a content hash that is not one is not projected as a seal
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a version with no content hash is not projected as a seal
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a content hash with no version is not projected as a seal
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > an empty version is not projected as a seal
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > a seal named and called unverified at once is not projected as a seal
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > a sealed document’s filing names the seal it rendered (LX-10, 2026-11-10) > an unverified reason that is not text is not projected as a seal
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { format: 'pdf', …(13) } to match object { sealVersion: 'approved', …(1) }
+AssertionError: expected { format: 'pdf', …(13) } to match object { sealVersion: 'approved', …(1) }
+AssertionError: expected { format: 'pdf', …(13) } to match object { sealUnverified: 'SOURCE_NOT_SEALED' }
+AssertionError: expected { format: 'pdf', …(13) } to match object { Object (sealUnverified) }
+AssertionError: expected { format: 'pdf', …(13) } to match object { Object (sealUnverified) }
+AssertionError: expected { store: 'authoring_documents', …(3) } to match object { sealedVersion: { …(2) } }
+AssertionError: expected { store: 'authoring_documents', …(3) } to match object { Object (sealUnverified) }
+AssertionError: expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+AssertionError: expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+AssertionError: expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+AssertionError: expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+AssertionError: expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+AssertionError: expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+ Test Files  2 failed (2)
+      Tests  13 failed | 39 passed (52)

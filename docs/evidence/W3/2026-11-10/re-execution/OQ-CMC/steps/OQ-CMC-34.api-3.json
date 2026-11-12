@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/analytical-methods/24",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "validated"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 21,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "Method validation (ICH Q2) is a governed action and is recorded with a signature; \"validated\" is one of the words it writes, so an ordinary edit cannot set it. POST /api/cmc/analytical-methods/:id/validate with a reason and re-authentication."
+    }
+  }
+}

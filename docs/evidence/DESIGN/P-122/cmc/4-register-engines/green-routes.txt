@@ -1,0 +1,8 @@
+ ✓ server/api/cmc/__tests__/register-engines-reached.test.ts > POST /api/cmc/dissolution-profiles/compare > answers the engine’s f2 over the two recorded profiles 29ms
+ ✓ server/api/cmc/__tests__/register-engines-reached.test.ts > POST /api/cmc/dissolution-profiles/compare > answers the engine’s refusal as its answer, not as a failure 4ms
+ ✓ server/api/cmc/__tests__/register-engines-reached.test.ts > POST /api/cmc/dissolution-profiles/compare > compares nothing when a profile is missing or the two are one 6ms
+ ✓ server/api/cmc/__tests__/register-engines-reached.test.ts > GET /api/cmc/impurity-profiles/assessment > answers each impurity against the guideline that governs it 55ms
+ ✓ server/api/cmc/__tests__/register-engines-reached.test.ts > GET /api/cmc/impurity-profiles/assessment > answers a refusal as the row’s answer, never dropping the row 3ms
+ ✓ server/api/cmc/__tests__/register-engines-reached.test.ts > GET /api/cmc/impurity-profiles/assessment > puts the project to the composition boundary before judging anything 3ms
+ Test Files  7 passed (7)
+      Tests  187 passed (187)
