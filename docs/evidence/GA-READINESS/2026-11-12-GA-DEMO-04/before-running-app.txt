@@ -1,0 +1,6 @@
+2026-11-12, trunk before the change, local app with no model key. Twelve turns, then a read.
+read before: 404 (the path is not an endpoint; it shows what the breaker lets through)
+turn 1..10: 503 {"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE"}}
+turn 11:    503 {"error":"Service ai-service is temporarily unavailable","status":"circuit_open","retry_after":10}
+turn 12:    503 {"error":"Service ai-service is temporarily unavailable","status":"circuit_open","retry_after":10}
+read after: 503 {"error":"Service ai-service is temporarily unavailable","status":"circuit_open"}
