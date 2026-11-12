@@ -50,7 +50,10 @@ describe('listVaultForCatalog', () => {
     const query = vi.fn(async () => answer([row()], [{ facet: 'folder', value: 'module-5', label: null, n: 1 }, { facet: 'project', value: P, label: 'Open project', n: 1 }]));
     const page = await listVaultForCatalog(7, { programId: P, programIds: [P, OTHER.toUpperCase()], kind: 'protocol', ctd: '5.3', q: 'dose' }, { query });
     const [sql, args] = query.mock.calls[0] as unknown as [string, unknown[]];
-    expect(args).toEqual([7, [P, OTHER], null, 'protocol', '5.3', null, null, null, 'dose', 200]);
+    expect(args).toEqual([7, [P, OTHER], null, 'protocol', '5.3', null, null, null, 'dose', 200, 0]);
+    // The catalog's own page: its limit (never more than 200) and offset.
+    await listVaultForCatalog(7, { programId: P, programIds: [P], limit: 50, offset: 100 }, { query });
+    expect((query.mock.calls[1] as unknown as [string, unknown[]])[1].slice(-2)).toEqual([50, 100]);
     expect(sql).not.toMatch(/protocol|dose/);
     expect(page.total).toBe(1);
     expect(page.documents[0]).toMatchObject({ documentId: row().id, projectId: P, title: 'Protocol v3', folder: 'module-5', folderLabel: 'Module 5 · Clinical',
