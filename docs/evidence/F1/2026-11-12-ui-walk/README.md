@@ -118,8 +118,21 @@ the second person; `shots/after-*.png`. Tests red first: `06-cmc-screens-red-gre
 | A signed batch rejection never showed | The row reads the signed decision (`release_status`) before the working status, and adopts the answer where the route puts it (`data.batchRecord`). A released batch, whose status becomes `completed`, had read "Pending" too. The control is named "Disposition" and its button "Sign the disposition" (`cmcBatch.ts`, `CmcModule.tsx`) | Rejected under signature by the second person: "Batch … rejected · signed 2efad9f6a080…"; the row reads Rejected with no disposition control, and the same after a reload (`after-b2-*`) |
 | A placement showed no result | The verdict is kept with the sequence it was made into and shown again when the board remounts the control. It says what was written: "Already placed. Nothing was written. All 21 sections in sequence 0001 are unchanged."; "1 section filed again; 20 unchanged, in sequence 0001" (`CmcPlaceIntoSubmission.tsx`) | On the fully approved programme of the OQ run, a repeat from the board (`after-b3-01`) |
 
-Still open on the CMC screens, in files this session holds: the method form's per-characteristic ICH Q2 evidence; the
-wording when an authenticator code is missing; a hint on the QC sample type; stale sections on the Overview. In
+| The QC sample type offered tokens ("raw-material", "in-process"…) and no word said which is drug substance evidence | Each option says where a result of it is filed, read from the shared rule the write-through applies (`qcSampleTypeOptions`, `cmcRegisterForms.ts`); the stored values are unchanged, and the field is full width so the words fit | "Finished product (drug product, §3.2.P.5.4)", "Raw material (drug substance, §3.2.S.4.4)", "Reference standard (not a batch analysis)" (`after-b12-01`; `09-qc-sample-type-red-green.txt`) |
+
+The wording when an authenticator code is missing or wrong is repaired below ("A refused signature says why").
+
+| The ICH Q2 check named every method "missing validation evidence: specificity, linearity / range, accuracy, precision", and nothing on the form could clear it | The register's table keeps the Q2 record in one JSON column and has no column per characteristic, so the write-through always sent null for the four values the check reads. The method form records each characteristic's result in the Q2 record (`evidence`), and the write-through reads it from there (`cmcRegisterForms.ts`, `cmc-write-through.ts` `q2Evidence`). No column, table or route | A new method added with its four results is not named missing evidence; the older, signed method still is, because its record is closed to edits under its signature (`after-b9-*`, `10-method-q2-evidence-red-green.txt`) |
+
+Still open on the CMC screens: stale sections on the Overview (the board's section read sends no stale flag,
+`server/routes/cmc-module3-board.routes.ts`).
+
+**The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
+author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The
+bar counts recorded origins; a citation marker in a sentence the author wrote does not make its recorded origin a
+source, so the text is counted as the author's either way. The row now says "a person stands behind it, cited or
+not" (red first in `10-…`). Whether a citation should move the sentence into "From sources" is the lineage
+lane's question, not decided here. In
 `CmcModule3Build.tsx` (held by the screen-work session): the remount itself, "21 ready to compile" after a compile,
 and finding types shown as stored tokens.
 
@@ -135,6 +148,35 @@ the versions read, which already attaches each version's lifecycle, placements a
 which already prints them. One projection, one field on the read, one clause on the line. No route, table or screen
 was added. `07-vault-seal-line-red-green.txt`: 10 new cases red on the committed code, then 45 of 45; the Vault's 70
 client suites, 790 of 790.
+
+## A refused signature says why (2026-11-12)
+
+Seen in the CMC walk: a signer whose authenticator code was not accepted read "Couldn’t approve section … — The server
+did not accept the change (HTTP 401).. Nothing was persisted."; a blank code was not caught by the form, which cannot
+know whether the signer has one enrolled.
+
+**What already exists.** `verifyReauth` (`server/routes/c2c/actions.ts`) is the one re-verification every high-risk
+route uses, and it answered a `REAUTH_*` code. The sentences a signer is told for each code already existed, but only
+inside the signature ceremony (`server/services/part11/governed-signature-ceremony.ts`, `REAUTH_MESSAGE`), so the
+ceremony's routes said why and the nine routes that call `verifyReauth` directly sent the code alone. The CMC screens
+read the server's sentence through `serverMessage`, and fell back to "HTTP 401" when there was none.
+
+**The repair.** The sentences moved from the ceremony to `verifyReauth`, which now returns the sentence with the
+code; the ceremony uses it, and the nine routes send it as `message` beside the unchanged code
+(`api/cmc/{routes,specificationRoutes,batchRecordRoutes,module3OperatingSystemRoutes}.ts`,
+`routes/c2c/{actions,documents}.ts`, `routes/510k-estar-routes.ts`, `routes/mdx-submission-gateway.ts` twice,
+`routes/financial-disclosures.ts`). A client that reads the code is unchanged. On the CMC screens the sentence is
+shown once, with one full stop (`cmcShared.tsx` `cmcRefusal`, used by `cmcWriteFailed` and the Overview), and the
+specification and batch dispositions no longer write their own "re-authentication failed".
+
+**Used in the running app** (`after-d2-01`, `after-d2-02`), as the run identity on an approvable §3.1: with the right
+password and a wrong code, "Couldn’t approve section 3.1 — The authenticator code was not accepted. Nothing was
+signed."; with no code, "… Your account has an authenticator enrolled: enter its current code to sign. Nothing was
+signed." Both answered 401 with the code and the sentence, and the section stayed Draft.
+
+`08-signature-refusal-red-green.txt`: 21 red on the committed code (one of them already red on trunk), 4 more on the
+screen's half; then 142 of 143 with the change, the one being that trunk-red case; 3,504 of 3,521 across the 221
+suites around it, where the other 14 are the report-pack export suite, which fails the same way on trunk.
 
 ## Not done
 

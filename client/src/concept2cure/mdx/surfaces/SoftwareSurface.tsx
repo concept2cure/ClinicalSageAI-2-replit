@@ -39,6 +39,11 @@ function everyDocumentCounted(sum: SoftwareSummary): boolean {
   return Array.isArray(sum.untracked) && sum.untracked.length === 0;
 }
 
+
+/** "basic" → "Basic": the documentation level as a figure says it, in sentence case. */
+function sentenceCase(word: string): string {
+  return word ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+}
 export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
   const projectId = program?.id ?? null;
   const live = useSoftware(projectId);
@@ -94,8 +99,10 @@ export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
             <div className="metrics-row metrics-compact">
               <div className="metric-card">
                 <div className="metric-label">Documentation level</div>
-                <div className="metric-val" style={{ fontSize: 18, textTransform: 'capitalize' }}>
-                  {sum.docLevel === 'undetermined' ? 'Not determined' : sum.docLevel}
+                {/* D8 slice 3 (P-128): a word in a figure takes the figure's size, and is written in sentence case
+                    here, not title-cased by a style ("Not Determined"). */}
+                <div className="metric-val">
+                  {sum.docLevel === 'undetermined' ? 'Not determined' : sentenceCase(sum.docLevel)}
                 </div>
                 <div className="metric-meta">FDA 2023 software guidance</div>
               </div>
@@ -112,7 +119,7 @@ export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
                 <div className="metric-label">Completeness</div>
                 {sum.completion === null ? (
                   <>
-                    <div className="metric-val" style={{ fontSize: 18 }}>Not determined</div>
+                    <div className="metric-val">Not determined</div>
                     {sum.reason && <div className="metric-meta">{sum.reason}</div>}
                   </>
                 ) : (

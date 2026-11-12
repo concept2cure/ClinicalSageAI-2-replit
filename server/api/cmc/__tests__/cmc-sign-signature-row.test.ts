@@ -96,8 +96,10 @@ vi.mock('../../../services/cmc/link-to-module3', () => ({
 }));
 
 const verifyReauth = vi.fn(async (_userId: number, reauth?: { password?: string }) => {
-  if (!reauth?.password) return { ok: false, error: 'REAUTH_PASSWORD_REQUIRED' };
-  return reauth.password === GOOD ? { ok: true } : { ok: false, error: 'REAUTH_PASSWORD_INVALID' };
+  if (!reauth?.password) return { ok: false, error: 'REAUTH_PASSWORD_REQUIRED', message: 'Enter your password to sign. Nothing was signed.' };
+  return reauth.password === GOOD
+    ? { ok: true }
+    : { ok: false, error: 'REAUTH_PASSWORD_INVALID', message: 'The password was not accepted. Nothing was signed.' };
 });
 /* The signer's role from the membership row (§11.10(g)); 'admin' carries
    signing authority under the default policy, 'viewer' does not. */
@@ -256,6 +258,8 @@ describe.each(CASES)('CMC $name writes the electronic_signatures row with its le
   it('a request with no credentials is refused and writes nothing', async () => {
     const res = await request(app).post(c.path).send(c.body);
     expect(res.status).toBe(401);
+    // The sentence beside the code (2026-11-12): the register drawers showed "HTTP 401".
+    expect(res.body.message).toBe('Enter your password to sign. Nothing was signed.');
     expect(h.log.filter((e) => e === 'BEGIN' || e === 'DOMAIN' || e.startsWith('LEDGER') || e.startsWith('SIGNATURE'))).toEqual([]);
   });
 });

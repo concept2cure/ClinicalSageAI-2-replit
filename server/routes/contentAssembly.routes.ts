@@ -8,6 +8,7 @@ import {
 } from '../services/DynamicContentAssembly.js';
 import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { openSseStream } from '../utils/sse-stream';
 
 const log = createScopedLogger('content-assembly');
 
@@ -251,13 +252,9 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
     return res.status(500).json({ success: false, error: 'Failed to generate preview' });
   }
 
-  // Set SSE headers
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
-    'Vary': 'Origin'
+  // SSE headers and a heartbeat (server/utils/sse-stream.ts).
+  openSseStream(req, res, {
+    headers: { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}), Vary: 'Origin' },
   });
 
   // Send initial preview
