@@ -242,7 +242,7 @@ function retainedPlainText(bytes:Buffer):boolean {
    still matches its own seal; otherwise null and the bytes stay "not established". Walked 2026-11-12: the walked
    document's Vault leaf read "substantive source text is not established" although its seal was on record. */
 async function sealedRenditionText(state:State,args:{leaf:SubmissionLeaf;sha256:string}):Promise<string|null> {
-  const q={query:async(sql:string,params?:unknown[])=>({rows:await tracked(state,sql,params??[])})};
+  const q={query:async<T=Record<string,unknown>>(sql:string,params?:unknown[])=>({rows:(await tracked(state,sql,params??[])) as T[]})};
   const receipt=await readAuthoringVaultFilingReceipt(q as unknown as Parameters<typeof readAuthoringVaultFilingReceipt>[0],
     {organizationId:state.input.organizationId,programId:state.input.programId,vaultDocumentId:String(args.leaf.documentUuid),artifactSha256:args.sha256});
   const sealed=receipt.status==='recorded'?receipt.source.sealedVersion:undefined;

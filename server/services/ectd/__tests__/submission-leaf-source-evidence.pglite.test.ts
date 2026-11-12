@@ -4,7 +4,7 @@ import { beforeAll,beforeEach,afterAll,describe,it,expect,vi } from 'vitest';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 const h=vi.hoisted(()=>({bytes:Buffer.from('Verified retained instruction: preserve the original record and document every correction.'),gets:0,
   /* The filing receipt (LX-10) has its own suite (authoring-vault-filing-receipt.pglite.test.ts); here it is what it answers. */
-  receipt:vi.fn(async():Promise<unknown>=>({status:'not-recorded'}))}));
+  receipt:vi.fn(async(..._args:unknown[]):Promise<unknown>=>({status:'not-recorded'}))}));
 vi.mock('../../../db',()=>({db:{},pool:{query:()=>{throw new Error('Global DB forbidden');}}}));
 vi.mock('../../auditService',()=>({default:{logAction:vi.fn()},writeChainedAuditRow:vi.fn()}));
 vi.mock('../../storage',()=>({getStorageProviderFor:()=>({get:async()=>{h.gets++;return {bytes:Buffer.from(h.bytes)};}})}));
