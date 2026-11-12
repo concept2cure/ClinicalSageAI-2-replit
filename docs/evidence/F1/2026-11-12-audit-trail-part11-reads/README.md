@@ -164,3 +164,60 @@ refused in production; its readers now read the attestation instead. Two pointer
 lane: the header of `server/routes/audit-trail-ledger.routes.ts` (line 53, held by another session for event
 names) still calls verify-chain "the authoritative verdict", and `scripts/demo/launch-demo/packs/mdx.mjs:485`
 reads it. Recorded for their holders in `.design/claude-convergence/COORDINATION.md`.
+
+## GA-D5-03 — a sealed report snapshot was a row the runtime role could rewrite
+
+**What already exists.** `report_snapshots` is created by `migrations/0014_report_os_foundation.sql`. The finalize
+(`server/routes/report-os.ts` `writeFinalize`) writes the seal into the latest snapshot's `snapshot_metadata` once,
+onto an unsealed row; no runtime code updates or deletes a sealed one (searched: `UPDATE report_snapshots`,
+`report_snapshots SET`, `update(reportSnapshots)`, `DELETE FROM report_snapshots`). The seal read
+(`GET /api/report-os/runs/:id/seal`) recomputes the seal and reports a rewrite as `mismatch`: a change was
+detected on read, not prevented. The repository's pattern for a fixed record is a `BEFORE UPDATE OR DELETE`
+trigger raising `IMMUTABILITY_VIOLATION` (for example `migrations/20260926_ana_turn_records.sql`).
+
+**Fix, in the creating migration (RULE 1), with a dated header note.** `report_snapshots_sealed_fixed()` and
+`trg_report_snapshots_sealed_fixed` refuse an UPDATE or DELETE of a row whose `snapshot_metadata` carries `seal`.
+An unsealed row stays writable, so the finalize can seal it. A DELETE issued by another trigger (the foreign-key
+cascade from its run or organisation, where the table carries those keys) is admitted. The function is a
+`CREATE OR REPLACE` this file alone defines and the trigger is created only when absent, so the file replays.
+
+**Not changed, stated.**
+
+- On the deploy-shaped schema `report_snapshots` carries no foreign keys (the table exists before 0014 runs, so
+  its `CREATE TABLE IF NOT EXISTS` adds none), and the tenant purge does not erase `report_snapshots`
+  (`PURGE_CHILD_TABLES`, `purge-referrers.ts`). The guard therefore blocks no purge today. If the purge's lane
+  adds the table, its sealed rows need a door like `immutable_report_records` has.
+- The table owner can still disable the trigger. The read-side check stays, as the second line of defence.
+
+**Red first, on PostgreSQL 16, as the runtime role (`app_service`, non-owner, RLS on).** With the trigger absent:
+
+```
+runtime role UPDATED sealed snapshot 4 to {"seal":{"contentHash":"forged"}}
+runtime role DELETED sealed snapshot 4
+```
+
+After replaying 0014 (which also shows the replay reinstalls it):
+
+| As the runtime role | Answer |
+|---|---|
+| change the seal of a sealed row | `IMMUTABILITY_VIOLATION: report snapshot 4 is sealed and cannot be changed.` |
+| set `is_latest = false` on a sealed row | refused, same |
+| delete a sealed row | refused (`cannot be deleted`) |
+| write the seal onto an unsealed row (the finalize) | updated |
+| change that row once sealed | refused |
+| (owner) delete the run, with the foreign key present | the sealed snapshot leaves by cascade |
+
+0014 applied twice in a row with no error. `ci:migration-drop-safety` and `ci:migration-set-order` pass.
+
+**Tests.**
+
+- `tests/db/report-snapshot-sealed-fixed.dbtest.ts` (new, beside the suite it splits from): as the runtime role,
+  a sealed snapshot is neither changed nor deleted, and an unsealed one takes its seal once and is then fixed.
+  3 of 3 pass with the trigger and 3 of 3 fail with it dropped; replaying 0014 restores it.
+- `tests/db/report-os-registry-seed.dbtest.ts`: the two cases that rewrite a sealed snapshot to prove the read
+  catches it failed with `IMMUTABILITY_VIOLATION` (the guard working). They now rewrite as the owner past the
+  trigger, in one transaction (`withOwnerRewrite`), the way the fixture's teardown passes the audit tables'
+  guards, and pass. 19 of 21 pass; the two export cases answer 503 identically with the trigger dropped: the
+  missing reporting PDF fonts on this machine, recorded in `docs/evidence/L1/2026-11-06-dependency-advisories/`.
+- `review-route-qms-rr2`, `report-label-matrix`, `report-os-delivery-recording` and
+  `report-os-tenant-from-session` pass.
