@@ -177,6 +177,58 @@ it('offers to resume a failed build, as that build, and follows it once resumed'
   expect(apiRequest.mock.calls.filter(([m, p]) => m === 'POST' && p === '/api/csr/jobs').length).toBe(0);
 });
 
+/* Reach (R1), 2026-11-11. The server stops a running build (POST /api/csr/jobs/:jobId/cancel) and no screen
+   called it: a build started by mistake ran through its 69 headings on the model's account, and the page could only
+   watch. A running build offers "Stop build N"; a stopped one says so, keeps its saved headings, and is resumed as
+   that build, because the document takes its imported sections from one build. */
+it('offers to stop a running build, and shows it stopped with its saved headings kept', async () => {
+  builds = [{ ...build(52, 'drafting'), progress: 30 }];
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/csr/jobs/52/cancel') { builds = [{ ...build(52, 'cancelled'), progress: 30 }]; return ok(null, 204); }
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  const stop = await within(region).findByRole('button', { name: 'Stop build 52' });
+  expect(within(region).queryByRole('button', { name: /Resume build/ })).toBeNull();
+  fireEvent.click(stop);
+  expect(await within(region).findByText(/CSR build 52 · stopped · 30%/)).toBeTruthy();
+  expect(within(region).getByText(/This build was stopped\. The sections already saved are kept\./)).toBeTruthy();
+  expect(within(region).queryByRole('button', { name: 'Stop build 52' })).toBeNull();
+  expect(within(region).getByRole('button', { name: 'Resume build 52' })).toBeTruthy();
+});
+
+it('a queued build can be stopped too, and a build that has ended offers no stop', async () => {
+  builds = [{ ...build(53, 'queued'), progress: 0 }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect(await within(region).findByRole('button', { name: 'Stop build 53' })).toBeTruthy();
+  cleanup();
+  for (const status of ['complete', 'failed', 'cancelled']) {
+    builds = [{ ...build(54, status), progress: 100, failure: status === 'failed' ? 'The build stopped.' : null }];
+    await card();
+    await screen.findByText(/CSR build 54 · /);
+    expect(screen.queryByRole('button', { name: /Stop build/ }), status).toBeNull();
+    cleanup();
+  }
+});
+
+it('says so when a build ended before it could be stopped, and reads the builds again', async () => {
+  builds = [{ ...build(55, 'drafting'), progress: 99 }];
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/csr/jobs/55/cancel') {
+      builds = [{ ...build(55, 'complete'), progress: 100 }];
+      throw refusal(409, { error: 'Job is in a terminal state and cannot be cancelled', status: 'complete' });
+    }
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  fireEvent.click(await within(region).findByRole('button', { name: 'Stop build 55' }));
+  expect(await within(region).findByText(/CSR build 55 · complete · 100%/)).toBeTruthy();
+  expect(within(region).getByText(/had already ended, so there was nothing to stop/i)).toBeTruthy();
+});
+
 it('says why a failed build could not be resumed, and keeps the offer', async () => {
   builds = [{ ...build(49, 'failed'), progress: 10, failure: 'The build stopped.' }];
   apiRequest.mockImplementation(async (method: string, path: string) => {
