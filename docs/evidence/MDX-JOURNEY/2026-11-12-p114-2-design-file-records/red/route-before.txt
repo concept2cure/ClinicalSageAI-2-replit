@@ -1,0 +1,126 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history
+{
+  "timestamp": "2026-11-12T21:08:04.100Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel dhf failed",
+  "context": {
+    "err": "relation unreadable"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one
+{
+  "timestamp": "2026-11-12T21:08:04.141Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel ecrs failed",
+  "context": {
+    "err": "column \"program_id\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project 28ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit 6ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary 5ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > leaves out an empty heading, as the documents' readiness does, so it is not reported as a blocker 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > marks the Administrative group's sections and the indications for use statement as filing content 13ms
+   → expected { A1: undefined, A6: undefined, …(3) } to deeply equal { A1: 'filing-content', …(4) }
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > still lists them, with their status: a mandatory cover letter with nothing written blocks its document 7ms
+   → expected { id: '2', num: 'A1', …(8) } to match object { status: 'blocked', …(2) }
+(8 matching properties omitted from actual)
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > decides nothing for a document whose class is not an FDA device filing 5ms
+   → expected Set{ undefined } to deeply equal Set{ 'design-file' }
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > never shows a sibling project's change, the organization's unscoped one, another organization's or a deleted one 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > another organization's project is refused before either panel is read 2ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > marks the Administrative group's sections and the indications for use statement as filing content
+AssertionError: expected { A1: undefined, A6: undefined, …(3) } to deeply equal { A1: 'filing-content', …(4) }
+
+- Expected
++ Received
+
+  {
+-   "A1": "filing-content",
+-   "A6": "filing-content",
+-   "B1": "design-file",
+-   "B2": "filing-content",
+-   "E5": "design-file",
++   "A1": undefined,
++   "A6": undefined,
++   "B1": undefined,
++   "B2": undefined,
++   "E5": undefined,
+  }
+
+ ❯ server/routes/__tests__/mdx-engineering-per-product.test.ts:270:20
+    268|     const res = await get();
+    269|     const record = Object.fromEntries(res.body.data.dhf.map((d: { num:…
+    270|     expect(record).toEqual({
+       |                    ^
+    271|       A1: 'filing-content', A6: 'filing-content', B2: 'filing-content',
+    272|       B1: 'design-file', E5: 'design-file',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > still lists them, with their status: a mandatory cover letter with nothing written blocks its document
+AssertionError: expected { id: '2', num: 'A1', …(8) } to match object { status: 'blocked', …(2) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "label": "Cover letter",
+-   "record": "filing-content",
+    "status": "blocked",
+  }
+
+ ❯ server/routes/__tests__/mdx-engineering-per-product.test.ts:279:22
+    277|     const res = await get();
+    278|     const byNum = Object.fromEntries(res.body.data.dhf.map((d: { num: …
+    279|     expect(byNum.A1).toMatchObject({ status: 'blocked', label: 'Cover …
+       |                      ^
+    280|     // The summary's figure is the project's mandatory sections, filin…
+    281|     expect(res.body.data.summary.dhfCompletion).toBe(20);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > decides nothing for a document whose class is not an FDA device filing
+AssertionError: expected Set{ undefined } to deeply equal Set{ 'design-file' }
+
+- Expected
++ Received
+
+  Set {
+-   "design-file",
++   undefined,
+  }
+
+ ❯ server/routes/__tests__/mdx-engineering-per-product.test.ts:287:82
+    285|     h.state.docs[0].doc_type = 'ivdr';
+    286|     const res = await get();
+    287|     expect(new Set(res.body.data.dhf.map((d: { record?: string }) => d…
+       |                                                                                  ^
+    288|   });
+    289| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 14 passed (17)
+   Start at  21:08:01
+   Duration  2.19s (transform 927ms, setup 177ms, import 1.63s, tests 101ms, environment 0ms)
+

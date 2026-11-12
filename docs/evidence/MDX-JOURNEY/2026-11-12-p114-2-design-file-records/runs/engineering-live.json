@@ -1,0 +1,66 @@
+{
+ "bad": [],
+ "risk": [
+  {
+   "tone": null,
+   "text": "Open risks 0 No risks recorded yet"
+  }
+ ],
+ "feed": [
+  {
+   "kind": "filing",
+   "ref": "§A1",
+   "title": "Cover letter"
+  },
+  {
+   "kind": "filing",
+   "ref": "§A2",
+   "title": "Submitter, applicant and correspondent information"
+  },
+  {
+   "kind": "filing",
+   "ref": "§A5",
+   "title": "510(k) summary or 510(k) statement (21 CFR 807.92 / 807.93)"
+  },
+  {
+   "kind": "filing",
+   "ref": "§A6",
+   "title": "Truthful and accuracy statement (21 CFR 807.87(k))"
+  },
+  {
+   "kind": "filing",
+   "ref": "§A9",
+   "title": "MDUFA user fee — Form FDA 3601 and payment"
+  },
+  {
+   "kind": "dhf",
+   "ref": "§B1",
+   "title": "Device description and principles of operation"
+  },
+  {
+   "kind": "filing",
+   "ref": "§B2",
+   "title": "Indications for use statement"
+  },
+  {
+   "kind": "dhf",
+   "ref": "§B3",
+   "title": "Classification, product code and regulation"
+  }
+ ],
+ "filing": [
+  "§A1 Cover letter v1 · just now · filing content blocked",
+  "§A2 Submitter, applicant and correspondent information v1 · just now · filing content bloc",
+  "§A3 Pre-submission correspondence and previous communications v1 · just now · filing conte",
+  "§A4 Consensus standards and declarations of conformity v1 · just now · filing content draf",
+  "§A5 510(k) summary or 510(k) statement (21 CFR 807.92 / 807.93) v1 · just now · filing con",
+  "§A6 Truthful and accuracy statement (21 CFR 807.87(k)) v1 · just now · filing content bloc",
+  "§A7 Class III summary and certification (21 CFR 807.94), where applicable v1 · just now · ",
+  "§A8 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied",
+  "§A9 MDUFA user fee — Form FDA 3601 and payment v1 · just now · filing content blocked",
+  "§B2 Indications for use statement v1 · just now · filing content blocked"
+ ],
+ "design": 21,
+ "unmarked": 0,
+ "note": "The sections of this project's own documents and where each stands. This is not an inspected design history file index: it lists only what has been authored here as document sections, and a section is ready when it has been approved, not when the file has been found complete. A filing's cover letter, forms and certifications are marked as filing content, not design records."
+}
