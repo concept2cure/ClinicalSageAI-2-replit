@@ -1,0 +1,12 @@
+the etmf row
+{"tiers": ["professional"], "industries": []}
+grants written by the band
+57
+organisations below the band holding filings made before admission
+57
+a band grant to an organisation with no such filing (must be 0)
+0
+a band grant to an organisation at or above professional (must be 0)
+0
+organisations below the band with no filing, and so no grant
+142

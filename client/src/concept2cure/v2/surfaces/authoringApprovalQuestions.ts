@@ -6,6 +6,7 @@
  * folder, when P-95's question took it past the file-size limit; the bar owns
  * when each is asked and what its answer does.
  */
+import { useState } from 'react';
 import type { C2CFormConfig } from '../C2CForm';
 
 /** What the server said is still outstanding on this document. */
@@ -97,3 +98,60 @@ export const NOT_REVIEWED_FORM = (sentence: string, canSend: boolean): C2CFormCo
   submitLabel: canSend ? 'Send for review' : 'Close',
   fields: [],
 });
+
+/* P-102 (the founder, 2026-11-05; slice 2, 2026-11-12): an informed-consent
+ * form with no ClinicalTrials.gov statement is approved only when the approver
+ * says the study is not an applicable clinical trial, since 21 CFR 50.25(c)
+ * requires the statement of one, and no record holds a study's status. The
+ * question states the server's sentence; it starts at going back, and saying
+ * "not an applicable clinical trial" reopens the signature, which the server
+ * records with the approval. Governed: the answer is part of the signed act. */
+export const TRIAL_STATUS_FORM = (title: string, sentence: string): C2CFormConfig => ({
+  eyebrow: 'Part 11 · approval',
+  title: 'Is this study an applicable clinical trial?',
+  sub: `“${title}”: ${sentence.replace(/^Not approved — /, '').replace(/ Nothing was signed\.$/, '')}`,
+  governed: true,
+  submitLabel: 'Continue',
+  fields: [
+    {
+      key: 'trialStatus',
+      label: 'Which is true?',
+      type: 'seg' as const,
+      required: true,
+      options: [
+        { value: 'add', label: 'It is one: go back and add the statement' },
+        { value: 'not_applicable', label: 'It is not an applicable clinical trial' },
+      ],
+    },
+  ],
+});
+
+/**
+ * The trial-status question's state (P-102): the server's sentence, and the
+ * answer. "Not an applicable clinical trial" reopens the signature with that
+ * statement, which the server records with the approval; going back drops it.
+ */
+export function useTrialStatusQuestion(go: (next: 'question' | 'sign' | null) => void) {
+  const [sentence, setSentence] = useState<string | null>(null);
+  const [stated, setStated] = useState(false);
+  return {
+    sentence,
+    stated,
+    ask: (s: string) => { setSentence(s); setStated(false); go('question'); },
+    clear: () => { setSentence(null); setStated(false); },
+    onChoice: (v: Record<string, string>) => {
+      const notApplicable = v.trialStatus === 'not_applicable';
+      setStated(notApplicable);
+      if (!notApplicable) setSentence(null);
+      go(notApplicable ? 'sign' : null);
+    },
+  };
+}
+export type TrialQuestion = ReturnType<typeof useTrialStatusQuestion>;
+
+/** The target line once the approver said the study is not an applicable clinical trial (P-102). */
+export function withTrialMeta(meta: string, trial: TrialQuestion): string {
+  return trial.stated
+    ? `${meta} You said this study is not an applicable clinical trial, so it needs no ClinicalTrials.gov statement; that is recorded with your approval.`
+    : meta;
+}

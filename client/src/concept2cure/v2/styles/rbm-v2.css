@@ -171,7 +171,7 @@
   .rbm-owner{display:block;font-size:10px;color:var(--text-400);margin-top:3px;}
   .rbm-control{display:flex;align-items:flex-start;gap:5px;font-size:10.5px;color:var(--success);margin-top:5px;}
   .rbm-control svg{width:11px;height:11px;flex-shrink:0;margin-top:1px;}
-  .rbm-qtl-acts{display:flex;align-items:center;gap:7px;justify-content:flex-end;}
+  .rbm-qtl-acts{display:flex;flex-wrap:wrap;align-items:center;gap:7px;justify-content:flex-end;}
   .rbm-sig-inv{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);padding:9px 11px;margin:9px 0;}
   .rbm-sig-inv-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--success);margin-bottom:6px;}
   .rbm-sig-inv-h svg{width:12px;height:12px;}
@@ -229,6 +229,8 @@
   .rbm-add{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--accent-200);border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:var(--radius-md);padding:4px 10px;transition:border-color var(--dur) var(--ease);}
   .rbm-add svg{width:12px;height:12px;}
   .rbm-add:hover{border-color:var(--accent-100);}
+  /* --text-500 is for the disabled and the ornamental (check-token-contrast.mjs). This is an icon-only control and
+     the line below it is a message a person reads: both take --text-400. */
   .rbm-rowedit{display:inline-flex;color:var(--text-400);padding:3px;border-radius:var(--radius-sm);}
   .rbm-rowedit svg{width:13px;height:13px;}
   .rbm-rowedit:hover{color:var(--accent-200);background:var(--bg-100);}
@@ -237,7 +239,8 @@
   .rbm-linkbtn:hover{border-color:var(--text-400);color:var(--text-100);}
   .rbm-linkbtn[aria-pressed="true"]{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}
   .rbm-kri-acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
-  .rbm-kri-sub{margin-top:9px;border-top:1px solid var(--bg-100);padding-top:9px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+  /* A narrow card scrolls the by-site list inside itself. */
+  .rbm-kri-sub{margin-top:9px;border-top:1px solid var(--bg-100);padding-top:9px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;max-width:100%;overflow-x:auto;}
   .rbm-kri-sub-h{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);}
   .rbm-kri-sub-row{display:grid;grid-template-columns:56px 1fr 46px auto;align-items:center;gap:8px;font-size:10.5px;color:var(--text-300);}
   .rbm-kri-sub-row .bar{height:7px;border-radius:var(--radius-sm);background:var(--bg-100);overflow:hidden;}
@@ -251,6 +254,9 @@
   .rbm-kri-sites thead th{border-bottom:1px solid var(--border);}
   .rbm-kri-sites tbody th{color:var(--text-100);}
   .rbm-kri-sites td{padding:3px 6px 3px 0;color:var(--text-200);border-top:1px solid var(--bg-100);}
+  .rbm-kri-trend{display:inline-flex;align-items:center;}
+  /* A reading and its date stay on one line. */
+  .rbm-kri-sites :is(th,td){white-space:nowrap;}
   .rbm-act-origin{margin-left:6px;font-size:var(--fs-caption);font-weight:600;color:var(--ai);background:var(--ai-muted);border-radius:var(--radius-sm);padding:0 5px;}
 
   /* KRI trend data-table equivalent */
@@ -286,7 +292,7 @@
   .rbm-spark-empty{font-size:10.5px;color:var(--text-400);}
 
   /* QTL gauge */
-  .rbm-gauge{min-width:220px;}
+  .rbm-gauge{min-width:180px;}
   .rbm-gauge-bar{position:relative;height:10px;border-radius:var(--radius-md);background:var(--bg-100);overflow:hidden;}
   .rbm-gauge-band{position:absolute;top:0;bottom:0;}
   .rbm-gauge-band.warn{background:var(--warning-muted);}
@@ -297,6 +303,11 @@
   .rbm-gauge-fill[data-tone="err"]{background:var(--error);}
   .rbm-gauge-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--warning);}
   .rbm-gauge-tick.hard{background:var(--error);}
+  /* A lower limit or a range: a mark at the value, toned by the engine's status. */
+  .rbm-gauge-mark{position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;border-radius:2px;background:var(--text-300);}
+  .rbm-gauge-mark[data-tone="ok"]{background:var(--success);}
+  .rbm-gauge-mark[data-tone="warn"]{background:var(--warning);}
+  .rbm-gauge-mark[data-tone="err"]{background:var(--error);}
   .rbm-gauge-lbl{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-top:4px;font-variant-numeric:tabular-nums;}
   .rbm-gauge-lbl span:first-child{font-weight:600;color:var(--text-100);}
   .rbm-tbl.qtl td{vertical-align:middle;}
@@ -497,6 +508,12 @@
   .rbm-ingest-rejects{margin-top:10px;}
   .rbm-ingest-rejects-h{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-bottom:5px;}
   .rbm-ingest-more{font-size:10.5px;color:var(--text-400);margin-top:5px;}
+  /* The study's earlier loads, inside the load dialog. A load that a later one replaced reads as set aside. */
+  /* It keeps its own height inside the dialog's column (a scrolling box there shrinks to nothing unless told not
+     to), and a long history scrolls inside it. */
+  .rbm-ingest-hist{margin:4px 0 12px;flex-shrink:0;max-height:240px;overflow:auto;}
+  .rbm-ingest-hist .rbm-tbl th[scope="row"]{background:none;color:var(--text-100);border-bottom:1px solid var(--bg-100);padding:9px 12px;}
+  .rbm-ingest-hist tr[data-superseded] td{color:var(--text-400);}
 
   /* The version chain. The row being shown/edited is marked so an approved
      version below it is never mistaken for the one on screen. */

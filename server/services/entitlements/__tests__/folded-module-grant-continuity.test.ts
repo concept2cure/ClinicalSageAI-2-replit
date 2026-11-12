@@ -112,6 +112,9 @@ beforeAll(async () => {
     await pg.exec(base.match(new RegExp(`CREATE TABLE "${t}" \\([\\s\\S]*?\\n\\);`))![0]);
   }
   await pg.exec(read('db/migrations/20260824_module_grant_expiry.sql'));
+  // The eTMF's band (db/migrations/20261112_etmf_module_professional_tier.sql) keeps the module for an organisation
+  // that already has trial master file filings, so it reads them; on the deploy path the table comes first.
+  await pg.exec(read('migrations/20260615_tmf_artifact_filings.sql'));
   // The stored enforcement mode: none, so the deployment's MODULE_ENFORCEMENT decides.
   await pg.exec('CREATE TABLE platform_settings (setting_key text PRIMARY KEY, setting_value text, updated_at timestamptz, updated_by integer, reason text)');
 

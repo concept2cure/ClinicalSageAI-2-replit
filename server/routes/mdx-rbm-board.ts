@@ -42,6 +42,8 @@ import {
 } from '../services/rbm/risk-report';
 import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
 import { governingPlanId as governingPlanIdOf } from '../services/rbm/rbm-actuator';
+import { QTL_DIRECTIONS, type QtlDirection } from '../services/rbm/rbm-engine';
+import { readSiteIndicatorHistory, type SiteIndicatorHistoryPoint } from '../services/rbm/site-risk-engine';
 import { actorLabel, resolveActorNames } from '../services/tenant/actor-names';
 
 const log = createScopedLogger('mdx-rbm-board');
@@ -114,6 +116,26 @@ export interface BoardSiteIndicator {
   dir: 'higher_worse' | 'lower_worse';
   at: string | null;
   cutoff: string | null;
+  /** The indicator's earlier readings at this site, oldest first, the latest last. Absent where none was read. */
+  history?: { v: number; cutoff: string | null }[];
+}
+
+/** How many readings of one indicator at one site the board sends: the most recent ones. */
+const SITE_HISTORY_POINTS = 24;
+
+/**
+ * Each site's readings with the indicator's course at that site across the loads. The readings and their bands are
+ * the snapshot's; the history is the stored site rows, in order, and nothing here is banded or scored.
+ */
+export function withSiteHistory(siteNumber: string | null, readings: BoardSiteIndicator[], history: SiteIndicatorHistoryPoint[]): BoardSiteIndicator[] {
+  if (!siteNumber || history.length === 0) return readings;
+  return readings.map((r) => {
+    const points = history
+      .filter((h) => h.siteNumber === siteNumber && h.kriName.trim().toLowerCase() === r.name.trim().toLowerCase())
+      .slice(-SITE_HISTORY_POINTS)
+      .map((h) => ({ v: h.value, cutoff: h.dataCutoff }));
+    return points.length > 0 ? { ...r, history: points } : r;
+  });
 }
 
 const SITE_INDICATOR_STATUS = new Set(['red', 'amber', 'green', 'not_evaluated']);
@@ -541,6 +563,11 @@ export default function createRbmBoardRoutes(): Router {
           unit: null,
           secondary: num(q.secondaryLimit),
           threshold: num(q.threshold),
+          // Which way the limit bites, and a range's lower bound and lower early-warning limit. The status below is
+          // the engine's for that direction (qtlStatus); the screen draws the limits and never bands the value.
+          direction: QTL_DIRECTIONS.includes(q.direction as QtlDirection) ? q.direction : 'upper',
+          thresholdLower: num(q.thresholdLower),
+          secondaryLower: num(q.secondaryLimitLower),
           current: num(q.currentValue),
           status: q.status,
           breachActionTaken: q.breachActionTaken,
@@ -578,6 +605,10 @@ export default function createRbmBoardRoutes(): Router {
           metrics: dimensionScores(p.metadata),
         }));
 
+      // An indicator's course at each site, where the sites were scored from the study's own readings. Read with
+      // the board's other sources: a failure here fails the board, it does not send sites with a blank trend.
+      const siteHistory = siteRows.some((s) => (s.metadata as { source?: unknown } | null)?.source === 'study_indicators')
+        ? await readSiteIndicatorHistory(q, orgId, programId) : [];
       const sites = [...siteRows]
         .sort((x, y) => (num(y.compositeRisk) ?? -Infinity) - (num(x.compositeRisk) ?? -Infinity))
         .map(s => ({
@@ -592,7 +623,7 @@ export default function createRbmBoardRoutes(): Router {
           drivers: Array.isArray(s.drivers) ? (s.drivers as string[]) : [],
           at: iso(s.scoredAt),
           ...siteBasis(s.metadata),
-          indicators: siteIndicatorReadings(s.metadata),
+          indicators: withSiteHistory(s.siteNumber, siteIndicatorReadings(s.metadata), siteHistory),
         }));
 
       const actions = [...actionRows]

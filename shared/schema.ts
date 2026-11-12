@@ -19068,6 +19068,12 @@ export const rbmQtls = pgTable(
     rationale:         text('rationale'),
     threshold:         numeric('threshold', { precision: 12, scale: 4 }),
     secondaryLimit:    numeric('secondary_limit', { precision: 12, scale: 4 }),
+    // Which way the limit bites, and for a range its lower bound and lower early-warning limit
+    // (migrations/20260930_rbm_qtl_direction.sql). The routes have read and written these in SQL since then; this
+    // definition did not carry them, so the board, which reads through it, could not send them to the screen.
+    direction:           text('direction').default('upper').notNull(),
+    thresholdLower:      numeric('threshold_lower', { precision: 12, scale: 4 }),
+    secondaryLimitLower: numeric('secondary_limit_lower', { precision: 12, scale: 4 }),
     currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
     breached:          boolean('breached').default(false),
     breachActionTaken: text('breach_action_taken'),

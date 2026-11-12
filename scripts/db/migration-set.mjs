@@ -3848,6 +3848,11 @@ export const C2C_MIGRATION_FILES = [
   // 0 and the system scope only, as session_activity. New table and index, IF NOT EXISTS; no DROP. Public with
   // organization_id INTEGER NOT NULL, so the sweep below gives it its tenant policy.
   'migrations/20261112b_rate_limit_counters.sql',
+  // The eTMF module moves to the professional band on its admission to the Vault (P-75, P-124 item 6, 2026-11-12).
+  // Data only: the band on available_modules, and an explicit grant for an organisation below it that already held
+  // filings. After every catalog writer (20260814j inserts the row with tiers [] and does nothing on conflict), so
+  // the band is the final word on each deploy. No table, column or DROP.
+  'db/migrations/20261112_etmf_module_professional_tier.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

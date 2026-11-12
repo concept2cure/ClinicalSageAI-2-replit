@@ -160,10 +160,11 @@ export function qtlRangeError(l: {
 }): string | null {
   if ((l.direction ?? 'upper') !== 'two_sided') return null;
   if (l.threshold == null || l.thresholdLower == null) {
-    return 'A two-sided tolerance limit requires both bounds: threshold (upper) and thresholdLower (lower).';
+    // Said for the person at the form as well as for a caller of the API: the field names follow the words.
+    return 'A range needs both bounds: the upper limit (threshold) and the lower bound (thresholdLower).';
   }
   if (l.thresholdLower >= l.threshold) {
-    return 'thresholdLower must be below threshold for a two-sided tolerance limit.';
+    return 'The lower bound of a range must be below its upper limit (thresholdLower below threshold).';
   }
   return null;
 }
