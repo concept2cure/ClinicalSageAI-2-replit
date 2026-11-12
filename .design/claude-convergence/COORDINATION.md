@@ -961,6 +961,18 @@ the founder set it on 2026-11-09: a biotech clinical study report from the proje
 `services/csr-builder.ts`, `services/authoring/workflow-import-governance.ts`, `surfaces/ReviewDecisionDialog.tsx`
 (Wave B lanes W1 and W8 of `01T2woo…`).
 
+**Qualification for CSR drafting (P-115 item 2, P-118), taken by this lane on 2026-11-12 because nobody held
+`server/eval/pq/**`** (said to `01T2woo…` and the lead first; no clash reported):
+- Landed, with no model and no change to the approved protocol: the verdict has a step for `csrDrafting`
+  (`pq-csr-drafting.ts`, split out of `pq-verdict.ts`) and reads the use (`computeVerdict` options);
+  `verify-pq-record.ts` reads the same use, requires a named-use record to carry exactly that use, and refuses to
+  verify a pass that rests on CSR drafting until its evidence check exists
+  (`docs/evidence/D4/2026-11-12-csr-drafting-verdict/`). `MEASURED_COMPONENTS` now includes `csrDrafting`.
+- Owed next, in the README's order: the run over the builder's own prompts, its evidence check, the preflight by
+  use, the gateway label for the builder's calls, the release branch, a new protocol version for the founder, and
+  a provider key. **→ W8 (`01T2woo…`):** the run will call `draftCSRSectionWithProvenance` as it stands, and the
+  label for the builder's gateway calls is yours to make or to hand me; it is not edited from here.
+
 **What the walk of the Lumen LMN-201 report still shows, in order** (each is the next thing this lane takes unless
 its file is held; say so here if it is yours):
 1. The report holds text under 6 of its 119 headings. The build drafted 69 and four were imported. Sending is now
