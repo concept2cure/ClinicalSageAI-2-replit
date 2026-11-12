@@ -30,7 +30,8 @@ import type { DhfRow } from '../data/engineering';
 export const DESIGN_HISTORY_NOTE =
   "The sections of this project's own documents and where each stands. " +
   'This is not an inspected design history file index: it lists only what has been authored here as document sections, ' +
-  'and a section is ready when it has been approved, not when the file has been found complete.';
+  'and a section is ready when it has been approved, not when the file has been found complete. ' +
+  "A filing's cover letter, forms and certifications are marked as filing content, not design records.";
 
 const EMPTY_HINT = "This project's document sections appear here once its documents have sections.";
 
@@ -74,13 +75,21 @@ export function EngineeringDesignHistory({ state, keyed, onRetry, notKeyedEmptyH
                 </div>
                 <div className="eng-dhf-strip">
                   {group.rows.map((d) => (
-                    <div key={d.id} className="eng-dhf-cell" data-status={d.status} title={`${d.label} · ${d.meta}`}>
+                    <div key={d.id} className="eng-dhf-cell" data-status={d.status} data-record={d.record}
+                      title={`${d.label} · ${d.meta}${d.record === 'filing-content' ? ' · filing content, not a design record' : ''}`}>
                       <div className="eng-dhf-num mono">§{d.num}</div>
                       <div className="eng-dhf-label">{d.label}</div>
                       <div className="eng-dhf-meta">
                         <span className="mono">{d.ver}</span>
                         <span className="dot-sep" aria-hidden="true">·</span>
                         <span>{d.updated}</span>
+                        {/* P-114 item 2: the filing's paperwork, listed but not as a design record. */}
+                        {d.record === 'filing-content' && (
+                          <>
+                            <span className="dot-sep" aria-hidden="true">·</span>
+                            <span>filing content</span>
+                          </>
+                        )}
                       </div>
                       <span className={`status-pill ${d.status}`}>{d.status}</span>
                     </div>
