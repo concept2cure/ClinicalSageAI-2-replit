@@ -47,8 +47,8 @@ const api = (page, method, url, body) => page.evaluate(async ({ method, url, bod
 }, { method, url, body });
 const signOut = (page) => page.evaluate(() => fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}` } }).catch(() => undefined));
 
-/* The binder's folder: the cabinet comes after the authored documents' own section folders, which share its numbers. */
-const folderButton = (page, re) => page.locator('button.vd-folder', { hasText: re }).last();
+/* The binder's folder: the binder is first in the tree (since step 2); the authored documents' own section folders, which share its numbers, come after. */
+const folderButton = (page, re) => page.locator('button.vd-folder', { hasText: re }).first();
 
 async function openVault(page, programId) {
   await page.goto(`${BASE}/concept2cure/vault?program=${programId}`, { waitUntil: 'networkidle' });
