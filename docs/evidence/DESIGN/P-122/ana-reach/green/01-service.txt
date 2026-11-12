@@ -1,0 +1,48 @@
+# GREEN — the service test with the change (working tree on 1ac0b70fb).
+# 2026-11-12T00:43:56Z  npx vitest run server/services/ha-interactions/__tests__ --reporter=verbose
+
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > recording a meeting > names this organisation's submission, or none, and never another tenant's 15ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > moving a meeting > runs one way, needs the date a move records, and does not reopen a closed meeting 17ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > moving a meeting > does not move another organisation's meeting 2ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > listing meetings > shows meetings with no submission and those on programs the reader may open, and no other 5ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > naming a meeting's minutes (P-39 step 4c) > names this project's minutes letter when the minutes are received, and nothing else 15ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > naming a meeting's minutes (P-39 step 4c) > refuses a minutes letter on a meeting that names no submission, or on any other move 7ms
+ ✓ server/services/ha-interactions/__tests__/meeting-lifecycle.pglite.test.ts > naming a meeting's minutes (P-39 step 4c) > clears the link when the letter is purged, and never blocks the purge 8ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > recording a commitment > names this organisation's submission, or none, and never another tenant's 15ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission has one live project in its own organisation, or none that can admit a write 6ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a meeting's submission is read in its own organisation only 3ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission is readable in no program, or in a program of the reader’s scope 4ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with no scope given, lists as the screens always have: every commitment of the organisation 5ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with a reader’s program scope, lists those that name no submission, one in no program, or one in scope 8ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > never another organisation's, whatever the scope 4ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a PMR, PMC or REMS needs a signature, what met it, and its date 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > a meeting commitment or other is a governed write: no signature, what met it optional 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > an unknown type is held to the signed rule, never the looser one 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > which fulfilments are signed acts > the signed list is the three postmarketing obligations 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > refuses a PMR that names neither a sequence nor a document, with the sentence 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > accepts a sequence alone, a document alone, or both 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > what met a commitment > a meeting commitment needs none 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > is stable, hex sha256, and tagged with its recipe 1ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > changes with every one of its eleven fields 2ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > the fulfilment digest (recipe commitment-fulfilment/v1) > does not depend on the order the fields were given in 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a commitment not fulfilled has no fulfilment to read 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > fulfilled before fulfilments were recorded is legacy, keyed on the record, not on what is missing 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a signed type with a live signature that binds the record is signed; one that does not, is a mismatch 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > a recorded signed type whose signature was withdrawn says so, and one with none says that 0ms
+ ✓ server/services/ha-interactions/__tests__/fulfilment-logic.test.ts > how a fulfilment reads > an unsigned type that was recorded is recorded 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > deriveCommitmentStatus > marks a past-due, non-terminal commitment overdue 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > deriveCommitmentStatus > preserves terminal states regardless of due date 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > deriveCommitmentStatus > leaves a future-dated open commitment as open 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > commitmentUrgency > buckets correctly 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > summarizeCommitmentPortfolio > counts every commitment into exactly one bucket 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > flags a scheduled meeting with no briefing book as not ready 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a held meeting with no questions is not ready: a major gap is a gap 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a planned meeting is not assessed yet, not "ready" 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a requested meeting is not assessed yet, not "ready" 1ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a closed interaction has no meeting to be ready for 0ms
+ ✓ server/services/ha-interactions/__tests__/ha-logic.test.ts > evaluateMeetingReadiness > a cancelled interaction has no meeting to be ready for 0ms
+ ✓ server/services/ha-interactions/__tests__/meeting-package.test.ts > assembleMeetingPackage > is ready with a briefing book + questions, and lists open questions 2ms
+ ✓ server/services/ha-interactions/__tests__/meeting-package.test.ts > assembleMeetingPackage > is NOT ready (critical) when a scheduled meeting has no briefing book 0ms
+ ✓ server/services/ha-interactions/__tests__/meeting-package.test.ts > assembleMeetingPackage > counts overdue interaction-sourced commitments and flags them 1ms
+ Test Files  5 passed (5)
+      Tests  43 passed (43)

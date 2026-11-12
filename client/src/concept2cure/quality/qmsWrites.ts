@@ -4,6 +4,7 @@
  * signed approval uses qmsApproval.ts and EsignModal.
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import type { DeviceChangeMarket } from '@shared/regulatory/change-control-taxonomy';
 import type { ChangeState, ChangeType, Classification, LinkType, Relationship, RiskLevel } from './changeData';
 
 /* ── A confirmed write, told to whatever else on the screen read what it changed ──
@@ -117,4 +118,18 @@ export function linkQmsChange(
   const body: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(link)) if (v !== undefined && v !== '') body[k] = v;
   return qmsPost(`changes/${id}/links`, body);
+}
+
+/**
+ * Run the device change determination for a market on a change (P-122). The body carries the person's answers to the
+ * engine's questions and, when a recorded determination is replaced, why. The server runs the engine, keeps the
+ * outcome on the change and returns it; no verdict is ever sent from here.
+ */
+export function assessQmsChangeImpact(
+  id: number,
+  input: { market: DeviceChangeMarket; answers: Record<string, boolean | undefined>; reason?: string },
+): Promise<{ id: number; regulatory_impact?: unknown }> {
+  return qmsPost(`changes/${id}/regulatory-impact`, {
+    market: input.market, answers: input.answers, ...(input.reason ? { reason: input.reason } : {}),
+  });
 }

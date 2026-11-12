@@ -33,7 +33,7 @@
 
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { ChangeRecordDetail, ChangeRecordFacts, changeRecordRows } from './ChangeRecordDetail';
+import { ChangeRecordDetail, ChangeRecordFacts, changeImpactRows, changeRecordRows } from './ChangeRecordDetail';
 import { AskAnaButton, INLINE_ACTIONS, RegisterBody, RegisterTable } from './SopRegisterRow';
 import { useQualityScope } from './registerContext';
 import { ChangeFlow } from './ChangeFlow';
@@ -52,6 +52,9 @@ import {
   summaryOfChanges,
   isImplementationOverdue,
   formatDate,
+  IMPACT_DECISION_LABEL,
+  IMPACT_MARKET_LABEL,
+  regulatoryImpactOf,
   type ChangeState,
   type ChangeLink,
   /* The row type shares this component's name; the alias keeps both usable. */
@@ -69,8 +72,9 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange } from './qmsWrites';
+import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange, assessQmsChangeImpact } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
+import { ChangeImpactForm } from './ChangeImpactForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import type { ChangeType, Classification, Relationship, RiskLevel } from './changeData';
 import { apiRequest } from '@/lib/queryClient';
@@ -107,7 +111,12 @@ const CHANGE_COLUMNS = ['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 
 const chip = (tone: string | null) => `rd-chip${tone ? ` tone-${tone}` : ''}`;
 
 
-const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+/* A refusal's sentence is the server's own, and qmsWrites' own for a reply it could not read. A TypeError is the
+   browser's throw when the request never reached the server ("Failed to fetch", "Load failed"): not user copy. */
+const errText = (err: unknown) => {
+  if (err instanceof TypeError) return 'the server could not be reached, so nothing was sent. Check your connection and try again.';
+  return err instanceof Error ? err.message : String(err);
+};
 const optionsOf = <K extends string>(labels: Record<K, string>) =>
   (Object.keys(labels) as K[]).map((k) => ({ value: k, label: labels[k] }));
 /** The moves a row may take here: the server's list, less approval (the signed route). */
@@ -167,6 +176,7 @@ function ChangeControlSession({
     | { kind: 'link'; change: ChangeControlRow }
     | { kind: 'unlink'; change: ChangeControlRow; link: ChangeLink }
     | { kind: 'assess'; change: ChangeControlRow }
+    | { kind: 'impact'; change: ChangeControlRow }
     | { kind: 'document' }
     | null
   >(null);
@@ -359,7 +369,7 @@ function ChangeControlSession({
                   after={open && (
                     <tr className="qcc-detail-tr">
                       <td colSpan={CHANGE_COLUMNS.length}>
-                        <ChangeRecordDetail change={c} onAsk={onAsk}
+                        <ChangeRecordDetail change={c} onAsk={onAsk} onAssessImpact={() => openDrawer({ kind: 'impact', change: c })}
                           onUnlink={takesLinks(c) ? (link) => openDrawer({ kind: 'unlink', change: c, link }) : undefined} />
                       </td>
                     </tr>
@@ -536,6 +546,27 @@ function ChangeControlSession({
           }}
         />
       )}
+      {/* P-122: the device change determination. The form sends the answers; the server runs the engine and returns
+          its verdict, which the toast repeats. A reply whose determination cannot be read is not reported as a
+          verdict: the write stands (the server answered), so the log is re-read and the change shows what is kept. */}
+      {drawer?.kind === 'impact' && (
+        <ChangeImpactForm
+          change={drawer.change}
+          refusal={refusal}
+          onCancel={closeDrawer}
+          onSubmit={(v) => {
+            const c = drawer.change;
+            void runWrite(async () => {
+              const reply = await assessQmsChangeImpact(c.id, v);
+              const determined = regulatoryImpactOf(reply.regulatory_impact)?.[v.market];
+              if (!determined || determined === 'unreadable') {
+                return `${c.changeNumber}: the assessment for the ${IMPACT_MARKET_LABEL[v.market]} was recorded. Its determination could not be read from the reply; read it on the change.`;
+              }
+              return `${c.changeNumber}: the engine's determination for the ${IMPACT_MARKET_LABEL[v.market]} is ${IMPACT_DECISION_LABEL[determined.decision]}. It is kept on the change.`;
+            });
+          }}
+        />
+      )}
       {drawer?.kind === 'unlink' && (
         <C2CForm
           config={{
@@ -593,7 +624,7 @@ function ChangeControlSession({
           renderMeaningDetails={(_meaning, committing) => <>
             <div className="qcc-sign-record" data-testid="change-approval-record">
               <p className="qcc-sign-lead">What you approve</p>
-              <ChangeRecordFacts change={approving} />
+              <ChangeRecordFacts change={approving} withImpact />
             </div>
             {learningReview && !('unavailable' in learningReview) && <LearningInvariantReview
               review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} />}
@@ -601,6 +632,7 @@ function ChangeControlSession({
           signedRows={[
             { label: 'Classification', value: CLASSIFICATION_LABEL[approving.classification] },
             ...changeRecordRows(approving),
+            ...changeImpactRows(approving),
             { label: 'Target implementation date', value: approving.targetImplementationDate ? formatDate(approving.targetImplementationDate) : 'Not recorded yet.' },
           ]}
           onClose={() => setApproving(null)}

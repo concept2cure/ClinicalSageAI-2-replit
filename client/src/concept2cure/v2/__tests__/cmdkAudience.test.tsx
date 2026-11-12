@@ -90,4 +90,15 @@ describe('⌘K: administration pages by audience', () => {
     serve(true);
     expect(await search('licens')).toContain('Platform licensing');
   });
+
+  /* GA walk, 2026-11-12 (docs/evidence/DESIGN/P-122/ga-walk/): Enterprise identity's reads need a platform
+     administrator, so for a customer's administrator the page is a refusal and nothing else. */
+  it("a customer's administrator is not offered Enterprise identity; a platform administrator is", async () => {
+    auth.roles = ['admin', 'user'];
+    serve(false);
+    expect((await search('identity')).filter((r) => /Enterprise identity/.test(r))).toEqual([]);
+    cleanup();
+    serve(true);
+    expect((await search('identity')).some((r) => /Enterprise identity/.test(r))).toBe(true);
+  });
 });
