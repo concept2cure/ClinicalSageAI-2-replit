@@ -12,7 +12,7 @@
  * unit-testable; the fetch itself is a thin, org-scoped query loop.
  */
 
-import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { db } from '../../../db';
 import { projects } from '@shared/schema';
 import {
@@ -164,6 +164,12 @@ async function fetchOrgPrograms(
         // under it, so counting them too would double-count the portfolio.
         isNull(projects.parentProjectId),
         ne(projects.status, 'archived'),
+        /* Archiving or deleting a project in Projects sets its regulatory_programs row
+           (c2c/projects.ts closeOut) and leaves this anchor row as it was. So an archived
+           project left Projects and stayed in Reporting's picker, its readiness board and
+           average, and its schedule (S12 biotech sweep, finding 89; re-checked in the
+           running app 2026-11-12). A project with no program record is kept. */
+        sql`NOT EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = ${projects.regulatoryProgramId} AND (rp.status = 'archived' OR rp.deleted_at IS NOT NULL))`,
         ...(accessibleProjectIds ? [inArray(projects.id, [...accessibleProjectIds])] : []),
       ),
     )

@@ -148,7 +148,7 @@ describe('the write-back keeps only what a checked answer found', () => {
       expect(summary).toContain(CONTINUITY[field][0]);
     }
     expect(summary).not.toContain('45%');
-    expect(structured.factCheck).toBe('answer-check/2');
+    expect(structured.factCheck).toBe('answer-check/3');
   });
 
   it('keeps the stored thread summary empty when every proposed item is withheld', async () => {
@@ -177,7 +177,7 @@ describe('the write-back keeps only what a checked answer found', () => {
     expect(structured.openQuestions).toEqual(['Which data cut-off applies?']);
     expect(structured.withheld.lockedFacts).toEqual(['The ORR in NCT01234567 was 45%']);
     expect(structured.withheld.decisions).toEqual(['Cite the 45% ORR in 2.7.3']);
-    expect(structured.factCheck).toBe('answer-check/2');
+    expect(structured.factCheck).toBe('answer-check/3');
     expect(summary).not.toContain('45%');
     expect(summary).toContain('212 patients');
   });

@@ -265,6 +265,9 @@ describe('denials and empty/unavailable sources', () => {
       expect(out.structure?.sections.length).toBeGreaterThan(0);
       expectNoStudyPayload(out);
       const gate = checkpoint();
+      // Nothing study-bearing was released, so the run is not raised to the studies' tier: at Tier 3 the next model
+      // call is refused on an outside provider and AnA cannot even say that there are no studies (2026-11-12).
+      expect(gate.tiers).not.toContain(3);
       await gate.recheck();
       await pg.query("UPDATE nonclinical_studies SET status='finalized' WHERE id=1");
       await expect(gate.recheck()).rejects.toThrow();

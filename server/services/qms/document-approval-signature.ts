@@ -87,7 +87,7 @@ import {
 import { TASK_SIGNATURE_MEANINGS, type GovernedSignMeaning } from '../part11/signature-meanings';
 import { qmsTrainingSectionSchema } from '../../../shared/qms/training';
 import { captureQmsAuthoringContent, persistQmsSignedVersion, authorizeQmsAuthoredSignature, QmsContentRefusedError, type QmsAuthoringSnapshot } from './controlled-document-content';
-import { filingAgreesWithEditing } from '../c2c/filing-section-target';
+import { divergedSectionLabel, filingAgreesWithEditing } from '../c2c/filing-section-target';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
 import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 import { QMS_INTERIM_APPROVAL_TYPE, shareWords } from '../review/approval-share';
@@ -226,15 +226,26 @@ async function refuseIfFilingDiverged(
   /* Name what the approver can OPEN, not only the filing node: for an
      assembled node the key is `2.5` and no authoring section carries that
      code, so a refusal naming only the key sends them looking for a section
-     that does not exist. Same rule, same reason, as the authoring refusal. */
-  const named = rewritten.map((d) => (d.section.code === d.key ? d.key : `${d.section.code} (filed at ${d.key})`));
+     that does not exist. The shared rule (divergedSectionLabel), each section
+     once.
+
+     THE REMEDY, corrected 2026-11-12. This said "open that section, make any
+     edit and save … Then approve again". An approval is given to a document
+     under review, and a controlled document under review refuses every
+     authoring write and the re-file with it (qmsAuthoringRefusal:
+     QMS_DOCUMENT_CONTROLLED for any register status but draft). So that could
+     never be done, from the day it shipped. What can: the register's Return
+     for revision, then the editor's Re-file saved text, which restores the
+     saved text to its filing without a throwaway edit. */
+  const named = Array.from(new Set(rewritten.map(divergedSectionLabel)));
   const one = named.length === 1;
   throw new QmsApprovalRefusedError(
     'FILING_DIVERGED',
-    `Not approved — the filed copy of ${one ? 'section' : 'sections'} ${named.join(', ')} ${one ? 'is' : 'are'} `
-    + 'not the text this document holds. Approving seals the text for filing, so the signature would attest to '
-    + `text the submission does not contain. Re-file it from the editor: open ${one ? 'that section' : 'those sections'}, `
-    + 'make any edit and save, which rewrites the filed copy. Then approve again. Nothing was signed.',
+    `Not approved. ${one ? 'The filed copy of section' : 'The filed copies of sections'} ${named.join(', ')} `
+    + `${one ? 'is' : 'are'} not the document's text. Approving seals the text for filing, so the signature would attest `
+    + 'to text the submission does not contain. A controlled document under review cannot be changed or re-filed, so '
+    + `return it for revision in the Quality register first. Then open ${one ? 'that section' : 'those sections'} in the `
+    + 'editor and choose Re-file saved text, send the document for review, and approve again. Nothing was signed.',
   );
 }
 

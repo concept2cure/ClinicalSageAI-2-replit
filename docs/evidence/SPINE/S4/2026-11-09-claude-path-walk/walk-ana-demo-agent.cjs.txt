@@ -1,0 +1,78 @@
+// AnA's tool path in the running app: for each scenario the stand-in provider asks for one tool, the real app runs
+// it, and the stand-in replies with the start of the tool result. Real server, database, session and browser.
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+const BASE = 'http://127.0.0.1:5000';
+const OUT = __dirname;
+const log = [];
+const note = (s) => { log.push(s); console.log(s); };
+const SCENARIOS = [
+  { tool: 'start_product_demo', input: { demo: 'sales-flagship' }, ask: 'Show me the flagship demo.' },
+  { tool: 'run_agent', input: { action: 'spawn', role: 'research', objective: 'Summarize what this project has on file about its predicate device.', instructions: 'Read only. Report what you find.' }, ask: 'Have a research agent look into the predicate device.' },
+];
+
+async function session(email) {
+  const dl = await (await fetch(`${BASE}/api/auth/dev-login`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: BASE }, body: JSON.stringify({ email }) })).json();
+  if (!dl.accessToken) throw new Error('dev-login failed: ' + JSON.stringify(dl).slice(0, 300));
+  const sess = await (await fetch(`${BASE}/api/v1/auth/session`, { headers: { Authorization: `Bearer ${dl.accessToken}`, Origin: BASE } })).json();
+  return { token: dl.accessToken, refresh: dl.refreshToken, user: sess.user };
+}
+
+(async () => {
+  const browser = await chromium.launch();
+  try {
+    const s = await session('e2e-admin@trialsage.test');
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    const expiry = new Date(Date.now() + 23 * 3600e3).toISOString();
+    await ctx.addInitScript(([t, r, e, u]) => {
+      for (const st of [window.localStorage, window.sessionStorage]) {
+        st.setItem('trialsage_access_token', t); st.setItem('trialsage_refresh_token', r);
+        st.setItem('trialsage_token_expiry', e); st.setItem('trialsage_user', u);
+      }
+    }, [s.token, s.refresh, expiry, JSON.stringify(s.user)]);
+    const p = await ctx.newPage();
+    p.on('pageerror', (e) => note('  pageerror: ' + String(e).slice(0, 160)));
+    await p.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'domcontentloaded' });
+    await p.getByText('P-95 review walk').first().waitFor({ timeout: 120000 });
+    await p.getByText('P-95 review walk').first().click();
+    await p.waitForTimeout(3000);
+    for (const [i, sc] of SCENARIOS.entries()) {
+      fs.writeFileSync(path.join(OUT, 'scenario.json'), JSON.stringify(sc));
+      await p.goto(`${BASE}/concept2cure/conversation-thread`, { waitUntil: 'domcontentloaded' });
+      const fresh = p.getByRole('button', { name: /New conversation/ }).first();
+      if (await fresh.count()) await fresh.click().catch(() => undefined);
+      const composer = p.locator('textarea').first();
+      await composer.waitFor({ timeout: 120000 });
+      await composer.fill(sc.ask);
+      await composer.press('Enter');
+      const outcome = await Promise.race([
+        p.getByText(/MOCK AFTER TOOL|MOCK NO TOOL/).first().waitFor({ timeout: 90000 }).then(() => 'reply'),
+        p.getByText(/blocked by AI gateway policy|could not|Couldn.t|refused|failed/i).last().waitFor({ timeout: 90000 }).then(() => 'error-text'),
+        p.getByRole('button', { name: /^(Confirm|Approve|Allow|Yes|Run it|Accept)/ }).first().waitFor({ timeout: 90000 }).then(() => 'asks-to-confirm'),
+      ]).catch(() => 'timeout');
+      await p.waitForTimeout(1500);
+      const tail = (await p.locator('main').first().innerText().catch(() => p.locator('body').innerText())).replace(/\s+/g, ' ');
+      const at = tail.lastIndexOf(sc.ask.slice(0, 30));
+      note(`[${i + 1}] ${sc.tool}: ${outcome}`);
+      note(`    screen after the question: ${tail.slice(at >= 0 ? at : -900, (at >= 0 ? at : tail.length - 900) + 900)}`);
+      await p.screenshot({ path: path.join(OUT, `demoagent-${String(i + 1).padStart(2, '0')}-${sc.tool}.png`) });
+      const confirm = p.getByRole('button', { name: /Confirm and run/ }).first();
+      if (outcome !== 'reply' && await confirm.count()) {
+        await confirm.click();
+        const after = await p.getByText(/MOCK AFTER TOOL|MOCK NO TOOL/).first().waitFor({ timeout: 90000 }).then(() => 'reply', () => 'timeout');
+        await p.waitForTimeout(1500);
+        const t2 = (await p.locator('main').first().innerText().catch(() => '')).replace(/\s+/g, ' ');
+        const k = t2.lastIndexOf('MOCK AFTER TOOL');
+        note(`    after Confirm and run: ${after}: ${t2.slice(k >= 0 ? k : -600, (k >= 0 ? k : t2.length - 600) + 600)}`);
+        await p.screenshot({ path: path.join(OUT, `demoagent-${String(i + 1).padStart(2, '0')}-${sc.tool}-confirmed.png`) });
+      }
+    }
+  } catch (e) {
+    note('WALK ERROR: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e)));
+  } finally {
+    fs.writeFileSync(path.join(OUT, 'walk-ana-demo-agent.log'), log.join('\n') + '\n');
+    await browser.close();
+  }
+})();

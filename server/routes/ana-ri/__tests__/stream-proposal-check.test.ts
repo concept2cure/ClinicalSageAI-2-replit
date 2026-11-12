@@ -49,15 +49,15 @@ const h = vi.hoisted(() => {
       state.gatewayCalls.push({ callerModule: req.callerModule, messages: [...req.messages] });
       const step = state.script.shift();
       if (Array.isArray(step)) {
-        return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+        return { content: '', toolUses: step, model: 'claude-opus-5-5', provider: 'anthropic', usage: {}, latencyMs: 1 };
       }
       if (step && typeof step === 'object') {
         req.onStream?.(step.say, undefined);
-        return { content: step.say, toolUses: step.tools, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+        return { content: step.say, toolUses: step.tools, model: 'claude-opus-5-5', provider: 'anthropic', usage: {}, latencyMs: 1 };
       }
       const text = step ?? 'Done.';
       req.onStream?.(text, undefined);
-      return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+      return { content: text, toolUses: [], model: 'claude-opus-5-5', provider: 'anthropic', usage: {}, latencyMs: 1 };
     },
   };
   /** A search the draft is written from; the drafting tool is held, never dispatched. */
@@ -273,7 +273,7 @@ describe('a governed draft is checked before the person approves it', () => {
 
     expect(h.state.approvals).toHaveLength(1);
     const held = h.state.approvals[0].check;
-    expect(held.engine).toBe('answer-check/2');
+    expect(held.engine).toBe('answer-check/3');
     expect(held.found).toBe(3);
     expect(held.notFound.map((c: { text: string }) => c.text)).toEqual(['31%']);
     expect(held.verdicts.map((v: { text: string }) => v.text)).toEqual(['is ready to file']);

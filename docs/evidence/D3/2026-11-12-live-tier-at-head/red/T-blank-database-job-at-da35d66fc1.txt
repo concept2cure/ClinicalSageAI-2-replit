@@ -1,0 +1,15 @@
+CI job "Blank DB Provisioning + Deploy Migration" (.github/workflows/ci.yml:1846), its steps run by hand
+at da35d66fc1ea95098cfe0651a6a785c09c03f5bf on an empty database named c2c_blank_proof, 2026-11-12.
+exit  step
+0  assert blank
+0  deploy-migrate refuses an unprovisioned db
+0  install-fresh
+0  deploy-migrate (first)
+0  RLS coverage after the FIRST deploy
+0  ci:replay-rebuilds-nothing
+0  RLS coverage after replay
+0  RLS parent-scope delegates
+0  readiness contract (the job's psql checks)
+0  deploy-smoke-assert
+1  ci:tables-live-schema
+0  ci:purge-coverage

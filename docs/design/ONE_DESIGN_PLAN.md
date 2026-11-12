@@ -926,6 +926,37 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
 - **Next.** Two S4 test-only items remain: a joined child → parent merge → lock case, and the canary in a whole turn (the
   assembled prompt bundle and the turn record). Then the founder's decisions on the product items.
 
+#### S4 — AnA's Claude path after the demo: walked, swept, and five defects fixed (2026-11-12, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-09-claude-path-walk/` (`README.md` for the walks, `FINDINGS.md` for the
+sweep) and `docs/evidence/SPINE/S4/2026-11-12-draft-model-recorded/`.
+
+- **What the walks are.** A person's turn in a real browser, on the real server and a real PostgreSQL with RLS on.
+  The provider is a local stand-in, because this container has no Anthropic key. So they show what the app sends and
+  does, and they do not show that any real key works.
+- **Fixed on 2026-11-09, on trunk** (`78e07c9ac2`, `d8febe0207`, `c5926d7d8b`, `45dbe6a695`, `367bdf0d21`): every
+  AnA turn was refused; one email address refused a whole conversation; a confidential read ended the turn with no
+  explanation; "Start a document" went to the model that may not draft. Two of the four rest on founder decisions of
+  that day: the conversation starts at Tier 1, and the tier rule judges the copy that is sent.
+- **Fixed on 2026-11-12**, each with a test that failed first:
+  - A draft AnA saves in a live turn read "model not recorded" for good. A reader now gets the model once the turn's
+    record is filed; nothing stored is rewritten (`5e063cab58`).
+  - Drafting requests by a document's everyday name (CSR, IB, SAP and others) reach the approved drafting model.
+  - A governed write by a model that may not draft is refused before the person is asked to confirm it.
+  - The Module 2.4 and 2.6 drafting tools no longer mark a turn restricted when the project has no studies.
+  - `run_agent`'s description no longer says every child call is local-only (`f9357302ae` for these four).
+- **Open, for the founder** (`FINDINGS.md`):
+  - a personal rule saved in "What AnA remembers" makes every later turn for that person fail;
+  - an uploaded document is CONFIDENTIAL until reclassified, so AnA on Claude will not read it;
+  - AnA's own drafts are read back at Tier 3;
+  - the conversation's history reaches Claude unclassified since the Tier 1 decision (the revisit promised on
+    2026-11-09).
+- **Open, for this epic.** The release gate reads a tool-saved draft's run where it expects a record
+  (`governed-machine-claims.ts`). It cannot be shown failing until a model passes PQ. Two narrow client and council
+  items are in `FINDINGS.md`.
+- **Phase 0 is unchanged: acceptance pending.** The two S4 test-only items of 2026-11-09 are still open. The ten spike
+  suites were rerun on `a9b5af1873`: 266 of 266.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
@@ -2581,7 +2612,14 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
     its words from the pathway the project files: a De Novo reads "similar devices" and "classification and special
     controls", not "predicate" and "substantial equivalence". Its section link asks for the filing by its governed
     class. Walked in the running app on a new De Novo project. Found and recorded: M23 to M25.
-- **Next.** P-114's items 3 and 5: the EU technical file per project (M3), and the IVD 510(k) outline (M6(a)).
+  - **P-114 item 3 landed** (`cfa3f6d671`,
+    `docs/evidence/MDX-JOURNEY/2026-11-12-p114-3-eu-technical-file-per-project/`). The route that assembles a
+    project's own EU technical file existed with no caller. The IVD and CER screens' "Assemble technical file" now
+    calls it for an EU IVDR or EU MDR project, and such a project is not offered the FDA eSTAR. A file that is not
+    complete is said to be incomplete. A project on an FDA route is unchanged. Walked in the running app on new EU
+    IVDR and EU MDR projects: nothing written (422, said as such), then one section written and the ZIP downloaded
+    (200, registered, audit row chained). Found and recorded: M26 to M30.
+- **Next.** P-114's item 5: the IVD 510(k) outline (M6(a)).
 
 #### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 
@@ -2883,6 +2921,51 @@ lanes' files (the IND registers and forms, the Part 11 chain view, the CMC clien
 
 **For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
 `COORDINATION.md` row): the first six decide the most.
+
+#### F1 — AnA's answer check, and this lane's own refusals (session `session_01TTTQ1hpdMr1yAMVYH4nYdE`, 2026-11-12)
+
+The lane "AnA's reasoning is checked by an engine" (`docs/work-orders/README.md`), back after 24 days. Every open item
+was re-read at HEAD before anything was changed.
+
+**Closed by other lanes meanwhile** (checked, not redone): the device and IVD exits ask whether the filing holds the
+document's text (`8c30fa2c9`, `e05eb3d4a`); a diverged section is re-filed with Re-file saved text (`848fa68e3`); the
+seeded 510(k) template is keyed to the eSTAR outline (`be46895c9`). This lane's nine suites from October pass at HEAD
+(180 tests).
+
+**Delivered**
+
+- **The answer check reads EU law, standards, EU guidance and EMA references** (`46c66f3d6`,
+  `docs/evidence/ANA-REASONING/2026-11-12/grd-cites/`). An answer whose claims were "MDR Article 61", "ISO 14971:2019",
+  "MDCG 2020-6" or "EMA/CHMP/ICH/135/1995" had no claims for the check: eight such answers each returned `claims=0`
+  and the strip said "No specific claims to check". Four kinds are read now, under the file's rule for CFR and ICH.
+  Engine `answer-check/3`; answers stored with a `/2` check stop vouching for memory until checked again, by design.
+  Red first (21 failed), then 37 of 37; 240 pass across the 20 suites around the check; 33 of 33 mutants killed.
+  Found and fixed before it landed: AnA's own `generate_citation` formats an EU citation from the identifier it is
+  given, unverified, and the first version would have counted that echo as found.
+- **Two refusals stop naming a remedy nobody could take** (`583dc7b5f`,
+  `docs/evidence/ANA-REASONING/2026-11-12/refusal-remedies/`). The QMS approval's `FILING_DIVERGED` told the approver
+  to edit and save a controlled document under review, which refuses every write; it now gives Return for revision,
+  Re-file saved text, review, approve. The note after an approval told the approver to save a document the approval
+  had just frozen; it now says what is so and carries the server's reason. Red first (2 and 5 failed); 804 pass across
+  63 suites; 13 of 13 mutants killed.
+
+**Found, not fixed here**
+
+- TP-RL-8: tool results are staged for the model without the input that produced them (one reader; not re-read a
+  second time). `server/services/ana/tool-output-frame.ts`.
+- Author-year references are not read by the answer check; the marker list in `server/services/ana/grounding-core.ts`
+  has no EU, ISO/IEC or MDCG form.
+- A template re-seed writes no audit row (`server/services/intelligence/template-seeds.ts`).
+- Two lists say which statuses seal a document, with two and eight entries (`document-lock.ts`,
+  `authoring-permissions.ts`); no statement writes any of the other six.
+- Not re-read this round: GRD-8 (the label check) and the editor family's follow-ons.
+
+**For the founder**
+
+1. A sealed non-QMS document that left filing sections unapproved has no repair path. Recommended: refuse the approval
+   while a bound section is unfiled and could still be filed, which sends the approver to Re-file saved text before
+   signing. It narrows P-29.2; the record is in the second evidence folder above.
+2. Documents started from the 510(k) template before 2026-11-01 keep its old section codes.
 
 ## 4. How everyone works
 

@@ -35,6 +35,7 @@ import {
   REF_RE,
   cteNames,
   relationsIn,
+  relationsInSource,
   isSqlish,
 } from '../../scripts/ci/check-migration-reachability.mjs';
 
@@ -217,6 +218,61 @@ describe('a CTE is a name the query binds, however it is written', () => {
     const sql = 'SELECT id, lower(name) AS n, unnest($1::int[]) AS ids FROM people';
     expect([...cteNames(sql)]).toEqual([]);
     expect([...relationsIn(sql)]).toEqual(['people']);
+  });
+});
+
+// server/services/c2c/project-portfolio.ts (81fdef65dd) keeps one WITH clause in a constant and opens two
+// queries with it. Each literal was read alone, so `portfolio`, `workstream` and `selected` came back as three
+// tables no database has, and the live-schema guard failed the blank-database job; the purge ratchet, which
+// runs after it in that job, never ran (docs/evidence/D3/2026-11-12-live-tier-at-head/blank-database-job.md).
+// The sources below are written as text, so `${NAME}` here is the file's own interpolation, not this test's.
+describe('a CTE a query takes from the fragment it opens with', () => {
+  const FRAGMENT = [
+    'const SELECTED_CTE = `WITH portfolio AS (',
+    '  SELECT p.id, p.ws FROM regulatory_programs p WHERE p.organization_id=$1',
+    '), selected AS (',
+    '  SELECT * FROM portfolio WHERE ws=$2',
+    ')`;',
+  ].join('\n');
+  const relations = (...lines: string[]) => [...relationsInSource([FRAGMENT, ...lines].join('\n'))].sort();
+
+  it('binds the fragment’s names in every query that opens with it', () => {
+    expect(
+      relations(
+        'const COUNTS_SQL = `${SELECTED_CTE}',
+        'SELECT count(*) FROM selected`;',
+        'const IDS_SQL = `${SELECTED_CTE}',
+        'SELECT id FROM selected ORDER BY id LIMIT $3`;',
+      ),
+    ).toEqual(['regulatory_programs']);
+  });
+
+  it('still reports a table the fragment does not bind', () => {
+    // Every name borrowed is a name the guard stops asking the database about, so only the fragment's own.
+    expect(
+      relations('const JOINED_SQL = `${SELECTED_CTE}', 'SELECT s.id FROM selected s JOIN no_such_store n ON n.id=s.id`;'),
+    ).toEqual(['no_such_store', 'regulatory_programs']);
+  });
+
+  it('lends nothing to a query that does not open with it', () => {
+    // A WITH clause scopes the statement it opens. Interpolated anywhere else, `selected` is a relation again.
+    expect(
+      relations('const NESTED_SQL = `SELECT id FROM selected WHERE id IN (${SELECTED_CTE} SELECT id FROM selected)`;'),
+    ).toEqual(['regulatory_programs', 'selected']);
+  });
+
+  it('lends nothing from a constant the file does not declare', () => {
+    expect([...relationsInSource('const SQL = `${IMPORTED_CTE}\nSELECT id FROM selected`;')]).toEqual(['selected']);
+  });
+
+  it('resolves a fragment built from a fragment', () => {
+    const src = [
+      'const BASE_CTE = `WITH portfolio AS (SELECT id FROM regulatory_programs)`;',
+      'const BOTH_CTE = `${BASE_CTE}, selected AS (SELECT id FROM portfolio)`;',
+      'const SQL = `${BOTH_CTE}',
+      'SELECT id FROM selected JOIN portfolio USING (id)`;',
+    ].join('\n');
+    expect([...relationsInSource(src)]).toEqual(['regulatory_programs']);
   });
 });
 

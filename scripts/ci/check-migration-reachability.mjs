@@ -240,6 +240,89 @@ export function cteNames(sql) {
   return out;
 }
 
+const NO_NAMES = new Set();
+
+/**
+ * The CTE names each template-literal constant of one source file binds.
+ *
+ * `relationsIn` reads one string literal, so a CTE bound in another literal is
+ * invisible to it. server/services/c2c/project-portfolio.ts keeps one WITH
+ * clause in a constant and opens two queries with it:
+ *
+ *   const PORTFOLIO_SELECTED_CTE = `WITH portfolio AS (…), workstream AS (…), selected AS (…)`;
+ *   const PORTFOLIO_COUNTS_SQL = `${PORTFOLIO_SELECTED_CTE} SELECT … FROM selected …`;
+ *
+ * `portfolio`, `workstream` and `selected` then came back as three tables no
+ * database has, and ci:tables-live-schema failed the blank-database job from
+ * 81fdef65dd on (found 2026-11-12, when that job was run at head by hand:
+ * docs/evidence/D3/2026-11-12-live-tier-at-head/blank-database-job.md). Its
+ * later steps, the purge ratchet among them, never ran. One copy of the clause
+ * per query would satisfy the parser by duplicating the SQL the constant
+ * exists to keep once.
+ *
+ * A constant built from another constant binds that one's names too.
+ *
+ * @param {string} src one file's source text
+ * @returns {Map<string, Set<string>>} constant name -> lowercased CTE names
+ */
+export function fragmentCteNames(src) {
+  const own = new Map();
+  const uses = new Map();
+  for (const m of src.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=`]+)?=\s*`([\s\S]*?)`/g)) {
+    own.set(m[1], cteNames(stripSqlComments(m[2])));
+    uses.set(m[1], [...m[2].matchAll(/\$\{\s*([A-Za-z_$][\w$]*)\s*\}/g)].map((u) => u[1]));
+  }
+  // To a fixed point, so a fragment built from a fragment resolves. Names only
+  // ever join a set, and there are finitely many, so this ends.
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const [name, names] of own) {
+      for (const used of uses.get(name)) {
+        for (const cte of own.get(used) ?? NO_NAMES) {
+          if (!names.has(cte)) { names.add(cte); changed = true; }
+        }
+      }
+    }
+  }
+  return own;
+}
+
+/**
+ * The CTE names one segment takes from the fragment it OPENS with.
+ *
+ * Narrow on purpose, because every name borrowed here is a name this guard
+ * stops asking the database about. A WITH clause scopes only the statement it
+ * opens, so only an interpolation at the very start of the segment counts, and
+ * only of a constant declared in the same file. A fragment interpolated
+ * anywhere else (a subquery, a join) lends nothing, and neither does a name
+ * that is merely bound somewhere in the file.
+ *
+ * @param {string} raw one segment from `sqlishSegments`
+ * @param {Map<string, Set<string>>} fragments `fragmentCteNames` of the segment's file
+ * @returns {Set<string>}
+ */
+export function borrowedCteNames(raw, fragments) {
+  const opening = /^\s*\$\{\s*([A-Za-z_$][\w$]*)\s*\}/.exec(raw);
+  return (opening && fragments.get(opening[1])) || NO_NAMES;
+}
+
+/**
+ * The relations one file's raw SQL binds: every SQL-looking segment, each with
+ * the CTE names it takes from the fragment it opens with.
+ *
+ * @param {string} src one file's source text
+ * @returns {Set<string>}
+ */
+export function relationsInSource(src) {
+  const out = new Set();
+  const fragments = fragmentCteNames(src);
+  // Only SQL-looking string segments — never the whole file. See sqlishSegments.
+  for (const raw of sqlishSegments(src)) {
+    for (const t of relationsIn(raw, borrowedCteNames(raw, fragments))) out.add(t);
+  }
+  return out;
+}
+
 /**
  * The server source files whose SQL the reference side reads: .ts, .js AND .mjs,
  * tests excluded.
@@ -267,9 +350,10 @@ export function serverSqlFiles(dir = path.join(repoRoot, 'server')) {
  * this parser.
  *
  * @param {string} raw one segment from `sqlishSegments`
+ * @param {Set<string>} [borrowed] CTE names the segment takes from the fragment it opens with (`borrowedCteNames`)
  * @returns {Set<string>}
  */
-export function relationsIn(raw) {
+export function relationsIn(raw, borrowed = NO_NAMES) {
   const out = new Set();
   // Comments inside a query are prose, and prose discusses joins: the line
   // `-- fails to match and the LEFT JOIN yields a null name.` inside a
@@ -290,7 +374,7 @@ export function relationsIn(raw) {
   for (const m of segment.matchAll(REF_RE)) {
     if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
     const t = qualify(m[1], m[2]);
-    if (!m[1] && ctes.has(t)) continue; // unqualified name bound by this query
+    if (!m[1] && (ctes.has(t) || borrowed.has(t))) continue; // unqualified name bound by this query
     out.add(t);
   }
   return out;
@@ -316,12 +400,9 @@ export function referencedTables(dir = path.join(repoRoot, 'server')) {
   const referenced = new Map();
   for (const abs of serverSqlFiles(dir)) {
     const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
-    // Only SQL-looking string segments — never the whole file. See sqlishSegments.
-    for (const raw of sqlishSegments(read(abs))) {
-      for (const t of relationsIn(raw)) {
-        if (!referenced.has(t)) referenced.set(t, new Set());
-        referenced.get(t).add(rel);
-      }
+    for (const t of relationsInSource(read(abs))) {
+      if (!referenced.has(t)) referenced.set(t, new Set());
+      referenced.get(t).add(rel);
     }
   }
   return referenced;
