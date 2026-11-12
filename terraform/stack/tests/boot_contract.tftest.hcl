@@ -255,6 +255,19 @@ run "renders_the_boot_contract" {
     error_message = "READYZ_TOKEN must reach the API from the readyz_token secret, never as a plain variable."
   }
 
+  # Postgres is the coordination store and the API runs as more than one task
+  # (decision B6; MR-03 Stage 7 step 8, OPS-20). Live co-editing keeps each
+  # document's state in one process's memory (server/services/hocuspocus-server.ts),
+  # so two tasks would hold two copies of one document. It stays off until F-27
+  # decides it; the deploy preflight refuses a revision that turns it on.
+  assert {
+    condition = !contains(concat(
+      [for e in module.ecs.api_container.environment : e.name],
+      [for s in module.ecs.api_container.secrets : s.name],
+    ), "ENABLE_COLLAB_CRDT")
+    error_message = "The API task must not carry ENABLE_COLLAB_CRDT: live co-editing is per-process, and this stack runs more than one task."
+  }
+
   # Every upload is scanned before it is stored, and production refuses one the
   # scanner did not see (server/middleware/uploadSafety.ts: 503
   # FILE_SCAN_UNAVAILABLE). Until 2026-10-01 nothing here set CLAMAV_HOST, so a

@@ -807,6 +807,26 @@ jobs:
             echo "::error::The task definition carries ENABLE_TEST_ROUTES: test routes have no production use, and the server refuses to boot with it. Remove it from terraform/stack."
             FAIL=1
           fi
+          # Postgres is this deployment's coordination store, and the API runs
+          # as more than one task (decision B6; MR-03 Stage 7 step 8, OPS-20).
+          # Live co-editing (ENABLE_COLLAB_CRDT, server/services/hocuspocus-server.ts)
+          # keeps each open document in one process's memory, so two tasks would
+          # hold two diverging copies of one section. It stays off until F-27
+          # decides how it is coordinated. The server reads exactly `true`; a
+          # secret cannot be read here and a topology choice is not a secret, so
+          # its presence there is refused too.
+          COLLAB_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "ENABLE_COLLAB_CRDT")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json | tr -d '[:space:]')
+          COLLAB_SECRET=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.secrets // []) | map(select(.name == "ENABLE_COLLAB_CRDT")) | length
+          ' /tmp/api-td-preflight.json)
+          if [[ "${COLLAB_VALUE,,}" == "true" || "$COLLAB_SECRET" != "0" ]]; then
+            echo "::error::The task definition turns on ENABLE_COLLAB_CRDT: live co-editing keeps each document in one task's memory, and this service runs more than one task, so two people editing one section would each see a different document. Remove it from terraform/stack until F-27 decides it."
+            FAIL=1
+          fi
           # The database owner's credential belongs to the one-off database task
           # alone (MR-03 Stage 3, OPS-16; checked in the next step). That role
           # owns every table and bypasses RLS; the API boots as app_service and
