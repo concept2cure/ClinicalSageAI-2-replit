@@ -1089,8 +1089,13 @@ RBM, QMS and more; Vault … and tasking too")
     every row. A load that carries site rows rescores the sites.
   - The Lumen seed scores LMN-201's eight sites, and no longer stops on an indicator a person added
     (`bcf2b595f`).
+  - "Run central monitoring" compares each site-level indicator across the study's sites, and Critical signals
+    list first (`7e4284cc5`). On LMN-201 it raises two Critical signals for site 104.
   - Open: clinical operations has not confirmed the scoring weights; a change to a KRI's limits does not rescore;
     Site Intelligence itself stays unreached and needs a founder decision to reach or retire.
+- **AnA's three agency-commitment tools are in scope in production** (2026-11-11, `7994dc8f1`; reach map section 4
+  rank 7). They write the store Communication writes. A PMR, PMC or REMS is still fulfilled only by a person's
+  signature (P-41). Record: `docs/evidence/DESIGN/R1/2026-11-11-ana-commitment-tools/README.md`.
 
 **Finding shared with the design lead**
 

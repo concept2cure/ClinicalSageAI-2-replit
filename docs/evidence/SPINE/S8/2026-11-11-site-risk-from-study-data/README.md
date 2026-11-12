@@ -77,6 +77,34 @@ how sites come to be scored. Site oversight joins the same sites to their open s
 seed's own indicators: with "New KRI" working, a person's indicator with no reading yet stopped the next seed, and
 everything the pack seeds after monitoring.
 
+## Central monitoring, found by pressing it once the sites existed
+
+"Run central monitoring" had nothing to scan before. With eight sites scored it ran and raised nothing, although
+site 104 reads 100 beside five sites at 0. Three defects, all in existing files:
+
+1. **The scan compared only the composite.** For a snapshot scored from the study's indicators the composite is a
+   three-level roll-up; most sites tie at 0, so the median absolute deviation is 0 and the engine falls back to a
+   classic z-score, whose maximum is (n-1)/sqrt(n): 2.47 for eight sites, under the 3.5 threshold. No site could
+   ever be flagged in a cohort under 15. `central-statistical-monitoring.ts` gains `detectSiteIndicatorOutliers`:
+   each indicator is compared across the sites that have a reading, in the indicator's own direction, with no limit
+   needed. Where most sites tie it takes Iglewicz and Hoaglin's mean-absolute-deviation form of the modified
+   z-score, `(x - median) / (1.253314 * MeanAD)`. The route (`mdx-rbm-data.ts`) scans a study-indicator snapshot
+   this way and a Site Intelligence one on its four risk scores, as before. The signal says the reading, the study
+   median and the number of sites.
+2. **Critical signals were listed last.** `RbmSurfacesB.tsx` ranked a severity with `rank || 3`, and Critical's
+   rank is 0.
+3. **A signal's title was squeezed to a few words a line** by the time beside it, which does not wrap
+   (`rbm-v2.css`). The time and status now move under the title when the row is too narrow for both.
+
+In the running app on LMN-201 (`central-monitoring-1440.png`, `central-monitoring-390.png`): two Critical signals,
+listed first. "Site 104 stands apart on AE reporting lag": "at site 104, AE reporting lag is 21 days against a study
+median of 3 days across 8 sites (robust score 12.141). Higher is worse for this indicator." And the same for Open
+query aging, 58 days against 11.5. No failed request; the page does not scroll sideways at 390.
+
+Tests, red first: `central-statistical-monitoring.test.ts` (5 new cases, one of which shows the composite cannot
+flag anything); the route in `mdx-rbm-data-honest-outcomes.test.ts` (3 cases); the list order in
+`rbmSiteRiskSource.test.tsx`.
+
 ## Verified
 
 Red first in each case; each test fails with its fix removed.
@@ -113,6 +141,12 @@ Red first in each case; each test fails with its fix removed.
 - **The scoring rule is one person's call.** It is the conventional traffic-light composite and it is written on the
   screen and on every row, but nobody in clinical operations has confirmed the weights (100, 50, 0) or the tier
   cut-offs. It is two constants in `site-risk-engine.ts`.
+- **The same tie problem remains where it was not changed.** The patient-profile scan and the Site Intelligence
+  composite scan still fall back to the classic z-score when most values tie, so in a cohort under 15 they cannot
+  flag anything on such a dimension. Changing them changes which subjects are flagged, which is the validation
+  lane's to weigh (RBM has no URS or OQ yet, GA-D4-09).
+- **"Run central monitoring" is not pressed by the seed.** It is left for a person: on LMN-201 it raises the two
+  signals above.
 - **A change to a KRI's limits does not rescore the sites.** The tab says when it was scored, and "Recompute site
   risk" rescores. A load does it by itself.
 - **Site names.** The study data names a site by its number only, so the tab shows numbers.
