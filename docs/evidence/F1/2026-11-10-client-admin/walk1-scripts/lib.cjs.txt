@@ -1,0 +1,48 @@
+// walk1 helpers on top of ../walk/common.cjs: a signed-in page per person (session kept between scripts in this
+// scratch folder, never in the repository), and small readers.
+const c = require('../walk/common.cjs');
+const path = require('path'); const fs = require('fs');
+const stateFile = (email) => path.join(__dirname, `.state-${email.replace(/[^a-z0-9]/gi, '_')}.json`);
+async function signedIn(browser, email, { viewport = c.VIEWPORTS.desktop, who = email.split('@')[0], fresh = false } = {}) {
+  const f = stateFile(email);
+  if (!fresh && fs.existsSync(f)) {
+    const context = await browser.newContext({ viewport, storageState: f });
+    // The saved session stands in for one continuous browser session: the person was active just now. Without
+    // this the product's idle sign-out (15 minutes, correct) fires on the stale "last activity" in the saved state.
+    await context.addInitScript(() => { try { const k = 'c2c-idle-last-activity'; const v = JSON.parse(localStorage.getItem(k) || 'null'); if (v && v.sid) { v.at = Date.now(); localStorage.setItem(k, JSON.stringify(v)); } } catch { /* none */ } });
+    const page = await context.newPage(); attachTo(page, who);
+    await page.goto(c.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await c.sleep(800);
+    if (!/\/login/.test(page.url())) {
+      const ok = await c.api(page, 'GET', '/api/v1/auth/session');
+      if (ok.status === 200) return { page, context };
+    }
+    await context.close();
+  }
+  const context = await browser.newContext({ viewport });
+  const page = await context.newPage(); attachTo(page, who);
+  await c.signIn(page, email);
+  await context.storageState({ path: f });
+  return { page, context };
+}
+const calls = new WeakMap();
+function attachTo(page, who) {
+  const list = []; calls.set(page, list);
+  page.on('response', async (r) => {
+    const u = r.url(); if (!u.includes('/api/')) return;
+    const m = r.request().method();
+    let body = '';
+    if (m !== 'GET' || r.status() >= 400) { try { body = (await r.text()).slice(0, 500); } catch { /* gone */ } }
+    list.push({ who, status: r.status(), method: m, url: u.replace(c.BASE, ''), body: body.replace(/"(token|accessToken|refreshToken|key|secret|apiKey)":"[^"]+"/g, '"$1":"<redacted>"'), req: m !== 'GET' ? (r.request().postData() || '').slice(0, 400).replace(/"(password|currentPassword|token)":"[^"]+"/g, '"$1":"<redacted>"') : '' });
+    if (r.status() >= 400) c.log.unscoped = (c.log.unscoped || []).concat(`${who} ${r.status()} ${m} ${u.replace(c.BASE, '')} ${body.slice(0, 200)}`);
+  });
+  page.on('console', (m) => { if (m.type() === 'error') (c.log.unscopedConsole ||= []).push(`${who} ${m.text().slice(0, 300)}`); });
+  page.on('pageerror', (e) => { (c.log.unscopedConsole ||= []).push(`${who} pageerror ${String(e.message).slice(0, 300)}`); });
+}
+/** The API calls a page made since the last drain: writes always, reads only when they failed. */
+function drain(page, { reads = false } = {}) {
+  const list = calls.get(page) || []; const out = list.splice(0).filter((x) => reads || x.method !== 'GET' || x.status >= 400);
+  return out.map((x) => `${x.status} ${x.method} ${x.url}${x.req ? ' req=' + x.req : ''}${x.body ? ' -> ' + x.body : ''}`);
+}
+const controls = (page, sel = 'main') => page.locator(`${sel} button:visible, ${sel} [role=tab]:visible, ${sel} a:visible, ${sel} select:visible, ${sel} input:visible, ${sel} textarea:visible`).evaluateAll((els) => els.map((e) => `${e.tagName.toLowerCase()}${e.getAttribute('role') ? '[' + e.getAttribute('role') + ']' : ''}:${(e.getAttribute('aria-label') || e.getAttribute('placeholder') || e.textContent || e.getAttribute('name') || '').trim().replace(/\s+/g, ' ').slice(0, 70)}${e.disabled ? ' (disabled)' : ''}`));
+const errs = () => ({ http: (c.log.unscoped || []).splice(0), console: (c.log.unscopedConsole || []).splice(0) });
+module.exports = { ...c, signedIn, drain, controls, errs, stateFile };

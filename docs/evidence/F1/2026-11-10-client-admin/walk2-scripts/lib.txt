@@ -1,0 +1,60 @@
+// Walk 2 helpers on top of the shared common.cjs.
+const c = require('./common.cjs');
+const fs = require('fs');
+const STATE = (who) => `${c.SCRATCH}/walk2/.state-${who}.json`;
+
+/** A page signed in as `email`, reusing a stored session when it still works. */
+async function pageFor(browser, who, email, { viewport = c.VIEWPORTS.desktop, fresh = false, password } = {}) {
+  // A stored session older than 8 minutes is not reused: the product's own idle clock (localStorage
+  // 'c2c-idle-last-activity') would, correctly, sign it out on load.
+  const hasState = !fresh && fs.existsSync(STATE(who)) && Date.now() - fs.statSync(STATE(who)).mtimeMs < 8 * 60000;
+  const context = await browser.newContext({ viewport, storageState: hasState ? STATE(who) : undefined });
+  // The stored session is a snapshot taken before the previous script's last clicks, so the product's idle clock
+  // ('c2c-idle-last-activity') in it is older than the person's real last activity. Bring it to now when reusing
+  // the snapshot; the server's own idle window still judges the session.
+  if (hasState) await context.addInitScript(() => { try { const k = 'c2c-idle-last-activity'; const v = JSON.parse(localStorage.getItem(k) || 'null'); if (v && v.sid && !window.__w2Touched) { window.__w2Touched = true; if (Date.now() - v.at > 60000) localStorage.setItem(k, JSON.stringify({ sid: v.sid, at: Date.now() })); } } catch {} });
+  const page = await context.newPage();
+  // attach the recorders from common.cjs through newPage's contract
+  page.on('response', (r) => { if (r.status() >= 400 && r.url().includes('/api/')) record('http', `${who} ${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')}`); });
+  page.on('console', (m) => { if (m.type() === 'error') record('console', `${who} ${m.text().slice(0, 300)}`); });
+  page.on('pageerror', (e) => record('console', `${who} pageerror ${String(e.message).slice(0, 300)}`));
+  let ok = false;
+  if (hasState) {
+    await page.goto(c.BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {});
+    await c.sleep(1200);
+    ok = !/\/login/.test(page.url());
+    if (ok) { const me = await c.api(page, 'GET', '/api/users/me'); ok = me.status === 200; }
+  }
+  if (!ok) { await c.signIn(page, email, password || c.PASSWORDS[email]); }
+  await context.storageState({ path: STATE(who) });
+  return { context, page };
+}
+let sink = null;
+function record(kind, line) { if (sink) sink[kind].push(line); else (c.log[`unscoped_${kind}`] ||= []).push(line); }
+/** Like common.step, but the recorders above write into it. */
+async function step(name, fn) {
+  const cur = { http: [], console: [] };
+  sink = cur;
+  const done = await c.step(name, async (s) => { const out = await fn(s); return out; });
+  sink = null;
+  done.http.push(...cur.http); done.console.push(...cur.console);
+  return done;
+}
+/** Screenshot of the whole scrolled content: a tall viewport for one frame, then back. */
+async function tallShot(page, name, h = 3000) {
+  const vp = page.viewportSize();
+  await page.setViewportSize({ width: vp.width, height: h }); await c.sleep(700);
+  const out = await c.shot(page, name);
+  await page.setViewportSize(vp); await c.sleep(300);
+  return out;
+}
+const mainText = (page, n = 12000) => page.locator('main').first().innerText({ timeout: 5000 }).then((t) => t.replace(/\n{2,}/g, '\n').slice(0, n)).catch(() => '');
+function report() {
+  for (const s of c.log.steps) {
+    console.log('=====', s.name, '|', s.outcome, s.error || '');
+    if (s.http.length || s.console.length) console.log('HTTP', JSON.stringify(s.http), 'CONSOLE', JSON.stringify(s.console));
+    if (s.notes.length) console.log(s.notes.join('\n'));
+  }
+}
+const psql = (sql) => require('child_process').execFileSync('psql', ['-h', '/tmp', '-U', 'postgres', '-d', 'cadmin', '-At', '-F', ' | ', '-c', sql], { encoding: 'utf8' }).trim();
+module.exports = { ...c, pageFor, step, tallShot, mainText, report, psql, STATE };

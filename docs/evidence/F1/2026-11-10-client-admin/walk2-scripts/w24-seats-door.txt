@@ -1,0 +1,46 @@
+// Walk 2, flow 5h: the seat and weekly-cap routes that no screen calls, tried by the organisation's own administrator.
+const c = require('./lib.cjs');
+const org = () => c.psql('select tier, max_users, max_projects from organizations where id=7');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const probe = async (s, label, method, url, body) => { const r = await c.api(page, method, url, body); s.notes.push(`${label}: ${method} ${url} -> ${r.status} ${JSON.stringify(r.body).slice(0, 420)}\n    org row: ${org()}`); return r; };
+  await c.step('seats: read, then set purchased seats to 50 with a reason and no payment', async (s) => {
+    await probe(s, 'read', 'GET', '/api/billing/seats');
+    await probe(s, 'no reason', 'PUT', '/api/billing/seats', { seats: 50 });
+    await probe(s, 'with a reason', 'PUT', '/api/billing/seats', { seats: 50, reason: 'F1 walk 2: can a client administrator raise its own seats without paying?' });
+    await probe(s, 'read again', 'GET', '/api/billing/seats');
+    const st = await c.api(page, 'GET', '/api/billing/status'); s.notes.push('billing status now: ' + JSON.stringify(st.body));
+    const lic = await c.api(page, 'GET', '/api/module-subscriptions/license'); s.notes.push('license now: maxUsers ' + lic.body?.maxUsers + ' usage ' + JSON.stringify(lic.body?.usage?.users));
+    await page.goto(`${c.BASE}/concept2cure/licensing`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    s.notes.push('licensing strip: ' + (await c.mainText(page, 700)).replace(/\n+/g, ' | ').slice(330, 480));
+    await c.shot(page, 'w2-56-licensing-seats-after-api.png');
+    const inv = await c.api(page, 'POST', '/api/tenant-users', { name: 'Sasha Sixth', email: 'walk2.sixth@example.test', role: 'viewer' });
+    s.notes.push('invite a sixth person now: ' + inv.status + ' ' + JSON.stringify(inv.body).replace(/token=[^"&\s]+/g, 'token=<redacted>').slice(0, 260));
+    s.notes.push('audit: ' + c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(coalesce(old_values::text,''),100), left(new_values::text, 260) from audit_logs where tenant_id=7 order by occurred_at desc limit 2`));
+  });
+  await c.step('seats: put back', async (s) => {
+    await probe(s, 'restore', 'PUT', '/api/billing/seats', { seats: 5, reason: 'F1 walk 2: restore the seat count after the probe' });
+  });
+  await c.step('weekly cap: the route the page describes ("caps you set yourself")', async (s) => {
+    await probe(s, 'read', 'GET', '/api/billing/weekly-limits');
+    s.notes.push('a control for it on Usage & limits or Subscription & billing: none (controls listed in w23 and w22)');
+  });
+  await c.step('a member presses "Admin controls" on Subscription & features', async (s) => {
+    const m = (await c.pageFor(browser, 'w2member', 'walk2.member2@example.test')).page;
+    await m.goto(`${c.BASE}/concept2cure/features`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    await m.getByRole('button', { name: /^Admin controls/ }).click(); await c.sleep(1200);
+    s.notes.push('switches shown to the member: ' + await m.getByRole('switch').count());
+    const sw = m.getByRole('switch', { name: 'Disable Tasks' });
+    if (await sw.count()) {
+      await sw.scrollIntoViewIfNeeded(); await sw.click(); await c.sleep(900);
+      const d = m.locator('[role=dialog], [role=alertdialog]').first();
+      if (await d.count()) { await d.locator('textarea').fill('walk 2: a member tries the switch'); await d.locator('input').last().fill('yes'); await d.getByRole('button', { name: /Confirm and log/ }).click(); await c.sleep(2000); }
+      s.notes.push('what the member is told: ' + (await m.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 300));
+      await c.shot(m, 'w2-56-member-admin-controls.png');
+      s.notes.push('db: ' + c.psql(`select module_id, enabled from module_subscriptions where organization_id=7 and module_id='tasks'`));
+    }
+  });
+  c.report(); c.save('w2-24-seats-door');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

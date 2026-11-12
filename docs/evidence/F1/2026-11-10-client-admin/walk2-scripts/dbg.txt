@@ -1,0 +1,11 @@
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  await page.goto(`${c.BASE}/concept2cure/features`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+  console.log(page.url());
+  console.log((await c.mainText(page, 600)));
+  console.log(JSON.stringify(await page.locator('main button:visible').evaluateAll(els => els.slice(0, 12).map(e => (e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 40) + '|pressed=' + e.getAttribute('aria-pressed')))));
+  await page.screenshot({ path: c.SCRATCH + '/walk2/dbg.png' });
+  await browser.close();
+})();

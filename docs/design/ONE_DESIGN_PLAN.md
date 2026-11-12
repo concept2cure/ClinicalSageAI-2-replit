@@ -1070,6 +1070,17 @@ RBM, QMS and more; Vault … and tasking too")
     answered 503 there.
   - Open: the other system packages a Codespace lacks beside the production image (LibreOffice, Ghostscript,
     veraPDF, `xmllint`, python-docx). Not exercised.
+- **Risk-based monitoring, the two defects the GA map lists under S8** (2026-11-11, the founder: "focus entirely
+  on getting what we built surfaced correctly on the UI and working for GA"). Record:
+  `docs/evidence/SPINE/S8/2026-11-11-site-risk-from-study-data/README.md`.
+  - GA-S8-01, "New KRI" answered 500 from the screen and from AnA: one KRI INSERT, typed (`c7f797d89`).
+  - GA-S8-02, Site risk and Site oversight read "0 sites": a study's sites are scored from its own site-level
+    indicator readings where Site Intelligence holds none (`e9fad2163`). The rule is stated on the screen and on
+    every row. A load that carries site rows rescores the sites.
+  - The Lumen seed scores LMN-201's eight sites, and no longer stops on an indicator a person added
+    (`bcf2b595f`).
+  - Open: clinical operations has not confirmed the scoring weights; a change to a KRI's limits does not rescore;
+    Site Intelligence itself stays unreached and needs a founder decision to reach or retire.
 
 **Finding shared with the design lead**
 
@@ -2610,6 +2621,48 @@ caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence i
   - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
     and its eyebrow; the Vault's test asserts it;
   - the editor's project-sources read answered 409 and 503 in the walk environment.
+
+
+#### R1 and F1 — client administration, and the open screen work (2026-11-10 to 2026-11-12)
+
+The founder, 2026-11-10: "Continue across all client onboarding, setup, licensing, admin, client security settings in
+their client admin", and "add user roles per biotech, pharma, CRO, cmc". 2026-11-11: "Continue and focus entirely on
+getting what we built surfaces correctly on the UI and working for GA. Stay aligned with our roadmap and rules."
+Session `…01T2wooCZu`. Decisions: P-119 (job roles by client type) and P-125 (P-122 applied to client administration).
+
+| What | Commits | Evidence |
+|---|---|---|
+| Sign-up can be typed into; a refusal is tied to its field; the acceptances and the job title are kept | `8a65a6f3a`, `452ea0ac6` | `docs/evidence/F1/2026-11-10-client-admin/fix-signup/` |
+| P-119 slice 1: 53 standard job roles by client type, as data | `7649a63be` | `…/2026-11-10-client-admin/job-roles/`, `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md` |
+| A platform-wide agreement is published by platform administrators, with a reason and an audit row | `e44b0c0b8`, `1ec422033`, `a341aff77` | `…/2026-11-10-client-admin/fix-S1a-agreements/` |
+| The walk and audit of client administration: 162 findings in twelve lanes | `a4711c1db` | `docs/evidence/F1/2026-11-10-client-admin/README.md` |
+| The GA and sales readiness map: 246 open items at HEAD | `bf04c749c` | `docs/evidence/GA-READINESS/2026-11-10/` |
+| The whole-platform sales rehearsal: a run of show per client type, an avoid list, 17 lanes | `1be270c1a` | `docs/evidence/DEMO/2026-11-10-sales-rehearsal/` |
+| The fifth P-122 inventory: 66 capabilities of client administration, 30 restorations | `d5cad6366`, `20511f85e` | `docs/evidence/DESIGN/P-122/inventory/administration.md` |
+
+**What was found.**
+- The security findings came first: any client administrator could publish a platform-wide agreement (fixed);
+  a client administrator could set their own seats and weekly limits; approval granted modules outside the plan; any
+  member could set budgets; provisioning attached accounts without consent (each fixed in a lane, in repair).
+- In client administration little was deleted. The losses are reach and truth: twelve settings cards in one column
+  under a tab that does not open by default, and single sign-on status, seats and groups shown that the server never
+  recorded.
+- Across the other four inventories and the rehearsal, read row by row against trunk on 2026-11-11 (204 rows): 68
+  restored, 13 held by another session, 77 open and unheld, 20 waiting on the founder.
+- Two sessions fixed the same finding twice in one day (the Quality-record titles in the data room; the eSTAR
+  section requirement). In both the later copy was withdrawn unpushed. A claim that is not pushed is not a claim.
+
+**In flight** (held in `COORDINATION.md`): the 21 fix lanes of the walk and the map, each verified by a second agent,
+repaired and re-checked, then the restoration for its own screen (P-125); the Administration chain, which carries
+P-119 slices 2 and 3 (job roles in Administration and in the account); and eight lanes over unheld files, led by the
+spine's centre: a frozen, signed document that answers 409 when placed into a filing.
+
+**Next.** Land each lane as its re-check passes; file each restoration's before and after under
+`docs/evidence/DESIGN/P-122/administration/`; then the rows the scout left for a later wave, which wait on these
+lanes' files (the IND registers and forms, the Part 11 chain view, the CMC client rows, an IVD lane).
+
+**For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
+`COORDINATION.md` row): the first six decide the most.
 
 ## 4. How everyone works
 

@@ -1,0 +1,29 @@
+// Walk 2, flow 4d: the organisation switch at the API, to see which side refuses the new session.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2admin', 'walk2.admin@example.test', { fresh: true });
+  await c.step('select-organization, then the new token on /session and /users/me', async (s) => {
+    const out = await page.evaluate(async () => {
+      const key = 'trialsage_access_token';
+      const old = localStorage.getItem(key) || sessionStorage.getItem(key);
+      const where = localStorage.getItem(key) ? 'localStorage' : 'sessionStorage';
+      const claim = (t) => { const p = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return { org: p.organizationId, role: p.role, type: p.type, sid: String(p.sid).slice(0, 8), sst: p.sst, idl: p.idl, iat: p.iat, keys: Object.keys(p).sort().join(',') }; };
+      const r = await fetch('/api/auth/enterprise/select-organization', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${old}` }, body: JSON.stringify({ organizationId: 7 }) });
+      const b = await r.json();
+      const get = async (u, t) => { const x = await fetch(u, { headers: { Authorization: `Bearer ${t}` } }); return `${x.status} ${(await x.text()).slice(0, 220)}`; };
+      const res = { where, oldClaims: claim(old), switchStatus: r.status, newClaims: b.token ? claim(b.token) : null, audit: b.meta };
+      res.sessionWithNew = await get('/api/v1/auth/session', b.token);
+      res.sessionWithNew2 = await get('/api/auth/session', b.token);
+      res.meWithNew = await get('/api/users/me', b.token);
+      res.adminWithNew = await get('/api/mdx/admin', b.token);
+      res.meWithOld = await get('/api/users/me', old);
+      // leave the browser holding the live token so the walk can continue
+      if (b.token) { (where === 'localStorage' ? localStorage : sessionStorage).setItem(key, b.token); }
+      return res;
+    });
+    s.notes.push(JSON.stringify(out, null, 1));
+  });
+  c.report(); c.save('w2-16c-switch-api');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

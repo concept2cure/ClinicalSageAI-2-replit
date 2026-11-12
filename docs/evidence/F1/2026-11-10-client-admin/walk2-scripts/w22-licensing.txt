@@ -1,0 +1,45 @@
+// Walk 2, flow 5f: "Subscription & billing" (the licensing page) with no billing provider configured.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (/\/api\/billing/.test(r.url())) { let b = ''; try { b = (await r.text()).slice(0, 500); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} ${r.request().postData() ? 'body=' + r.request().postData().slice(0, 200) : ''} -> ${b}`); } });
+  const open = async () => { calls.length = 0; await page.goto(`${c.BASE}/concept2cure/licensing`, { waitUntil: 'networkidle' }); await c.sleep(2500); };
+  await c.step('licensing: as found, and what the page read', async (s) => {
+    await open();
+    s.notes.push('reads: ' + JSON.stringify(calls.map((x) => x.slice(0, 700))));
+    await c.tallShot(page, 'w2-54-licensing-1440-tall.png', 2300);
+    s.notes.push('db: org ' + c.psql('select tier, max_users, max_projects, max_storage, status from organizations where id=7') + ' | licenses rows ' + c.psql('select count(*) from licenses where organization_id=7') + ' | stripe_events ' + c.psql('select count(*) from stripe_events'));
+    s.notes.push('db org billing columns: ' + c.psql(`select string_agg(column_name, ',') from information_schema.columns where table_name='organizations' and (column_name like '%stripe%' or column_name like '%billing%' or column_name like '%subscription%' or column_name like '%trial%' or column_name like '%seat%')`));
+    s.notes.push(c.psql(`select coalesce(stripe_customer_id,'(none)'), coalesce(stripe_subscription_id,'(none)'), coalesce(subscription_status,'(null)') from organizations where id=7`));
+  });
+  await c.step('licensing: Manage billing', async (s) => {
+    const b = page.getByRole('button', { name: /Manage billing/ });
+    s.notes.push('enabled: ' + await b.isEnabled() + ' | title: ' + await b.getAttribute('title') + ' | aria-disabled: ' + await b.getAttribute('aria-disabled'));
+    calls.length = 0; await b.click({ timeout: 3000, force: true }).catch((e) => s.notes.push('click: ' + e.message.split('\n')[0])); await c.sleep(1500);
+    s.notes.push('requests: ' + JSON.stringify(calls)); s.notes.push('url ' + page.url());
+    s.notes.push('status text: ' + (await page.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 300));
+  });
+  await c.step('licensing: Monthly / Annual, and the Enterprise tab', async (s) => {
+    await page.getByRole('button', { name: /^Monthly/ }).click(); await c.sleep(600);
+    const t = await c.mainText(page, 9000); s.notes.push('monthly prices: ' + (t.match(/\$[\d,]+\/mo[^\n]*/g) || []).join(' ; '));
+    await page.getByRole('button', { name: /Enterprise \(per-user\)/ }).click(); await c.sleep(1200);
+    const t2 = await c.mainText(page, 12000); s.notes.push('enterprise tab: ' + t2.slice(t2.indexOf('Enterprise (per-user)')).replace(/\n+/g, ' | ').slice(0, 2200));
+    await c.tallShot(page, 'w2-54-licensing-enterprise-1440-tall.png', 2600);
+    s.notes.push('requests: ' + JSON.stringify(calls.map((x) => x.slice(0, 200))));
+  });
+  await c.step('licensing: Start 14-day trial (Startup Biotech), no billing provider', async (s) => {
+    await open();
+    const b = page.getByRole('button', { name: /Start 14-day trial/ }).first(); await b.scrollIntoViewIfNeeded();
+    calls.length = 0; await b.click(); await c.sleep(3500);
+    const d = page.locator('[role=dialog], [role=alertdialog]').first();
+    if (await d.count()) { s.notes.push('dialog: ' + (await d.innerText()).replace(/\n+/g, ' | ').slice(0, 600)); await c.shot(page, 'w2-54-licensing-trial-dialog.png'); }
+    s.notes.push('requests: ' + JSON.stringify(calls));
+    s.notes.push('url ' + page.url());
+    s.notes.push('status text: ' + (await page.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 500));
+    await c.shot(page, 'w2-54-licensing-trial-after.png');
+    s.notes.push('db after: ' + c.psql('select tier, max_users, status from organizations where id=7') + ' | ' + c.psql(`select coalesce(stripe_customer_id,'(none)'), coalesce(subscription_status,'(null)') from organizations where id=7`));
+  });
+  c.report(); c.save('w2-22-licensing');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
