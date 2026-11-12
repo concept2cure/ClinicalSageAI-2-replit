@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx > the IND checklist reads a placed section as placed > a section placed from the Vault reads "Placed, not yet approved", never "Not started" or a raw value 117ms
+   → expected ' IND forms — 21 CFR 312C2C-101 — Init…' to match /Placed, not yet approved/
+ × client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx > the IND checklist reads a placed section as placed > a module card names the set it counts: sections approved, not "required sections approved" 51ms
+   → expected '0/18 required sections approved' to be '0/18 sections approved' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx > the IND checklist reads a placed section as placed > a section placed from the Vault reads "Placed, not yet approved", never "Not started" or a raw value
+AssertionError: expected ' IND forms — 21 CFR 312C2C-101 — Init…' to match /Placed, not yet approved/
+
+- Expected:
+/Placed, not yet approved/
+
++ Received:
+" IND forms — 21 CFR 312C2C-101 — Initial INDC2C-101 IND — Acme — eCTD v3.2.2 (FDA) Dossier Ask AnA Is the C2C-101 IND ready to file — and what stands between you and submissionThe C2C-101 IND is 0% ready. 1 thing stands between you and a fileable submission (21 CFR 312.23).48 required sections are not yet approved and 0 Module 1 forms are open. Close those and the package is fileable. None of these are FDA findings — they are the checklist I hold so nothing slips before you submit. Ask AnA how to clear the top blockerLive from this project's IND checklist — readiness checks the full required set, including missing sections.C2C-101_IND_filing-readiness_312.23NOT YET FILEABLEIND Filing Readiness — 21 CFR 312.23C2C-101 INDAcmeInitial IND — eCTD v3.2.2 (FDA)Assessed Nov 10, 20260%1 — Module progressAdministrative information0%0/18 required sections approved2 — Module 1 forms — 21 CFR 312.23(a)(1)2a — Build & render the FDA form PDFs -- real form engineCouldn’t reach the IND forms engineThe IND forms engine didn’t respond. Sign in to your tenant and retry.3 — Blockers to filing — 1 — ready = assessed with zero blockersSectionm1.14.4.1 — Investigator's Brochure -- placed21 CFR 312.23(a)(5) Ask AnA how to clear it Regulatory clock No target date--days, projected from the target dateTarget FDA receiptNo target date set30-day clears--21 CFR312.40(b) / 312.42No target submission date is recorded for this project, so there is nothing to project. Set a target submission date on the project and the 30-day clock projects from it.Documents AnA assemblesFor filingLifecycleIND Cover Letter AnAeCTD m1.221 CFR 312.23(a)(1)Introduces the IND, summarizes contents, and highlights key points for the FDA reviewer.FDA centerNot stated — chooseCDER — Center for Drug Evaluation and ResearchCBER — Center for Biologics Evaluation and ResearcheCTD sequence this letter accompanies (optional) Assemble now PDF Draft with AnAPre-IND Briefing Book AnAMeeting packageFDA Type B (Pre-IND)FDA meeting briefing book -- background, questions, and sponsor positions for the Pre-IND meeting.This IND is not linked to a project, so its briefing book cannot be started in the editor. Link the IND submission to its project first.Letter of AuthorizationeCTD m1.4.121 CFR 312.23(b)Authorization to reference another IND or Drug Master File, with LOA-coverage QC.Referenced file typeNot stated — chooseDMFINDNDABLAReferenced file numberFile holder (grantor)Subject (drug substance / product)Authorized scope (sections, one per line)Signatory (for the holder) Assemble now PDFStatement of Right of ReferenceeCTD m1.4.221 CFR 312.23(b)The sponsor’s statement that a right of reference to another file has been granted, with its gap list.Referenced file typeNot stated — chooseDMFINDNDABLAReferenced file numberSubject (drug substance / product)Authorized scope (sections, one per line)Signatory (for the sponsor) Assemble now PDFEach document assembles here end-to-end from this IND's recorded identity plus the particulars you enter — the rendered model and its gap list are the server's verdict. The lifecycle documents can then be filed into a real eCTD sequence under this application."
+
+ ❯ client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx:66:18
+     64|     await waitFor(() => expect(view.container.textContent).toMatch(/In…
+     65|     const text = view.container.textContent ?? '';
+     66|     expect(text).toMatch(/Placed, not yet approved/);
+       |                  ^
+     67|     expect(text).not.toMatch(/Not started/);
+     68|     expect(text).not.toMatch(/\bplaced\b(?!, not yet approved)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx > the IND checklist reads a placed section as placed > a module card names the set it counts: sections approved, not "required sections approved"
+AssertionError: expected '0/18 required sections approved' to be '0/18 sections approved' // Object.is equality
+
+Expected: "0/18 sections approved"
+Received: "0/18 required sections approved"
+
+ ❯ client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx:77:18
+     75|     await waitFor(() => expect(container.querySelector('.indl-mod-m'))…
+     76|     const card = container.querySelector('.indl-mod-m')!.textContent ?…
+     77|     expect(card).toBe('0/18 sections approved');
+       |                  ^
+     78|     expect(card).not.toMatch(/required/);
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  12:14:47
+   Duration  3.62s (transform 2.14s, setup 197ms, import 2.48s, tests 172ms, environment 552ms)
+

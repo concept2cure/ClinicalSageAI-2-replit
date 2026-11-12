@@ -1753,6 +1753,19 @@ function AncovaCell({ test }: { test: AncovaTest | null | undefined }) {
   );
 }
 
+/**
+ * A recorded stability result's conformance, as recorded: only an explicit
+ * "no" is out of specification, and a result recorded with no flag was not
+ * assessed. GA-DEMO-01 (2026-11-10): `!withinSpecification` read a missing
+ * flag as OOS, and C2C-201's fourteen unflagged results showed as 14 of 14
+ * outside their limits, where one is.
+ */
+export function stabilityConformance(r: { withinSpecification?: unknown }): 'within' | 'outside' | 'not assessed' {
+  if (r.withinSpecification === true) return 'within';
+  if (r.withinSpecification === false) return 'outside';
+  return 'not assessed';
+}
+
 /** Sort pull points numerically — '12' must follow '9', not precede it. */
 function byTimePoint(a: StabilityResult, b: StabilityResult): number {
   const na = parseFloat(a.timePoint);
@@ -1824,7 +1837,9 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      their acceptance criteria — the number a stability coordinator is actually
      tracking, computed from the recorded series and nothing else. */
   const allResults = rows.flatMap((r) => readStabilityResults(r.stabilityData));
-  const oos = allResults.filter((r) => !r.withinSpecification);
+  const oos = allResults.filter((r) => stabilityConformance(r) === 'outside');
+  const notAssessed = allResults.filter((r) => stabilityConformance(r) === 'not assessed');
+  const withinCount = allResults.length - oos.length - notAssessed.length;
 
   /** Adopt the server's row after a write; never the values that were typed. */
   const adopt = (json: unknown): StabilityStudyApiRow | null => {
@@ -2076,6 +2091,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       <p className="sec-sub" data-testid="cmc-stability-counts">
         {active} active {active === 1 ? 'study' : 'studies'}
         {' · '}<span data-tone={oos.length ? 'err' : undefined}>{oos.length} outside limits</span>
+        {notAssessed.length > 0 && <>{' · '}{notAssessed.length} not assessed</>}
       </p>
       {oos.length > 0 && (
         <div className="pj-con" style={{ marginBottom: 14 }}>
@@ -2125,7 +2141,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
               <tbody>
                 {rows.map((r) => {
                   const results = readStabilityResults(r.stabilityData);
-                  const failing = results.filter((x) => !x.withinSpecification).length;
+                  const failing = results.filter((x) => stabilityConformance(x) === 'outside').length;
+                  const unassessed = results.filter((x) => stabilityConformance(x) === 'not assessed').length;
                   const isOpen = expanded === r.id;
                   return (
                     <React.Fragment key={r.id}>
@@ -2143,6 +2160,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                           ) : (
                             <button className="cm-linkish" onClick={() => setExpanded(isOpen ? null : r.id)}>
                               {results.length} recorded{failing ? <span className="sp-tone-warn"> · {failing} OOS</span> : null}
+                              {unassessed ? <span className="cm-meta"> · {unassessed} not assessed</span> : null}
                             </button>
                           )}
                         </td>
@@ -2175,9 +2193,14 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                                     <td style={{ fontWeight: 600 }}>{x.result}</td>
                                     <td>{x.specification || '--'}</td>
                                     <td>
-                                      <span className={'rd-chip tone-' + (x.withinSpecification ? 'ok' : 'err')}>
-                                        {x.withinSpecification ? 'within' : 'OOS'}
-                                      </span>
+                                      {(() => {
+                                        const c = stabilityConformance(x);
+                                        return (
+                                          <span className={'rd-chip tone-' + (c === 'within' ? 'ok' : c === 'outside' ? 'err' : 'dim')}>
+                                            {c === 'outside' ? 'OOS' : c}
+                                          </span>
+                                        );
+                                      })()}
                                     </td>
                                     <td>{x.testedOn ? new Date(x.testedOn).toLocaleDateString() : '--'}</td>
                                     <td>{x.recordedBy || '--'}</td>
@@ -2218,7 +2241,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
             <>
               <div className="cm-meta" style={{ marginBottom: 10 }}>
                 {allResults.length} {allResults.length === 1 ? 'result' : 'results'} across {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).length} {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).length === 1 ? 'study' : 'studies'} ·
-                {' '}{allResults.length - oos.length} within acceptance criteria, {oos.length} outside ·
+                {' '}{withinCount} within acceptance criteria, {oos.length} outside{notAssessed.length > 0 ? `, ${notAssessed.length} not assessed` : ''} ·
                 {' '}longest pull point recorded: {Math.max(...allResults.map((r) => parseFloat(r.timePoint) || 0))} months
               </div>
               <table className="reg-tbl">
@@ -2227,7 +2250,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                   {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).map((r) => {
                     const res = readStabilityResults(r.stabilityData);
                     const longest = Math.max(...res.map((x) => parseFloat(x.timePoint) || 0));
-                    const bad = res.filter((x) => !x.withinSpecification).length;
+                    const bad = res.filter((x) => stabilityConformance(x) === 'outside').length;
+                    const good = res.filter((x) => stabilityConformance(x) === 'within').length;
                     const fit = q1e[r.id];
                     return (
                       <tr key={r.id}>
@@ -2245,7 +2269,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                         <td>{r.batchNumber || <span className="cm-meta">--</span>}</td>
                         <td>{stabConditionText(r.storageConditions) || '--'}</td>
                         <td>{longest} mo</td>
-                        <td><span className={'rd-chip tone-' + (bad ? 'err' : 'ok')}>{res.length - bad}/{res.length}</span></td>
+                        <td><span className={'rd-chip tone-' + (bad ? 'err' : good === res.length ? 'ok' : 'dim')}>{good}/{res.length}</span></td>
                         <td>
                           {!fit ? (
                             <span className="cm-meta">{q1eRefused[r.id] ?? 'estimating…'}</span>

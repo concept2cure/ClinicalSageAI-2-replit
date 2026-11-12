@@ -1,0 +1,5 @@
+KILLED M1 old JS timestamp guess back | Tests  4 failed | 1 passed (5) | restored sha256 ok
+KILLED M2 reason left out of the preimage (lenient) | Tests  4 failed | 1 passed (5) | restored sha256 ok
+KILLED M3 a mismatch is not recorded (verifier passes anything) | Tests  3 failed | 2 passed (5) | restored sha256 ok
+KILLED M4 timestamp_text not selected | Tests  4 failed | 1 passed (5) | restored sha256 ok
+4/4 mutations killed

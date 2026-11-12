@@ -1,0 +1,1870 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > reads the open project, not the lead one 5088ms
+   → expected [ Array(5) ] to include '/api/orchestration/projects/302/readi…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mOrchestration[0m
+              [0m [0m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-dot"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12.1"[39m
+                  [33mcy[39m=[32m"12.1"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mC2C-101[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mWorkflow runs & readiness[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mThe persisted execution engine — [0m
+              [36m<code>[39m
+                [0mworkflowRuns[0m
+              [36m</code>[39m
+              [0m (versioned, pausable, replayable), human-in-the-loop [0m
+              [36m<code>[39m
+                [0mapprovalCheckpoints[0m
+              [36m</code>[39m
+              [0m, and deterministic [0m
+              [36m<code>[39m
+                [0mreadinessEvaluations[0m
+              [36m</code>[39m
+              [0m. Every step, object touched and output is recorded for Part-11 traceability.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtitle[39m=[32m"No workflow templates are registered in this deployment."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-workflow"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"13"[39m
+                  [33my[39m=[32m"13"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m New run[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metrics"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mActive runs[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0mof 0 total[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mAwaiting approval[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0mHITL gates[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+            [33mdata-tone[39m=[32m"err"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mReadiness score[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0m50%[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0m0 blockers[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+            [33mdata-tone[39m=[32m"err"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mDispatch[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0mBlocked[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0mreadinessEvaluations[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"seg orch-views"[39m
+          [33mstyle[39m=[32m"margin-bottom: 16px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b on"[39m
+          [36m>[39m
+            [0mRuns[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mApprovals[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mReadiness[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-workflow"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"13"[39m
+                [33my[39m=[32m"13"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo workflow runs yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mRuns appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > an open project with no portfolio row reads no other project, and says so 5019ms
+   → Unable to find an element with the text: /This project has no orchestration record yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mOrchestration[0m
+            [0m [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mC2C-101[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mWorkflow runs & readiness[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mThe persisted execution engine — [0m
+            [36m<code>[39m
+              [0mworkflowRuns[0m
+            [36m</code>[39m
+            [0m (versioned, pausable, replayable), human-in-the-loop [0m
+            [36m<code>[39m
+              [0mapprovalCheckpoints[0m
+            [36m</code>[39m
+            [0m, and deterministic [0m
+            [36m<code>[39m
+              [0mreadinessEvaluations[0m
+            [36m</code>[39m
+            [0m. Every step, object touched and output is recorded for Part-11 traceability.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtitle[39m=[32m"No workflow templates are registered in this deployment."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-workflow"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"13"[39m
+                [33my[39m=[32m"13"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New run[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metrics"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mActive runs[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mof 0 total[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mAwaiting approval[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mHITL gates[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mReadiness score[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m50%[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0m0 blockers[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mDispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0mBlocked[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mreadinessEvaluations[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"seg orch-views"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b on"[39m
+        [36m>[39m
+          [0mRuns[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mApprovals[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mReadiness[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-workflow"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"3"[39m
+              [33my[39m=[32m"3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"13"[39m
+              [33my[39m=[32m"13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo workflow runs yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mRuns appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mOrchestration[0m
+            [0m [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mC2C-101[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mWorkflow runs & readiness[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mThe persisted execution engine — [0m
+            [36m<code>[39m
+              [0mworkflowRuns[0m
+            [36m</code>[39m
+            [0m (versioned, pausable, replayable), human-in-the-loop [0m
+            [36m<code>[39m
+              [0mapprovalCheckpoints[0m
+            [36m</code>[39m
+            [0m, and deterministic [0m
+            [36m<code>[39m
+              [0mreadinessEvaluations[0m
+            [36m</code>[39m
+            [0m. Every step, object touched and output is recorded for Part-11 traceability.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtitle[39m=[32m"No workflow templates are registered in this deployment."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-workflow"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"13"[39m
+                [33my[39m=[32m"13"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New run[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metrics"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mActive runs[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mof 0 total[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mAwaiting approval[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mHITL gates[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mReadiness score[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m50%[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0m0 blockers[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mDispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0mBlocked[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mreadinessEvaluations[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"seg orch-views"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b on"[39m
+        [36m>[39m
+          [0mRuns[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mApprovals[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mReadiness[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-workflow"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"3"[39m
+              [33my[39m=[32m"3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"13"[39m
+              [33my[39m=[32m"13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo workflow runs yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mRuns appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > with no project open, the lead project is used, as before 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > reads the open project, not the lead one
+AssertionError: expected [ Array(5) ] to include '/api/orchestration/projects/302/readi…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mOrchestration[0m
+              [0m [0m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-dot"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12.1"[39m
+                  [33mcy[39m=[32m"12.1"[39m
+                  [33mr[39m=[32m"1"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mC2C-101[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mWorkflow runs & readiness[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mThe persisted execution engine — [0m
+              [36m<code>[39m
+                [0mworkflowRuns[0m
+              [36m</code>[39m
+              [0m (versioned, pausable, replayable), human-in-the-loop [0m
+              [36m<code>[39m
+                [0mapprovalCheckpoints[0m
+              [36m</code>[39m
+              [0m, and deterministic [0m
+              [36m<code>[39m
+                [0mreadinessEvaluations[0m
+              [36m</code>[39m
+              [0m. Every step, object touched and output is recorded for Part-11 traceability.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtitle[39m=[32m"No workflow templates are registered in this deployment."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-workflow"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"3"[39m
+                  [33my[39m=[32m"3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"8"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"8"[39m
+                  [33mx[39m=[32m"13"[39m
+                  [33my[39m=[32m"13"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m New run[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metrics"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mActive runs[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0mof 0 total[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mAwaiting approval[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0m0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0mHITL gates[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+            [33mdata-tone[39m=[32m"err"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mReadiness score[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0m50%[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0m0 blockers[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric"[39m
+            [33mdata-tone[39m=[32m"err"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-l"[39m
+            [36m>[39m
+              [0mDispatch[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"metric-n"[39m
+            [36m>[39m
+              [0mBlocked[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dmod-chip"[39m
+              [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+            [36m>[39m
+              [0mreadinessEvaluations[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"seg orch-views"[39m
+          [33mstyle[39m=[32m"margin-bottom: 16px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b on"[39m
+          [36m>[39m
+            [0mRuns[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mApprovals[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mReadiness[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-workflow"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"13"[39m
+                [33my[39m=[32m"13"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo workflow runs yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mRuns appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx:56:40
+     54|     publishShellProject({ id: NEUR.programId, title: 'NeuroPanel-Dx 51…
+     55|     mount();
+     56|     await waitFor(() => expect(urls()).toContain(`/api/orchestration/p…
+       |                                        ^
+     57|     expect(urls().some((u) => u.includes(`/${LEAD.projectId}`))).toBe(…
+     58|     expect(document.body.textContent).not.toContain('C2C-101');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > an open project with no portfolio row reads no other project, and says so
+TestingLibraryElementError: Unable to find an element with the text: /This project has no orchestration record yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mOrchestration[0m
+            [0m [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mC2C-101[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mWorkflow runs & readiness[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mThe persisted execution engine — [0m
+            [36m<code>[39m
+              [0mworkflowRuns[0m
+            [36m</code>[39m
+            [0m (versioned, pausable, replayable), human-in-the-loop [0m
+            [36m<code>[39m
+              [0mapprovalCheckpoints[0m
+            [36m</code>[39m
+            [0m, and deterministic [0m
+            [36m<code>[39m
+              [0mreadinessEvaluations[0m
+            [36m</code>[39m
+            [0m. Every step, object touched and output is recorded for Part-11 traceability.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtitle[39m=[32m"No workflow templates are registered in this deployment."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-workflow"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"13"[39m
+                [33my[39m=[32m"13"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New run[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metrics"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mActive runs[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mof 0 total[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mAwaiting approval[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mHITL gates[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mReadiness score[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m50%[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0m0 blockers[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mDispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0mBlocked[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mreadinessEvaluations[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"seg orch-views"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b on"[39m
+        [36m>[39m
+          [0mRuns[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mApprovals[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mReadiness[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-workflow"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"3"[39m
+              [33my[39m=[32m"3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"13"[39m
+              [33my[39m=[32m"13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo workflow runs yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mRuns appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mOrchestration[0m
+            [0m [0m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-dot"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12.1"[39m
+                [33mcy[39m=[32m"12.1"[39m
+                [33mr[39m=[32m"1"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mC2C-101[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mWorkflow runs & readiness[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mThe persisted execution engine — [0m
+            [36m<code>[39m
+              [0mworkflowRuns[0m
+            [36m</code>[39m
+            [0m (versioned, pausable, replayable), human-in-the-loop [0m
+            [36m<code>[39m
+              [0mapprovalCheckpoints[0m
+            [36m</code>[39m
+            [0m, and deterministic [0m
+            [36m<code>[39m
+              [0mreadinessEvaluations[0m
+            [36m</code>[39m
+            [0m. Every step, object touched and output is recorded for Part-11 traceability.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtitle[39m=[32m"No workflow templates are registered in this deployment."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-workflow"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"8"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"8"[39m
+                [33mx[39m=[32m"13"[39m
+                [33my[39m=[32m"13"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New run[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"metrics"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mActive runs[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mof 0 total[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mAwaiting approval[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mHITL gates[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mReadiness score[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0m50%[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0m0 blockers[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"metric"[39m
+          [33mdata-tone[39m=[32m"err"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-l"[39m
+          [36m>[39m
+            [0mDispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"metric-n"[39m
+          [36m>[39m
+            [0mBlocked[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dmod-chip"[39m
+            [33mstyle[39m=[32m"margin-top: 6px; background: transparent; padding: 0px; color: var(--text-300);"[39m
+          [36m>[39m
+            [0mreadinessEvaluations[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"seg orch-views"[39m
+        [33mstyle[39m=[32m"margin-bottom: 16px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b on"[39m
+        [36m>[39m
+          [0mRuns[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mApprovals[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"seg-b"[39m
+        [36m>[39m
+          [0mReadiness[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-workflow"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"3"[39m
+              [33my[39m=[32m"3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M7 11v4a2 2 0 0 0 2 2h4"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mheight[39m=[32m"8"[39m
+              [33mrx[39m=[32m"2"[39m
+              [33mwidth[39m=[32m"8"[39m
+              [33mx[39m=[32m"13"[39m
+              [33my[39m=[32m"13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo workflow runs yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mRuns appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx:64:25
+     62|     publishShellProject({ id: ORPHAN, title: 'Lane L7-shell orphan' });
+     63|     mount();
+     64|     expect(await screen.findByText(/This project has no orchestration …
+       |                         ^
+     65|     expect(urls().some((u) => u.startsWith('/api/orchestration/project…
+     66|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  12:39:58
+   Duration  11.67s (transform 606ms, setup 143ms, import 733ms, tests 10.13s, environment 473ms)
+

@@ -1,0 +1,96 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > reads the open project, not the lead one 150ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > an open project with no portfolio row reads no other project, and says so 39ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > a legacy numeric workspace id is not a project: the lead project is used 24ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > with no project open, the lead project is used, as before 25ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > a failed project read is said as one (GA-UI-27) > says the project list could not be read, not that there is no project 22ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > an empty project list is said as empty, not as a failed read (V-L7-2) > with no project open, keeps the no-lead-project hint 16ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > an empty project list is said as empty, not as a failed read (V-L7-2) > with a project open, says it is not in the list, not that the read failed 40ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > opens the template picker and POSTs the chosen template with the open program 425ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > re-reads the board from the engine instead of appending a client-built row 200ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > reports a refused start and creates nothing 173ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > never claims the deployment has no templates while the registry read is in flight 99ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > Retry on a failed run POSTs that run’s template against the same program 135ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > Replay on a completed run POSTs a NEW run of the same template 196ms
+stderr | client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > says "Starting…" while a re-run is in flight, not "Cancelling…"
+An update to Orchestration inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Orchestration inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Orchestration inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > says "Starting…" while a re-run is in flight, not "Cancelling…" 156ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > refuses, with the reason stated, a run that does not record its template 172ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Pause and Resume have no backend and do not pretend to > wf-running: Pause is disabled and names the reason 87ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Pause and Resume have no backend and do not pretend to > wf-paused: Resume is disabled and names the reason 111ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Pause and Resume have no backend and do not pretend to > a disabled run control is visually disabled, not pixel-identical to a live one 10ms
+stderr | client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running
+An update to ConversationThread inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+stderr | client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished
+An update to ConversationThread inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+When testing, code that causes React state updates should be wrapped into act(...):
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running 174ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished 67ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > still routes a draft the server DID report a stored version for 119ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > does not report a clean validation class when no document carries a validation result 503ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > still reports the rules class clear in that same render 122ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports the validation class clear once documents carry validation results 144ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports neither class clear when the evaluation inventoried nothing 58ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > shows the class its findings when the assessment produced some 77ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > workflow runs: renders a retry, and pressing it issues another request 140ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > approval gates: renders a retry, and pressing it issues another request 283ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > no longer instructs the user to "sign in and retry" 50ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapReadiness > adopts the ReadinessAssessment fields with honest semantics 23ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapReadiness > marks status ready only when the engine says ready 1ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapReadiness > rejects payloads without the assessment fields (fail-closed) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns > adopts executions with template display names, newest first 3ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns > rejects empty or malformed workflow lists (fail-closed to fixture) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapCps > adopts persisted checkpoints through the { data } envelope 2ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapCps > rejects empty envelopes and rows without the gate keys (fail-closed) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns carries the template a run can be started from again > keeps templateId on the display row 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns carries the template a run can be started from again > reports NO template rather than inventing one when the engine did not record it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns carries the template a run can be started from again > still titles a run whose template is not in the registry, without claiming a name 1ms
+ Test Files  5 passed (5)
+      Tests  39 passed (39)
+   Start at  01:50:41
+   Duration  19.89s (transform 7.11s, setup 663ms, import 10.50s, tests 3.88s, environment 3.49s)

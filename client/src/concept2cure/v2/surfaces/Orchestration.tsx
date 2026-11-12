@@ -8,6 +8,7 @@ import { useDialog } from '../useDialog';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
+import { shellProgramId, useShellProject } from '../shellProject';
 
 /* ── Display-contract types (mapped from the real orchestration backends) ── */
 
@@ -285,30 +286,57 @@ export function mapCps(payload: unknown): OrchCheckpoint[] | null {
   });
 }
 
-/** Discover the org's lead program the same way AnaCommand.tsx does —
- *  GET /api/report-os/portfolio/org → attentionRanked[0].projectId is the
- *  integer projects.id the orchestration endpoints operate on. Fails closed
- *  to null (pid stays null and every panel shows its honest empty state). */
-function useOrchProgram(): { pid: number; label: string } | null {
-  const [prog, setProg] = useState<{ pid: number; label: string } | null>(null);
+/** The project Orchestration reads, from GET /api/report-os/portfolio/org,
+ *  whose members carry the integer projects.id the orchestration endpoints
+ *  operate on and the regulatory program id the shell opens.
+ *
+ *  It follows the shell's open project (GA-UI-27): with NeuroPanel-Dx open it
+ *  read the organisation's first-ranked project, so the breadcrumb named one
+ *  project and the screen read and ran another's. An open project is matched
+ *  by its program id; with no match it reads nothing
+ *  and `unmatched` names it, never another project. With no project open (or
+ *  a legacy numeric workspace id, which is not a project: shellProgramId) the
+ *  lead project (attentionRanked[0]) is read, as AnaCommand.tsx does. Fails
+ *  closed to null: pid stays null and every panel shows its honest empty state. */
+type OrchProgram = { prog: { pid: number; label: string } | null; unmatched: string | null; unread?: boolean };
+
+/** What the portfolio read gives Orchestration (pure; V-L7-1, V-L7-2).
+ *  Only a read error is "unread". A 200 with no data ({ data: null } for an
+ *  organisation with no top-level projects) is a real, empty list: an open
+ *  project is then unmatched, and with none open there is no lead project. */
+export function pickOrchProgram(
+  res: { data: unknown; error?: string | null },
+  openId: string | null,
+  openTitle: string | null,
+): OrchProgram {
+  if (res.error) return { prog: null, unmatched: null, unread: true };
+  const data = (res.data ?? {}) as any;
+  const rows = data.attentionRanked || (data.data && data.data.attentionRanked);
+  const list: any[] = Array.isArray(rows) ? rows : [];
+  const chosen = openId == null
+    ? list[0] ?? null
+    : list.find((m) => m && m.programId != null && String(m.programId) === openId) ?? null;
+  if (chosen && typeof chosen.projectId === 'number') {
+    return { prog: { pid: chosen.projectId, label: String(chosen.code || chosen.name || 'Project ' + chosen.projectId) }, unmatched: null };
+  }
+  return { prog: null, unmatched: openId != null ? openTitle : null };
+}
+
+function useOrchProgram(): OrchProgram {
+  const shell = useShellProject();
+  const openId = shellProgramId(shell);
+  const openTitle = shell ? String(shell.title || shell.code || shell.product || 'this project') : null;
+  const [state, setState] = useState<OrchProgram>({ prog: null, unmatched: null });
   useEffect(() => {
     let cancelled = false;
+    setState({ prog: null, unmatched: null });
     if (!connected()) return undefined;
     liveGetOrNull<any>('/api/report-os/portfolio/org').then((res) => {
-      if (cancelled || res.error || !res.data) return;
-      const data = res.data as any;
-      const rows = (data.attentionRanked || (data.data && data.data.attentionRanked)) || [];
-      const first = Array.isArray(rows) ? rows[0] : null;
-      if (first && typeof first.projectId === 'number') {
-        setProg({
-          pid: first.projectId,
-          label: String(first.code || first.name || 'Project ' + first.projectId),
-        });
-      }
+      if (!cancelled) setState(pickOrchProgram(res, openId, openTitle));
     });
     return () => { cancelled = true; };
-  }, []);
-  return prog;
+  }, [openId, openTitle]);
+  return state;
 }
 
 /* ── Helpers ── */
@@ -394,8 +422,14 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const [selId, setSel] = useState<string | null>(null);
 
   /* ── Live adoption — every panel fixture-free (real → empty → error) ── */
-  const prog = useOrchProgram();
+  const { prog, unmatched, unread: projectUnread } = useOrchProgram();
   const pid = prog ? prog.pid : null;
+  /** Why nothing is read: the open project has no orchestration record, or no project is in scope. */
+  const noProjectHint = (what: string) => projectUnread
+    ? `The project list could not be read, so no ${what} is shown. This is a failed read, not an empty one.`
+    : unmatched
+    ? `This project is not in the organisation's project list for orchestration, so no ${what} is read for it. Other projects are not shown here.`
+    : `No lead project is identified for this organization yet. Once a project is in scope, its ${what} appears here.`;
   const [newRunOpen, setNewRunOpen] = useState(false);
   /** Bumped by "Re-evaluate" — the readiness read recomputes on every call. */
   const [rdEpoch, setRdEpoch] = useState(0);
@@ -736,7 +770,11 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const anaContext = useMemo(() => {
     const parts: string[] = [];
     if (pid == null) {
-      parts.push('Orchestration — no lead project identified, so no runs, readiness or templates are being read.');
+      parts.push(projectUnread
+        ? 'Orchestration — the project list could not be read, so no runs, readiness or templates are being read.'
+        : unmatched
+        ? "Orchestration — the open project is not in the organisation's project list for orchestration, so no runs, readiness or templates are being read."
+        : 'Orchestration — no lead project identified, so no runs, readiness or templates are being read.');
     } else {
       parts.push(`Orchestration for ${progLabel}, ${view} view.`);
       if (runsState.loading) parts.push('Workflow runs are still loading.');
@@ -805,7 +843,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
       ],
     };
   }, [
-    pid, progLabel, view, runsState.loading, runsState.error, runsReady, runs, activeRunCount,
+    pid, progLabel, unmatched, projectUnread, view, runsState.loading, runsState.error, runsReady, runs, activeRunCount,
     cpsState.loading, cpsState.error, gatesReady, cps, pendingGateCount,
     rdState.loading, rdState.error, r, tplState.error, tplSettled, templates, sel,
   ]);
@@ -979,7 +1017,11 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             disabled={pid == null || !tplSettled || templates.length === 0 || Boolean(busyRun)}
             title={
               pid == null
-                ? 'No lead project is identified for this organization yet, so there is nothing to start a workflow run against.'
+                ? (projectUnread
+                  ? 'The project list could not be read, so there is nothing to start a workflow run against.'
+                  : unmatched
+                  ? "This project is not in the organisation's project list for orchestration, so there is nothing to start a workflow run against."
+                  : 'No lead project is identified for this organization yet, so there is nothing to start a workflow run against.')
                 : tplState.error
                   // An unreachable registry is NOT an empty registry. Saying
                   // "none are registered" here would render a failed read as a
@@ -1047,7 +1089,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             icon={I.workflow}
             title="No workflow runs yet"
             hint={pid == null
-              ? 'No lead project is identified for this organization yet. Once a project is in scope, its executed workflow runs appear here.'
+              ? noProjectHint('workflow run history')
               : 'Runs appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.'}
           />
         ) : (
@@ -1305,7 +1347,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             icon={I.fileText}
             title="No readiness evaluation yet"
             hint={pid == null
-              ? 'No lead project is identified for this organization yet. Once a project is in scope, its readiness is computed here.'
+              ? noProjectHint('readiness evaluation')
               : 'The readiness engine has nothing to score for this project yet. Add governed documents / CMC objects, then re-evaluate.'}
           />
         ) : (

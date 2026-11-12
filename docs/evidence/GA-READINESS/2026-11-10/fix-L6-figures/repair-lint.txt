@@ -1,0 +1,26 @@
+judgment-engine.ts 7
+   350 @typescript-eslint/no-unused-vars 'comp' is defined but never used. Allowed unused args must match /^_/u.
+   509 @typescript-eslint/no-unused-vars 'comp' is defined but never used. Allowed unused args must match /^_/u.
+   557 complexity Method 'assessMissingDataRisk' has a complexity of 16. Maximum allowed is 15.
+   623 complexity Method 'assessComparatorAppropriateness' has a complexity of 19. Maximum allowed is 15.
+   623 @typescript-eslint/no-unused-vars 'comp' is defined but never used. Allowed unused args must match /^_/u.
+   653 max-lines File has too many lines (753). Maximum allowed is 500.
+   771 complexity Method 'suggestMethod' has a complexity of 17. Maximum allowed is 15.
+document-generator.ts 11
+   128 max-params Method 'generate' has too many parameters (7). Maximum allowed is 5.
+   161 max-params Method 'generateContent' has too many parameters (6). Maximum allowed is 5.
+   205 complexity Method 'generateSampleSizeRationale' has a complexity of 22. Maximum allowed is 15.
+   445 complexity Method 'generateSAPSectionDraft' has a complexity of 19. Maximum allowed is 15.
+   552 @typescript-eslint/no-unused-vars 'domain' is defined but never used. Allowed unused args must match /^_/u.
+   644 @typescript-eslint/no-unused-vars 'judgment' is defined but never used. Allowed unused args must match /^_/u.
+   645 @typescript-eslint/no-unused-vars 'domain' is defined but never used. Allowed unused args must match /^_/u.
+   646 max-lines File has too many lines (766). Maximum allowed is 500.
+   646 @typescript-eslint/no-unused-vars 'regulatory' is defined but never used. Allowed unused args must match /^_/u.
+   735 @typescript-eslint/no-unused-vars 'meta' is defined but never used. Allowed unused args must match /^_/u.
+   750 complexity Method 'generateFullStatisticalAnalysisPlan' has a complexity of 20. Maximum allowed is 15
+HEAD:
+    +1  server/services/ana-biostats/judgment-engine.ts  (8 -> 9)
+         server/services/ana-biostats/judgment-engine.ts:570:3  complexity  Method 'assessFragility' has a complexity of 25. Maximum allowed is 15.
+         server/services/ana-biostats/judgment-engine.ts:623:13  max-depth  Blocks are nested too deeply (5). Maximum allowed is 4.
+    +1  server/services/cmc/batch-release-evidence.ts  (0 -> 1)
+         server/services/cmc/batch-release-evidence.ts:174:8  complexity  Function 'evaluateRecordedRelease' has a complexity of 17. Maximum allowed is 15.

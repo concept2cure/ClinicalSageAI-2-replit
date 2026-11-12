@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { evidenceFingerprint, readRecordedReleaseTests } from '../batch-release-evidence';
+import {
+  evaluateRecordedRelease,
+  evidenceFingerprint,
+  readRecordedReleaseTests,
+  recordedResultVerdict,
+} from '../batch-release-evidence';
 
 let pg: PGlite;
 beforeAll(async () => {
@@ -15,7 +20,13 @@ beforeAll(async () => {
     (1,7,'B-1',NULL,'ORG-SAMPLE','finished-product','AM-1','{"value":99.2}','{"limit":98}','pass',4,5,'2026-11-01','2026-11-01'),
     (2,7,'B-1','program-a','A-SAMPLE','finished-product','AM-1','{"value":99.2}','{"limit":98}','pass',4,5,'2026-11-01','2026-11-01'),
     (3,7,'B-1','program-b','B-SAMPLE','finished-product','AM-1','{"value":99.2}','{"limit":98}','pass',4,5,'2026-11-01','2026-11-01'),
-    (4,8,'B-1',NULL,'FOREIGN-SAMPLE','finished-product','AM-1','{"value":99.2}','{"limit":98}','pass',4,5,'2026-11-01','2026-11-01')`);
+    (4,8,'B-1',NULL,'FOREIGN-SAMPLE','finished-product','AM-1','{"value":99.2}','{"limit":98}','pass',4,5,'2026-11-01','2026-11-01'),
+    -- GA-DEMO-02: the demo's DS-2502-R2, as the QC mapper stores it. Recorded
+    -- "pass" at 97.4 % against 98.0 - 102.0 %, reviewed, beside a true pass.
+    (5,7,'C2C201-DS-2502','c2c-201','DS-2502-R1','in-process','HPLC-UV assay','{"value":"99.6","unit":"%"}','{"acceptanceCriteria":"98.0 - 102.0 %"}','pass',4,5,'2026-04-01','2026-04-01'),
+    (6,7,'C2C201-DS-2502','c2c-201','DS-2502-R2','in-process','HPLC-UV assay','{"value":"97.4","unit":"%","observation":"retest requested"}','{"acceptanceCriteria":"98.0 - 102.0 %"}','pass',4,5,'2026-04-06','2026-04-06'),
+    -- V-L1-04: the same contradiction recorded with the word "Passed".
+    (7,7,'ALIAS-1','c2c-201','ALIAS-R1','in-process','HPLC-UV assay','{"value":"97.4","unit":"%"}','{"acceptanceCriteria":"98.0 - 102.0 %"}','Passed',4,5,'2026-04-06','2026-04-06')`);
 });
 afterAll(async () => { await pg?.close(); });
 const queryable = { query: async (sql: string, params?: unknown[]) => pg.query(sql, params) };
@@ -54,5 +65,72 @@ describe('batch evidence keeps its exact recorded scope and content', () => {
     await pg.query("UPDATE qc_testing SET reviewed_by=6, updated_at='2026-11-02' WHERE id=3");
     const after = await readRecordedReleaseTests(queryable, 7, { batch_number: 'B-1', project_id: 'program-b' });
     expect(evidenceFingerprint(after)).not.toBe(evidenceFingerprint(before));
+  });
+});
+
+/**
+ * GA-DEMO-02. A recorded "pass" was trusted as a pass: DS-2502-R2 is recorded
+ * as a pass at 97.4 % against its own criterion of 98.0 - 102.0 %, and the
+ * release evaluation read `pass_fail_status` and nothing else, so the batch
+ * was eligible for a signed release over a result its own limit fails.
+ */
+describe('a recorded pass that contradicts its own criterion is not a pass', () => {
+  const ds = { batch_number: 'C2C201-DS-2502', project_id: 'c2c-201' };
+
+  it('compares the recorded value with the recorded criterion', () => {
+    expect(recordedResultVerdict({ value: '97.4', unit: '%' }, [{ acceptanceCriteria: '98.0 - 102.0 %' }])).toBe('outside');
+    expect(recordedResultVerdict({ value: '99.6', unit: '%' }, [{ acceptanceCriteria: '98.0 - 102.0 %' }])).toBe('within');
+    expect(recordedResultVerdict({ value: '0.61' }, ['NMT 0.5 %'])).toBe('outside');
+    expect(recordedResultVerdict({ value: '93' }, ['NLT 80 %'])).toBe('within');
+    expect(recordedResultVerdict({ value: '79' }, ['NLT 80 %'])).toBe('outside');
+    expect(recordedResultVerdict({ value: '103' }, ['98.0 - 102.0 %'])).toBe('outside');
+    /* Nothing to compare is said as itself, never as within. */
+    expect(recordedResultVerdict({ value: 99.2 }, [{ limit: 98 }])).toBe('not-comparable');
+    expect(recordedResultVerdict({ observation: 'clear' }, ['NMT 0.5 %'])).toBe('not-comparable');
+    expect(recordedResultVerdict(null, [null])).toBe('not-comparable');
+  });
+
+  /* V-L1-02: a limit is inclusive. A result exactly at its limit meets it, and
+     must never refuse a signed release. */
+  it('a result exactly at a limit is within it', () => {
+    expect(recordedResultVerdict({ value: '98.0' }, ['98.0 - 102.0 %'])).toBe('within');
+    expect(recordedResultVerdict({ value: '102.0' }, ['98.0 - 102.0 %'])).toBe('within');
+    expect(recordedResultVerdict({ value: '0.5' }, ['NMT 0.5 %'])).toBe('within');
+    expect(recordedResultVerdict({ value: '80' }, ['NLT 80 %'])).toBe('within');
+  });
+
+  it('a pass recorded as "Passed" over an out-of-criterion value is contradicted too (V-L1-04)', async () => {
+    const rows = await readRecordedReleaseTests(queryable, 7, { batch_number: 'ALIAS-1', project_id: 'c2c-201' });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ passFail: 'passed', passed: false, contradicted: true });
+  });
+
+  it('reads DS-2502-R2 as contradicted and not passed, and DS-2502-R1 as passed', async () => {
+    const rows = await readRecordedReleaseTests(queryable, 7, ds);
+    const r1 = rows.find((r) => r.sampleId === 'DS-2502-R1');
+    const r2 = rows.find((r) => r.sampleId === 'DS-2502-R2');
+    expect(r1).toMatchObject({ passFail: 'pass', passed: true, contradicted: false });
+    expect(r2).toMatchObject({ passFail: 'pass', passed: false, contradicted: true });
+  });
+
+  it.each(['approved', 'conditional'] as const)('refuses a %s release of the batch and names the contradicted result', async (decision) => {
+    const rows = await readRecordedReleaseTests(queryable, 7, ds);
+    const verdict = evaluateRecordedRelease(decision, rows, 'C2C201-DS-2502');
+    expect(verdict).toHaveProperty('refusal');
+    const refusal = (verdict as { refusal: string }).refusal;
+    expect(refusal).toContain('DS-2502-R2');
+    expect(refusal).toMatch(/recorded as a pass/);
+    expect(refusal).toMatch(/outside its recorded acceptance criterion/);
+    expect(refusal).not.toContain('DS-2502-R1');
+  });
+
+  it('still lets the batch be rejected', async () => {
+    const rows = await readRecordedReleaseTests(queryable, 7, ds);
+    expect(evaluateRecordedRelease('rejected', rows, 'C2C201-DS-2502')).toEqual({ releaseStatus: 'rejected', allPassed: false });
+  });
+
+  it('a result with no comparable criterion keeps its recorded disposition', async () => {
+    const rows = await readRecordedReleaseTests(queryable, 7, { batch_number: 'B-1', project_id: 'program-a' });
+    expect(rows[0]).toMatchObject({ passed: true, contradicted: false });
   });
 });

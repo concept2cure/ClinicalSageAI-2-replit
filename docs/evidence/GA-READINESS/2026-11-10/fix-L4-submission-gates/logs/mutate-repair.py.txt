@@ -1,0 +1,28 @@
+import hashlib, subprocess, re
+R='/home/user/ClinicalSageAI-2-replit/'
+CMP='server/routes/ectd-compile.ts'
+ASM='server/services/ind-lifecycle/ind-checklist-view-assembler.ts'
+T_CMP=['server/routes/__tests__/ectd-compile-validate-rule-set.test.ts']
+T_ASM=['server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts']
+muts=[
+ ('R1 (verifier V2) rule-set note pushed before the counts',CMP,"    const passCount = results.filter(r => r.severity === 'info').length;\n","    results.push(ruleSetFinding());\n    const passCount = results.filter(r => r.severity === 'info').length;\n",T_CMP),
+ ('R2 rule-set note pushed twice',CMP,"    // Last, outside the counts.\n    results.push(ruleSetFinding());\n","    // Last, outside the counts.\n    results.push(ruleSetFinding());\n    results.push(ruleSetFinding());\n",T_CMP),
+ ('R3 (verifier V5) rp.deleted_at IS NULL dropped',ASM,"rp.organization_id = $2 AND rp.deleted_at IS NULL","rp.organization_id = $2",T_ASM),
+ ('R4 (verifier V6) FORM_CODES guard dropped',ASM,"  if (FORM_CODES.has(code) || code === FORMS_HEADING) return;\n","  if (code === FORMS_HEADING) return;\n",T_ASM),
+ ('R5 (verifier V6b) FORMS_HEADING guard dropped',ASM,"  if (FORM_CODES.has(code) || code === FORMS_HEADING) return;\n","  if (FORM_CODES.has(code)) return;\n",T_ASM),
+ ('R6 (verifier V10) unprovisioned rethrown',ASM,"    if (isUnprovisioned(err)) return new Set();\n    throw err;\n  }\n}\n\n/** An absent","    throw err;\n  }\n}\n\n/** An absent",T_ASM),
+ ('R7 placeVaultLeaf ownership check dropped',ASM,"  if (subId == null || !l.document_uuid || !ownedVaultDocs.has(String(l.document_uuid).toLowerCase())) return;\n","  if (subId == null || !l.document_uuid) return;\n",T_ASM),
+ ('R8 placeVaultLeaf never called',ASM,"      placeVaultLeaf(l, seqToSub, ownedVaultDocs, placedBySub);\n","",T_ASM),
+]
+for name,f,a,b,tests in muts:
+    p=R+f; src=open(p).read(); h=hashlib.sha256(src.encode()).hexdigest()
+    if src.count(a)!=1: print(name,'-> ANCHOR NOT UNIQUE',src.count(a),flush=True); continue
+    open(p,'w').write(src.replace(a,b))
+    try:
+        r=subprocess.run(['npx','vitest','run',*tests,'--maxWorkers=1'],cwd=R,capture_output=True,text=True,timeout=600)
+        out=r.stdout+r.stderr
+        m=re.findall(r'Tests\s+[^\n]*',out)
+        print(name,'->','KILLED' if r.returncode!=0 else 'SURVIVED',m[-1] if m else out[-300:],flush=True)
+    finally:
+        open(p,'w').write(src)
+        print('  sha256 restored', hashlib.sha256(open(p).read().encode()).hexdigest()==h, flush=True)
