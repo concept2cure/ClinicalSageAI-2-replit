@@ -580,7 +580,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
         </DataGate>
 
         <div className="section-head" style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 14 }}>Needs attention</h2>
+          <h2>Needs attention</h2>
         </div>
         <DataGate
           state={rbqm.attention}

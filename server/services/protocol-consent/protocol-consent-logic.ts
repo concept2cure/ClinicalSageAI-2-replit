@@ -307,3 +307,50 @@ export function consentDocumentGate(sections: { code: string; text: string }[]):
     })),
   };
 }
+
+/** What the gate means for an approval of an informed-consent document (P-102). */
+export type ConsentApprovalVerdict =
+  | { kind: 'clear' }
+  /** The approver stated the study is not an applicable clinical trial; the approval records it. */
+  | { kind: 'stated_not_applicable' }
+  | { kind: 'refused'; code: 'CONSENT_INCOMPLETE' | 'CONSENT_TRIAL_STATUS_REQUIRED'; message: string; elements: string[] };
+
+const CTGOV = 'clinicaltrials_gov';
+
+/**
+ * The approval's verdict from the document's gate (P-102, slice 2). An element
+ * 21 CFR 50.25(a) requires refuses the approval and nothing lifts it. The
+ * ClinicalTrials.gov statement (50.25(c)) is owed only by an applicable
+ * clinical trial, and no record holds a study's status, so the approver is
+ * asked; `statedNotApplicable` is their answer, which the caller records on the
+ * approval. Pure.
+ */
+export function consentApprovalVerdict(gate: ConsentDocumentGate, statedNotApplicable: boolean): ConsentApprovalVerdict {
+  const open = gate.elements.filter((e) => !e.complete);
+  if (open.length === 0) return { kind: 'clear' };
+  const basic = open.filter((e) => e.key !== CTGOV);
+  const ctgovOpen = open.length > basic.length;
+  if (basic.length > 0) {
+    const n = basic.length;
+    return {
+      kind: 'refused',
+      code: 'CONSENT_INCOMPLETE',
+      elements: basic.map((e) => e.key),
+      message:
+        `Not approved — this informed consent form does not yet meet ${n} required element${n === 1 ? '' : 's'} of informed consent ` +
+        `(21 CFR 50.25(a)): ${basic.map((e) => e.title).join('; ')}. ` +
+        (ctgovOpen ? 'The ClinicalTrials.gov statement is also missing; it is required for an applicable clinical trial. ' : '') +
+        'The editor’s Check says what each one lacks. Nothing was signed.',
+    };
+  }
+  if (statedNotApplicable) return { kind: 'stated_not_applicable' };
+  return {
+    kind: 'refused',
+    code: 'CONSENT_TRIAL_STATUS_REQUIRED',
+    elements: [CTGOV],
+    message:
+      'Not approved — this informed consent form has no ClinicalTrials.gov statement, which 21 CFR 50.25(c) requires for an ' +
+      'applicable clinical trial. Add it, or, if this study is not an applicable clinical trial, say so and approve again: ' +
+      'that statement is recorded with your approval. Nothing was signed.',
+  };
+}

@@ -1,0 +1,842 @@
+{
+ "upperSelectors": [
+  "app.css .mdx-shell .pg-list-hdr",
+  "app.css .mdx-shell .se-row.header",
+  "app.css .mdx-shell .se-matrix-multi.header",
+  "app.css .mdx-shell .indesign-phase",
+  "app.css .mdx-shell .ed-tree-title",
+  "app.css .mdx-shell .ed-tree-vlabel",
+  "app.css .mdx-shell .ed-masthead-lbl",
+  "app.css .mdx-shell .ed-prov-lbl",
+  "app.css .mdx-shell .ed-flag-rule",
+  "app.css .mdx-shell .ed-table th",
+  "app.css .mdx-shell .ed-verdict",
+  "app.css .mdx-shell .ed-comment-suggest-lbl",
+  "app.css .mdx-shell .docs-type",
+  "app.css .mdx-shell .docs-framework",
+  "app.css .mdx-shell .docs-esig",
+  "app.css .mdx-shell .vault-rail-lbl",
+  "app.css .mdx-shell .vault-tree-lbl",
+  "app.css .mdx-shell .vault-type",
+  "app.css .mdx-shell .drawer-eyebrow",
+  "app.css .mdx-shell .drawer-meta .k",
+  "app.css .mdx-shell .drawer-section-lbl",
+  "app.css .mdx-shell .sub-detail-eyebrow",
+  "app.css .mdx-shell .sub-gate-lbl",
+  "app.css .mdx-shell .sub-gate-k",
+  "app.css .mdx-shell .ph-rec-kind",
+  "app.css .mdx-shell .ph-qms-scope",
+  "app.css .mdx-shell .gov-action-eyebrow",
+  "app.css .mdx-shell .udi-mri",
+  "app.css .mdx-shell .pv-capa-label",
+  "app.css .mdx-shell .eng-blocker-kind",
+  "app.css .mdx-shell .ps-type",
+  "app.css .mdx-shell .ps-detail-eyebrow",
+  "app.css .mdx-shell .ps-meeting-state",
+  "app.css .mdx-shell .ps-q-status",
+  "app.css .mdx-shell .ps-q-pos-lbl",
+  "app.css .mdx-shell .ps-q-fda-lbl",
+  "app.css .mdx-shell .ps-q-commit-lbl",
+  "app.css .mdx-shell .ps-q-commit-state",
+  "app.css .mdx-shell .ps-commit-state",
+  "pathway-tabs.css .mdx-shell .audit-day",
+  "pathway-tabs.css .mdx-shell .audit-chain-label",
+  "pathway-tabs.css .mdx-shell .audit-chain-k",
+  "pathway-tabs.css .mdx-shell .corr-refs-label",
+  "pathway-tabs.css .mdx-shell .ap-stage-pill",
+  "pathway-tabs.css .mdx-shell .ap-sign-attest-label",
+  "pathway-tabs.css .mdx-shell .dd-prev-mini-label",
+  "pathway-tabs.css .mdx-shell .dd-att-tag",
+  "pathway-tabs.css .mdx-shell .dd-act-tag",
+  "files-tree.css .mdx-shell .ftp-attach-grid .lbl"
+ ],
+ "screens": {
+  "01-device-510k": {
+   "arrival": {
+    "upper": {},
+    "headings": {},
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Stage 1 of 7 — Intake · Filing · 2027-03",
+      "[Demo · MDX] NeuroPanel-Dx 510(k) · Clas",
+      "The openFDA clearance lookup could not r",
+      "7 of 19 fields have a governed source"
+     ],
+     "section-sub | system-ui 11px/400 rgb(113, 112, 106)": [
+      "Optional Vault attachments. Choose each ",
+      "No Vault attachments selected."
+     ]
+    },
+    "thead": {
+     "cb | system-ui 12px/500 rgb(100, 98, 92)": [
+      ""
+     ],
+     "TH | system-ui 12px/500 rgb(100, 98, 92)": [
+      "K-number",
+      "Device",
+      "Cleared",
+      "Match"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No substantial-equivalence rows yet The SE matrix is built by predicate intelligence, whic",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty"
+    ]
+   },
+   "tab: Workspace Predicate · SE · eSTAR": {
+    "upper": {},
+    "headings": {},
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Stage 1 of 7 — Intake · Filing · 2027-03",
+      "[Demo · MDX] NeuroPanel-Dx 510(k) · Clas",
+      "The openFDA clearance lookup could not r",
+      "7 of 19 fields have a governed source"
+     ],
+     "section-sub | system-ui 11px/400 rgb(113, 112, 106)": [
+      "Optional Vault attachments. Choose each ",
+      "No Vault attachments selected."
+     ]
+    },
+    "thead": {
+     "cb | system-ui 12px/500 rgb(100, 98, 92)": [
+      ""
+     ],
+     "TH | system-ui 12px/500 rgb(100, 98, 92)": [
+      "K-number",
+      "Device",
+      "Cleared",
+      "Match"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No substantial-equivalence rows yet The SE matrix is built by predicate intelligence, whic",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty",
+     "status-pill: empty"
+    ]
+   },
+   "tab: Audit trail 98 21 CFR Part 11": {
+    "upper": {
+     "pathway-tabs.css .mdx-shell .audit-day": [
+      "THURSDAY, NOVEMBER 12",
+      "WEDNESDAY, NOVEMBER 11"
+     ],
+     "pathway-tabs.css .mdx-shell .audit-chain-label": [
+      "HASH CHAIN"
+     ],
+     "pathway-tabs.css .mdx-shell .audit-chain-k": [
+      "PREV",
+      "THIS"
+     ]
+    },
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   },
+   "tab: RTA / AI-Hold 0 Agency / NB queries": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No correspondence yet Agency and notified-body letters appear here once received for this "
+    ]
+   },
+   "tab: Approvals Your pending e-sign · all proj": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No approvals yet Approval requests appear here when a section or submission is routed for "
+    ]
+   },
+   "tab: Files Full filesystem": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   }
+  },
+  "02-device-pma": {
+   "arrival": {
+    "upper": {},
+    "headings": {},
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Project phase: Planning · Filing · 2027-",
+      "The PMA pathway's 10 phases. None is mar",
+      "7 of 19 fields have a governed source",
+      "Not yet registered — toggle the prerequi"
+     ],
+     "section-sub | system-ui 11px/400 rgb(113, 112, 106)": [
+      "Optional Vault attachments. Choose each ",
+      "No Vault attachments selected."
+     ]
+    },
+    "thead": {
+     "TH | system-ui 12px/500 rgb(100, 98, 92)": [
+      "Field",
+      "Value",
+      "Source"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No PMA modules yet This project has no PMA document, so it has no PMA modules to show."
+    ]
+   },
+   "tab: Workspace Phases · modules": {
+    "upper": {},
+    "headings": {},
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Project phase: Planning · Filing · 2027-",
+      "The PMA pathway's 10 phases. None is mar",
+      "7 of 19 fields have a governed source",
+      "Not yet registered — toggle the prerequi"
+     ],
+     "section-sub | system-ui 11px/400 rgb(113, 112, 106)": [
+      "Optional Vault attachments. Choose each ",
+      "No Vault attachments selected."
+     ]
+    },
+    "thead": {
+     "TH | system-ui 12px/500 rgb(100, 98, 92)": [
+      "Field",
+      "Value",
+      "Source"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No PMA modules yet This project has no PMA document, so it has no PMA modules to show."
+    ]
+   },
+   "tab: Audit trail 99 21 CFR Part 11": {
+    "upper": {
+     "pathway-tabs.css .mdx-shell .audit-day": [
+      "THURSDAY, NOVEMBER 12",
+      "WEDNESDAY, NOVEMBER 11"
+     ],
+     "pathway-tabs.css .mdx-shell .audit-chain-label": [
+      "HASH CHAIN"
+     ],
+     "pathway-tabs.css .mdx-shell .audit-chain-k": [
+      "PREV",
+      "THIS"
+     ]
+    },
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   },
+   "tab: Day-100 0 Agency / NB queries": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No correspondence yet Agency and notified-body letters appear here once received for this "
+    ]
+   },
+   "tab: Approvals Your pending e-sign · all proj": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No approvals yet Approval requests appear here when a section or submission is routed for "
+    ]
+   },
+   "tab: Files Full filesystem": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   }
+  },
+  "03-device-cer": {
+   "arrival": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   }
+  },
+  "04-device-diagnostics": {
+   "arrival": {
+    "upper": {},
+    "headings": {
+     "H2 | system-ui 18px/600 rgb(20, 20, 19)": [
+      "Assess, save and review IVD evidence"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Project phase: Planning · Filing · 2027-",
+      "The IVDR pathway's 7 stages. None is mar",
+      "7 of 19 fields have a governed source",
+      "Not yet registered — toggle the prerequi"
+     ],
+     "section-sub | system-ui 11px/400 rgb(113, 112, 106)": [
+      "Optional Vault attachments. Choose each ",
+      "No Vault attachments selected."
+     ]
+    },
+    "thead": {
+     "TH | system-ui 12px/500 rgb(100, 98, 92)": [
+      "Field",
+      "Value",
+      "Source"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No device classifications yet Classify this device under Annex VIII to populate the table.",
+     "c2c-empty-state: No clinical performance studies yet Record a clinical performance study to populate the co",
+     "c2c-empty-state: No analytical validations yet Log an analytical performance study (LoD, precision, interfe",
+     "c2c-empty-state: No GSPR chapters yet Start the GSPR matrix for this device to populate the chapter breakdo",
+     "c2c-empty-state: No companion diagnostic pairings yet Pair this diagnostic with a drug programme to coordin",
+     "c2c-empty-state: No CLIA categorizations yet Categorize this test's CLIA complexity to plan a waiver strate"
+    ]
+   },
+   "tab: Workspace Class · validation · GSPR": {
+    "upper": {},
+    "headings": {
+     "H2 | system-ui 18px/600 rgb(20, 20, 19)": [
+      "Assess, save and review IVD evidence"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Project phase: Planning · Filing · 2027-",
+      "The IVDR pathway's 7 stages. None is mar",
+      "7 of 19 fields have a governed source",
+      "Not yet registered — toggle the prerequi"
+     ],
+     "section-sub | system-ui 11px/400 rgb(113, 112, 106)": [
+      "Optional Vault attachments. Choose each ",
+      "No Vault attachments selected."
+     ]
+    },
+    "thead": {
+     "TH | system-ui 12px/500 rgb(100, 98, 92)": [
+      "Field",
+      "Value",
+      "Source"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No device classifications yet Classify this device under Annex VIII to populate the table.",
+     "c2c-empty-state: No clinical performance studies yet Record a clinical performance study to populate the co",
+     "c2c-empty-state: No analytical validations yet Log an analytical performance study (LoD, precision, interfe",
+     "c2c-empty-state: No GSPR chapters yet Start the GSPR matrix for this device to populate the chapter breakdo",
+     "c2c-empty-state: No companion diagnostic pairings yet Pair this diagnostic with a drug programme to coordin",
+     "c2c-empty-state: No CLIA categorizations yet Categorize this test's CLIA complexity to plan a waiver strate"
+    ]
+   },
+   "tab: Audit trail 99 21 CFR Part 11": {
+    "upper": {
+     "pathway-tabs.css .mdx-shell .audit-day": [
+      "THURSDAY, NOVEMBER 12",
+      "WEDNESDAY, NOVEMBER 11"
+     ],
+     "pathway-tabs.css .mdx-shell .audit-chain-label": [
+      "HASH CHAIN"
+     ],
+     "pathway-tabs.css .mdx-shell .audit-chain-k": [
+      "PREV",
+      "THIS"
+     ]
+    },
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   },
+   "tab: NB / GSPR 0 Agency / NB queries": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No correspondence yet Agency and notified-body letters appear here once received for this "
+    ]
+   },
+   "tab: Approvals Your pending e-sign · all proj": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No approvals yet Approval requests appear here when a section or submission is routed for "
+    ]
+   },
+   "tab: Files Full filesystem": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   }
+  },
+  "05-device-clinical-studies": {
+   "arrival": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Study portfolio",
+      "Protocol and study design",
+      "Risk-based monitoring",
+      "Applicable study designs"
+     ],
+     "H2 | Lora 14px/500 rgb(20, 20, 19)": [
+      "Needs attention"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "Select a study to load its enrollment an",
+      "ICH M11 protocol · SAP · schedule of act",
+      "ICH E6(R3) RBQM · ISO 14155 · project-sc",
+      "No specialization on file — showing the "
+     ]
+    },
+    "thead": {
+     "DIV | system-ui 12px/500 rgb(104, 102, 96)": [
+      "Severity",
+      "Kind",
+      "Item",
+      "Study type"
+     ]
+    },
+    "empties": [
+     "c2c-empty-state: No clinical studies yet Studies appear here once an IDE, feasibility, or post-market clini",
+     "c2c-empty-state: No study designs yet No protocol or study design is linked to this project yet. Designs au"
+    ]
+   }
+  },
+  "06-device-software": {
+   "arrival": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Tracked deliverables",
+      "Lifecycle items"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "The deliverables this register tracks ar",
+      "All SRS / SDS / test / cybersecurity art"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No software lifecycle items yet Software requirements, design, test, and cybersecurity art"
+    ]
+   }
+  },
+  "07-device-engineering": {
+   "arrival": {
+    "upper": {
+     "app.css .mdx-shell .eng-blocker-kind": [
+      "DHF"
+     ]
+    },
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "What's blocking your documents",
+      "Risk management · ISO 14971",
+      "Design controls · DHF"
+     ],
+     "H2 | system-ui 14px/600 rgb(20, 20, 19)": [
+      "Situational awareness"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "6 hard blockers · 25 review-pending · pu"
+     ],
+     "section-sub | system-ui 11px/400 rgb(107, 105, 99)": [
+      "Design history · change requests · non-c"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No engineering documents yet Design and software deliverables appear here once artifacts e"
+    ]
+   }
+  },
+  "08-device-udi": {
+   "arrival": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Blocking label release"
+     ],
+     "H2 | system-ui 14px/600 rgb(20, 20, 19)": [
+      "Situational awareness"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 hard blockers · 0 review pending · ISO"
+     ],
+     "section-sub | system-ui 11px/400 rgb(107, 105, 99)": [
+      "Device registry · region×language matrix"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No labeling documents yet IFUs, package and on-device labels appear here once labeling doc"
+    ]
+   }
+  },
+  "09-device-postmarket": {
+   "arrival": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Regulatory submissions in flight",
+      "Reporting clocks",
+      "Signal triage queue"
+     ],
+     "H2 | system-ui 14px/600 rgb(20, 20, 19)": [
+      "Situational awareness"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "[Demo · MDX] NeuroPanel-Dx 510(k) only ·",
+      "0 critical or under-review signals not y"
+     ],
+     "section-sub | system-ui 11px/400 rgb(107, 105, 99)": [
+      "CAPA board · vigilance trending · PMS pl"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "c2c-empty-state: No reportable items yet Complaints, MDR events and CAPAs appear here as they are raised, o",
+     "c2c-empty-state: No vigilance signals yet Signals appear here as complaints, MDR events and CAPAs are recor"
+    ]
+   }
+  },
+  "10-device-presub": {
+   "arrival": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: All": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Pre-Sub": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Submission Issue": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Study Risk Det.": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Agreement": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Informational": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Any stage": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Planning": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Package": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Filed": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Awaiting FDA": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Feedback": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   },
+   "tab: Integrate": {
+    "upper": {},
+    "headings": {
+     "H2 | Lora 17px/500 rgb(20, 20, 19)": [
+      "Q-Submissions in flight"
+     ]
+    },
+    "subs": {
+     "section-sub | system-ui 11px/400 rgb(117, 115, 109)": [
+      "0 total · 0 awaiting FDA · 0 feedback re"
+     ]
+    },
+    "thead": {},
+    "empties": [
+     "ps-empty: No Q-Subs yet Pre-submissions, SIRs and informational meetings appear here once filed."
+    ]
+   }
+  },
+  "11-human-factors": {
+   "arrival": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   }
+  },
+  "12-labeling": {
+   "arrival": {
+    "upper": {},
+    "headings": {},
+    "subs": {},
+    "thead": {},
+    "empties": []
+   }
+  }
+ }
+}

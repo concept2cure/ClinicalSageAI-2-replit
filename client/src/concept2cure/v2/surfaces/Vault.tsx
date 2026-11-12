@@ -15,6 +15,9 @@ import { RecordViewButton, VaultVersionViewer, useVaultVersionViewer } from './V
 import { VaultPlaceHold } from './VaultPlaceHold';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
+import { VaultTrialMasterFile, takeVaultTmfAsk, type TmfSectionState } from './VaultTrialMasterFile';
+import { tmfSectionAnaContext } from './vaultTmfAnaContext';
+import { useNavEntitlements } from '../navEntitlements';
 import {
   ARTIFACTS_BRANCH,
   ArtifactAuditReport,
@@ -1412,6 +1415,15 @@ function sectionNamesOf(tree: readonly (VaultDoc | VaultFolder)[]): Map<string, 
 function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session: ReturnType<typeof useAuthoringReadSession> }) {
   const available = useSurfaceAvailable();
   const projectId = currentProjectId();
+  const { verdictFor: entitlementFor } = useNavEntitlements();
+  /* The trial master file is the Vault's professional-tier module (P-75): its button and its section are offered where
+     it can be opened and the organisation's plan includes it. Unknown counts as included, the rail's rule. */
+  const tmfOffered = available('etmf') && entitlementFor('etmf')?.entitled !== false;
+  /* What the section shows, with the project it read it for, so AnA is told what is on screen and a project opened
+     next never inherits it. */
+  const [tmfTold, setTmfTold] = useState<{ projectId: string | null; state: TmfSectionState } | null>(null);
+  const tellTmf = useCallback((state: TmfSectionState) => setTmfTold({ projectId, state }), [projectId]);
+  const tmfShown = tmfTold && tmfTold.projectId === projectId ? tmfTold.state : null;
   const [workingSource, setWorkingSource] = useState<{ source: ImportSource; title: string } | null>(null);
   const ownerKey = JSON.stringify([projectId, session.actor, session.key]);
   const currentOwner = React.useRef(ownerKey);
@@ -1442,7 +1454,12 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   const canWrite = useVaultCanWrite();
   /* The view on screen (D6 §C.4 step 5); the library first. */
-  const [view, setView] = useState<VaultView>(() => (takeVaultCatalogAsk() ? 'catalog' : 'library'));
+  /* Asked once by another screen: the project page for the Data catalog (S2), the eTMF's page for the trial master
+     file, which lives in Required documents (P-75; admitted 2026-11-12). */
+  const [opening] = useState<'catalog' | 'tmf' | null>(() => (takeVaultCatalogAsk() ? 'catalog' : takeVaultTmfAsk() ? 'tmf' : null));
+  const [view, setView] = useState<VaultView>(opening === 'catalog' ? 'catalog' : opening === 'tmf' ? 'required' : 'library');
+  // Requests to bring the trial master file section into view: one when the Vault was opened on it, one per header click.
+  const [tmfRevealAsk, setTmfRevealAsk] = useState(opening === 'tmf' ? 1 : 0);
   /* The catalog grades every row it reads: it is read once the person opens it, then kept like every view. */
   const [catalogOpened, setCatalogOpened] = useState(false);
   React.useEffect(() => { if (view === 'catalog') setCatalogOpened(true); }, [view]);
@@ -2175,13 +2192,16 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
       };
     }
     const shown = results.length;
+    // The study's trial master file, while Required documents shows it: only what the section read.
+    const tmf = view === 'required' && tmfOffered && projectId ? tmfSectionAnaContext(tmfShown) : null;
     return {
       summary:
         `Document vault: ${vault?.documentCount ?? 0} document(s)` +
         (vault?.unfiledCount ? `, ${vault.unfiledCount} upload(s) unfiled` : '') +
         (folder ? `, folder "${folder.label}" open` : '') +
         (searching ? `, filtered to ${shown} by ${findLabel}` : '') +
-        (sel ? `, "${sel.title}" selected` : ''),
+        (sel ? `, "${sel.title}" selected` : '') +
+        (tmf ? `. Required documents is open; its trial master file section: ${tmf.summary}` : ''),
       facts: {
         // The server's count of documents. allDocs is the tree's leaves: each
         // section of an authored document, and only the uploads on the page.
@@ -2209,6 +2229,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         governedArtifacts: governedArtifactsFacts(vault?.artifacts, vault?.unavailable),
         // Across the projects the caller can open, when a person opened that view (slice C).
         organizationArtifacts,
+        trialMasterFile: tmf ? { summary: tmf.summary, ...(tmf.facts ?? {}) } : null,
         unavailableBranches: vault?.unavailable?.map((u) => u.branch) ?? [],
         shownInList: shown,
         searchQuery: trimmedQ || null,
@@ -2243,9 +2264,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         'Download a governed artifact as DOCX (recorded; it needs a recorded human review or signature on the current version)',
         'Export the governed artifacts’ manifest as CSV (their governance, not the files)',
         'Select a named document in the tree, so its detail is shown',
+        ...(tmf?.availableActions ?? []),
       ],
     };
-  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, orgCode, organizationArtifacts, orgFocused]);
+  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, orgCode, organizationArtifacts, orgFocused, view, tmfOffered, tmfShown]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -3167,18 +3189,34 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   );
 
   const requiredView = (
-    <VaultCoverage
-      coverage={vault?.coverage}
-      documents={coverageDocuments}
-      onUpload={() => uploadControls.current?.chooseFiles()}
-      onFileHere={(docId, target) =>
-        void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
-      }
-      busy={filing}
-      defaultOpen
-      onShowOutline={() => setView('library')}
-      sectionName={sectionName}
-    />
+    <>
+      <VaultCoverage
+        coverage={vault?.coverage}
+        documents={coverageDocuments}
+        onUpload={() => uploadControls.current?.chooseFiles()}
+        onFileHere={(docId, target) =>
+          void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
+        }
+        busy={filing}
+        defaultOpen
+        onShowOutline={() => setView('library')}
+        sectionName={sectionName}
+      />
+      {/* The study's trial master file (P-75: the eTMF lives inside the Vault): a section of this view, read once it is
+          opened. It asks AnA in the Vault's own conversation, and a file its filing form adds to the Vault is
+          read back into the Vault's own lists. */}
+      {tmfOffered ? (
+        <VaultTrialMasterFile
+          projectId={projectId}
+          active={view === 'required'}
+          documents={coverageDocuments}
+          onAsk={onAsk}
+          onState={tellTmf}
+          onVaultChanged={() => setVaultEpoch((n) => n + 1)}
+          revealRequest={tmfRevealAsk}
+        />
+      ) : null}
+    </>
   );
 
   const artifactsView = (
@@ -3243,14 +3281,14 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         {/* With no project open the page asks only which sponsor's Vaults to show (UI walk, 2026-11-12): each control
             here and each starter below needs a project, and returns with it. */}
         {projectId ? <div className="ph-acts">
-          {/* Offered only where the eTMF can be opened: outside this release it
-              led to the locked panel (FILING_SPINE.md F16). */}
-          {available('etmf') && (
+          {/* Offered only where the eTMF can be opened (FILING_SPINE.md F16). It shows the
+              trial master file where it lives, in Required documents. */}
+          {tmfOffered && (
             <button
               type="button"
               className="btn ghost"
-              onClick={() => onNav && onNav('etmf')}
-              title="Open the trial master file of this project’s study: its essential records, filed and missing"
+              onClick={() => { setView('required'); setTmfRevealAsk((n) => n + 1); }}
+              title="The trial master file of this project’s study, in Required documents"
             >
               {I.shieldCheck} Trial master file
             </button>
