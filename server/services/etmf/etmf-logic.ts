@@ -234,7 +234,7 @@ export type Classification =
 const UNCLASSIFIED: Classification = Object.freeze({ zone: null, zoneName: null, section: null, confidence: 'unclassified' });
 const TWO_ZONES: Classification = Object.freeze({ ...UNCLASSIFIED, conflict: true });
 
-function inZone(zone: number, code: string | null, section = sectionOf(zone)): Classification {
+function inZone(zone: number, code: string | null, section = sectionOf(zone)): Extract<Classification, { confidence: 'matched' }> {
   return { zone, zoneName: zoneName(zone), section, confidence: 'matched', code };
 }
 

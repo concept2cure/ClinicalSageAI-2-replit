@@ -303,7 +303,7 @@ describe('which keyword decides', () => {
       const place = TMF_KEYWORD_RULES.findIndex((r) => r.phrases.includes(short));
       TMF_KEYWORD_RULES.forEach((rule, index) => {
         for (const phrase of rule.phrases) {
-          if ([sample, short].includes(phrase) || rule.phrases.includes(short) || rule.phrases.includes(sample)) continue;
+          if (phrase === sample || phrase === short || rule.phrases.includes(short) || rule.phrases.includes(sample)) continue;
           const want = index < place ? rule.zone : 2;
           for (const name of [`${sample} - ${phrase} v2.pdf`, `${phrase} - ${sample} v2.pdf`]) {
             if (said(name).zone !== want) wrong.push(`"${name}": zone ${said(name).zone}, expected ${want}`);
