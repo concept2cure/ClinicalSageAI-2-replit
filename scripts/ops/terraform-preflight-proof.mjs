@@ -25,8 +25,9 @@
  *   3. Runs the preflight step's own shell against it (`aws` stubbed), then the
  *      database-task step's against the rendered migrate definition (MR-03
  *      Stage 3, OPS-16), and both against definitions each must REFUSE: an API
- *      carrying the owner's credential; a database task without it, with
- *      another environment, another secret source, or the API's role.
+ *      carrying the owner's credential, or turning on live co-editing; a
+ *      database task without it, with another environment, another secret
+ *      source, or the API's role.
  *   4. Checks the revisions the preflight checked are the ones that run: each
  *      step publishes its ARN; the migration derives from the database task's,
  *      deploy-api from the API's.
@@ -347,6 +348,12 @@ function checkDatabaseTask(pre, apiTd, migrateTd) {
       withApi((c) => c.secrets.push({ name: 'APP_SERVICE_DB_PASSWORD', valueFrom: ownerArn('APP_SERVICE_DB_PASSWORD') })), null],
     ['API', 'an API task definition carrying DATABASE_URL_PROD as a plain value', 'DATABASE_URL_PROD',
       withApi((c) => c.environment.push({ name: 'DATABASE_URL_PROD', value: 'postgresql://c2c_admin@db/x' })), null],
+    // Live co-editing is per-process and the service runs more than one task
+    // (MR-03 Stage 7 step 8, OPS-20): refused as a value and as a secret.
+    ['API', 'an API task definition turning on live co-editing (ENABLE_COLLAB_CRDT=true)', 'ENABLE_COLLAB_CRDT',
+      withApi((c) => c.environment.push({ name: 'ENABLE_COLLAB_CRDT', value: 'true' })), null],
+    ['API', 'an API task definition taking ENABLE_COLLAB_CRDT from a secret', 'ENABLE_COLLAB_CRDT',
+      withApi((c) => c.secrets.push({ name: 'ENABLE_COLLAB_CRDT', valueFrom: c.secrets[0].valueFrom })), null],
     ['database', 'a database task without DATABASE_URL', 'DATABASE_URL',
       apiTd, withMigrate((c) => { c.secrets = c.secrets.filter((s) => s.name !== 'DATABASE_URL'); })],
     ['database', 'a database task whose environment differs (DB_AUDIT_REQUIRED=none)', 'DB_AUDIT_REQUIRED',
