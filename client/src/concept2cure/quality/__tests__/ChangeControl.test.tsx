@@ -169,13 +169,24 @@ describe('ChangeControl — the change-control log', () => {
     expect(onAsk).not.toHaveBeenCalled();
   });
 
-  // D7-B: the procedure is a closed disclosure at the foot of the log, not a box with its own AnA buttons;
-  // "Explain the procedure" is the Change control tab's third starter (QualityWorkArea.test.tsx).
-  it('keeps how a change is raised in a closed disclosure under the log, with no AnA button of its own', () => {
+  // D7-B: the procedure sits at the foot of the log, not in a box with its own AnA buttons; "Explain the procedure"
+  // is the Change control tab's third starter (QualityWorkArea.test.tsx). P-122 rule 2 (2026-11-12): its five steps
+  // were on the screen before the restyle, so the disclosure is open; a person can close it.
+  /* Handoff from the trunk-CI lane (COORDINATION.md, 2026-11-10): a change's target date is a <time>, as the product's
+     other dates are, so it can be kept on one line and read by a machine. */
+  it("marks a change's target date as a date", () => {
+    render(<Harness onAsk={vi.fn()} />);
+    const row = screen.getByText('CC-2026-014').closest('tbody') as HTMLElement;
+    const when = row.querySelector('time');
+    expect(when?.getAttribute('datetime')).toBe('2026-09-15');
+    expect(when?.textContent).toMatch(/2026/);
+  });
+
+  it('shows how a change is raised under the log, open, with no AnA button of its own', () => {
     const onAsk = vi.fn();
     const { container } = render(<Harness onAsk={onAsk} />);
     const how = screen.getByText('How a change is raised').closest('details') as HTMLDetailsElement;
-    expect(how.open).toBe(false);
+    expect(how.open).toBe(true);
     expect(how.textContent).toMatch(/Route for independent approval, implement, then verify/);
     expect(screen.queryByRole('button', { name: /Explain the procedure|Find the controlled procedure/ })).toBeNull();
     expect(container.querySelector('.qcc-train')).toBeNull();

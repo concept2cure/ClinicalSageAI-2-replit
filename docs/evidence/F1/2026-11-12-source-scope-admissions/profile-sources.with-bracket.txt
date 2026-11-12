@@ -1,0 +1,18 @@
+— pass 1 —
+syncQualityProjectSources            1957 ms
+getCurrentReadableSourceScope        1397 ms
+  readable source ids 176
+requireSourceReadScopeStillCurrent   1253 ms
+searchDataRoom (all of the above +2 queries)   2854 ms
+  sources 176 total 176
+summarizeSourceUsage                 2218 ms
+gradeSources                           12 ms
+— pass 2 —
+syncQualityProjectSources             437 ms
+getCurrentReadableSourceScope        1053 ms
+  readable source ids 176
+requireSourceReadScopeStillCurrent   1095 ms
+searchDataRoom (all of the above +2 queries)   2587 ms
+  sources 176 total 176
+summarizeSourceUsage                 2108 ms
+gradeSources                           14 ms
