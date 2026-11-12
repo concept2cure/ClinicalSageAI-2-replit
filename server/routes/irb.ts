@@ -25,6 +25,7 @@ import {
   createSubmissionTx,
   setSubmissionStatusTx,
   setSubmissionContextTx,
+  linkSubmissionTx,
   IRB_CONTEXT_FIELDS,
   type IrbContextField,
   recordReviewTx,
@@ -224,6 +225,25 @@ router.patch('/submissions/:id/context', async (req, res) => {
   });
 });
 
+/*
+ * Linking an existing IRB submission to its Submission Center submission (D1).
+ * Creation was the only way to set the link, so a submission recorded without
+ * one never had a package. Strict, so a typo is a 400. The service refuses
+ * another organization's submission and refuses to move a link that exists.
+ */
+const linkSchema = z.object({ submissionId: z.number().int().positive(), reason }).strict();
+
+router.patch('/submissions/:id/link', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = linkSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    const out = await linkSubmissionTx(client, orgId, id, parsed.data.submissionId);
+    return { target: `irb-submission:${id}`, payload: { linkedSubmissionId: out.submissionId }, body: out };
+  });
+});
+
 const reviewSchema = z.object({
   reviewType: z.enum(['exempt', 'expedited', 'full_board']),
   outcome: z.enum(['approved', 'modifications_required', 'deferred', 'disapproved']),
@@ -359,9 +379,9 @@ router.get('/submissions/:id/completeness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const client = await pool.connect();
   try {
-    const input = await getCompletenessInput(client, orgId, id);
+    // Through the pool, inside the tenant scope: a bare connection carries none (2026-11-12).
+    const input = await getCompletenessInput(orgId, id);
     const completeness = evaluateIrbCompleteness(input);
     const rec = recommendReviewType({ riskLevel: input.riskLevel });
     /* `continuingReview` used to be served here from continuingReviewStatus,
@@ -375,8 +395,6 @@ router.get('/submissions/:id/completeness', async (req, res) => {
     res.json({ completeness, lifecycle, recommendedReview: rec });
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 

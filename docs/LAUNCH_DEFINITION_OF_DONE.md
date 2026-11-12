@@ -3270,3 +3270,44 @@ own. The rule that matters to a regulator is the one item 2 keeps and tightens: 
 is left saying nothing.
 
 Evidence: `docs/evidence/D2-CSR/2026-11-12-heading-only-sections/`.
+
+### P-127 — Help, training and support, run the way Claude's are: through AnA, and through a help and support agent
+
+The founder, 2026-11-10: **"You now own training and help function and must do through AnA and must follow existing
+roadmap and rules and practices. Extend what we have, build technical documentation and training materials as you
+go. Assure it all is easy to access by any user at any time either through ana chat directly or through an help and
+support agent.. both must be offered."** And: **"Exactly like Anthropic does with Claude support, training, new
+client onboarding and ticket tracking. Use fable 5 for this."** The design was put to the founder as proposed (its
+number was then P-121, since taken); the founder, 2026-11-12: **"Approve"**.
+
+Recorded by the walking session (`01QoxbLZhy…`), which owns package S13. Design:
+`docs/design/HELP_AND_SUPPORT_2026-11-10.md`, with its "What already exists" section (RULE 3).
+
+1. **Two entrances, always.** AnA answers "how do I…" in any conversation, from the help corpus, naming the article.
+   "Get help" (the account menu and the top bar's Help, P-122 §3.4) opens the same conversation in **support mode**:
+   the help corpus, the guided demos and the ticket tools only, a support brief, and a hand-off to a person by ticket,
+   which the person confirms before it is sent.
+2. **The help corpus** is articles in the repository (`shared/help/`), written from the product and checked in the
+   running app, served by the existing `/api/docs` mount (a stub until now). An article that names a screen is tested
+   against the screen registry. `support_articles` is left for an organisation's own articles, not built here.
+3. **One page, Help & training:** the existing `training` surface, re-purposed and admitted to the launch catalog. Its
+   deferred disposition ("converge into Quality") is replaced. It keeps what it shows today, the learning paths and
+   certifications reads (P-122 §2). Quality keeps GxP training of record; product training is not GxP training.
+4. **Courses** (the Academy) are data beside the articles; a lesson is an article and, where one fits, a Live Drive
+   demonstration. No progress or certificate in this package: they need a store and rules, proposed separately.
+5. **Tickets** reach the existing `support_tickets` and `support_ticket_messages` (`0007_support_admin.sql`) through a
+   new request-scoped route, `/api/support`: customers open, read, reply and resolve; Concept2Cure support staff work
+   the queue with internal notes customers never read. The deleted `support-admin.ts` is not restored (shared pool,
+   customer delete). `support_ticket_messages` gains tenant isolation by amending its creating migration (RULE 1),
+   and `0007_support_admin.sql` joins `C2C_MIGRATION_FILES`.
+6. **Onboarding:** Home's "Set up your organisation" gains "Take the getting-started course"; the administrator's
+   articles are linked from the setup steps.
+7. **Fable 5.** The articles and courses are written with Fable 5 agents. For serving users, Fable 5 is not an
+   approved model (`server/services/ai-governance/approved-models.ts`), and RULE 2 admits a model only as an approved
+   entry with a pinned version, rationale and evaluation reference. Support mode uses the approved routing until
+   Fable 5 is qualified under P-118's protocol; its entry is the founder's to approve with that evidence.
+8. **What is added** (package S13, each in `approvedAdditions`): AnA tools `search_help_center`, `read_help_article`,
+   `open_support_ticket`, `list_my_support_tickets`; route file `server/routes/support.ts`; mount `/api/support`. No
+   table, no new screen, no new model.
+9. **Not in this package:** release notes in the product, a public help site, e-mail where none is configured, course
+   progress and certificates, an organisation's own articles.

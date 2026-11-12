@@ -4,9 +4,15 @@
  * `docs/design/IRB_SUBMISSION.md` step 4: the IRB capability already exists in
  * this repository and nothing under `client/` reached it. This pane is the
  * reach. It renders `GET /api/irb/submissions/:id/package-manifest` for the IRB
- * submission carrying this protocol's number, and it does nothing else — no
- * computation, no scoring, no re-derivation. Every requirement, basis and count
- * below is `server/services/irb/package-manifest.ts`'s own.
+ * submission carrying this protocol's number, with no computation, no scoring
+ * and no re-derivation. Every requirement, basis and count below is
+ * `server/services/irb/package-manifest.ts`'s own.
+ *
+ * 2026-11-12: the submission itself is recorded here too. The tab could only
+ * read, and told a person to "create the IRB submission first" and to "link the
+ * submission in the Submission Center first", neither of which anything in the
+ * product could do. The record, its forms and its checks are
+ * `IrbSubmissionRecord.tsx`, split out of this file.
  *
  * ── Four states, never blurred ──────────────────────────────────────────────
  *   no submission   no IRB submission is recorded against this protocol number.
@@ -39,10 +45,11 @@
  *
  * Colour is never the only signal: every status is a word before it is a tone.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { PaneHead, KV } from './ProtocolDevShared';
 import { apiRequest } from '@/lib/queryClient';
+import { IrbSubmissionRecord, RecordIrbSubmissionForm, toIrbRecord, type IrbRecord } from './IrbSubmissionRecord';
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 
@@ -85,13 +92,6 @@ export interface IrbPackageManifestView {
   unexpectedSlots: string[];
 }
 
-/** The IRB submission row, as `GET /api/irb/submissions` returns its columns. */
-interface IrbSubmissionRef {
-  id: number;
-  protocolNumber: string;
-  title: string;
-}
-
 type LoadState =
   | { kind: 'loading' }
   /** This protocol record carries no protocol number, so nothing can be matched. */
@@ -99,10 +99,10 @@ type LoadState =
   /** No IRB submission is recorded against this protocol number. */
   | { kind: 'no-submission'; protocolNumber: string }
   /** The IRB submission exists and is not linked. There is NO PACKAGE. */
-  | { kind: 'unlinked'; sub: IrbSubmissionRef }
+  | { kind: 'unlinked'; sub: IrbRecord }
   /** The read failed. NOT an empty manifest. */
   | { kind: 'failed'; message: string }
-  | { kind: 'ready'; sub: IrbSubmissionRef; linkedSubmissionId: number; manifest: IrbPackageManifestView; siblings: number };
+  | { kind: 'ready'; sub: IrbRecord; linkedSubmissionId: number; manifest: IrbPackageManifestView; siblings: number };
 
 /* ── Reading ───────────────────────────────────────────────────────────────── */
 
@@ -115,10 +115,6 @@ function refusal(body: unknown, status: number): string {
 }
 
 const normalise = (s: unknown): string => str(s).trim().toLowerCase();
-
-function toRef(raw: Record<string, unknown>): IrbSubmissionRef {
-  return { id: Number(raw.id), protocolNumber: str(raw.protocol_number), title: str(raw.title) };
-}
 
 function asManifest(raw: unknown): IrbPackageManifestView {
   const m = (raw ?? {}) as Partial<IrbPackageManifestView>;
@@ -151,7 +147,7 @@ async function loadPackage(protocolNumber: string): Promise<LoadState> {
 
   const matches = listed.rows.filter((r) => normalise(r.protocol_number) === normalise(protocolNumber));
   if (matches.length === 0) return { kind: 'no-submission', protocolNumber };
-  const sub = toRef(matches[0]);
+  const sub = toIrbRecord(matches[0]);
 
   const res = await apiRequest('GET', `/api/irb/submissions/${sub.id}/package-manifest`);
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -358,10 +354,11 @@ function Unexpected({ m }: { m: IrbPackageManifestView }) {
 
 /* ── The states ────────────────────────────────────────────────────────────── */
 
-function ReadyBody({ state }: { state: Extract<LoadState, { kind: 'ready' }> }) {
+function ReadyBody({ state, record }: { state: Extract<LoadState, { kind: 'ready' }>; record: React.ReactNode }) {
   const { manifest: m, sub, linkedSubmissionId, siblings } = state;
   return (
     <>
+      {record}
       <div className="pde-note">
         {`IRB submission ${sub.id} — ${sub.title || 'no title recorded'} — against protocol number ${sub.protocolNumber}, linked to Submission Center submission ${linkedSubmissionId}. What is placed below is what that submission carries.`}
         {siblings > 0 && ` ${siblings} further IRB submission(s) record the same protocol number; the most recent is shown.`}
@@ -377,7 +374,15 @@ function ReadyBody({ state }: { state: Extract<LoadState, { kind: 'ready' }> }) 
   );
 }
 
-function PackageBody({ state }: { state: LoadState }) {
+interface PackageBodyProps {
+  state: LoadState;
+  canWrite: boolean;
+  /** The submission's own record, for the states that have one. */
+  record: (sub: IrbRecord) => React.ReactNode;
+  onRecord: () => void;
+}
+
+function PackageBody({ state, canWrite, record, onRecord }: PackageBodyProps) {
   switch (state.kind) {
     case 'loading':
       return <div role="status" className="scaf-note">Reading the IRB package manifest…</div>;
@@ -390,20 +395,32 @@ function PackageBody({ state }: { state: LoadState }) {
       );
     case 'no-submission':
       return (
-        <div className="pde-note">
-          {`No IRB submission is recorded against protocol number ${state.protocolNumber}. `}
-          There is nothing to show because no IRB submission exists for this protocol — this is not a
-          package with nothing in it. Create the IRB submission first.
-        </div>
+        <>
+          <div className="pde-note">
+            {`No IRB submission is recorded against protocol number ${state.protocolNumber}. `}
+            There is nothing to show because no IRB submission exists for this protocol — this is not a
+            package with nothing in it.
+            {canWrite ? ' Record the IRB submission to begin.' : ' Someone who can edit this protocol records it here.'}
+          </div>
+          {canWrite && (
+            <div className="pde-actions" style={{ marginTop: 10 }}>
+              <PG.Btn icon="plus" variant="outline" onClick={onRecord}>Record the IRB submission</PG.Btn>
+            </div>
+          )}
+        </>
       );
     case 'unlinked':
       return (
-        <div className="pde-note">
-          {`IRB submission ${state.sub.id} — ${state.sub.title || 'no title recorded'} — exists, but it has never been linked to a Submission Center submission. `}
-          There is no package to inspect: nothing can be placed until that link exists. This is not a
-          package with nothing in it — it is the absence of a package, and no manifest row is shown
-          because none would mean anything. Link the submission in the Submission Center first.
-        </div>
+        <>
+          {record(state.sub)}
+          <div className="pde-note">
+            {`IRB submission ${state.sub.id} — ${state.sub.title || 'no title recorded'} — exists, but it has never been linked to a Submission Center submission. `}
+            There is no package to inspect: nothing can be placed until that link exists. This is not a
+            package with nothing in it — it is the absence of a package, and no manifest row is shown
+            because none would mean anything.
+            {canWrite ? ' Link it to one of this project’s submissions above.' : ''}
+          </div>
+        </>
       );
     case 'failed':
       return (
@@ -413,7 +430,7 @@ function PackageBody({ state }: { state: LoadState }) {
         </div>
       );
     default:
-      return <ReadyBody state={state} />;
+      return <ReadyBody state={state} record={record(state.sub)} />;
   }
 }
 
@@ -421,19 +438,35 @@ function PackageBody({ state }: { state: LoadState }) {
 
 export interface IrbPackageTabProps {
   doc: Record<string, unknown>;
+  /** False for a viewer, or a protocol row the governed store does not hold: the tab then only reads. */
+  canWrite?: boolean;
+  /** The open project, whose Submission Center submissions the link is chosen from. */
+  programId?: string | null;
+  onError?: (message: string) => void;
+  onToast?: (message: string) => void;
 }
 
 const PANE_SUB =
-  'The artifacts a board expects of the IRB submission carrying this protocol number, and which of them the linked Submission Center submission actually carries. Read-only: every requirement, basis and count is the manifest engine’s. Assembling a package is not delivery — boards run their own portals and inboxes, so what this pane reports is what the package holds and nothing about how it reaches anyone. It states no verdict about the study and names no review pathway.';
+  'The IRB submission recorded against this protocol number, the artifacts a board expects of it, and which of them the linked Submission Center submission actually carries. Every requirement, basis, check and count is an engine’s. Assembling a package is not delivery — boards run their own portals and inboxes, so what this pane reports is what the record and the package hold and nothing about how either reaches anyone. It states no verdict about the study and names no review pathway.';
 
-export function IrbPackageTab({ doc }: IrbPackageTabProps) {
+export function IrbPackageTab({ doc, canWrite = false, programId = null, onError, onToast }: IrbPackageTabProps) {
   const protocolNumber = str(doc.shortTitle).trim();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [reads, setReads] = useState(0);
+  const shown = useRef('');
+  const [recording, setRecording] = useState(false);
+  const reread = () => setReads((n) => n + 1);
+  const fail = (m: string) => onError?.(m);
+  const say = (m: string) => onToast?.(m);
 
   useEffect(() => {
     if (!protocolNumber) { setState({ kind: 'no-key' }); return; }
     let live = true;
-    setState({ kind: 'loading' });
+    /* A re-read after a confirmed write keeps what is on screen until the new
+       read lands, so the record does not blink away under the person. */
+    const sameProtocol = shown.current === protocolNumber;
+    shown.current = protocolNumber;
+    setState((prev) => (sameProtocol && (prev.kind === 'ready' || prev.kind === 'unlinked') ? prev : { kind: 'loading' }));
     void (async () => {
       try {
         const next = await loadPackage(protocolNumber);
@@ -443,12 +476,22 @@ export function IrbPackageTab({ doc }: IrbPackageTabProps) {
       }
     })();
     return () => { live = false; };
-  }, [protocolNumber]);
+  }, [protocolNumber, reads]);
 
   return (
     <div className="pd-pane" role="region" aria-label="IRB package">
       <PaneHead title="IRB package" sub={PANE_SUB} />
-      <PackageBody state={state} />
+      <PackageBody
+        state={state} canWrite={canWrite} onRecord={() => setRecording(true)}
+        record={(sub) => <IrbSubmissionRecord record={sub} canWrite={canWrite} programId={programId} onChanged={reread} onError={fail} onToast={say} />}
+      />
+      {recording && (
+        <RecordIrbSubmissionForm
+          protocolNumber={protocolNumber} title={str(doc.title)} programId={programId}
+          onCancel={() => setRecording(false)} onError={fail}
+          onDone={(m) => { setRecording(false); say(m); reread(); }}
+        />
+      )}
     </div>
   );
 }
