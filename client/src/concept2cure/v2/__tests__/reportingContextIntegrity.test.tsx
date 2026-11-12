@@ -24,6 +24,10 @@ const props = { surface: { id: 'insights', label: 'Reporting' } as OwnedSurfaceV
 beforeEach(() => { apiRequest.mockReset(); props.onNav.mockReset(); window.history.replaceState({}, '', '/'); sessionStorage.clear(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; });
 afterEach(() => { cleanup(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; });
 
+/* The Data scope filter names a scope in the card's own words since 2026-11-12 (one vocabulary,
+   insightsLibraryShared.tsx), so a card's disclosure is told apart from the filter's option. */
+const onCard = (el: HTMLElement) => el.tagName !== 'OPTION';
+
 describe('reporting context integrity', () => {
   it('allows organization reports and saved history before a product program exists', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -34,7 +38,7 @@ describe('reporting context integrity', () => {
     });
     render(<InsightsCanvas {...props} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    expect(await screen.findByText('Organization-wide records')).toBeTruthy();
+    expect((await screen.findAllByText('Organization-wide records')).filter(onCard)).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: /^Run / }));
     await screen.findByText('Organization saved evidence');
     expect(apiRequest.mock.calls.find(([method, url]) => method === 'POST' && url === '/api/report-os/runs')?.[2]).toMatchObject({ scopeType: 'account', scopeId: '1' });
@@ -149,7 +153,7 @@ describe('catalog applicability and local cadence', () => {
       { typeId: 'ema', label: 'EU assessment', family: 'ema_maa', scopes: ['project'], computedScopes: ['project'], segments: [], runnable: true, region: 'EU', allowedPersonas: ['regulatory'] },
     ] as LibraryReportType[];
     render(<CatalogPanel types={types} programLabel="A-101" canRun onRun={vi.fn()} />);
-    expect(screen.getByText('Organization-wide records')).toBeTruthy();
+    expect(screen.getAllByText('Organization-wide records').filter(onCard)).toHaveLength(1);
     fireEvent.change(screen.getByRole('combobox', { name: 'Reporting role' }), { target: { value: 'quality' } });
     expect(screen.queryByText('EU assessment')).toBeNull();
     expect(screen.getByText('Organization register')).toBeTruthy();
