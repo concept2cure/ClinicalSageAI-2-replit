@@ -23,11 +23,26 @@ const UNREAD = 'The project source catalogue could not be read.';
    server's words (or the generic ones) and the retry. */
 function readFailure(status: number | undefined, code: string | undefined, fallback: string) {
   const refusal = readRefusalWords({ status, code }, 'the project source catalogue');
-  return refusal ? { ok: false as const, message: refusal.message, retryable: refusal.retryable }
-    : { ok: false as const, message: fallback, retryable: true };
+  const changedDuringRead = status === 503 && code === ACCESS_CHANGED_DURING_READ;
+  return refusal ? { ok: false as const, message: refusal.message, retryable: refusal.retryable, changedDuringRead }
+    : { ok: false as const, message: fallback, retryable: true, changedDuringRead };
 }
 
+/* The server refuses a read whose source access changed while it ran: a save that lands inside a long
+   catalogue read (the editor's own first save of a new document, on a project of many records) fails
+   the read's closing check with this code. Nothing was wrong with the request, so the page is read once
+   more before anything is said (found by the Quality lane's walk, 2026-11-12). A second refusal is shown,
+   with Try again. */
+const ACCESS_CHANGED_DURING_READ = 'SOURCE_READ_ACCESS_CHANGED';
+
 async function readPage(programId: string, offset: number, current: () => boolean) {
+  const first = await readPageOnce(programId, offset, current);
+  return first && !first.ok && (first as { changedDuringRead?: boolean }).changedDuringRead
+    ? readPageOnce(programId, offset, current)
+    : first;
+}
+
+async function readPageOnce(programId: string, offset: number, current: () => boolean) {
   try {
     if (!current()) return null;
     const response = await apiRequest('GET', projectSourceCatalogUrl(programId, { limit: PAGE_SIZE, offset }));
