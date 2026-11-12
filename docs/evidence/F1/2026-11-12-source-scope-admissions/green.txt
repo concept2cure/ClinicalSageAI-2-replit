@@ -1,0 +1,41 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/__tests__/quality-evidence-report.test.ts > native Quality report text fidelity > preserves clinical limits, literal prose and unresolved semantic marks in the PDF
+Error: Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ ❯ new Writer server/services/report-os/pdf/writer.ts:117:50
+    115|       this.pdf.on('error', reject);
+    116|     });
+    117|     if (!this.coreFont('NotoSans', false)) throw new ReportingPdfError…
+       |                                                  ^
+    118|     if (branding) this.prepareLetterhead(branding);
+    119|     this.newPage();
+ ❯ Module.buildRunPdf server/services/report-os/pdf/run-pdf.ts:240:13
+ ❯ server/services/report-os/__tests__/quality-evidence-report.test.ts:61:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 503, code: 'REPORT_PDF_FONTS_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/report-os/__tests__/quality-evidence-report.test.ts > native Quality report presentation > renders readable business facts in the view and PDF without changing the sealed input
+Error: Reporting PDF fonts are unavailable on this deployment. Nothing was exported.
+ ❯ new Writer server/services/report-os/pdf/writer.ts:117:50
+    115|       this.pdf.on('error', reject);
+    116|     });
+    117|     if (!this.coreFont('NotoSans', false)) throw new ReportingPdfError…
+       |                                                  ^
+    118|     if (branding) this.prepareLetterhead(branding);
+    119|     this.newPage();
+ ❯ Module.buildRunPdf server/services/report-os/pdf/run-pdf.ts:240:13
+ ❯ server/services/report-os/__tests__/quality-evidence-report.test.ts:220:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 503, code: 'REPORT_PDF_FONTS_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 90 passed (91)
+      Tests  2 failed | 1426 passed (1428)
+   Start at  03:52:44
+   Duration  267.83s (transform 11.97s, setup 1.51s, import 68.47s, tests 182.43s, environment 10ms)
+
+exit 1

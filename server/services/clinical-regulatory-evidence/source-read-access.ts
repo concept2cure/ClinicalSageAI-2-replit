@@ -1,6 +1,6 @@
 /** Source-row visibility never authorizes a citing document. */
 import type { RequestSqlClient } from '../../db/requestDb';
-import { getCurrentAccessibleProgramScope, requireCurrentProgramAccess, requireProgramScopeStillCurrent, ProgramReadAccessError, type CurrentAccessibleProgramScope } from '../c2c/current-program-access';
+import { getCurrentAccessibleProgramScope, requireCurrentProgramAccess, requireProgramScopeStillCurrent, withinOneProgramAdmission, ProgramReadAccessError, type CurrentAccessibleProgramScope } from '../c2c/current-program-access';
 import { createNativeRecordAdmission, NATIVE_RECORD_ORIGIN } from './record-source';
 import { AnaProjectScopeError } from '../ana/project-scope-admission';
 
@@ -158,16 +158,19 @@ export async function getCurrentReadableSourceScope(q: RequestSqlClient, input: 
     const readable: number[] = [];
     const unverified: UnverifiedSource[] = [];
     const report = input.unverified === 'report' && !selected;
-    for (const row of rows.rows) {
-      try {
-        const failed = await admitEvaluated(q, row,
-          () => admitReadableIdentity(q,row,{organizationId:input.organizationId,programs,selected,admitNative}), report);
-        if (failed) unverified.push(failed); else readable.push(Number(row.id));
-      } catch (error) {
-        // Evaluated lists omit inaccessible/unresolved identities. Failed verification does not become empty success.
-        if (selected || !evaluatedSourceOmission(error)) throw error;
+    // Each source's project is admitted once for the whole list; the scope is verified again below, outside it.
+    await withinOneProgramAdmission(async () => {
+      for (const row of rows.rows) {
+        try {
+          const failed = await admitEvaluated(q, row,
+            () => admitReadableIdentity(q,row,{organizationId:input.organizationId,programs,selected,admitNative}), report);
+          if (failed) unverified.push(failed); else readable.push(Number(row.id));
+        } catch (error) {
+          // Evaluated lists omit inaccessible/unresolved identities. Failed verification does not become empty success.
+          if (selected || !evaluatedSourceOmission(error)) throw error;
+        }
       }
-    }
+    });
     await requireProgramScopeStillCurrent(q,input,programs);
     return {scope:'verified-accessible-sources',sourceIds:readable,unverified};
   } catch (error) {

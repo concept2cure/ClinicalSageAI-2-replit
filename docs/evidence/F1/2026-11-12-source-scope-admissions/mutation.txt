@@ -1,0 +1,36 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > still refuses the read when the person leaves the organization while its sources are being admitted
+AssertionError: promise resolved "{ …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "scope": "verified-accessible-sources",
++   "sourceIds": [
++     21,
++     22,
++     23,
++   ],
++   "unverified": [],
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:225:27
+    223|     });
+    224|     try {
+    225|       await expect(scope()).rejects.toMatchObject({ status: 403 });
+       |                           ^
+    226|       expect(answered, 'the sharing read ran for the scope, the first …
+    227|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  03:48:03
+   Duration  6.45s (transform 1.26s, setup 102ms, import 2.15s, tests 3.86s, environment 0ms)
+
