@@ -10,6 +10,7 @@ import { pathwaySqlCase, workstreamSqlCase, WORKSTREAM_FILING_TYPES, type Workst
 import { REGULATORY_PATHWAYS, type RegulatoryPathway } from '../../../shared/constants/mdx';
 import { projectIntakeId } from '../../../shared/project-intake-workspace';
 import type { ProgramAccessExecutor, VerifiedProgramAnchor } from './current-program-access';
+import type { DossierFigure } from './dossier-read';
 
 /** A stated text column as written, or NULL when it holds nothing but
  * whitespace. Blank is not stated, so the card never shows a run of spaces as
@@ -107,8 +108,8 @@ export async function readPortfolioClients(q: ProgramAccessExecutor, organizatio
  * cover the selected Client; pathways cover Client+workstream. Only total and
  * filingSoon apply every selected filter. All are inside accepted anchors,
  * independently of LIMIT/OFFSET and without dossier measurements. */
-const PORTFOLIO_COUNTS_SQL = `WITH portfolio AS (
-  SELECT ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws,
+const PORTFOLIO_SELECTED_CTE = `WITH portfolio AS (
+  SELECT p.id::text AS id, ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws,
     ${pathwaySqlCase('p.program_type', 'p.regulatory_path')} AS pathway,
     p.target_submission_date
   ${projectAnchorFrom('$3')}
@@ -118,7 +119,8 @@ const PORTFOLIO_COUNTS_SQL = `WITH portfolio AS (
   SELECT * FROM portfolio WHERE $5::text IS NULL OR ws=$5
 ), selected AS (
   SELECT * FROM workstream WHERE $6::text IS NULL OR pathway=$6
-)
+)`;
+const PORTFOLIO_COUNTS_SQL = `${PORTFOLIO_SELECTED_CTE}
 SELECT jsonb_build_object(
   'total', (SELECT count(*) FROM selected),
   'byWorkstream', (SELECT COALESCE(jsonb_object_agg(ws,n), '{}'::jsonb)
@@ -170,4 +172,60 @@ export async function readPortfolioCounts(q: ProgramAccessExecutor, input: {
     throw new Error('Portfolio counts could not be read');
   }
   return {total:c.total, byWorkstream:c.byWorkstream, byPathway:c.byPathway, filingWithin60Days:c.filingWithin60Days};
+}
+
+/**
+ * The portfolio's average readiness (P-122 §3.2, ONE_DESIGN_PLAN §2): the mean of the
+ * measured dossier readiness over every selected project. It is the server's figure
+ * (Rule 2): the browser's mean over its loaded page was removed.
+ *
+ * Measuring reads each project's governed sections, so it is bounded: a selection
+ * past PORTFOLIO_READINESS_MAX projects is 'not_measured' and says so. Narrowing by
+ * client, workstream or pathway brings it under the bound.
+ */
+export const PORTFOLIO_READINESS_MAX = 200;
+export type PortfolioReadinessState = 'measured' | 'none' | 'not_measured' | 'unavailable';
+export interface PortfolioReadiness {
+  /** A whole percent; null unless `readinessState` is 'measured'. */
+  averageReadiness: number | null;
+  /** How many selected projects have a measured figure: the mean's denominator. */
+  readinessMeasured: number;
+  readinessState: PortfolioReadinessState;
+}
+
+const NOT_MEASURED: PortfolioReadiness = { averageReadiness: null, readinessMeasured: 0, readinessState: 'not_measured' };
+
+/** A project with no sections to count is left out, never a 0. One figure that could not be
+ *  read makes the average unavailable: a mean over the rest would be stated as the portfolio's. */
+export function portfolioReadiness(figures: Iterable<DossierFigure>): PortfolioReadiness {
+  const measured: number[] = [];
+  for (const f of figures) {
+    if (f.state === 'unavailable') return { averageReadiness: null, readinessMeasured: 0, readinessState: 'unavailable' };
+    if (f.state === 'measured' && typeof f.pct === 'number' && Number.isFinite(f.pct)) measured.push(f.pct);
+  }
+  if (measured.length === 0) return { averageReadiness: null, readinessMeasured: 0, readinessState: 'none' };
+  const mean = measured.reduce((sum, pct) => sum + pct, 0) / measured.length;
+  return { averageReadiness: Math.round(mean), readinessMeasured: measured.length, readinessState: 'measured' };
+}
+
+const PORTFOLIO_PROGRAM_IDS_SQL = `${PORTFOLIO_SELECTED_CTE}
+SELECT id AS portfolio_program_id FROM selected ORDER BY id LIMIT $7`;
+
+/**
+ * `page.whole`: the returned page holds every selected project, so its figures are the
+ * portfolio's and nothing is read again. Otherwise every selected project is measured
+ * through `measure`, the reader the cards use.
+ */
+export async function readPortfolioReadiness(q: ProgramAccessExecutor, input: {
+  organizationId: number; anchors: readonly VerifiedProgramAnchor[]; includeArchived: boolean;
+  clientWorkspaceId: number | null; workstream: Workstream | null; pathway: RegulatoryPathway | null;
+}, page: { total: number; whole: boolean; figures: ReadonlyMap<string, DossierFigure> },
+measure: (programIds: string[]) => Promise<ReadonlyMap<string, DossierFigure>>): Promise<PortfolioReadiness> {
+  if (page.whole) return portfolioReadiness(page.figures.values());
+  if (page.total > PORTFOLIO_READINESS_MAX) return NOT_MEASURED;
+  const {rows} = await q.query(PORTFOLIO_PROGRAM_IDS_SQL, [input.organizationId, input.includeArchived,
+    portfolioAnchorJson(input.anchors), input.clientWorkspaceId, input.workstream, input.pathway, PORTFOLIO_READINESS_MAX + 1]);
+  const ids = rows.map((row) => String((row as { portfolio_program_id: unknown }).portfolio_program_id));
+  if (ids.length > PORTFOLIO_READINESS_MAX) return NOT_MEASURED;
+  return portfolioReadiness((await measure(ids)).values());
 }
