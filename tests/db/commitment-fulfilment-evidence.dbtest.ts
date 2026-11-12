@@ -297,10 +297,11 @@ describe("the organisation's register and a program the reader cannot open", () 
     expect(res.body.data.sequences.map((s: { id: number }) => s.id).sort()).toEqual([seq.ok, seq.ack].sort());
 
     const underQ = await made(sub.Q, 'PMR made under the private IND');
+    // A reader who cannot open the submission's project is not told the commitment exists (e107d2c149):
+    // "a refused read answers 'Commitment not found here.', never confirming the commitment".
     const hidden = await request(app).get(optionsUrl('org', underQ)).set(as('member'));
-    expect(hidden.status, JSON.stringify(hidden.body)).toBe(200);
-    expect(hidden.body.data.commitment.submission).toEqual({ readable: false });
-    expect(hidden.body.data.sequences).toEqual([]);
+    expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+    expect(hidden.body.error?.message ?? hidden.body.error).toMatch(/Commitment not found here/);
     for (const leak of ['0917', 'hidden-IND', `"id":${sub.Q}`]) expect(JSON.stringify(hidden.body), `leaked ${leak}`).not.toContain(leak);
     const named = await request(app).get(optionsUrl('org', underQ)).set(as('signer'));
     expect(named.body.data.commitment.submission).toMatchObject({ readable: true, id: sub.Q });
