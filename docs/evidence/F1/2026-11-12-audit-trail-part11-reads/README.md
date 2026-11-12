@@ -16,6 +16,16 @@ each as it is fixed.
 - Tests of the screen: `client/src/concept2cure/v2/__tests__/auditTrail*.test.tsx`, `anaOperatesAuditTrail.test.tsx`,
   `anaSeesScreens.test.tsx`.
 
+- The seal check: `POST /api/audit/export/verify` in `server/routes/audit-trail-routes.ts`, over
+  `verifySignedAuditExport` (`server/services/audit/signedAuditExport.ts`). It checks a signed audit export and a
+  compliance report alike. Its one caller in the product is "Verify a saved report" on the Compliance reports
+  screen (`client/src/concept2cure/v2/surfaces/ComplianceReportsVerify.tsx`); the OQ step OQ-RPT-14 calls it too.
+- The gates its sibling routes already use: `requireAuditOrg` (same file) and `requireAuditReader`
+  (`server/services/audit/audit-api-authority.ts`: owner, administrator, manager, platform administrator).
+- The chained audit writer for exports: `server/services/audit/audited-export.ts` over `writeChainedAuditRow`.
+- The same organisation check on a saved snapshot, for conversion:
+  `server/services/audit/compliance-reports/snapshot-export.ts` (`REPORT_SNAPSHOT_TENANT_MISMATCH`).
+
 Nothing new was added: no route, parameter, screen or table.
 
 ## GA-D5-05 — the screen read the newest 200 entries and presented them as the whole trail
@@ -59,3 +69,71 @@ The more-than-1,000 case was also checked in the component test only.
 **Left for the route's holder.** A trail longer than 1,000 entries still cannot be filtered or searched past the
 newest 1,000 from this screen. That needs a cursor or a `kind` parameter on the route, which is another session's
 file. The screen now says so plainly in place of implying the list is complete.
+
+## GA-D6-03 — the seal check had no role gate, no organisation check and no audit row
+
+**Before.** `GET /api/audit/export` and `/audit/export/signed` required the session's organisation and the
+audit-reader role. `POST /api/audit/export/verify`, in the same file, required neither. Any signed-in session, a
+viewer included, could put any package to the platform's seal key and be told whether it was genuine, including a
+package sealed for another organisation. Nothing recorded that the check was made.
+
+**Fix.**
+
+1. The route applies `requireAuditOrg` and `requireAuditReader`, as the exports beside it do.
+2. The package must be one sealed for the session's organisation. The manifest states it (`queryFilters.organizationId`
+   on a signed audit export, `organizationId` on a compliance report; `manifestOrganizationId` in
+   `audited-export.ts`). Another organisation's package, or one that names none, is refused with
+   `403 AUDIT_EXPORT_TENANT_MISMATCH` and no verdict.
+3. The verdict is sent only after one row on the organisation's chain records it: action `audit.export_verify`,
+   the export id, the data hash, valid or not, the errors and the key (`recordExportVerification`). When the row
+   cannot be written the answer is `503 AUDIT_EXPORT_VERIFICATION_NOT_RECORDED` and no verdict.
+4. The verify instruction sent with each report now names who can use the route ("a signed-in administrator or
+   manager of the organisation"); it said "member".
+
+**Limit, stated.** On a version-2 manifest the organisation is under the seal, so relabelling another
+organisation's package as one's own makes it invalid (tested). A version-1 manifest (issued before the ledger L55
+fix) sealed its top-level fields only, so there the organisation is stated and not sealed, like every other
+nested claim of that version. Refusing version 1 outright would stop already-issued exports from verifying.
+
+**Red first.** `server/routes/__tests__/audit-export-verify-gate.test.ts`, 15 cases; 9 failed on the old route:
+
+```
+× a member is refused before the seal key is used        → expected 200 to be 403
+× a viewer is refused before the seal key is used        → expected 200 to be 403
+× a session whose organisation is 0 is refused           → expected 200 to be 403
+× a signed audit export sealed for another organisation  → expected 200 to be 403
+× a compliance report sealed for another organisation    → expected 200 to be 403
+× a package that names no organisation is refused        → expected 200 to be 403
+× a passing check writes one row on the chain            → expected "vi.fn()" to be called 1 times, but got 0 times
+× a failing check is recorded as failing
+× when the row cannot be written, no verdict is sent     → expected 200 to be 503
+```
+
+After: that file, `audit-compliance-reports`, `audit-trail-read-gate`, `audit-export-tenant-scope` and every suite
+under `server/services/audit`: 45 files, 548 tests, all pass. Two cases in `audit-export-tenant-scope.test.ts`
+posted manifests that named no organisation; they now name the session's.
+
+**In the running app** (local GA database; two organisations). The administrator of organisation 2 ran the user
+access review; each role then sent that saved report to the route:
+
+| Who | Answer |
+|---|---|
+| administrator (org 2) | 200, valid |
+| manager (org 2) | 200, valid |
+| member (org 2) | 403 `AUDIT_READ_RESTRICTED` |
+| viewer (org 2) | 403 `AUDIT_READ_RESTRICTED` |
+| administrator of organisation 6 | 403 `AUDIT_EXPORT_TENANT_MISMATCH` |
+| administrator (org 2), one character of the data changed | 200, not valid: "Data hash mismatch" |
+| administrator (org 2), organisation 6's own report | 403 `AUDIT_EXPORT_TENANT_MISMATCH` |
+| administrator of organisation 6, its own report | 200, valid |
+
+The audit trail of organisation 2 then listed each check, with who made it and the answer, for example
+"Sarah Chen — Checked the seal of COMPLIANCE-REPORT-1794461285095-ad1ea1b2: it verifies" and
+"JM Smith — Checked the seal of …: it does not verify".
+
+On the Compliance reports screen, "Verify a saved report": the organisation's own saved report shows "The saved
+report verifies: its data matches its seal" (`verify-own-report.png`); organisation 6's file shows "This file was
+not sealed for your organisation, so it is not checked here." (`verify-other-organisation-refused.png`).
+
+**Not run.** The OQ protocol (OQ-RPT-14) was not executed here; it runs the report and the check as one
+audit reader of one organisation, which the gate admits.

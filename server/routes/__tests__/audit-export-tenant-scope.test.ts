@@ -22,6 +22,8 @@ vi.mock('../../services/audit/signedAuditExport.js', () => ({
   verifySignedAuditExport: verifyExport,
 }));
 vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx }));
+// The verify route records each check on the chain before it answers (GA-D6-03); the writer is a double here.
+vi.mock('../../services/auditService.js', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: verifier }));
 
 import { createAuditTrailRoutes } from '../audit-trail-routes';
@@ -106,7 +108,7 @@ describe('the export names its key (P1-19b)', () => {
     verifyExport.mockReturnValue({ valid: true, errors: [], signingKeyId: 'k1' });
     const res = await request(app())
       .post('/api/audit/export/verify')
-      .send({ data: '[]', manifest: { exportId: 'E1', signingKeyId: 'k1' }, signature: 'sig' });
+      .send({ data: '[]', manifest: { exportId: 'E1', signingKeyId: 'k1', queryFilters: { organizationId: 7 } }, signature: 'sig' });
     expect(res.status).toBe(200);
     expect(res.body.verification).toMatchObject({ valid: true, signingKeyId: 'k1' });
   });
@@ -115,7 +117,7 @@ describe('the export names its key (P1-19b)', () => {
     verifyExport.mockReturnValue({ valid: true, errors: [], signingKeyId: null });
     const res = await request(app())
       .post('/api/audit/export/verify')
-      .send({ data: '[]', manifest: { exportId: 'E0' }, signature: 'sig' });
+      .send({ data: '[]', manifest: { exportId: 'E0', queryFilters: { organizationId: 7 } }, signature: 'sig' });
     expect(res.status).toBe(200);
     expect(res.body.verification.valid).toBe(true);
     expect(res.body.verification.signingKeyId).toBeNull();
