@@ -82,8 +82,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'The trial master file of the open project’s study (P-74, P-75: the eTMF lives inside the Vault). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R3) Appendix C essential records. A record is filed against a document of the project’s Vault, with a reason, and a filing is removed with a reason; both are audited. The inspection package downloads as a recorded ZIP. This page hosts the section (surfaces/VaultTrialMasterFile.tsx) until the eTMF is admitted to the Vault app; the Vault’s header button opens it.',
-    engineering: 'GET /api/etmf/trials/:studyId/completeness (studyId is a cdisc_prm_studies.study_id of the project), GET/POST .../artifacts, DELETE /api/etmf/artifacts/:id, GET .../inspection-package (server/routes/etmf.routes.ts). Filing and removal need a reason and a Vault-write role.',
+    notes: 'The trial master file of the open project’s study (P-74, P-75: the eTMF lives inside the Vault). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R3) Appendix C essential records. A record is filed against a document of the project’s Vault, with a reason, and a filing is removed with a reason; both are audited. The inspection package downloads as a recorded ZIP. This page hosts the section until the eTMF is admitted to the Vault app; the Vault’s header button opens it.',
+    engineering: 'GET /api/etmf/trials/:studyId/completeness (studyId is a cdisc_prm_studies.study_id of the project), GET/POST .../artifacts, DELETE /api/etmf/artifacts/:id, GET .../inspection-package (server/routes/etmf.routes.ts). Filing and removal need a reason and a Vault-write role. The section is surfaces/VaultTrialMasterFile.tsx.',
   },
   {
     // Routable but unregistered until now. `/concept2cure/client-portal` is
