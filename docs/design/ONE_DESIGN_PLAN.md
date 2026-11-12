@@ -2656,11 +2656,13 @@ them** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`, findings 
 - **The Lumen account with the gate on:** 277 of its 307 screens and tabs opened, none refused.
 - **For R1 and RBM's screens:** three RBM routes are built and no screen calls them (the load history, the scored
   patient profiles list, site oversight); a release refuses them, because no launch surface claims their prefix.
-- **2026-11-12, push slots.** Fifteen sessions push to the one branch, and a push that carries code holds it for
-  about seven minutes, so unscheduled pushes lost ref races for an hour or more. This session proposed an
-  eight-minute slot for each session on a two-hour cycle (`.design/claude-convergence/COORDINATION.md`, "The GA
-  run"). It first wrote that the founder had made it the manager across the sessions. That was wrong, and is
-  corrected there and by message: the founder's sentence went to every session.
+- **2026-11-12, push slots, proposed and withdrawn.** While fifteen sessions lost ref races, this session proposed an
+  eight-minute slot for each, and first wrote that the founder had made it the manager across the sessions. That was
+  wrong (the founder's sentence went to every session) and is corrected. The slots were withdrawn once trunk was quiet
+  (`.design/claude-convergence/COORDINATION.md`, "Push slots of 2026-11-12").
+- **2026-11-12, the device demo pack** (`docs/evidence/DEMO/2026-11-12-device-pack/`): the 510(k) Summary is reviewed
+  by a third person and approved by the second; the pack writes its text into the project's filing, so the seeded
+  510(k) export answers 200 instead of 422; the eSTAR probe leaves no seventh leaf (`GA-DEMO-10`, `-11`, `-12`).
 - **2026-11-12, the built client under the policy a release enforces** (`d08bbd2340`, same evidence folder, findings S
   and T): all 134 screens open with no error and nothing refused that a screen uses. Two violations were reported on
   every page and broke nothing; both are repaired (the template's inline style gets the nonce; Zod does not probe for
