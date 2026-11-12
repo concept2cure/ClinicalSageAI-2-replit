@@ -3118,6 +3118,25 @@ not pay for a feature that is nearly right.
 7. **Not this session's to decide, and still owed by people:** legal sign-off on each agency DTD before it is
    fetched (`assets/ectd-dtd/README.md`); licences; production secrets and hosting; the model key and the
    qualification approval that lets AnA be walked over folders in a conversation.
+8. **One outline per filing in the Library** (added 2026-11-12 by the Vault parity lane, `…01KnUGoX3g`, which carries
+   the Vault's open items now that this session has released them; same delegation, same test). The Library listed a
+   filing's outline twice:
+   - first the filing binder, holding the files placed against each heading;
+   - below it the authored filing document's own sections, with the same headings, each with its requirement, its
+     drafting state and its door to the editor.
+
+   The two counted different things, so one heading read "0/0" in one place and "0/9" in the other. This was seen on
+   a 510(k) and on both demo INDs. Two lists of the same table of contents is the confusion a regulatory lead stops
+   trusting a Vault over. Veeva's binder answers it with one content plan, where each heading shows what is authored
+   and what is filed.
+   - **Decided:** each authored section sits in the binder heading with its code, first among the files placed there.
+     It keeps its requirement, its state, its owner and its door to the editor, and carries its filing's identity
+     itself.
+   - **Nothing is dropped:** a section the binder has no heading for stays under its document, and so does any
+     document the binder is not the outline of. That includes a market's part, a second document of the same filing,
+     and another document type.
+   - **Kept from this session's design:** the binder is first, and the Vault opens on it. Built:
+     `server/services/vault/vault-binder-outline.ts`.
 
 Evidence: `docs/evidence/SPINE/S6/2026-11-10/README.md`.
 
