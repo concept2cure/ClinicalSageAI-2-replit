@@ -3311,3 +3311,39 @@ Recorded by the walking session (`01QoxbLZhy…`), which owns package S13. Desig
    table, no new screen, no new model.
 9. **Not in this package:** release notes in the product, a public help site, e-mail where none is configured, course
    progress and certificates, an organisation's own articles.
+
+### P-128 — The device and diagnostics screens take the plan's design: package D8
+
+**The question.** The device lane's study asked which package takes the device screens' design
+(`.design/client-journey/MDX_JOURNEY_2026-11-01.md`, question 1), and P-114 left it as a plan matter. Until now
+`client/src/concept2cure/mdx/**` was in no design package, so those screens could be repaired but not given
+ONE_DESIGN_PLAN §2's design. A walk of the running app on 2026-11-11 found them the largest gap from that design
+(`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-11/README.md`, finding 5).
+
+**The founder's answer, 2026-11-12.** Session `…01E8btkB` put the question to the founder with three choices: a new
+device design package, the device files added to D3 and D4, or repairs only for GA. The founder chose the first,
+whose words were: **"New package D8. Add a device design package covering client/src/concept2cure/mdx/** and the
+three device files in v2. I record it as your decision P-126 and start with the shared look in one stylesheet:
+sentence case, no filled stat tiles. Nothing a screen shows is removed. Moving the per-type device screens into the
+one editor stays undecided."** Recorded by that session. Reversible by the founder.
+
+**Its number.** The choice put to the founder named this decision P-126, and its words are quoted as chosen. Two
+other decisions were recorded the same morning and landed on trunk first: P-126 (a CSR heading that holds only its
+subsections, `c268e6f7b9`) and P-127 (help, training and support, `adb7eec173`). So this decision is **P-128**.
+What the founder chose is unchanged.
+
+1. **Package D8 holds the device and diagnostics screens' design.** Its files are
+   `client/src/concept2cure/mdx/**` and the three device files in v2 the study names:
+   `client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx`, `HumanFactors.tsx` and `Labeling.tsx`. D8 follows
+   ONE_DESIGN_PLAN §3's order for a design package: spec, build, evidence at 1440 px and 390 px in light and dark,
+   review, close.
+2. **The first slice is the shared look, in one stylesheet** (`client/src/concept2cure/mdx/app.css`): sentence case
+   in place of uppercase labels, and no filled stat tiles.
+3. **Nothing a screen shows is removed (P-122).** No metric, workflow, verdict, action or record is removed, hidden,
+   moved below the fold or put behind a closed disclosure. A figure a screen shows stays a figure it shows.
+4. **Not decided: moving the per-type device screens into the one editor.** RULE 4's convergence of the 510(k), PMA,
+   CER, IVD, Labeling, Pre-Sub, Human factors and Software workbenches into the project's document start and the one
+   editor (the second half of the study's question 1) stays the founder's. So does the retirement of unreached
+   device capability (question 4).
+5. **D8 adds nothing (RULE 6),** and files another session holds stay with it until its row releases them. F1 still
+   takes the device screens' repairs and R1 their unreached capability.

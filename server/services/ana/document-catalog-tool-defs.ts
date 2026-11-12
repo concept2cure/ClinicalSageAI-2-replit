@@ -44,7 +44,7 @@ export const LIST_PROJECT_DOCUMENTS: AnaTool = {
       query: { type: 'string', description: 'With catalog: words to find in a capture\u2019s title or text.' },
       kind: { type: 'string', description: 'With catalog: only this evidence kind (from organizedBy.kind).' },
       ctd: { type: 'string', description: 'With catalog: only this CTD section and its subsections (e.g. "5.3").' },
-      folder: { type: 'string', description: 'With catalog: only this proposed Vault folder (from organizedBy.folder).' },
+      filed_in: { type: 'string', description: 'With catalog: only captures proposed for this Vault folder (a value of organizedBy.folder).' },
       project: { type: 'string', description: 'With catalog: only this project of the catalog (from organizedBy.project).' },
       study: { type: 'number', description: 'With catalog: only this study (from organizedBy.study).' },
       program_id: {
