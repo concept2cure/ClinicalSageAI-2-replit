@@ -26,12 +26,12 @@
  *   DEMO_BASE_URL=http://localhost:5400 node scripts/demo/launch-demo/seed.mjs --pack mdx --purge
  */
 import { must, findDemo, sha256, connectSigner, makeMultiPagePdfBuffer } from '../lib.mjs';
-import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
+import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, NEUROPANEL_OBJECTIVE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, rowsOf, latin1, probe, finding } from './mdx-shared.mjs';
 import { connectApprover } from './lumen-vault.mjs';
 import { seedFiling, removeProbeLeaf } from './mdx-filing.mjs';
 import { qmsDocs, seedQms } from './mdx-qms.mjs';
-import { makeTally, pastReview } from './biotech-shared.mjs';
+import { ensureObjective, makeTally, pastReview } from './biotech-shared.mjs';
 import { ensureTasks } from './work-areas.mjs';
 
 /** NeuroPanel-Dx's 510(k) work on the task board (fictional device; planning values). */
@@ -534,6 +534,7 @@ export async function seed(ctx) {
     program = await seedProgram(ctx);
     return program.summary;
   });
+  await ensureObjective({ ...ctx, tally: makeTally(run) }, program, NEUROPANEL_OBJECTIVE);
   const vaultDocs = await seedVault(ctx, program.id);
   const signer = await connectSigner({ baseUrl: ctx.baseUrl, authorEmail: identity.email });
   run.record('signer', signer ? { email: signer.email, userId: signer.userId } : { supplied: false, note: SIGNER_ABSENT });
