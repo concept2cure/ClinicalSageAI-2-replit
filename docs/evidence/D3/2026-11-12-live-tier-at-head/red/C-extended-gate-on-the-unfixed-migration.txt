@@ -1,0 +1,20 @@
+[ci:install-fresh-overlay-deps] 398 overlay file(s) · 695 pushed table(s) · 7 pre-overlay creator(s) · 277 named-schema table(s) that exist only after the overlay · 1 finding(s).
+
+[ci:install-fresh-overlay-deps] FAIL — 1 overlay file(s) touch a named-schema table unguarded:
+
+  migrations/20261112_vault_catalog_dataset_profile.sql
+      touches vault.document_catalog, which does not exist until migrations/20260905_document_catalog.sql (guarded: re-applied at step 6)
+
+  The table is absent on every pass of install-fresh's step-3 overlay, so each of these
+  defers until the passes run out and the installer reports INCOMPLETE — failing blank-db
+  provisioning, and with it every job that needs a database built from empty.
+  deploy-migrate is unaffected, so the deploy path stays green and hides it.
+
+  Open the file's statements with the guard its siblings carry:
+
+      IF to_regclass('<schema>.<table>') IS NULL THEN RETURN; END IF;
+
+  It then no-ops at step 3 and scripts/db/install-fresh.mjs re-applies it at step 6, once the table
+  exists (it selects every root file carrying that guard). PRE_OVERLAY_CREATORS is NOT
+  the remedy here: the creator is already in migrations/ and is deferred on purpose.
+

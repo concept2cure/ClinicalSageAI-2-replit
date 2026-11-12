@@ -24,11 +24,36 @@
 -- RULE 1: replayed on every deploy. ADD COLUMN IF NOT EXISTS only: no table,
 -- no constraint, no trigger, no DROP. vault.document_catalog keeps its
 -- existing tenant policy; a column adds nothing for the sweeps to policy.
+--
+-- AMENDED IN PLACE 2026-11-12 (F1): the statements are now inside a DO block
+-- that returns when vault.document_catalog does not exist yet. Nothing is
+-- removed and nothing changes on a database that has the table: the same two
+-- columns and the same comment are applied, exactly as before.
+--   Why. On a database built from empty, install-fresh's step-3 overlay runs
+--   this file before the table exists: its creator
+--   (20260905_document_catalog.sql) itself waits on vault.documents, which the
+--   governed-content tree creates at step 6. Unguarded, the ALTER failed on
+--   every pass ("relation vault.document_catalog does not exist"), the file
+--   was left unapplied, and the installer reported INCOMPLETE and exited 1, so
+--   no database could be provisioned from blank. Guarded, it no-ops at step 3
+--   and install-fresh re-applies it at step 6, as it does for every root file
+--   carrying this guard (20261008e_document_catalog_attribution.sql is the
+--   sibling this follows). deploy-migrate was never affected: there the
+--   creator runs first.
+--   Evidence: docs/evidence/D3/2026-11-12-live-tier-at-head/.
 -- =============================================================================
 
-ALTER TABLE vault.document_catalog
-  ADD COLUMN IF NOT EXISTS dataset_profile jsonb,
-  ADD COLUMN IF NOT EXISTS dataset_profiled_at timestamptz;
+DO $catalog_dataset_profile$
+BEGIN
+  IF to_regclass('vault.document_catalog') IS NULL THEN
+    RETURN;
+  END IF;
 
-COMMENT ON COLUMN vault.document_catalog.dataset_profile IS
-  'The dataset profile of this content (dataset-profile.ts), made by the data catalog (data-room-vault.ts) from verified bytes. Derived; never a person''s or a model''s statement.';
+  ALTER TABLE vault.document_catalog
+    ADD COLUMN IF NOT EXISTS dataset_profile jsonb,
+    ADD COLUMN IF NOT EXISTS dataset_profiled_at timestamptz;
+
+  COMMENT ON COLUMN vault.document_catalog.dataset_profile IS
+    'The dataset profile of this content (dataset-profile.ts), made by the data catalog (data-room-vault.ts) from verified bytes. Derived; never a person''s or a model''s statement.';
+END
+$catalog_dataset_profile$;
