@@ -6,7 +6,7 @@
     "identity": null,
     "body": {
       "productName": "BX-702 5 mg film-coated tablet",
-      "batchNumber": "P2-20261110130629",
+      "batchNumber": "P2-20261112003432",
       "dosageForm": "tablet",
       "scope": "DP",
       "climaticZone": "II",
@@ -29,23 +29,23 @@
       "status": "ACTIVE",
       "startDate": "2026-01-15T00:00:00.000Z",
       "shelfLife": "24 months when stored at or below 25 C",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 38,
+    "durationMs": 34,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 66,
+        "id": 84,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "studyTitle": null,
         "productName": "BX-702 5 mg film-coated tablet",
-        "batchNumber": "P2-20261110130629",
+        "batchNumber": "P2-20261112003432",
         "dosageForm": "tablet",
         "strength": null,
         "scope": "DP",
@@ -76,8 +76,8 @@
         "startDate": "2026-01-15T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T13:06:42.424Z",
-        "updatedAt": "2026-11-10T13:06:42.424Z"
+        "createdAt": "2026-11-12T00:34:45.450Z",
+        "updatedAt": "2026-11-12T00:34:45.450Z"
       },
       "module3Linked": true
     }

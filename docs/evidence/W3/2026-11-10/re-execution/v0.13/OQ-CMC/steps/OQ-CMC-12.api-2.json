@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1/approve",
+    "anonymous": false,
+    "identity": "oq-member@validation.local",
+    "body": {
+      "reason": "Reviewed against the executed batch record and the certificate of analysis.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "ESIGNATURE_NO_AUTHORITY",
+      "message": "Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed."
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
     "anonymous": false,
     "identity": null,
     "body": {}
@@ -9,15 +9,16 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 53,
+    "durationMs": 57,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
-      "error": "1 section(s) went stale after approval and must be re-approved before final export",
+      "error": "1 draft section(s) are stale because their source records changed after the last compile: recompile, then approve them before final export",
       "data": {
         "totalSections": 21,
         "approvedSections": 0,
         "staleSections": 1,
+        "staleApprovedSections": 0,
         "openCriticalContradictions": 1,
         "sectionsWithoutProvenance": 0,
         "incompleteApprovedSections": [],
@@ -28,13 +29,13 @@
         "canonicalGovernedState": {
           "context": {
             "organizationId": "2",
-            "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+            "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
             "documentType": "cmc_module3",
             "ctdSection": "3",
             "intendedAction": "export",
             "actorId": "1",
-            "requestId": "3664e36b-cc36-4a7b-ba1d-2fef9ac994fd",
-            "timestamp": "2026-11-10T13:08:01.615Z"
+            "requestId": "02fd4262-6133-4bf2-8975-591da69c3c5c",
+            "timestamp": "2026-11-12T00:36:01.609Z"
           },
           "decision": {
             "decisionId": "",
@@ -44,14 +45,14 @@
             "blockerCount": 5,
             "warningCount": 3,
             "consequenceCount": 6,
-            "timestamp": "2026-11-10T13:08:01.616Z",
+            "timestamp": "2026-11-12T00:36:01.610Z",
             "decisionReference": {
-              "decisionId": "512ec1cb-1191-47f5-9caa-956aee88fc0a",
-              "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+              "decisionId": "3029eb3c-ae93-4111-a27e-d30f9a88d40f",
+              "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
               "intent": "export",
               "outcome": "block",
               "actorId": "1",
-              "timestamp": "2026-11-10T13:08:01.616Z"
+              "timestamp": "2026-11-12T00:36:01.611Z"
             }
           },
           "readinessState": {
@@ -59,7 +60,7 @@
             "score": 15,
             "blockers": [
               {
-                "id": "blk_5072fad5-b612-47b4-ba5f-31c7b2edc78a",
+                "id": "blk_af0d1555-1b0f-46a2-b344-e8bd2b218380",
                 "category": "unresolved_contradiction",
                 "severity": "critical",
                 "message": "1 critical contradiction(s) must be resolved before progression",
@@ -67,7 +68,7 @@
                 "remediationHint": "Resolve all critical contradictions before proceeding"
               },
               {
-                "id": "blk_d99aac24-ca2e-439f-9610-a299527e65eb",
+                "id": "blk_1c1c3fe6-fa1e-4e10-85b8-537532da1361",
                 "category": "missing_approval",
                 "severity": "major",
                 "message": "Document is stale: source data changed since last compilation",
@@ -77,34 +78,34 @@
             ],
             "warnings": [
               {
-                "id": "wrn_59c576b3-aacf-4a3a-866a-a5b20ff75f3d",
+                "id": "wrn_f7886c51-62e6-4984-a606-3a528cfd27f4",
                 "category": "evidence_incomplete",
                 "severity": "warning",
                 "message": "Evidence is missing or incomplete",
                 "source": "readiness-gates"
               },
               {
-                "id": "wrn_7cd89530-df4b-4b9c-ba19-04f7a46cbf65",
+                "id": "wrn_db9e5a4d-4ab4-4f9a-95e9-fd6ead81e488",
                 "category": "low_completeness",
                 "severity": "warning",
                 "message": "Completeness score is 0% — below recommended threshold",
                 "source": "readiness-gates"
               },
               {
-                "id": "wrn_02ced392-02c3-48a5-95af-8276a0bd8654",
+                "id": "wrn_37ad16d8-a970-437d-9d6c-09a93166be21",
                 "category": "non_critical_contradictions",
                 "severity": "warning",
                 "message": "1 non-critical contradiction(s) remain unresolved",
                 "source": "readiness-gates"
               }
             ],
-            "evaluatedAt": "2026-11-10T13:08:01.615Z",
+            "evaluatedAt": "2026-11-12T00:36:01.610Z",
             "evaluatedBy": "readiness-gates@1.0.0",
             "confidence": "high"
           },
           "blockers": [
             {
-              "id": "blk_5072fad5-b612-47b4-ba5f-31c7b2edc78a",
+              "id": "blk_af0d1555-1b0f-46a2-b344-e8bd2b218380",
               "category": "unresolved_contradiction",
               "severity": "critical",
               "message": "1 critical contradiction(s) must be resolved before progression",
@@ -112,7 +113,7 @@
               "remediationHint": "Resolve all critical contradictions before proceeding"
             },
             {
-              "id": "blk_d99aac24-ca2e-439f-9610-a299527e65eb",
+              "id": "blk_1c1c3fe6-fa1e-4e10-85b8-537532da1361",
               "category": "missing_approval",
               "severity": "major",
               "message": "Document is stale: source data changed since last compilation",
@@ -120,21 +121,21 @@
               "remediationHint": "Refresh or recompile the document to clear staleness"
             },
             {
-              "id": "gate_bf705eb5-b882-40c0-b10f-01d8e1fd957d",
+              "id": "gate_d5c07695-93c0-428e-8200-e54f783e86f9",
               "category": "missing_approval",
               "severity": "critical",
               "message": "Document must be approved before export",
               "source": "export-publish-gates@1.0.0"
             },
             {
-              "id": "gate_3a76bbb2-4c43-4daa-98da-368599f93670",
+              "id": "gate_64985de4-a1fe-486a-b18c-5e77491ed784",
               "category": "unresolved_contradiction",
               "severity": "critical",
               "message": "2 unresolved contradiction(s) block export",
               "source": "export-publish-gates@1.0.0"
             },
             {
-              "id": "gate_80cec0e0-5e1a-47f7-bbc2-389d331cfa08",
+              "id": "gate_4c33132d-91b5-4f3a-9dba-88517ff3f609",
               "category": "export_gate_failed",
               "severity": "major",
               "message": "Document is stale — refresh before export",
@@ -143,21 +144,21 @@
           ],
           "warnings": [
             {
-              "id": "wrn_59c576b3-aacf-4a3a-866a-a5b20ff75f3d",
+              "id": "wrn_f7886c51-62e6-4984-a606-3a528cfd27f4",
               "category": "evidence_incomplete",
               "severity": "warning",
               "message": "Evidence is missing or incomplete",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_7cd89530-df4b-4b9c-ba19-04f7a46cbf65",
+              "id": "wrn_db9e5a4d-4ab4-4f9a-95e9-fd6ead81e488",
               "category": "low_completeness",
               "severity": "warning",
               "message": "Completeness score is 0% — below recommended threshold",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_02ced392-02c3-48a5-95af-8276a0bd8654",
+              "id": "wrn_37ad16d8-a970-437d-9d6c-09a93166be21",
               "category": "non_critical_contradictions",
               "severity": "warning",
               "message": "1 non-critical contradiction(s) remain unresolved",
@@ -238,21 +239,21 @@
             ],
             "blockingReasons": [
               {
-                "id": "gate_bf705eb5-b882-40c0-b10f-01d8e1fd957d",
+                "id": "gate_d5c07695-93c0-428e-8200-e54f783e86f9",
                 "category": "missing_approval",
                 "severity": "critical",
                 "message": "Document must be approved before export",
                 "source": "export-publish-gates@1.0.0"
               },
               {
-                "id": "gate_3a76bbb2-4c43-4daa-98da-368599f93670",
+                "id": "gate_64985de4-a1fe-486a-b18c-5e77491ed784",
                 "category": "unresolved_contradiction",
                 "severity": "critical",
                 "message": "2 unresolved contradiction(s) block export",
                 "source": "export-publish-gates@1.0.0"
               },
               {
-                "id": "gate_80cec0e0-5e1a-47f7-bbc2-389d331cfa08",
+                "id": "gate_4c33132d-91b5-4f3a-9dba-88517ff3f609",
                 "category": "export_gate_failed",
                 "severity": "major",
                 "message": "Document is stale — refresh before export",
@@ -287,7 +288,7 @@
               "consequenceType": "update_readiness_score",
               "description": "Readiness evaluated: blocked (score: 15/100, confidence: high)",
               "targetObjectType": "project",
-              "targetObjectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+              "targetObjectId": "689b2e11-9727-43af-9aae-1369322b42cc",
               "severity": "info",
               "actionRequired": false,
               "autoExecutable": true,
@@ -331,12 +332,12 @@
             }
           ],
           "decisionReference": {
-            "decisionId": "512ec1cb-1191-47f5-9caa-956aee88fc0a",
-            "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+            "decisionId": "3029eb3c-ae93-4111-a27e-d30f9a88d40f",
+            "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
             "intent": "export",
             "outcome": "block",
             "actorId": "1",
-            "timestamp": "2026-11-10T13:08:01.616Z"
+            "timestamp": "2026-11-12T00:36:01.611Z"
           },
           "uiPresentationHints": {
             "readinessBadge": {
@@ -401,8 +402,8 @@
           },
           "artifactBinding": {},
           "stateFreshness": {
-            "evaluatedAt": "2026-11-10T13:08:01.615Z",
-            "generatedAt": "2026-11-10T13:08:01.619Z"
+            "evaluatedAt": "2026-11-12T00:36:01.609Z",
+            "generatedAt": "2026-11-12T00:36:01.618Z"
           },
           "derivedFlags": {
             "isBlocked": true,

@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "7902e393-1415-4027-aa17-a6d6c0eed598",
+      "projectId": "3cffcaa3-e0fd-4343-9091-3f63cb83b0aa",
       "productName": "PRV-running",
       "batchNumber": "B-1",
       "dosageForm": "tablet",
@@ -53,9 +53,9 @@
     "body": {
       "success": true,
       "data": {
-        "id": 78,
+        "id": 96,
         "organizationId": 2,
-        "projectId": "7902e393-1415-4027-aa17-a6d6c0eed598",
+        "projectId": "3cffcaa3-e0fd-4343-9091-3f63cb83b0aa",
         "studyTitle": null,
         "productName": "PRV-running",
         "batchNumber": "B-1",
@@ -102,8 +102,8 @@
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T13:28:01.900Z",
-        "updatedAt": "2026-11-10T13:28:01.900Z"
+        "createdAt": "2026-11-12T00:57:31.985Z",
+        "updatedAt": "2026-11-12T00:57:31.985Z"
       },
       "module3Linked": true
     }

@@ -14,7 +14,7 @@
         "description": "Per 100,000 tablets: BX-702 0.500 kg; microcrystalline cellulose PH-102 8.000 kg; gelatin 0.300 kg; film coat 0.300 kg"
       },
       "status": "development",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
@@ -25,9 +25,9 @@
     "body": {
       "success": true,
       "data": {
-        "id": 16,
+        "id": 21,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "productName": "BX-702 5 mg film-coated tablet",
         "dosageForm": "Film-coated tablet",
         "strength": "5 mg",
@@ -42,8 +42,8 @@
         "packagingMaterials": null,
         "stability": null,
         "status": "development",
-        "createdAt": "2026-11-10T13:06:36.435Z",
-        "updatedAt": "2026-11-10T13:06:36.435Z"
+        "createdAt": "2026-11-12T00:34:39.463Z",
+        "updatedAt": "2026-11-12T00:34:39.463Z"
       },
       "module3Linked": true
     }

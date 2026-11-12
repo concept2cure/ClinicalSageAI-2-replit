@@ -2,7 +2,7 @@
   "read": [
     {
       "register": "analytical-methods",
-      "id": 20,
+      "id": 25,
       "acts": [
         "Recorded",
         "Changed"
@@ -10,7 +10,7 @@
     },
     {
       "register": "stability-studies",
-      "id": 76,
+      "id": 94,
       "acts": [
         "Recorded",
         "Changed"
@@ -18,7 +18,7 @@
     },
     {
       "register": "comparability-studies",
-      "id": "cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+      "id": "3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
       "acts": [
         "Recorded",
         "Changed"

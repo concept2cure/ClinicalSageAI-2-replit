@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+    "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,13 +9,13 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 23,
+    "durationMs": 19,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": [],
       "count": 0,
-      "timestamp": "2026-11-10T13:22:01.541Z"
+      "timestamp": "2026-11-12T00:50:01.571Z"
     }
   }
 }

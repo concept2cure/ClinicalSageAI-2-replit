@@ -37,7 +37,10 @@ import { unrecordedCriticalFindings } from './contradiction-lifecycle';
 export interface Module3GovernedState {
   totalSections: number;
   approvedSections: number;
+  /** Every section flagged stale, whatever its approval state. */
   staleSections: number;
+  /** The stale sections that are approved: these owe a re-approval; a stale draft owes only a compile. */
+  staleApprovedSections: number;
   openCriticalContradictions: number;
   /** Sections with no `cmc_section_lineage` row — no traceable source. */
   sectionsWithoutProvenance: number;
@@ -255,6 +258,7 @@ export async function evaluateModule3GovernedState(params: {
   const totalSections = sections.length;
   const approvedSections = sections.filter((s: any) => s.approval_state === 'approved').length;
   const staleSections = sections.filter((s: any) => Boolean(s.stale)).length;
+  const staleApprovedSections = sections.filter((s: any) => Boolean(s.stale) && s.approval_state === 'approved').length;
   const allApproved = totalSections > 0 && approvedSections === totalSections;
   const openCritical = contradictions.filter(
     (c: any) => c.severity === 'critical' && c.status !== 'resolved'
@@ -302,6 +306,7 @@ export async function evaluateModule3GovernedState(params: {
       totalSections,
       approvedSections,
       staleSections,
+      staleApprovedSections,
       openCriticalContradictions: openCritical,
       sectionsWithoutProvenance,
       incompleteApprovedSections,
@@ -318,6 +323,21 @@ export async function evaluateModule3GovernedState(params: {
     // real contradictions rather than a count reconstructed into fake rows.
     contradictions: contradictions as Array<{ severity: string; status: string }>,
   };
+}
+
+/**
+ * The refusal for stale sections, said for what each is. An approved section
+ * that went stale owes a re-approval; a stale draft was never approved and
+ * owes a compile. Until 2026-11-12 every stale section was said to have "gone
+ * stale after approval", including on a project where nothing was approved.
+ */
+function staleSectionsRefusal(stale: number, staleApproved: number): string {
+  const approvedPart = `${staleApproved} section(s) went stale after approval and must be re-approved before final export`;
+  if (staleApproved >= stale) return approvedPart;
+  const draftPart =
+    `${stale - staleApproved} draft section(s) are stale because their source records changed after the last compile: ` +
+    'recompile, then approve them before final export';
+  return staleApproved > 0 ? `${approvedPart}; ${draftPart}` : draftPart;
 }
 
 export async function evaluateFinalExportGate(params: {
@@ -360,7 +380,7 @@ export async function evaluateFinalExportGate(params: {
         ? `${data.unplaceableApprovedSections.length} approved section(s) were compiled before section tables were carried ` +
           `and cannot be filed: ${data.unplaceableApprovedSections.join(', ')}. Recompile them, then re-approve.`
         : data.staleSections > 0
-        ? `${data.staleSections} section(s) went stale after approval and must be re-approved before final export`
+        ? staleSectionsRefusal(data.staleSections, data.staleApprovedSections)
         : data.driftedApprovedSections.length > 0
         ? `${data.driftedApprovedSections.length} approved section(s) no longer match their source data and must be ` +
           `recompiled and re-approved before final export: ${describeDrift(data.driftedApprovedSections)}`

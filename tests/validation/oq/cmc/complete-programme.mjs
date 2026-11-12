@@ -194,3 +194,23 @@ export async function openFindings(api, projectId) {
 /** The Module 3 requirement findings in a sequence's dispatch verdict (IND_MODULE3_REQUIRED). */
 export const module3RequirementFindings = (readiness) =>
   (readiness?.readiness?.findings ?? []).filter((f) => f.code === 'IND_MODULE3_REQUIRED');
+
+/** The sections that are not approved, or went stale, and so owe an approval. */
+export const sectionsOwingApproval = async (api, projectId) =>
+  (await sectionsOf(api, projectId)).filter((x) => x.approvalState !== 'approved' || x.stale).map((x) => x.sectionKey);
+
+/** The gate's answer when approved sections went stale: 409, counting them and naming each. */
+export const gateNamesStaleSections = (gate) => {
+  const d = gate.json?.data ?? {};
+  return gate.status === 409 && Number(d.staleSections) >= 1 && (d.driftedApprovedSections ?? []).length >= 1;
+};
+
+/** A placement the service reports as writing nothing: every section unchanged. */
+export const everySectionUnchanged = (placement) => {
+  const rows = dataOf(placement).placements ?? [];
+  return placement.status === 200 && rows.length > 0 && rows.every((x) => x.unchanged);
+};
+
+/** A release verdict that clears the sequence on a signature. */
+export const releaseClears = (release) => release.cleared === true && release.verdict === 'signed';
+

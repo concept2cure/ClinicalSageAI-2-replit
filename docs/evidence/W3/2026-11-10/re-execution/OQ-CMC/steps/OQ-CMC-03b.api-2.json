@@ -18,20 +18,20 @@
       "status": "development",
       "developmentPhase": "phase1",
       "modality": "small_molecule",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 40,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 51,
+        "id": 64,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "substanceName": "BX-702",
         "structuralFormula": null,
         "molecularFormula": "C17H19N3O2",
@@ -55,8 +55,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": "phase1",
-        "createdAt": "2026-11-10T13:06:36.146Z",
-        "updatedAt": "2026-11-10T13:06:36.146Z"
+        "createdAt": "2026-11-12T00:34:39.169Z",
+        "updatedAt": "2026-11-12T00:34:39.169Z"
       },
       "module3Linked": true
     }
