@@ -12,7 +12,11 @@
  * Honest state is the point of it:
  *   - a check that could not be assessed is listed as such, never as passed;
  *   - "no findings" says how many checks that covers, and that it is not proof;
- *   - a war game that assessed nothing says nothing was assessed;
+ *   - "no findings" is said only when the report records that checks ran. The
+ *     findings section speaks from the four-state discriminator
+ *     (v2/assessmentState.ts), never from the list being empty;
+ *   - a war game that assessed nothing says nothing was assessed, and a report
+ *     that does not record what it assessed says that, not "none";
  *   - the headline is the engine's assessment word. The score is the engine's
  *     figure, shown as detail with the number of checks behind it.
  *
@@ -20,6 +24,7 @@
  */
 import type { WarGameFinding, WarGameReport } from '@shared/types/intelligence-questions';
 
+import { assessmentState, mayReassure, type AssessmentState } from '../../v2/assessmentState';
 import { I } from './icons';
 import styles from './styles.module.css';
 
@@ -42,6 +47,24 @@ const ORDER: Record<WarGameFinding['severity'], number> = { critical: 0, warning
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
+/** A count the report records, or null when it records none (never read as 0). */
+const recorded = (n: unknown): number | null => (typeof n === 'number' && Number.isFinite(n) ? n : null);
+
+/**
+ * What the findings section says when it lists none. It speaks from the state,
+ * and the state from the report's record of how many checks ran: an empty list
+ * is the same in a war game that ran and found nothing, one that could run no
+ * check, and one whose report does not say. Only the first may reassure.
+ */
+function noFindingsCopy(state: AssessmentState, assessed: number | null): string {
+  if (state === 'unreadable') return 'This report\'s findings could not be read, so they are not shown as none.';
+  if (mayReassure(state) && assessed !== null) {
+    return `No finding from the ${plural(assessed, 'check')} assessed. A person must still confirm the document is complete.`;
+  }
+  if (assessed === 0) return 'No findings, because no check could run.';
+  return 'This report does not record how many checks ran, so an empty list here is not a clean result.';
+}
+
 function Finding({ f }: { f: WarGameFinding }) {
   return (
     <li className={styles.premortemRisk} data-severity={RAIL[f.severity]}>
@@ -60,16 +83,62 @@ function Finding({ f }: { f: WarGameFinding }) {
   );
 }
 
-export function WarGameReportPanel({ report }: { report: WarGameReport }) {
-  const assessed = report.rulesAssessed ?? 0;
-  const total = report.rulesTotal ?? assessed;
-  const notAssessed = report.notAssessed ?? [];
-  const unassessedCount = Math.max(total - assessed, notAssessed.length);
-  const findings = [...report.findings].sort((a, b) => ORDER[a.severity] - ORDER[b.severity]);
+/** The headline: the engine's assessment word, shown only over checks the report records ran. */
+function Estimate({ report, assessed, total }: { report: WarGameReport; assessed: number | null; total: number }) {
+  const ran = assessed !== null && assessed > 0;
+  const a = ASSESSMENT[report.overallAssessment];
+  return (
+    <div className={styles.premortemEstimate} data-class={ran ? a.tone : 'none'} role="status">
+      <div className={styles.premortemEstimateHead}>
+        <span className={styles.premortemEstimateLabel}>Assessment</span>
+        <span className={styles.premortemEstimateValue}>{ran ? a.label : assessed === 0 ? 'Not assessed' : 'Not recorded'}</span>
+      </div>
+      <p className={styles.premortemMeta}>
+        {ran
+          ? `${assessed} of ${plural(total, 'check')} assessed · score ${report.overallScore}/100 over those · regulatory risk ${report.regulatoryRiskLevel}`
+          : assessed === 0
+            ? `Nothing was assessed: none of the ${plural(total, 'check')} could be read from this interview's answers.`
+            : 'This report does not record how many checks it assessed, so it carries no verdict here.'}
+      </p>
+    </div>
+  );
+}
+
+/** Criticals are open; the rest are one disclosure away, so a long report reads as its blockers first. */
+function FindingList({ findings }: { findings: WarGameFinding[] }) {
   const critical = findings.filter((f) => f.severity === 'critical');
   const rest = findings.filter((f) => f.severity !== 'critical');
-  const nothingAssessed = assessed === 0;
-  const a = ASSESSMENT[report.overallAssessment];
+  return (
+    <>
+      <ol className={styles.premortemRiskList}>{(critical.length > 0 ? critical : findings).map((f) => <Finding key={f.id} f={f} />)}</ol>
+      {critical.length > 0 && rest.length > 0 && (
+        <details>
+          <summary className={styles.premortemMeta}>Show {plural(rest.length, 'more finding')} (warnings and notes)</summary>
+          <ol className={styles.premortemRiskList}>{rest.map((f) => <Finding key={f.id} f={f} />)}</ol>
+        </details>
+      )}
+    </>
+  );
+}
+
+export function WarGameReportPanel({ report }: { report: WarGameReport }) {
+  /* The report's own record of how many checks ran: the positive evidence a
+     "nothing found" needs. A report without it is null here, never 0, because 0
+     is the engine saying no check could run. */
+  const assessed = recorded(report.rulesAssessed);
+  const total = recorded(report.rulesTotal) ?? assessed ?? 0;
+  const notAssessed = Array.isArray(report.notAssessed) ? report.notAssessed : [];
+  const unassessedCount = Math.max(assessed === null ? 0 : total - assessed, notAssessed.length);
+  const findingsRead = Array.isArray(report.findings);
+  const findings = findingsRead ? [...report.findings].sort((a, b) => ORDER[a.severity] - ORDER[b.severity]) : [];
+  /* The four-state discriminator (v2/assessmentState.ts): the findings section
+     speaks from this, never from the list being empty. */
+  const state = assessmentState({
+    unreadable: !findingsRead,
+    scopeExists: true,
+    findingCount: findings.length,
+    assessmentRan: assessed !== null && assessed > 0,
+  });
 
   return (
     <section className={styles.premortemPanel} aria-label="War game report">
@@ -78,17 +147,7 @@ export function WarGameReportPanel({ report }: { report: WarGameReport }) {
         <span className={styles.premortemTitle}>War game — {CATEGORY[report.category] ?? report.category}</span>
       </header>
 
-      <div className={styles.premortemEstimate} data-class={nothingAssessed ? 'none' : a.tone} role="status">
-        <div className={styles.premortemEstimateHead}>
-          <span className={styles.premortemEstimateLabel}>Assessment</span>
-          <span className={styles.premortemEstimateValue}>{nothingAssessed ? 'Not assessed' : a.label}</span>
-        </div>
-        <p className={styles.premortemMeta}>
-          {nothingAssessed
-            ? `Nothing was assessed: none of the ${plural(total, 'check')} could be read from this interview's answers.`
-            : `${assessed} of ${plural(total, 'check')} assessed · score ${report.overallScore}/100 over those · regulatory risk ${report.regulatoryRiskLevel}`}
-        </p>
-      </div>
+      <Estimate report={report} assessed={assessed} total={total} />
 
       <p className={styles.premortemHonesty}>
         A war game reads the interview&rsquo;s answers against codified reviewer checks. It is a rehearsal, not an
@@ -97,26 +156,10 @@ export function WarGameReportPanel({ report }: { report: WarGameReport }) {
 
       <div className={styles.premortemSection}>
         <h3 className={styles.premortemSectionTitle}>Findings</h3>
-        {findings.length === 0 ? (
-          <p className={styles.premortemDetail}>
-            {nothingAssessed
-              ? 'No findings, because no check could run.'
-              : `No finding from the ${plural(assessed, 'check')} assessed. A person must still confirm the document is complete.`}
-          </p>
+        {state === 'assessed-with-findings' ? (
+          <FindingList findings={findings} />
         ) : (
-          <>
-            {/* Criticals are open; the rest are one disclosure away, so a long
-                report reads as its blockers first (progressive disclosure). */}
-            {(critical.length > 0 ? critical : findings).length > 0 && (
-              <ol className={styles.premortemRiskList}>{(critical.length > 0 ? critical : findings).map((f) => <Finding key={f.id} f={f} />)}</ol>
-            )}
-            {critical.length > 0 && rest.length > 0 && (
-              <details>
-                <summary className={styles.premortemMeta}>Show {plural(rest.length, 'more finding')} (warnings and notes)</summary>
-                <ol className={styles.premortemRiskList}>{rest.map((f) => <Finding key={f.id} f={f} />)}</ol>
-              </details>
-            )}
-          </>
+          <p className={styles.premortemDetail}>{noFindingsCopy(state, assessed)}</p>
         )}
       </div>
 
