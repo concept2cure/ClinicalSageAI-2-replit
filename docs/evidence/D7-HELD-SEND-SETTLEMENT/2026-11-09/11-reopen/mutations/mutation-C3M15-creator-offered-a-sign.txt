@@ -1,0 +1,5 @@
+MUTATION C3M15-creator-offered-a-sign in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T19:18:12.099100Z): replaced [      {o && (o.signerRefusal ? <div role="note">{blockerForDisplay(o.signerRefusal)}</div> : (] with [      {o && (false ? <div role="note">{blockerForDisplay(o.signerRefusal ?? '')}</div> : (]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > the server's refusal stands in its words; the creator is told; an unreadable answer is said 5161ms
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 429c3a82f7a4fad72dbf0d1ac7bfd206c370614a71ce85b955b43fcc3251f4b2 (expected 429c3a82f7a4fad72dbf0d1ac7bfd206c370614a71ce85b955b43fcc3251f4b2)

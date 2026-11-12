@@ -1,0 +1,11 @@
+MUTATION C2M21-no-cas-and-not-rejudged in server/services/submission-service/submission-service.ts (2026-11-09T21:18:43.186765Z): C2M07 and C2M13 applied together; server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts -t 'T10'
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T10 what is recorded is what the person read: a different read-back is refused, and nothing is written 1269ms
+ × server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T10 judged again under the lock: a send put on record after this act read it is not recorded twice 179ms
+   → expected null to match object { …(2) }
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T10 a reason is required 120ms
+      Tests  1 failed | 2 passed | 12 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected null to match object { …(2) }
+- Expected:
++ Received:
+restored sha256 fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990 (expected fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990)

@@ -1,0 +1,7 @@
+MUTATION C3M14-door-any-sequence in client/src/concept2cure/v2/gatewayLabels.ts (on the final code and tests, 2026-11-09T19:18:03.181130Z): replaced [  if (!s || s.reopenedBy || m?.dispatchBinding?.sequenceId !== sequenceId) return false;] with [  if (!s || s.reopenedBy) return false;]
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > there is no door with no answer of FDA's kept against it 111ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > there is no door with the settlement already re-opened 25ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > there is no door with another sequence's row 26ms
+      Tests  1 failed | 2 passed | 6 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 6ceedde3469d13502e1038a6a074388b7042c5616386e51c6f0b67e4df989388 (expected 6ceedde3469d13502e1038a6a074388b7042c5616386e51c6f0b67e4df989388)

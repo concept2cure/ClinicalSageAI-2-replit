@@ -1,0 +1,9 @@
+MUTATION C2M22-send-row-in-another-organisation in tests/db/ectd-filed-state-view.dbtest.ts (on the final code and tests, 2026-11-09T21:23:59.912008Z): replaced [[t.orgId, t.programId, sha256, userId, JSON.stringify(metadata)]] with [[mine.orgId, t.programId, sha256, userId, JSON.stringify(metadata)]]; tests/db/ectd-filed-state-view.dbtest.ts -t 'T11', on PostgreSQL as app_service with RLS_ENFORCE=on
+ × tests/db/ectd-filed-state-view.dbtest.ts > a send put on record after it was sent (P-99 C2) > T11 the act, through its routes as the runtime role under RLS, finds the send and its bytes and records what it carried 10656ms
+   → expected { step: 'sent-record', …(3) } to match object { step: 'sent-record', …(3) }
+      Tests  1 failed | 10 skipped (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { step: 'sent-record', …(3) } to match object { step: 'sent-record', …(3) }
+- Expected
++ Received
+restored sha256 79f4cf72dacd3f922fe89fee810b4f0318d121214b6d720f44717cca0e157412 (expected 79f4cf72dacd3f922fe89fee810b4f0318d121214b6d720f44717cca0e157412)

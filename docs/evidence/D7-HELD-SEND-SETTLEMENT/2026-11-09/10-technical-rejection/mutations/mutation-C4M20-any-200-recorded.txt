@@ -1,0 +1,5 @@
+MUTATION C4M20-any-200-recorded in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T18:30:17.454347Z): replaced [      if (done.data?.recorded !== true || done.data.sequenceId !== f.seq.id) {] with [      if (done.data?.recorded !== true) {]
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > a 200 that is not the record of this sequence is not a success 5476ms
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 0b6d92c3b2a033dff96dd1b387ddd77abcfcd671ffc2aafe4b491fe6d9077b59 (expected 0b6d92c3b2a033dff96dd1b387ddd77abcfcd671ffc2aafe4b491fe6d9077b59)

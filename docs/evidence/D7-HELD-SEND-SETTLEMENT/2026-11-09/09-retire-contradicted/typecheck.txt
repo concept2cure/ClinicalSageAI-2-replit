@@ -1,0 +1,4 @@
+# P-92 §10.5 B: the typecheck gate on the final code, 2026-11-09T17:51:54Z
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.

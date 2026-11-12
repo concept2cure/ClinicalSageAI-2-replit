@@ -38,6 +38,16 @@
  * signature over the notice, latest-only and the acceptance refusal are what
  * stand between a mistake and the record.
  *
+ * Two spines, one file (P-92 C4; the coordinating session's ruling 1, 2026-11-09):
+ *   - the PACKAGE spine above serves only package transmittals written before
+ *     2026-10-17, when production stopped accepting the package transmit
+ *     (launch-scope-api-gate.test.ts, F12 and LX-13). It stays so those rows can
+ *     still record FDA's answer;
+ *   - the SEQUENCE spine below is the one path for every send since: FDA's failed
+ *     Ack3 for a sequence recorded as received, recorded by the sequence's own
+ *     signed act (submission-service.ts recordTechnicalRejection). Its rules, its
+ *     statement and its record live here; the act and its locks live there.
+ *
  * @module server/services/ectd/filed-sequence-rejection
  */
 import { pool } from '../../db';
@@ -45,6 +55,7 @@ import { recordGovernedAction } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../part11/signature-persistence';
 import { readVaultSource } from '../regulatory/lifecycle-signature';
 import type { SubmissionStatus } from '../submission-gateways/types';
+import { heldSendWhen, readHeldSend, type HeldSendTransmittal } from '../submission-gateways/fda-esg-receipts';
 import { withPackageMetadataLock, type LockClient } from './package-content-change';
 import { isRejectedFiling, type FiledSequenceRejection, type FiledSequenceState } from './package-sequence-lifecycle';
 
@@ -403,4 +414,116 @@ export async function recordFiledSequenceRejection(p: FiledSequenceRejectionPara
       },
     };
   });
+}
+
+// ── The sequence spine (P-92 C4, design §10.5 C) ────────────────────────────────
+
+type Queryable = { query: (sql: string, args?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }> };
+
+/** The sequence a technical rejection is recorded on, with its last transmit claim (signature S, attempt A). */
+export interface RejectionSequence {
+  id: number; submissionId: number; sequenceNumber: string; dispatchStatus: string | null;
+  transmitSignatureActionId: string | null; transmitAttemptId: string | null;
+}
+/** What the rules judge (R1 to R4, R7), read by readSequenceRejectionFacts, before the locks and again under them. */
+export interface SequenceRejectionFacts {
+  sequence: RejectionSequence;
+  /** The one FDA ESG transmittal bound to the claim (C1's E2), or null. */
+  transmittal: HeldSendTransmittal | null;
+  /** R4: the number of a later sequence of the same submission in flight or on file, or null. */
+  laterInUse: string | null;
+  /** R7: FDA's verified answer refusing a send recorded as received, kept and not yet decided (P-92 C3). */
+  refusalPending: boolean;
+}
+
+/** The send's own record: the one bound transmittal (C1's E2, two throw), the later sequence (R4) and FDA's kept refusal (R7). */
+export async function readSequenceRejectionFacts(q: Queryable, organizationId: number, seq: RejectionSequence, opts: { lock?: boolean } = {}): Promise<SequenceRejectionFacts> {
+  const { transmittal } = await readHeldSend(q, organizationId, {
+    id: seq.id, sequenceNumber: seq.sequenceNumber, dispatchStatus: seq.dispatchStatus,
+    transmitSignatureActionId: seq.transmitSignatureActionId, transmitAttemptId: seq.transmitAttemptId,
+  }, opts);
+  const later = await q.query(
+    `SELECT sequence_number FROM ectd_sequences WHERE submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        AND sequence_number > $3 AND dispatch_status IN ('transmitting', 'sent', 'acknowledged') ORDER BY sequence_number LIMIT 1`,
+    [seq.submissionId, organizationId, seq.sequenceNumber],
+  );
+  const refusal = transmittal ? await q.query(
+    `SELECT 1 FROM submission_transmittals WHERE id = $1 AND organization_id = $2
+        AND EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(metadata->'as2ReceiptHistory', '[]'::jsonb)) e
+                     WHERE e->>'contradicts' = 'received' AND e->>'verified' = 'true')`,
+    [transmittal.id, organizationId],
+  ) : { rows: [] };
+  return { sequence: seq, transmittal, laterInUse: (later.rows[0]?.sequence_number as string | undefined) ?? null, refusalPending: refusal.rows.length > 0 };
+}
+
+const NOTHING_RECORDED = 'Nothing was changed.';
+
+/** R1: the sequence must be recorded as received by FDA, and not yet accepted or rejected. */
+function sequenceStatusRefusal(n: string, status: string | null): string | null {
+  if (status === 'sent') return null;
+  if (status === 'acknowledged') return `Sequence ${n} is recorded as accepted by FDA's center, so a technical rejection cannot be recorded over it. ${NOTHING_RECORDED}`;
+  if (status === 'rejected') return `Sequence ${n} is already recorded as rejected by FDA. ${NOTHING_RECORDED}`;
+  return `Sequence ${n} is not recorded as received by FDA, so there is no filing to record as rejected. ${NOTHING_RECORDED}`;
+}
+
+/** R2 and R3: the send is one bound production transmittal to FDA, still awaiting the center's answer. */
+function transmittalRefusal(n: string, f: SequenceRejectionFacts): string | null {
+  const t = f.transmittal;
+  if (!f.sequence.transmitSignatureActionId || !f.sequence.transmitAttemptId) {
+    return `Sequence ${n}'s send was recorded before the platform bound each send to its signature, so which transmission FDA rejected cannot be read, and it is not recorded by guess. ${NOTHING_RECORDED}`;
+  }
+  if (!t) return `No FDA transmission is recorded for sequence ${n}'s send, so FDA's Ack3 cannot be tied to it. ${NOTHING_RECORDED}`;
+  if (t.environment === 'staging' || t.as2Environment === 'staging') return `Sequence ${n}'s send went to FDA's test environment, which is not a filing. ${NOTHING_RECORDED}`;
+  if (t.environment !== 'production') return `Where sequence ${n} was sent is not recorded, so a technical rejection is not recorded for it. ${NOTHING_RECORDED}`;
+  if (ACCEPTANCE_STATUSES.has(t.status)) {
+    return `FDA's center is recorded as accepting sequence ${n} (an Ack3 that accepts it is on record), so a technical rejection cannot be recorded over it. ${NOTHING_RECORDED}`;
+  }
+  if (!AWAITING_AGENCY_STATUSES.has(t.status)) return `Sequence ${n}'s transmission is not recorded as received by FDA, so FDA's Ack3 cannot answer it. ${NOTHING_RECORDED}`;
+  return null;
+}
+
+/** Why FDA's failed Ack3 cannot be recorded on this sequence now (R1 to R4, R7), in words, or null. R5 and R6 are the act's. */
+export function sequenceRejectionBlocker(f: SequenceRejectionFacts): string | null {
+  const n = f.sequence.sequenceNumber;
+  const refusal = sequenceStatusRefusal(n, f.sequence.dispatchStatus) ?? transmittalRefusal(n, f);
+  if (refusal) return refusal;
+  if (f.laterInUse) {
+    return `Sequence ${f.laterInUse}, numbered after ${n}, is in flight or on file with FDA, and was planned against ${n}. Its own rejection is recorded first, with its own Ack3. ${NOTHING_RECORDED}`;
+  }
+  if (f.refusalPending) {
+    return `FDA's signed answer refusing this send of sequence ${n} is kept and not yet decided. That is decided first, by re-opening the settlement on FDA's answer. ${NOTHING_RECORDED}`;
+  }
+  return null;
+}
+
+/** The statement the signer signs (§10.5 C, with §10.5 D's number sentence until FDA's specification is quoted). One source. */
+export function sequenceRejectionStatement(p: { sequenceNumber: string; sentAt: string }): string {
+  const n = p.sequenceNumber;
+  return `FDA's Ack3 for the send of sequence ${n} on ${heldSendWhen(p.sentAt)} is the document chosen from this project's Vault. ` +
+    `It reports that the center did not accept sequence ${n}. Sequence ${n} is recorded as rejected by FDA: it is no longer on file with FDA. ` +
+    `It can then be sent again under its own number; FDA's notice decides whether that number can be used again, or whether a new sequence is needed.`;
+}
+
+/** The sequence-spine rejection record on the transmittal, in the package spine's shape, set once. */
+export interface SequenceTechnicalRejection {
+  sequence: string; recordedAt: string; recordedBy: number; reason: string;
+  evidence: { kind: 'ack3'; vaultDocumentId: string; sha256: string };
+  transmittalStatus: { previous: string; current: string }; signatureActionId: string; signatureId: number | null;
+}
+
+/** The transmittal's status after the rejection: the agency-rejection status for a send still awaiting the center. */
+export const rejectedTransmittalStatus = (status: string): string => (AWAITING_AGENCY_STATUSES.has(status) ? REJECTED_BY_AGENCY : status);
+
+/** Write the record on the transmittal, once: the status and `metadata.technicalRejection`. A second write changes nothing.
+ *  The gateway's own error columns are left as they were: the lists say the rejection from this record, once. */
+export async function markSequenceTechnicalRejection(q: Queryable, p: { organizationId: number; transmittalId: number; rejection: SequenceTechnicalRejection }): Promise<void> {
+  const r = await q.query(
+    `UPDATE submission_transmittals
+        SET status = $3::text,
+            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('technicalRejection', $4::jsonb),
+            updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND NOT (COALESCE(metadata, '{}'::jsonb) ? 'technicalRejection')`,
+    [p.transmittalId, p.organizationId, p.rejection.transmittalStatus.current, JSON.stringify(p.rejection)],
+  );
+  if ((r.rowCount ?? r.rows?.length ?? 0) === 0) throw new Error(`The technical rejection of sequence ${p.rejection.sequence} could not be written to its transmission; nothing was recorded.`);
 }

@@ -1,0 +1,56 @@
+# P-92 C4 red, 2026-11-09T17:55:57Z, at 6e44f18e47, before any C4 code: technical-rejection.pglite.test.ts
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > T1 the precheck states it; the act sets the sequence rejected, records the transmittal, and writes the chained row 23ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse acknowledged, before anyone signs, in words 8ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse already rejected, before anyone signs, in words 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse not received, before anyone signs, in words 9ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a send with no claim, before anyone signs, in words 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a test send, before anyone signs, in words 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a send with no environment named, before anyone signs, in words 6ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a transmission FDA's center accepted, before anyone signs, in words 6ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R2 two transmittals bound to one attempt are "could not be checked", never a guess 8ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R4 latest only: a later sequence in flight or on file is recorded first 13ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 the Ack3 absent from the Vault is refused before signing 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 the Ack3 another project's is refused before signing 13ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 the Ack3 another organization's is refused before signing 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 the Ack3 older than the send is refused before signing 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 a document that already settled the send is not FDA's Ack3 for its rejection 8ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > the Ack3 bytes changed after the statement was read: refused, the signature void, nothing recorded 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > the Ack3 deleted after signing: refused under the act, the signature void 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R6 the sequence's creator is told before signing, and the creator's signature is refused 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > Gate 1 refuses a signature with another meaning, and voids it 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > Gate 1 refuses a signature with another transmission, and voids it 9ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > Gate 1 refuses a signature with another kind of evidence, and voids it 6ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > Gate 1 refuses a signature with no statement, and voids it 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > the signed statement is compared word for word: one character changed is refused 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R7 FDA's kept answer refusing a send recorded as received is decided first (C3) 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > the facts are judged again under the lock: a sequence acknowledged after the first read is refused, the signature void 7ms
+   → precheckTechnicalRejection is not a function
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > a signature with no reason records nothing 7ms
+   → precheckTechnicalRejection is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  26 failed (26)

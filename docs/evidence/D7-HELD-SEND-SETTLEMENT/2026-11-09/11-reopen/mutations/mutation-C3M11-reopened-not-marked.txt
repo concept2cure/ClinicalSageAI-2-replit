@@ -1,0 +1,5 @@
+MUTATION C3M11-reopened-not-marked in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T19:27:39.232175Z): replaced [            metadata = jsonb_set(metadata || jsonb_build_object('as2Receipt', $4::jsonb), '{heldSendSettlement,reopenedBy}', $5::jsonb),] with [            metadata = metadata || jsonb_build_object('as2Receipt', $4::jsonb),]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > "received" FDA refused: the sequence and the transmittal are rejected, and both records stay 405ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711 (expected 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711)
