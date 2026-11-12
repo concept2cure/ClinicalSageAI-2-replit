@@ -1,0 +1,8 @@
+ × server/services/report-os/portfolio/__tests__/org-programs-archived.pglite.test.ts > Reporting's list of an organization's projects > leaves out a project archived or deleted in Projects, and keeps the rest
+ × server/services/report-os/portfolio/__tests__/org-programs-archived.pglite.test.ts > Reporting's list of an organization's projects > applies the same rule inside the projects a reader may open
+ × server/services/report-os/portfolio/__tests__/org-programs-archived.pglite.test.ts > Reporting's list of an organization's projects > answers nothing, not an empty board, when every project is archived
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'Active project', …(3) ] to deeply equal [ 'Active project', …(1) ]
+AssertionError: expected [ 'Active project', …(2) ] to deeply equal [ 'Active project' ]
+AssertionError: expected { organizationId: 7, …(11) } to be null
+      Tests  3 failed (3)

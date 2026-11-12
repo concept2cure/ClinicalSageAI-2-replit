@@ -386,7 +386,7 @@ const RO_PRESETS: Record<string, PresetDef[]> = {
   ],
   biotech: [
     { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.', fit: { applicationTypes: ['BLA'], for: 'a BLA' } },
-    { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], purpose: 'For confirming Module 4 is submission-grade.' },
+    { id: 'nonclin', label: 'Nonclinical readiness pack', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], purpose: 'For confirming Module 4 is submission-grade.' },
   ],
   medtech: [
     { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.', fit: { applicationTypes: ['510(k)'], for: 'a 510(k)' } },
@@ -2183,8 +2183,10 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   const recoveryNotice = reloaded && <ReportingRecoveryNotice reread={reloaded === 'reread'} />;
   /* The device section (fold F4): the device projects the reader can open, as
      the overview computed them, on the Report tab's landing canvas, with or
-     without a project open. It shows nothing for a reader with no device project. */
-  const deviceSection = paneView === 'report' && !report && !dashboard ? <InsightsDevicePortfolio device={data?.device} /> : null;
+     without a project open. It shows nothing for a reader with no device project.
+     Under an open project the read did not count, it names that project as not counted
+     (sweep finding 94); it is not withdrawn there (decision P-122). */
+  const deviceSection = paneView === 'report' && !report && !dashboard ? <InsightsDevicePortfolio device={data?.device} openProject={program?.code} /> : null;
   const withoutProgram = (content: React.ReactNode) => <div className="page-inner rc" data-work-area="insights" {...ownerEvents}><ReportingHead onNav={onNav} /><div className="rc-canvas" ref={canvasRef}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}{deviceSection}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
