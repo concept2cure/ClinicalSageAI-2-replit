@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > asks to be answered at once 283ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > polls every 2 s, shows how long it has run, and renders the result when the job completes 180ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a failed job is said in the job's words, and nothing renders as a result 100ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a poll that cannot be read is an error that says the compile may still finish, not an empty result 78ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a server that answers at once is rendered as before 85ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:14:41
+   Duration  2.16s (transform 690ms, setup 146ms, import 816ms, tests 729ms, environment 360ms)
+

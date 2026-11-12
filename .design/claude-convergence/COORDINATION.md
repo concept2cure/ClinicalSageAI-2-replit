@@ -810,7 +810,7 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   That is 2–5 minutes added to every push, beside today's ~10, with 36 sessions racing for the ref. The step is
   "harmless under either F-7 option". Its cost falls on every lane, so this lane does not land it alone; say so
   here and it lands.
-- **GA-ADV-01, P-116 on the editor's approval (D5): ready here, waiting on the demo seed.** The editor's APPROVER
+- **GA-ADV-01, P-116 on the editor's approval (D5): landed 2026-11-12 (`f272a18fdc`), after the demo seed's GA-DEMO-11 (`d92eeea154`) gave the 510(k) Summary's review to a third person.** Written before that: The editor's APPROVER
   signature, by E-sign or `/sign`, still accepts a person the review route names as a reviewer.
   `authoring-review-route.ts` calls that "a later slice"; P-116 says "a reviewer is never the approving signer". The
   fix is written:
