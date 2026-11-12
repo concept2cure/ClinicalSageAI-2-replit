@@ -1,6 +1,5 @@
 /** Current actor, exact program anchor and existing project sharing admission.
  * No read grant grants a write; callers retain their action-specific policy. */
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { programInOrganization } from './program-access';
 import { listProgramAnchorCandidates, readProgramAnchorRow } from './program-project-anchor';
 import { CsrScopeError, readCsrProjectActor, type CsrScopeExecutor } from '../csr/project-scope';
@@ -125,39 +124,9 @@ export async function readCurrentProgramActor(q: ProgramAccessExecutor, input: {
   }
 }
 
-/* One evaluated read asks the same question of the same project once per record it lists: a project with 168 sources
-   ran 307 identical admissions of four statements each, and its sources read took 7.5 s (walked 2026-11-12). Inside
-   `withinOneProgramAdmission` a repeat by the same actor on the same executor is the first answer; a refusal is never
-   kept. The read that opens the bracket verifies its scope before it and again after it, outside the bracket, so a
-   grant withdrawn meanwhile still refuses the read. A writer's locking admission and a retained-lifecycle read are
-   never answered from it.
-   The store is the process's: the development loader can load this module twice (once for an import statement, once
-   for `import()`), and a repeat must find the first answer from either copy. */
-type OneRead = AsyncLocalStorage<Map<ProgramAccessExecutor, Map<string, Promise<CurrentProgramAccess>>>>;
-const ONE_READ = Symbol.for('c2c.current-program-access.one-read');
-const shared = globalThis as unknown as Record<symbol, OneRead | undefined>;
-const oneRead: OneRead = (shared[ONE_READ] ??= new AsyncLocalStorage());
-export function withinOneProgramAdmission<T>(read: () => Promise<T>): Promise<T> {
-  return oneRead.run(new Map(), read);
-}
-
 /** Explicit program admission. All eligible anchors are counted before any
  * sharing test, so an accessible duplicate never hides a private anchor. */
 export async function requireCurrentProgramAccess(q: ProgramAccessExecutor, input: ProgramAccessInput): Promise<CurrentProgramAccess> {
-  const read = input.includeDeleted || input.forShare ? undefined : oneRead.getStore();
-  if (!read) return admitProgram(q, input);
-  const admitted = read.get(q) ?? new Map<string, Promise<CurrentProgramAccess>>();
-  read.set(q, admitted);
-  const key = `${input.organizationId}:${input.userId}:${input.programId.toLowerCase()}`;
-  const held = admitted.get(key);
-  if (held) return held;
-  const access = admitProgram(q, input);
-  admitted.set(key, access);
-  access.catch(() => { if (admitted.get(key) === access) admitted.delete(key); });
-  return access;
-}
-
-async function admitProgram(q: ProgramAccessExecutor, input: ProgramAccessInput): Promise<CurrentProgramAccess> {
   try {
     if (!await programInOrganization(q,input.programId,input.organizationId,{includeDeleted:input.includeDeleted})) {
       throw new ProgramReadAccessError(404,'PROJECT_NOT_FOUND','Project not found.');
