@@ -1,0 +1,22 @@
+Signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: portfolio ===
+  • Editor: the canonical CSR template … ok — 
+  • Client workspace: the organisation's own (no workspace created) … ok — 
+  • Project (a) Corvane Oncology (fictional) · CRV-310-301 Phase 3 CSR (planning) — SYNTHETIC … ok — 
+  • Vault: CRV-310-301 protocol · synthetic … ok — 
+  • Vault: CRV-310-301 statistical analysis plan · synthetic … ok — 
+  • Editor: CSR working document for CRV-310-301 … ok — 
+  • Tasks: 3 tasks on CRV-310-301 … ok — 3 created, 0 already there (board project 197863)
+  • Project (b) Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC … ok — 
+  • Vault: PTR-022-301 protocol · synthetic … ok — 
+  • Biostatistics: study design "[Demo · Portfolio] PTR-022-301 — Phase 3 study design (fictional)" … ok — created sd_70de6919e18e4ef489868f919d94baff
+  • Editor: CSR working document for PTR-022-301 … ok — 
+  • Tasks: 3 tasks on PTR-022-301 … ok — 3 created, 0 already there (board project 197864)
+  • Project (c) Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC … ok — 
+  • Vault: QLM-118-202 protocol · synthetic … ok — 
+  • Vault: QLM-118-202 statistical analysis plan · synthetic … ok — 
+  • Vault: QLM-118-202 clinical study source · synthetic v1 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … FAILED
+✗ portfolio: preview the clinical source: HTTP 422 {"error":"CSR_SOURCE_INPUTS_INVALID","message":"The source does not meet the documented CSR input contract. No tables were saved.","issues":[{"path":"","message":"A subject-level AE discontinuation basis requires the flag on every disposition record."},{"path":"","message":"A subject-level AE discontinuation basis cannot also carry event-level discontinuation flags."}]}

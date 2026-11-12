@@ -1,0 +1,1116 @@
+# 2026-11-09T19:06:58Z red first: the new sponsor-workspace cases against the pack as committed in 4d935f8ea (portfolio.mjs / portfolio-content.mjs unchanged)
+# git diff --stat:
+ scripts/demo/launch-demo/portfolio-demo.test.mjs | 81 ++++++++++++++++++++++++
+ 1 file changed, 81 insertions(+)
+$ node --test scripts/demo/launch-demo/*.test.mjs
+TAP version 13
+# Subtest: the small molecule is created in the antibody programme's workspace when none was chosen
+ok 1 - the small molecule is created in the antibody programme's workspace when none was chosen
+  ---
+  duration_ms: 0.757297
+  type: 'test'
+  ...
+# Subtest: an explicit --client-workspace-id still wins
+ok 2 - an explicit --client-workspace-id still wins
+  ---
+  duration_ms: 0.124791
+  type: 'test'
+  ...
+# Subtest: with neither, intake alone decides, as before
+ok 3 - with neither, intake alone decides, as before
+  ---
+  duration_ms: 0.086643
+  type: 'test'
+  ...
+# Subtest: a submission anchored to another program is never chosen, whatever its product name
+ok 4 - a submission anchored to another program is never chosen, whatever its product name
+  ---
+  duration_ms: 0.631921
+  type: 'test'
+  ...
+# Subtest: only another program's submission matches by name: none is chosen
+ok 5 - only another program's submission matches by name: none is chosen
+  ---
+  duration_ms: 0.174088
+  type: 'test'
+  ...
+# Subtest: an unanchored submission matching the program's identity is still found
+ok 6 - an unanchored submission matching the program's identity is still found
+  ---
+  duration_ms: 0.082509
+  type: 'test'
+  ...
+# Subtest: the program's own anchored submission wins over an unanchored name match
+ok 7 - the program's own anchored submission wins over an unanchored name match
+  ---
+  duration_ms: 0.083894
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): records the drug substance §3.2.S is written about
+ok 8 - biotech (C2C-101): records the drug substance §3.2.S is written about
+  ---
+  duration_ms: 1.264535
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): records the drug product §3.2.P is written about
+ok 9 - biotech (C2C-101): records the drug product §3.2.P is written about
+  ---
+  duration_ms: 0.314295
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): a biologic substance states its origin, as §3.2.A.2 asks
+ok 10 - biotech (C2C-101): a biologic substance states its origin, as §3.2.A.2 asks
+  ---
+  duration_ms: 0.1227
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): records the drug substance §3.2.S is written about
+ok 11 - lumen (LMN-201): records the drug substance §3.2.S is written about
+  ---
+  duration_ms: 0.08435
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): records the drug product §3.2.P is written about
+ok 12 - lumen (LMN-201): records the drug product §3.2.P is written about
+  ---
+  duration_ms: 0.229378
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): a biologic substance states its origin, as §3.2.A.2 asks
+ok 13 - lumen (LMN-201): a biologic substance states its origin, as §3.2.A.2 asks
+  ---
+  duration_ms: 0.086459
+  type: 'test'
+  ...
+# Subtest: every study that claims a shelf life sends it, so §3.2.P.8 has its subject
+ok 14 - every study that claims a shelf life sends it, so §3.2.P.8 has its subject
+  ---
+  duration_ms: 3.414009
+  type: 'test'
+  ...
+# Subtest: a study already on file without its claim is given one
+ok 15 - a study already on file without its claim is given one
+  ---
+  duration_ms: 1.532454
+  type: 'test'
+  ...
+# Subtest: the recorded release results reach the register §3.2.S.4.4 and §3.2.P.5.4 read
+ok 16 - the recorded release results reach the register §3.2.S.4.4 and §3.2.P.5.4 read
+  ---
+  duration_ms: 1.187908
+  type: 'test'
+  ...
+# Subtest: one recorded result disagrees with its own criterion, on purpose
+ok 17 - one recorded result disagrees with its own criterion, on purpose
+  ---
+  duration_ms: 0.876964
+  type: 'test'
+  ...
+# Subtest: the seeder records the substance and the product first of all
+ok 18 - the seeder records the substance and the product first of all
+  ---
+  duration_ms: 0.801471
+  type: 'test'
+  ...
+# Subtest: the substance carries the modality the boundary reads, as stated
+ok 19 - the substance carries the modality the boundary reads, as stated
+  ---
+  duration_ms: 0.666453
+  type: 'test'
+  ...
+# Subtest: a second run records neither material twice
+ok 20 - a second run records neither material twice
+  ---
+  duration_ms: 0.639278
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): every specification's method is a method the pack records
+ok 21 - biotech (C2C-101): every specification's method is a method the pack records
+  ---
+  duration_ms: 1.836604
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): every recorded method states the ICH Q2 parameters its validation signs for
+ok 22 - biotech (C2C-101): every recorded method states the ICH Q2 parameters its validation signs for
+  ---
+  duration_ms: 0.397114
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): no method is declared validated in the pack's data
+ok 23 - biotech (C2C-101): no method is declared validated in the pack's data
+  ---
+  duration_ms: 0.184728
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): every specification's method is a method the pack records
+ok 24 - lumen (LMN-201): every specification's method is a method the pack records
+  ---
+  duration_ms: 0.073209
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): every recorded method states the ICH Q2 parameters its validation signs for
+ok 25 - lumen (LMN-201): every recorded method states the ICH Q2 parameters its validation signs for
+  ---
+  duration_ms: 0.135908
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): no method is declared validated in the pack's data
+ok 26 - lumen (LMN-201): no method is declared validated in the pack's data
+  ---
+  duration_ms: 0.054657
+  type: 'test'
+  ...
+# Subtest: the seeder records each method before the specification that cites it
+ok 27 - the seeder records each method before the specification that cites it
+  ---
+  duration_ms: 1.830412
+  type: 'test'
+  ...
+# Subtest: the seeder carries the Q2 parameters, and does not sign without a signer
+ok 28 - the seeder carries the Q2 parameters, and does not sign without a signer
+  ---
+  duration_ms: 1.080159
+  type: 'test'
+  ...
+# Subtest: with a signer, each method is validated through the governed route
+ok 29 - with a signer, each method is validated through the governed route
+  ---
+  duration_ms: 0.803106
+  type: 'test'
+  ...
+# Subtest: a second run records nothing twice
+ok 30 - a second run records nothing twice
+  ---
+  duration_ms: 0.876108
+  type: 'test'
+  ...
+# Subtest: seed identity comes from the verified session and exercises protected project and task reads
+ok 31 - seed identity comes from the verified session and exercises protected project and task reads
+  ---
+  duration_ms: 32.969314
+  type: 'test'
+  ...
+# Subtest: refuses unauthenticated envelope before any protected read or seed write
+ok 32 - refuses unauthenticated envelope before any protected read or seed write
+  ---
+  duration_ms: 24.074612
+  type: 'test'
+  ...
+# Subtest: refuses missing user before any protected read or seed write
+ok 33 - refuses missing user before any protected read or seed write
+  ---
+  duration_ms: 19.179357
+  type: 'test'
+  ...
+# Subtest: refuses missing organization before any protected read or seed write
+ok 34 - refuses missing organization before any protected read or seed write
+  ---
+  duration_ms: 27.865675
+  type: 'test'
+  ...
+# Subtest: refuses default organization is not a session before any protected read or seed write
+ok 35 - refuses default organization is not a session before any protected read or seed write
+  ---
+  duration_ms: 11.578439
+  type: 'test'
+  ...
+# Subtest: refuses zero organization before any protected read or seed write
+ok 36 - refuses zero organization before any protected read or seed write
+  ---
+  duration_ms: 13.375911
+  type: 'test'
+  ...
+# Subtest: refuses fractional organization before any protected read or seed write
+ok 37 - refuses fractional organization before any protected read or seed write
+  ---
+  duration_ms: 23.222562
+  type: 'test'
+  ...
+# Subtest: refuses truncated organization before any protected read or seed write
+ok 38 - refuses truncated organization before any protected read or seed write
+  ---
+  duration_ms: 10.669071
+  type: 'test'
+  ...
+# Subtest: refuses missing actor before any protected read or seed write
+ok 39 - refuses missing actor before any protected read or seed write
+  ---
+  duration_ms: 11.675174
+  type: 'test'
+  ...
+# Subtest: refuses missing email before any protected read or seed write
+ok 40 - refuses missing email before any protected read or seed write
+  ---
+  duration_ms: 11.991789
+  type: 'test'
+  ...
+# Subtest: refuses missing organization record before any protected read or seed write
+ok 41 - refuses missing organization record before any protected read or seed write
+  ---
+  duration_ms: 9.692826
+  type: 'test'
+  ...
+# Subtest: refuses a different session organization than the operator requested
+ok 42 - refuses a different session organization than the operator requested
+  ---
+  duration_ms: 13.693391
+  type: 'test'
+  ...
+# Subtest: a token must not silently override the explicitly named demo account
+ok 43 - a token must not silently override the explicitly named demo account
+  ---
+  duration_ms: 9.076877
+  type: 'test'
+  ...
+# Subtest: email comparison ignores surrounding whitespace and case
+ok 44 - email comparison ignores surrounding whitespace and case
+  ---
+  duration_ms: 9.231994
+  type: 'test'
+  ...
+# Subtest: refuses unprovisioned projects, rather than treating it as an empty demo tenant
+ok 45 - refuses unprovisioned projects, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 9.460899
+  type: 'test'
+  ...
+# Subtest: refuses malformed projects, rather than treating it as an empty demo tenant
+ok 46 - refuses malformed projects, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 21.121231
+  type: 'test'
+  ...
+# Subtest: refuses unreconciled project access, rather than treating it as an empty demo tenant
+ok 47 - refuses unreconciled project access, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 9.873246
+  type: 'test'
+  ...
+# Subtest: refuses partial board, rather than accepting a broken Tasking backend
+ok 48 - refuses partial board, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 26.704154
+  type: 'test'
+  ...
+# Subtest: refuses unread task source, rather than accepting a broken Tasking backend
+ok 49 - refuses unread task source, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 23.959609
+  type: 'test'
+  ...
+# Subtest: refuses malformed board, rather than accepting a broken Tasking backend
+ok 50 - refuses malformed board, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 13.211157
+  type: 'test'
+  ...
+# Subtest: session read failures do not expose response bodies or bearer material
+ok 51 - session read failures do not expose response bodies or bearer material
+  ---
+  duration_ms: 10.159335
+  type: 'test'
+  ...
+# Subtest: invalid workspace selection is refused before authentication or HTTP
+ok 52 - invalid workspace selection is refused before authentication or HTTP
+  ---
+  duration_ms: 9.622468
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — created demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … 
+# ok — created demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … 
+# ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … 
+# ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 3, found 0
+# Subtest: the fresh biotech pack supplies its recorded biologic class and explicit workspace
+ok 53 - the fresh biotech pack supplies its recorded biologic class and explicit workspace
+  ---
+  duration_ms: 13.346971
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# FAILED
+# Subtest: the biotech pack refuses an unread project list without attempting creation
+ok 54 - the biotech pack refuses an unread project list without attempting creation
+  ---
+  duration_ms: 18.674225
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — found demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — found demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 1, found 2
+# Subtest: existing demo projects are reused without a second create
+ok 55 - existing demo projects are reused without a second create
+  ---
+  duration_ms: 13.022323
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — created demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … 
+# ok — created demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … 
+# ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … 
+# ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 3, found 0
+# Subtest: the Module 3 build runs after the registers it compiles from
+ok 56 - the Module 3 build runs after the registers it compiles from
+  ---
+  duration_ms: 12.070415
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — found demo-program (?)
+#   • Vault: read model lists the filed documents … 
+# ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … 
+# ok — created demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … 
+# ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 2, found 1
+# Subtest: a pack whose second programme is missing creates only that one
+ok 57 - a pack whose second programme is missing creates only that one
+  ---
+  duration_ms: 10.792545
+  type: 'test'
+  ...
+# Subtest: CLI refuses a mixed valid/invalid pack list before connecting
+ok 58 - CLI refuses a mixed valid/invalid pack list before connecting
+  ---
+  duration_ms: 43.733057
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — found demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — found demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … 
+# ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … 
+# ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 1, found 2
+# Subtest: an existing demo on a later portfolio page is reused, not duplicated
+ok 59 - an existing demo on a later portfolio page is reused, not duplicated
+  ---
+  duration_ms: 16.345417
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# FAILED
+# Subtest: a stalled paginated project read cannot create a duplicate
+ok 60 - a stalled paginated project read cannot create a duplicate
+  ---
+  duration_ms: 16.493595
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# FAILED
+# Subtest: an explicit workspace does not silently reuse a project in another workspace
+ok 61 - an explicit workspace does not silently reuse a project in another workspace
+  ---
+  duration_ms: 17.154059
+  type: 'test'
+  ...
+# Subtest: a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+ok 62 - a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+  ---
+  duration_ms: 12.252628
+  type: 'test'
+  ...
+# Subtest: successful seeding still does not assert browser qualification
+ok 63 - successful seeding still does not assert browser qualification
+  ---
+  duration_ms: 10.516929
+  type: 'test'
+  ...
+# Subtest: an environment-named demo email must match even when a token is supplied
+ok 64 - an environment-named demo email must match even when a token is supplied
+  ---
+  duration_ms: 9.695529
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+ok 65 - CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+  ---
+  duration_ms: 58.480363
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+ok 66 - CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+  ---
+  duration_ms: 50.103396
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+ok 67 - CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+  ---
+  duration_ms: 43.86385
+  type: 'test'
+  ...
+# Subtest: checked-in synthetic source is complete and remains explicitly artificial
+ok 68 - checked-in synthetic source is complete and remains explicitly artificial
+  ---
+  duration_ms: 4.621022
+  type: 'test'
+  ...
+# Subtest: reconciles the synthetic QC index and both TLFs with the source before admitting data
+ok 69 - reconciles the synthetic QC index and both TLFs with the source before admitting data
+  ---
+  duration_ms: 10.258071
+  type: 'test'
+  ...
+# Subtest: seeds one CSR project, ten Data Room source records, one editor document and pending tasks
+ok 70 - seeds one CSR project, ten Data Room source records, one editor document and pending tasks
+  ---
+  duration_ms: 37.116076
+  type: 'test'
+  ...
+# Subtest: Data Room records the original synthetic QC index and both reconciled TLF files by exact bytes
+ok 71 - Data Room records the original synthetic QC index and both reconciled TLF files by exact bytes
+  ---
+  duration_ms: 9.617058
+  type: 'test'
+  ...
+# Subtest: the exact fictional ADSL/ADEFF/ADAE/ADLB sources remain available with pinned bytes
+ok 72 - the exact fictional ADSL/ADEFF/ADAE/ADLB sources remain available with pinned bytes
+  ---
+  duration_ms: 11.924431
+  type: 'test'
+  ...
+# Subtest: original fictional analysis archive refuses tampering or a mismatched derived source
+ok 73 - original fictional analysis archive refuses tampering or a mismatched derived source
+  ---
+  duration_ms: 4.560159
+  type: 'test'
+  ...
+# Subtest: replays an exact source on a later Data Room search page without uploading a duplicate
+ok 74 - replays an exact source on a later Data Room search page without uploading a duplicate
+  ---
+  duration_ms: 21.317499
+  type: 'test'
+  ...
+# Subtest: an inactive or foreign client record is never adopted by the Faux seed
+ok 75 - an inactive or foreign client record is never adopted by the Faux seed
+  ---
+  duration_ms: 9.654251
+  type: 'test'
+  ...
+# Subtest: duplicate slugged client records fail before any project or source write
+ok 76 - duplicate slugged client records fail before any project or source write
+  ---
+  duration_ms: 2.948984
+  type: 'test'
+  ...
+# Subtest: a second same-title project is a refusal, not an arbitrary project selection
+ok 77 - a second same-title project is a refusal, not an arbitrary project selection
+  ---
+  duration_ms: 4.894721
+  type: 'test'
+  ...
+# Subtest: a stalled paginated source search never silently assumes the source was absent
+ok 78 - a stalled paginated source search never silently assumes the source was absent
+  ---
+  duration_ms: 2.961385
+  type: 'test'
+  ...
+# Subtest: replaying the pack reuses governed records without rewriting existing data
+ok 79 - replaying the pack reuses governed records without rewriting existing data
+  ---
+  duration_ms: 12.326267
+  type: 'test'
+  ...
+# Subtest: corrects only previously miscatalogued synthetic protocol/SAP through audited Vault details
+ok 80 - corrects only previously miscatalogued synthetic protocol/SAP through audited Vault details
+  ---
+  duration_ms: 14.370411
+  type: 'test'
+  ...
+# Subtest: refuses an inconsistent document type on an otherwise exact-hash existing source
+ok 81 - refuses an inconsistent document type on an otherwise exact-hash existing source
+  ---
+  duration_ms: 13.980789
+  type: 'test'
+  ...
+# Subtest: does not edit a source that has entered an approved or other lifecycle stage
+ok 82 - does not edit a source that has entered an approved or other lifecycle stage
+  ---
+  duration_ms: 11.952041
+  type: 'test'
+  ...
+# Subtest: refuses wrong organization before any project or source read/write
+ok 83 - refuses wrong organization before any project or source read/write
+  ---
+  duration_ms: 0.300395
+  type: 'test'
+  ...
+# Subtest: Project Management detail is unwrapped and must match the same client anchor
+ok 84 - Project Management detail is unwrapped and must match the same client anchor
+  ---
+  duration_ms: 13.451866
+  type: 'test'
+  ...
+# Subtest: refuses missing project client anchor before any Data Room or authoring write
+ok 85 - refuses missing project client anchor before any Data Room or authoring write
+  ---
+  duration_ms: 4.74728
+  type: 'test'
+  ...
+# Subtest: refuses substituted project ID before any Data Room or authoring write
+ok 86 - refuses substituted project ID before any Data Room or authoring write
+  ---
+  duration_ms: 2.873838
+  type: 'test'
+  ...
+# Subtest: never adopts an existing project with a different document type
+ok 87 - never adopts an existing project with a different document type
+  ---
+  duration_ms: 3.05109
+  type: 'test'
+  ...
+# Subtest: matching catalog hash never substitutes for an unavailable original
+ok 88 - matching catalog hash never substitutes for an unavailable original
+  ---
+  duration_ms: 12.636611
+  type: 'test'
+  ...
+# Subtest: a misclassified protocol cannot be corrected if its original was removed
+ok 89 - a misclassified protocol cannot be corrected if its original was removed
+  ---
+  duration_ms: 11.167684
+  type: 'test'
+  ...
+# Subtest: an altered current source hash refuses overwrite and stops other uploads
+ok 90 - an altered current source hash refuses overwrite and stops other uploads
+  ---
+  duration_ms: 10.428462
+  type: 'test'
+  ...
+# Subtest: CLI rejects accidental mixed-tenant seed selection without starting any connection
+ok 91 - CLI rejects accidental mixed-tenant seed selection without starting any connection
+  ---
+  duration_ms: 47.276053
+  type: 'test'
+  ...
+# Subtest: CLI requires exact organization ID before connecting to any Faux Biotech tenant
+ok 92 - CLI requires exact organization ID before connecting to any Faux Biotech tenant
+  ---
+  duration_ms: 33.540092
+  type: 'test'
+  ...
+# Subtest: CLI rejects a fake tenant plus an explicit client-workspace bypass
+ok 93 - CLI rejects a fake tenant plus an explicit client-workspace bypass
+  ---
+  duration_ms: 34.047216
+  type: 'test'
+  ...
+# Subtest: purge is an honest refusal to delete governed source records
+ok 94 - purge is an honest refusal to delete governed source records
+  ---
+  duration_ms: 0.365298
+  type: 'test'
+  ...
+# Subtest: rejects missing canonical CSR templates before any tenant write
+ok 95 - rejects missing canonical CSR templates before any tenant write
+  ---
+  duration_ms: 4.106192
+  type: 'test'
+  ...
+# Subtest: rejects duplicated canonical CSR templates before any tenant write
+ok 96 - rejects duplicated canonical CSR templates before any tenant write
+  ---
+  duration_ms: 4.436597
+  type: 'test'
+  ...
+# Subtest: ambiguous same-title Data Room sources are not silently adopted
+ok 97 - ambiguous same-title Data Room sources are not silently adopted
+  ---
+  duration_ms: 4.488537
+  type: 'test'
+  ...
+# Subtest: ambiguous same-title editor documents are not silently adopted
+ok 98 - ambiguous same-title editor documents are not silently adopted
+  ---
+  duration_ms: 7.829482
+  type: 'test'
+  ...
+# Subtest: a prior CSR working document with a non-canonical template is never adopted
+ok 99 - a prior CSR working document with a non-canonical template is never adopted
+  ---
+  duration_ms: 5.916574
+  type: 'test'
+  ...
+# Subtest: refuses a IN_REVIEW CSR as the reusable working draft
+ok 100 - refuses a IN_REVIEW CSR as the reusable working draft
+  ---
+  duration_ms: 12.614817
+  type: 'test'
+  ...
+# Subtest: refuses a APPROVED CSR as the reusable working draft
+ok 101 - refuses a APPROVED CSR as the reusable working draft
+  ---
+  duration_ms: 13.757225
+  type: 'test'
+  ...
+# Subtest: refuses a FROZEN CSR as the reusable working draft
+ok 102 - refuses a FROZEN CSR as the reusable working draft
+  ---
+  duration_ms: 15.935862
+  type: 'test'
+  ...
+# Subtest: refuses a section-only CSR rather than pretending it is an accessible working document
+ok 103 - refuses a section-only CSR rather than pretending it is an accessible working document
+  ---
+  duration_ms: 17.71366
+  type: 'test'
+  ...
+# Subtest: an actor without existing Authoring edit permission cannot seed a pending CSR review task
+ok 104 - an actor without existing Authoring edit permission cannot seed a pending CSR review task
+  ---
+  duration_ms: 8.010172
+  type: 'test'
+  ...
+# Subtest: a changed document identity on the existing Authoring detail read is refused
+ok 105 - a changed document identity on the existing Authoring detail read is refused
+  ---
+  duration_ms: 6.640933
+  type: 'test'
+  ...
+# Subtest: an existing reviewer task whose origin no longer matches the document is not reused
+ok 106 - an existing reviewer task whose origin no longer matches the document is not reused
+  ---
+  duration_ms: 14.300326
+  type: 'test'
+  ...
+# Subtest: no demo task is created when the existing Task Board reports missing stores
+ok 107 - no demo task is created when the existing Task Board reports missing stores
+  ---
+  duration_ms: 14.431822
+  type: 'test'
+  ...
+# Subtest: ambiguous task titles cannot silently reuse another task in the same project
+ok 108 - ambiguous task titles cannot silently reuse another task in the same project
+  ---
+  duration_ms: 12.711778
+  type: 'test'
+  ...
+# Subtest: the existing Task Board reread confirms each created task and its exact authoring document
+ok 109 - the existing Task Board reread confirms each created task and its exact authoring document
+  ---
+  duration_ms: 7.945226
+  type: 'test'
+  ...
+# Subtest: a task creation acknowledgement without a saved task identity is not counted as complete
+ok 110 - a task creation acknowledgement without a saved task identity is not counted as complete
+  ---
+  duration_ms: 6.561029
+  type: 'test'
+  ...
+# Subtest: a task acknowledged but not visible in the refreshed board is not reported as verified
+ok 111 - a task acknowledged but not visible in the refreshed board is not reported as verified
+  ---
+  duration_ms: 8.336128
+  type: 'test'
+  ...
+# Subtest: all review tasks remain pending; the seed never uses a review or approval ceremony
+ok 112 - all review tasks remain pending; the seed never uses a review or approval ceremony
+  ---
+  duration_ms: 6.855716
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP403 fails the actual seed CLI and manifest
+ok 113 - required subject intake HTTP403 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 50.67727
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP429 fails the actual seed CLI and manifest
+ok 114 - required subject intake HTTP429 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 55.107629
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP500 fails the actual seed CLI and manifest
+ok 115 - required subject intake HTTP500 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 48.093219
+  type: 'test'
+  ...
+# Subtest: successful required subject intake completes without signing the optional RACT
+ok 116 - successful required subject intake completes without signing the optional RACT
+  ---
+  duration_ms: 46.46059
+  type: 'test'
+  ...
+# Subtest: an already-loaded subject extract completes without resubmitting it
+ok 117 - an already-loaded subject extract completes without resubmitting it
+  ---
+  duration_ms: 44.66487
+  type: 'test'
+  ...
+# Subtest: the program is created in the workspace it is given
+ok 118 - the program is created in the workspace it is given
+  ---
+  duration_ms: 0.741926
+  type: 'test'
+  ...
+# Subtest: with no workspace, none is sent (intake decides, as before)
+ok 119 - with no workspace, none is sent (intake decides, as before)
+  ---
+  duration_ms: 0.176216
+  type: 'test'
+  ...
+# Subtest: each fictional sponsor is its own client workspace, named "(fictional demo)", one per company
+not ok 120 - each fictional sponsor is its own client workspace, named "(fictional demo)", one per company
+  ---
+  duration_ms: 1.132534
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:25:1'
+  failureType: 'testCodeFailure'
+  error: 'portfolio-content.mjs exports SPONSOR_WORKSPACES'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:27:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: every project spec carries its sponsor's workspace, and the intake body names it explicitly
+not ok 121 - every project spec carries its sponsor's workspace, and the intake body names it explicitly
+  ---
+  duration_ms: 0.834177
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    portfolio-content.mjs exports workspaceOf
+    + actual - expected
+    
+    + 'undefined'
+    - 'function'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'function'
+  actual: 'undefined'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:41:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: no sponsor is named like a Lumen pack supplier (or any other fictional company in the packs)
+not ok 122 - no sponsor is named like a Lumen pack supplier (or any other fictional company in the packs)
+  ---
+  duration_ms: 0.28051
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:56:1'
+  failureType: 'testCodeFailure'
+  error: 'Corvane Oncology (fictional) shares its name with a Lumen supplier'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:59:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a portfolio project found by title in another workspace is refused: never moved, never reused
+not ok 123 - a portfolio project found by title in another workspace is refused: never moved, never reused
+  ---
+  duration_ms: 0.330778
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:65:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    portfolio.mjs exports existingProjectFor
+    + actual - expected
+    
+    + 'undefined'
+    - 'function'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'function'
+  actual: 'undefined'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:66:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a sponsor workspace is found by exact name in this organisation, or refused, never adopted by a near match
+not ok 124 - a sponsor workspace is found by exact name in this organisation, or refused, never adopted by a near match
+  ---
+  duration_ms: 0.163703
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:80:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    portfolio.mjs exports matchSponsorWorkspace
+    + actual - expected
+    
+    + 'undefined'
+    - 'function'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'function'
+  actual: 'undefined'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:81:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a study design titled for the pack but bound to another project is left where it is
+not ok 125 - a study design titled for the pack but bound to another project is left where it is
+  ---
+  duration_ms: 0.100726
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:93:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    portfolio.mjs exports designOwnedElsewhere
+    + actual - expected
+    
+    + 'undefined'
+    - 'function'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'function'
+  actual: 'undefined'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:94:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: portfolio has its own prefix and every planned record title carries it
+ok 126 - portfolio has its own prefix and every planned record title carries it
+  ---
+  duration_ms: 0.769392
+  type: 'test'
+  ...
+# Subtest: idempotency keys (exact titles) are unique across the pack
+ok 127 - idempotency keys (exact titles) are unique across the pack
+  ---
+  duration_ms: 0.447387
+  type: 'test'
+  ...
+# Subtest: four fictional companies, eight studies, one per stage a..h, each labelled fictional and synthetic
+ok 128 - four fictional companies, eight studies, one per stage a..h, each labelled fictional and synthetic
+  ---
+  duration_ms: 1.197983
+  type: 'test'
+  ...
+# Subtest: every synthetic source reconciles with its study arms, the contract enums and itself
+ok 129 - every synthetic source reconciles with its study arms, the contract enums and itself
+  ---
+  duration_ms: 18.04092
+  type: 'test'
+  ...
+# Subtest: narrative numbers are the study's own numbers and say they are synthetic
+ok 130 - narrative numbers are the study's own numbers and say they are synthetic
+  ---
+  duration_ms: 0.963645
+  type: 'test'
+  ...
+# Subtest: a non-randomized study never says it was randomized (PTR-022-102, open-label sequential cohorts)
+ok 131 - a non-randomized study never says it was randomized (PTR-022-102, open-label sequential cohorts)
+  ---
+  duration_ms: 0.428288
+  type: 'test'
+  ...
+# Subtest: a resolved comment that claims an edit points at text that exists; open comments point at existing passages
+ok 132 - a resolved comment that claims an edit points at text that exists; open comments point at existing passages
+  ---
+  duration_ms: 0.345895
+  type: 'test'
+  ...
+# Subtest: no stage claims the CSR was filed: stage h is a fictional information-request scenario
+ok 133 - no stage claims the CSR was filed: stage h is a fictional information-request scenario
+  ---
+  duration_ms: 0.216033
+  type: 'test'
+  ...
+# Subtest: stage d drafts some headings, e..h all eight, a..c none; e has open comments, f none open
+ok 134 - stage d drafts some headings, e..h all eight, a..c none; e has open comments, f none open
+  ---
+  duration_ms: 0.255701
+  type: 'test'
+  ...
+# Subtest: mapHeadings picks the first matching template section by order and never maps one section twice
+ok 135 - mapHeadings picks the first matching template section by order and never maps one section twice
+  ---
+  duration_ms: 0.867083
+  type: 'test'
+  ...
+# Subtest: seed.mjs registers portfolio as opt-in: excluded from --pack all exactly like faux
+ok 136 - seed.mjs registers portfolio as opt-in: excluded from --pack all exactly like faux
+  ---
+  duration_ms: 0.272849
+  type: 'test'
+  ...
+# Subtest: CLI refuses portfolio mixed with another pack before connecting
+ok 137 - CLI refuses portfolio mixed with another pack before connecting
+  ---
+  duration_ms: 29.502259
+  type: 'test'
+  ...
+# Subtest: seed reads only, and writes nothing, when the canonical CSR template is unavailable
+ok 138 - seed reads only, and writes nothing, when the canonical CSR template is unavailable
+  ---
+  duration_ms: 0.792778
+  type: 'test'
+  ...
+# Subtest: C2C-CC-001 is created on its program
+ok 139 - C2C-CC-001 is created on its program
+  ---
+  duration_ms: 0.557093
+  type: 'test'
+  ...
+# Subtest: the NP-100 change is created on its program
+ok 140 - the NP-100 change is created on its program
+  ---
+  duration_ms: 0.230675
+  type: 'test'
+  ...
+# Subtest: with no program, none is sent (the route treats it as unscoped)
+ok 141 - with no program, none is sent (the route treats it as unscoped)
+  ---
+  duration_ms: 0.11392
+  type: 'test'
+  ...
+# Subtest: a real source-grounded AnA draft must have model, candidate, and audit turn
+ok 142 - a real source-grounded AnA draft must have model, candidate, and audit turn
+  ---
+  duration_ms: 1.480905
+  type: 'test'
+  ...
+# Subtest: AnA governed accept must reopen exact document, section and human-accepted content
+ok 143 - AnA governed accept must reopen exact document, section and human-accepted content
+  ---
+  duration_ms: 0.327271
+  type: 'test'
+  ...
+# Subtest: approved source is unique and requires complete, exact Vault metadata
+ok 144 - approved source is unique and requires complete, exact Vault metadata
+  ---
+  duration_ms: 1.056842
+  type: 'test'
+  ...
+# Subtest: frozen study-data identity and its exact approved source hash must reopen
+ok 145 - frozen study-data identity and its exact approved source hash must reopen
+  ---
+  duration_ms: 0.286383
+  type: 'test'
+  ...
+# Subtest: real, hash-verified model drafting is distinguishable from templates, failures and demo mode
+ok 146 - real, hash-verified model drafting is distinguishable from templates, failures and demo mode
+  ---
+  duration_ms: 0.91195
+  type: 'test'
+  ...
+# Subtest: independent current review must approve the exact imported CSR, not a Tasking card
+ok 147 - independent current review must approve the exact imported CSR, not a Tasking card
+  ---
+  duration_ms: 0.509144
+  type: 'test'
+  ...
+# Subtest: the reopened DOCX must contain actual saved prose from the approved version
+ok 148 - the reopened DOCX must contain actual saved prose from the approved version
+  ---
+  duration_ms: 2.481649
+  type: 'test'
+  ...
+# Subtest: the real API path does not create a model build unless explicitly requested
+ok 149 - the real API path does not create a model build unless explicitly requested
+  ---
+  duration_ms: 0.997185
+  type: 'test'
+  ...
+# Subtest: explicit build request starts one existing API job, but never reports completed drafting
+ok 150 - explicit build request starts one existing API job, but never reports completed drafting
+  ---
+  duration_ms: 0.552454
+  type: 'test'
+  ...
+1..150
+# tests 150
+# suites 0
+# pass 144
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 828.287082
+exit 1
+
+# ---------------------------------------------------------------------------
+# 2026-11-09T19:45:26Z red first, round 2 (review finding 1): the new known-product-behaviour case against the round-1 pack (portfolio.mjs header and manifest text unchanged; only portfolio-demo.test.mjs gained the case)
+$ node --test scripts/demo/launch-demo/*.test.mjs
+not ok 126 - the known product behaviour says what the server does: the first data-room read of ANY project captures organisation-wide Quality records, whatever its workspace
+# tests 151
+# pass 150
+# fail 1
+802-  ---
+803-  duration_ms: 0.462289
+804-  type: 'test'
+805-  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:101:1'
+806-  failureType: 'testCodeFailure'
+807-  error: 'portfolio.mjs exports KNOWN_PRODUCT_BEHAVIOUR'
+808-  code: 'ERR_ASSERTION'
+809-  name: 'AssertionError'
+810-  expected: true
+811-  operator: '=='
+812-  stack: |-
+813-    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/portfolio-demo.test.mjs:103:10)
+814-    Test.runInAsyncScope (node:async_hooks:214:14)
+815-    Test.run (node:internal/test_runner/test:1047:25)
+exit 1
+
+# the same case's header assertions, run alone against the round-1 header (the case above stops at its first assertion, the missing export):
+$ node <scratchpad>/header-check.mjs scripts/demo/launch-demo/packs/portfolio.mjs   # the four header regexes copied from the test
+FAIL  no "uploading stage h's letter … triggers"
+FAIL  no "so every sponsor's projects showed"
+FAIL  says "first read of any project's data room"
+FAIL  says "does not stop"
+exit 1

@@ -1,0 +1,645 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > reads one scoped profile for both cards and identifies its recorded source 189ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > shows Memory and Instructions as closed disclosures of one card 23ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > distinguishes a verified absent profile from a profile with no recorded fields 18ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > bounds each recorded list with shown and total counts and escapes saved text 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > states loading without an absence claim and permits an unselected workspace to bind the actual saved parent 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign program answer as unavailable 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign actor answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign organization answer as unavailable 20ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign workspace answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invalid anchor answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but false success answer as unavailable 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but absent profile field answer as unavailable 13ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but malformed risk row answer as unavailable 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invented missing confidence answer as unavailable 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 403 unavailable and retries the actual same scoped read 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 503 unavailable and retries the actual same scoped read 15ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection 3ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after account changes 8ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after role changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after organization changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after workspace changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program changes 7ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program-roundtrip changes 5ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after token-only changes 6ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes
+An update to ScopedRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > refuses a retained retry handler after a bearer account switch before another render 27ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > preserves a pending profile read through canonical same-account bearer refresh 13ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > sends no profile read while the project's own record is still being read
+An update to ScopedRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > sends no profile read while the project's own record is still being read
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > claims the open project's recorded workspace, not the previous project's current selection 5007ms
+   → Unable to find an element with the text: Recorded strategy from the client profile. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-knows-h"[39m
+      [33mclass[39m=[32m"pj-card pj-knows"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-knows-h"[39m
+        [36m>[39m
+          [0mWhat AnA knows[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sec-sub"[39m
+      [36m>[39m
+        [0mAnA reads these in every conversation in this project.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0mRecorded project context could not be read. Retry to read the current saved profile.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRetry recorded project context[0m
+      [36m</button>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-skills-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-skills-h"[39m
+        [36m>[39m
+          [0mSkills[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load the project's skills[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mThe read failed. This is not a project without skills.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mTry again[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-records-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-records-h"[39m
+        [36m>[39m
+          [0mRecords[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"pj-team-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the project’s records…[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-knows-h"[39m
+      [33mclass[39m=[32m"pj-card pj-knows"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-knows-h"[39m
+        [36m>[39m
+          [0mWhat AnA knows[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sec-sub"[39m
+      [36m>[39m
+        [0mAnA reads these in every conversation in this project.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0mRecorded project context could not be read. Retry to read the current saved profile.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRetry recorded project context[0m
+      [36m</button>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-skills-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-skills-h"[39m
+        [36m>[39m
+          [0mSkills[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load the project's skills[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mThe read failed. This is not a project without skills.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mTry again[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-records-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-records-h"[39m
+        [36m>[39m
+          [0mRecords[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"pj-team-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the project’s records…[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > sends no profile read while the project's own record is still being read 7ms
+   → expected [ [ 'GET', …(3) ] ] to have a length of +0 but got 1
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > writes a refused read as an error, never as no saved profile 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > claims the open project's recorded workspace, not the previous project's current selection
+TestingLibraryElementError: Unable to find an element with the text: Recorded strategy from the client profile. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-knows-h"[39m
+      [33mclass[39m=[32m"pj-card pj-knows"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-knows-h"[39m
+        [36m>[39m
+          [0mWhat AnA knows[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sec-sub"[39m
+      [36m>[39m
+        [0mAnA reads these in every conversation in this project.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0mRecorded project context could not be read. Retry to read the current saved profile.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRetry recorded project context[0m
+      [36m</button>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-skills-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-skills-h"[39m
+        [36m>[39m
+          [0mSkills[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load the project's skills[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mThe read failed. This is not a project without skills.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mTry again[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-records-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-records-h"[39m
+        [36m>[39m
+          [0mRecords[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"pj-team-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the project’s records…[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-knows-h"[39m
+      [33mclass[39m=[32m"pj-card pj-knows"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-knows-h"[39m
+        [36m>[39m
+          [0mWhat AnA knows[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sec-sub"[39m
+      [36m>[39m
+        [0mAnA reads these in every conversation in this project.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [0mRecorded project context could not be read. Retry to read the current saved profile.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRetry recorded project context[0m
+      [36m</button>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-skills-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-skills-h"[39m
+        [36m>[39m
+          [0mSkills[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't load the project's skills[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-h"[39m
+          [36m>[39m
+            [0mThe read failed. This is not a project without skills.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-error-retry"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mTry again[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33maria-labelledby[39m=[32m"pj-records-h"[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<h3[39m
+          [33mid[39m=[32m"pj-records-h"[39m
+        [36m>[39m
+          [0mRecords[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"pj-team-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the project’s records…[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx:220:25
+    218|     tenant.currentClientWorkspace = { id: '34', organizationId: '7' };
+    219|     render(sideIn(21));
+    220|     expect(await screen.findByText('Recorded strategy from the client …
+       |                         ^
+    221|     expect(reads()).toHaveLength(1);
+    222|     expect(reads()[0][3]).toEqual(expect.objectContaining({ 'x-client-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > sends no profile read while the project's own record is still being read
+AssertionError: expected [ [ 'GET', …(3) ] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx:228:21
+    226|     tenant.currentClientWorkspace = { id: '34', organizationId: '7' };
+    227|     render(sideIn('reading'));
+    228|     expect(reads()).toHaveLength(0);
+       |                     ^
+    229|     expect(screen.getByText('Reading saved project profile…')).toBeTru…
+    230|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 28 passed (30)
+   Start at  20:07:11
+   Duration  6.70s (transform 391ms, setup 112ms, import 489ms, tests 5.57s, environment 413ms)
+

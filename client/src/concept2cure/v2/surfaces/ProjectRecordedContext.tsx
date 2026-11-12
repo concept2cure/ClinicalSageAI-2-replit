@@ -22,28 +22,39 @@ function headers(scope: ProjectRecordedContextScope, current: () => boolean): Re
   } catch { return null; }
 }
 
+/** The open project's recorded client workspace, as the project page read it: a number when it records one, null when it
+ *  records none or could not be read, 'reading' while the project's own record is still loading. Absent: the caller
+ *  does not know it, and the shell's current client is claimed, as before. */
+export type ProjectWorkspace = number | null | 'reading';
+
 /** One current scoped read supplies the existing two profile cards. */
-export function ProjectRecordedContext({ programId }: { programId: string | null }) {
+export function ProjectRecordedContext({ programId, projectWorkspaceId }: { programId: string | null; projectWorkspaceId?: ProjectWorkspace }) {
   const user = useAuthUser();
   const actorUserId = numeric(user?.id), organizationId = numeric(user?.organizationId);
   if (!programId || !UUID.test(programId) || !user || !projectSharingId(actorUserId) || !projectSharingId(organizationId)) {
     return <Cards read={{ message: 'Select a project and sign in to read its saved profile context.' }} />;
   }
-  return <TenantContextRead programId={programId} user={user} actorUserId={actorUserId} organizationId={organizationId} />;
+  return <TenantContextRead programId={programId} user={user} actorUserId={actorUserId} organizationId={organizationId} projectWorkspaceId={projectWorkspaceId} />;
 }
-function TenantContextRead({ programId, user, actorUserId, organizationId }: {
-  programId: string; user: AuthUser; actorUserId: number; organizationId: number;
+function TenantContextRead({ programId, user, actorUserId, organizationId, projectWorkspaceId }: {
+  programId: string; user: AuthUser; actorUserId: number; organizationId: number; projectWorkspaceId?: ProjectWorkspace;
 }) {
   const tenant = useTenant(), owner = useAuthoringReadSession(user), program = useShellProject();
   const workspace = tenant.currentClientWorkspace;
   const selected = workspace ? numeric(workspace.id) : undefined;
   const valid = numeric(tenant.currentOrganization?.id) === organizationId && shellProgramId(program) === programId &&
     (!workspace || numeric(workspace.organizationId) === organizationId && projectSharingId(selected));
-  const key = JSON.stringify([owner.key, actorUserId, organizationId, programId, selected, valid]);
+  /* The claim follows the OPEN project (2026-11-09): moving from a project in one client workspace to a project in
+     another, the shell's current client still named the previous project's until clientFollowsProject.ts had read
+     the new one, and the profile read was refused 409 PROJECT_WORKSPACE_MISMATCH. The project page already holds
+     the project's recorded workspace; it is the claim. While that record is still being read, nothing is sent. */
+  const claimed = typeof projectWorkspaceId === 'number' && projectSharingId(projectWorkspaceId) ? projectWorkspaceId : selected;
+  const key = JSON.stringify([owner.key, actorUserId, organizationId, programId, claimed, valid]);
   const latest = useRef(key); latest.current = key;
   if (!valid) return <Cards read={{ message: RETIRED }} />;
+  if (projectWorkspaceId === 'reading') return <Cards read={{ loading: true }} />;
   const scope: ProjectRecordedContextScope = { programId, actorUserId, organizationId,
-    ...(selected === undefined ? {} : { clientWorkspaceId: selected as number }) };
+    ...(claimed === undefined ? {} : { clientWorkspaceId: claimed as number }) };
   return <ScopedRead key={key} scope={scope} current={() => latest.current === key && owner.sameRevision()} />;
 }
 function ScopedRead({ scope, current }: { scope: ProjectRecordedContextScope; current: () => boolean }) {

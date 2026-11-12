@@ -1,0 +1,21 @@
+# Live app, read-only, 2026-11-09
+## 1. GET /api/c2c/projects on the running dev server (port 5000, pre-fix server code: not restarted)
+rows: 81 ws counts: {"Biotech":62,"Pharma":15,"MDX":2,"Dmf":2}
+{"id":"7052fed1-184c-41b1-8af6-74594f593690","program_type":"dmf","ws":"Dmf"}
+{"id":"aa9bf1c4-9b1a-4f04-87bf-f08dbe6d17a4","program_type":"dmf","ws":"Dmf"}
+
+## 2. The fixed workstreamSqlCase over the same rows of the local DB (BEGIN READ ONLY ... ROLLBACK)
+[
+ {
+  "id": "7052fed1-184c-41b1-8af6-74594f593690",
+  "program_type": "dmf",
+  "product_type": "biologic",
+  "ws_after_fix": "Biotech"
+ },
+ {
+  "id": "aa9bf1c4-9b1a-4f04-87bf-f08dbe6d17a4",
+  "program_type": "dmf",
+  "product_type": "biologic",
+  "ws_after_fix": "Biotech"
+ }
+]

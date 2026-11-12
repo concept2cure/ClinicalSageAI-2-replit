@@ -1,0 +1,68 @@
+TAP version 13
+# Subtest: C2C-CC-001 is created on its program
+not ok 1 - C2C-CC-001 is created on its program
+  ---
+  duration_ms: 1.124995
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/qms-change-program.test.mjs:15:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - '6065271c-d4b0-4936-aad1-02855423a738'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '6065271c-d4b0-4936-aad1-02855423a738'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/qms-change-program.test.mjs:16:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: the NP-100 change is created on its program
+not ok 2 - the NP-100 change is created on its program
+  ---
+  duration_ms: 0.293616
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/qms-change-program.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - '6065271c-d4b0-4936-aad1-02855423a738'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '6065271c-d4b0-4936-aad1-02855423a738'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/qms-change-program.test.mjs:20:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: with no program, none is sent (the route treats it as unscoped)
+ok 3 - with no program, none is sent (the route treats it as unscoped)
+  ---
+  duration_ms: 0.130159
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 1
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 58.450353
