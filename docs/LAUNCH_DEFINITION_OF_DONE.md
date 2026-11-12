@@ -3174,6 +3174,22 @@ behind it and every change says who made it and why.
      deployed store.
 6. **Order to admission:** E4 (one store); "not applicable"; the URS and OQ; then the Vault app gains the `etmf`
    surface as a professional-tier module and the section moves into the Vault.
+7. **A person who may read the project's Vault reads its study's trial master file** (added 2026-11-12, when the URS
+   draft named it as a question). Every eTMF route required the regulatory-author role, reads included, which no
+   organization viewer holds. So a monitor, auditor or inspector given read access met a failed read beneath the
+   section's own view-only notice.
+   - **Who reads:** the people who read the project's Vault. The Vault's reads already admit a viewer, by design
+     (`routes/c2c/project-vault.ts`: "a viewer enumerating and downloading their own organization's dossier is the
+     viewer role working as intended").
+   - **Why:** ICH E6(R3) keeps the essential records available for monitoring, audit and inspection. The EMA's
+     guideline on the TMF (EMA/INS/GCP/856758/2018) expects direct, read-only access for monitors, auditors and
+     inspectors.
+   - **What a reader may do:** read the reference model, the study's filings and declarations, its readiness, and the
+     inspection package. The package is a recorded download, which names who took it.
+   - **What stays with the writer:** filing, removing and declaring, which keep the regulatory-author role and the
+     Vault's write role.
+   - Each read still admits the person to the study's project by the Vault's rule.
+   - Built: `server/routes/etmf.routes.ts` (`READERS`); proven on PostgreSQL in `tests/db/etmf-study-binding.dbtest.ts`.
 
 Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`. The steps of E4
 are in the plan's §3a.
