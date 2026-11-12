@@ -293,8 +293,13 @@ export function vaultLifecycleStageSql(alias: string): string {
 }
 
 export interface VaultFilterSqlOptions {
-  /** 'within' (in-app, whole segments) or 'exact' (the public API's raw match). */
-  ctdMatch?: 'within' | 'exact';
+  /**
+   * 'within' (in-app, whole segments), 'exact' (the public API's raw match), or
+   * 'exactWithin' (the data catalog's: the section as recorded, or one beneath
+   * it by whole segment, unnormalised, as the catalog matches its captures'
+   * sections in data-room-search.ts: '5.3' selects '5.3.5.1', not '5.30').
+   */
+  ctdMatch?: 'within' | 'exact' | 'exactWithin';
 }
 
 /**
@@ -346,10 +351,14 @@ function placementSql(statuses: VaultPlacementStatus[] | undefined, alias: strin
   return ` AND (${statuses.map((s) => one[s](alias)).join(' OR ')})`;
 }
 
-function ctdSql(codes: string[] | undefined, alias: string, bind: Bind, match: 'within' | 'exact'): string {
+function ctdSql(codes: string[] | undefined, alias: string, bind: Bind, match: NonNullable<VaultFilterSqlOptions['ctdMatch']>): string {
   if (!codes?.length) return '';
   if (match === 'exact') return ` AND ${alias}.ctd_section = ANY(${bind(codes)}::text[])`;
-  return ` AND ${ctdWithinSql(alias, bind(codes), bind(codes.map((c) => `${c}.%`)))}`;
+  const prefixes = codes.map((c) => `${c}.%`);
+  if (match === 'exactWithin') {
+    return ` AND (${alias}.ctd_section = ANY(${bind(codes)}::text[]) OR ${alias}.ctd_section LIKE ANY(${bind(prefixes)}::text[]))`;
+  }
+  return ` AND ${ctdWithinSql(alias, bind(codes), bind(prefixes))}`;
 }
 
 function stageSql(stages: string[] | undefined, alias: string, bind: Bind): string {
