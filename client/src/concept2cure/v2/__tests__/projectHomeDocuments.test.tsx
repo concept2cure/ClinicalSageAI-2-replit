@@ -164,58 +164,6 @@ describe('Author — the project\'s documents', () => {
     expect(await screen.findByText('Clinical overview (2.5)')).toBeTruthy();
   });
 
-  /* 2026-11-12, the production walk with narrow roles (docs/evidence/F1/2026-11-12-production-walk-narrow-roles/): a
-     document is listed per grant, and only an organisation administrator sees every document
-     (server/services/authoring/authoring-permissions.ts isGlobalAuthoringAdmin). A Member with no grant read "No
-     documents in this project yet. Ask AnA … to draft one." on a project holding five, and was invited to draft a
-     duplicate. An empty list says the project is empty only to a person who would see every document. */
-  /* A project with no documents starts on Plan once its documents are read (ProjectHome, "A first empty project
-     starts on Plan"); the Documents list is on Author. */
-  const openAuthorOfEmptyProject = async () => {
-    await waitFor(() => expect(tab('Plan')?.getAttribute('data-status')).toBe('active'));
-    await open('Author');
-  };
-  const signIn = (role: string) => authService.setToken(`e30.${btoa(JSON.stringify({ userId: 12, organizationId: 7 }))}.fixture`,
-    { id: '12', organizationId: '7', roles: [role], permissions: [] }, 'fixture-refresh', 3600);
-
-  it('an empty project says so in words, to a person who sees every document', async () => {
-    signIn('admin');
-    serve({ docs: () => ok({ documents: [] }) });
-    render(<ProjectHome {...props()} />);
-    await openAuthorOfEmptyProject();
-    expect(await screen.findByText('No documents in this project yet. Ask AnA in the box above to draft one.')).toBeTruthy();
-  });
-
-  it('an empty list tells anyone else it holds only the documents shared with them, and how one is shared', async () => {
-    for (const role of ['member', 'reviewer', 'approver', 'owner']) {
-      signIn(role);
-      // Each role opens the project afresh: the step the previous one chose is not remembered.
-      (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-410' };
-      serve({ docs: () => ok({ documents: [] }) });
-      const view = render(<ProjectHome {...props()} />);
-      await openAuthorOfEmptyProject();
-      const empty = await screen.findByTestId('pj-docs-empty');
-      expect(empty.textContent, role).toBe('No documents in this project are shared with you. This list shows the documents you have access to, so the project may hold others: a document’s owner shares it from the editor’s Access.');
-      expect(screen.queryByText(/No documents in this project yet/), role).toBeNull();
-      view.unmount();
-    }
-  });
-
-  it('with no signed-in person read yet, it does not say the project is empty', async () => {
-    serve({ docs: () => ok({ documents: [] }) });
-    render(<ProjectHome {...props()} />);
-    await openAuthorOfEmptyProject();
-    expect((await screen.findByTestId('pj-docs-empty')).textContent).toMatch(/shared with you/);
-  });
-
-  it('the screen and the server agree on who sees every document', async () => {
-    const { isGlobalAuthoringAdmin } = await import('../../../../../server/services/authoring/authoring-permissions');
-    const { seesEveryProjectDocument } = await import('../surfaces/ProjectHome');
-    for (const role of ['admin', 'super_admin', 'platform_admin', 'owner', 'business_admin', 'manager', 'member', 'reviewer', 'approver', 'viewer']) {
-      expect(seesEveryProjectDocument([role]), role).toBe(isGlobalAuthoringAdmin({ id: '1', email: null, roles: [role.toUpperCase()] }));
-    }
-  });
-
   it('"Recent drafts" and the Workspace grid are gone, and nothing reads the drafts', async () => {
     serve();
     render(<ProjectHome {...props()} />);
@@ -562,5 +510,59 @@ describe('Review findings — the row, the handoff and the filing type say what 
     await screen.findByRole('button', { name: /Compile and download/ });
     expect(screen.queryByTestId('pj-coming-later')).toBeNull();
     expect(document.body.textContent).not.toMatch(/Coming later|annual[- ]report tracking|variation classifier/i);
+  });
+});
+
+describe('Author — an empty Documents list, by who is listed every document', () => {
+  /* 2026-11-12, the production walk with narrow roles (docs/evidence/F1/2026-11-12-production-walk-narrow-roles/): a
+     document is listed per grant, and only an organisation administrator sees every document
+     (server/services/authoring/authoring-permissions.ts isGlobalAuthoringAdmin). A Member with no grant read "No
+     documents in this project yet. Ask AnA … to draft one." on a project holding five, and was invited to draft a
+     duplicate. An empty list says the project is empty only to a person who would see every document. */
+  /* A project with no documents starts on Plan once its documents are read (ProjectHome, "A first empty project
+     starts on Plan"); the Documents list is on Author. */
+  const openAuthorOfEmptyProject = async () => {
+    await waitFor(() => expect(tab('Plan')?.getAttribute('data-status')).toBe('active'));
+    await open('Author');
+  };
+  const signIn = (role: string) => authService.setToken(`e30.${btoa(JSON.stringify({ userId: 12, organizationId: 7 }))}.fixture`,
+    { id: '12', organizationId: '7', roles: [role], permissions: [] }, 'fixture-refresh', 3600);
+
+  it('an empty project says so in words, to a person who sees every document', async () => {
+    signIn('admin');
+    serve({ docs: () => ok({ documents: [] }) });
+    render(<ProjectHome {...props()} />);
+    await openAuthorOfEmptyProject();
+    expect(await screen.findByText('No documents in this project yet. Ask AnA in the box above to draft one.')).toBeTruthy();
+  });
+
+  it('an empty list tells anyone else it holds only the documents shared with them, and how one is shared', async () => {
+    for (const role of ['member', 'reviewer', 'approver', 'owner']) {
+      signIn(role);
+      // Each role opens the project afresh: the step the previous one chose is not remembered.
+      (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-410' };
+      serve({ docs: () => ok({ documents: [] }) });
+      const view = render(<ProjectHome {...props()} />);
+      await openAuthorOfEmptyProject();
+      const empty = await screen.findByTestId('pj-docs-empty');
+      expect(empty.textContent, role).toBe('No documents in this project are shared with you. This list shows the documents you have access to, so the project may hold others: a document’s owner shares it from the editor’s Access.');
+      expect(screen.queryByText(/No documents in this project yet/), role).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it('with no signed-in person read yet, it does not say the project is empty', async () => {
+    serve({ docs: () => ok({ documents: [] }) });
+    render(<ProjectHome {...props()} />);
+    await openAuthorOfEmptyProject();
+    expect((await screen.findByTestId('pj-docs-empty')).textContent).toMatch(/shared with you/);
+  });
+
+  it('the screen and the server agree on who sees every document', async () => {
+    const { isGlobalAuthoringAdmin } = await import('../../../../../server/services/authoring/authoring-permissions');
+    const { seesEveryProjectDocument } = await import('../surfaces/ProjectHome');
+    for (const role of ['admin', 'super_admin', 'platform_admin', 'owner', 'business_admin', 'manager', 'member', 'reviewer', 'approver', 'viewer']) {
+      expect(seesEveryProjectDocument([role]), role).toBe(isGlobalAuthoringAdmin({ id: '1', email: null, roles: [role.toUpperCase()] }));
+    }
   });
 });
