@@ -47,9 +47,8 @@
  *     (a required section with no draft blocks CSR completion). Omitted (not
  *     false) otherwise, matching the fixture's optional shape.
  *   - No CSR build job for the org/project → program: null and an all-not-
- *     started section structure (mirrors the biopharma/ctd build-state
- *     "degrade to all-not-started" pattern). A wired client treats a null
- *     program as "no live program" and keeps its sample fixture.
+ *     started section structure. A wired client treats a null program as
+ *     "no live program" and keeps its sample fixture.
  *
  * Tenant scoping: organizationId is resolved from JWT-bound request context
  * only (tenantContext / user), never from the body/query/headers. Every read

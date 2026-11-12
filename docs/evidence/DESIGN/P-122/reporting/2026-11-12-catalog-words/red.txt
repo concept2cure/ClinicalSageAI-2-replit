@@ -1,0 +1,7 @@
+ × client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > mounts Insights with the real surface registry and reaches its catalog without masking shared imports
+ × client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > counts applicable definitions separately from engine-backed and currently runnable types
+ × client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > says where a report runs in words, never the stored scope names
+ × client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > offers each availability in words, and still filters by the stored value
+ ✓ client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > qualifies predictions separately and never suggests a plan unlocks a validated prediction
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

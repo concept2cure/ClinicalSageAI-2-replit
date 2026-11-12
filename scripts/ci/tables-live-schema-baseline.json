@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 33,
+  "count": 29,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -92,18 +92,6 @@
     ],
     "trials": [
       "server/storage.ts"
-    ],
-    "vault.drafting_sessions": [
-      "server/api/drafting/routes.ts"
-    ],
-    "vault.extracted_entities": [
-      "server/api/drafting/routes.ts"
-    ],
-    "vault.hybrid_search": [
-      "server/api/drafting/routes.ts"
-    ],
-    "vault.table_priority_search": [
-      "server/api/drafting/routes.ts"
     ],
     "workflow_definitions": [
       "server/services/workflow/WorkflowExecutionEngine.ts"
