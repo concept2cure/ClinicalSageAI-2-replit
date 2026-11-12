@@ -225,6 +225,13 @@ function ConsentVerdict({ gate, status }: { gate: ConsentGate; status: string })
    form approval would refuse could read "100% complete". The tab now shows the
    gate's own verdict (`consentGate`, from the same evaluateConsentCompleteness
    the approve path runs) and says, in the gate's words, what is missing. */
+/** Why there is no checklist: no elements, or (older server) no gate verdict to report them against. */
+function consentEmptyNote(title: string, elements: number) {
+  return elements === 0
+    ? <>The linked consent form <strong>{title}</strong> has no elements recorded, so there is no checklist to report against.</>
+    : <>The approval gate&rsquo;s verdict on <strong>{title}</strong> was not returned, so its completeness is not reported here.</>;
+}
+
 export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
   const consent = asRows(doc.consent);
   const form = (doc.consentForm ?? null) as Row | null;
@@ -236,7 +243,7 @@ export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
         <PaneHead title="Informed consent" sub="Read from the linked consent form" />
         <div className="pde-note">
           {form
-            ? <>The linked consent form <strong>{str(form.title)}</strong> has no elements recorded, so there is no checklist to report against.</>
+            ? consentEmptyNote(str(form.title), consent.length)
             : <><strong>No consent form is linked to this protocol.</strong> Consent elements are authored on a consent form, which carries its own version and approval; until one is linked there is no completeness to report.</>}
         </div>
         <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />

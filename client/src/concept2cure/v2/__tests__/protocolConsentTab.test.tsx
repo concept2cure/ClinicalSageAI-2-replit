@@ -54,5 +54,7 @@ describe('the consent tab', () => {
   it('with no verdict from the server it prints no percentage', () => {
     const { container } = render(<ConsentTab doc={{ consent: rows, consentForm: form() }} />);
     expect(container.textContent).not.toMatch(/% complete/);
+    expect(container.textContent).toContain('was not returned');
+    expect(container.textContent).not.toContain('no elements recorded');
   });
 });
