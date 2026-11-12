@@ -82,6 +82,17 @@ describe('AnA reads a study\'s trial master file from the deployed store', () =>
     expect(JSON.stringify(out)).not.toMatch(/completenessPct|%/);
   });
 
+  it('get_tmf_view: a study with every required record declared not applicable is given no readiness, and says why', async () => {
+    const { TMF_REFERENCE_MODEL } = await import('../../etmf/tmf-completeness');
+    const essential = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.filter((a) => a.essential).map((a) => a.code));
+    const completeness = assessTmfCompleteness({ providedArtifacts: [], scope: 'essential', documentEvidence: {}, notApplicable: essential });
+    store.readTrialTmf.mockResolvedValueOnce({ study: STUDY, filings: [], completeness: { ...completeness, study: STUDY } });
+    const out = JSON.parse(await getToolHandler('get_tmf_view')!({ study_id: 'S-1' }, ctx));
+    expect(out.readiness).toBe('not determined');
+    expect(out.message).toMatch(new RegExp(`No readiness is stated: every required record \\(${essential.length}\\) is declared not applicable to this study`));
+    expect(out.message).not.toMatch(/outside the platform|Readiness: ready/);
+  });
+
   it('get_tmf_view named by the retired store\'s id is refused, never read as "list everything"', async () => {
     const out = JSON.parse(await getToolHandler('get_tmf_view')!({ tmf_file_id: 3 }, ctx));
     expect(out.code).toBe('TMF_STUDY_ID_REQUIRED');

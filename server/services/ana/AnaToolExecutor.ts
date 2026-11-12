@@ -21587,6 +21587,10 @@ function tmfReadinessSentence(assessment: Omit<TmfAssessment, 'study'>): string 
   const declared = s.totalNotApplicable > 0 ? `; ${s.totalNotApplicable} declared not applicable to this study, each with a reason` : '';
   const counts = `${s.totalMissing} of ${s.totalRequired} required records are not counted as present${unverified}; `
     + `${s.zonesComplete} of ${s.zoneCount} zones are complete${declared}`;
+  if (assessment.ready === null && s.totalRequired === 0) {
+    return `No readiness is stated: every required record (${s.totalNotApplicable}) is declared not applicable to this study, `
+      + 'each with a reason, so there is none to check.';
+  }
   if (assessment.ready === null) {
     return 'Readiness is not determined: every remaining gap is filed against a reference outside the platform, which cannot be checked here. '
       + `This is neither ready nor not ready. ${counts}.`;

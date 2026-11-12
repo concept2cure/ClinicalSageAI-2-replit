@@ -65,6 +65,14 @@ function referenceLabelMap(): Map<string, { label: string; zone: number }> {
 }
 
 /** The README's account of what "filed" rests on. */
+/** The cover's readiness line. No record left to check (every one declared not applicable) is no verdict, never "YES". */
+function readinessLabel(completeness: TmfCompletenessResult): string {
+  if (completeness.ready === null) {
+    return completeness.summary.totalRequired === 0 ? 'NO VERDICT (every required record is declared not applicable)' : 'NOT DETERMINED';
+  }
+  return completeness.ready ? 'YES' : 'NO';
+}
+
 function contentBasisNote(basis: TmfCompletenessResult['basis']): string {
   return basis === 'verified_documents'
     ? '  An artifact counts as filed only when its filing references a vault\n' +
@@ -148,7 +156,7 @@ export async function buildTmfInspectionPackage(
   /* 2026-10-15: this printed "Inspection ready: YES" whenever every essential
      code had a filing row — with or without a document — under a note that
      "nothing in this package is fabricated". */
-  const readyLabel = completeness.ready === null ? 'NOT DETERMINED' : completeness.ready ? 'YES' : 'NO';
+  const readyLabel = readinessLabel(completeness);
   const readme = [
     'TRIAL MASTER FILE — INSPECTION-READINESS PACKAGE',
     '='.repeat(50),
