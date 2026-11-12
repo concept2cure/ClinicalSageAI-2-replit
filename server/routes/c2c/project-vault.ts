@@ -119,6 +119,7 @@ import {
 } from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
+import { mayManageLegalHolds } from '../vault-legal-holds';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import {
   ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
@@ -354,6 +355,9 @@ interface VaultDisplayShape {
    *  (MR-08 Stage 5): reference and date, never the reason. Absent, with an
    *  `unavailable` entry, when the holds could not be read. */
   legalHolds?: import('../../services/vault/vault-hold-notice.js').VaultHoldNotice[];
+  /** Whether this reader may place a legal hold (P-125 point 8): the hold routes' own rule
+   *  (`mayManageLegalHolds`), so a record offers "Place legal hold" to the people those routes admit. */
+  mayPlaceLegalHold?: boolean;
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -2199,6 +2203,7 @@ export default function createProjectVaultRoutes(): Router {
         unfiledCount,
         ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
         ...(legalHolds ? { legalHolds } : {}),
+        mayPlaceLegalHold: mayManageLegalHolds(req),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),

@@ -12,6 +12,7 @@ import { VaultHoldNotice, type VaultHoldNoticeShape } from './VaultHoldNotice';
 import { FolderExportButton } from './VaultFolderExport';
 import { VaultVersions } from './VaultVersions';
 import { RecordViewButton, VaultVersionViewer, useVaultVersionViewer } from './VaultVersionViewer';
+import { VaultPlaceHold } from './VaultPlaceHold';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import {
@@ -210,6 +211,8 @@ interface VaultDisplayShape {
   awaitingConfirmationCount?: number;
   /** The active legal holds covering the project or a version in it (MR-08 Stage 5): reference and date. */
   legalHolds?: VaultHoldNoticeShape[];
+  /** Whether this reader may place a legal hold: the hold routes' own rule, as the Vault read reports it (P-125 point 8). */
+  mayPlaceLegalHold?: boolean;
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -2797,6 +2800,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         {sel.src === 'upload' && sel.docId && (
           <VaultHoldNotice holds={vault?.legalHolds} documentId={sel.docId}
             unreadable={vault?.unavailable?.some((u) => u.branch === 'legalHolds')} />
+        )}
+        {/* Placed where the record is, for everyone the hold routes admit (P-125 point 8). */}
+        {sel.src === 'upload' && sel.docId && vault?.mayPlaceLegalHold === true && (
+          <VaultPlaceHold key={`hold-${sel.docId}`} documentId={sel.docId} title={sel.title} onPlaced={() => setVaultEpoch((n) => n + 1)} />
         )}
         {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
           key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
