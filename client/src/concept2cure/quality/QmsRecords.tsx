@@ -26,7 +26,7 @@ import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { useCapasBySource } from './capaSources';
 import { scopedPath, useAnswerOf, useQualityScope, useQualityWrites, useRegisterContext } from './registerContext';
-import { qualityWriteCount } from './qmsWrites';
+import { qualityWriteCount, writeRefusal } from './qmsWrites';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
@@ -101,7 +101,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       setSigning(action.sign(row, v));
       setDrawer(null);
     } catch (err) {
-      setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
+      setRefusal(writeRefusal(err));
     }
   };
   const run = async (write: () => Promise<string>) => {
@@ -117,7 +117,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       // A write that did not announce itself still re-reads the register.
       if (qualityWriteCount() === announced) read.refresh();
     } catch (err) {
-      setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
+      setRefusal(writeRefusal(err));
     } finally {
       writing.current = false;
     }

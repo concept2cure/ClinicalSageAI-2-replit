@@ -11,6 +11,9 @@ import { lockDocumentDispositionProgram } from '../document-data-disposition/pro
 import { createSource } from './evidence-spine.service';
 import { recordSupersession } from './data-room-capture-audit';
 import { SourceReadAccessError } from './source-read-access';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('quality-source-projection');
 
 export interface NativeRecordSnapshot {
   key: string;
@@ -113,6 +116,12 @@ export async function syncQualityProjectSources(input: { organizationId: number;
   } catch (error) {
     await q.query('ROLLBACK').catch(rollback => { poisoned = rollback instanceof Error ? rollback : new Error('Native source rollback unconfirmed'); });
     if (error instanceof ProgramReadAccessError || error instanceof SourceReadAccessError) throw error;
+    /* The refusal stands (no partial catalogue), and its cause goes to the log: until 2026-11-12 a 503 here left
+       nothing to diagnose it by. The message and code only, never the error's detail, which can carry row values. */
+    logger.warn('Quality source projection failed; the catalogue was not supplied', {
+      organizationId: input.organizationId, programId: input.programId,
+      code: (error as { code?: unknown } | null)?.code ?? null, error: error instanceof Error ? error.message : String(error),
+    });
     throw new SourceReadAccessError(503, 'QUALITY_SOURCE_PROJECTION_UNAVAILABLE', 'Current Quality sources could not be verified. No partial catalogue was supplied.');
   } finally { q.release(poisoned); }
 }

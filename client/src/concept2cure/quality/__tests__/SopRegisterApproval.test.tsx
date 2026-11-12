@@ -21,7 +21,7 @@
  */
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within, act } from '@testing-library/react';
 
 /** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
 function openMore(scope: HTMLElement = document.body) {
@@ -95,6 +95,7 @@ vi.mock('../../_shared/components/EsignModal', () => ({
 }));
 
 import { SopRegister } from '../SopRegister';
+import { qualityWritten } from '../qmsWrites';
 
 const renderRegister = () =>
   render(<SopRegister onAsk={() => {}} filter="all" onFilterChange={() => {}} />);
@@ -108,6 +109,7 @@ beforeEach(() => {
   H.trainRows = [];
   H.trainError = null;
   H.trainRefresh.mockReset();
+  H.reviewRefresh.mockReset();
   H.apiRequest.mockReset();
   H.refresh.mockReset();
   H.signed = null;
@@ -346,6 +348,18 @@ describe('SopRegister — a failed read is not an empty register', () => {
     // empty register is only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
     expect(figures()).toBeNull();
     expect(screen.queryByTestId('sop-register-failed')).toBeNull();
+  });
+
+  /* Walked 2026-11-12 (w41): an approval puts a version in force, which changes who is due to train and what is due
+     for review, and an acknowledgement changes coverage. The register re-read its documents and left the review
+     schedule and coverage as they were first read. Both follow a confirmed Quality write. */
+  it('re-reads the review schedule and training coverage when a Quality write is confirmed', () => {
+    renderRegister();
+    expect(H.trainRefresh).not.toHaveBeenCalled();
+    expect(H.reviewRefresh).not.toHaveBeenCalled();
+    act(() => qualityWritten());
+    expect(H.trainRefresh).toHaveBeenCalledTimes(1);
+    expect(H.reviewRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('renders a failed training read as a failure, not "no training-controlled documents"', () => {
