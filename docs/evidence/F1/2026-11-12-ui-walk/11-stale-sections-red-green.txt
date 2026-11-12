@@ -1,0 +1,27 @@
+# Stale sections on the CMC Overview, the close-out's returned refusal, and the cm-meta ratchet. 2026-11-12.
+# Red first, on the committed code:
+$ npx vitest run server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts
+ × a section that went stale says so on the board > carries the stale flag and the reason, for drafts and approved sections alike
+ Tests  1 failed | 3 passed (4)
+$ npx vitest run client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a stale section says so, and is not offered for approval > a stale draft names why, withholds approval and of
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a stale section says so, and is not offered for approval > an approved section that went stale says it owes a
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 19 passed (21)
+$ npm run ci:success-before-ok   (on trunk, before the close-out change)
+  ❌ client/src/concept2cure/v2/surfaces/CmcModule.tsx:2101  fireToast(`The shelf life is saved and the study is still running. …
+$ npx vitest run client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts   (on trunk)
+  × cm-meta: uses rose from 84 to 85 (40cc8265b7, the stability row's 'not assessed' count)
+
+# With the change:
+$ npm run ci:success-before-ok
+check-success-before-ok: no occurrences across 449 file(s).
+$ npx vitest run the ratchet, the 35 CMC client suites, and both board route suites
+ Test Files  36 passed (36)
+      Tests  492 passed (492)
+
+# In the running app:
+#  BX-733, approved and stale: '3.2.P.5 · 100% · Approved · Stale · Approved before its sources changed: recompile, then approve again. · Recompile on the build board'; chip title: '§3.2.P.5 is out of date: Source data updated: method (method:26). Recompile it on the Module 3 build board, then approve it.'
+#  OQ-008 project, draft and stale: '3.2.S.7 · 100% · Draft · Stale · Approve section (disabled) · Recompile on the build board'
+#  Close-out with a wrong authenticator code: POST …/close-out 401; toast 'The shelf life is saved and the study is still running. Couldn’t save the close-out — The authenticator code was not accepted. Nothing was signed.'; the row shows the saved shelf life and stays Active.

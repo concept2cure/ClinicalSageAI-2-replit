@@ -46,3 +46,19 @@ describe('a refused section approval on the Overview', () => {
       .toBe('Couldn’t approve section 3.2.S.4 — The section changed since you read it. Nothing was persisted.');
   });
 });
+
+describe('a thrown refusal, worded once', () => {
+  it('ends the request helper’s sentence once and adds that nothing was persisted', async () => {
+    const { cmcThrownRefusal } = await import('../surfaces/cmcShared');
+    const { ApiRequestError } = await import('@/lib/queryClient');
+    expect(cmcThrownRefusal('Couldn’t log the batch — ', new ApiRequestError('Batch B-1 already exists.', 409)))
+      .toBe('Couldn’t log the batch — Batch B-1 already exists. Nothing was persisted.');
+  });
+
+  it('a browser-native throw is not shown as the reason', async () => {
+    const { cmcThrownRefusal } = await import('../surfaces/cmcShared');
+    const text = cmcThrownRefusal('Couldn’t log the batch — ', new TypeError('Failed to fetch'));
+    expect(text).not.toMatch(/Failed to fetch/);
+    expect(text).toBe('Couldn’t log the batch — the request did not reach the server. Check your connection and try again. Nothing was persisted.');
+  });
+});

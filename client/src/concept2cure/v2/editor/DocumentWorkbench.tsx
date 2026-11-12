@@ -149,7 +149,7 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
-import { AuthoredHtml } from './AuthoredHtml';
+import { AuthoredHtml, documentReadCitations } from './AuthoredHtml';
 import { ConsentElementsCheck, type ConsentElementsCheckData } from './ConsentElementsCheck';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
@@ -3212,6 +3212,9 @@ export function DocumentWorkbench({
     [projectSources, citationAdmission.admissions, readableSourceSectionId]);
   const precedingCitations = useMemo(() => admittedPrecedingSources(sections, readableSourceSectionId, projectSources, citationAdmission.admissions),
     [sections, readableSourceSectionId, projectSources, citationAdmission.admissions]);
+  /* The Document view numbers citations as the canvas and the export do (walked 2026-11-12: it showed the source's file name). */
+  const readCitations = useMemo(() => documentReadCitations(sections, projectSources, citationAdmission.admissions),
+    [sections, projectSources, citationAdmission.admissions]);
   const citationChoices = useMemo(() => projectSources.filter(sourceCitationEligible).map(source => ({ id: String(source.id), title: source.title })), [projectSources]);
   const citationResolutionState = projectSourcesState === 'error' || citationAdmission.state === 'error' ? 'error'
     : projectSourcesState === 'loading' || citationAdmission.state === 'loading' ? 'loading' : 'ready';
@@ -5181,7 +5184,11 @@ export function DocumentWorkbench({
                              showed a DIFFERENT document from the canvas when
                              a section carried one. Same audited sanitiser
                              module, authoring variant, auth-resolved refs. */
-                          <AuthoredHtml className="ed-full-sec-body" html={html} />
+                          <AuthoredHtml
+                            className="ed-full-sec-body"
+                            html={html}
+                            citations={citationResolutionState === 'ready' ? readCitations.get(sec.id) : 'checking'}
+                          />
                         ) : (
                           /* Not "empty" as a finding — nothing has been written
                              here yet, and the document view says which. */
