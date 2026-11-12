@@ -105,6 +105,11 @@ export function transitionQmsChange(
   });
 }
 
+/** Remove a link from a change, with its reason. The server keeps it on the record as removed (MR-12 Stage 8). */
+export function unlinkQmsChange(id: number, linkId: number, reason: string): Promise<{ id: number }> {
+  return qmsWrite('DELETE', `changes/${id}/links/${linkId}`, { reason });
+}
+
 export function linkQmsChange(
   id: number,
   link: { linkType: LinkType; linkedRef: string; linkedLabel?: string; relationship?: Relationship; note?: string },

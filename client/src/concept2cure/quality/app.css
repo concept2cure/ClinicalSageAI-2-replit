@@ -202,6 +202,8 @@
 .qcc-link-label { color: var(--text-200); }
 .qcc-link-rel, .qcc-link-type { color: var(--text-300); font-size: var(--fs-small); }
 .qcc-link-type::before { content: "·"; margin-right: 10px; }
+/* Why the record was linked, as recorded with the link: its own quiet line under the link (2026-11-12). */
+.qcc-link-note { flex-basis: 100%; color: var(--text-300); font-size: var(--fs-small); }
 /* What the approver signs, inside the signature ceremony (C9). */
 .qcc-sign-record { margin: 0 0 12px; }
 .qcc-sign-lead { margin: 0 0 6px; font-size: var(--fs-small); font-weight: 600; color: var(--text-200); }

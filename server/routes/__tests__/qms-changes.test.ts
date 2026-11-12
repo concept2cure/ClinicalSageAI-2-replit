@@ -352,6 +352,34 @@ describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
 });
 
 
+/* 2026-11-12: the link's removal had no screen (no client called it), and its audit row named the link by its id
+   alone, which says nothing once the link is off the record's list. The row now names the record and keeps the reason. */
+describe('DELETE /api/mdx/qms/changes/:id/links/:linkId — a link is removed with its reason', () => {
+  const WHY = 'Linked to the wrong deviation.';
+  it('removes the link, and records which record it was and why', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 3, link_type: 'deviation', linked_ref: 'DEV-2026-014' }] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: WHY });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ id: 3, removed: true });
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.unlink', reason: WHY,
+      details: { linkId: 3, linkType: 'deviation', linkedRef: 'DEV-2026-014', reason: WHY } }));
+  });
+
+  it('422 without a reason; nothing is read or written', async () => {
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: 'short' });
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a link that is not a standing link of an open change; no audit row', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: WHY });
+    expect(res.status).toBe(404);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+});
+
 /**
  * DP-60 (2026-10-01): every change-control write carries the editor gate the
  * document, supplier, audit and nonconformance writes carry (P1-31). A viewer

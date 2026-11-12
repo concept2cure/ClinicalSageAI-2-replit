@@ -137,12 +137,12 @@ describe('ChangeControl — the change-control log', () => {
     // Proposed: Advance is inline.
     const proposed = screen.getByText('CC-2026-001').closest('tbody') as HTMLElement;
     expect(within(proposed).getByRole('button', { name: 'Advance' })).toBeTruthy();
-    // Closed, with no move: Link a record is all it takes, inline, and there is no More.
+    // Closed: the server takes no link on a closed, cancelled or rejected change, so none is offered (2026-11-12).
     const closed = screen.getByText('CC-2026-002').closest('tbody') as HTMLElement;
     expect(within(closed).queryByRole('button', { name: /Advance|Approve/ })).toBeNull();
     // C9: past assessment the record is what the approval signed, so it offers no edit.
     expect(within(closed).queryByRole('button', { name: 'Edit assessment' })).toBeNull();
-    expect(names(closed)).toEqual(['CC-2026-002', expect.stringMatching(/linked record/), 'Link a record', 'Ask AnA about this change']);
+    expect(names(closed)).toEqual(['CC-2026-002', expect.stringMatching(/linked record/), 'Ask AnA about this change']);
   });
 
   it('expands a change to its linked deviation / validation records', () => {
