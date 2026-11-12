@@ -50,15 +50,34 @@ project. Nothing was changed."; a viewer's Vault folder write 403 (see the earli
 4. **Enterprise identity's refusal named roles in identifiers** ("requires the super_admin or platform_admin
    role"). It says "managed by platform administrators". Test: `identityConsole.test.tsx`.
 
+## Sign-in, walked on the sign-in page
+
+| Case | What the person reads | Notes |
+|---|---|---|
+| Wrong password for a real account | "Incorrect email or password. If you were invited and have not set a password yet, open the link in your invitation or reset your password." | |
+| An address with no account | The same sentence | No account enumeration from the refusal |
+| Not an email address | "Enter a valid email address." | |
+| Five wrong passwords, then a sixth | "Account temporarily locked due to too many failed attempts. Try again later." | The right password is refused while locked. The locked sentence is shown only for an account that exists, so it does confirm one; that is the usual trade for telling a real person why they cannot sign in, and is left as it is |
+
+## Reviewed, not a defect
+
+- **The sign-in token carries `organizationId` (and on some paths `userId`) as strings** (`authEnterprise.ts`).
+  Both live verifiers parse the claim strictly (`parseFiniteInt`, digits only) and re-read the membership and its
+  role from `organization_users` on every request (`server/auth.ts` 234–310; `server/middleware/auth.ts`
+  `admitLiveSession` → `enforceOrgMembership` → `applyOrganizationRole`). The socket server and the MCP token
+  reader parse to a positive integer too. `optionalAuth`, which attaches the claim without the membership read,
+  has no caller.
+- **Session reads per page open:** measured here in the development build, a page open reads `/api/users/me` twice
+  and `/api/organizations/:id` twice (React's development double mount), not six times. Not reproduced; left with
+  the lead's release-shaped run.
+
 ## For other lanes (not changed here)
 
 - **Home shows "New project" to a viewer**; the server refuses the create with a clear sentence. The button belongs
   to the project page's lane (`01QoxbLcnW…`).
-- From the lead's run, still open and this lane's to take next: the sign-in token carries `organizationId` and
-  `userId` as strings (`authEnterprise.ts`), and each page open reads the session six times.
 
 ## Not walked
 
-Sign-in with a second factor, SSO and SCIM provisioning (no identity provider here; development sign-in skips the
+Sign-in with a second factor, password reset and invitation links (no mail transport here), SSO and SCIM provisioning (no identity provider here; development sign-in skips the
 second factor and says so on the audit trail), session expiry, and the platform-administrator screens (no platform
 administrator in the seed). 390 px and dark theme.
