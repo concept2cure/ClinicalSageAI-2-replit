@@ -176,6 +176,9 @@ proof only; nothing was applied.
 **Still open in this order, engineering:**
 - Stage 6 steps 2 and 4–6 (OPS-17: long submission work behind the 60 s edge). Step 2, the measurement on the
   production image, comes first and decides whether steps 4–6 are needed. Then the staging acceptance, after Stage 5.
+  2026-11-12: not measured. The cloud session's network refuses `deb.debian.org`, so the production image cannot be
+  built there. The harness is ready, with how to run it on a runner or on staging:
+  `docs/evidence/D1/2026-11-12-edge-timeouts/`.
 - Stage 7 steps 2–3 (shared rate-limit counters in Postgres). **This now waits for the founder:** the step creates
   `public.rate_limit_counters`, and since RULE 6 (P-80) a new table needs an `approvedAdditions` entry in
   `docs/design/one-design-plan.json` under a founder decision. NEW-2 (confirm B6 for rate limits) is the same decision.
