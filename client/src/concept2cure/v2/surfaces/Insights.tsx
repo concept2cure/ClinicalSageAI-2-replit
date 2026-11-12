@@ -25,7 +25,7 @@ import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
-import { LIBRARY_VIEWS, catalogCapabilityCounts, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
+import { LIBRARY_VIEWS, catalogCapabilityCounts, scopeWord, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import { sealLineFrom, type BundlePdfContent, type ReportRunRow, type RunSealView } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
 import { GlobalSchedule, type ScheduleProject } from './PyramidProject';
@@ -45,13 +45,6 @@ const RO_TIERS: Tier[] = [
   { id: 'enterprise', label: 'Enterprise', rank: 2 },
 ];
 
-/** A report-os scope (shared/schema/report-os.ts reportScopeEnum) in a reader's
- *  words. `program` is a report program group, a group of projects, not one
- *  project; it printed as the raw enum, "program" (decision 12). */
-const SCOPE_WORD: Record<string, string> = {
-  account: 'account', program: 'project group', project: 'project', study: 'study', submission: 'submission', document: 'document',
-};
-const scopeWord = (s: string) => SCOPE_WORD[s] ?? s;
 const REPORT_PLAN_UNVERIFIED = "Your organization's plan could not be verified. Running reports is unavailable until it can be verified.";
 const REPORT_ACCESS_CHANGED = 'Your reporting session or access changed. Reopen the report from Run history before continuing.';
 const REPORT_WRITE_UNCONFIRMED = 'The report request outcome could not be confirmed. It may have completed. Check Run history before starting another request.';

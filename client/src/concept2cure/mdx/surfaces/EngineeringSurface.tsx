@@ -54,7 +54,10 @@ export interface EngineeringSurfaceProps extends EngineeringPanelsContextProps {
 }
 
 interface Blocker {
-  kind: 'dhf' | 'risk' | 'ecr' | 'nc';
+  /* 'filing': a section that is the filing's paperwork (a cover letter, an FDA
+     form, a certification), not a design record. It still blocks its document
+     and is still listed; it is not tagged as design history (P-114 item 2). */
+  kind: 'dhf' | 'filing' | 'risk' | 'ecr' | 'nc';
   severity: 'err' | 'warn' | 'low';
   ref: string;
   title: string;
@@ -158,7 +161,7 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
     for (const d of dhf) {
       if (d.status === 'draft' || d.status === 'blocked') {
         list.push({
-          kind: 'dhf',
+          kind: d.record === 'filing-content' ? 'filing' : 'dhf',
           severity: d.status === 'blocked' ? 'err' : 'warn',
           ref: `§${d.num}`,
           title: d.label,
@@ -329,7 +332,10 @@ export function EngineeringSurface({ program, onAskAna, onOpenEditor, onPanelsCo
                 <NotKeyedMetric />
               )}
             </div>
-            <div className="metric-card" data-tone="err">
+            {/* P-114 item 2: red only when a risk is open. Zero open risks
+                with no risk file recorded is neither red nor green; the line
+                below says which zero it is. It was red always. */}
+            <div className="metric-card" data-tone={s.openRisks > 0 ? 'err' : undefined}>
               <div className="metric-label">Open risks</div>
               <div className="metric-val">{s.openRisks}</div>
               <div className="metric-meta">

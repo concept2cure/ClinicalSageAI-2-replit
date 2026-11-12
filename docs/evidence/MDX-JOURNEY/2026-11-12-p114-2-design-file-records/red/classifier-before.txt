@@ -1,0 +1,100 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > marks a section of the outline's Administrative group as filing content 3ms
+   → designFileStanding is not a function
+ × shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > reads the PMA outline's group by its own label, and the group heading itself 1ms
+   → designFileStanding is not a function
+ × shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > marks the indications for use statement (Form FDA 3881) wherever the outline files it 0ms
+   → designFileStanding is not a function
+ × shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > leaves the design and performance sections in the design file 0ms
+   → designFileStanding is not a function
+ × shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > decides nothing for a document that is not an FDA device filing, or whose class is unknown 0ms
+   → designFileStanding is not a function
+ × shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > does not take a word inside a label for the group 0ms
+   → designFileStanding is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > marks a section of the outline's Administrative group as filing content
+TypeError: designFileStanding is not a function
+ ❯ k510 shared/regulatory/__tests__/design-file-standing.test.ts:19:60
+     17| import { designFileStanding } from '../design-controls-trace';
+     18|
+     19| const k510 = (label: string, groupLabel: string | null) => designFileS…
+       |                                                            ^
+     20|
+     21| describe('designFileStanding', () => {
+ ❯ shared/regulatory/__tests__/design-file-standing.test.ts:31:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > reads the PMA outline's group by its own label, and the group heading itself
+TypeError: designFileStanding is not a function
+ ❯ shared/regulatory/__tests__/design-file-standing.test.ts:36:12
+     34|   it('reads the PMA outline\'s group by its own label, and the group h…
+     35|     const pmaGroup = 'A · Administrative information (21 CFR 814.20(b)…
+     36|     expect(designFileStanding({ docType: 'pma', label: 'FDA Form 3514 …
+       |            ^
+     37|     expect(designFileStanding({ docType: 'pma', label: pmaGroup, group…
+     38|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > marks the indications for use statement (Form FDA 3881) wherever the outline files it
+TypeError: designFileStanding is not a function
+ ❯ k510 shared/regulatory/__tests__/design-file-standing.test.ts:19:60
+     17| import { designFileStanding } from '../design-controls-trace';
+     18|
+     19| const k510 = (label: string, groupLabel: string | null) => designFileS…
+       |                                                            ^
+     20|
+     21| describe('designFileStanding', () => {
+ ❯ shared/regulatory/__tests__/design-file-standing.test.ts:41:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > leaves the design and performance sections in the design file
+TypeError: designFileStanding is not a function
+ ❯ k510 shared/regulatory/__tests__/design-file-standing.test.ts:19:60
+     17| import { designFileStanding } from '../design-controls-trace';
+     18|
+     19| const k510 = (label: string, groupLabel: string | null) => designFileS…
+       |                                                            ^
+     20|
+     21| describe('designFileStanding', () => {
+ ❯ shared/regulatory/__tests__/design-file-standing.test.ts:46:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > decides nothing for a document that is not an FDA device filing, or whose class is unknown
+TypeError: designFileStanding is not a function
+ ❯ shared/regulatory/__tests__/design-file-standing.test.ts:53:12
+     51|
+     52|   it('decides nothing for a document that is not an FDA device filing,…
+     53|     expect(designFileStanding({ docType: 'ivdr', label: 'EU declaratio…
+       |            ^
+     54|     expect(designFileStanding({ docType: 'cer', label: 'Administrative…
+     55|     expect(designFileStanding({ docType: null, label: 'Cover letter', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > does not take a word inside a label for the group
+TypeError: designFileStanding is not a function
+ ❯ k510 shared/regulatory/__tests__/design-file-standing.test.ts:19:60
+     17| import { designFileStanding } from '../design-controls-trace';
+     18|
+     19| const k510 = (label: string, groupLabel: string | null) => designFileS…
+       |                                                            ^
+     20|
+     21| describe('designFileStanding', () => {
+ ❯ shared/regulatory/__tests__/design-file-standing.test.ts:59:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  21:07:29
+   Duration  425ms (transform 77ms, setup 125ms, import 21ms, tests 9ms, environment 0ms)
+

@@ -1,0 +1,752 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels q_sub preparation and applicant completion before and after export 218ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels ide preparation and applicant completion before and after export 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels 513g preparation and applicant completion before and after export 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > the first painted frame asserts nothing it has not checked 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders while every request is still pending — checking is a visible status, not only a title 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the user is NOT signed in (401 everywhere) — disabled with a reason, no empty table 72ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the network throws outright — a failed read, in plain words, with retry 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > with no program says so and fetches no field list 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > not ready ⇒ Generate disabled with the blockers in the title, no input claims data 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > a failed field read disables Generate with the reason — the user has not seen what will be written 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > busy ⇒ Exporting… is a visible status line and the reason on the control 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 1ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OfficialEstarPanelForContext inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > ready ⇒ governed rows are read-only with source words; unsourced rows have labelled inputs 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a failed field read (5xx) renders ErrorState with a sentence and retry, never an empty table or the raw body 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 404 says the program was not found — and offers no retry, which could not succeed 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 422 says the field map is not populated — and offers no retry 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > posts useProgramData:true and only the typed non-empty keys, then reports filled/blank 72ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > switching programs forgets the previous program’s outcome — no stale Downloaded line under the new header 74ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > after a run, says how to see the values in Acrobat — the form hides those sections until then 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > says which written values the form clears when the filer follows the instruction 64ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > warns that the Declaration of Conformity company name is rebuilt from the applicant 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > names the typed keys the server dropped 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 403 NOT_ENTITLED renders Locked with the tier in the title — never a dead button 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 422 refusal shows the blockers on the status line 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > an enforced denial locks Generate on mount, names the tier, and never posts 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a denial in warn mode does not lock — the POST would go through 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a failed entitlement read locks nothing 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > officialEstarVariantFor (pure): the product type decides, never the surface 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type cdx chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type CDx chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type CDX chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type samd chooses the device template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type SaMD chooses the device template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type device chooses the device template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type ivd chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > keeps the complementary diagnostic filing in its canonical IVD family 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > the header names the family, and the reads carry the variant 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > a device program reads as the nIVD eSTAR 5ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource null ⇒ export-only, no "Not set" line 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a registration-held key names the eSTAR registration as its home 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a governed value never shows "Not set" even though its declaredSource is set 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > officialEstarTypeFor (pure): the regulatory path decides, never the surface 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the header names the pathway and the family 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the readiness and official-fields reads 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the POST body 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > switching the pathway forgets what was typed under the previous one 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved device profile makes the preview re-read the governed values 57ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a rejected device-profile save does NOT re-read — nothing changed to re-read 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved correspondent block makes the preview re-read 47ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders while every request is still pending (no data at all) 77ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders when the user is NOT signed in (401 on every endpoint) 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders when the network throws outright 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders an unregistered org with an empty catalog and no filings 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders a registered org with a catalog and a tracked filing 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders a filing with NO review clock without printing a bogus date 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > shows the stored values and says where they are written 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > renders the block empty — no placeholder values — when the row has none 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > Save PUTs the five text fields with the held prerequisites preserved 50ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > toggling a prerequisite carries the stored correspondent values in the write 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > says "Not saved" when the write is rejected (editor-only), keeping the typed values 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — the Declaration of Conformity company name > a typed Declaration of Conformity company name is sent, so the DoC can name the entity that holds the address 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > omits the five text keys while the registration has not loaded 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > omits them after the registration read FAILED, too — a failure is not "no values" 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > a FAILED registration read says so — it never reads as "not yet registered" 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > a FAILED submissions read says so — it never reads as "no tracked filings yet" 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > an ACTUAL empty result still reads as empty, not as a failure 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > saving the correspondent block after a FAILED read writes no prerequisite at all 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > includes them once the registration HAS loaded, at their stored values 35ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 403 names the role, so a viewer is not sent hunting for a bad value
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — an unsaved correspondent edit survives a toggle > keeps a typed Declaration of Conformity company name when a prerequisite is toggled 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — an unsaved correspondent edit survives a toggle > still follows the row when nobody has typed into the form 52ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 400 is the one case that really is the update being rejected
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > a request that reached no verdict says so, and says nothing changed
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 403 names the role, so a viewer is not sent hunting for a bad value 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 400 is the one case that really is the update being rejected 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > a request that reached no verdict says so, and says nothing changed 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — readiness is scoped to the programme > sends the programme with the assessment 119ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — readiness is scoped to the programme > refuses to assess without a programme rather than reading the whole org 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > says so — and fetches nothing — when no program is selected 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > renders while the profile request is still pending 6ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > summarizes the loaded profile from real fields only 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > shows the profile error instead of a blank success shell 6ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > surfaces the lookup unavailableReason honestly — no fabricated autofill 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — honest states > offers the top hit as autofill — fields fill, the user still Saves 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the five eSTAR device fields > shows the stored eSTAR device fields in the intake form 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the five eSTAR device fields > Save PUTs only the edited eSTAR fields — and an emptied one as "" to clear it 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the five eSTAR device fields > reports an honest empty when openFDA matches nothing 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > profilePatch — the five eSTAR device fields > is empty when the form mirrors the profile 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > profilePatch — the five eSTAR device fields > sends a changed field trimmed and an emptied field as "" (the clear signal) 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > profilePatch — the five eSTAR device fields > does not clear a field that was already blank 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > classificationAutofill — openFDA hit → intake fields, offered not saved > maps regulationNumber → regulationNumber and deviceName → classificationName 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > classificationAutofill — openFDA hit → intake fields, offered not saved > leaves a typed value alone when the hit has nothing for it 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > names an absent dataset as unavailable, quoting the server reason 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > labels zero explicit associations and keeps broader recognition scope open for review 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > counts real hits and cites the recognition list they came from 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > standardsStatusLine — the three states stay three > distinguishes a failed request from the server saying "unavailable" 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > renders actual acquired FDA associations through the canonical loader with their limited scope 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > renders an actual zero-code match without ruling out broader FDA recognition scope 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > shows nothing about standards until asked 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > says the list is not held rather than showing a plausible one 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > renders FDA fields verbatim, with the extent of recognition and the source 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — recognized standards > reports zero explicit code associations without asserting no broader recognized standard applies 26ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 403 names the role, not the data — the operator is not sent hunting for a bad value
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 400 is the one case that really is the update being rejected
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Regulation number (21 CFR) is capped at 50 characters 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Common name is capped at 500 characters 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Classification name is capped at 500 characters 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Associated product codes is capped at 500 characters 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — the eSTAR device inputs carry the route’s caps > Indications for Use citation (attachment and page) is capped at 1000 characters 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 403 names the role, not the data — the operator is not sent hunting for a bad value 46ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > a request that reached no verdict says so, and says nothing changed
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 500 is not reported as a rejection of the operator’s data either
+An update to DeviceProfilePanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 400 is the one case that really is the update being rejected 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > a request that reached no verdict says so, and says nothing changed 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx > DeviceProfilePanel — a refused save says which refusal it was > 500 is not reported as a rejection of the operator’s data either 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows none of another project's DHF, trace, change-request or non-conformance rows 103ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says why each of the three panels is not shown 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not claim change requests or non-conformances were checked when they were not read for the project 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says an empty risk file has nothing to check, not that every risk is verified 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the all-clear when the risk file has records and all are verified 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > treats an unreported scope as not keyed (fail closed) 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > renders the panels again once the route reports them keyed to the project 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this project's 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > prints them once the route reports change requests and the DHF keyed to the project 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not list or count the organisation's documents as this project's 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > lists and counts the documents once the route reports them keyed to the project 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says in plain words why a panel is not shown 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say the records are organization-wide when the route did not report it 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not promise that records appear here while the read is not keyed to the project 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say an unreported read is organization-wide in its empty hint 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the original empty hints once the route reports the panels keyed to the project 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows a failed read as a failure, not as a panel waiting to be keyed 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > starts with no attachment rows or metadata/source reads, and retains export without attachments 239ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > blocks an incomplete row while destinations load, and removal restores export without attachments 130ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for 510k/device 160ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for de_novo/ivd 123ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > selects exact program-scoped versions and posts explicit destinations for pma/ivd 117ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the companion diagnostic product family through destination reads and the official export 118ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the case-varied companion diagnostic product family through destination reads and the official export 104ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the complementary diagnostic product family through destination reads and the official export 95ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the software as a medical device product family through destination reads and the official export 106ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > carries the medical device product family through destination reads and the official export 123ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > uses the existing picker pages instead of hiding matches after the first page 108ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > blocks duplicate single-file destinations and preserves a deliberate change or removal 228ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > optional explicit official eSTAR attachments > caps even queued Add activations at the server’s 150-assignment limit 1091ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a selectable Vault result without a recorded hash 103ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > keeps earlier versions unavailable in the reused picker 92ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with wrong type instead of offering unverified destinations 71ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with wrong variant instead of offering unverified destinations 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with missing template version instead of offering unverified destinations 70ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > rejects a successful catalog with duplicate slot instead of offering unverified destinations 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > retries a failed slot read without discarding the row or treating failure as empty 109ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > describes a verified catalog with no destinations and permits removing the optional row 78ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment source and catalog refusals > renders actual server refusal reasons and keeps the chosen version reviewable 130ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the program changes 104ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the pathway changes 105ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the variant changes 97ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > resets selected rows when the session changes 87ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > disables assignment edits while an attachment-bearing export is pending 96ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx > attachment request ownership > does not expose attachment controls for PreSTAR preparation 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file > reads it by the project, and only after its own route has admitted the project 94ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file > reads nothing for a project its own route refused 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > draws the whole register, not four rows: every hazard on the 5x5 matrix 37ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > opens a hazard in the drawer, and sets the hazard as the entity in context
+An update to EngineeringSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > switches the matrix between the initial and the residual assessment 305ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > opens a hazard in the drawer, and sets the hazard as the entity in context 55ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > shows the metrics of the register 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a hazard to the project 246ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a risk control to the selected hazard 143ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > accepts residual risk only through the signature dialog (the signed act) 89ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell
+An update to EngineeringSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell 66ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > a hazard not in the project is refused with the hazards listed 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with the organization's scope 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with another project's scope 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with no scope at all 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > a 503 says the project could not be checked, and the retry reads again 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a viewer is offered no write control > no New hazard, Add risk control or Accept residual, and says the register is view only 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a viewer is offered no write control > an editor, and a session that does not say, are offered them 121ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — the empty lifecycle list offers a way to add an item > offers "Ask AnA to add a lifecycle item" and sends AnA the request 194ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — the empty lifecycle list offers a way to add an item > does not offer it with no project open, where there is no project to add to 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — nothing assessed is not assessed and clear > a project with no lifecycle items: no score, no green card, and the server says why 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — nothing assessed is not assessed and clear > a level recorded but cyber-device status not: counts are shown, the score is not, and nothing is green 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — nothing assessed is not assessed and clear > a computed score is still shown as the server computed it 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — a score over the tracked records is not the whole required set > shows the scope the route gives, and paints no card green while FDA documents go uncounted 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — a score over the tracked records is not the whole required set > a body that does not say what went uncounted is not an all-clear either 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — a score over the tracked records is not the whole required set > a score with nothing left uncounted may still read as complete 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — a word in a figure is sentence case, at the figure size > an undetermined level reads "Not determined", in the figure size, with no style of its own 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — a word in a figure is sentence case, at the figure size > a determined level is written with its first letter capital, not by a style 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows the actual version refusal without adding a file or a local activity event 242ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'malformed successful reply' and sends no automatic retry 54ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'explicit uncertain commit' and sends no automatic retry 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'complete-send reply loss' and sends no automatic retry 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows partial success and the refused file while listing only the confirmed attachment 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > keeps a mixed unknown result distinct from a known refusal 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > reports a valid 'created' receipt with its existing Vault wording 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > reports a valid 'unchanged same-bytes' receipt with its existing Vault wording 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > clears an earlier refusal when a deliberate new selection starts and publishes its own result 50ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > one active device attachment batch > shows pending status and disables selection while ignoring later input and drop gestures 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > one active device attachment batch > blocks overlapping input and drop calls before the pending state can repaint 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > opens the native chooser once per keyboard activation without submitting an upload 55ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > opens the existing drop-zone chooser once per pointer gesture 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > keeps pending progress and the eventual result while visiting Document and Activity tabs 75ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > 510(k) surface — the official eSTAR family follows the program > an IVD program on the 510(k) surface is produced on the IVD eSTAR 115ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > 510(k) surface — the official eSTAR family follows the program > a device program on the 510(k) surface is produced on the nIVD eSTAR 48ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > a De Novo program on the 510(k) surface is produced as a De Novo, on its family 60ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > a PMA program on the PMA surface is produced as a PMA, on its family 176ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the official eSTAR pathway follows the program, not the surface > an IVD PMA program on the PMA surface is produced as a PMA on the IVD eSTAR 23ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the PMA surface derives the pathway from the program, never from itself > a De Novo program open on the PMA surface is produced as a De Novo 30ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the PMA surface derives the pathway from the program, never from itself > a 510(k) program open on the PMA surface is produced as a 510(k) 23ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the diagnostics surface derives the eSTAR family from the program, never from itself > a non-IVD device program open on the diagnostics surface is produced on the nIVD eSTAR 57ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx > the diagnostics surface derives the eSTAR family from the program, never from itself > an IVD program open on the diagnostics surface is still produced on the IVD eSTAR 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt 221ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds the selected file after a full producer receipt and keeps activity server-owned 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a '409 version refusal' 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a '409 version refusal' 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'malformed successful reply' 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'malformed successful reply' 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'explicit uncertain commit' 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'explicit uncertain commit' 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'lost complete-send reply' 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'lost complete-send reply' 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches neither same-name selection when one is refused and the other is unconfirmed 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > keeps both confirmed selections for a valid create followed by an unchanged same-bytes receipt 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment selection lifetime > uses the original sent File when a live selection is replaced before its receipt arrives 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not claim nothing is blocking when the blocker sources failed 90ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > says an empty read has nothing to check 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not draw an all-zero ISO 14971 matrix over a failed risk read 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > draws the matrix when the risk file read cleanly 47ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not report a hazard count over a risk file it could not read 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not print "Documents in flight 0" when the documents read failed 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no review-pending count over a risk file it could not read 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no hard-blocker count over sources it could not read, once every source is keyed 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no counts while the sources are still loading 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints the counts once the sources have been read 18ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx > device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 205ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx > device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 244ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx > device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 113ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > shows none of another project's signals, CAPAs or PMS plan rows 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no organisation-wide count as this project’s 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > says why each of the signals, CAPA board, trends and PMS plan panels is not shown 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > names what has no per-project store: PMS plan execution, not the PMS plan 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > keeps this project's reporting clocks, read by project 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > names the project the reporting clocks are limited to by its title, not its class and pathway 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > asks AnA to triage only what its triage tool reads, for this project 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no scope for PMS plan entries, which have no store 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > the Situational awareness toggle names only what it holds 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id' 333ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document' 85ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program' 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway' 62ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false 57ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section 69ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > publishes a confirmed file when its original visit remains current 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > keeps an ordinary bearer refresh current and accepts its valid unchanged receipt 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > a recorded `authoring` reads as the project phase, not "Manufacturing validation" 147ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > no recorded phase states none — the hook's progress-band stage is not one 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > a filed PMA is not in the Approval phase 47ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > a failed read of the project row says so — it is not "no phase recorded" 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — a read that settles with no row of this project is not "Reading" > an empty object 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — a read that settles with no row of this project is not "Reading" > a null row 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — a read that settles with no row of this project is not "Reading" > another project's row 50ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > useRecordedPhaseLine — a switch of project states nothing of the previous one > B does not inherit A's failed read 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > useRecordedPhaseLine — a switch of project states nothing of the previous one > B never shows A's recorded phase 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > reads the board with the project's id and draws its families 179ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > mounts the IVD assessment workbench for the same project 183ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for the organization is not drawn under a project 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for another project is not drawn 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project the organization does not own (404) says so 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an ownership check that could not run (503) says so 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a failed read (500) says so 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal outside the release (403 LAUNCH_SCOPE) says so 57ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an organization the route could not confirm (403 IVD_NO_TENANT) says so 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a family that could not be read is "Not read", and no overall figure is shown 258ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project with no records reads empty, as a read that succeeded 51ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > returns the identical set when every selected row survives 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > returns the identical set when the whole selection survives 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > drops a K-number the new list no longer offers 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > falls back to the top candidate when nothing survives 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > leaves an empty candidate list alone rather than clearing the selection 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > PUTs the claimed candidate to the governed device profile 239ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > claims a reduced openFDA clearance too — it is a real FDA record 185ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > states what is already on file, and withdraws it on request 102ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > says so when nothing is claimed, rather than leaving the form silent 65ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > reports stored entries it cannot read instead of naming the first it can 59ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > example rows are never claimable > offers no example K-number to claim 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > Engineering reads the open project's design inputs > reads them by the project 103ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > draws the traceability matrix: input, output, verification, validation 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > breaks down the gaps, and "Close the first gap" asks AnA about it 205ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > shows the ISO 13485 §7.3 checklist, with the elements no store evidences 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > asks AnA from a row: the hazard an input controls 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > adds a design input to the project 202ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with the organization's scope 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with another project's scope 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with no scope at all 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > a 503 says the project could not be checked 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a viewer is offered no write control > no New design input, and says the trace is view only 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a viewer is offered no write control > an editor is offered it 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > renders all six tabs as a real tablist, with the pathway header 204ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > says so when no program is selected, without inventing one 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > never leaks kit fixtures into an empty tenant (sample mode off) 162ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > the Generator tab shows honest empty sections and routes drafting through AnA 80ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > supports arrow-key navigation across the tablist 276ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx > CerSurface — the CER workbench > the literature tab offers per-row recording and refuses a too-short search locally 104ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a software item opens the Software screen 381ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > a governed artifact opens in the one editor 137ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > Engineering: each document row opens the record it names > says where a row opens, not "the editor" for all of them 113ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > UDI: a labeling document opens Labeling > the label row opens the Labeling screen 93ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with no handler a row is not a button 6ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > DocumentsPanel draws no dead row control > with a handler, a click passes the row's id and the row itself 23ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > what AnA is told about the device screens is true > names the screens' own controls, and does not claim they are absent 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > what AnA is told about the device screens is true > says that nothing here sends a filing to an agency 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceDocumentRowsOpen.test.tsx > UDI with no labeling document opens Labeling > offers Open Labeling, and it opens the Labeling screen 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > lists the project's document sections, grouped under the document each belongs to 109ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > says what the panel is and is not: not an inspected design history file index 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > counts the project's mandatory sections approved, and does not call it DHF completion 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > a blocked section reaches the blocker feed by its section and document, not as a DHF entry 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > an empty design history says where sections come from 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > tags a blocked cover letter "filing" in the blocker feed, and a blocked test report "dhf" 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > marks it as filing content in the section list, and says why in the note 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > a row the route did not mark keeps the standing it had 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the Open risks card is red only when a risk is open > zero open risks with no risk file recorded is neither red nor green: "No risks recorded yet" 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the Open risks card is red only when a risk is open > an open risk is red 24ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > retires engineering working state when the selected project changes 60ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > draws no portfolio and no creation door; with no project open it sends the person to Projects 175ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > requires an explicit project selection before mounting a project feature 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > never substitutes another same-pathway project for an unavailable selection 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > software does not borrow the first project 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps the selected project and responds when the shell switches projects 13ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > withholds the leaf on a failed context read and offers a retry 21ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > routes an IVD away from MDR CER into performance evaluation 16ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > opens the CER document type for the selected project, preserving pathway-specific authoring 14ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps a secondary IVDR performance section out of the primary 510(k) document 14ms
+ ✓ client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx > device-diagnostics: AnA sees the open project's IVDR readiness > carries the board's facts, summary and actions in the one context 199ms
+ ✓ client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx > device-diagnostics: AnA sees the open project's IVDR readiness > a failed read is told as a failure, never as 0% 65ms
+ ✓ client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx > device-diagnostics: AnA sees the open project's IVDR readiness > never carries the previous project's board under the next project 206ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an SE attribute with no verdict is unassessed, not equivalent 69ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an IVD with no Annex VIII class is not classified, not class B 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > a submitted program is in flight, not cleared 55ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > explains the mixed scope and keeps reporting-clock requests narrowed to the project 48ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > shows no count while the triage read has failed 21ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > counts MDRs due within 72h and open CAPAs from the server-computed queue 21ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > asks for the open project's Q-Subs only, and shows no other project's 72ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > is not called an organization-wide view under the project's title 219ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > never draws the previous project's Q-Subs under the next project 63ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > with no project, reads nothing and says a project is needed 7ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > asks for the open project's UDI summary only, and shows no other project's labels 27ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > is not called an organization-wide view under the project's title 37ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > never draws the previous project's labels under the next project 30ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-udi reads the open project > with no project, reads nothing and says a project is needed 3ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > does not count a filed MDR past its due date, which the server says is not overdue, as due within 72h 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > still counts what the server marks overdue and what is due within 72h 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > calls no figure a running clock, and says filed MDRs are left out now that the read leaves them out 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > says only what the server's overdue means, beside an MDR filed after its date 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > shows 0, not "Not yet read", when the triage read answered with nothing 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > keeps "—" while the triage read is in flight 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > EngineeringSurface — the route refuses the project > a 404 says the project is not one this organization can see, and offers another project, not a retry 215ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > EngineeringSurface — the route refuses the project > a 503 says the project could not be checked, so nothing was shown, and the retry reads again 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > EngineeringSurface — the route refuses the project > any other failure is still a failed read on each panel, never the ownership words 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > reads the 404 and the 503 by their bodies 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > is null for every other failure, including a 404 or 503 that is not the ownership answer 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > lists only the exact confirmed file when same-name files have different outcomes 298ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > shows a visible unknown receipt instead of silently leaving an empty attachment list 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > shows a visible refused file instead of silently leaving an empty attachment list 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > announces a confirmed upload and keeps its local list distinct from the recorded audit history 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > retires a partly confirmed batch on close and never associates its rows later 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > retires a partly confirmed batch on section and never associates its rows later 81ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > retires a partly confirmed batch on close and reopen and never associates its rows later 101ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > disables and guards picker and drop dispatch while the current request is busy 102ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > state the required modules present, as the assembly check counts them 166ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > name the sections finished and written, by code 81ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > ask AnA with the module's own facts 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say a malformed answer is a failed read: no throw, and not "no PMA document" 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.modules.test.tsx > the PMA screen's module cards > say so when the project has no PMA document 68ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > opens a signature form instead of filing on the first click 129ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > sends the artifact, the reason, the meaning and the credential — and no filing date 77ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > will not offer an empty picker when nothing has been retained 27ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > keeps the form open with the server's reason when the credential is refused 73ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > the filing panel starts from the program's eSTAR variant > an IVD program's panel starts on the IVD form 113ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > the filing panel starts from the program's eSTAR variant > with no variant passed it reads as a device, as before 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > device-diagnostics with no project open > says no project is selected and states no stage 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > device-diagnostics with no project open > says the selection is unavailable, not another stage, when the open project is not readable 6ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > device-diagnostics with no project open > positive control: with the project open the leaf mounts, states its recorded phase and reads 140ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > IvdSurface mounted with no project > fails closed by itself: no stage, no subject, no read 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContextSettles.test.tsx > device-engineering: the panels' context hand-off settles > stops re-rendering the host once the register and the trace have reported 709ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > attaches only the confirmed same-name dropped file when its sibling is refused 183ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps repeated references to one File independent when only the second selection is confirmed 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps both confirmed dropped selections for a new receipt and a valid same-bytes reupload 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > a failed read is not counted as 0 238ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > a read in flight is not counted as 0 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > positive control: a finished read is counted, zero included 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > the Approvals tab does not count the organisation's queue as this project's 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > a failed read is not counted as 0 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > a read in flight is not counted as 0 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > positive control: a finished read is counted, zero included 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > the Approvals tab does not count the organisation's queue as this project's 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > a failed read is not counted as 0 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > a read in flight is not counted as 0 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > positive control: a finished read is counted, zero included 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > the Approvals tab does not count the organisation's queue as this project's 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > a failed read is not counted as 0 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > a read in flight is not counted as 0 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > positive control: a finished read is counted, zero included 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > the Approvals tab does not count the organisation's queue as this project's 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx > EngineeringSurface — the trace is the project's > draws the trace panel from the keyed read 105ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx > EngineeringSurface — the trace is the project's > still hides the panels the route reads by organization 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx > EngineeringSurface — the trace is the project's > hides the trace again if its read stops reporting it keyed (fail closed) 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx > IvdSurface — states the recorded project phase, through the real host > a recorded `authoring` ticks no IVDR stage and names none 161ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx > IvdSurface — states the recorded project phase, through the real host > an approved IVD is not clamped to "Stage 7 of 7 — Submit" 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx > IvdSurface — states the recorded project phase, through the real host > no recorded phase states none — the hook's progress-band stage is not one 63ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx > 510(k) predicate selection is operable without a mouse > exposes each predicate as a real checkbox control 226ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx > 510(k) predicate selection is operable without a mouse > reports the selection through aria-checked, not a data attribute alone 78ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > asks for this project's records 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > shows this project's signals, CAPA board, trends and PMS plan execution when the server says they are its 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > says a failed read is a failure, with a retry, and never an empty or unkeyed panel 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > keeps the panels hidden when the server does not say the rows are this project's 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > K510Surface — an unread submission is not a clean one > does not report "0 blockers" for eSTAR sections it never read 146ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > K510Surface — an unread submission is not a clean one > still reports a real count once the sections are read 72ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > K510Surface — an unread submission is not a clean one > renders no predicate, match score or SE comparison a live read did not return 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > the 510(k) data module states no assessment > exports the real eSTAR section list and no findings about any submission 3ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > says so once, and offers no read failure or retry for the candidates or the SE matrix 168ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > still reports a service that is down as a failure 76ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > shows the empty matrix with its own hint, not a read failure 69ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > still reports a failed read as a failure 52ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > renders the docs-* classes this test is meant to cover 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-action-chip 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-actions 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-blocker-note 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-body 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-dhf 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-esig 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-esig- 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-flag 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-flags 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-framework 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-fw- 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-head 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-last 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-meta 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-open 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-owner 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-panel 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-panel-compact 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-pct 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-progress 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-progress-fill 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-rail 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-reviewer 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-reviewers 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-row 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-row-main 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-title 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > app.css has a rule selecting .docs-ver 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/documentsPanelIsStyled.test.ts > DocumentsPanel is styled > names the stylesheet it actually lives in 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > .mdx-shell .section-head h2 is the canonical section heading: the section size, weight 600, not the serif 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > .mdx-shell .eng-awareness-head h2 is the canonical section heading: the section size, weight 600, not the serif 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > .mdx-shell .section-title is the canonical section heading: the section size, weight 600, not the serif 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > a sub-line is set once, in the small size and the muted text 7ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > .mdx-shell .audit-day is sentence case, not letter-spaced 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > .mdx-shell .audit-chain-label is sentence case, not letter-spaced 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > .mdx-shell .audit-chain-k is sentence case, not letter-spaced 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > the chain keys, written lowercase in markup, read with a capital first letter 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > the Pre-Sub detail’s empty state has no box, as the canonical empty state 7ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > an audit row’s event code takes its own width and ends in an ellipsis, so it never runs under the name 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/sectionsOnTheCanonicalStyles.test.ts > device sections on the canonical styles (D8 slice 4) > the pathway sheet sets uppercase on no more than the five rules this slice leaves 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unassessed.test.tsx > IvdSurface — an unassessed GSPR matrix is not a zero score > never reports 0% compliant for a device whose matrix has not been started 193ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unassessed.test.tsx > IvdSurface — an unassessed GSPR matrix is not a zero score > still reports a real zero — an assessed device that meets nothing says so 74ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unassessed.test.tsx > IvdSurface — an unassessed GSPR matrix is not a zero score > renders no classification, LoD or sensitivity a live read did not return 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unassessed.test.tsx > the IVD data module states no finding > exports no classification, validation, clinical or GSPR rows 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/tileToneMeansSomething.test.tsx > Post-market vigilance: the deadline tiles > a queue with nothing in it shows 0 with no status colour 54ms
+ ✓ client/src/concept2cure/mdx/__tests__/tileToneMeansSomething.test.tsx > Post-market vigilance: the deadline tiles > a queue that could not be read shows no figure and no status colour 25ms
+ ✓ client/src/concept2cure/mdx/__tests__/tileToneMeansSomething.test.tsx > Post-market vigilance: the deadline tiles > an MDR due within 72 hours is still the error colour, and an open CAPA the warning colour 16ms
+ ✓ client/src/concept2cure/mdx/__tests__/tileToneMeansSomething.test.tsx > UDI and labeling: the signature tile > no label awaiting a signature shows 0 with no status colour, and the tile is still drawn 27ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > "Open §11 in editor" writes the selected project, docType and section before navigating 298ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the 510(k) workspace hands the editor its section > with no selected project, offers Projects and creates no editor target 14ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > a section row passes ITS OWN code and label through onOpenEditor 80ms
+ ✓ client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx > the CER Generator rows hand the editor their section > without an onOpenEditor the affordance is not drawn — no dead buttons 66ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a project the organization does not own (404) is said as itself, not as a failed read 204ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > an ownership check that could not run (503) is said as itself, not as a failed read 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a role refusal (403) is said as itself, not as a failed read 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the check that could not run is tried again, and its answer is drawn 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a genuine failure (500) is still a failed read on the panels 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > are a line that wraps, not a grid of equal tiles 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > on a phone, the space between figures is wider than the space inside one 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > nothing runs out of a figure: its column keeps the figure's width and the label may wrap 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > on a phone each figure is a wrapping line: the figure moves under its label rather than out of its space 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > a figure has no box: no border, no ground, no padding 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > the figure is the canonical register figure: the section size, weight 600, not the serif 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > the label is the canonical small label and the note a caption 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > still says a figure’s tone on the figure 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/tilesAreALineOfFigures.test.ts > a device screen’s figures (D8 slice 3) > keeps the label, the figure, its unit and its note as rules, none hidden (P-122) 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > renders no fixture device, stage, clock or subject name 138ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > states no section or blocker count when no sections were read 56ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with a program whose predicate service is unreachable > shows its own stage and clock, and a banner that does not promise example rows 111ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-510k renders inside the .mdx-shell scope root 30ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-pma renders inside the .mdx-shell scope root 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-cer renders inside the .mdx-shell scope root 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-diagnostics renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-clinical-studies renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-software renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-engineering renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-udi renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-postmarket renders inside the .mdx-shell scope root 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-presub renders inside the .mdx-shell scope root 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > the scope root opts out of the shell grid 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > keeps the kit content measure around the surface 4ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > K510Surface: the clearance lookup says why it could not run, in words > does not print the raw "fetch failed" reason the rehearsal app showed 145ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: fetch failed" reads as words 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: getaddrinfo ENOTFOUND api.fda.gov" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json timed out after 10000ms" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json responded 500" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA unavailable" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json returned an unexpected body" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "device/510k.json parse error" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > keeps a reason already written as a sentence for a person 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > .mdx-shell .page-eyebrow is quiet: sentence case, no letter-spacing, --fs-caption 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > .mdx-shell .metric-label is quiet: sentence case, no letter-spacing, --fs-small 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > .mdx-shell .tbl thead th is quiet: sentence case, no letter-spacing, --fs-caption 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > .mdx-shell .ctable-head is quiet: sentence case, no letter-spacing, --fs-caption 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > has no more uppercase rules than the 39 this slice leaves, and the kept code chip is one of them 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > fills no stat tile by its tone (err) 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > fills no stat tile by its tone (warn) 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > fills no stat tile by its tone (ok) 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > still says a tile’s tone, on its figure 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/sharedLookRetiredPatterns.test.ts > the device kit’s shared look (D8 slice 1) > keeps the eyebrow, the tile’s label, its figure and its note as rules: nothing a screen shows is unstyled away 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > does not render { label: 'a route and a status', status: 500, body: 'nope' } 177ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > does not render { label: 'a driver error', status: 503, body: 'ECONNREFUSED' } 22ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx > MDX host — a failed programs load discloses nothing and offers a way out > offers a retry rather than a dead screen 32ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA phase list is a taxonomy, not a programme > names the ten phases 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA phase list is a taxonomy, not a programme > carries no position, and nothing supplies one 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > carries no invented device name or filing date 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > does not claim a current phase when no program is selected 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > the tab row scrolls inside itself 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > .mdx-shell .stage-strip scrolls inside itself at phone width 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > .mdx-shell .phases scrolls inside itself at phone width 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > the two-column body stacks at phone width 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > the health cards go two to a row at phone width 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > a section header and its row of controls wrap at phone width, and no select is wider than the screen 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/pathwayPagesFitAPhone.test.ts > a pathway page on a phone (D8 slice 2b) > wider than a phone the layouts are as they were 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unclassifiedAskAna.test.tsx > IvdSurface — Ask AnA on an unclassified device > asks AnA to classify it, not to explain the rule for "Class null" 176ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unclassifiedAskAna.test.tsx > IvdSurface — Ask AnA on an unclassified device > positive control: a classified device keeps its question about its own class 114ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx > DossierDrawer — Activity is the server’s section history > renders the version rows the server recorded, with author and reason 160ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx > DossierDrawer — Activity is the server’s section history > says a failed history read failed, rather than showing no activity 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx > DossierDrawer — Activity is the server’s section history > says a section with no document has no recorded history 20ms
+ ✓ client/src/concept2cure/mdx/__tests__/pageHeaderWrapsAtPhoneWidth.test.ts > the device header’s layout (D8 slice 2) > wraps, with its actions level with the top of its text 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/pageHeaderWrapsAtPhoneWidth.test.ts > the device header’s layout (D8 slice 2) > gives the text block the canonical floor, so the actions wrap under it before they squeeze it 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/pageHeaderWrapsAtPhoneWidth.test.ts > the device header’s layout (D8 slice 2) > at phone width gives the actions a full line, lets a row of actions wrap, and sets the canonical phone title 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/pageHeaderWrapsAtPhoneWidth.test.ts > the device header’s layout (D8 slice 2) > wider than a phone leaves a row of actions on one line, as it was 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/pageHeaderWrapsAtPhoneWidth.test.ts > the device header’s layout (D8 slice 2) > keeps the header, its eyebrow, title, description and actions as rules, none hidden 4ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > focuses the requested heading on arrival and consumes the handoff once 197ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > supports repeated moves on the already mounted feature 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > never changes the selected project or focuses another project’s panel 4ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > retires a handoff across A to B to A visits and session changes 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > refuses unknown subsection names and leaves a current dialog in control 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > says this project's post-market documents are not read here yet 105ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > counts no documents it did not read 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > keeps the regulations the panel serves in the header 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx > DossierDrawer — the Document tab is read-only > shows the section text with no editable surface 85ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx > DossierDrawer — the Document tab is read-only > "Open in editor" in the Document tab opens the authoring editor on this section 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx > DossierDrawer — the Document tab is read-only > never writes the filing section from the drawer 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > covers the device screens 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-510k says nothing that reads as unfinished 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-cer says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-diagnostics says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-pma says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-clinical-studies says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-software says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-engineering says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-udi says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-postmarket says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-presub says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-cer names the one editor and the governed export its Generator reaches 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the CER screen describes no sample mode > its header names no sample-mode guard 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > .mdx-shell .status-pill.empty is drawn in the muted ink, on the same ground 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > .mdx-shell .status-pill.na is drawn in the muted ink, on the same ground 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > the empty pill still says it is empty by its dashed border 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > the eSTAR section number is drawn in the muted ink 0ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/ApprovalCard.meaning.test.tsx > ApprovalCard — the meaning of a signature is chosen, not typed > offers exactly the governed meanings, and sends the selected id
+An update to ApprovalCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ApprovalCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/ApprovalCard.meaning.test.tsx > ApprovalCard — the meaning of a signature is chosen, not typed > offers exactly the governed meanings, and sends the selected id 321ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > asks for the authenticator code when the server requires it 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > says the factor could not be checked, not that the password was wrong 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > tells a signer with no authenticator to enrol one, where one is required (ADR-0014 P1-2b) 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > keeps the existing sentences 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > leaves unassessed documents out of both the sum and the count 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > is null — not 0 — when nothing was assessed 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > rounds the mean of assessed values 0ms
+
+ Test Files  65 passed (65)
+      Tests  591 passed (591)
+   Start at  21:09:18
+   Duration  91.09s (transform 3.97s, setup 6.41s, import 19.85s, tests 30.00s, environment 25.14s)
+
