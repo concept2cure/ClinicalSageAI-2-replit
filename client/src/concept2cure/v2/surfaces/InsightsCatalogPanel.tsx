@@ -260,7 +260,7 @@ export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, progr
       </div>
       <ReportingPersonaError profile={profile} />
 
-      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(type)} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {type.label} — {type.availabilityReason || 'This report is unavailable in the current context.'}</div>)}
+      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(type)} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {unavailableNote(type)}</div>)}
 
       {byFamily.length === 0 && notComputed.length === 0 && needsContext.length === 0 && predictions.length === 0 ? (
         <EmptyState
@@ -293,6 +293,11 @@ export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, progr
 }
 
 const readable = (value: string) => value.replace(/[._-]/g, ' ');
+/** Why a report is not offered. A reason that opens with the report's own name is shown as it is, so the name is said once. */
+function unavailableNote(type: LibraryReportType): string {
+  const reason = type.availabilityReason || 'This report is unavailable in the current context.';
+  return reason.startsWith(type.label) ? reason : `${type.label} — ${reason}`;
+}
 function catalogAvailability(type: LibraryReportType): string {
   if (type.family === 'prediction' && !type.runnable && (!type.availabilityState || type.availabilityState === 'not-computed')) return 'prediction-unavailable';
   if (!type.runnable) return type.availabilityState || (type.computedScopes.length ? 'unavailable' : 'not-computed');
