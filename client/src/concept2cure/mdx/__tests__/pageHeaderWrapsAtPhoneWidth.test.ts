@@ -1,5 +1,5 @@
 /**
- * D8 slice 2 (founder decision P-126): a device screen's header is laid out as the canonical page header is
+ * D8 slice 2 (founder decision P-128): a device screen's header is laid out as the canonical page header is
  * (`.c2c-v2 .ph`, v2/styles/app-v2.css): its text block and its actions wrap, and at phone width each takes a
  * full line.
  *

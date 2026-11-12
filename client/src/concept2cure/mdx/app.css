@@ -1443,7 +1443,7 @@
    ═════════════════════════════════════════════════════════════════ */
 
 /* ── Shared page chrome ─────────────────────────────────────── */
-/* D8 slice 2 (P-126): the header is laid out as the canonical page header is (`.c2c-v2 .ph`, app-v2.css). It
+/* D8 slice 2 (P-128): the header is laid out as the canonical page header is (`.c2c-v2 .ph`, app-v2.css). It
    was one row that never wrapped, so at 390 px the title stood in a narrow column beside its actions and the last
    action was cut off at the screen's edge. The text block now keeps the canonical floor and the actions wrap
    under it; at phone width each takes a full line. Nothing in the header is removed (P-122). */
