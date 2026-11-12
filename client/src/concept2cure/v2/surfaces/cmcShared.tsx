@@ -143,6 +143,19 @@ export function cmcAssessmentThrew(action: string, e: unknown): string {
     : `Couldn’t ${action}. Check your connection and try again.`;
 }
 
+/**
+ * A thrown refusal after its lead, by the cmcRefusal rule: the request
+ * helper's message (user copy by construction) ended once, or, for a
+ * browser-native throw, that the request did not reach the server. Walked
+ * 2026-11-12: "… A different, authorized user must sign.." — each catch
+ * appended its own full stop.
+ */
+export function cmcThrownRefusal(lead: string, e: unknown): string {
+  const known = typeof e === 'object' && e !== null && (e as { name?: unknown }).name === 'ApiRequestError'
+    ? String((e as { message?: unknown }).message ?? '').trim() : '';
+  return cmcRefusal(lead, known || 'the request did not reach the server. Check your connection and try again');
+}
+
 export function cmcWriteThrew(subject: string, e: unknown): string {
   const known =
     typeof e === 'object' && e !== null &&

@@ -79,6 +79,7 @@ import {
   cmcWriteError,
   cmcWriteFailed,
   cmcRefusal,
+  cmcThrownRefusal,
   cmcWriteThrew,
   cmcAssessmentThrew,
 } from './cmcShared';
@@ -871,10 +872,14 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      that motivated this work (21/21 approved, three at 0% complete) the card
      was green while the gate refused. The percentage stays as what it is:
      approvals. */
+  /* Read again after an approval lands (walked 2026-11-12: the card said
+     "export blocked: 1 not approved" until a reload). */
+  const [readinessEpoch, setReadinessEpoch] = useState(0);
+  const readinessPath = ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null;
   const readiness = useLiveData<{
     totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
     sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
-  }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  }>(readinessPath, [readinessPath, readinessEpoch]);
   /* The refusal's own words, or null when the read failed to answer and the
      chip's own sentence stands (D0, `readRefusalWords`). */
   const readinessRefusal = readiness.error || (!readiness.loading && !readiness.data)
@@ -952,16 +957,18 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         return;
       }
       setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
+      setReadinessEpoch((e) => e + 1);
       const ver = (json as { versionNumber?: number })?.versionNumber;
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
       fireToast(
         'Section ' + target.key + ' approved and signed' +
           (ver ? ' · v' + ver : '') +
-          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.',
+          /* No full stop after the shortened hash's ellipsis ("…e25e3d60402d….", walked 2026-11-12). */
+          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '.'),
       );
       setSign(null);
     } catch (e) {
-      fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t approve section ' + target.key + ' — ', e), 'error');
     }
   };
 
@@ -1428,7 +1435,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       }
       setEdit(null);
     } catch (e) {
-      fireToast('Couldn’t save the specification — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t save the specification — ', e), 'error');
     }
   };
   // doSign — REAL governed approval. POSTs to the ONLY approval path
@@ -1452,7 +1459,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
       setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
-      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '.'));
       setSign(null);
     } catch (e) {
       fireToast(joinSentence('Couldn’t approve the specification — ', e instanceof Error ? e.message : String(e)), 'error');
@@ -2696,7 +2703,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       setForm(false);
       fireToast('Batch ' + adopted.id + ' logged · ' + adopted.st);
     } catch (e) {
-      fireToast('Couldn’t log the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t log the batch — ', e), 'error');
     }
   };
   // edit — PUT /:id (P-122: the route had no caller). The route records the
@@ -2717,7 +2724,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       setEditing(null);
       fireToast('Batch ' + adopted.id + ' saved, with your reason on its audit trail.');
     } catch (e) {
-      fireToast('Couldn’t save the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t save the batch — ', e), 'error');
     }
   };
   // doRelease — REAL governed release. POSTs to the ONLY release path
@@ -2744,7 +2751,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
       fireToast('Batch ' + target.id + ' ' + dispositionWord(adopted.st) + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '.'));
     } catch (e) {
-      fireToast('Couldn’t release the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t release the batch — ', e), 'error');
     }
   };
   return (

@@ -527,3 +527,42 @@ describe('CmOverview — a stale section says so, and is not offered for approva
     expect(p5.textContent).toMatch(/approved before its sources changed: recompile, then approve again/i);
   });
 });
+
+/* Walked 2026-11-12: after a section was approved on screen the card still said "export blocked: 1 not approved"
+   until a reload. The gate's verdict is read again after an approval lands. */
+describe('CmOverview — the export verdict after an approval', () => {
+  it('is read again, so the blocked line clears without a reload', async () => {
+    let signed = false;
+    wire(
+      board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.1', 'draft', 100)] }),
+      () => { signed = true; return res({ success: true, versionNumber: 1 }); },
+      () => res({ success: true, data: signed ? readinessOf({ totalSections: 2, approvedSections: 2 })
+        : readinessOf({ totalSections: 2, approvedSections: 1, exportReady: false }) }),
+    );
+    renderOverview();
+    await screen.findByText(/export blocked: 1 not approved/);
+    await openSignatureFor();
+    fireEvent.change(screen.getByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed as compiled.' } });
+    fireEvent.change(screen.getByPlaceholderText('Re-enter your password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+    await screen.findByText('Export ready');
+    expect(screen.queryByText(/export blocked/)).toBeNull();
+  });
+});
+
+/* Walked 2026-11-12: a separation-of-duties refusal of a section approval read "… A different, authorized user must
+   sign.." — the thrown refusal's sentence, then a second full stop. */
+describe('CmOverview — a thrown refusal reads as one sentence', () => {
+  it('ends the server’s sentence once and says nothing was persisted', async () => {
+    const { ApiRequestError } = await import('@/lib/queryClient');
+    const why = 'Separation of duties: you are an author of this record and cannot approve it. A different, authorized user must sign.';
+    wire(board({ sections: [section('3.2.P.1', 'draft', 100)] }), () => { throw new ApiRequestError(why, 403); });
+    renderOverview();
+    await openSignatureFor();
+    fireEvent.change(screen.getByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed as compiled.' } });
+    fireEvent.change(screen.getByPlaceholderText('Re-enter your password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+    const toast = await screen.findByText(/Separation of duties/);
+    expect(toast.textContent).toBe(`Couldn’t approve section 3.2.P.1 — ${why} Nothing was persisted.`);
+  });
+});

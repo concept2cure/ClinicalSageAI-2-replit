@@ -130,6 +130,9 @@ The wording when an authenticator code is missing or wrong is repaired below ("A
 The retired-name ratchet (`foundationsRetiredRatchet.test.ts`) was red on trunk: `40cc8265b7` added a `cm-meta` span
 in the stability rows. The count is now written as plain words in its button, and the ratchet is green.
 
+| After a section was approved on screen the card still said "export blocked: 1 not approved" until a reload | The gate's verdict is read again when an approval lands (`CmcModule.tsx`, the readiness read's re-read counter) | As the second person: "0 of 21 … 21 not approved" became "1 of 21 … 20 not approved" with no reload (`after-b7-01`, `13-…`) |
+| A thrown refusal read "… must sign.."; a signed toast ended "…e25e3d60402d…." | Every thrown CMC refusal is worded by one helper (`cmcShared.tsx` `cmcThrownRefusal`), which ends the sentence once and never shows a browser-native error as the reason; the signed toasts end once | "Couldn't approve section 3.1 — Separation of duties: … A different, authorized user must sign. Nothing was persisted." |
+
 Nothing is left open on the CMC screens from this walk in files this session holds.
 
 **A citation outside the editor** read as its source's file name in the Document view ("62%C2C-101-biopharmaceutics-
