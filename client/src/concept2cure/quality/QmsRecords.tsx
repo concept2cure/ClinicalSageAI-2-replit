@@ -25,7 +25,8 @@ import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { useCapasBySource } from './capaSources';
-import { scopedPath, useAnswerOf, useQualityScope, useRegisterContext } from './registerContext';
+import { scopedPath, useAnswerOf, useQualityScope, useQualityWrites, useRegisterContext } from './registerContext';
+import { qualityWriteCount } from './qmsWrites';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
@@ -63,6 +64,17 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const [openId, setOpenId] = React.useState<R['id'] | null>(null);
   /* Bumped by every write, so an open detail re-reads what the write changed. */
   const [version, setVersion] = React.useState(0);
+  /* A confirmed Quality write re-reads this register, once, whoever made it: an MDR decision recorded from a complaint
+     left the MDR register under it empty until the page was reloaded (walked 2026-11-11, w39). Every write door
+     announces itself (qmsWrites.ts qualityWritten), so this is the register's one re-read after a write. */
+  const writes = useQualityWrites();
+  const readAt = React.useRef(writes);
+  React.useEffect(() => {
+    if (writes === readAt.current) return;
+    readAt.current = writes;
+    read.refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [writes]);
   const today = new Date().toISOString().slice(0, 10);
   const capas = useCapasBySource(config.capaSourceKind);
   const ctx = useRegisterContext(config.needs);
@@ -97,11 +109,13 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
     writing.current = true;
     setRefusal(null);
     try {
+      const announced = qualityWriteCount();
       const text = await write();
       setDrawer(null);
       fire(text);
       setVersion((n) => n + 1);
-      read.refresh();
+      // A write that did not announce itself still re-reads the register.
+      if (qualityWriteCount() === announced) read.refresh();
     } catch (err) {
       setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -194,7 +208,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
                   after={config.detail && isOpen && (
                     <tr className="qcc-detail-tr">
                       <td colSpan={columns.length}>
-                        <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, (text) => { if (text) fire(text); read.refresh(); })}</div>
+                        <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, (text) => { if (text) fire(text); })}</div>
                       </td>
                     </tr>
                   )}
@@ -232,10 +246,11 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setSigning(null)}
           onSign={async (input) => {
+            const announced = qualityWriteCount();
             const manifest = await signing.post(input);
             fire(signing.done);
             setVersion((n) => n + 1);
-            read.refresh();
+            if (qualityWriteCount() === announced) read.refresh();
             return manifest;
           }}
         />

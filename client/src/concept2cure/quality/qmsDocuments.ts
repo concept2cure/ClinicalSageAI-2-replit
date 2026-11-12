@@ -1,4 +1,5 @@
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import type { AuthDoc } from '../v2/editor/DocumentWorkbench';
 import type { DocType } from './data';
 import {adaptDoc,type ServerDoc} from './qmsDocumentRecord';
@@ -43,6 +44,7 @@ async function mutate(path: string, body: unknown): Promise<MutationRow> {
       typeof (data as MutationRow).authoring_document_id !== 'string') {
     throw new Error('The server did not return the editing copy. Reload the register to see whether the change was recorded.');
   }
+  qualityWritten();
   return data as MutationRow;
 }
 export function createQmsDocument(input: {

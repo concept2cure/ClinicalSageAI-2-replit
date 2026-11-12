@@ -19,7 +19,7 @@ const H = vi.hoisted(() => ({
 }));
 vi.mock('../../mdx/hooks/useFetchJson', async (original) => ({
   ...(await original<typeof import('../../mdx/hooks/useFetchJson')>()),
-  useFetchJson: (url: string) => ({ failure: null, ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
+  useFetchJson: (url: string) => ({ failure: null, ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: () => H.refresh(url) }),
 }));
 vi.mock('../../v2/shellProject', () => ({
   shellProgramId: () => H.program, shellProgramName: () => H.programName,
@@ -52,7 +52,7 @@ const serve = () => {
   H.reads['/api/capa-mdr/complaints'] = { data: { rows: [COMPLAINT], count: 1 }, loading: false, error: null };
   H.reads['/api/capa-mdr/mdr-events'] = { data: { rows: [MDR], count: 1 }, loading: false, error: null };
 };
-afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; H.program = null; H.programName = null; window.history.replaceState(null, '', '/concept2cure/quality'); });
+afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.refresh.mockReset(); H.reads = {}; H.program = null; H.programName = null; window.history.replaceState(null, '', '/concept2cure/quality'); });
 
 const body = (name: string) => screen.getByRole('button', { name }).closest('tbody') as HTMLElement;
 const section = (heading: string) => screen.getByRole('heading', { name: heading }).closest('section') as HTMLElement;
@@ -170,6 +170,11 @@ describe("Quality's Complaints and MDR tab", () => {
       programId: P, sourceComplaintId: COMPLAINT.id, jurisdiction: 'us_fda', usFdaReportType: 'initial_5day',
       eventNarrative: COMPLAINT.eventNarrative,
     })));
+    /* Walked 2026-11-11 (w39): the decision was recorded from the complaints register, and the MDR register under it
+       stayed empty until the page was reloaded. A confirmed write re-reads the register beside it, each once. */
+    await waitFor(() => expect(H.refresh).toHaveBeenCalledWith('/api/capa-mdr/mdr-events'));
+    expect(H.refresh.mock.calls.filter(([url]) => url === '/api/capa-mdr/mdr-events')).toHaveLength(1);
+    expect(H.refresh.mock.calls.filter(([url]) => url === '/api/capa-mdr/complaints')).toHaveLength(1);
   });
 
   it("opens a complaint's vigilance timeline under its row", () => {
