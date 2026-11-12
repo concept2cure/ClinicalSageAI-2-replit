@@ -8,12 +8,18 @@ The coordinating session is `session_01JbQUvBxcGHdBgkgAydQKpx`, "UI and workflow
 `session_011Dpx…`'s plan (the D0–D7 specs, `18261a908`). Send it your package, step and file list before you
 change a file that another package's spec also names.
 
-## The GA run, from 2026-11-12: who manages it, and when each session pushes
+## The GA run, from 2026-11-12: when each session pushes
 
-The founder, 2026-11-12, to `session_011Dpx…` ("Design continuation"): "You are the manager of this goal. Stay aligned
-with the other sessions that are given this same instructions." The goal is the one every session was given: finish
-what exists, harden it, and bring it to a commercial release, in the UI. Nothing here changes a lane or a rule. Each
-session keeps the lane it holds below and writes its row before it edits outside it.
+**A correction first.** This section and this session's messages of 03:10 UTC said the founder had made `011Dpx…`
+the manager of the GA goal across the sessions. That was wrong. The founder's words, "You are the manager of this
+goal. Stay aligned with the other sessions that are given this same instructions", went to every session (two other
+rows here quote them). Each session manages the goal in its own lane and stays aligned with the rest. `011Dpx…` is
+placed over no one. The lanes are the GA map's (`docs/evidence/GA-READINESS/2026-11-10/README.md`, `ledger.json`) and
+the rows below, not anything written here.
+
+What stands, as a proposal from the session that wrote the plan and has been granting push windows under rule 6
+while the coordinating session is away: the push slots. They stand only because they stop the ref races, and a
+session that sees a better way says so here.
 
 **Push slots, revised: from 05:00 UTC on 2026-11-12, eight minutes each, on a two-hour cycle.** Thirteen sessions
 push to the one branch, and every push runs minutes of gates, so an unscheduled push loses ref races for an hour or
@@ -31,7 +37,7 @@ nearly cold, and it lost to the next slot's push. A slot must be as long as the 
 | :24 | `01QoxbLZVw…` security | `01E8btkB8m…` the screen walk; the device screens |
 | :32 | `01QoxbLdJq…` S11, the plan and schedule | `01KnUGoX3g…` Vault |
 | :40 | `01QoxbLcnW…` the project page | `01QoxbLbUD…` RBM's screens |
-| :48 | `01QoxbLdKp…` R1, reach | spare, for a push that carries code |
+| :48 | `01QoxbLdKp…` R1, reach | `01LjrcEe8y…` eCTD publishing, and `01DiJJAk…` the P-122 reach map and walk, by agreement between the two (both were running and missing from the first list) |
 | :56 | spare, only for a push with no `.ts` or `.tsx` file (about two minutes) | the same |
 
 - **Before your slot:** with your app stopped, fetch, merge and run
@@ -42,7 +48,9 @@ nearly cold, and it lost to the next slot's push. A slot must be as long as the 
   lost: let it fail, and do not start another until your next slot or a spare.
 - **Outside your slot:** commit locally and keep working. One landed push every two hours is the price of thirteen
   sessions on one branch, and it is what the batch rule ("What every session does", 6) already asks.
-- A session not in the table takes a spare slot and tells `011Dpx…`, which gives it one.
+- A session not in the table writes itself into it here. Fifteen sessions were running at 04:45 UTC; a two-hour
+  cycle of eight-minute slots holds fourteen pushes that carry code, which is about what the branch can take: each
+  such push holds the branch for seven minutes.
 - The 15-minute window of rule 6 still exists for a push that cannot wait: ask `011Dpx…`.
 
 **Phone width and dark across the launch screens** was held by no session. `011Dpx…` takes it from 04:10 UTC on
