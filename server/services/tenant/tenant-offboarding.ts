@@ -1469,4 +1469,22 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      backfill could not attribute stay NULL and belong to no tenant, so a purge
      does not touch them (2026-10-13). */
   'citation_chains',
+  /* Two tables that became org-keyed on 2026-11-12. Found by ci:purge-coverage
+     on a database built from empty at 592233d61; the blank-database job had
+     reached neither commit. No foreign key names either one, so they are
+     leaves and their positions are free
+     (docs/evidence/D3/2026-11-12-live-tier-at-head/purge-coverage.md).
+     - support_ticket_messages (0007_support_admin.sql as amended by
+       ee78e60639, P-127): what the tenant's people wrote in their support
+       requests. It gained organization_id that day, and from that day an
+       erased tenant kept every message. Its ticket (support_tickets) is in
+       the gate's baseline of tables the purge does not yet reach, and stays
+       there: what happens to the ticket record is not this entry's decision.
+     - rate_limit_counters (20261112b, P-129): sign-in and document rate-limit
+       hits shared across server processes. The limiter writes every row as
+       organisation 0, the estate's, as session_activity's are, and those are
+       not this tenant's and are not touched. It is listed so that a row ever
+       written under a tenant's id does not outlive the tenant. */
+  'support_ticket_messages',
+  'rate_limit_counters',
 ]);
