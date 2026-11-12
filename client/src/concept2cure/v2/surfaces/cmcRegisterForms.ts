@@ -128,10 +128,12 @@ export interface AnalyticalMethodBody {
   matrix: string;
   technique: string;
   status: string;
-  ichQ2Parameters: { characteristics: string[]; summary?: string };
+  ichQ2Parameters: { characteristics: string[]; summary?: string; evidence?: Partial<Record<Q2EvidenceKey, string>> };
   validationDate?: string;
   projectId?: string;
 }
+
+export type Q2EvidenceKey = 'specificity' | 'linearity' | 'accuracy' | 'precision';
 
 export function methodForm(row?: Partial<AnalyticalMethodBody> | null): C2CFormConfig {
   return {
@@ -156,8 +158,31 @@ export function methodForm(row?: Partial<AnalyticalMethodBody> | null): C2CFormC
       { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(METHOD_STATUSES, row?.status, METHOD_SIGNED_STATES), required: true, half: true, default: statusDefaultFor(METHOD_STATUSES, row?.status, METHOD_SIGNED_STATES), desc: 'Validated, or suitable for its phase, is recorded with a signature on the Validate action' },
       { key: 'characteristics', label: 'ICH Q2 characteristics evaluated', type: 'text', default: (row?.ichQ2Parameters?.characteristics ?? []).join(', '), placeholder: ICH_Q2_CHARACTERISTICS.slice(0, 4).join(', ') },
       { key: 'summary', label: 'Validation summary', type: 'textarea', default: row?.ichQ2Parameters?.summary ?? '', placeholder: 'Outcome against the acceptance criteria for each characteristic…' },
+      ...q2EvidenceFields(row?.ichQ2Parameters?.evidence),
     ],
   };
+}
+
+/** The characteristics the ICH Q2 check asks a procedure's record to carry data for (ich-compliance-q2.ts). */
+export const Q2_EVIDENCE: ReadonlyArray<{ key: Q2EvidenceKey; label: string; placeholder: string }> = [
+  { key: 'specificity', label: 'Specificity: what was shown', placeholder: 'e.g. No interference from placebo, impurities or degradants at the analyte peak' },
+  { key: 'linearity', label: 'Linearity and range: what was shown', placeholder: 'e.g. r² 0.9998 over 50–150% of the target concentration' },
+  { key: 'accuracy', label: 'Accuracy: what was shown', placeholder: 'e.g. Mean recovery 99.6% (98.9–100.4%) at three levels' },
+  { key: 'precision', label: 'Precision: what was shown', placeholder: 'e.g. Repeatability RSD 0.4% (n = 6); intermediate precision RSD 0.7%' },
+];
+
+/* Walked 2026-11-12: the form had no place for a characteristic's result, so
+   the ICH Q2 check, which asks each record for specificity, linearity,
+   accuracy and precision data, could not be cleared from the screen. */
+function q2EvidenceFields(evidence?: Partial<Record<Q2EvidenceKey, string>>): C2CFormConfig['fields'] {
+  return Q2_EVIDENCE.map(({ key, label, placeholder }) => ({
+    key: `q2_${key}`, label, type: 'textarea' as const, default: evidence?.[key] ?? '', placeholder,
+  }));
+}
+
+function q2EvidenceOf(v: Record<string, string>): Partial<Record<Q2EvidenceKey, string>> | undefined {
+  const given = Q2_EVIDENCE.flatMap(({ key }) => (opt(v[`q2_${key}`]) ? [[key, opt(v[`q2_${key}`]) as string] as const] : []));
+  return given.length ? Object.fromEntries(given) : undefined;
 }
 
 /** The statuses an ordinary save may set. Neither signed state is reached by a
@@ -188,6 +213,7 @@ export function methodBody(v: Record<string, string>, projectId?: string): Analy
     ichQ2Parameters: {
       characteristics: csvToArray(v.characteristics),
       ...(opt(v.summary) ? { summary: opt(v.summary) } : {}),
+      ...(q2EvidenceOf(v) ? { evidence: q2EvidenceOf(v) } : {}),
     },
   };
   if (projectId) body.projectId = projectId;

@@ -122,8 +122,17 @@ the second person; `shots/after-*.png`. Tests red first: `06-cmc-screens-red-gre
 
 The wording when an authenticator code is missing or wrong is repaired below ("A refused signature says why").
 
-Still open on the CMC screens, in files this session holds: the method form's per-characteristic ICH Q2 evidence;
-stale sections on the Overview. In
+| The ICH Q2 check named every method "missing validation evidence: specificity, linearity / range, accuracy, precision", and nothing on the form could clear it | The register's table keeps the Q2 record in one JSON column and has no column per characteristic, so the write-through always sent null for the four values the check reads. The method form records each characteristic's result in the Q2 record (`evidence`), and the write-through reads it from there (`cmcRegisterForms.ts`, `cmc-write-through.ts` `q2Evidence`). No column, table or route | A new method added with its four results is not named missing evidence; the older, signed method still is, because its record is closed to edits under its signature (`after-b9-*`, `10-method-q2-evidence-red-green.txt`) |
+
+Still open on the CMC screens: stale sections on the Overview (the board's section read sends no stale flag,
+`server/routes/cmc-module3-board.routes.ts`).
+
+**The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
+author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The
+bar counts recorded origins; a citation marker in a sentence the author wrote does not make its recorded origin a
+source, so the text is counted as the author's either way. The row now says "a person stands behind it, cited or
+not" (red first in `10-…`). Whether a citation should move the sentence into "From sources" is the lineage
+lane's question, not decided here. In
 `CmcModule3Build.tsx` (held by the screen-work session): the remount itself, "21 ready to compile" after a compile,
 and finding types shown as stored tokens.
 

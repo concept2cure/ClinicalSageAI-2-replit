@@ -1229,3 +1229,24 @@ describe('the QC sample type says where a result is filed', () => {
     expect(labelOf('cleaning-verification')).toBe('Cleaning verification (not a batch analysis)');
   });
 });
+
+/* Walked 2026-11-12: the ICH Q2 check asks each method's record for specificity, linearity, accuracy and precision
+   data, and the method form had no place to record them. */
+describe('the method form records each characteristic’s result', () => {
+  const base = { methodCode: 'AM-011', title: 'RP-HPLC assay', purpose: 'Assay', analyte: 'BX-733', matrix: 'Drug product', technique: 'HPLC', status: 'validation' };
+
+  it('offers the four characteristics the check reads, prefilled from the record', () => {
+    const fields = methodForm({ ichQ2Parameters: { characteristics: [], evidence: { accuracy: 'Recovery 99.6%' } } }).fields;
+    expect(fields.filter((f) => f.key.startsWith('q2_')).map((f) => f.key)).toEqual(['q2_specificity', 'q2_linearity', 'q2_accuracy', 'q2_precision']);
+    expect(fields.find((f) => f.key === 'q2_accuracy')?.default).toBe('Recovery 99.6%');
+  });
+
+  it('sends only what was written, inside the Q2 record', () => {
+    const body = methodBody({ ...base, q2_specificity: ' No interference ', q2_precision: 'RSD 0.4%', q2_linearity: '  ' });
+    expect(body.ichQ2Parameters.evidence).toEqual({ specificity: 'No interference', precision: 'RSD 0.4%' });
+  });
+
+  it('control: with nothing written, the record carries no evidence key', () => {
+    expect(methodBody(base).ichQ2Parameters).not.toHaveProperty('evidence');
+  });
+});

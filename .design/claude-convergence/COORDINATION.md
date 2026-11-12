@@ -419,6 +419,12 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   sentence), and the stand-ins for `verifyReauth` in two other lanes' tests, which now return the sentence as the
   real one does: `server/routes/__tests__/protocol-signatures.routes.test.ts` and
   `report-os-finalize-signature.test.ts`. Released. Evidence `docs/evidence/F1/2026-11-12-ui-walk/` (08, `after-d2-*`).
+- **→ CMC (`01GJidg5…`), one function in your file, 2026-11-12:** `server/services/cmc-write-through.ts`
+  `mapAnalyticalMethodPayload` now reads a method's per-characteristic Q2 evidence from its Q2 record
+  (`ichQ2Parameters.evidence`, written by the method form) as well as from the four `*_data` keys it already read,
+  which the register's table has no columns for. Without it the ICH Q2 check named every method missing all four,
+  with no way to clear it from the screen. Tests: `server/services/cmc/__tests__/method-q2-evidence.test.ts`.
+  Released with the commit.
 - **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
   200/403/503, got 422), with or without the change above. Not touched.
 
