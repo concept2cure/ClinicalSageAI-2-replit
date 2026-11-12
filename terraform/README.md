@@ -99,8 +99,10 @@ The GitHub environment is `staging` or `production`, named for the root.
   - Scheduled jobs that take the lease run once per window across tasks
     (`server/db/scheduledOnce.ts`). `api_max_count` stays at 2 until MR-14
     closes OPS-07, the schedulers that do not take it yet.
-  - HTTP rate limits are still counted per task, in memory. Sharing them needs
-    a new table, which is a founder decision (MR-03 Stage 7 steps 2 and 3).
+  - The sign-in and document rate limits are counted across tasks in
+    `rate_limit_counters` (P-129). A task that cannot reach it refuses those
+    requests (503) rather than counting alone. The other categories are
+    per-task ceilings, in memory.
 - **Live co-editing is off.** `ENABLE_COLLAB_CRDT` keeps each open document in
   one process's memory, so it cannot be on while more than one task serves.
   The stack does not set it, and the deploy preflight refuses a task
