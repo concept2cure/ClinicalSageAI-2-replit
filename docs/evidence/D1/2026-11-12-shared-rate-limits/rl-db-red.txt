@@ -1,0 +1,116 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > runs as a role that is neither a superuser nor exempt from RLS 2ms
+{"level":30,"time":"2026-11-12T18:35:24.603Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T18:35:24.604Z","pid":18662,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T18:35:24.604Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T18:35:24.848Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T18:35:24.848Z","pid":18662,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T18:35:24.848Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T18:35:25.008Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T18:35:25.106Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ × tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > a client that spends the auth bucket on task A is refused on task B 1262ms
+   → expected 401 to be 429 // Object.is equality
+{"level":30,"time":"2026-11-12T18:35:25.008Z","pid":18662,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T18:35:25.008Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T18:35:25.106Z","pid":18662,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T18:35:25.106Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T18:35:25.219Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T18:35:25.220Z","pid":18662,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T18:35:25.220Z","pid":18662,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ × tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > the per-account sign-in limit counts one account across tasks 227ms
+   → expected 401 to be 429 // Object.is equality
+ × tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > the rows are the estate’s: organization 0, and no tenant scope reads them 3ms
+   → expected [] to deeply equal [ { organization_id: +0 } ]
+ × tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > a store that cannot be read refuses the sign-in category rather than counting per task 99ms
+   → expected 401 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > a client that spends the auth bucket on task A is refused on task B
+AssertionError: expected 401 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 401
+
+ ❯ tests/db/rate-limits-across-tasks.dbtest.ts:80:25
+     78|     expect(seen).toEqual(Array(AUTH_CEILING).fill(401));
+     79|     const next = await request(b).post('/api/auth/login').set(from(add…
+     80|     expect(next.status).toBe(429);
+       |                         ^
+     81|     expect(Number(next.headers['retry-after'])).toBeGreaterThan(0);
+     82|     // Another address is untouched.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > the per-account sign-in limit counts one account across tasks
+AssertionError: expected 401 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 401
+
+ ❯ tests/db/rate-limits-across-tasks.dbtest.ts:97:27
+     95|     }
+     96|     expect(statuses.slice(0, max).every((s) => s === 401), JSON.string…
+     97|     expect(statuses[max]).toBe(429);
+       |                           ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > the rows are the estate’s: organization 0, and no tenant scope reads them
+AssertionError: expected [] to deeply equal [ { organization_id: +0 } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "organization_id": 0,
+-   },
+- ]
++ []
+
+ ❯ tests/db/rate-limits-across-tasks.dbtest.ts:102:18
+    100|   it('the rows are the estate’s: organization 0, and no tenant scope r…
+    101|     const { rows } = await env.owner.query(`SELECT DISTINCT organizati…
+    102|     expect(rows).toEqual([{ organization_id: 0 }]);
+       |                  ^
+    103|     const runtime = await import('../../server/db/runtime');
+    104|     const { runWithTenantScope } = await import('../../server/db/tenan…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/rate-limits-across-tasks.dbtest.ts > rate limits across server tasks, on PostgreSQL as the runtime role with RLS enforcing > a store that cannot be read refuses the sign-in category rather than counting per task
+AssertionError: expected 401 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 401
+
+ ❯ tests/db/rate-limits-across-tasks.dbtest.ts:115:26
+    113|     try {
+    114|       const res = await request(a).post('/api/auth/login').set(from('1…
+    115|       expect(res.status).toBe(503);
+       |                          ^
+    116|       // A category outside the shared set is not affected.
+    117|       expect((await request(a).post('/api/things').set(from('198.51.10…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  18:35:23
+   Duration  2.01s (transform 611ms, setup 46ms, import 167ms, tests 1.64s, environment 0ms)
+

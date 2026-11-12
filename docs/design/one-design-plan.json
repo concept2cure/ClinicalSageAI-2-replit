@@ -792,6 +792,14 @@
       "decision": "P-127",
       "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
       "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
+    },
+    {
+      "kind": "table",
+      "name": "public.rate_limit_counters",
+      "package": "L1",
+      "decision": "P-129",
+      "where": "public schema, organization_id INTEGER NOT NULL DEFAULT 0 (the estate's row, system scope only, as session_activity); one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "the sign-in and document rate limits counted across API tasks (MR-03 Stage 7 steps 2-3, SEC-08, OPS-20); no screen, no mount"
     }
   ],
   "completesRequired": true,
