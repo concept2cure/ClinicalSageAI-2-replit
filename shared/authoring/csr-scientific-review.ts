@@ -330,6 +330,47 @@ export function placeholderIn(content: string | null | undefined): string | null
   return CSR_DATA_PLACEHOLDER.exec(visible.join(''))?.[0] ?? null;
 }
 
+/* Founder decision P-126 (2026-11-12, under delegation; it reads P-115 item 5, "Every heading holds text"):
+ * - a heading holds text when a reader sees some: markup, entities and white space are not text, so "<p></p>",
+ *   what the editor saves for a cleared section, is blank. A figure or an embedded object is content;
+ * - a heading that holds only its subsections needs no text of its own. ICH E3 uses such headings to organise
+ *   ("5 Ethics" over 5.1 to 5.3), and a report is not made complete by filler typed under them. It is written when
+ *   each of its subsections is, and each of those is held to this same rule.
+ * One definition, for the review screen that builds the map and the server that verifies it. */
+const EMBEDDED_CONTENT = /<(?:img|svg|object|embed|math)\b/i;
+
+/** Whether a saved section holds text a reader sees (or a figure). */
+export function csrSectionHoldsText(content: string | null | undefined): boolean {
+  if (!content) return false;
+  if (EMBEDDED_CONTENT.test(content)) return true;
+  let at = 0;
+  for (const [from, to] of markupRanges(content)) {
+    if (content.slice(at, from).trim()) return true;
+    at = to;
+  }
+  return content.slice(at).trim().length > 0;
+}
+
+/**
+ * The sections of one saved document that hold no text of their own and only organise subsections: a blank
+ * section whose number is the parent of another section's number in the same document ("5" of "5.1"; never "5" of
+ * "50.1"). By id.
+ */
+export function csrHeadingOnlySectionIds(
+  sections: ReadonlyArray<{ id: string; code?: string | null; content: string | null }>,
+): Set<string> {
+  const codes = sections.map(section => (typeof section.code === 'string' ? section.code.trim() : ''));
+  const ids = new Set<string>();
+  sections.forEach((section, index) => {
+    const code = codes[index];
+    if (code && !csrSectionHoldsText(section.content) && codes.some(other => other.startsWith(`${code}.`))) ids.add(section.id);
+  });
+  return ids;
+}
+
+/** What a review records for a heading that holds only its subsections: nothing was there to check. */
+export const CSR_HEADING_ONLY_STATEMENT = 'Heading only. It holds no text of its own; its subsections hold the text.';
+
 /** A placeholder as a message quotes it: whole up to 80 characters, otherwise cut and closed with "…]". */
 export const quotedPlaceholder = (held: string): string => (held.length <= 80 ? held : `${held.slice(0, 78)}…]`);
 

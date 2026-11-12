@@ -128,7 +128,11 @@ export const IMPACT_MARKET_LABEL: Record<DeviceChangeMarket, string> = { us: 'Un
 /** What each market's engine decides, in a sentence. */
 export const IMPACT_MARKET_ASKS: Record<DeviceChangeMarket, string> = {
   us: 'FDA: whether the change needs a new 510(k), or is documented in a letter to file.',
-  eu: 'MDR and IVDR: whether the change is a significant change (MDCG 2020-3).',
+  /* MDCG 2020-3 is the guidance on the transitional provision (MDR Article 120; IVDR Article 110(3) for an IVD):
+     it decides whether a change to a device still marketed under its Directive certificate is significant. The
+     engine applies that lens (services/regulatory/change-assessment.ts). A device certified under the MDR or
+     IVDR reports changes to its notified body under its own certificate; the engine does not decide that. */
+  eu: 'For a device still on the market under its Directive certificate (MDR Article 120, IVDR Article 110): whether the change is a significant change (MDCG 2020-3).',
 };
 /** Each outcome in plain words. A value outside this map is not an outcome and is read as unreadable. */
 export const IMPACT_DECISION_LABEL: Record<ImpactDecision, string> = {

@@ -1,0 +1,31 @@
+{
+  "step": "review",
+  "label": "before",
+  "tablesPreview": 200,
+  "sections": 119,
+  "headingOnly": [],
+  "saysNoSavedText": 113,
+  "gapsNamingNoText": 113,
+  "gapsTotal": 122,
+  "firstGaps": [
+    "Section 1 Title Page has no saved text. A CSR is approved only when every section is written.",
+    "Section 2 Synopsis has no saved text. A CSR is approved only when every section is written.",
+    "Section 3 Table of Contents for the Individual Clinical Study Report has no saved text. A CSR is approved only when every section is written.",
+    "Section 4 List of Abbreviations and Definitions of Terms has no saved text. A CSR is approved only when every section is written.",
+    "Section 5 Ethics has no saved text. A CSR is approved only when every section is written.",
+    "Section 5.1 Independent Ethics Committee (IEC) or Institutional Review Board (IRB) has no saved text. A CSR is approved only when every section is written."
+  ],
+  "recordApprovalDisabled": true,
+  "ethics": {
+    "heading": "5 · Ethics",
+    "says": "No saved text. A CSR is approved only when every section is written.",
+    "asksForStatement": false
+  },
+  "investigationalPlan": {
+    "heading": "9 · Investigational Plan",
+    "says": "No saved text. A CSR is approved only when every section is written.",
+    "asksForStatement": false
+  },
+  "failedRequests": [],
+  "consoleErrors": []
+}

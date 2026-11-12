@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import config from '../../vitest.config';
 import { readWorkflow, stepNamed } from './workflow-harness';
+import { evaluateIf } from './workflow-expression';
 
 const root = path.resolve(__dirname, '..', '..');
 const scripts = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).scripts;
@@ -73,6 +74,23 @@ describe('bounded test execution and retained CI evidence', () => {
     expect(upload.if).toBe('always()');
     expect(upload.with?.name).toBe('integration-tests-results');
     expect(upload.with?.path).toBe('test-results/');
+  });
+
+  // MR-02 Stage 3, 2026-11-12: the re-render re-lints the whole tree (about 2
+  // minutes), and with `if: failure()` it ran whenever ANY earlier Lint step
+  // had failed — on every push while any guardrail was red.
+  it('re-renders ESLint findings only when ESLint itself failed', () => {
+    const eslint = stepNamed(workflow, 'lint', 'Run ESLint');
+    const render = stepNamed(workflow, 'lint', 'Render ESLint findings (failure only)');
+    expect(eslint.id).toBe('eslint');
+    const at = (anyFailed: boolean, eslintOutcome: string) =>
+      evaluateIf(render.if, {
+        status: { success: !anyFailed, failure: anyFailed, cancelled: false },
+        contexts: { steps: { eslint: { outcome: eslintOutcome, conclusion: eslintOutcome } } },
+      });
+    expect(at(true, 'failure')).toBe(true);
+    expect(at(true, 'success')).toBe(false);
+    expect(at(false, 'success')).toBe(false);
   });
 
   it('retains coverage test verdicts while leaving the coverage ratchet strict', () => {
