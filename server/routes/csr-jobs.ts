@@ -73,6 +73,7 @@ import {
   type CsrReviewDecision,
 } from '../services/csr/csr-section-review';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { csrBuildOfDocument } from '../services/authoring/csr-import-into-document';
 import { buildHeadings } from '../services/csr/csr-headings';
 import { csrAssemblyRouter } from './csr-jobs-assembly';
 import { csrNarrativeRouter } from './csr-jobs-narratives';
@@ -302,6 +303,12 @@ router.get('/', async (req: Request, res: Response) => {
   if (typeof req.query.programId !== 'string') {
     return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
   }
+  // Asked from a CSR document's build section, the list also says which build that document holds imported
+  // sections from (`documentBuild`), so the section opens on it. A document takes its imports from one build.
+  const documentId = typeof req.query.documentId === 'string' ? req.query.documentId : null;
+  if (documentId !== null && !RUN_ID.test(documentId)) {
+    return res.status(400).json({ code: 'CSR_DOCUMENT_INVALID', error: 'documentId must identify a document.' });
+  }
   try {
     const database = requireDb();
     const scope = await resolveCsrScope(database, organizationId, { programId: req.query.programId }, { forWrite: false, actorUserId: resolveUserId(req) });
@@ -313,9 +320,11 @@ router.get('/', async (req: Request, res: Response) => {
       eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.projectId, scope.projectId),
       sql`${csrBuildJobs.studyInfoSnapshot} -> 'evidenceSource' ->> 'runId' = ${runId}`,
     )).orderBy(desc(csrBuildJobs.updatedAt), desc(csrBuildJobs.id)).limit(25);
+    const documentBuild = documentId === null ? undefined
+      : await csrBuildOfDocument(queryableFromDrizzle(database), organizationId, req.query.programId, documentId);
     // A failed build says why it stopped, in plain words from its receipt's typed reason (csrBuildFailureText);
     // the receipt's stored message is never sent.
-    return res.json({ jobs: rows.map(row => ({
+    return res.json({ ...(documentBuild === undefined ? {} : { documentBuild }), jobs: rows.map(row => ({
       jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
       updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       failure: row.status === 'failed' ? csrBuildFailureText(row.error) : null,

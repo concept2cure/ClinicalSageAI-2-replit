@@ -718,6 +718,7 @@ function AccountMenu({
       ? { label: 'Subscription & billing', ic: 'creditCard', to: 'licensing' }
       : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
+    { label: 'Help & training', ic: 'book', to: 'training' },
     { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },

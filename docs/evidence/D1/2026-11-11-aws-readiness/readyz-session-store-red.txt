@@ -1,0 +1,131 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > production: a task that can read session_activity is ready, and says so 41ms
+   → expected undefined to be 'ok' // Object.is equality
+ × server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > production: a task that cannot read it is not ready, and the detail names the store and the cause 7ms
+   → expected 200 to be 503 // Object.is equality
+ × server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > reads the table as the session service does: organisation 0, under the system tenant scope 3ms
+   → Cannot read properties of undefined (reading 'sql')
+ × server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > is one of the cached round trips: five hits, one read 24ms
+   → expected +0 to be 1 // Object.is equality
+ × server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > the public body stays the verdict alone 5ms
+   → expected 200 to be 503 // Object.is equality
+ × server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > outside production it is skipped, and the table is not read 6ms
+   → expected undefined to be 'skipped' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > production: a task that can read session_activity is ready, and says so
+AssertionError: expected undefined to be 'ok' // Object.is equality
+
+- Expected:
+"ok"
+
++ Received:
+undefined
+
+ ❯ server/startup/__tests__/readyz-session-store.test.ts:82:44
+     80|     const res = await request(appWithHealth()).get('/readyz');
+     81|     expect(res.status).toBe(200);
+     82|     expect(res.body.dependencies.sessions).toBe('ok');
+       |                                            ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > production: a task that cannot read it is not ready, and the detail names the store and the cause
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/startup/__tests__/readyz-session-store.test.ts:88:24
+     86|     sessionStore = 'missing';
+     87|     const res = await request(appWithHealth()).get('/readyz');
+     88|     expect(res.status).toBe(503);
+       |                        ^
+     89|     expect(res.body.ready).toBe(false);
+     90|     expect(res.body.failed).toEqual(['sessions']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > reads the table as the session service does: organisation 0, under the system tenant scope
+TypeError: Cannot read properties of undefined (reading 'sql')
+ ❯ server/startup/__tests__/readyz-session-store.test.ts:99:14
+     97|     await request(appWithHealth()).get('/readyz');
+     98|     const [q] = sessionQueries();
+     99|     expect(q.sql).toMatch(/FROM session_activity WHERE organization_id…
+       |              ^
+    100|     expect(q.scope).toMatchObject({ tenantId: '0', source: 'job', call…
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > is one of the cached round trips: five hits, one read
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/startup/__tests__/readyz-session-store.test.ts:108:37
+    106|     const app = appWithHealth();
+    107|     for (let i = 0; i < 5; i++) await request(app).get('/readyz');
+    108|     expect(sessionQueries().length).toBe(1);
+       |                                     ^
+    109|     vi.setSystemTime(new Date('2026-11-11T12:00:05Z'));
+    110|     await request(app).get('/readyz');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > the public body stays the verdict alone
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/startup/__tests__/readyz-session-store.test.ts:124:24
+    122|     mountFastPathHealthEndpoints(app, pool);
+    123|     const res = await request(app).get('/readyz');
+    124|     expect(res.status).toBe(503);
+       |                        ^
+    125|     expect(res.body).toEqual({ ready: false });
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > outside production it is skipped, and the table is not read
+AssertionError: expected undefined to be 'skipped' // Object.is equality
+
+- Expected:
+"skipped"
+
++ Received:
+undefined
+
+ ❯ server/startup/__tests__/readyz-session-store.test.ts:133:44
+    131|     const res = await request(appWithHealth()).get('/readyz');
+    132|     expect(res.status).toBe(200);
+    133|     expect(res.body.dependencies.sessions).toBe('skipped');
+       |                                            ^
+    134|     expect(sessionQueries()).toEqual([]);
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  00:03:42
+   Duration  802ms (transform 238ms, setup 97ms, import 311ms, tests 90ms, environment 0ms)
+
