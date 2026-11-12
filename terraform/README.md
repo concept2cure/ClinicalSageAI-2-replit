@@ -141,6 +141,14 @@ The GitHub environment is `staging` or `production`, named for the root.
 
   The runbook is `docs/runbooks/incident-response.md`, and a rollback is
   `docs/runbooks/rollback.md`.
+- **The network and the edge are logged.**
+  - The VPC's flow log records ALL traffic in `/aws/vpc/c2c-<env>/flow-logs`, kept a year
+    (`modules/vpc-secure`).
+  - The ALB's access log goes to `c2c-<short>-alb-logs-<account>`, kept `access_log_retention_days`
+    (`stack/access_logs.tf`).
+  - CloudFront's access log, and the vault and frontend buckets' server access logs, go to
+    `c2c-<short>-access-logs-<account>`.
+  - The account baseline (GuardDuty, Security Hub, Config) is not yet configured (MR-04 Stage 3).
 - **`/readyz` through CloudFront answers `{ ready }` alone.** The detail goes
   to a caller presenting the `readyz_detail` token in `x-readyz-token`, or to
   one inside the task.

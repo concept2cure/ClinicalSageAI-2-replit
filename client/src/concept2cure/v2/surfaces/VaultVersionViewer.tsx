@@ -22,7 +22,7 @@ import {
 } from '../editor/vaultPdfViewer';
 
 interface ViewedVersion extends ViewableFile { id: string }
-type Note = { text: string; tone: 'ok' | 'error' };
+export type Note = { text: string; tone: 'ok' | 'error' };
 
 /** Whether a version is offered for viewing: its file is named as a PDF. The bytes still decide. */
 export function viewableAsPdf(v: { fileName: string | null }): boolean {
@@ -130,6 +130,25 @@ export function useVaultVersionViewer(projectId: string) {
   return { viewer, closeViewer, viewing, note, view };
 }
 
+/** A host's reader, which a Versions section reads through (Vault.tsx): it opens the host's wide reading drawer, and
+ *  `note` is what the last View from that section came to when nothing was framed. */
+export interface HostReader {
+  view: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
+  viewing: string | null;
+  note: Note | null;
+}
+
+/** The reader a Versions section uses: its host's, or, standing alone, its own, framed under the list. */
+export function useSectionReader(projectId: string, host: HostReader | undefined) {
+  const own = useVaultVersionViewer(projectId);
+  if (host) return { view: host.view, viewing: host.viewing, panel: <VaultViewNote note={host.note} /> };
+  return {
+    view: (id: string, label: string, hash: string | null, as?: 'rendition') => void own.view(id, label, hash, as),
+    viewing: own.viewing,
+    panel: <VaultVersionViewer state={own} />,
+  };
+}
+
 /**
  * Brings what a view opened, or said, into view. The viewer renders under the list it was opened from, and a seal's
  * list of documents is longer than the page: "Open" framed the document below the fold, and the click looked as if
@@ -142,18 +161,24 @@ function useBroughtIntoView(shown: unknown) {
   return ref;
 }
 
+/** What the last View came to, said where it was asked for and brought into view: a refusal, or a file downloaded. */
+export function VaultViewNote({ note }: { note: Note | null }) {
+  const noteRef = useBroughtIntoView(note);
+  if (!note) return null;
+  return (
+    <div ref={noteRef} className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'}>
+      {note.tone === 'error' ? I.alertTriangle : null} {note.text}
+    </div>
+  );
+}
+
 /** The open version, framed, with its served hash; and the note of the last attempt. */
 export function VaultVersionViewer({ state }: { state: ReturnType<typeof useVaultVersionViewer> }) {
   const { viewer, closeViewer, note } = state;
-  const noteRef = useBroughtIntoView(note);
   const viewerRef = useBroughtIntoView(viewer?.url);
   return (
     <>
-      {note && (
-        <div ref={noteRef} className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'}>
-          {note.tone === 'error' ? I.alertTriangle : null} {note.text}
-        </div>
-      )}
+      <VaultViewNote note={note} />
       {viewer && (
         <div ref={viewerRef} className="pf-viewer" data-testid="vault-version-viewer">
           <div className="pf-viewer-h">

@@ -28,6 +28,7 @@ module "vpc" {
   private_subnets  = var.private_subnets
   azs              = var.azs
   region           = var.region
+  name             = local.long
   eks_workloads_sg = module.ecs.ecs_tasks_security_group_id
   tags             = var.tags
 }
@@ -419,7 +420,10 @@ module "alb" {
   api_port            = 5000
   origin_secret       = var.cloudfront_origin_secret
   deletion_protection = var.alb_deletion_protection
-  tags                = var.tags
+  # Through the bucket policy, so the ALB is created after ELB may write
+  # (access_logs.tf): otherwise CreateLoadBalancer fails with Access Denied.
+  access_logs_bucket = aws_s3_bucket_policy.alb_logs.bucket
+  tags               = var.tags
 }
 
 # ── Compute (ECS Fargate) ───────────────────────────────────────────────────

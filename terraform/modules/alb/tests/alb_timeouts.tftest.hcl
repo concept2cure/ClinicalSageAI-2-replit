@@ -38,3 +38,28 @@ run "the_alb_idles_for_exactly_the_edge_timeout" {
     error_message = "The ALB's idle_timeout must be 60 s: CloudFront's origin_read_timeout, and below the server's 65 s keep-alive (server/index.ts). Raise all three together or none (MR-03 Stage 6 step 10)."
   }
 }
+
+# Access logs (MR-04 Stage 3 step 5): on exactly when a bucket is passed. The
+# stack passes one (terraform/stack/tests/detective_controls.tftest.hcl); the
+# module default stays empty so the module can be reused without one.
+run "access_logs_are_written_when_a_bucket_is_given" {
+  command = plan
+
+  variables {
+    access_logs_bucket = "c2c-prod-alb-logs-123456789012"
+  }
+
+  assert {
+    condition     = output.access_logs.enabled && output.access_logs.bucket == "c2c-prod-alb-logs-123456789012"
+    error_message = "With a bucket, the ALB must write access logs to it."
+  }
+}
+
+run "no_bucket_no_access_logs" {
+  command = plan
+
+  assert {
+    condition     = !output.access_logs.enabled
+    error_message = "Without a bucket, access logs stay off (an enabled log with no bucket fails at create)."
+  }
+}
