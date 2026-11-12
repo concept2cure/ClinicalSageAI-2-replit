@@ -84,10 +84,26 @@ The cause: `generateStfFiles` refuses such a leaf with a plain `Error`. `assembl
   and its audit row was persisted and chained. Compile, which runs the same assembly, reported the sentence among its
   blockers instead of a bare failure.
 
-## Next (MR-03 Stage 6 steps 4–6)
+## Then: steps 4–6, built and measured again
 
-Compile, sequence assemble and package assemble answer 202 with a job id. The job is a row in
-`public.artifact_compute_jobs`, which the work order names; it adds no table. A
-`GET …/jobs/:jobId` returns the full result, tenant-scoped. `EctdCompile.tsx`, `GatewayTransmittals.tsx` and
-`SequenceAssembleTestPackage.tsx` poll. A sweep marks a job abandoned when its task restarted. Then comes the staging
-acceptance: a 200-leaf compile behind CloudFront with no 504.
+| Commit | What |
+|---|---|
+| `37e55e96a` | **Compile.** `POST /api/ectd-compile/:projectIdent/compile` asked with `Prefer: respond-async` answers 202 `{jobId, poll}` once every refusal is decided. It runs the same `compileFromSpine` in the request scope, holding its connection (`retainRequestDbClient`). `GET …/jobs/:jobId` returns the full `CompilationResult`, for the session's organization only. The job is a row of `artifact_compute_jobs`, under an `ectd-in-process` profile seeded in place in `20260326_artifact_compute_plane.sql` (RULE 1). A sweep marks a job abandoned past its 30-minute timeout, once across tasks. `EctdCompile.tsx` polls every 2 s and shows the seconds; the polling helpers are split into `ectdCompileJob.ts`. |
+| `114773a67` | **The test package.** `POST /api/submissions/sequences/:seqId/assemble` does the same. The job holds the route's answer: 200, or the recorded 422 refusal. `SequenceAssembleTestPackage.tsx` follows it, keeping "could not be confirmed" for a failed job or an unreadable poll. |
+
+**How each was shown:**
+- **Compile, route test:** fails on trunk, which has no job route (`compile-job-red.txt`); 6 of 6 green
+  (`compile-job-green.txt`).
+- **Compile, screen test:** 4 of 5 fail on trunk (`screen-job-red.txt`); 5 of 5 green (`screen-job-green.txt`).
+- **Test package, route test:** 4 of 7 fail on trunk (`assemble-job-red.txt`); 7 of 7 green (`assemble-job-green.txt`).
+- **Test package, screen test:** 5 of 5 fail on trunk (`testpkg-job-red.txt`); 5 of 5 green (`testpkg-job-green.txt`).
+- **Live, on the server built from each change, at 200 × 80 pages:**
+  - compile answered 202 in 19–36 ms, and its job completed in 51–59 s with 200 leaves rendered;
+  - the test package answered 202 in 23–26 ms, and its job completed in 49–51 s
+  - (`timings-200x80-pages-async.txt`, `timings-200x80-pages-async-both.txt`).
+
+**Not changed: package assemble** (`/api/submission-ops/packages/:id/assemble`). No screen calls it. Gateway
+Transmittals became read-only on 2026-10-17 (LX-13), and a sequence is transmitted from its Dispatch tab. The work order
+names `GatewayTransmittals.tsx` for it, which predates that change.
+
+**Left: the staging acceptance** (MR-03 Stage 5). A 200-leaf compile behind CloudFront with no 504 in the access log.

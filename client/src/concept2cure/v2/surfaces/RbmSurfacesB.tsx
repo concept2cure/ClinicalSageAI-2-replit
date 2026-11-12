@@ -411,6 +411,13 @@ function SiteIndicatorTable({ sites, columns }: { sites: RbmBoardSite[]; columns
   );
 }
 
+/** How the sites are ranked and scored, and where a trend over time is to be found. */
+function SiteRiskNote({ count, fromIndicators }: { count: number; fromIndicators: boolean }) {
+  return (
+    <div className="rbm-note">{I.info}All {count} scored site{count === 1 ? '' : 's'} shown, ranked by composite risk. {fromIndicators ? 'Each indicator is banded at the site against its own limits: red counts 100, amber 50, green 0, and the composite is the mean over the indicators evaluated at the site. ' : ''}The tier is set from the composite score; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot, which keeps no history of the composite. {fromIndicators ? 'Each indicator’s readings at a site across the loads are on Key risk indicators, under “By site”.' : 'A trend over time is not available for these scores.'}</div>
+  );
+}
+
 export function RbmSites({ board, onReload, onAsk }: SubProps) {
   const sites = board.sites;
   const columns = siteIndicatorColumns(board);
@@ -460,7 +467,7 @@ export function RbmSites({ board, onReload, onAsk }: SubProps) {
           </tbody></table>
       </div>
       {columns.length > 0 && <SiteIndicatorTable sites={sites} columns={columns} />}
-      <div className="rbm-note">{I.info}All {sites.length} scored site{sites.length === 1 ? '' : 's'} shown, ranked by composite risk. {fromIndicators ? 'Each indicator is banded at the site against its own limits: red counts 100, amber 50, green 0, and the composite is the mean over the indicators evaluated at the site. ' : ''}The tier is set from the composite score; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available.</div>
+      <SiteRiskNote count={sites.length} fromIndicators={fromIndicators} />
     </div>
   );
 }

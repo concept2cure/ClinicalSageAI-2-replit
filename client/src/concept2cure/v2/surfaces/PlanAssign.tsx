@@ -20,7 +20,7 @@
  * (GET /api/tasks/tasks/by-module/Plan), keyed by the origin columns, never
  * by the title.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { isRowsWith, useLiveRows } from '../dataConnect';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
@@ -31,6 +31,9 @@ import {
   createAssignedTask, isSubmittableReviewer, useAssigneeRoster, type AssignOutcome, type Assignee, type RosterState,
 } from '../editor/AssignReviewDialog';
 import { TASK_STATE_LABEL } from '../editor/ReviewTasksPanel';
+import {
+  jobRoleForPlanTaskRole, matchStandardJobRole, PLAN_TASK_ROLE_HOLDERS_ELSEWHERE,
+} from '@shared/regulatory/client-type-job-roles';
 
 export const PLAN_TASK_MODULE = 'Plan';
 export const PLAN_TASK_ENTITY = 'filing_deliverable';
@@ -183,8 +186,67 @@ export function AssignmentLine({ assignment }: { assignment: PlanAssignment }) {
   return <span className="pj-plan-assigned" data-testid="plan-assignment">{state} {who}{dueWords(assignment.dueDate)}</span>;
 }
 
-export function assignForm(title: string, roster: Assignee[], rosterState: RosterState, due?: { value: string; desc: string }): C2CFormConfig {
+/** The organisation's job roles and who holds each (GET /api/mdx/qms/job-roles, P-49). */
+export interface JobRoleHolders { name: string; members: Array<{ userId: number; label: string; active: boolean }> }
+export type HoldersState = 'loading' | 'ready' | 'error';
+
+/**
+ * Who the work breakdown proposes for a task (P-119): the job role its role key means in the standard catalog
+ * (shared/regulatory/client-type-job-roles.ts), and the active members who hold that job role in this organisation.
+ * A lookup, never a guess: an organisation's role counts only when its name is a standard role's name, and a task
+ * whose role the catalog does not know proposes no one.
+ */
+export function proposedOwners(taskRole: string | undefined, roles: JobRoleHolders[]): { roleName: string; holderIds: string[] } | null {
+  const role = jobRoleForPlanTaskRole(taskRole);
+  if (!role) return null;
+  const keys = new Set([role.key, ...(PLAN_TASK_ROLE_HOLDERS_ELSEWHERE[String(taskRole ?? '').trim().toLowerCase()] ?? [])]);
+  const holderIds = roles.filter(r => keys.has(matchStandardJobRole(r.name)?.key ?? ''))
+    .flatMap(r => r.members.filter(m => m.active).map(m => String(m.userId)));
+  return { roleName: role.name, holderIds: [...new Set(holderIds)] };
+}
+
+/** The job roles, read once when the Assign form opens for a work-breakdown task. */
+function useJobRoleHolders(wanted: boolean): { roles: JobRoleHolders[]; state: HoldersState } {
+  const [read, setRead] = useState<{ roles: JobRoleHolders[]; state: HoldersState }>({ roles: [], state: 'loading' });
+  useEffect(() => {
+    if (!wanted) return undefined;
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await apiRequest('GET', '/api/mdx/qms/job-roles');
+        const json = (await res.json().catch(() => null)) as { data?: { roles?: JobRoleHolders[] } } | null;
+        const roles = res.ok && Array.isArray(json?.data?.roles) ? json.data.roles : null;
+        if (alive) setRead(roles ? { roles, state: 'ready' } : { roles: [], state: 'error' });
+      } catch {
+        if (alive) setRead({ roles: [], state: 'error' });
+      }
+    })();
+    return () => { alive = false; };
+  }, [wanted]);
+  return read;
+}
+
+/** The proposal in words under Person, and the roster with the role's holders first. The person still chooses.
+ *  `status` is the part that changes while the form is open (the job roles land or fail): C2CForm's live region. */
+function proposalFor(roster: Assignee[], proposal: AssignProposal | undefined): { desc?: string; status?: string; roster: Assignee[] } {
+  if (!proposal?.owners) return { roster };
+  const { roleName, holderIds } = proposal.owners;
+  const desc = `The work breakdown gives this task to the ${roleName}.`;
+  if (proposal.state === 'loading') return { roster, desc, status: '' };
+  if (proposal.state === 'error') return { roster, desc, status: 'Who holds that job role could not be read.' };
+  const holders = roster.filter(a => holderIds.includes(String(a.id)));
+  if (!holders.length) return { roster, desc, status: 'No one in your organisation holds that job role yet.' };
+  return {
+    desc, status: `Listed first: ${holders.length === 1 ? 'the person who holds' : 'the people who hold'} that job role.`,
+    roster: [...holders.map(a => ({ ...a, label: `${a.label ?? a.name} (${roleName})` })), ...roster.filter(a => !holders.includes(a))],
+  };
+}
+
+export interface AssignProposal { owners: ReturnType<typeof proposedOwners>; state: HoldersState }
+
+export function assignForm(title: string, members: Assignee[], rosterState: RosterState, due?: { value: string; desc: string }, proposal?: AssignProposal): C2CFormConfig {
   const unread = rosterState === 'error';
+  const { roster, desc, status } = proposalFor(members, rosterState === 'ready' ? proposal : undefined);
   return {
     eyebrow: 'Plan',
     title: `Assign: ${title}`,
@@ -195,18 +257,20 @@ export function assignForm(title: string, roster: Assignee[], rosterState: Roste
     fields: unread ? [] : [
       { key: 'assignee', label: 'Person', type: 'select', required: true,
         options: roster.map(a => ({ value: a.id, label: a.label ?? a.name })),
-        ...(roster.length ? {} : { desc: 'No members in this organisation yet, so no one can be chosen.' }) },
+        ...(roster.length ? (desc ? { desc, descStatus: status } : {}) : { desc: 'No members in this organisation yet, so no one can be chosen.' }) },
       { key: 'due', label: 'Due date', type: 'date', required: true, ...(due ? { default: due.value, desc: due.desc } : {}) },
       { key: 'note', label: 'Note', type: 'textarea', rows: 3, placeholder: 'What they should know (optional)' },
     ],
   };
 }
 
-function AssignDrawer({ deliverable, due, onCancel, onSubmit }: {
-  deliverable: PlanDeliverable; due?: { value: string; desc: string }; onCancel: () => void; onSubmit: (values: Record<string, string>) => void;
+function AssignDrawer({ deliverable, due, taskRole, onCancel, onSubmit }: {
+  deliverable: PlanDeliverable; due?: { value: string; desc: string }; taskRole?: string; onCancel: () => void; onSubmit: (values: Record<string, string>) => void;
 }) {
   const { roster, rosterState } = useAssigneeRoster();
-  return <C2CForm config={assignForm(deliverable.title, roster, rosterState, due)} onCancel={onCancel} onSubmit={onSubmit} />;
+  const holders = useJobRoleHolders(Boolean(jobRoleForPlanTaskRole(taskRole)));
+  const proposal = { owners: proposedOwners(taskRole, holders.roles), state: holders.state };
+  return <C2CForm config={assignForm(deliverable.title, roster, rosterState, due, proposal)} onCancel={onCancel} onSubmit={onSubmit} />;
 }
 
 /**
@@ -214,7 +278,7 @@ function AssignDrawer({ deliverable, due, onCancel, onSubmit }: {
  * A viewer is not offered it (the server refuses their task writes), nor is a
  * project whose projects.id is not verified.
  */
-export function AssignAction({ deliverable, programId, projectId, assigned = false, onAssigned, due, buildBody }: {
+export function AssignAction({ deliverable, programId, projectId, assigned = false, onAssigned, due, buildBody, taskRole }: {
   deliverable: PlanDeliverable; programId: string; projectId: number | null;
   /** Someone already has it: a second Assign adds a person, it does not move the first task. */
   assigned?: boolean; onAssigned: () => void;
@@ -222,6 +286,8 @@ export function AssignAction({ deliverable, programId, projectId, assigned = fal
   due?: { value: string; desc: string };
   /** The task body, where it is not a deliverable's (buildPyramidTaskBody). */
   buildBody?: (form: { assignee: string; due: string; note: string }) => Record<string, unknown>;
+  /** A work-breakdown task's role key: the form names its job role and lists the people who hold it first. */
+  taskRole?: string;
 }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -249,7 +315,7 @@ export function AssignAction({ deliverable, programId, projectId, assigned = fal
     </button>
     {outcome && !outcome.ok && <p className="pf-sel-m pj-plan-assign-msg" role="alert" data-testid="plan-assign-error">{outcome.message}</p>}
     {outcome?.ok && <p className="pf-sel-m pj-plan-assign-msg" role="status">Assigned{outcome.assigneeName ? ` to ${outcome.assigneeName}` : ''}. The task is in their tasks and this project’s tasks.</p>}
-    {open && <AssignDrawer deliverable={deliverable} due={due} onCancel={() => setOpen(false)} onSubmit={v => void submit(v)} />}
+    {open && <AssignDrawer deliverable={deliverable} due={due} taskRole={taskRole} onCancel={() => setOpen(false)} onSubmit={v => void submit(v)} />}
   </>;
 }
 
