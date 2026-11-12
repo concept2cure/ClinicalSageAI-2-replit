@@ -440,7 +440,10 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Admin — compliance"
         title="Audit trail"
-        sub={`${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`}
+        /* A count is stated only for a trail that was read: a refused or failed read is not "0 entries". */
+        sub={loading || error
+          ? 'Hash-chained — append-only — 21 CFR Part 11 §11.10(e)'
+          : `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`}
         actions={
           <React.Fragment>
             <button
@@ -460,9 +463,12 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
             <button type="button" className="btn ghost" onClick={() => onNav('compliance-reports')}>
               {I.fileCheck} Compliance reports
             </button>
-            <button className="btn primary" onClick={doExport} disabled={exporting}>
-              {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
-            </button>
+            {/* The export is the trail's readers' to run; a role refused the read is not offered it. */}
+            {error && readStatus === 403 ? null : (
+              <button className="btn primary" onClick={doExport} disabled={exporting}>
+                {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
+              </button>
+            )}
           </React.Fragment>
         }
       />

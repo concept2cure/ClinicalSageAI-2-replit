@@ -310,7 +310,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     if (tenantState === 'forbidden') {
       return {
         summary:
-          'This account cannot administer enterprise identity — the SCIM token and allowlist directory requires the super_admin or platform_admin role, so nothing is listed.',
+          'This account cannot administer enterprise identity — the SCIM token and allowlist directory is for platform administrators, so nothing is listed.',
         facts: { access: 'forbidden' },
       };
     }
@@ -344,7 +344,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     return (
       <div className="cm-body" style={{ padding: 24 }}>
         <EmptyState icon={I.lock} title="Platform administrator required"
-          hint="SCIM token and allowlist administration requires the super_admin or platform_admin role. Sign in with a platform-administrator account to manage enterprise identity." />
+          hint="SCIM tokens and the allowlist are managed by platform administrators. Sign in with a platform administrator account to manage enterprise identity." />
       </div>
     );
   }
