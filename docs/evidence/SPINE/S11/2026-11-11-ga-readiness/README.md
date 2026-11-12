@@ -92,3 +92,11 @@ In the running app, as the runtime role with RLS enforced: a colleague moved the
 the owner's notification reads "Due date changed: Submit IND · Now due 2027-06-02", and the owner's own change back
 produced none. Reporting & analytics, "When does each project file?": four rows, and the note names the 510(k)
 project (`desk-global-schedule.png`, `phone-global-schedule.png`; no horizontal scroll at 390).
+
+## Dark mode, 2026-11-12
+
+The earlier "dark" capture had not switched the app's own theme (it reads `c2c-v2-prefs`, not the browser's colour
+scheme). Re-done with the theme on, at 1440 and 390, on the IND plan, the 510(k) plan, a task sheet and Projects:
+every text node's colour against its nearest opaque background meets WCAG AA (4.5:1, or 3:1 for large text), none
+below; the schedule line, its dots and the status words read on the dark surface (`screenshots/dark-*.png`). Nothing
+needed changing.
