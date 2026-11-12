@@ -1,0 +1,35 @@
+red: us-biotech-registry-identities-draft-from-their-record.test.ts on trunk f5d0d417a (the parent of this change), 2026-11-12
+ ✓ names exactly the identities that read one record: the fourteen, and the three BLA changes
+ × US_TYPE_D_MEETING shares the draftability of the component read from the same record
+ × US_INTERACT shares the draftability of the component read from the same record
+ × US_EXPANDED_ACCESS_INDIVIDUAL shares the draftability of the component read from the same record
+ × US_EXPANDED_ACCESS_INTERMEDIATE shares the draftability of the component read from the same record
+ × US_EXPANDED_ACCESS_TREATMENT shares the draftability of the component read from the same record
+ × US_EUA_THERAPEUTIC shares the draftability of the component read from the same record
+ × US_BLA_ANNUAL shares the draftability of the component read from the same record
+ × US_BLA_PEDIATRIC_ANNUAL shares the draftability of the component read from the same record
+ × US_BLA_PMR_ANNUAL shares the draftability of the component read from the same record
+ × US_BLA_DISTRIBUTION shares the draftability of the component read from the same record
+ × US_BLA_PAE_REPORT shares the draftability of the component read from the same record
+ × US_BPDR shares the draftability of the component read from the same record
+ × US_CBER_MASTER_FILE shares the draftability of the component read from the same record
+ × US_CBER_LOT_RELEASE shares the draftability of the component read from the same record
+ × New document lists each as a draftable document, never a "preparation worksheet"
+ × an attendee list, a form and a dataset stay manual on the registry row
+ × US_BLA_SUPP keeps its worksheet until its updated CTD sections are decided
+ × US_BLA_CBE30 keeps its worksheet until its updated CTD sections are decided
+ × US_BLA_CBE0 keeps its worksheet until its updated CTD sections are decided
+ × does not widen the lookup inquiry, AnA's section requirements and the package inventory key on
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  20 failed | 1 passed (21)
+
+The failing assertions, by kind:
+      2 AssertionError: expected 'undefined' to be 'function' // Object.is equality
+      1 AssertionError: expected [ 'US_TYPE_D_MEETING', false, … ] to deeply equal [ 'US_TYPE_D_MEETING', true, … ]
+      1 AssertionError: expected [ undefined, undefined ] to deeply equal [ 'narrative', 'manual' ]
+      1 AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ 'narrative', 'manual', 'manual' ]
+      1 AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ 'narrative', 'manual', 'narrative' ]
+      6 AssertionError: expected [ undefined, undefined, … ] to deeply equal [ 'narrative', 'manual', … ]
+      2 AssertionError: expected [ undefined, undefined, … ] to deeply equal [ 'narrative', 'narrative', … ]
+      1 AssertionError: expected [] to deeply equal [ 'MTG-ATTEND' ]
