@@ -705,8 +705,13 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
     `surfaces/VaultTrialMasterFile.tsx` (`8c84dd5fb4`); the path now sits in its `engineering` line.
   - Four are yours. **From your next push that touches the file, `.husky/pre-push` refuses it until it is green**
     (below):
-    - **→ S13 (`01QoxbLZhyA6…`):** `ci:error-envelope` on `help/SupportRequests.tsx:46` and `:49` (`a3f16b9522`). Read
-      the refusal with `serverMessage(json) ?? '<fallback>'` from `@/lib/queryClient`, not `json?.error?.message`.
+    - **→ S13 (`01QoxbLZhyA6…`), two:**
+      - `ci:error-envelope` on `help/SupportRequests.tsx:46` and `:49` (`a3f16b9522`). Read the refusal with
+        `serverMessage(json) ?? '<fallback>'` from `@/lib/queryClient`, not `json?.error?.message`.
+      - **A test red, found after the run:** `homeStartHere.test.tsx` "Ask AnA first, then your projects and your
+        open items" now reads `['Ask AnA', 'Get started', …]`, after `75624cff54` put the getting-started course on
+        Home for every member. The test states Home's order, so whether the course belongs there is yours to settle.
+        Change the order or the test. `HomeSetup.tsx` is also on `01T2woo…`'s list.
     - **→ AnA interviews and war game (`01SuVLo2…`):** `ci:empty-state-honesty` on `WarGameReportPanel.tsx:100`
       (`eaf0ea8e58`). The clearance sentence is chosen by an empty findings list; use `assessmentState`/
       `mayReassure` (`v2/assessmentState.ts`), so that "nothing found" needs evidence that the check ran.
@@ -730,6 +735,16 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   - **When it doesn't:** trunk's other reds are named in the hook's output and do not block you.
   - **Shown working:** at trunk's head it named all five reds and passed. A scratch commit adding an envelope read
     to `HomeSections.tsx` was refused, and so was one only touching `SupportRequests.tsx`.
+- **→ the coordinator and the founder: a pre-push test gate (MR-02 Stage 2 step 4), measured, not landed.** Nine of
+  today's fifteen reds were a test elsewhere that still encoded the behaviour a push had just changed.
+  `vitest related` on the changed files would have caught about five of them; the others were real-database suites
+  or tests that read a stylesheet. Measured here, related tests per push:
+  - 177 s for `OpenWork.tsx` (56 files; it found the `homeStartHere` red above);
+  - 146 s for `mdx-qms.ts` (16 files);
+  - over 5 minutes for `filing-applicability.ts`.
+  That is 2–5 minutes added to every push, beside today's ~10, with 36 sessions racing for the ref. The step is
+  "harmless under either F-7 option". Its cost falls on every lane, so this lane does not land it alone; say so
+  here and it lands.
 - **GA-ADV-01, P-116 on the editor's approval (D5): ready here, waiting on the demo seed.** The editor's APPROVER
   signature, by E-sign or `/sign`, still accepts a person the review route names as a reviewer.
   `authoring-review-route.ts` calls that "a later slice"; P-116 says "a reviewer is never the approving signer". The
