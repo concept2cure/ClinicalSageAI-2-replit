@@ -20,8 +20,9 @@
  * A live row with `notApplicableReason` is not a filing: it declares that the
  * record does not apply to the study, with who, when and why (P-124 item 5).
  *
- * Distinct from shared/schema/etmf.ts `tmfArtifacts` (Store B, on no deploy
- * path; retired by slice E4 of docs/design/ETMF_CONVERGENCE_2026-10-30.md).
+ * The one trial master file store. A second (a per-study TMF container and its
+ * artifacts with typed statuses and no document, on no deploy path) was retired
+ * on 2026-11-12 by slice E4 of docs/design/ETMF_CONVERGENCE_2026-10-30.md.
  *
  * Conventions mirror shared/schema/ind-cross-references.ts (uuid PK + integer
  * organization_id tenant column + drizzle-zod insert).

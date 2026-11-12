@@ -19,7 +19,8 @@
  * that imports these lists cannot drift from what the server sends.
  *
  * 'not_assessed' is the codebase's existing term for "nothing was checked"
- * (etmf-logic.ts, market-formatting-validator.ts). 'not_applicable' is not used:
+ * (market-formatting-validator.ts; the retired TMF verdict in etmf-logic.ts used it
+ * until 2026-11-12). 'not_applicable' is not used:
  * in this codebase it means "the requirement does not apply", and at least one
  * reader (submission-readiness-twin-service.ts) counts it as compliant.
  *

@@ -11,8 +11,9 @@
  *                            record declared not applicable with its reason (P-124 item 5)
  *   README.txt             — human-readable summary + honesty note
  *
- * HONESTY CONTRACT: tmf_artifacts stores metadata only — no document bytes. This
- * package therefore assembles the inspection *index and readiness picture*, and
+ * HONESTY CONTRACT: a filing (tmf_artifact_filings) names its document; it holds
+ * no document bytes. This package therefore assembles the inspection *index and
+ * readiness picture*, and
  * says so plainly. It never fabricates document content it does not hold. Where
  * a filing carries a documentRef the ref is listed so the inspector can locate
  * the source of record; the bytes themselves are not claimed to be inside.

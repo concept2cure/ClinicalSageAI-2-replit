@@ -21,8 +21,6 @@
  *     and filing frameworks; ids unique; legacy filter ids preserved
  *   - the service-org rule: product owners map to their segment, CROs and
  *     other service orgs get the cross-sponsor TMF view
- *   - the eTMF seed skeleton: pure derivation from the reference model,
- *     essential-drives-completeness invariant
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -49,7 +47,7 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy';
 import { TMF_ZONES, classifyArtifact, zoneName } from '../etmf/etmf-logic';
-import { TMF_REFERENCE_MODEL, getTmfReferenceModel, seedArtifacts } from '../etmf/tmf-completeness';
+import { TMF_REFERENCE_MODEL, getTmfReferenceModel } from '../etmf/tmf-completeness';
 import { planEssentialDocuments } from '../gcp-operations/gcp-operations-knowledge';
 import * as GCP_REFERENCE from '../gcp-operations/gcp-operations-reference';
 
@@ -568,38 +566,5 @@ describe('vaultViewForOrganization (service-org rule)', () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// eTMF seed skeleton
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('seedArtifacts (eTMF expected-document skeleton)', () => {
-  it("'all' scope seeds every reference-model artifact across all 11 zones", () => {
-    const seeds = seedArtifacts('all');
-    const catalogSize = TMF_REFERENCE_MODEL.reduce((n, z) => n + z.artifacts.length, 0);
-    expect(seeds).toHaveLength(catalogSize);
-    expect(new Set(seeds.map(s => s.zone))).toEqual(new Set(TMF_REFERENCE_MODEL.map(z => z.number)));
-  });
-
-  it("'essential' scope seeds only essential documents, all completeness-required", () => {
-    const seeds = seedArtifacts('essential');
-    const essentialCount = TMF_REFERENCE_MODEL.reduce(
-      (n, z) => n + z.artifacts.filter(a => a.essential).length, 0,
-    );
-    expect(seeds).toHaveLength(essentialCount);
-    expect(seeds.every(s => s.completenessRequired)).toBe(true);
-  });
-
-  it('completeness_required mirrors essential — optional artifacts never dilute readiness', () => {
-    const byCode = new Map(seedArtifacts('all').map(s => [s.code, s]));
-    for (const zone of TMF_REFERENCE_MODEL) {
-      for (const a of zone.artifacts) {
-        expect(byCode.get(a.code)?.completenessRequired, a.code).toBe(a.essential);
-      }
-    }
-  });
-
-  it('seed codes are unique (idempotency key sanity)', () => {
-    const codes = seedArtifacts('all').map(s => s.code);
-    expect(new Set(codes).size).toBe(codes.length);
-  });
-});
+// The eTMF seed skeleton (seedArtifacts) and its four cases went on 2026-11-12 with the retired store it seeded (eTMF
+// convergence E4 step 5). A study's expected records are the reference model's, read by assessTmfCompleteness.
