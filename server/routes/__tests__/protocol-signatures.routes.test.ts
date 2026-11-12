@@ -16,7 +16,7 @@ import request from 'supertest';
 
 const h = vi.hoisted(() => ({
   log: [] as string[],
-  reauth: { ok: true } as { ok: boolean; error?: string },
+  reauth: { ok: true } as { ok: boolean; error?: string; message?: string },
   sod: null as unknown,
   sigFail: null as unknown,
   finalizeFail: null as unknown,
