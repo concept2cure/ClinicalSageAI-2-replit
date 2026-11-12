@@ -56,10 +56,10 @@ const h = vi.hoisted(() => {
     route: async (req: any) => {
       state.gatewayCalls++;
       const step = state.script.shift();
-      if (Array.isArray(step)) return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+      if (Array.isArray(step)) return { content: '', toolUses: step, model: 'claude-opus-5-5', provider: 'anthropic', usage: {}, latencyMs: 1 };
       const text = step ?? 'Done.';
       req.onStream?.(text, undefined);
-      return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
+      return { content: text, toolUses: [], model: 'claude-opus-5-5', provider: 'anthropic', usage: {}, latencyMs: 1 };
     },
   };
   const handlers: Record<string, (input: any, ctx?: any) => Promise<string>> = {
@@ -267,7 +267,7 @@ describe('the tool context names the conversation, the turn and the model (PF-10
     await turn();
     // A document a tool creates records these as its provenance (authoring-draft-tool.ts).
     expect(h.state.toolCtx).toHaveLength(1);
-    expect(h.state.toolCtx[0]).toMatchObject({ threadId: 'thread-1', turnId: 'run_test', model: 'm' });
+    expect(h.state.toolCtx[0]).toMatchObject({ threadId: 'thread-1', turnId: 'run_test', model: 'claude-opus-5-5' });
   });
 
   it('a held governed call records the same: the only path a confirm-class draft takes in production', async () => {
@@ -278,7 +278,7 @@ describe('the tool context names the conversation, the turn and the model (PF-10
     expect(h.state.approvals[0].toolContext).toMatchObject({
       threadId: 'thread-1',
       turnId: 'run_test',
-      servingModel: { model: 'm' },
+      servingModel: { model: 'claude-opus-5-5' },
     });
   });
 

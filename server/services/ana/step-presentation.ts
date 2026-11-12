@@ -53,6 +53,7 @@ import type { StepStatus } from '@shared/ana/turn-timeline';
 import { stepPresentationOf } from './tool-authorization.js';
 import { agentEndedByHoldExpiry, agentResultSummary } from './sub-agent-result.js';
 import { refusalOf } from './tool-trace.js';
+import { MODEL_MAY_NOT_DRAFT } from './governed-write-tools.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
@@ -383,6 +384,8 @@ export function stepMessage(
   const Step = doing.charAt(0).toUpperCase() + doing.slice(1);
   if (heldBack) {
     if (why === 'declined') return `You declined ${step}, so it did not run.`;
+    // Not a question for a person: a yes would not make the model an approved one.
+    if (why === MODEL_MAY_NOT_DRAFT) return `${Step} did not run: ${why}. Ask again with Thorough effort.`;
     return `${Step} did not run: it needs a person's authorisation${why ? ` (${why})` : ''}.`;
   }
   if (status === 'error') return `AnA couldn't finish ${step} and continued without it.`;

@@ -1,4 +1,5 @@
 import { requestsReadOnly } from './read-only-turn.js';
+import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 /**
  * Which AnA tools persist MODEL-AUTHORED text into a governed record.
  *
@@ -130,8 +131,11 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
  */
 // "create" and "start" (2026-11-09): "Start a 510(k) summary document" was routed to Balanced, and the draft the
 // person then confirmed was refused at the gate. Seen walking the running app.
+// "revise" and "insert", and the documents' everyday names (2026-11-12): "Draft the CSR", "write the IB" and
+// "Prepare the SAP" were all routed to Balanced. "update", "save" and "file" are left out on purpose: they are as
+// often a question ("any update on the report?") as a write, and a write they miss still meets the gate.
 export const GOVERNED_DRAFT_REQUEST =
-  /\b(draft|redraft|write|rewrite|author|compose|prepare|generate|create|start)\b(?:\W+\w+){0,6}?\W+(document|section|sections|summary|overview|narrative|letter|response|module|report|protocol|plan|sop|label|labeling|consent|briefing|submission|amendment|biosketch)\b/i;
+  /\b(draft|redraft|write|rewrite|revise|author|compose|prepare|generate|create|start|insert)\b(?:\W+\w+){0,6}?\W+(document|section|sections|summary|overview|narrative|letter|response|module|report|protocol|plan|sop|label|labeling|consent|briefing|submission|amendment|biosketch|brochure|synopsis|csr|ib|sap|qos|dsur|cer)\b/i;
 
 export function requestsGovernedDraft(message: string | null | undefined): boolean {
   return typeof message === 'string' && !requestsReadOnly(message) && GOVERNED_DRAFT_REQUEST.test(message);
@@ -139,6 +143,35 @@ export function requestsGovernedDraft(message: string | null | undefined): boole
 
 export function isGovernedContentWriteTool(name: string): boolean {
   return Object.prototype.hasOwnProperty.call(GOVERNED_CONTENT_WRITE_TOOLS, name);
+}
+
+type ServedModel = { provider?: string | null; model?: string | null } | null | undefined;
+
+/** The run's reason for a step the model gate held back; step-presentation.ts writes the person's sentence from it. */
+export const MODEL_MAY_NOT_DRAFT = 'the model that answered this turn is not approved for regulatory drafting';
+
+/** What a governed-write tool returns instead of writing, when the model is not approved. */
+export function governedWriteRefusal(tool: string, served: ServedModel) {
+  const who = served?.model ? `${served.provider ?? 'unknown'}/${served.model}` : 'an unidentified model';
+  return {
+    error: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+    tool,
+    servedBy: served?.model ?? null,
+    message:
+      `${tool} was not run: it stores text the model wrote in a governed record, and this turn was answered by ` +
+      `${who}, which is not approved for regulatory drafting. Nothing was saved. Ask again with Thorough effort ` +
+      'to have an approved model draft it.',
+  };
+}
+
+/**
+ * The model gate: the refusal for a governed write by a model that may not draft, or null.
+ * One rule, read at two doors. The tool gate reads it before a handler runs. The stream reads it before it asks a
+ * person to confirm the write, because a yes cannot make the model approved (walked 2026-11-09: the person
+ * confirmed, and was then refused).
+ */
+export function governedWriteModelRefusal(tool: string, served: ServedModel): ReturnType<typeof governedWriteRefusal> | null {
+  return isGovernedContentWriteTool(tool) && !isServedModelApprovedForHighRisk(served) ? governedWriteRefusal(tool, served) : null;
 }
 
 /** Dotted paths of free-text properties in a tool's input schema. */

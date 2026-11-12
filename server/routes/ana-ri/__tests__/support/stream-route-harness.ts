@@ -127,6 +127,12 @@ function freshState() {
     approvalDecisionLands: true as boolean,
     /** What readApprovalDecision returns once the gate is open: a person's answer, or null (none yet). */
     approvalDecision: null as null | { decided: 'approved' | 'denied'; error?: string; result?: unknown },
+    /**
+     * The model every scripted round is served by. The default is a placeholder no registry approves, so a governed
+     * write it asks for is refused before anyone is asked (governed-write-tools.ts governedWriteModelRefusal). A
+     * suite whose subject is the approval of such a write serves APPROVED_DRAFTING_MODEL.
+     */
+    servedBy: { model: 'm', provider: 'p' } as { model: string; provider: string },
     endRuns: [] as Array<{ status: string; stoppedReason: string }>,
     /**
      * What endRun answers (run-control.ts EndRunOutcome): 'already_ended' when
@@ -233,7 +239,7 @@ const gateway = {
       riskTier: req.riskTier,
     });
     const requestId = state.requestIds[state.gatewayCalls - 1];
-    const served = { model: 'm', provider: 'p', usage: {}, latencyMs: 1, ...(requestId ? { requestId } : {}) };
+    const served = { ...state.servedBy, usage: {}, latencyMs: 1, ...(requestId ? { requestId } : {}) };
     const step = state.script.shift();
     if (Array.isArray(step)) return { content: '', toolUses: step, ...served };
     if (step && typeof step === 'object') return modelSays(req, step, served);
@@ -511,6 +517,9 @@ export const mocks = {
   metrics: () => ({ recordAnaTurn: () => {} }),
   anthropicFiles: () => ({ isPdfIntakeEnabled: () => false, readLocalUploadBuffer: async () => null }),
 };
+
+/** A model the registry approves for regulatory drafting outside production (approved-models.ts). */
+export const APPROVED_DRAFTING_MODEL = { model: 'claude-opus-5-5', provider: 'anthropic' } as const;
 
 export const harness = { state, handlers, gateway };
 

@@ -1,0 +1,59 @@
+// One real AnA turn in the running app: real server, real database, real dev-login session, real browser.
+// The provider is a local stand-in (mock-anthropic.cjs) that records what the app sends; nothing is substituted
+// between the composer and the provider boundary.
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+const BASE = 'http://127.0.0.1:5000';
+const OUT = __dirname;
+const log = [];
+const note = (s) => { log.push(s); console.log(s); };
+
+async function session(email) {
+  const dl = await (await fetch(`${BASE}/api/auth/dev-login`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: BASE }, body: JSON.stringify({ email }) })).json();
+  if (!dl.accessToken) throw new Error('dev-login failed: ' + JSON.stringify(dl).slice(0, 300));
+  const sess = await (await fetch(`${BASE}/api/v1/auth/session`, { headers: { Authorization: `Bearer ${dl.accessToken}`, Origin: BASE } })).json();
+  return { token: dl.accessToken, refresh: dl.refreshToken, user: sess.user };
+}
+
+(async () => {
+  const browser = await chromium.launch();
+  try {
+    const s = await session('e2e-admin@trialsage.test');
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    const expiry = new Date(Date.now() + 23 * 3600e3).toISOString();
+    await ctx.addInitScript(([t, r, e, u]) => {
+      for (const st of [window.localStorage, window.sessionStorage]) {
+        st.setItem('trialsage_access_token', t); st.setItem('trialsage_refresh_token', r);
+        st.setItem('trialsage_token_expiry', e); st.setItem('trialsage_user', u);
+      }
+    }, [s.token, s.refresh, expiry, JSON.stringify(s.user)]);
+    const p = await ctx.newPage();
+    p.on('response', async (res) => {
+      if (/\/api\/ana-ri\/stream/.test(res.url())) note(`  HTTP ${res.request().method()} ${res.url().replace(BASE, '')} -> ${res.status()}`);
+    });
+    p.on('pageerror', (e) => note('  pageerror: ' + String(e).slice(0, 200)));
+    await p.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'domcontentloaded' });
+    await p.getByText('P-95 review walk').first().waitFor({ timeout: 120000 });
+    await p.getByText('P-95 review walk').first().click();
+    await p.waitForTimeout(3000);
+    await p.goto(`${BASE}/concept2cure/conversation-thread`, { waitUntil: 'domcontentloaded' });
+    const composer = p.locator('textarea').first();
+    await composer.waitFor({ timeout: 120000 });
+    await composer.fill('In two sentences, what does a 510(k) summary need to say about the predicate device?');
+    await composer.press('Enter');
+    const got = await p.getByText(/MOCK PROVIDER REPLY/).first().waitFor({ timeout: 120000 }).then(() => true, () => false);
+    note('reply from the provider boundary on screen: ' + got);
+    if (!got) {
+      const body = (await p.locator('body').innerText()).slice(-1500);
+      note('screen tail: ' + body.replace(/\s+/g, ' '));
+    }
+    await p.screenshot({ path: path.join(OUT, 'ana-turn-01.png') });
+  } catch (e) {
+    note('WALK ERROR: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e)));
+  } finally {
+    fs.writeFileSync(path.join(OUT, 'walk-ana-turn.log'), log.join('\n') + '\n');
+    await browser.close();
+  }
+})();
