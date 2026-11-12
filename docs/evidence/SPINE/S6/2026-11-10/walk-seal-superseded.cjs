@@ -90,8 +90,12 @@ async function openSeal(page, programId) {
       const j = await r.json().catch(() => null);
       return { status: r.status, version: j?.document?.version ?? j?.data?.document?.version ?? null, error: j?.error ?? null, message: j?.message ?? null };
     }, { programId: program.id, sealed });
-    expect(made.status < 300, `a new version was checked in (${JSON.stringify(made)})`);
-    step('2. a new version of the sealed document is checked in', { sealedVersion: sealed.version, newVersion: made.version });
+    // On a database where this walk already ran, the sealed version already has its successor: the Vault refuses a
+    // second one (VERSION_NOT_CURRENT), which is the state step 3 reads.
+    const already = made.status === 409 && made.error?.code === 'VERSION_NOT_CURRENT';
+    expect(made.status < 300 || already, `a new version was checked in (${JSON.stringify(made)})`);
+    step(already ? '2. the sealed version already has its successor (an earlier run); a second is refused' : '2. a new version of the sealed document is checked in',
+      { sealedVersion: sealed.version, newVersion: made.version, refused: already ? 'VERSION_NOT_CURRENT' : null });
 
     // 3. After: the same seal says so, and still holds what it sealed.
     row = await openSeal(page, program.id);
