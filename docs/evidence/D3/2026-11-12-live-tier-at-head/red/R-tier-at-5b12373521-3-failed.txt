@@ -1,0 +1,11 @@
+npm run test:db at 5b12373521e42e5abdea4e5e72d09341d3e4a2ba, 2026-11-12 22:11:59Z to 22:26:33Z
+Read from the JSON report of that run (vitest --reporter=json). The default reporter printed the same totals.
+Test files  1 failed | 263 passed (264)
+Tests       3 failed | 3263 passed (3266)
+Skipped or todo: 0 pending, 0 todo
+
+tests/db/tenant-purge-blocking-keys.dbtest.ts: 3 failed, 3 passed
+  x a tenant with a row in every table that names a purged row with no delete action A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+  x a tenant with a row in every table that names a purged row with no delete action is purged, the way the route runs it, once custody of its export is signed
+  x a tenant with a row in every table that names a purged row with no delete action A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+

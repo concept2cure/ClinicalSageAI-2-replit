@@ -212,7 +212,7 @@ export async function postAuthoringSignature(
   adoptWorkflowSource = false,
   acknowledgeUnresolved = false,
   acks: ApprovalAcks = NO_ACKS,
-): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string; notApproved: string[] }> {
+): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string; notApproved: string[]; filingReason: string | null }> {
   const meaning = AUTHORING_MEANING[input.meaning];
   if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
   let res: Response;
@@ -233,15 +233,28 @@ export async function postAuthoringSignature(
   const json = (await res.json().catch(() => null)) as {
     documentHash?: string;
     signedAt?: string;
-    filingApproval?: { approved?: string[]; notApproved?: string[] } | null;
+    filingApproval?: { approved?: string[]; notApproved?: string[]; reason?: string } | null;
   } | null;
   /* apiRequest RETURNS a 401 rather than throwing it. Here a 401 is the
      signing ceremony refusing the password or code, not a lost session. */
   if (res.status === 401) {
     throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
   }
-  const notApproved = (json?.filingApproval?.notApproved ?? []).map(String).filter((k) => k !== '');
-  return { meaning, hash: json?.documentHash, signedAt: json?.signedAt, notApproved };
+  return { meaning, hash: json?.documentHash, signedAt: json?.signedAt, ...leftUnapproved(json?.filingApproval) };
+}
+
+/**
+ * The sections an approval left unapproved in the filing, and the server's own
+ * reason when it gave one (kept since 2026-11-12: when the filing is locked or
+ * submitted it says so — "… has been submitted, so none of its sections was
+ * approved" — and the transport dropped that and the note guessed instead).
+ */
+function leftUnapproved(
+  filingApproval: { notApproved?: string[]; reason?: string } | null | undefined,
+): { notApproved: string[]; filingReason: string | null } {
+  const reason = filingApproval?.reason;
+  const filingReason = typeof reason === 'string' && reason.trim() ? reason.trim() : null;
+  return { notApproved: (filingApproval?.notApproved ?? []).map(String).filter((k) => k !== ''), filingReason };
 }
 
 /**
@@ -279,12 +292,27 @@ export function signedToast(signed: { meaning: string; hash?: string; notApprove
   );
 }
 
-export function notApprovedNote(keys: readonly string[]): string {
+/**
+ * What the approver reads after an approval that left filing sections behind.
+ *
+ * Corrected 2026-11-12. It used to say "its filed text is not the text you
+ * signed … open it in the editor and save to re-file, then approve again".
+ * Neither half could be true where it is shown. This appears AFTER the
+ * approval, which froze the document, so nothing in it can be saved or
+ * re-filed; and a filed copy that differs from the signed text is refused
+ * BEFORE the signature (P-29.2, FILING_DIVERGED), so that is not how a section
+ * comes to be left behind. It now says what is so, what it will cost at
+ * dispatch, and the server's own reason when it gave one. It names no remedy
+ * because this document has none to offer; that gap is recorded for the
+ * founder (docs/evidence/ANA-REASONING/2026-11-12/refusal-remedies/).
+ */
+export function notApprovedNote(keys: readonly string[], reason?: string | null): string {
   const one = keys.length === 1;
+  const why = reason && reason.trim() ? ` ${reason.trim()}` : '';
   return (
-    `The approval did not cover ${one ? 'section' : 'sections'} ${keys.join(', ')}: ` +
-    `${one ? 'its' : 'their'} filed text is not the text you signed, so ${one ? 'it was' : 'they were'} ` +
-    'left unapproved in the filing. Open ' + (one ? 'it' : 'them') + ' in the editor and save to re-file, then approve again.'
+    `The approval did not reach ${one ? 'section' : 'sections'} ${keys.join(', ')} in the filing.${why} ` +
+    `${one ? 'It is' : 'They are'} not approved there, and will not count as finalized when the submission is checked for dispatch. ` +
+    'This document is now approved and frozen, so nothing in it can be saved or re-filed.'
   );
 }
 
@@ -467,7 +495,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
    *  (P-29, D-29-C). Persistent, not a toast: the approver has to be able to
    *  read the keys and act on them after the confirmation has gone. */
   const notApprovedNoteId = useId();
-  const [notApprovedKeys, setNotApprovedKeys] = useState<string[]>([]);
+  const [notApproved, setNotApproved] = useState<{ keys: string[]; reason: string | null }>({ keys: [], reason: null });
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
   /** The server's sentence when it refused an approval because review is not complete (P-95). */
@@ -556,7 +584,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
        clearing flips its default meaning back to review, which resets it to a
        blank form (found in the running app, 2026-11-02). closeAll clears them
        when the dialog closes. */
-    setNotApprovedKeys(signed.notApproved);
+    setNotApproved({ keys: signed.notApproved, reason: signed.filingReason });
     fireToast(signedToast(signed));
     onChanged();
     return signedManifest(input, signed.signedAt, signed.hash);
@@ -576,8 +604,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         {I.penLine} E-sign
       </button>
       {esignRefusal && esignRefusal !== freezeRefusal && <RefusalNote id={esignNoteId} testId="esign-refusal" text={esignRefusal} />}
-      {notApprovedKeys.length > 0 && (
-        <RefusalNote id={notApprovedNoteId} testId="esign-not-approved" text={notApprovedNote(notApprovedKeys)} />
+      {notApproved.keys.length > 0 && (
+        <RefusalNote id={notApprovedNoteId} testId="esign-not-approved" text={notApprovedNote(notApproved.keys, notApproved.reason)} />
       )}
 
       <FreezeDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} signerIsAuthor={signerIsAuthor} signer={signer}
