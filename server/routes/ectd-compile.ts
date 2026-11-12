@@ -1576,6 +1576,25 @@ router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => 
 // POST /:projectIdent/validate — Pre-compile validation only
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// GA-D7-10: the rule set Validate runs, by name, and the one that decides dispatch.
+const VALIDATE_RULE_SET = {
+  name: "Compile's placement and package checks",
+  otherRuleSet: 'Submission readiness, in Submit',
+} as const;
+
+function ruleSetFinding(): ValidationResult {
+  return {
+    rule: 'VALIDATION_RULE_SET',
+    severity: 'info',
+    message:
+      `These findings come from ${VALIDATE_RULE_SET.name}: where each document is placed in the sequence ` +
+      `and what the package must name. ${VALIDATE_RULE_SET.otherRuleSet}, checks the same sequence against ` +
+      `a separate rule set, so its count of errors can differ from this one. Its verdict is the one that ` +
+      `decides dispatch.`,
+    fix: 'Open Submission readiness in Submit to see the dispatch verdict for this sequence.',
+  };
+}
+
 router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
@@ -1638,6 +1657,8 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
     const errorCount = results.filter(r => r.severity === 'error').length;
+    // Last, outside the counts.
+    results.push(ruleSetFinding());
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1645,6 +1666,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
       programId: anchor.programId,
       valid: errorCount === 0,
       requiredSectionSource: required.provenance,
+      ruleSet: VALIDATE_RULE_SET,
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
     });

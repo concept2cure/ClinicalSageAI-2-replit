@@ -21,6 +21,7 @@ import crypto from 'crypto';
 import { Pool } from 'pg';
 import type { ChainBreak } from './chain.js';
 import type { TenantChainHead, TenantChainVerifier } from './tenant-chain-verdict.js';
+import { exportChangeWords } from './audit-change-words.js';
 
 import { stableStringify } from '../../../shared/canonical-json.js';
 import {
@@ -404,6 +405,7 @@ async function queryAuditLogs(pool: Queryable, req: AuditExportRequest) {
             a.table_name AS entity_type, a.record_id AS entity_id,
             COALESCE(a.actor_id, a.user_id) AS user_id, a.ip_address,
             COALESCE(a.occurred_at, a.created_at) AS timestamp, a.reason, a.target,
+            a.old_values, a.new_values,
             a.payload_hash, a.sha256_chain, a.chain_seq, a.hmac_seal
        FROM audit_logs a
       WHERE ${cond.join(' AND ')}
@@ -420,7 +422,7 @@ async function queryAuditData(pool: Queryable, req: AuditExportRequest) {
   const events = await queryAuditEvents(pool, req);
   const logs = await queryAuditLogs(pool, req);
   const at = (r: Record<string, unknown>) => new Date(String(r.timestamp)).getTime() || 0;
-  const merged = [...events.rows, ...logs.rows].sort((a, b) => at(a) - at(b));
+  const merged = await exportChangeWords(pool, [...events.rows, ...logs.rows].sort((a, b) => at(a) - at(b)));
   const truncated = events.truncated || logs.truncated || merged.length > EXPORT_ROW_LIMIT;
   if (merged.length > EXPORT_ROW_LIMIT) merged.length = EXPORT_ROW_LIMIT;
   return {
@@ -472,6 +474,7 @@ async function queryAuditEvents(pool: Queryable, req: AuditExportRequest) {
     `SELECT id, organization_id, event_type, entity_type, entity_id,
             user_id, user_name, user_role, ip_address, timestamp,
             reason, comments, regulatory_significant, gxp_relevant,
+            old_values, new_values, changed_fields,
             record_hash, previous_hash, sequence_number, created_at
      FROM audit_events ${where}
      ORDER BY timestamp ASC
@@ -577,6 +580,8 @@ export function formatAuditExportCsv(rows: Record<string, unknown>[]): string {
     'regulatory_significant', 'gxp_relevant',
     'record_hash', 'previous_hash', 'sequence_number',
     'sha256_chain', 'chain_seq', 'hmac_seal', 'payload_hash', 'target', 'comments', 'created_at',
+    // AUD-01: the governed change, in words and as stored.
+    'event_name', 'target_name', 'change_summary', 'change_note', 'reason_from_values', 'old_values', 'new_values',
   ];
 
   const csvRows = rows.map(row =>

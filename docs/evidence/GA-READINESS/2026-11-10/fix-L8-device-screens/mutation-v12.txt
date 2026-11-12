@@ -1,0 +1,2 @@
+V12 machine-text catch-all narrowed to "openFDA unavailable" | exit 0 | SURVIVED | Tests  8 passed (8) | restored sha256 ok
+V12 machine-text catch-all narrowed to "openFDA unavailable" | exit 1 | caught | Tests  2 failed | 8 passed (10) | restored sha256 ok

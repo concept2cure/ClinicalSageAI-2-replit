@@ -324,3 +324,72 @@ describe('create_regulatory_commitment, reached under launch scope', () => {
     expect(await count()).toBe(before);
   });
 });
+
+/* fulfill_regulatory_commitment was re-filed to Communication on 2026-11-11 (7994dc8f1). It asked for the
+   organisation's editor role and nothing about the project: an editor could mark fulfilled, which is terminal, a
+   commitment on a submission of a project they cannot open. It is admitted now as the create is. */
+describe('fulfill_regulatory_commitment, reached under launch scope', () => {
+  /** Ids 6 to 8, after the five every case starts with. */
+  const ON_OPEN = 6, ON_PRIVATE = 7, AT_PRIVATE_MEETING = 8, ORG_OWN = 1, PMR_ON_OPEN = 2, PMC_ON_PRIVATE = 3;
+  beforeEach(async () => {
+    await h.pg.exec(`
+      INSERT INTO regulatory_commitments (organization_id, submission_id, source_interaction_id, commitment_type, description, due_date, created_by, project_id) VALUES
+        (1, ${SUB_OPEN},    NULL,               'other',              'Send the updated protocol',     CURRENT_DATE + 5, ${OWNER}, NULL),
+        (1, ${SUB_PRIVATE}, NULL,               'meeting_commitment', 'Private follow-up',             CURRENT_DATE + 5, ${OWNER}, NULL),
+        (1, NULL,           ${MEETING_PRIVATE}, 'meeting_commitment', 'Agreed at the private meeting', CURRENT_DATE + 5, ${OWNER}, NULL);
+    `);
+  });
+  const fulfil = (ctx: Ctx, id: number) => run('fulfill_regulatory_commitment', { commitment_id: id, reason: 'Sent to the agency in sequence 0004.' }, ctx, true);
+  const statusOf = async (id: number) => (await h.pg.query<{ status: string }>('SELECT status FROM regulatory_commitments WHERE id = $1', [id])).rows[0]?.status;
+
+  it('a member who may change the project marks its commitment fulfilled', async () => {
+    const out = await fulfil(as(1, EDITOR), ON_OPEN);
+    expect(out.ok).toBe(true);
+    expect(await statusOf(ON_OPEN)).toBe('fulfilled');
+  });
+
+  it("the organisation's own commitment, naming no submission and no meeting, is fulfilled by an editor", async () => {
+    expect((await fulfil(as(1, EDITOR), ORG_OWN)).ok).toBe(true);
+    expect(await statusOf(ORG_OWN)).toBe('fulfilled');
+  });
+
+  it('a member who can open the project but not change it is refused, and nothing is recorded', async () => {
+    const out = await fulfil(as(1, READER), ON_OPEN);
+    expect(out.code).toBe('PROJECT_WRITE_ACCESS_DENIED');
+    expect(out.error).toBe('That commitment is not one of a project you may change. Nothing was recorded.');
+    expect(await statusOf(ON_OPEN)).toBe('open');
+    expect(h.recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it("a private project's commitment, or one made at its meeting, is refused in the same words", async () => {
+    for (const id of [ON_PRIVATE, AT_PRIVATE_MEETING]) {
+      const out = await fulfil(as(1, EDITOR), id);
+      expect(out.code, String(id)).toBe('PROJECT_WRITE_ACCESS_DENIED');
+      expect(await statusOf(id)).toBe('open');
+    }
+  });
+
+  it("the private project's owner marks it fulfilled", async () => {
+    expect((await fulfil(as(1, OWNER), ON_PRIVATE)).ok).toBe(true);
+    expect(await statusOf(ON_PRIVATE)).toBe('fulfilled');
+  });
+
+  it('a refusal confirms nothing about the commitment: a private PMC is refused as any other, not as a signed act', async () => {
+    const out = await fulfil(as(1, EDITOR), PMC_ON_PRIVATE);
+    expect(out.code).toBe('PROJECT_WRITE_ACCESS_DENIED');
+    expect(JSON.stringify(out)).not.toMatch(/PMC|sign/i);
+  });
+
+  it('a PMR the person may change is still a signed act for the screen (P-41), and nothing is written', async () => {
+    const out = await fulfil(as(1, EDITOR), PMR_ON_OPEN);
+    expect(out.ok).not.toBe(true);
+    expect(JSON.stringify(out)).toMatch(/sign/i);
+    expect(await statusOf(PMR_ON_OPEN)).toBe('open');
+  });
+
+  it("a user of another organisation cannot fulfil this organisation's commitment", async () => {
+    const out = await fulfil(as(2, OUTSIDER), ON_OPEN);
+    expect(out.ok).not.toBe(true);
+    expect(await statusOf(ON_OPEN)).toBe('open');
+  });
+});

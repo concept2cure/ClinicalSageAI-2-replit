@@ -11,7 +11,7 @@ route, service, screen, mount or table.
 |---|---|---|---|
 | `create_regulatory_commitment` (tool) | `lifecycle-mgmt` | in scope, Communication (`communication-center`) | Re-filed, after adding a project-level check. |
 | `review_commitment_portfolio` (tool) | `lifecycle-mgmt` | in scope, Communication | Re-filed, after adding a project-level check. |
-| `fulfill_regulatory_commitment` (tool) | `lifecycle-mgmt` | **still withheld** | It records a fulfilment itself. See section 3. |
+| `fulfill_regulatory_commitment` (tool) | `lifecycle-mgmt` | in scope, Communication | This lane first left it withheld. R1 re-filed it on 2026-11-11 (`7994dc8f1`); the merge kept that, and this lane added the project check it lacked. See section 3. |
 | `simulate_study_design` (tool) | `csr-workflow` | in scope, protocol workspace (`protocol-dev`) | Re-filed. No executor change was needed. |
 | `recommend_endpoints` (command) | `csr-workflow` | in scope, protocol workspace | Re-filed. No executor change was needed. |
 | `evaluate_endpoint` (command) | `csr-workflow` | in scope, protocol workspace | Re-filed. No executor change was needed. |
@@ -83,17 +83,24 @@ file (R1, the study-design capabilities).
 | `recommend_endpoints` | Organisation predicate (fixed 2026-10-15). | As above. | Writes nothing. | Counts and `evidence_strength` are computed. A model is asked only for endpoint wording when the corpus gives too few; such an endpoint carries no count and no rate, strength 10 (a constant), and the label "proposed by a language model". |
 | `evaluate_endpoint` | Organisation predicate. | As above. | Writes nothing. | `score` is always null. The model's commentary is labelled as commentary. |
 
-## 3. Why `fulfill_regulatory_commitment` stays withheld
+## 3. `fulfill_regulatory_commitment`: first withheld here, then re-filed by R1, now admitted by project
 
-The task's condition was that the tool must not record a fulfilment by itself.
-- For a PMR, PMC or REMS it does not: it reads the type from the record, writes nothing and points to Communication
-  (`ana-cannot-sign.test.ts`). The database would refuse the write as well.
+This lane's brief said the tool must not record a fulfilment by itself, so it was first left withheld:
+- For a PMR, PMC or REMS it does not record one: it reads the type from the record, writes nothing and points to
+  Communication (`ana-cannot-sign.test.ts`). The database would refuse the write as well.
 - For a meeting commitment or other it does: on a confirmation in chat with a stated reason, it sets the commitment
   fulfilled. That status is terminal, and no reopen exists. The tool names no evidence of what met it, which the
   screen lets a person name.
 - P-41 allows exactly this ("a meeting commitment or other is fulfilled by a governed write with a reason"), and a
-  test pins it. So this is a founder or coordinator decision, not a defect. Re-filing it is one line in the
-  inventory plus a `present` entry.
+  test pins it.
+
+R1 reached the same three tools on 2026-11-11 and re-filed all of them (`7994dc8f1`), on P-41's words. The two lanes
+merged on 2026-11-12 and R1's re-file was kept. Two things followed here:
+- `ci:step-presentation` was red on trunk, because the tool had no `present` entry. Added in `63be97f98`.
+- The tool asked for the organisation's editor role and nothing about the project. It now asks what the create
+  asks: a commitment that names a submission, or was made at a meeting on one, is marked fulfilled only by someone
+  who may change that submission's project. It asks before the type is read, so a refusal says nothing about a
+  commitment the person cannot open (`red/06-ana-fulfil-at-head.txt`: 3 of 26 failed; `green/06-ana-fulfil.txt`).
 
 ## 4. What changed
 
@@ -109,6 +116,15 @@ The task's condition was that the tool must not record a fulfilment by itself.
     project the person can open. A named submission outside that is refused, in the words a missing one gets.
 - `server/routes/ha-interactions.ts`: the meeting admission reads the submission's project and the meeting's
   submission from the two service functions. Behaviour unchanged.
+- **The screen's own commitments door, 2026-11-12 (second change).** It had been left looser than AnA. Now:
+  - `POST /commitments` naming a submission, or a meeting on one, needs the edit right on that submission's project;
+  - `GET /commitments` is bound to the reader's program scope, as the meetings list beside it is. A commitment that
+    names a submission, or was made at a meeting on one, of a program the reader cannot open is not listed;
+  - `POST /commitments/:id/milestones` and `POST /commitments/:id/fulfill` need the edit right, and
+    `GET /commitments/:id/fulfilment-options` the read right, on the project of the submission or meeting the
+    commitment names. A refused read answers "Commitment not found here.";
+  - a commitment that names neither is the organisation's own, as before;
+  - `subjectsOfCommitment` (`ha-service.ts`) is the one reader the routes and AnA's fulfilment tool both use.
 - `server/services/ana/ana-launch-scope.inventory.json`: the five names moved to `inScope`, with the amendment
   `amended20261112`.
 - `server/services/ana/tool-authorization.register.json`: `present` entries for the three tools.
@@ -129,10 +145,16 @@ Run with `npx vitest run <file> --reporter=verbose`. Each new test runs with lau
 | `green/02-commitment-tools.txt` | The commitment tools and the suites around them: 171 of 171. |
 | `green/03-study-design-and-launch-scope.txt` | The study-design tools, the launch-scope test for all five, and the suites around them: 911 of 911. |
 | `green/04-gates.txt` | `ci:launch-scope-api`, `ci:sql-interpolation`, `ci:step-presentation`, the ESLint delta per changed file, and the full typecheck. |
+| `red/04-screen-routes-at-head.txt` | The screen's routes before the second change: 9 of 14 fail. A commitment is recorded on a submission the person may not change; a milestone and a fulfilment go through; the list is read with no scope. |
+| `red/05-list-without-the-meeting-clause.txt` | The list with its meeting clause disabled: a commitment made at a meeting on a program the reader cannot open is listed. 1 of 10 fails. |
+| `red/06-ana-fulfil-at-head.txt` | AnA's fulfilment tool before its project check: a reader with no edit right, and a non-member of a private project, mark a commitment fulfilled. 3 of 26 fail. |
+| `green/05-screen-routes-and-service.txt` | The routes' admission tests, the meeting admission, error containment, the fulfilment route and the service: 43 of 43. |
+| `green/06-ana-fulfil.txt` | The commitment tools with the fulfilment cases, and the suites around them: 106 of 106. |
 
 New tests:
-- `server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts`: withheld at HEAD, offered after; the
-  fulfilment tool still withheld.
+- `server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts`: withheld at HEAD, offered after; an
+  obligation tool of the locked lifecycle screen still withheld.
+- `server/routes/__tests__/ha-interactions-commitment-admission.test.ts`: the screen's routes.
 - `server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts`: a member of the project is
   answered; a user of another organisation is refused; so is a member who cannot change or open the project.
 - `server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts`: the same, plus RULE 2 (no model call in
@@ -145,12 +167,11 @@ New tests:
   in AnA's review. It does not appear on a project's page or Respond step, which list the commitments made in that
   project's letters. It is the same register through its other door, by the 2026-10-18 rule. Recording into a
   project's door from conversation would need the letter and its visibility tier, and is not done here.
-- **The screens' own door is unchanged, apart from the tenant check.** `GET /api/ha-interactions/commitments` still
-  lists every organisation commitment to any member, and `POST` still asks for the editor role only. So AnA is now
-  stricter than the screen: its count can be lower than the list a person sees. Meetings got a project check on
-  2026-10-30 (P-39 step 4); commitments did not.
-- **`docs/design/ONE_DESIGN_PLAN.md` section 1b** still says the three commitment tools are "held for
-  `lifecycle-mgmt`". It is now true of one. The plan changes only by founder decision, so it was not edited.
+- **The screen's door and AnA now ask the same question** (section 4, second change). What is left: the screen's
+  route tests are mocks of the admission, not a PostgreSQL run; and a project's own commitments (the Respond step's
+  door, `routes/c2c/agency-responses.ts`) were not touched, because that door already admits by project.
+- **`docs/design/ONE_DESIGN_PLAN.md` section 1b** still said the three commitment tools are "held for
+  `lifecycle-mgmt`". R1 recorded their landing in section 3a (`9838081df`). The plan changes only by founder decision, so it was not edited.
 - **Tool wording was not changed.** `simulate_study_design`'s description promises "enrolment/dropout feasibility",
   which its result does not contain.
 - **The CSR corpus has a `client_workspace_id` column that no reader narrows by.** For a CRO, the study-design

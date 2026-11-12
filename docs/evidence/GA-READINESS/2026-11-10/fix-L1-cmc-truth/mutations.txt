@@ -1,0 +1,17 @@
+M1 a missing stability flag reads as OOS again: CAUGHT (test failed) · client/src/concept2cure/v2/surfaces/CmcModule.tsx restored sha256 matches
+M2 a contradicted pass counts as passed: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M3 the contradiction refusal is skipped: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M4 the lower bound of a range is not checked: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M5 section 3.1 reads name across all records: CAUGHT (test failed) · server/services/module3Composer.ts restored sha256 matches
+M6 section 3.3 reads name across all records: CAUGHT (test failed) · server/services/module3Composer.ts restored sha256 matches
+M7 the QC register never shows a contradiction: CAUGHT (test failed) · client/src/concept2cure/v2/surfaces/cmcRegisters.tsx restored sha256 matches
+M8 the seed flags the 0.61 impurity as within: CAUGHT (test failed) · scripts/demo/launch-demo/packs/biotech-work-content.mjs restored sha256 matches
+M9 the composer QC verdict never compares: CAUGHT (test failed) · server/services/module3Composer.ts restored sha256 matches
+M10 (V6) the lower limit becomes exclusive: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M11 the upper NMT limit becomes exclusive: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M12 the range upper limit becomes exclusive: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M13 (V5) "passed" is not read as a declared pass: CAUGHT (test failed) · server/services/cmc/batch-release-evidence.ts restored sha256 matches
+M14 (V10) the composer drops the flat criterion keys: CAUGHT (test failed) · server/services/module3Composer.ts restored sha256 matches
+M15 (V12) a not-assessed result chip in the error colour: CAUGHT (test failed) · client/src/concept2cure/v2/surfaces/CmcModule.tsx restored sha256 matches
+M16 (V13) the per-study chip counts unassessed as within, in green: CAUGHT (test failed) · client/src/concept2cure/v2/surfaces/CmcModule.tsx restored sha256 matches
+M17 (V-L1-04) the register reads only "pass" as a pass: CAUGHT (test failed) · client/src/concept2cure/v2/surfaces/cmcRegisters.tsx restored sha256 matches

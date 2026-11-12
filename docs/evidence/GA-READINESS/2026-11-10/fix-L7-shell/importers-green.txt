@@ -1,0 +1,1002 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search"
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search" 334ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation 279ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette 167ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title 48ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line 118ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button 224ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before 183ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it 9ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it 198ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is
+An update to RailRecents inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Rail inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it) 112ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is 121ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page 37ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page 18ms
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TopBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers 6ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does 6ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it 9ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > shows the complete saved section and table before a decision 683ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > posts the captured request and saved snapshot binding 363ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > does not announce or refresh success from an unaudited success flag 236ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > the board opens the decision the reviewer pressed > "Request changes..." opens with Request changes chosen and asks for the reason 128ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > the board opens the decision the reviewer pressed > "Record review decision" still opens with nothing chosen 182ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > prevents duplicate writes and ignores Escape and backdrop while a verdict is in flight 48ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > keeps a saved-content refusal open, disables retry, and clears the choice on explicit reload 67ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > shows the authoritative refusal alongside the full read without offering a verdict 30ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > rejects a same-tick account token swap before posting the displayed person’s choice 36ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > refuses AnA document selection while this governed dialog owns the canvas 125ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > preserves the confirmed receipt when the refreshed board no longer contains the document 208ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > does not publish a delayed previous-document read into its replacement 15ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > retires a late verdict after an actor replacement without reporting success 52ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=true) 55ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=false) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > runs checks without a model, refreshes the server receipt and unlocks an eligible approval 56ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > retains a human disagreement without letting it waive a current blocking finding 134ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > allows a reasoned human resolution only after the latest checks no longer reproduce the finding 74ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > holds an unknown check outcome until an explicit reload recovers its actual server receipt 112ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > fences a stale approval and stale rerun callback immediately after a new blocking receipt 59ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > does not publish a delayed former actor’s findings into the replacement session 74ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > a document with no revision number (J3 R10) > names no revision before or after the decision, and says nothing was left unrecorded 245ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > a document with no revision number (J3 R10) > still names the revision when the document carries one 283ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a loaded register publishes real seal counts 206ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a FAILED register read publishes the failure, never an empty org 68ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > IdentityConsole — the forbidden state grounds AnA without a single secret > a 403 publishes "cannot administer" — and no token, CIDR or org id ever enters facts 69ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > Orchestration — a dead checkpoint store is NEVER "zero gates pending" > publishes the gates failure in the reviewer-protecting words 91ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > BiopharmaJourney — the journey publishes real program identity > a loaded journey names the program, its stage count and readiness 61ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > security: identity-console never leaks a SCIM token, CIDR or org id > publishes counts from a populated directory — and no label, CIDR or org id 88ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > security: access-requests never leaks a requester email, name, note or reason > publishes the requested module (allowed) but no third-party PII or free text 62ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: task board — a failed read is a failure, never a clean empty board > publishes "could not be read", not "0 tasks", when the board read fails 66ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: doc-journey never publishes the actor name/email > publishes the active stage label but not its who (a name-or-email field) 60ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: projects never publishes the lead email > publishes the program code but not its lead (a COALESCE(name,email) field) 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: audit-trail never publishes an actor name or a reason free-text > publishes the event meaning and hasReason boolean, not the actor or the reason text 67ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: the ledger row names the account that acted (F-42) > shows each entry's account reference beside a display name two accounts share 45ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: review queue — a dead my-queue read is a failure, not "0 threads" > publishes "could not be read", not "0 open threads", when the queue read fails 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: clinical-ops never publishes a subject-scoped deviation narrative > publishes the deviation category/study but not its free-text description or CAPA 69ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint 56ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board 527ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > renders the real queue, workflow and thread — never a "Sample data" pill 52ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'approved' } reads "Reviewers approved, sign-off pending", never the raw code 48ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'APPROVED', state: 'approved' } reads "Approved", never the raw code 39ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'changes-requested' } reads "Changes requested", never the raw code 37ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'rejected' } reads "Declined", never the raw code 45ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'in-review' } reads "In review", never the raw code 49ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > shows the reviewer as signed, by whom it was asked, and offers no review decision 116ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > a queue whose every reviewer signed reads "Reviewers signed, sign-off pending" 38ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > a later change request is not hidden by an earlier signature 68ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default 26ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked 113ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > a program opened from a link is named from the board, never by its id 147ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > with no row naming it, the switch says "this project" 56ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > the review-thread inbox follows the same program filter 110ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest empty > shows the empty state, not a fabricated queue, when the org has nothing in review 10ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest error > shows the error state, not a fabricated queue, when the load fails 11ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review view-model module — no fixtures > exports render-contract types + config only, and no fabricated data constants 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > carries no context eyebrow, and its one action sits in the header's action slot 203ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > shows the three scopes as one segmented control, and a scope still filters 143ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > switches between this project and all projects with labels that keep their names 210ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > heads the inbox with a section heading and its counts, in sentence case 63ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 676ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 474ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 361ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 236ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 116ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 124ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 108ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 98ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 88ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 94ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 87ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 74ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 98ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 158ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 103ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 164ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 78ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 178ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 104ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 128ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 144ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 8ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 19ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > Account reaches existing in-app alert setup > loads on request, saves the current recipient preference and refreshes the existing inbox badge 639ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > the stylesheet gate measures what it claims > flags the orphaned rules and the hover highlights it exists to catch 3ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > the stylesheet gate measures what it claims > does not flag a class the surface genuinely renders 3ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > states that it is read-only and names where the document is edited 369ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > carries none of the nine formatting controls 20ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > leaves no inert control anywhere in the preview 30ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > does not present the page as editable 16ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > the stylesheet matches — no orphaned toolbar rule, no hover highlight 16ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey opens its own document in the editor > opens this document, in its project, not the editor list 158ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > has the page header with no eyebrow, one primary that opens the document, and a quiet AnA action 60ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > keeps the four facts as quiet figures 16ms
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > sets the preview prose in the editor's type 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > opens a saved report using its validated run resource instead of an arbitrary action URL 401ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > does not offer a report link for a malformed or unrelated resource 88ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a failed notifications read is an alert, not "No unread messages" 40ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a genuinely empty inbox still says so 32ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed unread-count read is not shown as zero waiting 16ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed my-work read is not shown as zero waiting either 45ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when every count loads and nothing is waiting, there is no badge 12ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a real count still shows as a number 11ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when something is overdue, the bell is marked and its name says how many 30ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a late item still marks the bell when another count failed, beside the "?" 34ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows 260ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when unsaved work owns the canvas 41ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when account work owns the canvas 58ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates 47ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > refuses a same-tick bearer replacement before React sees the account change 30ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > retires the old drawer and its pending reads when the actor changes 33ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > notification setup refresh ownership > refreshes counts for current-recipient preference changes and ignores a different organization 26ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > reads the open project, not the lead one 111ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > an open project with no portfolio row reads no other project, and says so 45ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > a legacy numeric workspace id is not a project: the lead project is used 28ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > Orchestration follows the open project (GA-UI-27) > with no project open, the lead project is used, as before 20ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFollowsOpenProject.test.tsx > a failed project read is said as one (GA-UI-27) > says the project list could not be read, not that there is no project 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-03: the bell count sits beside the bell > the count is in the button flow, not on its corner 12ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-03: the bell count sits beside the bell > a trigger with a count widens to hold the bell and the count side by side 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-07: every filing picker reaches all its tabs at 390 > the base .rpk-tabs rule scrolls sideways, and its tabs keep their width 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-05: the audit notice has a background of its own > the root-mounted notice is opaque, bordered and padded 16ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retires native creation before a same-project account replacement receives its old receipt 537ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retires native creation before a same-project account replacement receives its old identified503 169ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > holds the exact assigned task after a synchronous document create and Cancel 191ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > holds the exact assigned task after a synchronous section create and Cancel 228ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a confirmed document receipt before its normal callback and exact task navigation 151ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a confirmed section receipt before its normal callback and exact task navigation 165ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a definite403 refusal after the native form is closed 208ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retains an HTTP408 as unknown and never claims nothing was created 149ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > holds unknown document, its recovery read and host refresh until all succeed 389ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > holds unknown section, its recovery read and host refresh until all succeed 392ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a 403 recovery 162ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a wrong scope recovery 188ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a host refresh failure recovery 213ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > retained ledger ownership across authoring contexts > keeps an earlier project’s unresolved entry through A→B→A and suppresses its late receipt 538ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > retained ledger ownership across authoring contexts > unregisters a retired host without letting its late response recreate a guard or open a document 336ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > holds an unknown document when the actual host refresh fails after a valid recovery read 684ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > holds an unknown section when the actual host refresh fails after a valid recovery read 930ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > refuses a wrong-scope document host refresh after the recovery read succeeded 326ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > refuses a wrong-scope section host refresh after the recovery read succeeded 1824ms
+stderr | client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running 201ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished 83ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > still routes a draft the server DID report a stored version for 141ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > does not report a clean validation class when no document carries a validation result 407ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > still reports the rules class clear in that same render 141ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports the validation class clear once documents carry validation results 104ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports neither class clear when the evaluation inventoried nothing 129ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > shows the class its findings when the assessment produced some 192ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > starts on "Not stated — choose" and records nothing until a decision is chosen (P-21) 1122ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > POSTs the verdict and the note to the authoring review transition 412ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > a decline is the authoring "rejected" verdict, and needs grounds 287ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > re-reads the board after the decision, so the row comes from the record 284ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > says the decision was NOT recorded when the server refuses, and stays open 250ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > offers no signature meaning — the board does not sign 219ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > requesting changes > is the authoring "changes_requested" verdict with the reason, and re-reads the board 331ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > there is no delegate on the board > the authoring workflow has no delegate transition, so the board offers none 92ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > POSTs a comment to the document’s section through the authoring router and re-reads the board 165ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > resolving a comment PATCHes it through the authoring router, and a refusal puts it back to open 209ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > the hero call to action > "Open the queue" selects a document still in review instead of doing nothing 334ms
+stderr | client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > open-queue jumps to the next document still awaiting a decision
+An update to ReviewSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > registers under "review", and select-document drives the SAME selection the row click drives 980ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > open-queue jumps to the next document still awaiting a decision 108ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > Review — AnA operates the real board > an unknown document is an honest refusal, never a guess 90ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > TaskBoard — the aliased surface obeys nav-target-addressed directives > registers under "tasks"; a tasking.* directive (nav-target id) operates it through the alias 107ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > TaskBoard — the aliased surface obeys nav-target-addressed directives > tasking.filter resolves programmes against the real options with honest misses 105ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > TaskBoard — the aliased surface obeys nav-target-addressed directives > tasking.open-task opens the detail, and a second open is refused while it holds the canvas 77ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > GlobalRiBrowser — held through the catalog load, applied when it lands > registers under "global-ri"; an intelligence.* directive held during loading applies on ready 51ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx > GlobalRiBrowser — held through the catalog load, applied when it lands > close-capability refuses honestly when none is open; open-capability resolves by label 12ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > opens the template picker and POSTs the chosen template with the open program 445ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > re-reads the board from the engine instead of appending a client-built row 195ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > reports a refused start and creates nothing 180ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — "New run" starts a run > never claims the deployment has no templates while the registry read is in flight 76ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > Retry on a failed run POSTs that run’s template against the same program 105ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > Replay on a completed run POSTs a NEW run of the same template 143ms
+stderr | client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > says "Starting…" while a re-run is in flight, not "Cancelling…"
+An update to Orchestration inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Orchestration inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Orchestration inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > says "Starting…" while a re-run is in flight, not "Cancelling…" 182ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Retry and Replay re-run the same template > refuses, with the reason stated, a run that does not record its template 129ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Pause and Resume have no backend and do not pretend to > wf-running: Pause is disabled and names the reason 74ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Pause and Resume have no backend and do not pretend to > wf-paused: Resume is disabled and names the reason 82ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx > Orchestration — Pause and Resume have no backend and do not pretend to > a disabled run control is visually disabled, not pixel-identical to a live one 3ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > lists the documents at my sign-off from the review board, and nothing from the unified store 522ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > a failed board read says the approvals could not be loaded 51ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > no sign-off waiting renders no approvals group 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > opens the exact task handed off by the board, even beyond the list cap or already done 198ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > states when the task no longer belongs to the authorized program work view 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > reads the work view by the program UUID and lists its items with their store 125ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > says the counts are a floor when a store could not be read 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > an empty work view is an honest empty, not a failure 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > a program with no project record says so, not "no tasks" and not an error 134ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > a failed read is an error, never an empty list 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > orders open work by due date, undated last, and says each status in words at the row’s right 441ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > a past due date is marked overdue 156ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > Review lists no tasks: the one list is on Plan 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > a task handed over from Tasks with stage "review" opens Plan, the requested row first and focused 136ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > keeps the handed-over task under React.StrictMode 167ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked 2ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻ 778ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs
+An update to NamedReviewGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button 259ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > still gives the number when something is late 86ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs 121ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice 134ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons 191ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > finds the tray block 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻ 9ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px 0ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Nonclinical — the SEND conformance row may not render the exception > does not put a raw thrown message on screen, and still says the check did not run 1031ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Nonclinical — the SEND conformance row may not render the exception > does not put a transport status on screen for the 401 branch 455ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Nonclinical — the SEND conformance row may not render the exception > still shows the server's own sentence when the server sent one 235ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Nonclinical — the SEND conformance row may not render the exception > still reports a clean check as clean 172ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Orchestration — a payload it cannot read is not an absence of assessment > says the evaluation could not be read when the payload is rejected 208ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Orchestration — a payload it cannot read is not an absence of assessment > offers a way to re-evaluate from that state 348ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Orchestration — a payload it cannot read is not an absence of assessment > still says nothing has been evaluated when there genuinely is no evaluation 36ms
+ ✓ client/src/concept2cure/v2/__tests__/flaggedHonestyItems.test.tsx > Orchestration — a payload it cannot read is not an absence of assessment > still renders the score when the engine returns a real assessment 129ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > workflow runs: renders a retry, and pressing it issues another request 225ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > approval gates: renders a retry, and pressing it issues another request 313ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx > Orchestration — a failure offers a way out, and it really re-reads > no longer instructs the user to "sign in and retry" 69ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > preserves the project, editor and record params when native work refuses a 20000000-0000-4000-8000-000000000002 target 6ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > preserves the project, editor and record params when native work refuses a null target 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > checks the tray owner before changing any channel 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > builds a confirmed task destination with the current actor and organization 9ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > refuses a task when the current actor cannot be established before clearing existing targets 2ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > retains all channels when native creation becomes uncertain during the target read 411ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > rechecks the retained tray owner after the linked record is confirmed 29ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > rejects a changed live actor even if the bearer has not yet been replaced 48ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > does not resolve a linked record under a bearer for another actor 36ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > actual tray owns a pending notification target > refuses the confirmed target when the old tray actor changes before React retires it 90ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > actual tray owns a pending notification target > does not revive an old notification callback after an account round trip 249ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapReadiness > adopts the ReadinessAssessment fields with honest semantics 30ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapReadiness > marks status ready only when the engine says ready 1ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapReadiness > rejects payloads without the assessment fields (fail-closed) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns > adopts executions with template display names, newest first 2ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns > rejects empty or malformed workflow lists (fail-closed to fixture) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapCps > adopts persisted checkpoints through the { data } envelope 1ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapCps > rejects empty envelopes and rows without the gate keys (fail-closed) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns carries the template a run can be started from again > keeps templateId on the display row 0ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns carries the template a run can be started from again > reports NO template rather than inventing one when the engine did not record it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts > mapRuns carries the template a run can be started from again > still titles a run whose template is not in the registry, without claiming a name 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 611ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 158ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 123ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 569ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing 390ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not report a clear queue when a refresh fails under a stale queue 969ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not say nothing is in review when the response carried no board 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > still reports a clear queue when the rows were read and none is waiting on the caller 54ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > names a document awaiting my review, and one at my sign-off step, and says nothing is in review when nothing is 99ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > a review or sign-off the caller does not own is not reported as 'yours' 27ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > waits for authorized resolution, switches to the actual UUID program and opens the exact record without marking read 353ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > keeps a refused target visible with retry, and opens it only after a later confirmed read 180ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > an authored section is handed to the real editor with exact identity and section code 62ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > a malformed successful target never borrows the current program or follows an arbitrary action 68ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > an unsaved native editor or open signature ceremony blocks navigation before target/program state changes 87ms
+ ✓ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > one click opens the version the route names, in the Vault of its project 387ms
+ ✓ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > a board that cannot be read is said, and nothing is opened 100ms
+ ✓ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > a route the board does not list opens the Review board 178ms
+ ✓ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > an approval at your sign-off opens its document (GA-UI-04) > opens the document in the editor, in its project 638ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > is on the Review screen, above the threads, where a reviewer already looks for work 198ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > lists the request from /reviews/pending, with its round and the note it was sent with 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > opening it shows the text of the version under review, and the decision, but no naming of reviewers 133ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > the named reviewer decides through the review submit route, and the decision is shown 71ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > a list that cannot be read says so, and is never shown as no requests 6ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > with nothing waiting, it adds nothing to the screen 5ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > Your open work lists it, and opens the Review screen, where the decision is 10ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRequests.test.tsx > ReviewRequests — the artifact reviews you were named for (P-95) > Your open work says when the list could not be read, rather than showing nothing 5ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > the shared contract admits the Vault version, only with its project, and a route task id 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > opening it publishes the project and the Vault target, then navigates to the Vault 11ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a named member whose turn it is reads "Your turn", with their due date 24ms
+stderr | client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > says what an approver waits on, and a QMS route opens the Review board
+An update to NamedReviewGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > an ordinary task still opens on the task board
+An update to NamedReviewGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > the sender's row carries every member's outcome and Remind; Open the version opens that version 217ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a route that could not be read says so, and names nobody 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a withdrawn route says nothing is signed until a new one is sent 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > says what an approver waits on, and a QMS route opens the Review board 64ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > an ordinary task still opens on the task board 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > finds the bar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100, unclipped 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it 314ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a conversation the server will not confirm (not yours, or gone) is not opened 84ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a notice with no record stays a row that only marks read 43ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > Home names a project's client type in words > a device project reads "Medical device & IVD", never the key MDX 313ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > Home names a project's client type in words > with no project, the example names a device filing as well as a drug one 14ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's review names the client type in words > an NDA is reviewed under "Client type", not "Workstream" 352ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's review names the client type in words > a 510(k) is reviewed as "Medical device & IVD", never MDX 390ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's objective speaks to every filing type > the placeholder names a device outcome beside the IND one, and no study endpoint 11ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a notice that says the request completed and its audit entry is unconfirmed 97ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows one notice for a repeated request, and removes it on dismiss 244ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows the actual GET export transport warning while the caller receives the CSV 23ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a failed preview audit after a large clinical table payload without consuming the result 37ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx > GlobalMutationErrors — a completed request with no audit row > shows a tamper-only audit warning while preserving the successful response 11ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > Project home keeps one column width on every step > `.pj` claims the flex row it sits in 12ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > The Projects list reads at 1440 and at 390 > a cell's text wraps inside its column 1ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > The Projects list reads at 1440 and at 390 > on a phone the table scrolls inside its frame and keeps its columns 1ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > Project home's section actions stay on a phone's screen > the head and its actions wrap at ≤640px 6ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > New project's filing tabs reach every client type on a phone > the wizard scrolls its filing tabs sideways and does not shrink them 7ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with a review you were named for listed, the claim narrows to the editor queue 132ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with that list unread, it does not claim nothing is in review 34ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with nothing named and nothing on the board, it still says nothing is in review 23ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > lists it with the people who can sign it, and does not claim nothing is in review 385ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > says plainly when nobody in the organization can sign it 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx > a Vault version in review is on the board, with who has it > a failed Vault read is said, never shown as an empty list 13ms
+
+ Test Files  34 passed (34)
+      Tests  341 passed (341)
+   Start at  12:54:21
+   Duration  117.94s (transform 11.71s, setup 4.47s, import 31.08s, tests 48.37s, environment 26.09s)
+

@@ -1,0 +1,12 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with a review you were named for listed, the claim narrows to the editor queue 145ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with that list unread, it does not claim nothing is in review 39ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with nothing named and nothing on the board, it still says nothing is in review 21ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > AnA's refusals on an empty editor queue (GA-UI-05, V-L7-4) > review.select-document narrows to the editor queue when a named review is listed 28ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > AnA's refusals on an empty editor queue (GA-UI-05, V-L7-4) > review.select-document still says nothing is in review when nothing is listed 24ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > AnA's refusals on an empty editor queue (GA-UI-05, V-L7-4) > review.open-queue narrows to the editor queue when a named review is listed 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > AnA's refusals on an empty editor queue (GA-UI-05, V-L7-4) > review.open-queue still says nothing is in review when nothing is listed 12ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  02:00:35
+   Duration  3.44s (transform 1.58s, setup 233ms, import 1.87s, tests 292ms, environment 769ms)

@@ -1,0 +1,20 @@
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > treats hyphenated name codes (a controlled SOP) as named matter, in the order stored 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > shows a reader no number for a name code, and the outline code otherwise 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > shows a working field the number of the section it belongs to, never its stored key 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > still reports numbered sections out of order among themselves, front matter kept in place 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reads the order it is given, not a sorted copy of it 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > names a working field by its section number and title, never its stored key 326ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > says checks are not required for this document, instead of "(optional)" 63ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a finding names its section in words 59ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a section with neither a number nor a title reads "Untitled section" 61ms
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  01:38:21
+   Duration  28.32s (transform 10.55s, setup 424ms, import 4.97s, tests 21.18s, environment 665ms)
+
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > the request client answers a timestamptz as text, as PostgreSQL does through Drizzle 60ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > places a frozen, sealed document whose section creation is chained 579ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > a ledger that cannot be read answers 503 in words, and nothing is written 153ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > a chained row that no longer derives is still refused 409 215ms
+      Tests  4 passed (4)

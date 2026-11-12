@@ -94,6 +94,30 @@ describe('evaluateReleaseSignatureGate — not-required path', () => {
     const gate = evaluateReleaseSignatureGate({ required: false, verdict });
     expect(gate.cleared).toBe(true);
   });
+
+  /* GA-D7-11 (2026-11-10): a 510(k) sequence, unsigned and unfrozen, showed this
+     gate as "Satisfied" with a check. Nothing was satisfied: the gate did not
+     apply. A cleared gate that did not apply says so, in its own words, so no
+     screen can read it as a signature that was checked and passed. */
+  it.each(BLOCKING_WHEN_REQUIRED)('a not-required %s gate says "Not required", never that a signature passed', verdict => {
+    const gate = evaluateReleaseSignatureGate({ required: false, verdict });
+    expect(gate.notRequired).toMatch(/^Not required for this submission type\./);
+    expect(gate.notRequired).not.toMatch(/satisfied|verifies|passed/i);
+  });
+
+  it('a not-required gate with a verified signature on record says both', () => {
+    const gate = evaluateReleaseSignatureGate({ required: false, verdict: 'signed' });
+    expect(gate.cleared).toBe(true);
+    expect(gate.notRequired).toMatch(/^Not required for this submission type\./);
+    expect(gate.notRequired).toMatch(/one is on record and verifies/);
+  });
+
+  it('a REQUIRED gate never carries the not-required note, signed or blocked', () => {
+    for (const verdict of ['signed', ...BLOCKING_WHEN_REQUIRED] as ReleaseSignatureVerdict[]) {
+      expect(evaluateReleaseSignatureGate({ required: true, verdict }).notRequired).toBeUndefined();
+    }
+    expect(evaluateReleaseSignatureGate({ required: false, verdict: 'invalid' }).notRequired).toBeUndefined();
+  });
 });
 
 describe('release-signature gate composes with the existing dispatch gates', () => {
