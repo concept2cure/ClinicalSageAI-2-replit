@@ -59,3 +59,37 @@ describe('assessTmfCompleteness', () => {
     expect(a).toEqual(b);
   });
 });
+
+describe('records declared not applicable (P-124 item 5)', () => {
+  const essential = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.filter((a) => a.essential).map((a) => a.code));
+
+  it('leave the required set, are counted as neither present nor missing, and are counted on their own', () => {
+    const base = assessTmfCompleteness({ providedArtifacts: [] });
+    const r = assessTmfCompleteness({ providedArtifacts: [], notApplicable: ['monitoring_plan'] });
+    const zone = r.zones.find((z) => z.notApplicable.includes('monitoring_plan'))!;
+    expect(zone.required).not.toContain('monitoring_plan');
+    expect(zone.missing).not.toContain('monitoring_plan');
+    expect(zone.present).not.toContain('monitoring_plan');
+    expect(r.summary).toMatchObject({ totalNotApplicable: 1, totalRequired: base.summary.totalRequired - 1, totalMissing: base.summary.totalMissing - 1 });
+  });
+
+  it('a study that files every other essential record and declares one is ready, and says one was declared', () => {
+    const r = assessTmfCompleteness({ providedArtifacts: essential.filter((c) => c !== 'monitoring_plan'), notApplicable: ['monitoring_plan'] });
+    expect(r.ready).toBe(true);
+    expect(r.summary.totalNotApplicable).toBe(1);
+    expect(r.summary.totalMissing).toBe(0);
+  });
+
+  it('a code both filed and declared is counted as declared, never twice', () => {
+    const r = assessTmfCompleteness({ providedArtifacts: ['monitoring_plan'], notApplicable: ['monitoring_plan'] });
+    expect(r.zones.flatMap((z) => z.present)).not.toContain('monitoring_plan');
+    expect(r.summary.totalNotApplicable).toBe(1);
+  });
+
+  it('a declaration outside the scope checked is not counted; nothing declared reads as before', () => {
+    const optional = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.filter((a) => !a.essential).map((a) => a.code))[0];
+    expect(assessTmfCompleteness({ providedArtifacts: [], notApplicable: [optional] }).summary.totalNotApplicable).toBe(0);
+    expect(assessTmfCompleteness({ providedArtifacts: [], scope: 'all', notApplicable: [optional] }).summary.totalNotApplicable).toBe(1);
+    expect(assessTmfCompleteness({ providedArtifacts: [] }).zones.every((z) => z.notApplicable.length === 0)).toBe(true);
+  });
+});

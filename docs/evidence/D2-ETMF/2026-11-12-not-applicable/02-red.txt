@@ -1,0 +1,40 @@
+# The new pins against the code as it stood at 4424c05e21 (sources reverted; tests and fixtures as changed)
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > 401 when unauthenticated 22ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > POST file → 201 against the study (org and actor from the session); 400 for an unknown artifact code 30ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > refuses a filing with no reason (400 REASON_REQUIRED), and files nothing 15ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > refuses a trial name that is no study the caller can open (404 STUDY_NOT_FOUND) on every route 60ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > refuses a Vault document of another project (409 DOCUMENT_NOT_IN_PROJECT); files one of the study's own 11ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > GET artifacts says what each filing's document is, and null where the reference is not a Vault document of the project 8ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > re-filing the same artifact updates the one row, and records the document it replaced 13ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF reads are the study's > GET completeness reflects stored artifacts (not ready until all essentials filed), and names the study 6ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF reads are the study's > does not serve another org's study, or this study to another org 10ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF reads are the study's > streams the inspection package as a recorded download, and sends nothing when it cannot be recorded 48ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF removal keeps the record > DELETE needs a reason; with one → 204, the filing is listed no more and stays on record; unknown id → 404 26ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF removal keeps the record > files the removed artifact again on the same row 13ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > is refused without a reason, or with a document, and nothing is written 20ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > is declared with who, when and why, audited, listed, and counted as neither filed nor missing 15ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > a filed record is not declared over: 409 RECORD_FILED, and the filing stands 14ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > declared again, the new reason replaces the old on the same row, and the audit row keeps the old one 7ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > is withdrawn as a filing is removed, with a reason that is kept, and the record is required again 2ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > a document filed against a declared record ends the declaration on the same row, and says which it ended 6ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > the database refuses a declaration that names a document, or carries no reason 3ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > a record declared not applicable to the study > the inspection package lists a declaration with its reason, and does not count it as filed 16ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > declaring a record not applicable to the study > a missing record offers it; the form asks why, and sends the declaration with no document 269ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > declaring a record not applicable to the study > a declared record says why, who and when, and is counted as neither filed nor missing 48ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > declaring a record not applicable to the study > is withdrawn with a reason, and the record is missing again 92ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > declaring a record not applicable to the study > filing a document against a declared record says it ends the declaration 84ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > declaring a record not applicable to the study > a filed record is not offered it, and a refusal from the server is said in the form 60ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > declaring a record not applicable to the study > a view-only role is offered none of it 56ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > TMF_REFERENCE_MODEL > has 11 zones, each with ≥1 essential artifact and unique codes 3ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > ready when all essential artifacts are present (default scope) 1ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > flags missing essential artifacts per zone and is not ready 1ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > scope 'all' requires non-essential artifacts too 0ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > reports an empty TMF as not ready with all essentials missing 0ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > is deterministic 1ms
+ × server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > leave the required set, are counted as neither present nor missing, and are counted on their own 3ms
+ × server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a study that files every other essential record and declares one is ready, and says one was declared 3ms
+ × server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a code both filed and declared is counted as declared, never twice 3ms
+ × server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a declaration outside the scope checked is not counted; nothing declared reads as before 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  18 failed | 18 passed (36)

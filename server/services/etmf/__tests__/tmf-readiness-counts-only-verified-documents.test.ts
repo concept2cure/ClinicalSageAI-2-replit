@@ -152,8 +152,8 @@ describe('the inspection package', () => {
     expect(readme).toMatch(/Inspection ready: NO/);
     expect(readme).toMatch(/without a verified document: 26/);
     const csv = (await zip.file('inspection-index.csv')!.async('string')).trim().split('\n');
-    expect(csv[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence');
-    expect(csv.find((l) => l.split(',')[1] === 'protocol')).toMatch(/,no_document$/);
+    expect(csv[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence,not_applicable_reason');
+    expect(csv.find((l) => l.split(',')[1] === 'protocol')).toMatch(/,no_document,$/);
     const manifest = JSON.parse(await zip.file('manifest.json')!.async('string'));
     expect(manifest.ready).toBe(false);
     expect(manifest.basis).toBe('verified_documents');

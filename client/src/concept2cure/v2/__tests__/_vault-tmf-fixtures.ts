@@ -31,7 +31,13 @@ export const tmfBase = (studyId: string) => `/api/etmf/trials/${studyId}`;
 export const BASE = tmfBase(STUDY.studyId);
 
 export type VaultDocument = { title: string | null; version: string | null; current: boolean };
-export type FilingRow = { id: string; artifactCode: string; documentRef: string | null; filedAt: string };
+export type FilingRow = {
+  id: string; artifactCode: string; documentRef: string | null; filedAt: string;
+  /** A declaration that the record does not apply (P-124 item 5), and who made it, as GET …/artifacts lists them. */
+  notApplicableReason?: string | null; filedByName?: string | null;
+};
+/** Who the in-memory server names as the person who filed or declared a record. */
+export const DECLARER = 'Dana Reyes';
 type Route = 'studies' | 'completeness' | 'filings' | 'file' | 'remove' | 'package';
 export type Scope = 'essential' | 'all';
 /** What a route answers: a response, or one still on its way. A refusal is thrown, as `apiRequest` throws it. */
@@ -85,13 +91,16 @@ function evidenceOf(row: FilingRow): TmfDocumentEvidence {
 
 /** As GET …/completeness answers: the service's assessment of the study's live filings in a scope, with the study it is about. */
 export function completenessOf(studyId: string = STUDY.studyId, scope: Scope = 'essential') {
-  const rows = tmf.filings[studyId] ?? [];
+  const all = tmf.filings[studyId] ?? [];
+  // A declaration is not a filing (tmf-artifact-persistence.ts readTrialTmf): it leaves the required set.
+  const rows = all.filter((f) => f.notApplicableReason == null);
   const study = studyId === EXTENSION.studyId ? EXTENSION : STUDY;
   return {
     ...assessTmfCompleteness({
       providedArtifacts: rows.map((f) => f.artifactCode),
       scope,
       documentEvidence: Object.fromEntries(rows.map((f) => [f.artifactCode, evidenceOf(f)])),
+      notApplicable: all.filter((f) => f.notApplicableReason != null).map((f) => f.artifactCode),
     }),
     study: { id: 7, studyId, programId: PID, protocolId: studyId, title: study.title, phase: study.phase, indication: study.indication, status: 'draft' },
   };
@@ -120,8 +129,20 @@ const SEARCH = { data: { query: 'plan', total: 1, limit: 25, offset: 0,
 export const NOT_IN_PROJECT = ROUTE('DOCUMENT_NOT_IN_PROJECT',
   "That Vault document is not held in this study's project, so the artifact cannot be recorded as filed against it. File a document from the project's own Vault.");
 
+export const RECORD_FILED = ROUTE('RECORD_FILED',
+  'A document is filed for this record. Remove that filing, with its reason, before declaring the record not applicable. Nothing was changed.');
+
+function declareIt(studyId: string, sent: { artifactCode?: string; reason?: string }): Response {
+  const held = (tmf.filings[studyId] ?? []).find((f) => f.artifactCode === sent.artifactCode);
+  if (held && held.notApplicableReason == null) throw refusal(409, RECORD_FILED);
+  const row: FilingRow = { ...filing(String(sent.artifactCode), null, 8), notApplicableReason: String(sent.reason), filedByName: DECLARER };
+  tmf.filings[studyId] = [...(tmf.filings[studyId] ?? []).filter((f) => f.artifactCode !== row.artifactCode), row];
+  return json(row, 201);
+}
+
 function fileIt(studyId: string, body: unknown): Response {
-  const sent = body as { artifactCode?: string; documentRef?: string };
+  const sent = body as { artifactCode?: string; documentRef?: string; notApplicable?: boolean; reason?: string };
+  if (sent.notApplicable === true) return declareIt(studyId, sent);
   const row = filing(String(sent.artifactCode), sent.documentRef ?? null, 9);
   // tmf-artifact-persistence.ts assertDocumentInStudyProject: a Vault reference must name a live document of the study's project.
   const id = vaultIdOf(row);

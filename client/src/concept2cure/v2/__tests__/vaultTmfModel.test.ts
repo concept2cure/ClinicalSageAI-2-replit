@@ -58,7 +58,7 @@ describe('the three figures', () => {
       providedArtifacts: ['protocol', 'tmf_plan', 'monitoring_plan'],
       documentEvidence: { protocol: 'verified', tmf_plan: 'no_document', monitoring_plan: 'unverifiable' },
     });
-    expect(tmfFigures(result)).toEqual({ zonesComplete: 0, zoneCount: 11, filed: 1, required: ESSENTIAL.length, open: ESSENTIAL.length - 1, unverified: 2 });
+    expect(tmfFigures(result)).toEqual({ zonesComplete: 0, zoneCount: 11, filed: 1, required: ESSENTIAL.length, open: ESSENTIAL.length - 1, unverified: 2, notApplicable: 0 });
     expect(tmfFiguresSentence(result)).toBe(
       `0 of 11 zones are complete; 1 of ${ESSENTIAL.length} essential records are filed; ${ESSENTIAL.length - 1} are open, 2 filed with no verified document.`,
     );

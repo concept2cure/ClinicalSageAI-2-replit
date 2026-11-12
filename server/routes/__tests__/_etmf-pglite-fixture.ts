@@ -39,6 +39,11 @@ CREATE TABLE IF NOT EXISTS vault.documents (
   id UUID PRIMARY KEY, program_id UUID NOT NULL, organization_id INTEGER NOT NULL, deleted_at TIMESTAMPTZ,
   document_code TEXT, document_title TEXT, file_name TEXT, version TEXT, supersedes_id UUID
 );
+-- Who filed or declared a record, by name: public.actor_name as 20260929_actor_names.sql declares it (its
+-- organization filter is exercised on PostgreSQL), over the two columns it reads.
+CREATE TABLE IF NOT EXISTS tmf_test_users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+CREATE OR REPLACE FUNCTION public.actor_name(p_user_id integer) RETURNS TABLE (name text, email text)
+  LANGUAGE sql AS $fn$ SELECT u.name, u.email FROM tmf_test_users u WHERE u.id = p_user_id $fn$;
 -- What the audit-writer double records, on the client it is handed: a row here
 -- commits or rolls back with the filing it describes.
 CREATE TABLE IF NOT EXISTS tmf_test_audit (
