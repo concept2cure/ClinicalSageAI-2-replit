@@ -99,7 +99,7 @@ import { readProjectAuthoringRecords } from '../../services/c2c/project-authorin
 import { readProjectTeam } from '../../services/c2c/project-team';
 import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-intake-workspace';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
-import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts } from '../../services/c2c/project-portfolio';
+import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts, readPortfolioReadiness } from '../../services/c2c/project-portfolio';
 import { installProjectSettingsRoutes } from './project-settings';
 import { CharterObjectivesRefusal, objectiveStatedAtCreation, recordObjectiveAtCreation, type RecordedObjectives } from '../../services/c2c/charter-objectives';
 import { installProjectRecordedContextRoutes } from './project-recorded-context';
@@ -636,7 +636,11 @@ router.get('/', async (req: Request, res: Response) => {
       Object.assign(p, readinessFields(figures.get(p.id) ?? unread()));
     }
 
-    const counts = await readPortfolioCounts(pool, {organizationId:orgId, anchors, includeArchived, clientWorkspaceId, workstream, pathway});
+    const selection = {organizationId:orgId, anchors, includeArchived, clientWorkspaceId, workstream, pathway};
+    const counts = {...await readPortfolioCounts(pool, selection)};
+    // The portfolio's average readiness, the server's figure (P-122): over every selected project, not this page.
+    Object.assign(counts, await readPortfolioReadiness(pool, selection,
+      {total: counts.total, whole: offset === 0 && !hasMore, figures}, (ids) => homeFigures(ids, orgId)));
     const clients = await readPortfolioClients(pool, orgId, anchors, includeArchived);
     await requireProgramScopeStillCurrent(pool, identity, scope);
     return res.json({

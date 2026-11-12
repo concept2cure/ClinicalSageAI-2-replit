@@ -25,7 +25,7 @@ import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
-import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
+import { LIBRARY_VIEWS, catalogCapabilityCounts, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import { sealLineFrom, type BundlePdfContent, type ReportRunRow, type RunSealView } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
 import { GlobalSchedule, type ScheduleProject } from './PyramidProject';
@@ -2292,6 +2292,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   const packs = roPresetsForSeg(seg, catalog, p.registryId);
   const packsNotOffered = roPacksNotOffered(seg, catalog, p.registryId);
   const notComputed = roNotComputed(catalog);
+  const runnableCount = catalogCapabilityCounts(libraryCatalog).available;
   const segLabel = SEG_LABEL[seg] || seg;
 
   return (
@@ -2456,6 +2457,14 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
                   <p className="rc-packs-none">No standard pack for {segLabel} can run here. Find a report above, or open the Catalog.</p>
                 )}
                 {packsNotOffered && <p className="rc-packs-none" data-testid="rc-packs-not-offered">{packsNotOffered}</p>}
+                {/* P-122: the reports that can be run are in the Catalog, a tab away. The landing says
+                    how many there are, by the catalog's own count, and opens them. */}
+                {runnableCount > 0 && (
+                  <p className="rc-packs-none" data-testid="ro-runnable-count">
+                    {runnableCount === 1 ? '1 report' : `${runnableCount} reports`} can be run one at a time for {p.code}.{' '}
+                    <button type="button" className="btn ghost" onClick={() => { setPaneView('catalog'); pushCanvasTop(); }}>Open the catalog</button>
+                  </p>
+                )}
               </section>
               {/* P-26: the program's report types no engine computes, listed
                   once, here, and never as tiles inside a pack. Asking for one
