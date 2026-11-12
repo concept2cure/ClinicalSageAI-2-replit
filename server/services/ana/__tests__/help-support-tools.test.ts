@@ -45,6 +45,41 @@ describe('offered when the question is about using the product', () => {
       expect(asksHowToUseProduct(q), q).toBe(true);
     for (const q of ['Draft the nonclinical overview', 'What does ICH E3 require in section 12?', 'summarise the CMC risks'])
       expect(asksHowToUseProduct(q), q).toBe(false);
-    expect(HELP_SUPPORT_TOOLS.map((t) => t.name)).toEqual(['search_help_center', 'read_help_article']);
+    expect(HELP_SUPPORT_TOOLS.map((t) => t.name)).toEqual(['search_help_center', 'read_help_article', 'open_support_ticket', 'list_my_support_tickets']);
+  });
+});
+
+describe('open_support_ticket', () => {
+  it('drafts a request and links it to be sent; it says nothing was sent', async () => {
+    const { handleOpenSupportTicket } = await import('../help-support-tools');
+    const r = JSON.parse(handleOpenSupportTicket({
+      subject: 'Assign button missing', details: 'On the Plan step of IND-001 there is no Assign beside the protocol.',
+      category: 'technical', priority: 'urgent', articles: ['assign-work', 'not-an-article'],
+    }));
+    expect(r).toMatchObject({ status: 'draft', sent: false, draft: { category: 'technical', priority: 'medium', articles: ['assign-work'] } });
+    const link = new URL(r.link, 'http://x');
+    expect(link.pathname).toBe('/concept2cure/training');
+    expect(Object.fromEntries(link.searchParams)).toMatchObject({ request: 'new', subject: 'Assign button missing', category: 'technical', articles: 'assign-work' });
+    expect(r.instruction).toMatch(/Nothing has been sent/);
+  });
+
+  it('asks for what happened rather than drafting an empty request', async () => {
+    const { handleOpenSupportTicket } = await import('../help-support-tools');
+    expect(JSON.parse(handleOpenSupportTicket({ subject: 'Hi', details: '' })).status).toBe('error');
+  });
+
+  it('is classed read (it records nothing) and is in launch scope', async () => {
+    const { toolAuthorizationOf } = await import('../tool-authorization');
+    for (const name of ['open_support_ticket', 'list_my_support_tickets', 'search_help_center', 'read_help_article']) {
+      expect(toolAuthorizationOf(name, {}).class).toBe('read');
+      expect(HELP_SUPPORT_TOOLS.some((t) => t.name === name)).toBe(true);
+    }
+  });
+});
+
+describe('list_my_support_tickets', () => {
+  it('needs a signed-in member of an organisation, and reads nothing otherwise', async () => {
+    const { handleListMySupportTickets } = await import('../help-support-tools');
+    expect(JSON.parse(await handleListMySupportTickets({}, undefined)).status).toBe('error');
   });
 });
