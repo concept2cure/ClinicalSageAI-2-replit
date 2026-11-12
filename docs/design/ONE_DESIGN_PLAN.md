@@ -2576,8 +2576,12 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
     database rebuilt from empty.
   - **The demo pack finding is closed**, by the demo seed's owner (`011Dpx…`, `GA-DEMO-10`,
     `docs/evidence/DEMO/2026-11-12-device-pack/`): the `mdx` pack files its text into the filing.
-- **Next.** P-114's items 4, 3 and 5: the De Novo doors (M7), the EU technical file per project (M3), and the IVD
-  510(k) outline (M6(a)).
+  - **P-114 item 4 landed** (`0e1870081`, `docs/evidence/MDX-JOURNEY/2026-11-12-p114-4-de-novo-doors/`). De Novo has
+    its strategy and assembly doors on Plan and Submit. The 510(k) screen, which produces the De Novo eSTAR, takes
+    its words from the pathway the project files: a De Novo reads "similar devices" and "classification and special
+    controls", not "predicate" and "substantial equivalence". Its section link asks for the filing by its governed
+    class. Walked in the running app on a new De Novo project. Found and recorded: M23 to M25.
+- **Next.** P-114's items 3 and 5: the EU technical file per project (M3), and the IVD 510(k) outline (M6(a)).
 
 #### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 
