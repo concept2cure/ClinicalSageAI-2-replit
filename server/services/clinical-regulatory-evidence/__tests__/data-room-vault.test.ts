@@ -29,6 +29,12 @@ describe('a Vault document\'s grade', () => {
     const g = gradeCapture(vaultGradeFacts(row()));
     expect(g).toMatchObject({ grade: 'B', score: 82, engine: 'data-room-grade v1', cap: null });
     expect(g.basis.find((b) => b.criterion === 'integrity')).toMatchObject({ points: 15 });
+    // Said in the Vault's words: it was added and filed, not captured.
+    expect(g.basis.map((b) => b.detail).slice(0, 3)).toEqual([
+      'SHA-256 recorded when it was added to Vault; who added it is recorded; filed in Vault.',
+      'original bytes held; held under the Vault’s controls; fixity not yet checked.',
+      'Current: no later version replaced it.',
+    ]);
     // Confirmed by a person, and its fixity proven: the facts move the grade, nothing else does.
     expect(gradeCapture(vaultGradeFacts(row({ catalog_state: 'confirmed', verdict: 'verified' })))).toMatchObject({ grade: 'A', score: 100 });
   });
