@@ -5123,9 +5123,11 @@ async function reviewRefused(
   current: Awaited<ReturnType<typeof lockedSigningContent>>,
   ids: { docId: string | string[] | undefined; tenantId: number },
 ): Promise<boolean> {
+  const signer = Number(getActorId(req));
   const refusal = await authoringApprovalReviewRefusal(client, {
     tenantId: ids.tenantId, docId: String(current.doc?.id ?? ids.docId), digest: sectionsDigest(current.sections),
     reviewersRequired: (await organizationReviewPolicy(client, ids.tenantId)).independentReviewersRequired, // P-117
+    signerId: Number.isSafeInteger(signer) && signer > 0 ? signer : null, // P-116: never one of the route's reviewers
   });
   if (!refusal) return false;
   res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
