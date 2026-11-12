@@ -92,7 +92,7 @@ describe('Quality records', () => {
     const heads = within(table).getAllByRole('columnheader').map((h) => h.textContent);
     expect(heads[0]).toBe('Number');
     expect(heads).toContain('What was found');
-    expect(heads.at(-1)).toBe('Actions');
+    expect(heads).not.toContain('Actions'); // the actions are the record's second line, not a column (w37)
     expect(container.querySelectorAll('tbody.qms-rec')).toHaveLength(1);
     const body = container.querySelector('tbody.qms-rec') as HTMLElement;
     // P-122: an undispositioned nonconformance's two acts are inline, and Ask AnA beside them; nothing is left for More.

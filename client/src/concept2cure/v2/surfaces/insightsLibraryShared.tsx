@@ -55,6 +55,45 @@ export interface LibraryReportType {
 }
 
 /** Counts refer to this authorized applicable catalog, never the global seed. */
+/* A report type's region and reporting roles, in words (ONE_DESIGN_PLAN §2: no ids or enum values on
+   screen). The registry's region codes are not uniform (US, USA_FDA, fda, USA_OLAW), so each is read
+   by its parts: a country, then an agency. A part this does not know is shown as written. */
+const REGION_COUNTRY: Record<string, string> = {
+  US: 'US', USA: 'US', EU: 'EU', UK: 'UK', JP: 'Japan', CN: 'China', CA: 'Canada', AU: 'Australia', KR: 'South Korea',
+  CH: 'Switzerland', BR: 'Brazil', SG: 'Singapore', IN: 'India',
+};
+const REGION_AGENCY: Record<string, string> = {
+  FDA: 'FDA', EMA: 'EMA', PMDA: 'PMDA', NMPA: 'NMPA', MHRA: 'MHRA', HC: 'Health Canada', TGA: 'TGA', MFDS: 'MFDS',
+  SWISSMEDIC: 'Swissmedic', ANVISA: 'ANVISA', MDR: 'MDR', IVDR: 'IVDR', OLAW: 'OLAW', OHRP: 'OHRP', NIH: 'NIH', DEA: 'DEA',
+};
+export function regionWords(code: string): string {
+  const parts = code.trim().toUpperCase().split(/[_\s-]+/).filter(Boolean);
+  if (parts.length === 0) return code;
+  if (parts.length === 1) {
+    const [only] = parts;
+    if (only === 'GLOBAL' || only === 'ALL') return 'Global';
+    if (only === 'OTHER') return 'Other';
+    if (only === 'FDA') return 'US · FDA';
+    return REGION_COUNTRY[only] ?? REGION_AGENCY[only] ?? code;
+  }
+  const [country, ...agency] = parts;
+  return `${REGION_COUNTRY[country] ?? country} · ${agency.map(a => REGION_AGENCY[a] ?? a).join(' ')}`;
+}
+
+const ROLE_WORD: Record<string, string> = {
+  ra: 'regulatory affairs', qa: 'quality assurance', pv: 'pharmacovigilance', pm: 'project manager', pi: 'principal investigator',
+  reg: 'regulatory', ops: 'operations', admin: 'administration', tmf: 'TMF', iacuc: 'IACUC', irb: 'IRB', cmc: 'CMC',
+};
+/** "ra_lead" → "regulatory affairs lead"; "iacuc_coordinator" → "IACUC coordinator". */
+export function reportingRoleWords(id: string): string {
+  return id.trim().split(/[_.\s-]+/).filter(Boolean).map(part => ROLE_WORD[part.toLowerCase()] ?? part.toLowerCase()).join(' ');
+}
+/** The same, as the first words of a line or an option. */
+export function reportingRoleLabel(id: string): string {
+  const words = reportingRoleWords(id);
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function catalogCapabilityCounts(types: readonly LibraryReportType[]) {
   return {
     defined: types.length,

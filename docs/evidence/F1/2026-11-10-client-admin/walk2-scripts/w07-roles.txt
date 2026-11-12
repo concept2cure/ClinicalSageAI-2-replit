@@ -1,0 +1,52 @@
+// Walk 2, flow 1: "Roles + scopes" in the walk's own organization, and three of its rows against what the server enforces.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const owner = (await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test')).page;
+  await c.step('Roles + scopes as the administrator', async (s) => {
+    await owner.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await owner.getByRole('tab', { name: 'Roles + scopes' }).or(owner.getByRole('button', { name: 'Roles + scopes' })).first().click(); await c.sleep(2000);
+    const t = await c.mainText(owner, 20000);
+    s.notes.push(t.slice(t.indexOf('Roles + scopes\n', t.indexOf('Settings')), t.indexOf('Admin audit')));
+    await c.tallShot(owner, 'w2-10-roles-own-org-1440.png', 1700);
+    const admin = await c.api(owner, 'GET', '/api/mdx/admin');
+    s.notes.push('roles payload: ' + JSON.stringify(admin.body?.data?.roles ?? admin.body?.roles));
+    s.notes.push('grants payload: ' + JSON.stringify(admin.body?.data?.grants ?? admin.body?.grants));
+  });
+  const people = { member: ['w2member', 'walk2.member2@example.test'], viewer: ['w2viewer', 'walk2.viewer@example.test'], manager: ['w2manager', 'walk2.manager@example.test'] };
+  const pages = {};
+  for (const [role, [who, email]] of Object.entries(people)) {
+    await c.step(`sign in as the ${role}`, async (s) => { pages[role] = (await c.pageFor(browser, who, email)).page; s.notes.push('url ' + pages[role].url()); });
+  }
+  const probe = async (s, label, page, method, url, body) => { const r = await c.api(page, method, url, body); s.notes.push(`${label}: ${method} ${url} -> ${r.status} ${JSON.stringify(r.body).slice(0, 260)}`); return r; };
+  await c.step('row "audit:read" (Admin, Manager; not Member, Viewer) against the audit API', async (s) => {
+    for (const [label, page] of [['admin', owner], ['manager', pages.manager], ['member', pages.member], ['viewer', pages.viewer]]) {
+      await probe(s, label, page, 'GET', '/api/audit-trail/ledger?limit=1');
+    }
+  });
+  await c.step('row "members:administer" (Admin only) against the membership and admin APIs', async (s) => {
+    for (const [label, page] of [['manager', pages.manager], ['member', pages.member], ['viewer', pages.viewer]]) {
+      await probe(s, label, page, 'GET', '/api/mdx/admin');
+      await probe(s, label, page, 'POST', '/api/tenant-users', { name: 'Nobody Atall', email: 'walk2.nobody@example.test', role: 'viewer' });
+      await probe(s, label, page, 'PATCH', '/api/organizations/7/settings', { settings: { security: { sessionTimeoutMinutes: 30, maxConcurrentSessions: 5 } }, reason: 'walk 2 refusal probe' });
+      await probe(s, label, page, 'GET', '/api/api-keys');
+    }
+  });
+  await c.step('row "records:write" (not Viewer) against project creation', async (s) => {
+    for (const [label, page] of [['viewer', pages.viewer], ['member', pages.member]]) {
+      await probe(s, label, page, 'POST', '/api/c2c/projects', { name: 'Walk 2 role probe' });
+    }
+  });
+  await c.step('the Admin console as a member (non-administrator)', async (s) => {
+    const p = pages.member;
+    await p.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    s.notes.push('url ' + p.url()); s.notes.push((await c.mainText(p)).slice(0, 900));
+    await c.shot(p, 'w2-10-admin-console-as-member-1440.png');
+    // is "Admin" offered in the member's account menu?
+    await p.locator('aside, nav').locator('button', { hasText: 'Miles Member' }).first().click().catch(() => {}); await c.sleep(700);
+    s.notes.push('account menu: ' + JSON.stringify(await p.locator('[role=menu] [role=menuitem], [role=menu] button, [role=menu] a').evaluateAll(els => els.map(e => e.textContent.trim().replace(/\s+/g, ' ')))));
+    await c.shot(p, 'w2-10-account-menu-as-member-1440.png');
+  });
+  c.report(); c.save('w2-07-roles');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

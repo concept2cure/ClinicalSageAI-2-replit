@@ -169,7 +169,9 @@ function PyDashboard({ pyr, onPhase, onTask }: { pyr: PyPyramid; onPhase: (id: s
 
 // ── Work breakdown ────────────────────────────────────────────────────────
 
-export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus, rowPlan }: {
+export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus, rowPlan, readOnly }: {
+  /** The person may not change this project: each status is shown, not offered (a viewer, an archived project). */
+  readOnly?: boolean;
   pyr: PyPyramid; focusPhase: string | null; onTask: (id: string) => void;
   tasks: PyTask[]; onStatus: (id: string, status: string) => void;
   /** A project's line for the task: its due date and owner (S11 step 3, PyramidProject.tsx). */
@@ -194,7 +196,7 @@ export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus, rowP
                     {t.risk && <span className="py-row-risk" data-sev={t.risk.severity} title={`Risk: ${t.risk.severity}`}>{I.alertTriangle}</span>}
                     {rowPlan?.(t)}
                   </button>
-                  <select className="py-row-status" data-tone={PY_STATUS[t.status]?.tone} value={t.status}
+                  <select className="py-row-status" data-tone={PY_STATUS[t.status]?.tone} value={t.status} disabled={readOnly}
                     onChange={e => onStatus(t.id, e.target.value)} aria-label={`Status of ${t.name}`}>
                     {Object.entries(PY_STATUS).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}
                   </select>
@@ -257,8 +259,10 @@ function PyBindings({ task, onOpenSection, onOpenVaultFolder, projectOpen }: {
   );
 }
 
-export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, onOpenVaultFolder, projectOpen, plan }: {
+export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, onOpenVaultFolder, projectOpen, plan, readOnly }: {
   pyr: PyPyramid; task: PyTask; tasks: PyTask[];
+  /** The person may not change this project: the status is shown, not offered. */
+  readOnly?: boolean;
   /** A project's schedule and owner for the task (S11 step 3, PyramidProject.tsx). */
   plan?: React.ReactNode;
   onClose: () => void; onTask: (id: string) => void;
@@ -300,7 +304,7 @@ export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWor
           <div className="py-sheet-status">
             <label htmlFor="py-sheet-status">Status</label>
             <select id="py-sheet-status" aria-label={`Status of ${task.name}`}
-              data-tone={PY_STATUS[task.status]?.tone} value={task.status}
+              data-tone={PY_STATUS[task.status]?.tone} value={task.status} disabled={readOnly}
               onChange={e => onStatus(task.id, e.target.value)}>
               {Object.entries(PY_STATUS).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}
             </select>

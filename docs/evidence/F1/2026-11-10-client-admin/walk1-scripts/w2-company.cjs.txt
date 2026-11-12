@@ -1,0 +1,48 @@
+// Flow 2c: Home step 1 "Record your company details" -> the company identity form; save; reload; Home state.
+const L = require('./lib.cjs');
+const EMAIL = 'avery.lind@northgate-bio.example.test';
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, EMAIL);
+  await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(1200);
+  await page.getByRole('button', { name: /Record your company details/ }).click(); await page.waitForLoadState('networkidle'); await L.sleep(1500);
+  const sec = page.locator('section.company-documents');
+  const geometry = await page.evaluate(() => {
+    const el = document.querySelector('section.company-documents'); if (!el) return null;
+    const scroller = [...document.querySelectorAll('*')].find(e => e.scrollHeight > e.clientHeight + 200 && /auto|scroll/.test(getComputedStyle(e).overflowY) && e.contains(el));
+    const r = el.getBoundingClientRect();
+    return { topOfCompanyCardPx: Math.round(r.top), viewportHeight: innerHeight, scrollerHeight: scroller ? scroller.scrollHeight : null, cardsAbove: [...document.querySelectorAll('main h2, main h3')].filter(h => h.getBoundingClientRect().top < r.top).map(h => h.textContent.trim()) };
+  });
+  note('where the company details card is when the step opens', geometry);
+  await sec.scrollIntoViewIfNeeded(); await L.sleep(500);
+  await L.shot(page, 'w1-31-company-identity-initial.png');
+  note('company section text', (await sec.innerText()).slice(0, 1800));
+  note('company inputs', await sec.locator('label').evaluateAll(els => els.map(l => { const c = l.querySelector('input,textarea,select'); return `${l.querySelector('span')?.textContent || l.textContent.trim().slice(0, 50)} = ${c ? (c.type === 'checkbox' ? c.checked : JSON.stringify(c.value).slice(0, 60)) : '?'}${c?.disabled ? ' (disabled)' : ''}`; })));
+  // fill: find fields by label text
+  const field = (label) => sec.locator('label.company-field').filter({ has: page.locator(`span:text-is("${label}")`) }).locator('input,textarea').first();
+  const labels = await sec.locator('label.company-field > span').allInnerTexts();
+  note('field labels', labels);
+  L.drain(page);
+  const tryFill = async (label, value) => { const f = field(label); if (await f.count()) { await f.fill(value); return true; } return false; };
+  note('filled address', await tryFill('Company address', 'Hafenstrasse 12\n20457 Hamburg\nGermany') || await tryFill('Address', 'Hafenstrasse 12\n20457 Hamburg\nGermany'));
+  await tryFill('Company contact details', 'regulatory@northgate-bio.example.test, +49 40 0000 000');
+  await tryFill('Registration and legal details', 'HRB 000000, Amtsgericht Hamburg');
+  await L.sleep(400);
+  const saveBtn = sec.getByRole('button', { name: 'Save company documents' });
+  note('save enabled before reason', await saveBtn.isEnabled());
+  await field('Reason for company document change').fill('First record of company details at set-up');
+  await L.sleep(300);
+  note('save enabled with reason', await saveBtn.isEnabled());
+  await L.shot(page, 'w1-32-company-identity-filled.png');
+  await saveBtn.click(); await L.sleep(3000);
+  note('writes', L.drain(page));
+  note('after save', (await sec.innerText()).slice(-900));
+  await L.shot(page, 'w1-33-company-identity-saved.png');
+  // Home: is step 1 done now?
+  await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('home setup', await page.locator('[data-testid=home-setup]').innerText().catch(() => '(gone)'));
+  await L.shot(page, 'w1-34-home-setup-after-company.png');
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

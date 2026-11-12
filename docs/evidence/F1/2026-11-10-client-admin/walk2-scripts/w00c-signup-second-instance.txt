@@ -1,0 +1,38 @@
+// Walk 2, flow 0c: the self-serve sign-up completed on the other walker's second instance (port 5231, same database,
+// mail to a local sink), because the lead's instance (5220) has no mail and refuses sign-up. Everything after is on 5220.
+const c = require('./common.cjs');   // BASE = argv[2] = http://127.0.0.1:5231
+const mail = require('../walk1/mail.cjs');
+const EMAIL = 'walk2.owner@example.test';
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'w2owner' });
+  let since = Date.now() - 1000;
+  await c.step('sign-up on the instance with mail', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/signup', { waitUntil: 'networkidle' });
+    await page.fill('#firstName', 'Wanda'); await page.fill('#lastName', 'Walker'); await page.fill('#email', EMAIL);
+    await page.fill('#password', process.env.WALK_PASSWORD); await page.fill('#confirmPassword', process.env.WALK_PASSWORD);
+    await page.fill('#jobTitle', 'Head of Regulatory Operations');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(300);
+    await page.fill('#organization', 'Walk Two Biologics'); await page.selectOption('#organizationType', 'biotech');
+    await page.fill('#country', 'United States'); await page.selectOption('#useCase', 'ind');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(300);
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(300);
+    await page.locator('div.h-40.overflow-y-auto').evaluateAll(els => els.forEach(e => { e.scrollTop = e.scrollHeight; e.dispatchEvent(new Event('scroll', { bubbles: true })); }));
+    await c.sleep(300);
+    for (const cb of await page.locator('input[type=checkbox]').all()) await cb.check();
+    since = Date.now() - 1000;
+    await page.getByRole('button', { name: /Create account/i }).click(); await c.sleep(3500);
+    s.notes.push('screen: ' + (await c.textOf(page, 'body')).split('Română')[1]);
+    await c.shot(page, 'w2-00c-signup-check-your-email.png');
+  });
+  await c.step('open the verification link', async (s) => {
+    const m = await mail.mailFor(EMAIL, since, 'verify');
+    s.notes.push('subject: ' + mail.subjectOf(m));
+    const link = mail.linkIn(m);
+    await page.goto(link, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    s.notes.push('screen: ' + (await c.textOf(page, 'body')).split('Română')[1]?.slice(0, 500));
+    await c.shot(page, 'w2-00c-verify-email-done.png');
+  });
+  console.log(JSON.stringify(c.log.steps.map(s => ({ n: s.name, o: s.outcome, e: s.error, http: s.http, console: s.console, notes: s.notes })), null, 1));
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

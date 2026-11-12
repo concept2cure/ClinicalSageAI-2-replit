@@ -54,6 +54,16 @@ const CALLED = [
   '/api/ind-lifecycle/sequence/{currentId}/diff/pdf',
   '/api/ind-lifecycle/sequence/{seqId}/manifest',
   '/api/ind-lifecycle/sequence/{seqId}/manifest/pdf',
+  // client/src/concept2cure/v2/surfaces/SubmissionIndRegisters.tsx, on the IND screen (P-122, 2026-11-10): the
+  // registers, each claimed by a `:param` segment so the safety registers beside them stay out
+  // (ind-registers-launch-claim.test.ts).
+  '/api/ind-lifecycle/submission/{id}/cross-references', //                       the list (GET), recording one (POST)
+  '/api/ind-lifecycle/submission/{id}/cross-reference-register', //               the LOA-coverage QC
+  '/api/ind-lifecycle/submission/{id}/cross-references/{crossRefId}/file-loa', // filing the letter (m1.4.1)
+  '/api/ind-lifecycle/cross-references/{crossRefId}', //                          marking it on file (PATCH), removing it (DELETE)
+  '/api/ind-lifecycle/submission/{id}/annual-reports', //                          the tracked reports (GET), tracking one (POST)
+  '/api/ind-lifecycle/submission/{id}/annual-reports/overdue', //                  the server's overdue feed
+  '/api/ind-lifecycle/submission/{id}/amendments', //                              the tracked amendments (GET), tracking one (POST)
   // client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx (embedded in the IND screen)
   '/api/ind-forms/',
   '/api/ind-forms/program-facts',
@@ -89,7 +99,8 @@ const ADMITTED_UNCALLED: Record<string, string> = {
 const ROUTES = indLifecycleRoutes();
 const isSafety = (p: string) => /\/(safety-reports?|icsr-transmissions)(\/|$)/.test(p);
 const SAFETY = ROUTES.filter((r) => isSafety(r.path)).map((r) => ({ key: `${r.method} ${r.path}`, path: fill(r.path) }));
-/** The register routes under /submission/:id stay unclaimed (P-32): a prefix cannot admit them without the safety routes beside them. */
+/** The safety registers under /submission/:id stay unclaimed (P-32). The other registers there are claimed by a `:param`
+ *  segment each (P-122), which admits nothing beside them. */
 const SAFETY_TOP = SAFETY.filter((r) => !r.path.startsWith('/api/ind-lifecycle/submission/'));
 const SAFETY_REGISTER = SAFETY.filter((r) => r.path.startsWith('/api/ind-lifecycle/submission/'));
 

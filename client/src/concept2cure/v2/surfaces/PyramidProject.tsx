@@ -138,7 +138,7 @@ function TaskPlan({ slot, standing, owner, ownersUnread, assign, onMoved }: {
       {slot ? (
         <p className="py-sheet-sched">
           Starts by {dayWords(slot.start)}, due {dayWords(slot.due)} · {slot.workingDays} working {slot.workingDays === 1 ? 'day' : 'days'}
-          {slot.basis === 'typical-duration' ? ", the engine's typical duration" : ' from its estimated hours'}
+          {slot.basis === 'typical-duration' ? ", its typical duration" : ' from its estimated hours'}
           {slot.afterSubmission ? ' · after the submission' : ''}
           {standing ? ` · ${PY_STANDING_WORDS[standing]}` : ''}.
         </p>
@@ -193,7 +193,9 @@ export function ProducedBy({ deliverableId, read, owners }: {
   );
 }
 
-export function ProjectProgramPlan({ programId, read: shared, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, workstreamNote, onNav, onAsk }: {
+export function ProjectProgramPlan({ programId, read: shared, projectId = null, owners, ownersUnread = false, onAssigned, targetKey, workstreamNote, canEdit = true, onNav, onAsk }: {
+  /** Whether the person may change this project (not a viewer, not archived). Default true: the server still decides. */
+  canEdit?: boolean;
   programId: string;
   /** Said under the workstreams: a device plan's workstreams have no work-breakdown key (ProjectPlan.tsx). */
   workstreamNote?: string;
@@ -237,18 +239,26 @@ export function ProjectProgramPlan({ programId, read: shared, projectId = null, 
   }
   return (
     <ProgramPlanBody data={data} pyramid={data.pyramid} tasks={tasks} refusal={refusal} setStatus={setStatus}
-      programId={programId} projectId={projectId} owners={owners} ownersUnread={ownersUnread} onAssigned={onAssigned}
+      canEdit={canEdit} programId={programId} projectId={projectId} owners={owners} ownersUnread={ownersUnread} onAssigned={onAssigned}
       workstreamNote={workstreamNote} onNav={onNav} onAsk={onAsk} />
   );
 }
 
 interface PlanOwners {
+  /** False for a viewer or an archived project: statuses are shown, not offered. */
+  canEdit: boolean;
   programId: string;
   projectId: number | null;
   owners?: Map<string, PlanAssignment>;
   ownersUnread: boolean;
   onAssigned?: () => void;
 }
+
+/** Said wherever a schedule rests on working hours alone: typical task durations are regulatory content with a cited
+ *  source, and none is on record for this filing type yet, so the dates are a floor and are never shown as a forecast. */
+export const MINIMUM_DATES_NOTE =
+  'These are the earliest possible dates, not a forecast. Typical task durations are not on record for this filing type yet, '
+  + 'so each task is given only its working hours. Allow for review cycles, testing and waiting time when you set the target date.';
 
 /** The schedule's sentence, how many tasks have an owner, and how the dates were reached. */
 function PlanScheduleLines({ data, late, owned, total, ownersUnread }: {
@@ -257,13 +267,20 @@ function PlanScheduleLines({ data, late, owned, total, ownersUnread }: {
   return <>
     <p className="pj-desc" data-testid="pj-program-schedule">
       {scheduleSentence(data, late)}
-      {data.schedule && ` ${ownersUnread ? 'Who owns each task could not be read.' : `${owned} of ${total} tasks have an owner.`}`}
+      {data.schedule && ` ${ownersUnread ? 'Who owns each task could not be read.' : `${owned} of ${total} ${owned === 1 ? 'task has' : 'tasks have'} an owner.`}`}
     </p>
+    {data.schedule?.durations === 'hours-only' && (
+      <p className="pj-desc" data-testid="pj-program-minimum" role="note">{MINIMUM_DATES_NOTE}</p>
+    )}
     {data.schedule && (
-      <p className="pj-desc pj-fact-none">
-        Each task is due the working day before the work that depends on it starts. Its length is the engine&apos;s typical
-        duration, or its estimated hours at an eight-hour day. Working days are Monday to Friday; holidays are not counted.
-      </p>
+      <details className="pj-more py-how">
+        <summary>How these dates are worked out</summary>
+        <p className="pj-desc pj-fact-none">
+          Each task is due the working day before the work that depends on it starts, counting back from the target
+          submission date. A task&apos;s length is its typical duration for this filing type or, where none is on record,
+          its estimated hours at an eight-hour day. Working days are Monday to Friday; holidays are not counted.
+        </p>
+      </details>
     )}
   </>;
 }
@@ -283,7 +300,7 @@ function ProjectTaskSheet({ pyr, task, tasks, slot, standing, ind, setStatus, on
   );
   return (
     <PyTaskSheet pyr={pyr} task={task} tasks={tasks} onClose={() => onOpenTask(null)} onTask={onOpenTask}
-      onStatus={(id, s) => void setStatus(id, s)} projectOpen
+      onStatus={(id, s) => void setStatus(id, s)} projectOpen readOnly={!plan.canEdit}
       plan={<TaskPlan slot={slot} standing={standing} owner={owners?.get(task.id)} ownersUnread={ownersUnread} assign={assign} onMoved={onAssigned} />}
       onOpenSection={ind ? (code, title) => {
         setEditorTarget({ docType: null, code, label: title, programId });
@@ -320,7 +337,7 @@ function ProgramPlanBody({ data, pyramid, tasks, refusal, setStatus, onNav, onAs
       </div>
       <p className="pj-desc">
         {progress.completed} of {progress.total} tasks done · critical path {progress.criticalPathPct}% done · about {progress.hoursRemaining} hours of work remaining.
-        The phases, tasks, hours and dependencies are the engine&apos;s; each task&apos;s status is this project&apos;s.
+        The work breakdown is the standard one for this filing type; progress, owners and dates are this project&apos;s.
       </p>
       <PlanScheduleLines data={data} late={late} owned={owned} total={progress.total} ownersUnread={plan.ownersUnread} />
       {data.pendingStore && <p className="pj-desc pj-fact-none" role="note">Recorded progress is not available in this deployment, so every task reads as not started.</p>}
@@ -328,7 +345,7 @@ function ProgramPlanBody({ data, pyramid, tasks, refusal, setStatus, onNav, onAs
       {data.schedule && <ScheduleLine schedule={data.schedule} pyr={pyr} asOf={data.asOf ?? ''} clock={data.reviewClock ?? null} />}
       <Workstreams pyr={pyr} slots={data.schedule ? slots : null} asOf={data.asOf ?? ''} owners={plan.owners} note={workstreamNote}
         breakdown={(phaseId) => <PyWorkBreakdown pyr={pyr} focusPhase={phaseId} tasks={tasks} onTask={setOpenTask}
-          onStatus={(id, s) => void setStatus(id, s)}
+          onStatus={(id, s) => void setStatus(id, s)} readOnly={!plan.canEdit}
           rowPlan={(t) => <RowPlan slot={slots[t.id]} owner={plan.owners?.get(t.id)} standing={standingOf(t)} />} />} />
       {open && <ProjectTaskSheet pyr={pyr} task={open} tasks={tasks} slot={slots[open.id]} standing={standingOf(open)}
         ind={data.type === 'IND'} setStatus={setStatus} onOpenTask={setOpenTask} onNav={onNav} onAsk={onAsk} plan={plan} />}
@@ -373,7 +390,7 @@ function WorkstreamRow({ phase, tasks, slots, asOf, owners, breakdown }: {
       <summary>
         <span className="py-ws-name">{phase.name}</span>
         <span className="py-ws-lead">{lead ? `Lead ${lead}` : 'No lead'}</span>
-        <span className="py-ws-n">{done} of {tasks.length} tasks done</span>
+        <span className="py-ws-n">{done} of {tasks.length} done</span>
         <span className="py-ws-date">{status === 'complete' ? 'Completed' : ends ? `Completes ${dayWords(ends)}` : 'No date'}</span>
         <span className="py-ws-status">{PY_WORK_STATUS_WORDS[status]}</span>
       </summary>
@@ -426,20 +443,20 @@ export function ScheduleLine({ schedule, pyr, asOf, clock }: { schedule: PySched
   const marks = scheduleMarks(pyr, schedule, clock);
   return (
     <figure className="py-line" data-testid="pj-schedule-line">
-      <div className="py-line-track" role="img"
+      <div className="py-line-track" role="group"
         aria-label={`Schedule from ${dayWords(schedule.start)} to submission on ${dayWords(schedule.target)}${clock ? ` and ${clock.label.toLowerCase()} by ${dayWords(clock.ends)}` : ''}; today is ${dayWords(asOf)}.`}>
         <span className="py-line-base" style={{ left: pct(schedule.start), width: width(schedule.start, schedule.target) }} />
         {criticalSpans(pyr, schedule).map(([a, b]) => <span key={a} className="py-line-crit" style={{ left: pct(a), width: width(a, b) }} />)}
         {clock && <span className="py-line-clock" style={{ left: pct(schedule.target), width: width(schedule.target, clock.ends) }} />}
         {marks.map((m) => (
-          <span key={m.key} className="py-line-dot" data-kind={m.kind} style={{ left: pct(m.at) }} tabIndex={0}
+          <span key={m.key} className="py-line-dot" data-kind={m.kind} style={{ left: pct(m.at) }} role="img" tabIndex={0}
             title={`${m.label} · ${dayWords(m.at)}`} aria-label={`${m.label}, ${dayWords(m.at)}`} />
         ))}
         {asOf && <span className="py-line-today" style={{ left: pct(asOf) }} aria-hidden="true"><span>Today</span></span>}
       </div>
       <figcaption className="pj-desc pj-fact-none">
         Starts {dayWords(schedule.start)} · submission {dayWords(schedule.target)}
-        {clock ? ` · ${clock.label} by ${dayWords(clock.ends)} (${clock.authority}, ${clock.basis}).` : '. The engines hold no review clock for this filing.'}
+        {clock ? ` · ${clock.label} by ${dayWords(clock.ends)} (${clock.authority}, ${clock.basis}).` : '. No agency review clock is on record for this filing type.'}
         {' '}The darker line is the critical path; each dot is a phase completing.
         {clock?.clockStops ? ' The agency’s days exclude clock stops, so the decision can come later.' : ''}
       </figcaption>
@@ -462,6 +479,8 @@ export interface PortfolioLineData {
   start?: string | null;
   /** The agency's clock after the filing, or null where none is held. */
   reviewClock?: PyReviewClock | null;
+  /** 'hours-only': the plan's dates are the earliest possible, so "on schedule" is said against minimum dates. */
+  durations?: 'typical' | 'hours-only' | 'mixed' | null;
   summary?: {
     total: number; done: number; blocked: number; overdue: number; lateToStart: number;
     next: { phaseId: string; phaseName: string; taskId: string; due: string | null } | null;
@@ -497,7 +516,7 @@ export function portfolioWords(line: PortfolioLineData | undefined): { text: str
       text: s.overdue > 0 ? `${plural(s.overdue, 'task', 'tasks')} past due${next}` : `${plural(s.lateToStart, 'task', 'tasks')} should have started${next}`,
       tone: 'warn',
     };
-    default: return { text: `On schedule${next}` };
+    default: return { text: `${line.durations === 'hours-only' ? 'On schedule against minimum dates' : 'On schedule'}${next}` };
   }
 }
 
@@ -544,12 +563,12 @@ function GlobalScheduleTrack({ name, line, asOf, pct, width }: {
     ...(clock ? [{ key: 'decision', at: clock.ends, label: `${clock.label} (day ${clock.days})`, kind: 'decision' as const }] : []),
   ];
   return (
-    <div className="py-line-track" role="img"
+    <div className="py-line-track" role="group"
       aria-label={`${name}: work from ${dayWords(line.start)}, submission ${dayWords(line.target)}${clock ? `, ${clock.label.toLowerCase()} by ${dayWords(clock.ends)}` : ''}.`}>
       <span className="py-line-base" style={{ left: pct(line.start), width: width(line.start, line.target) }} />
       {clock && <span className="py-line-clock" style={{ left: pct(line.target), width: width(line.target, clock.ends) }} />}
       {marks.map((m) => (
-        <span key={m.key} className="py-line-dot" data-kind={m.kind} style={{ left: pct(m.at) }} tabIndex={0}
+        <span key={m.key} className="py-line-dot" data-kind={m.kind} style={{ left: pct(m.at) }} role="img" tabIndex={0}
           title={`${m.label} · ${dayWords(m.at)}`} aria-label={`${m.label}, ${dayWords(m.at)}`} />
       ))}
       {asOf && <span className="py-line-today" style={{ left: pct(asOf) }} aria-hidden="true" />}

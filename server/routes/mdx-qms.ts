@@ -1484,10 +1484,10 @@ router.delete('/qms/changes/:id/links/:linkId', requireEditorAccess, async (req:
        §11.10(e) record beside it is the only thing left to report —
        `meta.auditTrail`. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId,
+      tenantId: orgId, userId, reason: reason.data,
       action: 'mdx.qms.change.unlink',
       resourceType: 'qms_change_control', resourceId: id,
-      details: { linkId, reason: reason.data },
+      details: { linkId, linkType: removed.link_type, linkedRef: removed.linked_ref, reason: reason.data },
     }, requestConnectable(req));
     return ok(res, { id: linkId, removed: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-remove', err); }

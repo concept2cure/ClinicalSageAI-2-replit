@@ -48,8 +48,19 @@ sandbox's CSR study before this was seen.
 |---|---|---|
 | A, projects and authoring (Ana) | **Finished**: 29 stops, 120 clicks | Nothing new. One browser-side "insufficient resources" while four browsers ran. |
 | C, work areas and administration, with the rail (Ana) | **Finished**: 68 stops, 265 clicks | Nothing new beyond E, the correct refusals and the minor wording above. |
-| B, Communication, Vault, Submission Center, Tasks (Ana) | Resumed, in progress | Added when it ends. |
-| D, the Lumen account, every area, with the rail (Lumen lead) | Resumed, in progress | Added when it ends. |
+| B, Communication, Vault, Submission Center, Tasks (Ana) | **Stopped, not finished**: 38 stops, 1,343 clicks | Finding Q. Nothing else new. |
+| D, the Lumen account, every area, with the rail (Lumen lead) | **Stopped, not finished**: 27 stops, 906 clicks | Nothing new. |
+| E, the Lumen account, every screen and tab opened, a sample of each list clicked (Lumen lead) | **Stopped, not finished**: 303 stops, 308 clicks | Nothing new. |
+
+B, D and E ran one at a time, each browser for 20 clicks. They were stopped when the push's typecheck needed the
+sandbox's memory (the typecheck was killed twice beside the app and a browser), and the sandbox then restarted. They
+were not resumed: the walk of 2026-11-11 opens every one of their screens and tabs again, with production's
+launch-scope gate on (`../2026-11-11-release-gate/`).
+
+37 clicks in B and D timed out on controls inside a collapsed section (a seal's "Open", a version's "View" and
+"Download", a readiness finding's "Place a leaf"). Current Chromium gives such a control a box though it is not
+visible. Each kind was opened by hand in the running app: one was finding Q, and the others work. The crawler now
+opens the section first (`3b030ecea2`).
 
 ### What the clicks found
 
@@ -64,6 +75,7 @@ sandbox's CSR study before this was seen.
 | O | The cause of N in the demo data: LMN-201's protocol, consent form and toxicity report, and C2C-101's protocol and SAP, were placed in study sections naming no study. | **Fixed** (`73ebee2233`, `68db67431e`): each states its study id and ICH STF file-tag; the seed places them tagged and tags leaves an earlier run placed. **Walked:** the button now downloads `194021-0000-fda.zip` on the Lumen account and in the development organisation, and `999101-0000-fda.zip` on C2C-101. |
 | — | The same button on the device project (**NeuroPanel-Dx 510(k)**): 409 `PACKAGE_IDENTITY_MISSING`. | **Open, the device lane's** (P-114 decided its regulatory questions): a 510(k) files as an eSTAR and holds no agency number before it is filed, so whether Dispatch offers an eCTD inspection copy there, and under what identity, is not a number for a seed to invent. |
 | P | Compliance reports → **Run attestation**: 503 in every Codespace (no attestation signing key), shown as "Couldn’t produce the attestation · Attestation not configured" beside a "Try again" that could never work. | **Fixed** (`a19a92eab7`): the Codespace mints its own key, as it does its JWT secrets, on a new state and on an existing one; where an installation has no key the panel says so with no retry. **Walked:** the attestation returns "Audit trail: Links intact". |
+| Q | Vault → Seals & fixity → "What it holds" → **Open** on a sealed document: the document was framed under the seal's 17 rows, below the fold, so the click looked as if it had done nothing. | **Fixed** (this change, `VaultVersionViewer.tsx`): what a view opens, or what the Vault says when it refuses, is brought into view, with no motion. It holds for a document's Versions section too, which uses the same viewer. Shown red then green in `vaultVersionViewer.test.tsx`; walked on LMN-201 (the Investigator's Brochure opens in view, with its hash line). |
 | — | CMC → **Open the Module 3 build board** on LMN-201: 409 `CMC_PRODUCT_CLASS_OUT_OF_SCOPE`. | **Correct** (P-28's composition boundary: a biologic is refused by name, and the message says where its quality content is written). |
 | — | RBM → **Generate from RACT** (first run's item 10). | **Correct.** With the seed's RACT approved, LMN-201's plan is generated (v1, 14 actions). On a project where RBM has not started, the tab says so and offers Start; Generate on a draft RACT is refused with its reason. |
 | K | Biostatistics → **Assess defensibility** on the untouched form: a red error toast in developer words ("…the inputs listed in errors are missing or invalid. No verdict was formed. Missing or invalid: effectSize."). | **Fixed** (this change, `BiostatWorkbench.tsx`): a field not yet filled is named by its label beside the button ("To assess this design, enter: Effect size (standardized)."), with no error. Any other refusal is still shown in the engine's words. Shown red then green in `biostatWorkbench.test.tsx`; walked (the note, then a verdict once 0.5 is entered). |

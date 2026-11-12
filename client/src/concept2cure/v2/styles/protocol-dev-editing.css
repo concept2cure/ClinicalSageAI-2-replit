@@ -109,7 +109,13 @@
      1440: the bar took 819 px and the protocol 325, with its tabs and panes clipped. They now stack in one column
      that claims the row; the protocol takes the height left under the bar. */
   .pde-shell{display:flex;flex-direction:column;flex:1 1 auto;min-width:0;min-height:0;}
-  .pde-shell > .pd-wrap{flex:1 1 auto;height:auto;min-height:0;}
+  .pde-shell > .pd-wrap{flex:1 0 auto;height:auto;min-height:0;}
+  /* The working panel keeps a usable height (F1, 2026-11-11). The protocol took "the height left under the bar",
+     and at 1440×900 the bar, the protocol's header, the open-in-editor note, the suggested order and the tabs left
+     183 px: every tab's content (sections, statistics, the IRB package, consent) was read through a 183 px scroller
+     inside the page's own scroller. Measured in the running app. The protocol no longer shrinks to fit; its grid is
+     at least most of the window, and the page scrolls the header away. */
+  .pde-shell > .pd-wrap > .pd-grid{min-height:max(520px,72vh);}
   .pd-grid > .pd-work > .pd-pane{max-width:920px;}
 
   /* ── cover page ─────────────────────────────────────────────────── */

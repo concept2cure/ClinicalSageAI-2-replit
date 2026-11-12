@@ -612,12 +612,12 @@ export async function addLink(orgId: number, changeId: number, p: {
 
 /**
  * Remove a link: it is kept, stamped with who removed it, when and why, and no
- * reader lists it again (MR-12 Stage 8). False when it is not a standing link
- * of this change.
+ * reader lists it again (MR-12 Stage 8). Returns which record it was, for the
+ * audit row; null when it is not a standing link of an open change.
  */
 export async function removeLink(orgId: number, changeId: number, linkId: number,
-  removal: { removedBy: number; reason: string }, client: RequestSqlClient = pool): Promise<boolean> {
-  const { rows } = await queryRowsClient(client).query(
+  removal: { removedBy: number; reason: string }, client: RequestSqlClient = pool): Promise<Pick<ChangeLinkRow, 'link_type' | 'linked_ref'> | null> {
+  const { rows } = await queryRowsClient(client).query<Pick<ChangeLinkRow, 'link_type' | 'linked_ref'>>(
     `WITH changed AS (
        UPDATE qms_change_controls SET updated_at=clock_timestamp()
         WHERE id=$2 AND organization_id=$3 AND deleted_at IS NULL AND status NOT IN ('closed','cancelled','rejected')
@@ -625,10 +625,10 @@ export async function removeLink(orgId: number, changeId: number, linkId: number
         RETURNING id
      ) UPDATE qms_change_links SET removed_at = NOW(), removed_by = $4, removal_reason = $5
       WHERE id = $1 AND change_id = $2 AND organization_id = $3 AND removed_at IS NULL
-        AND EXISTS (SELECT 1 FROM changed) RETURNING id`,
+        AND EXISTS (SELECT 1 FROM changed) RETURNING link_type, linked_ref`,
     [linkId, changeId, orgId, removal.removedBy, removal.reason],
   );
-  return rows.length > 0;
+  return rows[0] ?? null;
 }
 
 // ─── Register summary (KPIs for the Change Control surface) ───────────────────

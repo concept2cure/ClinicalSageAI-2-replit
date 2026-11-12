@@ -1,0 +1,112 @@
+// Flow 4: the administrator's member acts in Northgate Biologics GmbH (my own organization).
+const L = require('./lib.cjs');
+const fs = require('fs'); const path = require('path');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const redact = (s) => String(s).replace(/token=[A-Za-z0-9._%-]+/g, 'token=<redacted>');
+const LINKS = path.join(__dirname, '.setup-links.json');
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  const dialog = page.getByRole('dialog');
+  const drawer = page.locator('aside.adm-drawer');
+  const toasts = async () => page.locator('[role=status], [role=alert]').evaluateAll(els => [...new Set(els.map(e => e.textContent.trim()).filter(t => t && t.length < 400 && !/Creating a member|recorded in the audit trail against you/.test(t)))]);
+  const open = async (name) => { await page.locator('.ctable-row', { hasText: name }).first().click(); await L.sleep(400); };
+  const drain = () => L.drain(page).map(redact).map(x => x.slice(0, 520));
+
+  // A. my own row
+  await open('Avery Lind');
+  note('own row: buttons', await drawer.locator('button').evaluateAll(els => els.map(e => `${e.textContent.trim()}${e.disabled ? ' (disabled)' : ''}`)));
+  note('own row: note', await drawer.locator('.adm-muted.adm-sub').allInnerTexts());
+
+  // B. change role: Priya member -> manager
+  await open('Priya Raman');
+  await page.getByTestId('member-change-role').click(); await dialog.waitFor();
+  note('role dialog', await dialog.innerText());
+  await L.shot(page, 'w1-70-change-role-dialog.png');
+  await dialog.getByRole('button', { name: 'Change role' }).click(); await L.sleep(400);
+  note('role: submit with no reason', await dialog.locator('[role=alert]').allInnerTexts());
+  await dialog.getByLabel('Reason for the change').fill('  '); await dialog.getByRole('button', { name: 'Change role' }).click(); await L.sleep(400);
+  note('role: reason of spaces', { alert: await dialog.locator('[role=alert]').allInnerTexts(), writes: drain() });
+  await dialog.getByLabel('Reason for the change').fill('No change intended'); await dialog.getByRole('button', { name: 'Change role' }).click(); await L.sleep(1500);
+  note('role: same role', { toasts: await toasts(), writes: drain(), dialogOpen: await dialog.isVisible().catch(() => false) });
+  if (await dialog.isVisible().catch(() => false)) await dialog.getByRole('button', { name: 'Cancel' }).click();
+  for (const [role, why] of [['manager', 'Leads the NGB-101 program plan'], ['viewer', 'Stepping back to read-only during leave'], ['reviewer', 'Returns as section reviewer'], ['approver', 'Covers QA approvals in November'], ['admin', 'Second administrator for continuity'], ['member', 'Continuity cover ended']]) {
+    await open('Priya Raman');
+    await page.getByTestId('member-change-role').click(); await dialog.waitFor();
+    await dialog.getByLabel('New role').selectOption(role);
+    await dialog.getByLabel('Reason for the change').fill(why);
+    await dialog.getByRole('button', { name: 'Change role' }).click(); await L.sleep(1600);
+    note(`role -> ${role}`, { toasts: await toasts(), writes: drain() });
+    if (role === 'manager') await L.shot(page, 'w1-71-role-changed.png');
+  }
+  // C. designate a QMS approver: Quinn (Approver role)
+  await open('Quinn Abara');
+  note('Quinn drawer: QMS approver standing', await page.getByTestId('member-qms-approver-standing').innerText());
+  await page.getByTestId('member-qms-approver').click(); await dialog.waitFor();
+  note('qms dialog', await dialog.innerText());
+  await L.shot(page, 'w1-72-qms-approver-dialog.png');
+  await dialog.getByRole('button', { name: 'Designate' }).click(); await L.sleep(400);
+  note('qms: no reason', await dialog.locator('[role=alert]').allInnerTexts());
+  await dialog.getByLabel('Reason').fill('Head of Quality approves controlled documents'); await dialog.getByRole('button', { name: 'Designate' }).click(); await L.sleep(1600);
+  note('qms: designate Quinn', { toasts: await toasts(), writes: drain() });
+  await open('Quinn Abara');
+  note('Quinn standing after', await page.getByTestId('member-qms-approver-standing').innerText());
+  await L.shot(page, 'w1-73-qms-approver-designated.png');
+  // designate a Viewer (no signing authority) -> refusal
+  await open('Vik Osei');
+  await page.getByTestId('member-qms-approver').click(); await dialog.waitFor();
+  await dialog.getByLabel('Reason').fill('Try: a viewer as approver'); await dialog.getByRole('button', { name: 'Designate' }).click(); await L.sleep(1600);
+  note('qms: designate a Viewer', { toasts: await toasts(), writes: drain(), dialogOpen: await dialog.isVisible().catch(() => false) });
+  await L.shot(page, 'w1-74-qms-approver-viewer-refused.png');
+  if (await dialog.isVisible().catch(() => false)) await dialog.getByRole('button', { name: 'Cancel' }).click();
+  // remove the designation
+  await open('Quinn Abara');
+  await page.getByTestId('member-qms-approver').click(); await dialog.waitFor();
+  await dialog.getByLabel('Reason').fill('Designation recorded in error during set-up'); await dialog.getByRole('button', { name: 'Remove designation' }).click(); await L.sleep(1600);
+  note('qms: remove designation', { toasts: await toasts(), writes: drain() });
+
+  // D. remove an invited member (cancel the invitation): Quinn
+  await open('Quinn Abara');
+  await page.getByTestId('member-remove').click(); await dialog.waitFor();
+  note('remove dialog', await dialog.innerText());
+  await L.shot(page, 'w1-75-remove-dialog.png');
+  await dialog.getByRole('button', { name: 'Remove member' }).click(); await L.sleep(400);
+  note('remove: no reason', await dialog.locator('[role=alert]').allInnerTexts());
+  await dialog.getByLabel('Reason for removal').fill('Invited in error; Quinn joins in January'); await dialog.getByRole('button', { name: 'Remove member' }).click(); await L.sleep(1800);
+  note('remove Quinn (invited)', { toasts: await toasts(), writes: drain() });
+  await L.shot(page, 'w1-76-removed.png');
+  note('members now', await page.locator('.ctable-row .ctable-strong').allInnerTexts());
+  note('tiles', (await L.textOf(page, 'main')).split('Members\n').slice(1, 2).join('').slice(0, 200));
+  // E. Quinn's setup link after removal
+  const links = JSON.parse(fs.readFileSync(LINKS, 'utf8'));
+  const ctx = await browser.newContext(); const p2 = await ctx.newPage();
+  const seen = []; p2.on('response', async (r) => { if (r.url().includes('/api/') && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 300); } catch {} seen.push(`${r.status()} ${r.request().method()} ${r.url().replace(L.BASE, '')} ${b}`); } });
+  await p2.goto(links['quinn.abara@northgate-bio.example.test'], { waitUntil: 'networkidle' });
+  await p2.fill('#reset-password', process.env.WALK_PASSWORD); await p2.fill('#reset-password-confirm', process.env.WALK_PASSWORD);
+  await p2.getByRole('button', { name: 'Update password' }).click(); await L.sleep(2000);
+  note('removed invitee opens their setup link and sets a password', { calls: seen.map(redact), url: redact(p2.url()) });
+  await ctx.close();
+  // F. re-invite Quinn after removal, and the freed seat: Marta as manager
+  const invite = async (name, email, role) => {
+    await page.getByTestId('admin-invite-member').click(); await dialog.waitFor();
+    await dialog.getByLabel('Full name').fill(name); await dialog.getByLabel('Email').fill(email); await dialog.getByLabel('Role').selectOption(role);
+    await dialog.getByRole('button', { name: 'Send invite' }).click(); await L.sleep(1800);
+    const got = await page.locator('input[aria-label^="Setup link for"]').evaluateAll(els => els.map(e => [e.getAttribute('aria-label').replace('Setup link for ', ''), e.value]));
+    const l2 = JSON.parse(fs.readFileSync(LINKS, 'utf8')); for (const [who, url] of got) l2[who] = url; fs.writeFileSync(LINKS, JSON.stringify(l2, null, 1), { mode: 0o600 });
+    return { toasts: await toasts(), writes: drain() };
+  };
+  note('invite Marta as manager into the freed seat', await invite('Marta Kowal', 'marta.kowal@northgate-bio.example.test', 'manager'));
+  note('re-invite Quinn (removed; account exists with a password now)', await invite('Quinn Abara', 'quinn.abara@northgate-bio.example.test', 'approver'));
+  await L.shot(page, 'w1-77-reinvite-removed-member.png');
+  note('members at end', await page.locator('.ctable-row').evaluateAll(els => els.map(e => e.innerText.replace(/\n+/g, ' | '))));
+  // G. Audit activity for Priya
+  await open('Priya Raman');
+  await drawer.getByRole('button', { name: /Audit activity/ }).click(); await page.waitForLoadState('networkidle'); await L.sleep(2000);
+  note('Audit activity -> url', page.url());
+  note('Audit activity -> main', (await L.textOf(page, 'main')).slice(0, 2600));
+  await L.shot(page, 'w1-78-audit-activity-member.png');
+  note('failed calls', drain());
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

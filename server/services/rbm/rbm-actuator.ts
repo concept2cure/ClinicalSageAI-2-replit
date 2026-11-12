@@ -172,7 +172,12 @@ export interface DefineKriInput {
 }
 
 /** Create a KRI. Infers green/amber/red status from the current value vs the
- *  amber/red thresholds and the direction. */
+ *  amber/red thresholds and the direction.
+ *
+ *  The one KRI INSERT: the screen's "New KRI" (routes/mdx-rbm.ts POST /rbm-kris) and AnA's command both come
+ *  here. $11 is the reading, used twice (current_value, and whether evaluated_at is set), and both uses carry its
+ *  type: a bare `$11 IS NULL` beside a numeric column made PostgreSQL deduce two types for one parameter (42P08),
+ *  so every creation failed, from the screen and from AnA (GA-S8-01; mdx-rbm-kri-create.pglite.test.ts). */
 export async function defineKri(exec: Exec, organizationId: number, input: DefineKriInput) {
   const dir: KriDirection = input.direction ?? 'higher_worse';
   const status = kriStatus(input.currentValue ?? null, input.thresholdAmber ?? null, input.thresholdRed ?? null, dir);
@@ -180,7 +185,7 @@ export async function defineKri(exec: Exec, organizationId: number, input: Defin
     `INSERT INTO rbm_kris (
        organization_id, program_id, assessment_id, name, metric_definition, data_source,
        unit, direction, threshold_amber, threshold_red, current_value, status, evaluated_at
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, CASE WHEN $11 IS NULL THEN NULL ELSE NOW() END)
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::numeric,$12, CASE WHEN $11::numeric IS NULL THEN NULL ELSE NOW() END)
      RETURNING *`,
     [
       organizationId, input.programId ?? null, input.assessmentId ?? null, input.name,
