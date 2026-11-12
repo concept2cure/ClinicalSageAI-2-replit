@@ -717,6 +717,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
     - **→ S13 (`01QoxbLZhyA6…`), two:**
       - `ci:error-envelope` on `help/SupportRequests.tsx:46` and `:49` (`a3f16b9522`). Read the refusal with
         `serverMessage(json) ?? '<fallback>'` from `@/lib/queryClient`, not `json?.error?.message`.
+      - **Two more, from the pinned run at `ef0472c7b8` (2026-11-12 10:34):** `launch-scope.test.ts` "the shell no
+        longer carries training" still asserts what `1207a3c307` (P-127) changed; and `hostilePayloadProbe`
+        "training": `Training.tsx:188` reads `index.data?.courses.map(…)`, which throws on 7 of 8 unexpected
+        responses (a record without `courses` is enough). `Array.isArray(index.data?.courses) ? … : null` there,
+        then rerun the probe.
       - **A test red, found after the run:** `homeStartHere.test.tsx` "Ask AnA first, then your projects and your
         open items" now reads `['Ask AnA', 'Get started', …]`, after `75624cff54` put the getting-started course on
         Home for every member. The test states Home's order, so whether the course belongs there is yours to settle.
@@ -730,7 +735,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
       - `ci:tenant-isolation:no-regression` on `server/services/qms/change-regulatory-impact.ts:261`
         (`c332eca5a7`): `SELECT … FROM users u WHERE u.id = $1` has no organisation term. Scope it, or mark it
         `// tenant-isolation-safe: <reason>` if the id is the authenticated actor's own.
-    - **→ CMC screens (`01QoxbLcnW5j…`):** `ci:success-before-ok` on `CmcModule.tsx:2101` (`feea54cae6`). "The shelf
+    - **→ CSR path (`01QoxbLZjz…`), from the pinned run:** `server/routes/__tests__/csr-jobs-narratives.pglite.test.ts`
+    and `tests/unit/csr-jobs-routes.test.ts` do not load. `f4a56a5058` made `csr-jobs.ts` import
+    `csr-import-into-document`, and their `csr-builder` mock has no `flattenICHE3Sections`. Mock
+    `csr-import-into-document` in them as `csr-jobs-build-and-review` does, or use `importOriginal`.
+  - **→ CMC screens (`01QoxbLcnW5j…`):** `ci:success-before-ok` on `CmcModule.tsx:2101` (`feea54cae6`). "The shelf
       life is saved…" is reached before the response is checked. `apiRequest` returns a 401 rather than throwing,
       so check `res.ok` first.
 - **→ every lane: `.husky/pre-push` now runs CI's Lint-job gates on what your push brings**

@@ -284,8 +284,8 @@ edits there to show a test failing, and drafted GA-ADV-01 there. So:
 - shard 2 (from 05:50:58) also had `4f80673c6c` to `4f275c1793`;
 - shards 3 and 4 (from 06:14:41 and 06:42:36) also had `bb05e5c0f7` and `269e57f168`, then `2381e2b632`.
 Shard logs show edited sources in their code frames. A result for a file this lane edited during the run is
-therefore not evidence for `21c6837180`. A replay in a detached worktree pinned to `ef0472c7b8`, which nothing else
-touches, is filed below when it finishes.
+therefore not evidence for `21c6837180`. The replay this called for, in a detached worktree pinned to `ef0472c7b8`, follows under "Run pinned
+at `ef0472c7b8`".
 
 **The 18 reds, and what became of each.** Every fix below was shown red at HEAD, then green. Eight of the ten fix
 commits also record a run in which the test was made to fail, by a change for that run only, on the case it exists to
@@ -322,3 +322,34 @@ Of the 15 reds that are not the founder's:
 **Not run here, and why:** Production Image Boot and Codespace (no route to npm from a container, as above). The
 Lint job's 130 steps are next: its first 16 passed before the run was paused to push these fixes, since the
 pre-push typecheck and the job's own cannot share this container's memory.
+
+## Run pinned at `ef0472c7b8`, 2026-11-12 10:34 UTC (MR-02 Stage 3)
+
+The same jobs as above, in a detached git worktree at `ef0472c7b8` that nothing else edited during the run. Its
+`node_modules` was linked from the main checkout. Record: `run-2026-11-12-pinned/steps.txt` and `shards.json`.
+(A first attempt at 10:32 was two copies of the script started by mistake, racing on one database. It was stopped
+and is not counted.)
+
+| Job | Result at `ef0472c7b8` |
+|---|---|
+| Real-database suite (`app_service`, `RLS_ENFORCE=on`) | 4 of 3,254 failed, in 2 files (1,164 s) |
+| `RUN_INTEGRATION_TESTS` files | green |
+| Test shards 1–4, three files at a time | 1, 1, 4 and 1 tests failed; 2 files failed to load; 1,520, 1,410, 1,656 and 1,440 s |
+| The merge verdict | 6,358 collected, 6,358 ran, none missing, none twice; 83,454 tests, 7 failed |
+
+**None of the reds this lane fixed in the first run came back.** What is red at `ef0472c7b8`:
+
+| Red | Cause | Holder |
+|---|---|---|
+| `tests/db/tenant-purge-blocking-keys` (3) | P-58 against P-104 | the founder |
+| `tests/db/entitlement-schema-posture`, "ci:migration-drop-safety:selftest exits 0" | Only when the checkout sits under the OS temp directory: the selftest's fixtures read as "missing from the repo". 12 of 12 pass in `/home/user/…`. Not a trunk red. | none |
+| `d0PhoneWidth` | CMC's register scroll beside D0's rule (`687d0af9df`) | R1 (`01DiJJAk…`) |
+| `workbenchRemedies` "insert-empty" | the editor bridge rebuilt during `propose` | the Codex editor continuation |
+| `vault-document-filter` | `data-room-vault.ts` builds its own Vault predicate | data room (`01QoxbLdTrwY…`) |
+| `foundationsRetiredRatchet` (`cm-meta` 84 → 85) | `40cc8265b7` | `01T2woo…` |
+| `homeStartHere` | "Get started" on Home (`75624cff54`) | S13 (`01QoxbLZhyA6…`) |
+| `launch-scope.test.ts` "the shell no longer carries training" | Help & training is a launch surface now (`1207a3c307`, P-127) | S13, new |
+| `hostilePayloadProbe` "training" | `Training.tsx:188` reads `index.data?.courses.map(…)`: throws on 7 of 8 unexpected responses | S13, new |
+| `csr-jobs-narratives.pglite` and `tests/unit/csr-jobs-routes` (do not load) | `f4a56a5058` made `csr-jobs.ts` import `csr-import-into-document`; their `csr-builder` mock lacks `flattenICHE3Sections` | CSR path (`01QoxbLZjz…`), new |
+
+`2381e2b632`'s budget held three files at a time: the all-filings editor probe passed in shard 3.
