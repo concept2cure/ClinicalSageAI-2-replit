@@ -80,13 +80,20 @@ async function ensureSop(ctx, list, sop, rec) {
   return `${created ? 'created' : 'found'} #${doc.id} ${doc.doc_number} → ${d.status}`;
 }
 
-async function ensureChange({ api, tally }, rec) {
+/** The C2C-CC-001 change control's create body. */
+export function biotechChangeBody(sop2Id, programId) {
+  /* On its program, so the Quality evidence capture reads it as C2C-101's, not organization-wide. */
+  return { ...CHANGE, title: T(CHANGE.title), targetImplementationDate: inDays(45), qmsDocumentId: sop2Id ?? null,
+    ...(programId ? { programId } : {}) };
+}
+
+async function ensureChange({ api, tally, programId }, rec) {
   const changes = asArray(must(await api('GET', '/api/mdx/qms/changes'), 200, 'list changes'), 'data');
   let ch = changes.find((c) => (c.change_number ?? c.changeNumber) === CHANGE.changeNumber) || null;
   const sop2 = rec.documents.find((d) => d.key === 'sop-002');
   if (ch) tally.found('qms-change');
   else {
-    const r = must(await api('POST', '/api/mdx/qms/changes', { ...CHANGE, title: T(CHANGE.title), targetImplementationDate: inDays(45), qmsDocumentId: sop2?.id ?? null }), 201, 'create change');
+    const r = must(await api('POST', '/api/mdx/qms/changes', biotechChangeBody(sop2?.id, programId)), 201, 'create change');
     ch = r.data ?? r;
     tally.created('qms-change');
   }

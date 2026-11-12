@@ -1,0 +1,1182 @@
+{
+  "pack": "biotech",
+  "prefix": "[Demo · Biotech]",
+  "outcome": "failed",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T19:51:44.543Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 154,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {
+        "module3-compile": 1
+      },
+      "found": {
+        "program": 2,
+        "vault-document": 6,
+        "vault-filing": 6,
+        "authoring-document": 3,
+        "authoring-section": 16,
+        "authoring-comment": 3,
+        "authoring-comment-resolution": 2,
+        "protocol-document": 1,
+        "protocol-section": 10,
+        "protocol-objective": 6,
+        "protocol-criterion": 16,
+        "protocol-visit": 9,
+        "protocol-team-member": 6,
+        "protocol-soa-assessment": 10,
+        "protocol-soa-cell": 51,
+        "protocol-risk": 6,
+        "protocol-milestone": 5,
+        "protocol-amendment": 1,
+        "protocol-version": 1,
+        "study-design": 1,
+        "submission": 1,
+        "sequence": 1,
+        "leaf": 6,
+        "sequence-transition": 1,
+        "qms-document": 4,
+        "qms-change": 1,
+        "qms-change-link": 1,
+        "cmc-drug-substance": 2,
+        "cmc-drug-product": 2,
+        "cmc-method": 9,
+        "cmc-spec": 11,
+        "cmc-stability": 5,
+        "cmc-batch": 6,
+        "cmc-qc-result": 5
+      }
+    },
+    "identities": {
+      "author": {
+        "email": "jm.smith@concept2cure.pro",
+        "userId": "1",
+        "organizationId": "2"
+      },
+      "signer": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+    },
+    "provenance": "Seeded demonstration content authored for the Concept2Cure launch demo (fictional sponsor, molecule, study and people). Not model-drafted: no AI provider is configured.",
+    "program": {
+      "id": "6065271c-d4b0-4936-aad1-02855423a738",
+      "code": "C2C-101",
+      "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "productName": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)",
+      "programType": "ind",
+      "phase": "planning",
+      "status": "active",
+      "indication": "Moderate-to-severe plaque psoriasis in adults",
+      "sponsor": "Concept2Cure Therapeutics (fictional) — the organisation the founder is signed into",
+      "spineSubmissionId": null,
+      "created": false,
+      "clientWorkspaceId": 2
+    },
+    "vault.documents": [
+      {
+        "key": "ib",
+        "id": "75d6cf26-b705-4aea-9d18-cbd03f163b91",
+        "title": "[Demo · Biotech] Investigator's Brochure C2C-101 v3.0",
+        "documentType": "IB",
+        "folderId": "module-1",
+        "sectionCode": "m1.14.4.1",
+        "leafTitle": "Investigator's Brochure v3.0",
+        "pages": 2,
+        "bytes": 7296,
+        "sha256": "b23339ccea9d8b0ef2087fc525c56abe512815ae7244d2b77cfec383d7c94578",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "protocol",
+        "id": "e7ae5774-0678-4423-86fc-5f7dbd3e0c57",
+        "title": "[Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled",
+        "documentType": "PROTOCOL",
+        "folderId": "module-5",
+        "sectionCode": "m5.3.5.1",
+        "leafTitle": "Protocol C2C-101-201 v1.0",
+        "pages": 2,
+        "bytes": 9196,
+        "sha256": "44cf3a1bedc69fc402070838694cd33e02c9c51b0a08c5a0b06706e8ca839b4f",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "sap",
+        "id": "dc4f5bfc-3c10-4e25-92ba-5c6202e17120",
+        "title": "[Demo · Biotech] Statistical Analysis Plan C2C-101-201 v1.0",
+        "documentType": "SAP",
+        "folderId": "module-5",
+        "sectionCode": "m5.3.5.1",
+        "leafTitle": "Statistical Analysis Plan C2C-101-201 v1.0",
+        "pages": 2,
+        "bytes": 6891,
+        "sha256": "aeecd5e3f5a1d142cbf72ba2bf683e9f54db23dd360220167a6fc073efc44e18",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "cmc",
+        "id": "be0f7621-7c77-429c-be6d-6ac73da3ed6d",
+        "title": "[Demo · Biotech] CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101",
+        "documentType": "MODULE_2",
+        "folderId": "module-2",
+        "sectionCode": "m2.3",
+        "leafTitle": "Quality Overall Summary — C2C-101",
+        "pages": 2,
+        "bytes": 6467,
+        "sha256": "2dddf37b17b81e1cf62c4dbfc38dae63be419faf73d87e2c9cfc9d1c2d331e3e",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "tox",
+        "id": "98c0b490-17da-4595-80ea-a6153c057363",
+        "title": "[Demo · Biotech] Nonclinical Toxicology Summary — C2C-101",
+        "documentType": "MODULE_2",
+        "folderId": "module-2",
+        "sectionCode": "m2.6.6",
+        "leafTitle": "Toxicology Written Summary — C2C-101",
+        "pages": 2,
+        "bytes": 5781,
+        "sha256": "ae9376f9a34659fee25aba45670484f52d9dcd4d6f4c671657eb52f1e3bdeeaa",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "preind",
+        "id": "84155fd7-0758-444c-a7a5-f39d60cb05ce",
+        "title": "[Demo · Biotech] Pre-IND Meeting Minutes — C2C-101 (Type B)",
+        "documentType": "CORRESPONDENCE",
+        "folderId": "module-1",
+        "sectionCode": "m1.6.3",
+        "leafTitle": "Pre-IND meeting minutes (Type B)",
+        "pages": 2,
+        "bytes": 5599,
+        "sha256": "9f2e02c4e112226ea244a738ae36bfc0d9bfc2314e30371b4541d73a0915756a",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      }
+    ],
+    "vault.readModel": {
+      "documentCount": 21,
+      "unfiledCount": 12,
+      "standard": "biotech",
+      "dataRoom": {
+        "captured": 37,
+        "classified": 10,
+        "filed": 0,
+        "needsReview": 27,
+        "sources": [
+          {
+            "id": 455,
+            "title": "Sweep_RV_C2C-101_DataRoom_Note.pdf",
+            "kind": "PDF",
+            "sizeLabel": "745 B",
+            "addedAt": "2h ago",
+            "stage": "needs_review",
+            "readState": "Read",
+            "suggestedFolder": null,
+            "suggestedFolderLabel": "",
+            "evidenceKind": null,
+            "confidence": "none",
+            "needsReview": true,
+            "filedAs": null
+          },
+          {
+            "id": 229,
+            "title": "stability-data-cut-1794183324923.txt",
+            "kind": "Text",
+            "sizeLabel": "84 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 227,
+            "title": "stability-data-cut-1794183288633.txt",
+            "kind": "Text",
+            "sizeLabel": "84 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 225,
+            "title": "stability-data-cut-1794183148874.txt",
+            "kind": "Text",
+            "sizeLabel": "101 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 223,
+            "title": "stability-data-cut-1794183127960.txt",
+            "kind": "Text",
+            "sizeLabel": "101 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 221,
+            "title": "stability-data-cut-1794183085570.txt",
+            "kind": "Text",
+            "sizeLabel": "101 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 219,
+            "title": "stability-data-cut-1794183040093.txt",
+            "kind": "Text",
+            "sizeLabel": "74 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 218,
+            "title": "stability-data-cut-1794183040093.txt",
+            "kind": "Text",
+            "sizeLabel": "73 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 217,
+            "title": "stability-data-cut-1794183006228.txt",
+            "kind": "Text",
+            "sizeLabel": "60 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 216,
+            "title": "stability-data-cut-1794182991748.txt",
+            "kind": "Text",
+            "sizeLabel": "59 B",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 163,
+            "title": "[Demo] FDA information request (fictional) - IND C2C-101.txt",
+            "kind": "Text",
+            "sizeLabel": "1.3 kB",
+            "addedAt": "22h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "corresp",
+            "suggestedFolderLabel": "Agency correspondence",
+            "evidenceKind": "resp",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          }
+        ],
+        "window": {
+          "shown": 11,
+          "truncated": false
+        }
+      }
+    },
+    "authoring.documents": [
+      {
+        "key": "synopsis",
+        "title": "[Demo · Biotech] Protocol Synopsis C2C-101-201",
+        "module": "M5",
+        "role": "frozen-signed",
+        "id": "d49749de-add0-4380-935f-a111e2d04b25",
+        "status": "draft",
+        "created": false,
+        "governance": null,
+        "sections": [
+          {
+            "id": "b4799c7d-aedc-422a-9c6e-3086b9da8ef9",
+            "code": "S.1",
+            "title": "Objectives"
+          },
+          {
+            "id": "820ef675-0653-4e75-8192-a147eb11416e",
+            "code": "S.2",
+            "title": "Study design"
+          },
+          {
+            "id": "812cc5e5-ca05-4e5c-878f-6e9a21f9eff4",
+            "code": "S.3",
+            "title": "Study population"
+          },
+          {
+            "id": "1a7bcf62-daad-487a-8d9f-2fee37fd1b7a",
+            "code": "S.4",
+            "title": "Endpoints"
+          },
+          {
+            "id": "c6fdcca1-1101-4b09-b5dc-fb719aeafb46",
+            "code": "S.5",
+            "title": "Sample size rationale"
+          },
+          {
+            "id": "9069c453-5c7b-4d90-81d0-6ff4c0e0a09c",
+            "code": "S.6",
+            "title": "Statistical methods"
+          }
+        ],
+        "comments": [
+          {
+            "id": "87b4bad1-7319-4da0-981f-1df890c7e087",
+            "sectionCode": "S.5",
+            "status": "resolved",
+            "resolvedBy": "jm.smith@concept2cure.pro"
+          },
+          {
+            "id": "661598af-7f84-467c-8978-b68ffe86d65a",
+            "sectionCode": "S.2",
+            "status": "resolved",
+            "resolvedBy": "jm.smith@concept2cure.pro"
+          }
+        ],
+        "review": null,
+        "frozen": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+        "signature": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+      },
+      {
+        "key": "clinical-overview",
+        "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+        "module": "M2",
+        "role": "in-review",
+        "id": "79793c98-005d-45bc-8261-0cd0d2208ec7",
+        "status": "draft",
+        "created": false,
+        "governance": null,
+        "sections": [
+          {
+            "id": "c7f0c674-abdd-47a6-80e2-7e66c2bbd489",
+            "code": "2.5.1",
+            "title": "Product Development Rationale"
+          },
+          {
+            "id": "d0ea5645-b27f-430a-91bc-594833c4fb0e",
+            "code": "2.5.2",
+            "title": "Overview of Biopharmaceutics"
+          },
+          {
+            "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+            "code": "2.5.3",
+            "title": "Overview of Clinical Pharmacology"
+          },
+          {
+            "id": "1b160bae-4cb6-44dc-bb04-fe405215d8c1",
+            "code": "2.5.4",
+            "title": "Overview of Efficacy"
+          },
+          {
+            "id": "b59189fc-4ade-4688-bb10-6a757c1b408e",
+            "code": "2.5.5",
+            "title": "Overview of Safety"
+          },
+          {
+            "id": "32374305-2e73-4800-9d71-c50f5acffac7",
+            "code": "2.5.6",
+            "title": "Benefits and Risks Conclusions"
+          }
+        ],
+        "review": null
+      },
+      {
+        "key": "ib-summary",
+        "title": "[Demo · Biotech] IB Summary of Data and Guidance for the Investigator — C2C-101",
+        "module": "M1",
+        "role": "draft-open-comment",
+        "id": "bdd5a24e-10d7-4dd1-aba6-e65a6c069758",
+        "status": "draft",
+        "created": false,
+        "governance": null,
+        "sections": [
+          {
+            "id": "0ed07960-0e49-4cc9-93d5-1fa4b2d7fe05",
+            "code": "7.1",
+            "title": "Summary of nonclinical data"
+          },
+          {
+            "id": "03d134e8-12b7-45f3-b4e6-73db4dc82931",
+            "code": "7.2",
+            "title": "Summary of clinical data"
+          },
+          {
+            "id": "1496ef1a-9595-4f10-a56e-16d86f522aad",
+            "code": "7.3",
+            "title": "Guidance for the investigator"
+          },
+          {
+            "id": "96447076-2cd6-45d3-b51a-471c2d19a45d",
+            "code": "7.4",
+            "title": "Reference safety information"
+          }
+        ],
+        "comments": [
+          {
+            "id": "a3d380b8-4763-4996-b672-fcaa82490a1d",
+            "sectionCode": "7.3",
+            "status": "open",
+            "resolvedBy": null
+          }
+        ]
+      }
+    ],
+    "protocol": {
+      "title": "[Demo · Biotech] Protocol C2C-101-201 — Phase 2 dose-ranging study of C2C-101 in plaque psoriasis",
+      "protocolNumber": "C2C-101-201",
+      "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+      "id": 1,
+      "soa": {
+        "assessments": 10,
+        "visits": 9,
+        "totalCells": 51
+      },
+      "risks": 6,
+      "milestones": 5,
+      "amendment": {
+        "id": 1,
+        "title": "Amendment 1 — add Week 2 PK sampling and align stratification wording"
+      },
+      "versions": 1,
+      "pdev": {
+        "id": "1",
+        "objectives": 6,
+        "inclusion": 8,
+        "exclusion": 8,
+        "visits": 9,
+        "assessments": 10,
+        "risks": 6,
+        "milestones": 5,
+        "amendments": 1,
+        "team": 6,
+        "keys": [
+          "id",
+          "programId",
+          "title",
+          "shortTitle",
+          "kind",
+          "version",
+          "status",
+          "sponsor",
+          "pi",
+          "principalInvestigator",
+          "team",
+          "updated",
+          "completeness",
+          "openSection",
+          "sections",
+          "content",
+          "objectives",
+          "eligibility",
+          "soa",
+          "riskSummary",
+          "risks",
+          "milestones",
+          "budget",
+          "amendments",
+          "deviations",
+          "reviews",
+          "reviewComments",
+          "finalization",
+          "consent",
+          "consentForm",
+          "completenessFindings",
+          "ruleFindings",
+          "studyDesign"
+        ]
+      }
+    },
+    "submission": {
+      "submission": {
+        "id": 1,
+        "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "productName": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)",
+        "applicationType": "ind",
+        "primaryRegion": "fda",
+        "status": "planning"
+      },
+      "sequence": {
+        "id": 1,
+        "sequenceNumber": "0000",
+        "status": "assembling",
+        "region": "fda"
+      },
+      "leaves": [
+        {
+          "id": 14,
+          "sectionCode": "1.20",
+          "title": "Sweep RV 1.20 Introductory Statement C2C-101",
+          "documentUuid": "3fef6324-ab16-4556-92bd-fa4d184b380e"
+        },
+        {
+          "id": 1,
+          "sectionCode": "m1.14.4.1",
+          "title": "Investigator's Brochure v3.0",
+          "documentUuid": "75d6cf26-b705-4aea-9d18-cbd03f163b91"
+        },
+        {
+          "id": 6,
+          "sectionCode": "m1.6.3",
+          "title": "Pre-IND meeting minutes (Type B)",
+          "documentUuid": "84155fd7-0758-444c-a7a5-f39d60cb05ce"
+        },
+        {
+          "id": 4,
+          "sectionCode": "m2.3",
+          "title": "Quality Overall Summary — C2C-101",
+          "documentUuid": "be0f7621-7c77-429c-be6d-6ac73da3ed6d"
+        },
+        {
+          "id": 5,
+          "sectionCode": "m2.6.6",
+          "title": "Toxicology Written Summary — C2C-101",
+          "documentUuid": "98c0b490-17da-4595-80ea-a6153c057363"
+        },
+        {
+          "id": 2,
+          "sectionCode": "m5.3.5.1",
+          "title": "Protocol C2C-101-201 v1.0",
+          "documentUuid": "e7ae5774-0678-4423-86fc-5f7dbd3e0c57"
+        },
+        {
+          "id": 3,
+          "sectionCode": "m5.3.5.1",
+          "title": "Statistical Analysis Plan C2C-101-201 v1.0",
+          "documentUuid": "dc4f5bfc-3c10-4e25-92ba-5c6202e17120"
+        }
+      ],
+      "readiness": {
+        "gate": {
+          "cleared": false,
+          "blockers": [
+            "7 open error-severity validation finding(s) must be resolved before dispatch.",
+            "7 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+            "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+            "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:1)."
+          ]
+        },
+        "freezeGate": {
+          "cleared": false,
+          "blockers": [
+            "7 open error-severity validation finding(s) must be resolved before dispatch.",
+            "7 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+            "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+          ]
+        },
+        "validationErrors": 7,
+        "unacknowledgedShadowCriticals": 0,
+        "releaseSignature": {
+          "required": true,
+          "verdict": "unsigned",
+          "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:1",
+          "cleared": false
+        },
+        "readiness": {
+          "errors": 7,
+          "warnings": 7,
+          "infos": 2,
+          "releaseBlockers": 7,
+          "findings": [
+            {
+              "severity": "error",
+              "code": "IND_MODULE3_REQUIRED",
+              "sectionCode": "3.2.S",
+              "message": "There is no 3.2.S Drug Substance leaf in the original IND (sequence 0000), and no cross-reference on record covers 3.2.S with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.S, naming 3.2.S among its sections, with its Letter of Authorization on file (Module 1.4.1).",
+              "rule": {
+                "id": "IND_MODULE3_REQUIRED",
+                "title": "The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization",
+                "category": "content",
+                "regions": [
+                  "fda"
+                ],
+                "severity": "high",
+                "source": "21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "error",
+              "code": "IND_MODULE3_REQUIRED",
+              "sectionCode": "3.2.P",
+              "message": "There is no 3.2.P Drug Product leaf in the original IND (sequence 0000), and no cross-reference on record covers 3.2.P with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.P, naming 3.2.P among its sections, with its Letter of Authorization on file (Module 1.4.1).",
+              "rule": {
+                "id": "IND_MODULE3_REQUIRED",
+                "title": "The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization",
+                "category": "content",
+                "regions": [
+                  "fda"
+                ],
+                "severity": "high",
+                "source": "21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "m1.14.4.1",
+              "blocksRelease": true,
+              "message": "Leaf \"Investigator's Brochure v3.0\" (m1.14.4.1) points at vault_documents 75d6cf26-b705-4aea-9d18-cbd03f163b91, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "m5.3.5.1",
+              "blocksRelease": true,
+              "message": "Leaf \"Protocol C2C-101-201 v1.0\" (m5.3.5.1) points at vault_documents e7ae5774-0678-4423-86fc-5f7dbd3e0c57, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "m5.3.5.1",
+              "blocksRelease": true,
+              "message": "Leaf \"Statistical Analysis Plan C2C-101-201 v1.0\" (m5.3.5.1) points at vault_documents dc4f5bfc-3c10-4e25-92ba-5c6202e17120, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "m2.3",
+              "blocksRelease": true,
+              "message": "Leaf \"Quality Overall Summary — C2C-101\" (m2.3) points at vault_documents be0f7621-7c77-429c-be6d-6ac73da3ed6d, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "m2.6.6",
+              "blocksRelease": true,
+              "message": "Leaf \"Toxicology Written Summary — C2C-101\" (m2.6.6) points at vault_documents 98c0b490-17da-4595-80ea-a6153c057363, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "m1.6.3",
+              "blocksRelease": true,
+              "message": "Leaf \"Pre-IND meeting minutes (Type B)\" (m1.6.3) points at vault_documents 84155fd7-0758-444c-a7a5-f39d60cb05ce, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "warning",
+              "code": "DOCUMENT_NOT_APPROVED",
+              "sectionCode": "1.20",
+              "blocksRelease": true,
+              "message": "Leaf \"Sweep RV 1.20 Introductory Statement C2C-101\" (1.20) points at vault_documents 3fef6324-ab16-4556-92bd-fa4d184b380e, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+              "rule": {
+                "id": "DOCUMENT_NOT_APPROVED",
+                "title": "Every leaf’s source document is approved for transmission",
+                "category": "integrity",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "high",
+                "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "error",
+              "code": "MISSING_REQUIRED_SECTION",
+              "sectionCode": "1.1",
+              "message": "Required section 1.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+              "rule": {
+                "id": "MISSING_REQUIRED_SECTION",
+                "title": "Region-required Module 1 sections are present",
+                "category": "content",
+                "regions": [
+                  "fda",
+                  "eu",
+                  "jp",
+                  "ca",
+                  "au",
+                  "ch"
+                ],
+                "severity": "medium",
+                "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "error",
+              "code": "MISSING_REQUIRED_SECTION",
+              "sectionCode": "1.2",
+              "message": "Required section 1.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+              "rule": {
+                "id": "MISSING_REQUIRED_SECTION",
+                "title": "Region-required Module 1 sections are present",
+                "category": "content",
+                "regions": [
+                  "fda",
+                  "eu",
+                  "jp",
+                  "ca",
+                  "au",
+                  "ch"
+                ],
+                "severity": "medium",
+                "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "error",
+              "code": "MISSING_REQUIRED_SECTION",
+              "sectionCode": "1.3",
+              "message": "Required section 1.3 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+              "rule": {
+                "id": "MISSING_REQUIRED_SECTION",
+                "title": "Region-required Module 1 sections are present",
+                "category": "content",
+                "regions": [
+                  "fda",
+                  "eu",
+                  "jp",
+                  "ca",
+                  "au",
+                  "ch"
+                ],
+                "severity": "medium",
+                "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "error",
+              "code": "MISSING_REQUIRED_SECTION",
+              "sectionCode": "1.12.14",
+              "message": "Required section 1.12.14 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+              "rule": {
+                "id": "MISSING_REQUIRED_SECTION",
+                "title": "Region-required Module 1 sections are present",
+                "category": "content",
+                "regions": [
+                  "fda",
+                  "eu",
+                  "jp",
+                  "ca",
+                  "au",
+                  "ch"
+                ],
+                "severity": "medium",
+                "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "error",
+              "code": "MISSING_REQUIRED_SECTION",
+              "sectionCode": "1.14.4.2",
+              "message": "Required section 1.14.4.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+              "rule": {
+                "id": "MISSING_REQUIRED_SECTION",
+                "title": "Region-required Module 1 sections are present",
+                "category": "content",
+                "regions": [
+                  "fda",
+                  "eu",
+                  "jp",
+                  "ca",
+                  "au",
+                  "ch"
+                ],
+                "severity": "medium",
+                "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "info",
+              "code": "DUPLICATE_NEW_SECTION",
+              "sectionCode": "m5.3.5.1",
+              "message": "Section m5.3.5.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended.",
+              "rule": {
+                "id": "DUPLICATE_NEW_SECTION",
+                "title": "Section does not carry multiple unintended \"new\" leaves",
+                "category": "lifecycle",
+                "regions": [
+                  "ich"
+                ],
+                "severity": "low",
+                "source": "ICH eCTD Specification (v3.2.2 / v4.0)",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            },
+            {
+              "severity": "info",
+              "code": "CLINICAL_HOLD_NOT_ASSESSED",
+              "sectionCode": null,
+              "message": "Clinical hold (21 CFR 312.42) is not assessed: nothing on this platform records whether FDA has placed this IND on clinical hold, so this verdict neither clears nor blocks the sequence on that ground. Confirm the IND is not on hold before dispatch; the complete response to a hold (312.42(e)) is filed as a response sequence.",
+              "rule": {
+                "id": "CLINICAL_HOLD_NOT_ASSESSED",
+                "title": "A US IND sequence states that a clinical hold is not assessed",
+                "category": "content",
+                "regions": [
+                  "fda"
+                ],
+                "severity": "low",
+                "source": "21 CFR 312.42",
+                "enforcement": "dispatch-readiness",
+                "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+              }
+            }
+          ]
+        },
+        "leafCount": 7
+      },
+      "shadowReview": {
+        "status": "not executed",
+        "reason": "existing run(s) did not complete (latest status \"failed\", model none)",
+        "runs": 1,
+        "latest": {
+          "id": 1,
+          "sequenceId": 1,
+          "region": "fda",
+          "lens": "fda_filing",
+          "model": null,
+          "promptVersion": "shadow-review@v1.2",
+          "status": "failed",
+          "rtfRiskScore": null,
+          "crlRiskScore": null,
+          "summary": null,
+          "failureCode": "no_provider_configured",
+          "waiverSignatureActionId": null,
+          "waivedFailedRunId": null,
+          "leafManifestDigest": null,
+          "inputCoverage": {
+            "leaves": [
+              {
+                "chars": 4427,
+                "leafId": 1,
+                "status": "read",
+                "sentChars": 4427,
+                "sectionCode": "m1.14.4.1"
+              },
+              {
+                "chars": 3198,
+                "leafId": 6,
+                "status": "read",
+                "sentChars": 3198,
+                "sectionCode": "m1.6.3"
+              },
+              {
+                "chars": 3850,
+                "leafId": 4,
+                "status": "read",
+                "sentChars": 3850,
+                "sectionCode": "m2.3"
+              },
+              {
+                "chars": 3335,
+                "leafId": 5,
+                "status": "read",
+                "sentChars": 3335,
+                "sectionCode": "m2.6.6"
+              },
+              {
+                "chars": 5741,
+                "leafId": 2,
+                "status": "read",
+                "sentChars": 5741,
+                "sectionCode": "m5.3.5.1"
+              },
+              {
+                "chars": 4069,
+                "leafId": 3,
+                "status": "read",
+                "sentChars": 4069,
+                "sectionCode": "m5.3.5.1"
+              }
+            ],
+            "version": 1,
+            "textSent": true,
+            "charsSent": 24620,
+            "totalLimit": 150000,
+            "perLeafLimit": 12000
+          },
+          "organizationId": 2,
+          "createdBy": 1,
+          "createdAt": "2026-11-08T22:20:19.389Z",
+          "updatedAt": "2026-11-08T22:20:19.519Z",
+          "deletedAt": null
+        }
+      },
+      "dispatchQc": {
+        "clearedToDispatch": false,
+        "verdictSource": "assess-dispatch-readiness",
+        "blockers": [
+          "7 open error-severity validation finding(s) must be resolved before dispatch.",
+          "7 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:1)."
+        ],
+        "warnings": [
+          "Leaf \"Investigator's Brochure v3.0\" (m1.14.4.1) points at vault_documents 75d6cf26-b705-4aea-9d18-cbd03f163b91, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "Leaf \"Protocol C2C-101-201 v1.0\" (m5.3.5.1) points at vault_documents e7ae5774-0678-4423-86fc-5f7dbd3e0c57, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "Leaf \"Statistical Analysis Plan C2C-101-201 v1.0\" (m5.3.5.1) points at vault_documents dc4f5bfc-3c10-4e25-92ba-5c6202e17120, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "Leaf \"Quality Overall Summary — C2C-101\" (m2.3) points at vault_documents be0f7621-7c77-429c-be6d-6ac73da3ed6d, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "Leaf \"Toxicology Written Summary — C2C-101\" (m2.6.6) points at vault_documents 98c0b490-17da-4595-80ea-a6153c057363, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "Leaf \"Pre-IND meeting minutes (Type B)\" (m1.6.3) points at vault_documents 84155fd7-0758-444c-a7a5-f39d60cb05ce, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "Leaf \"Sweep RV 1.20 Introductory Statement C2C-101\" (1.20) points at vault_documents 3fef6324-ab16-4556-92bd-fa4d184b380e, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+          "No configured external-engine assessment is established. External validation is advisory here, so this gate does not block dispatch."
+        ],
+        "checklist": 7,
+        "narrative": null,
+        "narrativeUnavailable": {
+          "code": "PROVIDER_UNAVAILABLE",
+          "message": "No AI provider is configured; the deterministic verdict stands without a narrative."
+        }
+      },
+      "orchestration": {
+        "notExecuted": "the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog"
+      }
+    },
+    "qms": {
+      "documents": [
+        {
+          "key": "sop-001",
+          "id": 1,
+          "docNumber": "C2C-SOP-001",
+          "title": "[Demo · Biotech] SOP-001 Document Control",
+          "version": "1.0",
+          "status": "draft",
+          "created": false,
+          "target": "effective",
+          "approval": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+        },
+        {
+          "key": "sop-002",
+          "id": 2,
+          "docNumber": "C2C-SOP-002",
+          "title": "[Demo · Biotech] SOP-002 Change Control",
+          "version": "1.0",
+          "status": "draft",
+          "created": false,
+          "target": "effective",
+          "approval": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+        },
+        {
+          "key": "sop-003",
+          "id": 3,
+          "docNumber": "C2C-SOP-003",
+          "title": "[Demo · Biotech] SOP-003 Deviation Management",
+          "version": "1.0",
+          "status": "draft — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+          "created": false,
+          "target": "in_review"
+        },
+        {
+          "key": "sop-004",
+          "id": 4,
+          "docNumber": "C2C-SOP-004",
+          "title": "[Demo · Biotech] SOP-004 Training",
+          "version": "1.0",
+          "status": "draft",
+          "created": false,
+          "target": "draft"
+        }
+      ],
+      "change": {
+        "id": 1,
+        "changeNumber": "C2C-CC-001",
+        "status": "proposed",
+        "classification": "minor"
+      },
+      "deviation": "not supported by the QMS API — see notes",
+      "trainingAck": {
+        "executed": false,
+        "documentId": 1,
+        "note": "Only an effective controlled document can be acknowledged."
+      }
+    },
+    "programSmallMolecule": {
+      "id": "c339171c-ddf4-40a8-86d0-05944f1235a9",
+      "code": "C2C-201-B6DI",
+      "title": "[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)",
+      "productName": "C2C-201 (oral selective JAK1 inhibitor, fictional)",
+      "programType": "ind",
+      "phase": "planning",
+      "status": "active",
+      "indication": "Moderate-to-severe atopic dermatitis in adults",
+      "sponsor": "Concept2Cure Therapeutics (fictional) — the organisation the founder is signed into",
+      "spineSubmissionId": null,
+      "created": false,
+      "clientWorkspaceId": 2
+    }
+  },
+  "notes": [
+    "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Authoring freeze of Protocol Synopsis C2C-101-201: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Authoring e-signature on Protocol Synopsis C2C-101-201: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "The submission is the program's canonical spine created by intake (title = program name, productName = program product). There is no PATCH /api/submissions/:id, so the story's label \"IND 0000 — Original IND\" is carried by the sequence (number 0000, type original), not by a renamed submission.",
+    "Sequence 0000 left in \"assembling\": the structural validation reports 7 error-severity finding(s), so it was not moved to \"validated\".",
+    "Shadow Review not executed: 1 run(s) exist for sequence 0000 and none completed (latest status \"failed\"); no AI provider is configured.",
+    "QMS approval of C2C-SOP-001: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "QMS approval of C2C-SOP-002: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "QMS deviation not created: /api/mdx/qms exposes documents, changes (with a \"deviation\" link TYPE by reference), nonconforming products, suppliers, internal audits, management reviews and training — there is no deviation entity to write (server/routes/mdx-qms.ts). SOP-003 Deviation Management describes the process; the register itself is not a launch QMS capability.",
+    "QMS personal acknowledgement: Only an effective controlled document can be acknowledged.",
+    "FAILED: The project Task Board contains malformed or duplicate task titles. Reconcile the task records before demo seeding."
+  ],
+  "finishedAt": "2026-11-09T19:52:14.547Z"
+}

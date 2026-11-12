@@ -29,6 +29,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { liveGetOrNull, unwrapList, useLiveRows, type ListState } from '../dataConnect';
 import { SC_APPTYPES } from '../fixtures/submission';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
+import { PATHWAY_LABEL, REGULATORY_PATHWAYS, REGULATORY_PATH_TO_PATHWAY, pathwayKey, type RegulatoryPathway } from '@shared/constants/mdx';
 
 /** GET /api/submissions scoped to one program (its uuid). */
 export const programSubmissionsPath = (programId: string): string =>
@@ -195,20 +196,35 @@ export function awaitingOwnReleaseSignature(a: DispatchReadinessAssessment | nul
    no program open, the program could not be read, no submission for it, no
    sequence on its submission, discovery failed. */
 
-/** A program type or application type in words ("IND", "510(k)", "De Novo",
- *  "Prior Approval Supplement"): the application-type label when one matches,
- *  a filing document class's label when it is one (never its key, "pas"),
- *  otherwise the value as the server gave it ("CER"); null when there is none. */
 /** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves.
  *  One rule for a submission (SubmissionCenter) and a project (ProjectHome). */
 export function isUsInd(s: { applicationType?: string | null; primaryRegion?: string | null }): boolean {
   return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
 }
 
+/** A program type or application type in words ("IND", "510(k)", "De Novo",
+ *  "Prior Approval Supplement", "Clinical study report", "DMF"): the
+ *  application-type label when one matches, a filing document class's label
+ *  with its first letter a capital (never its key, "pas"), a pathway's label
+ *  when the value IS a pathway, otherwise the key in capitals ("dmf" → "DMF");
+ *  null when there is none.
+ *
+ *  The same answer as the project list's filingLabel (Projects.tsx), which a
+ *  test holds it to: the header printed "dmf" and "clinical study report" for
+ *  projects that list names "DMF" and "Clinical study report" (sweep D3 (c),
+ *  2026-11-09). */
 export function programTypeLabel(t: string | null | undefined): string | null {
   const v = String(t ?? '').trim();
   if (!v) return null;
-  return SC_APPTYPES.find((a) => a.v === v.toLowerCase())?.l ?? filingDocumentClassOf(v)?.label ?? v;
+  const application = SC_APPTYPES.find((a) => a.v === v.toLowerCase())?.l;
+  if (application) return application;
+  const classLabel = filingDocumentClassOf(v)?.label;
+  if (classLabel) return classLabel.charAt(0).toUpperCase() + classLabel.slice(1);
+  /* Only a type that IS a pathway takes its label: an MDR technical file is not "CER", nor a bare IVD "IVDR". */
+  const key = pathwayKey(v);
+  const own: RegulatoryPathway | null = (REGULATORY_PATHWAYS as readonly string[]).includes(key) ? key as RegulatoryPathway
+    : Object.hasOwn(REGULATORY_PATH_TO_PATHWAY, key) && REGULATORY_PATH_TO_PATHWAY[key] === 'k510' ? 'k510' : null;
+  return own && own !== 'other' ? PATHWAY_LABEL[own] : key.toUpperCase().replace(/_/g, ' ');
 }
 
 /** A submission's latest sequence, as GET /api/submissions/:id/sequences

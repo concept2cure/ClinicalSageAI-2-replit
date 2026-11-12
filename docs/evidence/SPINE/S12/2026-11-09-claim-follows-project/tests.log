@@ -1,0 +1,1128 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > rereads recovered persisted text for the same source without sending a processing mutation 433ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows persisted retry-needed processing instead of a premature extracted label 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > keeps legacy unknown availability ineligible instead of inventing readable text 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows a superseded source as historical even when its persisted text exists 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 51ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer 401ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a pending source search does not report zero matches 383ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":{}} 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > offers a way to add sources 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > says how many pages OCR read for an upload a budget stopped 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":2,"changedSections":0} 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the affected sections when a source has changed under them 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > shows no change banner when nothing is stale 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > two returned citations of one section are described as citations, not two sections 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the sections drafted from a Vault version that a later approved version replaced (S12) 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 85ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 274ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the editing copy of the filing it measures, never the newest document tagged with its module 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an added market's rows open that market's editing copy 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > with no editing copy the row says so and has nothing to click; a market's says where one is made 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > two documents bound to one filing: said, and neither is opened 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > when the documents could not be read, the row says its copy is not known, never that there is none 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the protocol workspace as doors 141ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > with no editing copy the line says where one is made, in the rows' words, and has nothing to click 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > two documents bound to the market's filing: said, and neither is opened 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > when the documents could not be read, the line says its copy is not known, never that there is none 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > while the documents are read, the line says so and has nothing to click 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > two documents bound to the home filing: said, and neither is opened 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > when the documents could not be read, it says its copy is not known, never that there is none 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > while the documents are read, it says so and has nothing to click 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > a figure over two home documents opens neither, and says why 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 130ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the project files' door names its job: "Add or find files in Vault" opens the Vault 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile; readiness has no door of its own 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 146ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and Submit carries no roadmap line 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project's Submit names nothing as coming later 77ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > team anchors belong to the current authenticated scope > waits for a fresh team anchor after 'account' changes on the same selected UUID
+An update to TenantSettings inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TenantContextRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > team anchors belong to the current authenticated scope > waits for a fresh team anchor after 'account' changes on the same selected UUID 515ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > team anchors belong to the current authenticated scope > waits for a fresh team anchor after 'organization' changes on the same selected UUID
+An update to TenantSettings inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TenantContextRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > team anchors belong to the current authenticated scope > waits for a fresh team anchor after 'organization' changes on the same selected UUID 244ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses the admitted numeric anchor and offers only human Use/Edit choices 203ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > waits for a verified team anchor and retains the roster when sharing is unavailable 100ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > is a card in Project knowledge, on every step, and no longer a section of Plan
+An update to ProjectPlan inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectPlan inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses server capability instead of a displayed project owner fact 159ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > is a card in Project knowledge, on every step, and no longer a section of Plan 144ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > "Manage" opens the Team drawer with the roster, the note once and sharing; Escape closes it, focus returns 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > a team that could not be read says so on the card, with its retry, and "Manage" still opens 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > each person on the Team card says their open work; what no one on the team holds is said, and opens Plan 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > a work read that failed is said once on the card, never as "Nothing open" 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > the Filing card says the open agency letters and the next response due, and opens Respond 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > the work and the inbox are each read once, however many steps show them 387ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > the Filing card says the open commitments, how many are overdue and the next due date, and opens Respond 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > a commitments read that failed says so, never "None open" 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > does not send project A’s unsent question from the same-mounted project B composer 381ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires draft, older pages, activity and dossier in B’s first commit before passive read resets 272ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a later A visit is fresh and ignores an older-page reply from the first A visit 322ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > ignores late first-page threads, activity and dossier replies from an abandoned project 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'account' changes 115ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'organization' changes 128ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a new sign-in of the same account retires unsent state even though the actor and project match 116ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace 253ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > preserves the exact composer and loaded history through stage/title changes and ordinary bearer refresh 355ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps the remembered step while retiring global source pins after a project ownership change 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > opens study and protocol design from the project's work-area doors, beside the steps, in one click 296ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a started deliverable opens this project’s working copy; the rest start from their template 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a failed catalogue read is a failure with a retry, never an empty plan 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > an unreadable assignment list is said, and Assign still works 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a small-molecule US IND: Module 3 in CMC, Module 1 in the IND forms, QA on Submit 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 59ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list
+An update to ProjectDocuments inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > a device project’s Plan is its workstreams, each assignable 206ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list 134ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > keys tasks by this project’s deliverable; the newest wins; another project’s and cancelled tasks are ignored 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > never Number()s the program UUID: the project id is the verified numeric one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > while the project record is read, Plan says so, and never that the filing has no list 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > does not offer project initiation for a returned record belonging to another project 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a filing with no list is not told to "see every document": its suggestion asks which documents it needs 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a working copy titled as its template counts as started 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > an unconfirmed Assign reads the lists again, so they say what is there 148ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > opens with what is due for the signed-in person, from the plan's tasks, by date 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > says nothing is assigned rather than leaving the section out 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > shows no due-for-you list without a signed-in person 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > names, beside each IND document, the work-breakdown task that produces it, its due date and owner 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > says a producing task without an owner is the task's, not the document's 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > reads the project pyramid once for the whole Plan step 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > waits for the project record before offering Add a market, then reaches the medicinal action 411ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > offers no market action after a failed project read 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded 510k pathway out of eCTD markets even when its product class is inconsistent 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded pma pathway out of eCTD markets even when its product class is inconsistent 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded mdr pathway out of eCTD markets even when its product class is inconsistent 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > keeps the recorded ivdr pathway out of eCTD markets even when its product class is inconsistent 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a device 510k project, while retaining its submissions 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a device pma project, while retaining its submissions 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a ivd 510k project, while retaining its submissions 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a cdx pma project, while retaining its submissions 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > does not offer an eCTD market for a samd 510k project, while retaining its submissions 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > a 510k project with no submission recorded says that, not that it has no market 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > a pma project with no submission recorded says that, not that it has no market 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > a de_novo project with no submission recorded says that, not that it has no market 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the hde preparation limit before offering submission actions, even with inconsistent product data 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the mdl preparation limit before offering submission actions, even with inconsistent product data 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the ivd_licence preparation limit before offering submission actions, even with inconsistent product data 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the shonin preparation limit before offering submission actions, even with inconsistent product data 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the ninsho preparation limit before offering submission actions, even with inconsistent product data 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the todokede preparation limit before offering submission actions, even with inconsistent product data 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the ivd_approval preparation limit before offering submission actions, even with inconsistent product data 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — device pathway actions reflect the supported workflow > states the jp_cdx preparation limit before offering submission actions, even with inconsistent product data 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps the Submission Center door ("Open Submission Center" until slice A.1), which opens on this project 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > an IND project whose only submission is an MAA shows the MAA as its market, with its own state 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a CER project (no application type is CER) lists its submissions as its markets 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit tab never denies a submission the project has > a submission with no project recorded is not gated by name: no verdict, and the panels agree 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > opens the existing module for the same confirmed opted-in project 395ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (false) 122ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (undefined) 118ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true ("true") 112ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > preserves the existing availability verdict 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires a retained entry after project A to B to A 357ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an old entry and admits the fresh entry after a batched project A to B to A 224ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an entry on browser bearer change 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an entry on unmount change 142ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > with no documents yet, on Plan: what the filing needs 114ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > with documents, on Author 79ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > a step the person chose is kept when the empty list lands afterwards
+An update to ProjectObjective inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkProjects inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkProjects inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectReportsDoor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHeaderDoors inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > a step the person chose is kept when the empty list lands afterwards
+An update to ProjectObjective inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > when the list could not be read, on Author: a failure decides nothing 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > a step the person chose is kept when the empty list lands afterwards 71ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers its own question to AnA, where the band's guidance went > Evidence asks which sources are missing, and Author offers to draft from them
+An update to ProjectDocuments inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers its own question to AnA, where the band's guidance went > Plan asks what the filing still needs, and who has each piece 174ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers its own question to AnA, where the band's guidance went > Evidence asks which sources are missing, and Author offers to draft from them 135ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers its own question to AnA, where the band's guidance went > the steps are one control in their order, and no step shows a "What to do now" band 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers its own question to AnA, where the band's guidance went > a device filing is offered a draft from its device evidence 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers the tools that belong to it, on this project > a US drug IND: CMC / Module 3 on Author, the IND forms on Submit 181ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers the tools that belong to it, on this project > a biologic IND is offered its forms, and not CMC, which composes small-molecule Module 3 only 149ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers the tools that belong to it, on this project > an NDA is offered neither 140ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 129ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer comes first in the main column; the readiness figure is on the Filing card in the aside 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none 294ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > a screenful exactly offers nothing more 129ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again 175ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > reads the review board scoped to this program, and groups the documents by what they need 350ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a document every reviewer approved but nobody has signed is not shown as Approved 136ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > "Open document" opens THAT document, by id, in this program 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab shows this filing’s reviews > a failed read is an error with a retry, never an empty list, and the retry reads again 125ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab: its empty state and its doors > an empty board says so in words 49ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab: its empty state and its doors > never says "aren't wired" and never sends the person to the task-board alias
+An update to ProjectQuality inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectQuality inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectQuality inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectQuality inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab: its empty state and its doors > never says "aren't wired" and never sends the person to the task-board alias 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab: its empty state and its doors > "Review documents on the review board" opens the Review surface when it is available, and is not shown when it is not 188ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx > ProjectHome — the Review tab: its empty state and its doors > the tab has no tasks list and no tasks door 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > renders disambiguated identities and publishes identity/source facts to AnA without contact details 307ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'wrong program' as unavailable, never an empty roster or identity facts 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'legacy shape' as unavailable, never an empty roster or identity facts 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'invalid identity' as unavailable, never an empty roster or identity facts 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'null response' as unavailable, never an empty roster or identity facts 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > states 'missing store' as unavailable, never an empty roster or identity facts 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome sourced responsibility integration > distinguishes a verified empty roster from a failed read 154ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > hides the previous program roster immediately while its replacement loads 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team program-switch isolation > ignores a late successful roster from an abandoned program 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > keeps email-bearing account names, legacy names and display labels outside AnA facts 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > states the total and truncation when AnA receives a roster excerpt 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx > ProjectHome team summary and recovery > retries the actual scoped GET after an unavailable read 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > opens real settings within the current project instead of leaving for the portfolio 382ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'generic project' 331ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > refreshes saved metadata and activity without resetting the open workflow stage for 'IVD 510K project' 538ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > names the owning client rather than calling the CRO organization the sponsor 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > no tab says "Not in this release" 169ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > no step names a roadmap: the "Coming later" lines are gone (2026-10-31) 115ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "plan" opens Plan, a step again 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "lifecycle" opens Submit too 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > a message typed in the start box survives switching tabs 237ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > the start box comes first, above the steps; the conversations sit beside them; both stay on every step 106ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — Project knowledge is the same on every step > About, Filing, Team, then What AnA knows and Records, on all six steps 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — Project knowledge is the same on every step > the Filing card's readiness figure opens Author, where its detail is 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan step of a drug IND offers no locked tool, and names nothing as coming later 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan step of a device 510(k) offers no locked tool, and names nothing as coming later 136ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Evidence step of a drug IND offers no locked tool, and names nothing as coming later 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Evidence step of a device 510(k) offers no locked tool, and names nothing as coming later 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Author step of a drug IND offers no locked tool, and names nothing as coming later 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Author step of a device 510(k) offers no locked tool, and names nothing as coming later 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Review step of a drug IND offers no locked tool, and names nothing as coming later 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Review step of a device 510(k) offers no locked tool, and names nothing as coming later 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit step of a drug IND offers no locked tool, and names nothing as coming later 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit step of a device 510(k) offers no locked tool, and names nothing as coming later 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond step of a drug IND offers no locked tool, and names nothing as coming later 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond step of a device 510(k) offers no locked tool, and names nothing as coming later 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 173ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip 514ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount 141ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > opens Plan for a workId with stage invalid 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > opens Plan for a workId with stage review 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > opens Plan for a workId with stage undefined 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > opens the exact task handed off by the board, even beyond the list cap or already done 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > states when the task no longer belongs to the authorized program work view 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > reads the work view by the program UUID and lists its items with their store 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > says the counts are a floor when a store could not be read 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > an empty work view is an honest empty, not a failure 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > a program with no project record says so, not "no tasks" and not an error 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan: the program’s tasks and approvals > a failed read is an error, never an empty list 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > orders open work by due date, undated last, and says each status in words at the row’s right 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > a past due date is marked overdue 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > Review lists no tasks: the one list is on Plan 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > a task handed over from Tasks with stage "review" opens Plan, the requested row first and focused 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx > ProjectHome — Plan’s tasks and approvals, by due date (D3-4) > keeps the handed-over task under React.StrictMode 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Health_Canada 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Registered_Certification_Body 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders client, product, indication and the IND number from GET /api/c2c/projects/:id 190ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 101ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 93ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for client, product or indication the row lacks 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says the client type the filing type gives, as the project list does, with no list row handed over 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > a filing type no client type is known for is still "not recorded", never a guess 86ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > offers the existing choose-or-create door when no project is selected 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the dossier read’s figure, and ignores a stale progress_percent and the detail row 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > leads Module completion with the figure line, draws no ring, and discloses how it is measured 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads a measured 0% 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with nothing to measure is stated as "Not recorded", never left out or drawn as 0 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > Author hands the critical-path question through the project’s existing AnA callback 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > every section in review reads 0% on the card and on its rows, with the review counted 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > while the dossier is read the card says so, never "Not recorded" 51ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn 131ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a 200 without the dossier’s shape is a failed read, not an empty dossier 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a store the server could not read says why, on the card and the rows 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > an added market is its own line, and the header figure is the home filing’s 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx > withholds drafting while the refreshed source admission is unknown, then adopts withdrawal 454ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx > retires local and handoff pins on programme change before the new source read resolves 323ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx > MDX starts inside the verified client project > reaches the workflow compiler from Project home and keeps work in the project
+An update to ProjectDocuments inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx > MDX starts inside the verified client project > reaches the workflow compiler from Project home and keeps work in the project 492ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx > MDX starts inside the verified client project > retires the previous project workflow while the next project record is loading 183ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > reads one scoped profile for both cards and identifies its recorded source 212ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > shows Memory and Instructions as closed disclosures of one card 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > distinguishes a verified absent profile from a profile with no recorded fields 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > bounds each recorded list with shown and total counts and escapes saved text 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > states loading without an absence claim and permits an unselected workspace to bind the actual saved parent 13ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign program answer as unavailable 20ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign actor answer as unavailable 25ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign organization answer as unavailable 15ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign workspace answer as unavailable 15ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invalid anchor answer as unavailable 13ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but false success answer as unavailable 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but absent profile field answer as unavailable 14ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but malformed risk row answer as unavailable 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invented missing confidence answer as unavailable 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 403 unavailable and retries the actual same scoped read 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 503 unavailable and retries the actual same scoped read 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection 3ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after account changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after role changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after organization changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after workspace changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program changes 7ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program-roundtrip changes 5ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after token-only changes 5ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes
+An update to ScopedRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > sends no profile read while the project's own record is still being read
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes 14ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > refuses a retained retry handler after a bearer account switch before another render 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > preserves a pending profile read through canonical same-account bearer refresh 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > claims the open project's recorded workspace, not the previous project's current selection 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > sends no profile read while the project's own record is still being read 2ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > the client claim follows the open project, across client workspaces in one session > writes a refused read as an error, never as no saved profile 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project offers it beside its facts, named for the job and the place 322ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered when Reporting & analytics is not in this release 144ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered with no project open 10ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > counts this project's open CAPAs, open change controls, undispositioned product and its documents by status 331ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > says a read failed, for that record only, and never shows it as 0 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > opens Quality from its door 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > is not offered when Quality is not in this release 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > shows class, regulatory path, product code, regulation, panel, predicate and flags from the row 358ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > states absence for a device field the row lacks — never a placeholder 94ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > publishes the product type onto the open shell project so the shell can follow it 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — drug program is unchanged > renders the drug facts and no device block 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a Quality work project on the organisation's Quality area wherever the person may, whatever the track (P-111 item 5) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > gives a work project its owner and due date through the Plan's assign, and says when its assignment cannot be read 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > beside the work projects, names the filing's sections drafted from the Vault with their standing, unattributed (S12 gap 5) 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5) 68ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocuments inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocuments inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectConversations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocuments inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > a BLOCKED program does not wear a green pill 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an AT_RISK program does not wear a green pill 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an UNKNOWN status is neutral — never assumed healthy 18ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the status chip reflects its value, not a fixed green > an ACTIVE program is the ordinary state: no status chip in the byline, nothing reads as an alert 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a LOW priority is not in the byline, and reads as a plain fact in Project knowledge 196ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx > ProjectHome — the priority chip reflects its value, not a fixed warn > a CRITICAL priority still warns — the alert stays reachable 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > lists the project's vault from the project-scoped read, on the page 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a file can be opened here; nothing asks for a section or offers to close a rail 255ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > Project home — the Evidence stage holds the project's files > a failed read is a failure with a retry, not an empty vault 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx > ProjectFilesPanel beside the editor is unchanged > keeps its rail header and asks for a section before citing 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > names what it does and speaks in no voice but the page's 189ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > the open step's suggestion fills the box and never sends 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > a question typed here starts a new conversation in the project, carrying the words 147ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > Enter with an empty box goes nowhere 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx > Project home — the start box > is styled by one .pj-convo rule, not also by a row rule that centres it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — Plan lists this project's tasks, and no other > has no "Your tasks" section that is not about this project 375ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx > Project home — Plan lists this project's tasks, and no other > "See all tasks in Tasks" opens Tasks on everyone's tasks, from the project's Tasks section 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > "Working" while someone watches; when it has stopped by, once nobody does 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > the same instant, in UTC, whatever zone this device is in (DT3 review 4.7) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > workingMarkerLine > a run waiting on its person is "Waiting for you", never "Working" (DT3 review 2.3) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > mark the conversation AnA is working in, from ?mine=live, and leave the others as they are 119ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > the marker is read again when the page comes back on screen: a turn that ended is no longer "Working" 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the project's conversations > a list that could not be read says so, quietly, and marks nothing (DT3 review 2.3) 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the RUN_LIMIT refusal links to the Working conversations > each one opens its conversation 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the RUN_LIMIT refusal links to the Working conversations > under any other turn there is nothing, and nothing is read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx > the RUN_LIMIT refusal links to the Working conversations > a list that could not be read shows no links, and says nothing false 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQualityDocuments.test.tsx > Author: the filing’s documents, then the quality documents > lists the controlled SOP under Quality documents, below the filing’s documents 307ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQualityDocuments.test.tsx > Author: the filing’s documents, then the quality documents > a register it cannot read leaves one list, and says why 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQualityDocuments.test.tsx > Author: the filing’s documents, then the quality documents > where Quality is not in this release, the register is not read and the list is the filing’s 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectRecords > reads the project’s records and lists each store under its own heading 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectRecords > is one "Records" card whose stores are closed disclosures, each summary saying its count 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectRecords > a store it could not read says so, and is never shown as none 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectRecords > a full page says “the first 200”, never a total it did not count 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectRecords > a failed read is an error, not an empty project 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectProtocol — Evidence’s protocol, from the same records read (D3-4) > lists the study designs with phase and status, and opens each work area, with one read for both readers 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectProtocol — Evidence’s protocol, from the same records read (D3-4) > an empty store offers the design door as its one action 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectProtocol — Evidence’s protocol, from the same records read (D3-4) > a store not carried here says its reason, and a failed read is an error, never "none" 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > marks no stage done on a real project; only the open stage is marked 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > opening a later stage does not complete the ones before it 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with no project selected, shows no lifecycle and no placeholder project name 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it once, in the heading 34ms
+ ✓ client/src/concept2cure/v2/__tests__/clientFollowsProject.test.tsx > the current client follows the open project > reads the client from the project record, bare or enveloped 2ms
+ ✓ client/src/concept2cure/v2/__tests__/clientFollowsProject.test.tsx > the current client follows the open project > makes the open project's client current when it is another client 62ms
+ ✓ client/src/concept2cure/v2/__tests__/clientFollowsProject.test.tsx > the current client follows the open project > changes nothing when the project is of the current client, or its record cannot be read 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project 275ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > with no project open, there is no records panel and no records read 5ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSideNotRead.test.tsx > Project knowledge: no selected project > offers no profile absence claim or request without a current project 129ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 17ms
+
+ Test Files  37 passed (37)
+      Tests  381 passed (381)
+   Start at  20:07:50
+   Duration  74.47s (transform 4.97s, setup 1.87s, import 20.87s, tests 35.95s, environment 12.03s)
+
