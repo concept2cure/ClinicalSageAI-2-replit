@@ -1,0 +1,43 @@
+# The test as committed, run against trunk's Biostatistics.tsx (a9b5af1873). Expected: red.
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > no project open — the organisation’s recorded industry chooses the example > an IVD diagnostics organisation opens on the diagnostic-accuracy example, not Phase III oncology
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > no project open — the organisation’s recorded industry chooses the example > a medical-device organisation opens on the same example a device project does
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > no project open — the organisation’s recorded industry chooses the example > a SaMD organisation is still a device organisation
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > no project open — the organisation’s recorded industry chooses the example > a biotech / pharma organisation keeps the survival example
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > no project open — the organisation’s recorded industry chooses the example > a CRO is not assumed to be a device shop, and is not assumed not to be
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > the general example is not sized first, then swapped > a diagnostics organisation never sees the oncology design sized while its profile is being read
+ ✓ biostatProjectlessExampleFitsTheOrg.test.tsx > the general example is not sized first, then swapped > an organisation with nothing recorded is sized as soon as that is known
+ ✓ biostatProjectlessExampleFitsTheOrg.test.tsx > the general example is not sized first, then swapped > a failed profile read does not leave the page waiting
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > nothing recorded is not a statement about the tenant > an organisation with no industry profile keeps the general example
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > nothing recorded is not a statement about the tenant > a failed profile read is not read as biotech — it changes nothing
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > nothing recorded is not a statement about the tenant > a profile carrying a value outside the governed vocabulary is ignored
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > the note says what the example is, and what to do from here > with no project it never points at “your project’s study design”
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > the note says what the example is, and what to do from here > with a project open it points at that project’s design
+ × biostatProjectlessExampleFitsTheOrg.test.tsx > the note says what the example is, and what to do from here > names the list by its heading, not by a side of the screen it is not on at phone width
+ ✓ biostatProjectlessExampleFitsTheOrg.test.tsx > a project’s own product type still decides, and costs no extra read > a drug project is not moved onto the device example by a device organisation
+ ✓ biostatProjectlessExampleFitsTheOrg.test.tsx > a project’s own product type still decides, and costs no extra read > an IVD project opens on the diagnostic example whatever the organisation records
+ ✓ biostatProjectlessExampleFitsTheOrg.test.tsx > a project’s own product type still decides, and costs no extra read > the organisation’s profile is not read at all while a project is open
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Pivotal OS (survival)' to be 'Diagnostic accuracy' // Object.is equality
+Expected: "Diagnostic accuracy"
+Received: "Pivotal OS (survival)"
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+- true
++ false
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+- true
++ false
+AssertionError: expected 'Worked example — Pivotal OS (survival…' not to match /your project’s/
+- Expected:
++ Received:
+AssertionError: expected 'Worked example — Pivotal OS (survival…' to match /your project’s design under Study des…/
+- Expected:
++ Received:
+AssertionError: expected 'Worked example — Pivotal OS (survival…' not to match /on the (left|right)/
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  12 failed | 5 passed (17)
