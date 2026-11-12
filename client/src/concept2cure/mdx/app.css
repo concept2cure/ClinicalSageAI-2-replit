@@ -4516,6 +4516,22 @@
 .mdx-shell .empty-state-t{ font-size:14px; font-weight:600; color:var(--text-100); margin-bottom:6px; }
 .mdx-shell .empty-state-s{ font-size:12px; margin-bottom:14px; }
 
+/* D8 slice 2b (P-128): a pathway page does not scroll sideways on a phone. At 390 px the 510(k), PMA and
+   Diagnostics pages scrolled to about 710 px: the tab row, the stage strip, the two-column body, the four health
+   cards and the filing panel's row of controls each ran past the edge, and carried their controls with them. The
+   strips scroll inside themselves, as the project's steps do; the columns stack; the cards go two to a row; a
+   section header and its controls wrap. Wider than a phone each is as it was. The tab row is in pathway-tabs.css. */
+@media (max-width: 640px) {
+  .mdx-shell .stage-strip { overflow-x: auto; scrollbar-width: none; }
+  .mdx-shell .phases { overflow-x: auto; scrollbar-width: none; }
+  .mdx-shell .col2 { grid-template-columns: minmax(0, 1fr); }
+  .mdx-shell .health { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mdx-shell .section-hdr { flex-wrap: wrap; gap: 8px 16px; }
+  .mdx-shell .section-hdr > * { min-width: 0; max-width: 100%; }
+  .mdx-shell .section-hdr > div { flex-wrap: wrap; }
+  .mdx-shell .section-hdr select { max-width: 100%; }
+}
+
 /* The shared risk register keeps its matrix and hazard drawer readable on a phone. */
 @media (max-width: 640px) {
   .mdx-shell[data-surface] .risk-split { grid-template-columns: minmax(0, 1fr); }
