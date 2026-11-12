@@ -11,7 +11,8 @@ import { createHash } from 'node:crypto';
    (shared/authoring/csr-scientific-review.ts), so the screen never offers a
    figure this verifier would refuse. Re-exported for this module's importers. */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, numericalText, placeholderIn, quotedPlaceholder, reportedDisplaySpans,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, csrHeadingOnlySectionIds, csrSectionHoldsText,
+  numericalText, placeholderIn, quotedPlaceholder, reportedDisplaySpans,
   type CsrTableKey, type RetainedScientificRun, type RetainedScientificTable,
   type ScientificCellClaim, type ScientificReviewSubmission, type ScientificSectionReview,
 } from '../../../shared/authoring/csr-scientific-review.js';
@@ -23,7 +24,8 @@ export type {
 };
 export interface ScientificReviewSnapshot {
   id: string;
-  sections: ReadonlyArray<{ id: string; content: string | null }>;
+  /** `code` is the section's number in the saved snapshot; the heading-only rule (P-126) reads it. */
+  sections: ReadonlyArray<{ id: string; code?: string | null; content: string | null }>;
 }
 export interface ScientificReviewReceipt {
   format: typeof CSR_SCIENTIFIC_REVIEW_FORMAT;
@@ -185,10 +187,19 @@ export function prepareScientificReviewReceipt(args: {
   }
   const bySection = new Map(submission.sections.map(s => [s.sectionId, s]));
   let checkedClaims = 0;
+  // P-126: a heading that holds only its subsections needs no text of its own. Every other section holds text a
+  // reader sees; markup alone is blank. Each review stays bound to the section's exact saved content.
+  const headingOnly = csrHeadingOnlySectionIds(args.snapshot.sections);
   for (const section of args.snapshot.sections) {
     const review = bySection.get(section.id);
-    if (!review || typeof section.content !== 'string' || !section.content.trim() ||
-      review.contentSha256 !== scientificSha256(section.content)) {
+    if (!review || review.contentSha256 !== scientificSha256(section.content ?? '')) {
+      return fail('CSR_EVIDENCE_SECTION_CHANGED', 'A saved section is missing, blank or no longer matches its reviewed content.');
+    }
+    if (headingOnly.has(section.id)) {
+      if (review.assessment === 'no-quantitative-results') continue;
+      return fail('CSR_EVIDENCE_SECTION_CHANGED', 'A heading that holds no text of its own cannot carry a mapped result.');
+    }
+    if (typeof section.content !== 'string' || !csrSectionHoldsText(section.content)) {
       return fail('CSR_EVIDENCE_SECTION_CHANGED', 'A saved section is missing, blank or no longer matches its reviewed content.');
     }
     refuseHeldPlaceholder(section.content);

@@ -902,3 +902,35 @@ longer exists: a message to it answers "not found", so its hold on `surfaces/Pro
    composition boundary refuses a biologic by name (P-28). Quality by design and Module 3 build each say so, and
    the reads answer 409. The registers under "Study records" are populated. Module 3 composition can be shown in
    the development organisation (C2C-201, signing in as Cal CMC). Widening the boundary is the founder's.
+
+## The CSR path to a reviewable report — 2026-11-12 (`01QoxbLZ…`, L1 row D2; files below held while each change is in hand)
+
+The founder, 2026-11-11: "focus entirely on getting what we built surfaces correctly on the UI and working for GA."
+And 2026-11-12: "You are the manager of this goal. Stay aligned with the other sessions." This lane's goal is the one
+the founder set it on 2026-11-09: a biotech clinical study report from the project to its filing.
+
+**Landed 2026-11-11 and 11-12:**
+- A running CSR build can be stopped and a stopped one resumed, from the CSR document's build section
+  (`surfaces/CsrRunBuilds.tsx`, `routes/csr-jobs.ts`; `docs/evidence/DESIGN/R1/2026-11-11-csr-build-stop/`).
+- "Not applicable because …" on a heading the build does not draft (P-115 item 5): `surfaces/CsrNotApplicable.tsx`,
+  split out of `CsrRunBuilds.tsx` (`docs/evidence/D2-CSR/2026-11-12-heading-not-applicable/`).
+- **P-126** (under the founder's delegation): a CSR heading that holds only its subsections needs no text of its
+  own, and a heading with none must hold text a reader sees. One rule in `shared/authoring/csr-scientific-review.ts`,
+  used by `server/services/authoring/csr-scientific-review-core.ts`, `surfaces/csrEvidenceMap.ts` and
+  `surfaces/CsrEvidenceReview.tsx` (`docs/evidence/D2-CSR/2026-11-12-heading-only-sections/`). Those four files are
+  released with this commit.
+
+**Not touched, and not this lane's:** `editor/StudyDataBuild.tsx`, `services/csr/csr-job-runner.ts`,
+`services/csr-builder.ts`, `services/authoring/workflow-import-governance.ts`, `surfaces/ReviewDecisionDialog.tsx`
+(Wave B lanes W1 and W8 of `01T2woo…`).
+
+**What the walk of the Lumen LMN-201 report still shows, in order** (each is the next thing this lane takes unless
+its file is held; say so here if it is yours):
+1. The report holds text under 6 of its 119 headings. The build drafted 69 and four were imported: a person sends,
+   and a second person approves, each heading one at a time before it can enter the document. The review screen
+   lists the other 91 as "No saved text".
+2. §14 and §16 are not written into the document by the import (P-115 item 5, second half): the engine's tables,
+   the supplied appendix or the recorded declaration, labelled as engine content.
+3. The assembly is rendered from the build's outputs, not from the signed document's sections (P-115 item 3).
+4. No model has passed qualification, so model-drafted text is not released (P-115 item 1, P-118). Needs the
+   founder's provider key.

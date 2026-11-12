@@ -3227,3 +3227,46 @@ deleting a person's data on request.
 Evidence: `docs/evidence/DESIGN/P-122/inventory/administration.md` and `administration-restoration-order.json`; the walk and audit
 behind them, `docs/evidence/F1/2026-11-10-client-admin/`. Each restoration files its before and after beside the
 inventory, as the other areas do.
+
+### P-126 — Decided under the founder's delegation: a CSR heading that holds only its subsections needs no text of its own
+
+The founder, 2026-11-10: **"I want you to make the most educated, best decision for me getting this product to market
+and providing the best product I can to this institutional buyer in a highly regulated market."** And on 2026-11-12:
+**"You are the manager of this goal."** Decided by the walking session (`01QoxbLZ…`), as P-115 was. It reads P-115
+item 5 ("Every heading holds text"); it does not replace it. The founder may overrule it by a later decision.
+
+**What was found** (walking the LMN-201 report in the Lumen account, 2026-11-12,
+`docs/evidence/D2-CSR/2026-11-12-heading-not-applicable/`):
+- An ICH E3 report has 119 headings. 19 of them only organise the headings beneath them: "5 Ethics" over 5.1 to 5.3,
+  "9 Investigational Plan", "12 Safety Evaluation", "16 Appendices". Their own section in the document is empty.
+- The CSR scientific review refused any section whose saved content was empty
+  (`server/services/authoring/csr-scientific-review-core.ts`). So a report could be reviewed, signed and filed only
+  after a person typed something under each of the 19.
+- The same check read "empty" as the empty string. A section holding only markup, which is what the editor saves
+  when a person clears a section, passed as written.
+
+**What is decided.**
+1. **A heading that holds only its subsections needs no text of its own.** It is written when each of its
+   subsections is, and each of those is held to this same rule. In one saved document, that is a blank section
+   whose number is the parent of another section's number.
+2. **Every heading with no subsections holds text a reader sees**, or the person's "Not applicable to this study"
+   statement with their reason (P-115 item 5). Markup, entities and white space are not text. A figure is content.
+3. **"Not applicable" is not offered on a heading that holds only subsections.** It is not what such a heading says.
+4. **The review stays bound to the exact saved content of every section, the blank ones included.** A review of a
+   heading-only section records that it is one, and carries no mapped result. Text added under it after the review
+   voids the review, as any other edit does.
+5. **One rule, in one place** (`shared/authoring/csr-scientific-review.ts`), for the review screen that builds the
+   reviewer's map and the server that verifies it.
+
+**What does not change.** Nothing about who reviews, signs or approves; the figure-to-cell mapping; the placeholder
+rule; the qualification rule for model-drafted text (P-115 item 1); the review's format identifier. A receipt issued
+before this decision verifies as before, unless the document holds a section of empty markup, which is now refused
+(item 2).
+
+**Why.** The sponsor answers for each word of a submission. Filler typed under "9 Investigational Plan" to satisfy
+a software check is a word nobody meant, in a signed record, and a reviewer at the buyer's quality unit reads it as
+one. ICH E3 gives the structure of the report as guidance, and its organising headings carry no content of their
+own. The rule that matters to a regulator is the one item 2 keeps and tightens: no heading that should say something
+is left saying nothing.
+
+Evidence: `docs/evidence/D2-CSR/2026-11-12-heading-only-sections/`.
