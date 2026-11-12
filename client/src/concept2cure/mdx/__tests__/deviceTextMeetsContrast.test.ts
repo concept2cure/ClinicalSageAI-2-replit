@@ -23,8 +23,6 @@ const rule = (selector: string): string => {
   const found = new RegExp(`(?:^|[{},])\\s*${escape(selector)}\\s*\\{([^}]*)\\}`, 'm').exec(app);
   return found ? found[1] : '';
 };
-/** How many declarations draw text in the disabled ink (`color:`, not `background:` or `border-color:`). */
-const disabledInkTexts = (css: string): number => (css.match(/(?:^|[;{\s])color:\s*var\(--text-500\)/g) ?? []).length;
 
 describe('device text and the disabled ink (D8 slice 2c)', () => {
   it.each(['.mdx-shell .status-pill.empty', '.mdx-shell .status-pill.na'])('%s is drawn in the muted ink, on the same ground', (selector) => {
@@ -42,13 +40,7 @@ describe('device text and the disabled ink (D8 slice 2c)', () => {
     expect(rule('.mdx-shell .estar-num')).toMatch(/(?:^|[;\s])color:\s*var\(--text-300\)/);
   });
 
-  /* Seven declarations drew text in the disabled ink in app.css, two in pathway-tabs.css and one in files-tree.css.
-     The two a screen shows on arrival are gone. The other eight style states this slice did not open (a project
-     list's "no blocker", an editor's provenance label, a dossier drawer's hints, a truncated file path); each is
-     measured when its state is opened. The count only goes down. */
-  it('no more text is drawn in the disabled ink than this slice leaves', () => {
-    expect(disabledInkTexts(app)).toBeLessThanOrEqual(5);
-    expect(disabledInkTexts(sheet('pathway-tabs.css'))).toBeLessThanOrEqual(2);
-    expect(disabledInkTexts(sheet('files-tree.css'))).toBeLessThanOrEqual(1);
-  });
+  /* The count of declarations that drew text in the disabled ink was held here from slice 2c. From 2026-11-12 the
+     shared v2/__tests__/faintestTextTier.test.ts reads the device stylesheets too and refuses any readable use, which
+     is stricter, so the count is not kept twice. */
 });

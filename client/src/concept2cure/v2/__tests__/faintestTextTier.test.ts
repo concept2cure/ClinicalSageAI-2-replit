@@ -11,12 +11,21 @@
  *
  * So every `color: var(--text-500)` in the v2 stylesheets must be one of the kinds below, named with its reason.
  * A new use on text fails here.
+ *
+ * The device and diagnostics screens' stylesheets (client/src/concept2cure/mdx/, D8, founder decision P-128) are
+ * read too, from 2026-11-12: S11's audit found "empty" at 1.91:1 there (fixed by D8 slice 2c), and a drawer's hint,
+ * an upload's accepted file types and a file list's "showing first 200" were still in the faintest tier. The mdx
+ * tree has its own re-based ramp (mdx/surface-text-ramp.css).
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const STYLES = resolve(__dirname, '../styles');
+/** The stylesheet trees read, each with the root its rules are scoped under. */
+const TREES: ReadonlyArray<{ dir: string; scope: RegExp }> = [
+  { dir: resolve(__dirname, '../styles'), scope: /^\.c2c-v2 / },
+  { dir: resolve(__dirname, '../../mdx'), scope: /^\.mdx-shell(\[data-surface\])? / },
+];
 
 /** Icons and glyphs beside a label that says the same thing; the label carries the meaning. */
 const ORNAMENT: Record<string, string> = {
@@ -38,6 +47,9 @@ const ORNAMENT: Record<string, string> = {
   '.pv-arrow': 'arrow between two named versions',
   '.ub-i': 'invoice glyph whose title names the invoice; the row says it in words',
   '.tb-dot': 'separator dot between two values',
+  // The device screens (mdx/).
+  '.estar-open': 'row-open arrow beside the eSTAR section label, shown on hover',
+  '.pg-list-blocker.none .ico': 'glyph beside the words that say there is no blocker',
 };
 
 /** Selectors whose kind their own syntax says. */
@@ -48,17 +60,17 @@ const exempt = (sel: string) =>
 
 interface Use { sheet: string; line: number; selector: string }
 
-/** Every rule in the v2 stylesheets whose own `color` is --text-500. */
+/** Every rule in the v2 and device stylesheets whose own `color` is --text-500. */
 function uses(): Use[] {
   const out: Use[] = [];
-  for (const sheet of readdirSync(STYLES).filter((n) => n.endsWith('.css') && n !== 'surface-text-ramp.css')) {
-    const css = readFileSync(resolve(STYLES, sheet), 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '));
+  for (const { dir, scope } of TREES) for (const sheet of readdirSync(dir).filter((n) => n.endsWith('.css') && n !== 'surface-text-ramp.css')) {
+    const css = readFileSync(resolve(dir, sheet), 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '));
     const re = /([^{}]*)\{([^{}]*)\}/g;
     for (let m = re.exec(css); m; m = re.exec(css)) {
       if (!/(^|[;\s{])color\s*:\s*var\(--text-500\)/.test(m[2])) continue;
       const prelude = m[1].slice(m[1].lastIndexOf(';') + 1).trim().replace(/\s+/g, ' ');
       const line = css.slice(0, m.index + m[0].indexOf(m[2])).split('\n').length;
-      for (const sel of prelude.split(',')) out.push({ sheet, line, selector: sel.trim().replace(/^\.c2c-v2 /, '') });
+      for (const sel of prelude.split(',')) out.push({ sheet, line, selector: sel.trim().replace(scope, '') });
     }
   }
   return out;
