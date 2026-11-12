@@ -1,0 +1,19 @@
+{
+  "step": "send",
+  "summary": "Section review | 69 of 119 ICH E3 headings drafted · 0 approved | Send 69 drafts for review | Import approved sections into this document",
+  "offered": "Send 69 drafts for review",
+  "before": {
+    "Draft": 69,
+    "Not drafted": 50
+  },
+  "seconds": 2,
+  "said": "69 headings were sent for review.",
+  "saidAs": "status",
+  "after": {
+    "In review": 69,
+    "Not drafted": 50
+  },
+  "offeredAfter": null,
+  "failedRequests": [],
+  "consoleErrors": []
+}
