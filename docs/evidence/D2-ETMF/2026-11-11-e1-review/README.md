@@ -124,8 +124,15 @@ At `9fb630345d` plus this change:
 - Not run: the two PostgreSQL suites (`tests/db/vault-processing-sweep.dbtest.ts`,
   `tests/db/tmf-assessment-audit-outcomes.dbtest.ts`); this container has no PostgreSQL server.
 
-After the merge with trunk (the Vault parity lane's E2, E3 and Trial master file page): see the commit that follows
-this one, which records the re-run.
+**After the merge with trunk** (`b2c2003144`: 251 commits, among them the Vault parity lane's E2, E3 and Trial master
+file page; the merge had no conflict):
+
+- The same six paths, which now include that lane's study-binding and governed-filing tests: 18 files, 332 tests.
+- Every test that names a changed module, the whole of `server/services/vault/__tests__`, and
+  `server/routes/__tests__/etmf-artifacts.routes.test.ts`: 98 files, 1,501 tests.
+- The callers that reach Vault filing with a title (`server/services/clinical-regulatory-evidence/__tests__`, AnA's
+  document-placement tools, authoring's file-to-Vault): 64 files, 1,047 tests.
+- All pass. The typecheck and the pre-push gates ran at push.
 
 ## The review of this fix
 
