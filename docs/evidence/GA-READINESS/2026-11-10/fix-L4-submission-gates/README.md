@@ -84,3 +84,7 @@ Status by the ledger's closesWhen:
 
 - Should the template reviewer be a named reviewer record (a person in the product) rather than a role?
 - Which required set is the one for an IND: the rule pack's 36 or the outline's 48?
+
+## Logs not kept
+
+Two logs of whole neighbouring test runs are over 100 kB each and are not kept in the repository: `related-gate-2.txt` `related-gate.txt`. Their pass counts are quoted in "Proof" above; the runs can be repeated with the commands given there.
