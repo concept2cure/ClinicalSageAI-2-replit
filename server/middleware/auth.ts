@@ -243,6 +243,26 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 };
 
+/**
+ * A token id as the number the global /api gate (server/auth.ts) puts on req.user, or the claim as given.
+ *
+ * Every sign-in mints `userId` and `organizationId` as text ("7", "42"). authenticateToken and optionalAuth
+ * built req.user from those claims as they were, so behind them a route saw `organizationId: "42"` where behind
+ * the global gate it saw 42, and a route that hands it to a function taking only a positive integer refused the
+ * request (GA-D6-05; Biostatistics' save answered 503 on every project until 44f25b3fd patched that one route).
+ * Strict: only a positive integer, written in digits with no sign, point or padding, becomes a number. Anything
+ * else is kept exactly as given, so an identity provider's opaque subject keeps its identity and a malformed
+ * organisation claim is refused downstream as it was, never turned into an organisation.
+ */
+export function numericTokenId<T>(claim: T): number | T {
+  if (typeof claim === 'number') return claim;
+  if (typeof claim === 'string' && /^[1-9]\d{0,15}$/.test(claim)) {
+    const n = Number(claim);
+    if (Number.isSafeInteger(n)) return n;
+  }
+  return claim;
+}
+
 /** Attach the verified, live session's user and run the tenant boundary. */
 function admitLiveSession(
   req: Request,
@@ -252,12 +272,13 @@ function admitLiveSession(
   subject: NonNullable<JWTPayload['userId'] | JWTPayload['id'] | JWTPayload['sub']>,
 ): void {
   req.user = {
-    id: subject,
-    userId: subject,
+    // Numbers, as the global /api gate makes them (GA-D6-05, numericTokenId).
+    id: numericTokenId(subject),
+    userId: numericTokenId(subject),
     email: decoded.email,
     role: decoded.role || 'user',
     roles: expandRoleClaims(decoded.role, decoded.roles),
-    organizationId: decoded.organizationId || decoded.orgId,
+    organizationId: numericTokenId(decoded.organizationId || decoded.orgId),
     permissions: decoded.permissions || [],
   };
   // The token's provider, as server/auth.ts records it on req.identity: a
@@ -568,7 +589,9 @@ export const requireOrgAccess = (req: Request, res: Response, next: NextFunction
     req.body?.organizationId ||
     req.query?.organizationId;
 
-  if (requestedOrgId && requestedOrgId !== req.user.organizationId) {
+  // Compared as text: the id from the URL or query is text, one from a JSON body may be a number, and the
+  // session's is a number since GA-D6-05. A strict comparison refused the caller's own organisation.
+  if (requestedOrgId && String(requestedOrgId) !== String(req.user.organizationId)) {
     return res.status(403).json({
       error: { code: 'AUTH_005', message: 'Access to this organization denied' },
     });
@@ -646,12 +669,13 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   verifyLiveToken(token).then(
     () => {
       req.user = {
-        id: subject,
-        userId: subject,
+        // Numbers, as the global /api gate makes them (GA-D6-05, numericTokenId).
+        id: numericTokenId(subject),
+        userId: numericTokenId(subject),
         email: decoded.email,
         role: decoded.role || 'user',
         roles: expandRoleClaims(decoded.role, decoded.roles),
-        organizationId: decoded.organizationId || decoded.orgId,
+        organizationId: numericTokenId(decoded.organizationId || decoded.orgId),
         permissions: decoded.permissions || [],
       };
       next();
