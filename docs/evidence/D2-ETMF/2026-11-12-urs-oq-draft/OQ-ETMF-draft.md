@@ -45,7 +45,7 @@ depends on it is recorded as not executed.
 | Step | URS | Kind | Action | Expected result |
 |---|---|---|---|---|
 | OQ-ETMF-01 | URS-ETMF-001 | scripted | `GET /api/etmf/trials/:trialId/completeness` with no session | 401 |
-| OQ-ETMF-02 | URS-ETMF-001 | scripted | as `OQ_VIEWER`: the completeness read, then a filing | 403 on each; no row written |
+| OQ-ETMF-02 | URS-ETMF-001 | scripted | as `OQ_VIEWER`: the completeness read, the filings, the package; then a filing, a declaration and a removal | each read 200, and the package's `EXPORT_GENERATED` row names the viewer; each write 403, and no row written |
 | OQ-ETMF-03 | URS-ETMF-002 | prerequisite | create the reference project, its study and its documents (§1) | each 201; the study is listed by `GET /api/study-design` for the project |
 | OQ-ETMF-04 | URS-ETMF-002 | scripted | as `OQ_MEMBER` (not shared on the project): read and file against the study | 404 `STUDY_NOT_FOUND` on each; nothing read or written |
 | OQ-ETMF-05 | URS-ETMF-002 | scripted | every route, with a `:trialId` that is no study | 404 `STUDY_NOT_FOUND` on each; nothing written |
@@ -93,8 +93,8 @@ none is configured, each is a deviation, *not executed: model not configured*. T
 3. **Execution** under the posture in §1, at one commit with IQ-001 and OQ-001…008, and the record filed under
    `docs/evidence/W3/<date>/OQ-ETMF/`.
 4. **TM-001 regenerated** from that execution, and VSR-001 amended.
-5. **The founder's answer** on URS draft §3, first item: whether a read-only identity may read a trial master file.
-   OQ-ETMF-02 observes today's behaviour (refused); it changes only if that answer does.
+5. Nothing is owed to the founder: whether a read-only identity reads a trial master file was decided as P-124
+   item 7 (it does, and writes nothing), and OQ-ETMF-02 observes it.
 
 Steps OQ-ETMF-36 and -37 straddle admission: -36 runs before the held change is applied, and -37 after it.
 
