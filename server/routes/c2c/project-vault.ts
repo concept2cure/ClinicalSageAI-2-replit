@@ -80,6 +80,7 @@ import {
   removeProgramFolder, renameProgramFolder,
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
+import { placeAuthoredSectionsInBinder } from '../../services/vault/vault-binder-outline.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
 import {
   estarDeviceAnswers, estarFilingType, estarOutlineRequirements,
@@ -161,6 +162,9 @@ interface VaultDoc {
   artifact?: ArtifactLeafFacts;
   /** Exact governed section key, or null for a whole-document fallback leaf. */
   filingSectionKey?: string | null;
+  /** An authored section placed in the binder (P-123 item 8): the filing document it is a section of, and its type. */
+  filingDocumentId?: string;
+  filingFamily?: string;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
@@ -2065,6 +2069,9 @@ export default function createProjectVaultRoutes(): Router {
         /* First in the tree, as a Veeva binder is: the Vault opens on the filing's binder, not on an
            authored document's draft outline (S6, 2026-11-10). */
         tree.unshift(filingCabinet(view, uploads, folders));
+        /* One outline per filing (P-123 item 8, 2026-11-12): the authored filing document's sections go into the
+           binder's headings, and its folder keeps only what the binder has no heading for. */
+        placeAuthoredSectionsInBinder(tree, docsRes.rows as DocRow[]);
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         uploadsStoreMissing = true;

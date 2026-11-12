@@ -1,0 +1,5 @@
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+--- eTMF server suites (unit and route)
+ Test Files  15 passed (15)
+      Tests  187 passed (187)

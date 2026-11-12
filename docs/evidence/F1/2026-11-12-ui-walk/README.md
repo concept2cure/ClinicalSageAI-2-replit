@@ -124,8 +124,45 @@ The wording when an authenticator code is missing or wrong is repaired below ("A
 
 | The ICH Q2 check named every method "missing validation evidence: specificity, linearity / range, accuracy, precision", and nothing on the form could clear it | The register's table keeps the Q2 record in one JSON column and has no column per characteristic, so the write-through always sent null for the four values the check reads. The method form records each characteristic's result in the Q2 record (`evidence`), and the write-through reads it from there (`cmcRegisterForms.ts`, `cmc-write-through.ts` `q2Evidence`). No column, table or route | A new method added with its four results is not named missing evidence; the older, signed method still is, because its record is closed to edits under its signature (`after-b9-*`, `10-method-q2-evidence-red-green.txt`) |
 
-Still open on the CMC screens: stale sections on the Overview (the board's section read sends no stale flag,
-`server/routes/cmc-module3-board.routes.ts`).
+| Stale sections read "Draft" (or "approved") with a live "Approve section" on the Overview; the approve route refused them as out of date | The board's section read sends each section's stale flag and recorded reason (`server/routes/cmc-module3-board.routes.ts`); the approvals table shows "Stale" with the reason, withholds the approval, and offers "Recompile on the build board". An approved section that went stale says it owes a new approval (`CmcModule.tsx` `SectionApprovalAction`) | BX-733 after a method was added: 3.2.P.5, 3.2.S.4, 3.2.P.8 read "Approved · Stale … recompile, then approve again"; a stale draft elsewhere has its approval withheld (`after-b6-*`, `11-stale-sections-red-green.txt`) |
+| A close-out refused with a returned 401 (a password or code not accepted) did not take the refusal branch the thrown ones did; `ci:success-before-ok` named it | One refusal branch, checked before anything is said, for both | A wrong authenticator code: "The shelf life is saved and the study is still running. Couldn't save the close-out — The authenticator code was not accepted. Nothing was signed." (`after-b8-02`) |
+
+The retired-name ratchet (`foundationsRetiredRatchet.test.ts`) was red on trunk: `40cc8265b7` added a `cm-meta` span
+in the stability rows. The count is now written as plain words in its button, and the ratchet is green.
+
+| After a section was approved on screen the card still said "export blocked: 1 not approved" until a reload | The gate's verdict is read again when an approval lands (`CmcModule.tsx`, the readiness read's re-read counter) | As the second person: "0 of 21 … 21 not approved" became "1 of 21 … 20 not approved" with no reload (`after-b7-01`, `13-…`) |
+| A thrown refusal read "… must sign.."; a signed toast ended "…e25e3d60402d…." | Every thrown CMC refusal is worded by one helper (`cmcShared.tsx` `cmcThrownRefusal`), which ends the sentence once and never shows a browser-native error as the reason; the signed toasts end once | "Couldn't approve section 3.1 — Separation of duties: … A different, authorized user must sign. Nothing was persisted." |
+
+Nothing is left open on the CMC screens from this walk in files this session holds.
+
+**The Builder's leaf source** (B11): every Module 3 leaf read "Source evidence not yet determined — The retained
+source has no verified project relationship". A placed section is filed as a filing copy that records its CMC project
+and section key (`place-module3-into-submission.ts`, marked by `module3-placement-marker.ts`); the evidence reader
+(`server/services/ectd/submission-leaf-source-evidence.ts`) looked only for an Authoring document behind a filing
+copy. A copy carrying the placement marker is now traced to its CMC section in this project; its pinned text and
+approved status are judged as before. A copy naming another project is refused; one whose section the project does not
+hold stays undetermined. In the running app both Module 3 sequences went from 21 undetermined to 21 resolved, and the
+Builder reads "Source verified" (`after-b11-01`, `14-builder-module3-leaf-source-red-green.txt`). The Vault leaf of
+the walked document read "substantive source text is not established": its file is a PDF. Its chained filing receipt
+names the sealed version the PDF was rendered from (LX-10), and that record holds the text; the reader now establishes
+the text from it when the record still matches its own seal (`sealedRenditionText`), and a PDF with no receipt, or a
+receipt naming a seal the record does not hold, stays not established. In the running app the walked document's Vault
+leaf went to resolved and reads "Vault document · Source verified" (`after-b11-02`).
+
+**A citation outside the editor** read as its source's file name in the Document view ("62%C2C-101-biopharmaceutics-
+BP-001.txt"), where the canvas and the filed document print "[1]". The stored link caches the name, and the
+read-only renderer (`editor/AuthoredHtml.tsx`) printed it. The Document view (`DocumentWorkbench.tsx`) now hands the
+renderer the document's numbering, made by the canvas's own reading-order walk (`citationAdmission.ts`
+`admittedPrecedingSources`) and the export's registry (`documentReadCitations`): "62%[1, Study BP-001 summary]", with
+the source's name on hover; a source not admitted to the section is stated, as on the canvas
+(`after-d9-01`, `12-document-view-citation-red-green.txt`). The reviewer's copy (`ReviewDecisionDialog.tsx`, held by
+Wave B) still shows the cached name until its holder passes the same numbering; noted in COORDINATION.
+
+**The editor's paused-attribution note** said "paused while you edit" on a frozen section nobody can edit. On a
+read-only section the painting stops because the text shown differs from the text the origins were recorded against
+(a citation shows as "[1]"); the note now says that there (`RichSectionEditor.tsx` `attributionPausedNote`; red first in
+`15-editor-note-and-real-postgres.txt`, with the real-PostgreSQL runs of the leaf evidence changes: 41 of 41, and the
+deliverables suite 38 of 38).
 
 **The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
 author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The

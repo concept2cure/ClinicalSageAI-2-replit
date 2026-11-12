@@ -18,6 +18,7 @@ path (done: `migrations/20260615_tmf_artifact_filings.sql` and `migrations/20261
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-11-12 | Claude (Vault parity lane, `…01KnUGoX3g`) | Drafted from the shipped code after eTMF E4, for Validation to number, review and file. Each requirement is traced to its source and to the tests that prove it today. |
+| 0.2 | 2026-11-12 | Claude (Vault parity lane) | URS-ETMF-001: a viewer reads, by P-124 item 7, which answered the question §3 put to the founder. |
 
 ## 1. Intended use
 
@@ -45,7 +46,7 @@ Sources are relative to the repository root. "Proven by" names suites that pass 
 
 | URS id | Requirement | Part 11 | Risk | Source | Proven by (development evidence) |
 |---|---|---|---|---|---|
-| URS-ETMF-001 | Every `/api/etmf` route requires an authenticated session holding the regulatory-author role. A session without it is refused every route, reads included. | §11.10(d) | high | `server/routes/etmf.routes.ts` | `server/routes/__tests__/etmf.routes.test.ts`, `server/routes/__tests__/etmf-artifacts.routes.test.ts` (401 unauthenticated; 403 without the role) |
+| URS-ETMF-001 | Every `/api/etmf` route requires an authenticated session. A person who may read the project's Vault reads its study's trial master file: the regulatory-author role or the organization's viewer role (P-124 item 7). Every write requires the regulatory-author role and the Vault's write role. A session with neither role is refused every route. | §11.10(d) §11.10(g) | high | `server/routes/etmf.routes.ts` (`READERS`, `AUTHOR`) | `server/routes/__tests__/etmf.routes.test.ts`, `server/routes/__tests__/etmf-artifacts.routes.test.ts` (401 unauthenticated), `tests/db/etmf-study-binding.dbtest.ts` (a viewer shared on the project reads; every write refused; another project's study not found) |
 | URS-ETMF-002 | A trial master file is a study's. Every route that reads or writes one names a study of a project the caller can open. A study of a project the caller cannot open, or no study, is refused 404 `STUDY_NOT_FOUND` on every route, and nothing is read or written. An access check that cannot be completed is an error (503 `STUDY_ACCESS_UNAVAILABLE`), never "not found". | §11.10(d) | high | `server/services/etmf/tmf-study-access.ts` | `tests/db/etmf-study-binding.dbtest.ts`, `server/routes/__tests__/etmf-artifacts.routes.test.ts` |
 | URS-ETMF-003 | Filings are held to their organisation in the database: row-level security on the store, forced, under the non-owner runtime role. A filing's study is held to the filing's own organisation. Another organisation's filing is neither read nor removed. | §11.10(d) | high | `migrations/20260615_tmf_artifact_filings.sql`, `migrations/20261110_tmf_filings_study_ref.sql` | `tests/db/tmf-assessment-audit-outcomes.dbtest.ts` (deployed FORCE RLS, foreign reads and deletes refused), `tests/db/etmf-study-binding.dbtest.ts` |
 | URS-ETMF-004 | One reference model is read by every assessment, filing and classification: the DIA TMF Reference Model's 11 zones and 41 records, 26 of them essential, each with a stable code. | none | medium | `shared/constants/domain/tmf-reference-model.ts` | `server/services/__tests__/vault-taxonomy-etmf.test.ts` (one catalog, drift guard), `server/services/etmf/__tests__/tmf-completeness.test.ts` |
@@ -68,9 +69,9 @@ Sources are relative to the repository root. "Proven by" names suites that pass 
 
 ## 3. Assumptions and constraints
 
-- **A read-only (viewer) session cannot read the trial master file.** Every route requires the regulatory-author role
-  (URS-ETMF-001). An inspector or auditor reading with no right to write is not provided. Whether one should be is the
-  founder's decision, and it is recorded here so the OQ does not claim it.
+- **A reader is a member of the organization.** A monitor, auditor or inspector reads with the viewer role on the
+  project (P-124 item 7, URS-ETMF-001). An inspector's account outside the organization, or access limited in time, is
+  not provided.
 - **Study-level only.** The reference model's country and site levels are not represented.
 - **No timeliness or QC assessment.** No filing lag and no QC state is recorded for a record. The section says so
   instead of showing a figure.

@@ -181,8 +181,8 @@ export async function seed(ctx) {
   await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
   // The Vault: each project's synthetic client data room, reviewed, approved and sealed by its people (lumen-vault.mjs).
   const vault = await ensureLumenVault({ ...ctx, ...c }, projects);
-  // The headline scenario: LMN-201's Phase 2 CSR, prepared up to its build (lumen-csr.mjs).
-  await ensureLumenCsr({ ...ctx, ...c }, lmn201);
+  // The headline scenario: three synthetic CSRs written in full, LMN-201 and LMN-801 approved (lumen-csr.mjs).
+  await ensureLumenCsr({ ...ctx, ...c }, projects);
   /* Submission Center: sequence 0000 on LMN-201's canonical submission, with its approved Vault documents placed as
      eCTD leaves and the deterministic readiness reads, through the biotech pack's own path (biotech-submission.mjs).
      Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
