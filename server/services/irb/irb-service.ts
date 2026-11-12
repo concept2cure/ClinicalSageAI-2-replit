@@ -96,7 +96,22 @@ function recordedFact(v: boolean | null | undefined): boolean | null {
   return v ?? null;
 }
 
+/**
+ * The Submission Center submission an IRB submission is linked to (D1) is this
+ * organization's, or the link is refused. The foreign key alone accepts any
+ * organization's id, and an approval then threads a provenance link to it.
+ * The refusal does not say whether the id exists elsewhere.
+ */
+async function requireOwnSubmission(client: Queryable, orgId: number, submissionId: number): Promise<void> {
+  const { rows } = await client.query(
+    `SELECT id FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [submissionId, orgId],
+  );
+  if (rows.length === 0) throw new IrbError('BAD_INPUT', `Submission Center submission ${submissionId} was not found for this organization. Nothing was changed.`);
+}
+
 export async function createSubmissionTx(client: Queryable, orgId: number, userId: number, input: IrbSubmissionInput): Promise<{ id: number }> {
+  if (input.submissionId != null) await requireOwnSubmission(client, orgId, input.submissionId);
   const { rows } = await client.query(
     `INSERT INTO irb_submissions
        (organization_id, study_id, submission_id, protocol_number, title, risk_level,
@@ -168,6 +183,28 @@ export async function setSubmissionContextTx(
     params,
   );
   return { id, recorded };
+}
+
+/**
+ * Link an IRB submission to its Submission Center submission (D1), once.
+ *
+ * Only creation could set the link, so a submission recorded without one (from
+ * AnA's command, or before the package existed) could never have a package. A
+ * link that exists is not moved here: an approval may already have threaded
+ * its provenance to the linked submission.
+ */
+export async function linkSubmissionTx(client: Queryable, orgId: number, id: number, submissionId: number): Promise<{ id: number; submissionId: number }> {
+  const s = await getSubmission(client, orgId, id);
+  if (s.submission_id != null) {
+    throw new IrbError('INVALID_STATE', `This IRB submission is already linked to Submission Center submission ${Number(s.submission_id)}. A link is not moved. Nothing was changed.`);
+  }
+  await requireOwnSubmission(client, orgId, submissionId);
+  await client.query(
+    `UPDATE irb_submissions SET submission_id = $3, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND submission_id IS NULL`,
+    [id, orgId, submissionId],
+  );
+  return { id, submissionId };
 }
 
 async function getSubmission(client: Queryable, orgId: number, id: number): Promise<any> {
@@ -305,7 +342,9 @@ export async function addReportableEventTx(client: Queryable, orgId: number, use
 
 export async function listSubmissions(orgId: number, submissionId?: number): Promise<any[]> {
   const params: unknown[] = [orgId];
-  let sql = `SELECT id, study_id, submission_id, protocol_number, title, review_type, risk_level, is_single_irb, status, approval_date, expiration_date
+  let sql = `SELECT id, study_id, submission_id, protocol_number, title, review_type, risk_level, is_single_irb, status, approval_date, expiration_date,
+                    involves_vulnerable_populations, consent_waiver_requested,
+                    involves_children, is_ind_study, uses_phi, uses_recruitment_material
                FROM irb_submissions WHERE organization_id = $1 AND deleted_at IS NULL`;
   if (submissionId != null) { params.push(submissionId); sql += ` AND submission_id = $2`; }
   sql += ` ORDER BY created_at DESC`;
@@ -313,7 +352,18 @@ export async function listSubmissions(orgId: number, submissionId?: number): Pro
   return rows;
 }
 
-export async function getCompletenessInput(client: Queryable, orgId: number, id: number): Promise<{
+/**
+ * Reads through the pool, as getPackageManifest and getLifecycleStatus do.
+ *
+ * It took a connection from its caller until 2026-11-12, and both callers
+ * handed it one from `pool.connect()` with no BEGIN. The pool sets the tenant
+ * on a checked-out connection only at BEGIN (server/db/poolInstrumentation.ts),
+ * so the read ran with no tenant, row security hid the row, and the answer was
+ * "IRB submission not found" for a submission that existed.
+ */
+const scopedPool: Queryable = { query: (sql, params) => pool.query(sql, params as unknown[]) };
+
+export async function getCompletenessInput(orgId: number, id: number): Promise<{
   riskLevel: IrbRiskLevel;
   reviewType: IrbReviewType | null;
   /** NULL = not recorded; the gate reports its check as not assessed. */
@@ -325,12 +375,12 @@ export async function getCompletenessInput(client: Queryable, orgId: number, id:
   siteCount: number;
   approvalDate: string | null;
 }> {
-  const s = await getSubmission(client, orgId, id);
-  const { rows: cc } = await client.query(
+  const s = await getSubmission(scopedPool, orgId, id);
+  const { rows: cc } = await scopedPool.query(
     `SELECT COUNT(*)::int AS n FROM irb_consent_documents WHERE irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status IN ('draft','approved')`,
     [id, orgId],
   );
-  const { rows: sc } = await client.query(
+  const { rows: sc } = await scopedPool.query(
     `SELECT COUNT(*)::int AS n FROM irb_sites WHERE irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId],
   );
