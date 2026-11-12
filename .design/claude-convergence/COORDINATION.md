@@ -144,7 +144,7 @@ Publication request for the demo followthrough, 2026-11-06 22:01 UTC: its source
 | (none held) | RIM | F1 repair B landed 2026-11-09 (`cec19b461`): `assess-dispatch-readiness.ts` answers only for a live sequence. Released. |
 | `client/src/concept2cure/quality/**` (the controlled-document register, training reader and coverage, approve dialog), `server/services/qms/training*.ts`, `server/services/qms/training-assignment.ts`, `server/routes/mdx-qms-training.ts`, `docs/evidence/MR-12/2026-10-29-training-assignment/**`, `docs/evidence/D2-QMS-IN-PROJECTS/**` | Quality and training (`01GyGhjgjrNv…`), from 2026-11-06 | **Update, 2026-11-12, under the founder's direction of that day ("You are the manager of this goal. Stay aligned with the other sessions"):** D7, F1 and R1 under P-122, by walking the merged Quality in the running app and fixing what breaks, red then green. **Landed 2026-11-11 and 2026-11-12:** a record's facts are never covered by its actions, and the tabs are not clipped (`c83219951`); a confirmed write re-reads the figure line and the register beside it (`dd14af400`); a linked record can be removed from a change, with its reason (`94450dd2c`, R1); what Quality showed is not behind a closed disclosure, and the three unruled classes carry a rule (`9d1f8ea22`); who is due to train, coverage and the review schedule follow a confirmed write (`dd8f5488d`); a failed Quality projection logs its cause, and a project's sources read was measured on a project made of Quality records (see "Found by the Quality lane" below); a write the server did not confirm says so (`c446043c2`). A controlled document was walked end to end (create, write, route, sign, assign, read and acknowledge): `docs/evidence/DESIGN/D7/2026-11-12-training-lists-re-read/`. **Touched once and not held:** `server/services/clinical-regulatory-evidence/record-source.ts` (the projection's log line). **Held from 2026-11-12 for one change, named before it starts:** `server/services/qms/project-evidence.ts` and `authorizeQmsContentRead` in `server/services/qms/controlled-document-content.ts`, to ask a project's authoring access once per register read (the Quality evidence reader asks it once per record, which is most of what a sources read still costs on a Quality-heavy project); no change to what the end-of-read recheck means. **Then, in this lane's files:** the suppliers register is wider than its box at 1024; a complaint's row does not name its MDR report; the remaining D7-B items that wait on a founder decision are listed in `docs/design/ONE_DESIGN_PLAN.md` §3a. Shared files (`ProjectHome.tsx`, `styles/**`, `TaskBoard.tsx`) are asked for here before any change. |
 | (none held) | RIM | F1 repair C landed 2026-11-09 (`0f5db6192`): `ind-lifecycle/shared.ts` `fail()` maps through `SUBMISSION_ERROR_STATUS`. Released. |
-| (none held) | Regulatory document AI architecture (`017CFk…`) | L1 (launch row D2), the founder's Phase 2 CSR demo walked on the CDISC pilot (2026-11-02): a fixed demo-mode reply is no longer saved as an AI draft (`c226754e3`; 30 headings in build 1, not 37 as first written here), and the CSR scientific review offers the document's frozen study data (`c29fdcb4e`, `d39a037dc`). Its holds are released. Record and the founder's runbook: `docs/evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md`. **→ catalog owner:** New document lists "GLOBAL · Clinical Study Report (CSR)" twice; the second (`registry:ICH_CSR`) makes a CSR without "Build from the study's data" (F1). **→ coordinator:** a reviewer's task sheet has no link to the document or the Review board (F4); `CsrBuildProgress.tsx` counts and labels template rows as drafted (F2) and approves a heading with no text shown (F9), which needs a hold of its own. F8 (fail closed) landed the same day: a CSR section that still holds a data placeholder cannot pass the CSR scientific review, so it cannot be approved, signed, frozen, exported or filed (`0563a8274`, `559f8057f`); and `c29fdcb4e`'s import join was corrected to the stored key, `importSource.id` (`0dbaa3215`). Its holds are released. Next in this lane, once the founder's model key is in the environment (a new session): real drafting on the prepared study data |
+| (none held) | Regulatory document AI architecture (`017CFk…`) | L1 (launch row D2), the founder's Phase 2 CSR demo walked on the CDISC pilot (2026-11-02): a fixed demo-mode reply is no longer saved as an AI draft (`c226754e3`; 30 headings in build 1, not 37 as first written here), and the CSR scientific review offers the document's frozen study data (`c29fdcb4e`, `d39a037dc`). Its holds are released. Record and the founder's runbook: `docs/evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md`. **→ catalog owner:** New document lists "GLOBAL · Clinical Study Report (CSR)" twice; the second (`registry:ICH_CSR`) makes a CSR without "Build from the study's data" (F1). **→ coordinator:** a reviewer's task sheet has no link to the document or the Review board (F4); `CsrBuildProgress.tsx` counts and labels template rows as drafted (F2) and approves a heading with no text shown (F9), which needs a hold of its own. F8 (fail closed) landed the same day: a CSR section that still holds a data placeholder cannot pass the CSR scientific review, so it cannot be approved, signed, frozen, exported or filed (`0563a8274`, `559f8057f`); and `c29fdcb4e`'s import join was corrected to the stored key, `importSource.id` (`0dbaa3215`). Its holds are released. Next in this lane, once the founder's model key is in the environment (a new session): real drafting on the prepared study data. **2026-11-12, after the demo:** the runbook's two wrong instructions are corrected (the reviewer's path, and step 14 before the review), and the demo-day re-walk is recorded with each finding's state at `a9b5af187`: `docs/evidence/DEMO/2026-11-09-demo-day-rewalk/README.md`; what it hands on is under "Found by the demo-day re-walk" below. The CSR path itself is `01QoxbLZ…`'s (its section below); this session takes nothing in it. Holds nothing |
 
 ### Quality core workflow — Codex continuation, 2026-11-06
 
@@ -244,6 +244,8 @@ S10 (the agency's communications back into the project) is held by RIM since 202
 - **D4-3 waits until after the Phase 2 CSR demo** (the founder, 2026-11-02). D4-3 moves Freeze, E-sign and Place
   into filing from the editor's bar into the inspector; until the demo is done they stay in the bar (`b6a46499f`), so
   the rehearsed path does not move. The AI architecture session (`017CFk…`) says when the demo is over.
+  *2026-11-12, from `017CFk…`: the demo of 2026-11-09 is over, and the coordinating session has been told. Nothing in
+  this lane waits on the bar any more. The session has no word from the founder on how the demo went.*
 
 ## Known caveats
 
@@ -1038,6 +1040,45 @@ Evidence: `docs/evidence/F1/2026-11-12-production-walk-narrow-roles/`. Messages,
   normally. Rows written before any key existed (seeded data here; in the field, a database that ran keyless before
   its first keyed deploy) leave the editor's Review tasks rail failing on that document permanently. Whether pre-key
   rows are admitted is your decision; the walk only records it.
+
+## Found by the demo-day re-walk (`017CFk…`) in files other lanes hold, 2026-11-12
+
+Record: `docs/evidence/DEMO/2026-11-09-demo-day-rewalk/README.md` (walked on `51c52751e` on 2026-11-09; each finding
+re-checked on `a9b5af187` by reading the code, 14 fixed, 16 partly, 25 open). Only what no later record carries is
+listed here; the README's table has the lines. Messages, not instructions; each holder decides.
+
+- **For the Project page holder (D3, `ProjectHome.tsx`).** On the Review step, a row that says "Awaiting your
+  review" offers only "Open document". The editor has no review decision, so a reviewer who presses it has nowhere
+  to decide (CSR-1). The step's own button "Review documents on the review board" is the way; the row could say so
+  or open the board. Also BT-F10 (Module completion reads "0 drafted" under a list of Draft documents:
+  `server/services/c2c/dossier-read.ts` counts only the filing's bound sections) and MDX-9 (`doc.module` printed raw,
+  "510k").
+- **For S4 (`01KZK3…`), unheld files.**
+  - ANA-02: an account with a private rule or a saved personal profile has every AnA turn refused on a frontier
+    model. The capsule is recorded at tier 3 on every turn (`routes/ana-ri/stream.ts`, owner-private context;
+    `ai-gateway/model-call-scope.ts`), and tier 2 and above goes only to a self-hosted model. Reproduced against
+    the gateway with one capsule: `DENY_INPUT_TIER`. Whether a person's own rules are tier 3 is a tier decision
+    (the founder's, like the tier-1 start), not a repair.
+  - ANA-05: a failed turn is never saved, so a reopened conversation shows the question with no answer and
+    "AnA has not started a turn". `stream.ts` saves an answer only for a stopped turn (`persistStoppedAnswer`).
+- **For the Biostatistics files (unheld: `server/services/biostatistics-bridge/statistical-review.ts`,
+  `server/services/ana-biostats/document-generator.ts`).**
+  - T2-F9: on LMN-201 the Design assessment says "Missing Data Risk … No method specified" while its own review
+    table says "Missing data · Low · A pre-specified … strategy", and "No sensitivity analysis" beside a Scenario
+    Analysis table. The stored design does state its strategy; the judgment engine is not given it.
+  - T2-F10: the Design Assumption Note ends "Key concerns:" with an empty list when the action is "revise".
+  - T2-F8: `sensitive to effect_size, attrition_rate` (parameter names as stored).
+- **For `01T2woo…` (CMC and device rows of its list).** BT-F3: on a biologic, Validation says to place Module 3
+  from CMC, and CMC's Module 3 build refuses it (the P-28 boundary); the remedy offered is one the product refuses.
+  CMC-3: Approve on a specification opens the signature form before the method refusal. CMC-10 and CMC-11: the
+  audit chain's Actor is a user id, and "phase_2" is printed as stored. MDX-5: the 510(k) screen's ISO due label,
+  "Open §11", and a bare "vs.".
+- **Unheld, small.** BT-F4 (`surfaces/SubmissionSeqWorkspaces.tsx`: the Validation tab prints rule codes); T2-F5
+  and T2-F6 (`RbmSurfacesB.tsx:633-664` and `RbmSurfacesA.tsx:144-145`: plan and due dates as stored, "row(s)",
+  the source code "edc"); CMC-7 (`server/services/cmc/qbd-analyzer.ts`: no CQA is derived because the specification
+  form never writes `test_parameters`); MDX-8 (`server/services/audit/auth-event-audit.ts:72`: a development
+  sign-in's wording leads the audit trail in a Codespace).
+- **For Quality (`01GyGhjg…`).** BT-F11 and T2-F15: `quality/data.ts` `formatDate` still prints YYYY-MM-DD.
 
 ## What every session does
 
