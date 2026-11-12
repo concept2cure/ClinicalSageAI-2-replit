@@ -1,0 +1,813 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "SOP register @1440",
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "tableWidth": 1083,
+          "boxWidth": 1040,
+          "overflow": 43,
+          "headsCovered": [
+            {
+              "head": "Next review",
+              "by": 43
+            }
+          ],
+          "rows": 9,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Change control @1440",
+      "tables": [
+        {
+          "name": "Change control log",
+          "tableWidth": 1070,
+          "boxWidth": 1040,
+          "overflow": 30,
+          "headsCovered": [
+            {
+              "head": "Links",
+              "by": 30
+            }
+          ],
+          "rows": 10,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1440",
+      "tables": [
+        {
+          "name": "CAPA",
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "overflow": 0,
+          "headsCovered": [],
+          "rows": 100,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @1440",
+      "tables": []
+    },
+    {
+      "name": "Deviations @1440",
+      "tables": [
+        {
+          "name": "Deviations",
+          "tableWidth": 1086,
+          "boxWidth": 1040,
+          "overflow": 46,
+          "headsCovered": [
+            {
+              "head": "CAPA",
+              "by": 46
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 22
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @1440",
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "tableWidth": 1063,
+          "boxWidth": 1040,
+          "overflow": 23,
+          "headsCovered": [
+            {
+              "head": "CAPA",
+              "by": 23
+            }
+          ],
+          "rows": 3,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @1440",
+      "tables": [
+        {
+          "name": "Suppliers",
+          "tableWidth": 1209,
+          "boxWidth": 1040,
+          "overflow": 169,
+          "headsCovered": [
+            {
+              "head": "Quality agreement",
+              "by": 77
+            },
+            {
+              "head": "CAPA",
+              "by": 169
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 145
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @1440",
+      "tables": [
+        {
+          "name": "Internal audits",
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "overflow": 0,
+          "headsCovered": [],
+          "rows": 1,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @1440",
+      "tables": [
+        {
+          "name": "Management reviews",
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "overflow": 0,
+          "headsCovered": [],
+          "rows": 1,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "SOP register @1280",
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "tableWidth": 1083,
+          "boxWidth": 936,
+          "overflow": 147,
+          "headsCovered": [
+            {
+              "head": "Effective",
+              "by": 55
+            },
+            {
+              "head": "Next review",
+              "by": 147
+            }
+          ],
+          "rows": 9,
+          "rowsCovered": 9,
+          "sample": [
+            {
+              "col": "Effective",
+              "text": "2026-11-10",
+              "under": 31
+            },
+            {
+              "col": "Next review",
+              "text": "—",
+              "under": 68
+            },
+            {
+              "col": "Next review",
+              "text": "—",
+              "under": 68
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Change control @1280",
+      "tables": [
+        {
+          "name": "Change control log",
+          "tableWidth": 1070,
+          "boxWidth": 936,
+          "overflow": 134,
+          "headsCovered": [
+            {
+              "head": "Status",
+              "by": 19
+            },
+            {
+              "head": "Target",
+              "by": 80
+            },
+            {
+              "head": "Links",
+              "by": 134
+            }
+          ],
+          "rows": 10,
+          "rowsCovered": 10,
+          "sample": [
+            {
+              "col": "Target",
+              "text": "—",
+              "under": 32
+            },
+            {
+              "col": "Links",
+              "text": "1",
+              "under": 104
+            },
+            {
+              "col": "Target",
+              "text": "—",
+              "under": 32
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1280",
+      "tables": [
+        {
+          "name": "CAPA",
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "overflow": 0,
+          "headsCovered": [],
+          "rows": 100,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @1280",
+      "tables": []
+    },
+    {
+      "name": "Deviations @1280",
+      "tables": [
+        {
+          "name": "Deviations",
+          "tableWidth": 1086,
+          "boxWidth": 936,
+          "overflow": 150,
+          "headsCovered": [
+            {
+              "head": "Target close",
+              "by": 58
+            },
+            {
+              "head": "CAPA",
+              "by": 150
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 126
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @1280",
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "tableWidth": 1063,
+          "boxWidth": 936,
+          "overflow": 127,
+          "headsCovered": [
+            {
+              "head": "Detected",
+              "by": 35
+            },
+            {
+              "head": "CAPA",
+              "by": 127
+            }
+          ],
+          "rows": 3,
+          "rowsCovered": 3,
+          "sample": [
+            {
+              "col": "Detected",
+              "text": "2026-11-10",
+              "under": 11
+            },
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 103
+            },
+            {
+              "col": "Detected",
+              "text": "2026-11-10",
+              "under": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @1280",
+      "tables": [
+        {
+          "name": "Suppliers",
+          "tableWidth": 1209,
+          "boxWidth": 936,
+          "overflow": 273,
+          "headsCovered": [
+            {
+              "head": "Re-approval",
+              "by": 51
+            },
+            {
+              "head": "Quality agreement",
+              "by": 181
+            },
+            {
+              "head": "CAPA",
+              "by": 273
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "Quality agreement",
+              "text": "—",
+              "under": 64
+            },
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 249
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @1280",
+      "tables": [
+        {
+          "name": "Internal audits",
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "overflow": 0,
+          "headsCovered": [],
+          "rows": 1,
+          "rowsCovered": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @1280",
+      "tables": [
+        {
+          "name": "Management reviews",
+          "tableWidth": 1029,
+          "boxWidth": 936,
+          "overflow": 93,
+          "headsCovered": [
+            {
+              "head": "Action items",
+              "by": 1
+            },
+            {
+              "head": "CAPA",
+              "by": 93
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 69
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SOP register @1024",
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "tableWidth": 1083,
+          "boxWidth": 680,
+          "overflow": 403,
+          "headsCovered": [
+            {
+              "head": "Type",
+              "by": 18
+            },
+            {
+              "head": "Version",
+              "by": 86
+            },
+            {
+              "head": "Status",
+              "by": 202
+            },
+            {
+              "head": "Effective",
+              "by": 311
+            },
+            {
+              "head": "Next review",
+              "by": 403
+            }
+          ],
+          "rows": 9,
+          "rowsCovered": 9,
+          "sample": [
+            {
+              "col": "Version",
+              "text": "1.0",
+              "under": 42
+            },
+            {
+              "col": "Status",
+              "text": "Effective",
+              "under": 152
+            },
+            {
+              "col": "Effective",
+              "text": "2026-11-10",
+              "under": 287
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Change control @1024",
+      "tables": [
+        {
+          "name": "Change control log",
+          "tableWidth": 1070,
+          "boxWidth": 680,
+          "overflow": 390,
+          "headsCovered": [
+            {
+              "head": "Type",
+              "by": 55
+            },
+            {
+              "head": "Class",
+              "by": 128
+            },
+            {
+              "head": "Status",
+              "by": 275
+            },
+            {
+              "head": "Target",
+              "by": 336
+            },
+            {
+              "head": "Links",
+              "by": 390
+            }
+          ],
+          "rows": 10,
+          "rowsCovered": 10,
+          "sample": [
+            {
+              "col": "Type",
+              "text": "Supplier",
+              "under": 19
+            },
+            {
+              "col": "Class",
+              "text": "Minor",
+              "under": 104
+            },
+            {
+              "col": "Status",
+              "text": "Proposed",
+              "under": 199
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1024",
+      "tables": [
+        {
+          "name": "CAPA",
+          "tableWidth": 921,
+          "boxWidth": 680,
+          "overflow": 241,
+          "headsCovered": [
+            {
+              "head": "Source",
+              "by": 26
+            },
+            {
+              "head": "Risk",
+              "by": 76
+            },
+            {
+              "head": "State",
+              "by": 147
+            },
+            {
+              "head": "Target close",
+              "by": 241
+            }
+          ],
+          "rows": 100,
+          "rowsCovered": 100,
+          "sample": [
+            {
+              "col": "Source",
+              "text": "Trend",
+              "under": 2
+            },
+            {
+              "col": "Risk",
+              "text": "Low",
+              "under": 52
+            },
+            {
+              "col": "State",
+              "text": "Open",
+              "under": 123
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @1024",
+      "tables": []
+    },
+    {
+      "name": "Deviations @1024",
+      "tables": [
+        {
+          "name": "Deviations",
+          "tableWidth": 1086,
+          "boxWidth": 680,
+          "overflow": 406,
+          "headsCovered": [
+            {
+              "head": "Class",
+              "by": 40
+            },
+            {
+              "head": "Status",
+              "by": 111
+            },
+            {
+              "head": "Detected",
+              "by": 219
+            },
+            {
+              "head": "Target close",
+              "by": 314
+            },
+            {
+              "head": "CAPA",
+              "by": 406
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "Class",
+              "text": "Major",
+              "under": 16
+            },
+            {
+              "col": "Status",
+              "text": "Open",
+              "under": 87
+            },
+            {
+              "col": "Detected",
+              "text": "2026-11-10",
+              "under": 195
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @1024",
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "tableWidth": 1063,
+          "boxWidth": 680,
+          "overflow": 383,
+          "headsCovered": [
+            {
+              "head": "Source",
+              "by": 28
+            },
+            {
+              "head": "Disposition",
+              "by": 183
+            },
+            {
+              "head": "Detected",
+              "by": 291
+            },
+            {
+              "head": "CAPA",
+              "by": 383
+            }
+          ],
+          "rows": 3,
+          "rowsCovered": 3,
+          "sample": [
+            {
+              "col": "Disposition",
+              "text": "Awaiting disposition",
+              "under": 159
+            },
+            {
+              "col": "Detected",
+              "text": "2026-11-10",
+              "under": 267
+            },
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 359
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @1024",
+      "tables": [
+        {
+          "name": "Suppliers",
+          "tableWidth": 1209,
+          "boxWidth": 680,
+          "overflow": 529,
+          "headsCovered": [
+            {
+              "head": "Criticality",
+              "by": 42
+            },
+            {
+              "head": "Approval",
+              "by": 129
+            },
+            {
+              "head": "Next audit",
+              "by": 211
+            },
+            {
+              "head": "Re-approval",
+              "by": 307
+            },
+            {
+              "head": "Quality agreement",
+              "by": 437
+            },
+            {
+              "head": "CAPA",
+              "by": 529
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "Criticality",
+              "text": "Critical",
+              "under": 18
+            },
+            {
+              "col": "Approval",
+              "text": "Pending",
+              "under": 105
+            },
+            {
+              "col": "Next audit",
+              "text": "—",
+              "under": 142
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @1024",
+      "tables": [
+        {
+          "name": "Internal audits",
+          "tableWidth": 823,
+          "boxWidth": 680,
+          "overflow": 143,
+          "headsCovered": [
+            {
+              "head": "Findings",
+              "by": 51
+            },
+            {
+              "head": "CAPA",
+              "by": 143
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 119
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @1024",
+      "tables": [
+        {
+          "name": "Management reviews",
+          "tableWidth": 1029,
+          "boxWidth": 680,
+          "overflow": 349,
+          "headsCovered": [
+            {
+              "head": "Decisions",
+              "by": 127
+            },
+            {
+              "head": "Action items",
+              "by": 257
+            },
+            {
+              "head": "CAPA",
+              "by": 349
+            }
+          ],
+          "rows": 1,
+          "rowsCovered": 1,
+          "sample": [
+            {
+              "col": "Action items",
+              "text": "1 open · 0 closed",
+              "under": 233
+            },
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "under": 325
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "w37-covered-cells",
+      "ok": true
+    }
+  ]
+}

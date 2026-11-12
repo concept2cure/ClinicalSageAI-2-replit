@@ -1,0 +1,86 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "link-added",
+      "status": 201,
+      "to": "CC-W31-451228",
+      "ref": "VP-W40-88070"
+    },
+    {
+      "name": "changes",
+      "linked": {
+        "number": "CC-W31-451228",
+        "status": "proposed",
+        "links": [
+          {
+            "id": 5,
+            "ref": "VP-W40-88070",
+            "note": null
+          }
+        ]
+      },
+      "terminal": null
+    },
+    {
+      "name": "record",
+      "items": [
+        "VP-W40-88070Walk 40 validation protocolReferencesValidationRemove"
+      ],
+      "linkCount": "1 linked record"
+    },
+    {
+      "name": "no-reason",
+      "stillOpen": 1,
+      "invalid": "true"
+    },
+    {
+      "name": "removed",
+      "toast": "VP-W40-88070 was removed from CC-W31-451228's linked records."
+    },
+    {
+      "name": "after",
+      "linkCount": "0 linked records",
+      "items": [],
+      "empty": [
+        "No linked records yet.To keep the log traceable, link the deviation, CAPA or validation protocol this change touches, with Link a record."
+      ]
+    },
+    {
+      "name": "why-linked",
+      "number": "CC-C9-268139",
+      "notes": [
+        "The validation protocol this change is assessed against."
+      ]
+    },
+    {
+      "name": "cancelled",
+      "status": 200,
+      "state": "cancelled"
+    },
+    {
+      "name": "terminal",
+      "number": "CC-W40-197964",
+      "actions": [
+        "Ask AnA about this change"
+      ],
+      "empty": [
+        "No linked records."
+      ]
+    },
+    {
+      "name": "terminal",
+      "skipped": "no closed, cancelled or rejected change in the walk organisation"
+    },
+    {
+      "name": "ids",
+      "change": 29,
+      "link": 5
+    },
+    {
+      "name": "w40-remove-link",
+      "ok": true
+    }
+  ]
+}

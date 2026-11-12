@@ -10,7 +10,7 @@
  */
 import * as React from 'react';
 import { EmptyState } from '../v2/dataConnect';
-import { LINK_TYPE_LABEL, RELATIONSHIP_LABEL, RISK_LABEL, type ChangeControl as ChangeControlRow } from './changeData';
+import { LINK_TYPE_LABEL, RELATIONSHIP_LABEL, RISK_LABEL, type ChangeControl as ChangeControlRow, type ChangeLink } from './changeData';
 
 const NOT_RECORDED = 'Not recorded yet.';
 
@@ -39,14 +39,19 @@ export function ChangeRecordFacts({ change }: { change: ChangeControlRow }) {
   );
 }
 
-export function ChangeRecordDetail({ change: c, onAsk }: { change: ChangeControlRow; onAsk: (q: string) => void }) {
+export function ChangeRecordDetail({ change: c, onAsk, onUnlink }: {
+  change: ChangeControlRow; onAsk: (q: string) => void;
+  /** Remove a link, with its reason. Absent where the change takes no link change (closed, cancelled, rejected). */
+  onUnlink?: (link: ChangeLink) => void;
+}) {
   const links = c.links ?? [];
   return (
     <div className="qcc-detail">
       <ChangeRecordFacts change={c} />
       <h3 className="qcc-detail-title">Linked records</h3>
       {links.length === 0 ? (
-        <EmptyState title="No linked records yet." hint="To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)." />
+        <EmptyState title={onUnlink ? 'No linked records yet.' : 'No linked records.'}
+          hint={onUnlink ? 'To keep the log traceable, link the deviation, CAPA or validation protocol this change touches, with Link a record.' : undefined} />
       ) : (
         <ul className="qcc-links">
           {links.map((l) => (
@@ -64,6 +69,14 @@ export function ChangeRecordDetail({ change: c, onAsk }: { change: ChangeControl
               </button>
               <span className="qcc-link-rel">{RELATIONSHIP_LABEL[l.relationship]}</span>
               <span className="qcc-link-type">{LINK_TYPE_LABEL[l.linkType]}</span>
+              {onUnlink && (
+                <button type="button" className="btn ghost small" aria-label={`Remove ${l.linkedRef} from ${c.changeNumber}`}
+                  title="Remove this link, with a reason. It is kept on the record as removed." onClick={() => onUnlink(l)}>
+                  Remove
+                </button>
+              )}
+              {/* Why it was linked, as recorded with the link (required past proposal since 2026-11-10). */}
+              {l.note && <span className="qcc-link-note">{l.note}</span>}
             </li>
           ))}
         </ul>
