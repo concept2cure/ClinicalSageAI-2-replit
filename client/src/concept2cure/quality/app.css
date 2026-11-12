@@ -246,3 +246,18 @@
 .c2c-v2 .reg-tbl.qms-reg .qms-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .c2c-v2 .reg-tbl.qms-reg tbody[data-more] > tr > td { background: var(--bg-050); }
 .c2c-v2 .reg-tbl.qms-reg .qms-row-more { justify-content: flex-start; border-top: 0; padding: 0; }
+
+/* ─── Change control: the device change determination in a change's detail (P-122) ───
+   Between the record's facts and its linked records: one row per market, in the facts' own grid. The verdict is the
+   only weight; the engine's rationale, what it found and where the verdict came from are plain lines under it. */
+.qcc-impact { margin: 0 0 14px; }
+.qcc-impact .qcc-detail-head { flex-wrap: wrap; gap: 6px 12px; margin-bottom: 4px; }
+.qcc-detail .qcc-impact h3.qcc-detail-title { margin: 0; }
+.qcc-impact .qcc-facts { margin: 0 0 6px; }
+.qcc-impact .qcc-facts dd { white-space: normal; }
+.qcc-impact .qcc-facts dd[data-unread] { color: var(--error); }
+.qcc-impact-verdict { font-weight: 600; }
+.qcc-impact-why { margin: 2px 0 0; }
+.qcc-impact-triggers { margin: 4px 0 0; padding-left: 18px; color: var(--text-200); }
+.qcc-impact-meta, .qcc-impact-note { margin: 4px 0 0; color: var(--text-300); font-size: var(--fs-small); }
+.qcc-detail > .qcc-impact-note { margin: 0 0 14px; }

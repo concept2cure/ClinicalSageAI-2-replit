@@ -11,6 +11,7 @@
  * @module client/src/concept2cure/quality/changeData
  */
 
+import type { DeviceChangeMarket, EuDeviceChangeOutcome, FdaDeviceChangeOutcome } from '@shared/regulatory/change-control-taxonomy';
 import { formatDate } from './data';
 import type { LearningReviewView } from './qmsApproval';
 
@@ -78,6 +79,106 @@ export interface ChangeControl {
    *  is offered: the browser does not keep its own copy of the state machine. */
   nextStates?: ChangeState[];
   learningReview?: LearningReviewView | { unavailable: true } | null;
+  /** Whether the device change determination applies to this change, and what is recorded on it (GET
+   *  /api/mdx/qms/changes `regulatory_impact`). The server decides which project is a device's. Absent or null when
+   *  the row carries none: the determination is then neither offered nor described. */
+  regulatoryImpact?: RegulatoryImpact | null;
+}
+
+/* ─── The device change determination, kept on the change (P-122) ─────────
+   Two rule engines decide it (server/services/regulatory/change-assessment.ts): in the United States, whether a
+   device change needs a new 510(k) or is documented in a letter to file; in the European Union, whether it is a
+   significant change. The server runs them and keeps the outcome on the change
+   (server/services/qms/change-regulatory-impact.ts). Nothing here computes or defaults a verdict. */
+
+/** What an engine can decide: the three FDA outcomes, and the EU's two. */
+export type ImpactDecision = FdaDeviceChangeOutcome | EuDeviceChangeOutcome;
+
+/** One market's determination as the change keeps it. */
+export interface ImpactDetermination {
+  decision: ImpactDecision;
+  /** The engine's own rationale, and the triggers it found. */
+  rationale: string;
+  triggers: string[];
+  /** The version of the engine's rules it was reached under. */
+  ruleVersion: string;
+  /** The answers given, under the engine's own input names. */
+  inputs: Record<string, boolean>;
+  byName: string;
+  at: string;
+}
+
+/** `unreadable`: something is kept for the market and it is not a determination. It is said, and is never shown as
+ *  a verdict or as "not assessed". */
+export type KeptDetermination = ImpactDetermination | 'unreadable' | null;
+
+export interface RegulatoryImpact {
+  /** `device`: the change is filed under a device project. Otherwise why the determination does not apply. */
+  applies: 'device' | 'not_device' | 'no_project';
+  productType: string | null;
+  /** Only an organisation with a device project is told why a change that is not a device's does not offer it. */
+  organisationHasDevices: boolean;
+  /** A determination may be recorded now: a device project's change, still proposed or under assessment. */
+  assessable: boolean;
+  us: KeptDetermination;
+  eu: KeptDetermination;
+}
+
+export const IMPACT_MARKET_LABEL: Record<DeviceChangeMarket, string> = { us: 'United States', eu: 'European Union' };
+/** What each market's engine decides, in a sentence. */
+export const IMPACT_MARKET_ASKS: Record<DeviceChangeMarket, string> = {
+  us: 'FDA: whether the change needs a new 510(k), or is documented in a letter to file.',
+  eu: 'MDR and IVDR: whether the change is a significant change (MDCG 2020-3).',
+};
+/** Each outcome in plain words. A value outside this map is not an outcome and is read as unreadable. */
+export const IMPACT_DECISION_LABEL: Record<ImpactDecision, string> = {
+  new_510k: 'New 510(k)',
+  letter_to_file: 'Letter to file',
+  pma_supplement_or_de_novo: 'Beyond a 510(k): PMA supplement or De Novo',
+  significant: 'Significant change',
+  non_significant: 'Not a significant change',
+};
+const FDA_OUTCOMES: readonly string[] = ['new_510k', 'letter_to_file', 'pma_supplement_or_de_novo'];
+
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** The engine's decision from its result, or null when the result holds none. The EU's is a yes or a no: anything
+ *  else is no decision, never "not significant". */
+function decisionOf(market: DeviceChangeMarket, result: Record<string, unknown>): ImpactDecision | null {
+  if (market === 'us') return FDA_OUTCOMES.includes(String(result.decision)) ? (result.decision as ImpactDecision) : null;
+  if (typeof result.significant !== 'boolean') return null;
+  return result.significant ? 'significant' : 'non_significant';
+}
+
+/** One market's kept determination from the server's row. */
+function keptDeterminationOf(market: DeviceChangeMarket, raw: unknown): KeptDetermination {
+  if (raw === null || raw === undefined) return null;
+  if (!isObject(raw) || !isObject(raw.result) || !isObject(raw.by) || !isObject(raw.inputs)) return 'unreadable';
+  const { result, by, inputs, ruleVersion, at } = raw;
+  const decision = decisionOf(market, result);
+  const triggers = Array.isArray(result.triggers) && result.triggers.every((t) => typeof t === 'string') ? (result.triggers as string[]) : null;
+  const answered = Object.values(inputs).every((v) => typeof v === 'boolean');
+  const texts = [result.rationale, ruleVersion, by.name, at].every((t) => typeof t === 'string' && t.trim().length > 0);
+  if (!decision || !triggers || !answered || !texts) return 'unreadable';
+  return {
+    decision, triggers, rationale: String(result.rationale), ruleVersion: String(ruleVersion),
+    inputs: inputs as Record<string, boolean>, byName: String(by.name), at: String(at),
+  };
+}
+
+/** The server's `regulatory_impact` on a register row, or null when the row carries none this code can read. */
+export function regulatoryImpactOf(raw: unknown): RegulatoryImpact | null {
+  if (!isObject(raw)) return null;
+  const { applies } = raw;
+  if (applies !== 'device' && applies !== 'not_device' && applies !== 'no_project') return null;
+  return {
+    applies,
+    productType: typeof raw.productType === 'string' ? raw.productType : null,
+    organisationHasDevices: raw.organisationHasDevices === true,
+    assessable: raw.assessable === true,
+    us: keptDeterminationOf('us', raw.us),
+    eu: keptDeterminationOf('eu', raw.eu),
+  };
 }
 
 export interface ChangeSummary {
