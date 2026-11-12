@@ -305,7 +305,7 @@ catch. The two that do not:
 | `cmdkPlaces` (palette focus rule) | `845a63b2bf` grew D0's composer list; the test pinned the whole list | fixed, `269e57f168` |
 | `workbenchRemedies` "insert-empty" | a real race: the sections re-read after AnA's turn rebuilds the editor bridge during `propose`'s hash | handed to the Codex editor continuation |
 | `globalBiotechTemplateEditor` (all filings) | 244 documents, 3,195 sections: 158 s alone, over 180 s three files at a time | fixed, `2381e2b632` |
-| `vault-document-filter` (one predicate) | `data-room-vault.ts:168-169` builds its own (`d016d56eee`) | handed to the data room lane |
+| `vault-document-filter` (one predicate) | `data-room-vault.ts:168-169` builds its own (`d016d56eee`) | handed to the data room lane; unanswered after 8 h, fixed by this lane (`c955b27628`) |
 | `adminConsoleSettings` (2) | the Identity console door is a platform administrator's (`7dfb49b645`) | fixed, `846a0aebea` |
 | `foundationsRetiredRatchet` (`cm-meta` 84 → 85) | `40cc8265b7`, `CmcModule.tsx`, a held file | handed to `01T2woo…` |
 | `homeOpenItems` (approval row) | an approval opens its document (`4c6d882afd`) | fixed, `e35e967605` |
@@ -345,7 +345,7 @@ and is not counted.)
 | `tests/db/entitlement-schema-posture`, "ci:migration-drop-safety:selftest exits 0" | Only when the checkout sits under the OS temp directory: the selftest's fixtures read as "missing from the repo". 12 of 12 pass in `/home/user/…`. Not a trunk red. | none |
 | `d0PhoneWidth` | CMC's register scroll beside D0's rule (`687d0af9df`) | R1 (`01DiJJAk…`) |
 | `workbenchRemedies` "insert-empty" | the editor bridge rebuilt during `propose` | the Codex editor continuation |
-| `vault-document-filter` | `data-room-vault.ts` builds its own Vault predicate | data room (`01QoxbLdTrwY…`) |
+| `vault-document-filter` | `data-room-vault.ts` builds its own Vault predicate | data room (`01QoxbLdTrwY…`); fixed by this lane after 8 h unanswered (`c955b27628`) |
 | `foundationsRetiredRatchet` (`cm-meta` 84 → 85) | `40cc8265b7` | `01T2woo…` |
 | `homeStartHere` | "Get started" on Home (`75624cff54`) | S13 (`01QoxbLZhyA6…`) |
 | `launch-scope.test.ts` "the shell no longer carries training" | Help & training is a launch surface now (`1207a3c307`, P-127) | S13, new |
