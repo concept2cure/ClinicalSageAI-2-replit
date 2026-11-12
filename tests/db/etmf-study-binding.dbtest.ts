@@ -433,10 +433,10 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     const documentOf = Object.fromEntries(res.body.map((f: { artifactCode: string; document: unknown }) => [f.artifactCode, f.document]));
     expect(documentOf).toEqual({
       // The first version has a live successor: named, and not the current version.
-      protocol: { id: first, title: 'Clinical study report', version: '1.0', current: false },
-      investigators_brochure: { id: second, title: 'Clinical study report', version: '2.0', current: true },
+      protocol: { id: first, title: 'Clinical study report', version: '1.0', current: false, lifecycleStage: null },
+      investigators_brochure: { id: second, title: 'Clinical study report', version: '2.0', current: true, lifecycleStage: null },
       // No title: the file name, which is the document's own.
-      monitoring_plan: { id: untitled, title: 'monitoring-plan-signed.pdf', version: '1.0', current: true },
+      monitoring_plan: { id: untitled, title: 'monitoring-plan-signed.pdf', version: '1.0', current: true, lifecycleStage: null },
       // Deleted since, off-platform, no reference, another project's, another organization's: no document, no guess.
       regulatory_submission: null,
       sample_icf: null,
@@ -457,9 +457,22 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     const filed = await (await as(lead)).post(`${trial(studyD)}/artifacts`).send({ artifactCode: 'sap', documentRef: `vault://${v1}`, reason: REASON });
     expect(filed.status, JSON.stringify(filed.body)).toBe(201);
     const before = await (await as(lead)).get(`${trial(studyD)}/artifacts`);
-    expect(before.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: true }]);
+    expect(before.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: true, lifecycleStage: null }]);
     await vaultDocument(mine, progC, lead.userId, { code, title: 'Statistical analysis plan', version: '2.0', supersedes: v1 });
     const after = await (await as(lead)).get(`${trial(studyD)}/artifacts`);
-    expect(after.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: false }]);
+    expect(after.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: false, lifecycleStage: null }]);
+  });
+
+  it('says the document\'s review stage, as the Library reads it: a record\'s state is its document\'s (P-124 item 5)', async () => {
+    const studyE = await study(mine, progC, 'E');
+    const doc = await vaultDocument(mine, progC, lead.userId, { code: `${PROBE}-IB`, title: 'Investigator brochure', version: '3.0' });
+    const filed = await (await as(lead)).post(`${trial(studyE)}/artifacts`).send({ artifactCode: 'investigators_brochure', documentRef: `vault://${doc}`, reason: REASON });
+    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
+    await owner.query(
+      `INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs, created_by)
+       VALUES ($1, $2, $3, 'Investigator brochure', 'IB', 'approved', true, $4, $5::jsonb, $6)`,
+      [`${PROBE}-cd-${doc}`, mine.orgId, progC, 'b'.repeat(64), JSON.stringify({ vault_documents: { nativeId: doc } }), lead.userId]);
+    const res = await (await as(lead)).get(`${trial(studyE)}/artifacts`);
+    expect(res.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: doc, title: 'Investigator brochure', version: '3.0', current: true, lifecycleStage: 'approved' }]);
   });
 });

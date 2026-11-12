@@ -2830,86 +2830,87 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     />
   ) : (
     <div className={recordAsDrawer ? 'vd-grid' : 'vd-grid wa-split'}>
-      <div className="vd-browse" data-tree={treeAsDrawer ? 'drawer' : undefined}>
-        {/* Finding a document: the search, saved views, the two scopes and the six filters, across the structure
-            and the list. Inside the list's column the filters took three rows and the first document sat below
-            the fold at 1440px (P-122: a person's own work is on the first screen). */}
-        <div className="vd-findbar" data-testid="vault-findbar">
-        {/* One row: the search, saved views and the two scopes. THE SEARCH
-            BOX: `q` is driven by this field and by AnA's vault.search, the
-            same state. */}
-        <div className="vd-find">
-          {treeAsDrawer && (
-            <button type="button" className="btn ghost small" aria-expanded={treeOpen} onClick={() => setTreeOpen(true)}>
-              {I.folder} Structure
-            </button>
-          )}
-          <label className="vd-find-q">
-            <span className="vd-find-ic" aria-hidden="true">{I.search}</span>
-            <span className="sr-only">Search this vault</span>
-            <input
-              type="search"
-              className="c2c-input"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search titles and document text"
-              aria-label="Search this vault"
-            />
-          </label>
-          {projectId && (
-            <button
-              type="button"
-              className="btn ghost small"
-              aria-expanded={viewsOpen}
-              aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
-              onClick={() => setViewsOpen((open) => !open)}
-            >
-              Saved views
-            </button>
-          )}
-          <label className="vd-toggle">
-            <input type="checkbox" checked={includeEarlier} onChange={(e) => setIncludeEarlier(e.target.checked)} />
-            Earlier versions
-          </label>
-          <label className="vd-toggle">
-            <input
-              type="checkbox"
-              checked={allProjects}
-              disabled={folderHeld}
-              aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
-              onChange={(e) => setAllProjects(e.target.checked)}
-            />
-            All my projects
-          </label>
-        </div>
-        {folderHeld && (
-          <p id="vd-folder-held" className="vd-find-note">
-            A folder is one project&rsquo;s cabinet. Remove the folder filter to search all your projects.
-          </p>
+      {/* Finding a document: the search, saved views, the two scopes and the six filters, across the whole Library,
+          over the structure, the list and the record. Inside the list's column the filters took three rows and the
+          first document sat below the fold at 1440px; across the structure and the list they still took two rows
+          at 1280px, where the list's column is 308px (P-122: a person's own work is on the first screen). */}
+      <div className="vd-findbar" data-testid="vault-findbar">
+      {/* One row: the search, saved views and the two scopes. THE SEARCH
+          BOX: `q` is driven by this field and by AnA's vault.search, the
+          same state. */}
+      <div className="vd-find">
+        {treeAsDrawer && (
+          <button type="button" className="btn ghost small" aria-expanded={treeOpen} onClick={() => setTreeOpen(true)}>
+            {I.folder} Structure
+          </button>
         )}
-        {viewsOpen && projectId && (
-          <VaultSavedViews
-            projectId={projectId}
-            canWrite={canWrite}
-            current={findState}
-            searching={searching}
-            defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
-            applied={appliedView}
-            onApply={applySavedView}
-            onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
-            onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
+        <label className="vd-find-q">
+          <span className="vd-find-ic" aria-hidden="true">{I.search}</span>
+          <span className="sr-only">Search this vault</span>
+          <input
+            type="search"
+            className="c2c-input"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search titles and document text"
+            aria-label="Search this vault"
           />
+        </label>
+        {projectId && (
+          <button
+            type="button"
+            className="btn ghost small"
+            aria-expanded={viewsOpen}
+            aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
+            onClick={() => setViewsOpen((open) => !open)}
+          >
+            Saved views
+          </button>
         )}
-        <VaultFindFilterRow
-          key={filterReset}
-          value={findFilters}
-          onChange={setFindFilters}
-          onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
-          facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
-          folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
-          view={libraryMode ? null : vaultView}
+        <label className="vd-toggle">
+          <input type="checkbox" checked={includeEarlier} onChange={(e) => setIncludeEarlier(e.target.checked)} />
+          Earlier versions
+        </label>
+        <label className="vd-toggle">
+          <input
+            type="checkbox"
+            checked={allProjects}
+            disabled={folderHeld}
+            aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
+            onChange={(e) => setAllProjects(e.target.checked)}
+          />
+          All my projects
+        </label>
+      </div>
+      {folderHeld && (
+        <p id="vd-folder-held" className="vd-find-note">
+          A folder is one project&rsquo;s cabinet. Remove the folder filter to search all your projects.
+        </p>
+      )}
+      {viewsOpen && projectId && (
+        <VaultSavedViews
+          projectId={projectId}
+          canWrite={canWrite}
+          current={findState}
+          searching={searching}
+          defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
+          applied={appliedView}
+          onApply={applySavedView}
+          onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
+          onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
         />
-        </div>
+      )}
+      <VaultFindFilterRow
+        key={filterReset}
+        value={findFilters}
+        onChange={setFindFilters}
+        onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
+        facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+        folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
+        view={libraryMode ? null : vaultView}
+      />
+      </div>
+      <div className="vd-browse" data-tree={treeAsDrawer ? 'drawer' : undefined}>
         {!treeAsDrawer && (
           <aside className="vd-tree" aria-label="Document structure">
             {treeCaption}
@@ -2978,9 +2979,12 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
             </div>
           )}
           {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.binder ? (
-            /* Where the binder's folders come from: the filing's outline, by name and version. */
+            /* Where the binder's folders come from: the filing's outline, by name and version. The name is not said
+               twice: on the binder itself the line above already reads "Filing binder · <outline>". */
             <div className="vd-d-idx" data-testid="vault-binder-source">
-              Binder from the filing’s outline: {(cabinet as CabinetFolder).binder!.label} · version {(cabinet as CabinetFolder).binder!.version}
+              {folder.label.includes((cabinet as CabinetFolder).binder!.label)
+                ? <>From the filing’s outline, version {(cabinet as CabinetFolder).binder!.version}</>
+                : <>Binder from the filing’s outline: {(cabinet as CabinetFolder).binder!.label} · version {(cabinet as CabinetFolder).binder!.version}</>}
             </div>
           ) : null}
           {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.note ? (

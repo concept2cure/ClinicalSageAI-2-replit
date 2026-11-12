@@ -1,0 +1,11 @@
+# The stage pins against the code as it stood at ee340a33d7 (the two sources reverted; tests and fixtures as changed). Whole files, so each suite's own setup runs.
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > GET artifacts says what each filing's document is, and null where the reference is not a Vault document of the project 18ms
+ × server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > a filing's document carries its review stage, as the Library reads it: a record's state is its document's 10ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > a filed record says its document's review stage > stage approved reads “Review: Approved.” 57ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > a filed record says its document's review stage > stage in_review reads “Review: In review.” 32ms
+ × client/src/concept2cure/v2/__tests__/vaultTmfNotApplicable.test.tsx > a filed record says its document's review stage > stage null reads “Review: Not sent for review.” 32ms
+ × server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > names the document of each Vault reference: id, title, version and whether it is the current version 11ms
+ × server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > gives null, never a guessed title, for a reference that names no live document of the project 1ms
+ × server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > takes the file name when the document has no title, and null when it has neither 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 50 passed (58)

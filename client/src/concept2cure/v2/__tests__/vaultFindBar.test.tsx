@@ -8,6 +8,11 @@
  * column (446px), where the filters took three rows. They now sit in one bar across the tree and the list, where
  * the six filters share a row. Nothing is removed or hidden. The measurements are in
  * docs/evidence/SPINE/S6/2026-11-12-vault-library-first-screen/.
+ *
+ * At 1280x800 the list's column is 308px and the bar still took two rows there, with the binder's line and the
+ * confirm control each said twice above the first document (904px). The bar now spans the whole Library, the
+ * record included; the binder's line names the outline once; the confirm control reads "Confirm…" beside the
+ * sentence that names its folder.
  */
 import React from 'react';
 import { readFileSync } from 'node:fs';
@@ -40,8 +45,9 @@ describe('the Library’s find bar', () => {
     for (const name of ['Type', 'Filing', 'Classification', 'Evidence kind', 'Review']) {
       expect(within(filters).getByLabelText(name)).toBeTruthy();
     }
-    // Across the structure and the list: a child of the browse grid, not of the list.
-    expect(bar.parentElement?.classList.contains('vd-browse')).toBe(true);
+    // Across the whole Library: a child of the Library's grid, over the structure, the list and the record.
+    expect(bar.parentElement?.classList.contains('vd-grid')).toBe(true);
+    expect(bar.closest('.vd-browse')).toBeNull();
     expect(bar.closest('.vd-list')).toBeNull();
     // The list keeps what is the list's: where it is, and the documents.
     const list = document.querySelector('.vd-list') as HTMLElement;

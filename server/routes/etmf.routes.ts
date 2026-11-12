@@ -13,8 +13,9 @@
  *
  * Filing and removing are governed (E3): each needs the person's reason of at
  * least 8 characters (400 REASON_REQUIRED), and is recorded in the audit trail
- * by the transaction that makes the change. The inspection package is a
- * recorded download.
+ * by the transaction that makes the change. So is declaring a record not
+ * applicable to the study (P-124 item 5), which is withdrawn as a filing is
+ * removed. The inspection package is a recorded download.
  *
  * Refusals answer `{ success: false, error: <CODE>, message }`.
  */
@@ -26,6 +27,7 @@ import { requireGovernedReason } from './governed-reason';
 import { assessTmfCompleteness, getTmfReferenceModel } from '../services/etmf/tmf-completeness';
 import {
   recordTmfArtifactFiling,
+  declareTmfArtifactNotApplicable,
   listTmfArtifacts,
   removeTmfArtifactFiling,
   getTrialTmfCompleteness,
@@ -112,7 +114,11 @@ router.post('/completeness', limiter, requireRole(AUTHOR), (req: Request, res: R
 
 // ── A study's persisted TMF ───────────────────────────────────────────────────
 
-/** File (or re-file) a TMF artifact for a study. Body: { artifactCode, documentRef?, reason }. */
+/**
+ * File (or re-file) a TMF artifact for a study. Body: { artifactCode, documentRef?, reason }.
+ * With `notApplicable: true` and no documentRef, declare the record not applicable to the study instead: the reason is
+ * why it does not apply (P-124 item 5). A record with a live filing answers 409 RECORD_FILED.
+ */
 router.post('/trials/:trialId/artifacts', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
@@ -120,9 +126,16 @@ router.post('/trials/:trialId/artifacts', limiter, requireRole(AUTHOR), async (r
   if (!b.artifactCode) {
     return refuse(res, 400, 'VALIDATION', 'artifactCode is required.');
   }
+  const declaring = b.notApplicable === true;
+  if (declaring && typeof b.documentRef === 'string' && b.documentRef.trim()) {
+    return refuse(res, 400, 'NOT_APPLICABLE_WITH_DOCUMENT',
+      'A record declared not applicable names no document. Send either a document or the declaration. Nothing was changed.');
+  }
   try {
-    const { auditTrail, ...row } = await recordTmfArtifactFiling(
-      { trialId: trialIdOf(req), artifactCode: String(b.artifactCode), documentRef: b.documentRef, reason: b.reason }, ctx);
+    const input = { trialId: trialIdOf(req), artifactCode: String(b.artifactCode), reason: b.reason };
+    const { auditTrail, ...row } = declaring
+      ? await declareTmfArtifactNotApplicable(input, ctx)
+      : await recordTmfArtifactFiling({ ...input, documentRef: b.documentRef }, ctx);
     res.status(201).json({ ...row, meta: { auditTrail } });
   } catch (err) {
     fail(res, err);
@@ -293,7 +306,7 @@ router.get('/trials/:trialId/inspection-package', limiter, requireRole(AUTHOR), 
   }
 });
 
-/** Remove a filed TMF artifact. Body: { reason }. The filing stays on record as removed. */
+/** Remove a filed TMF artifact, or withdraw a declaration. Body: { reason }. The row stays on record as removed. */
 router.delete('/artifacts/:id', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
