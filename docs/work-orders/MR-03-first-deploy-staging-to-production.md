@@ -174,14 +174,20 @@ proof only; nothing was applied.
   partial one. A governed tool has no deadline. The agency-response draft's model call takes the call's signal.
 
 **Still open in this order, engineering:**
-- Stage 6 steps 2 and 4–6 (OPS-17: long submission work behind the 60 s edge). Step 2, the measurement on the
-  production image, comes first and decides whether steps 4–6 are needed. Then the staging acceptance, after Stage 5.
-  **2026-11-12, step 2 measured** (`docs/evidence/D1/2026-11-12-edge-timeouts/`). The production code and toolchain ran
-  on a 4-core host, because the image itself could not be built in the cloud session. A 200-leaf IND of 80-page
-  documents compiles in p95 59.3 s and assembles in p95 56.0 s. At 8 pages a leaf the same 200 leaves take 20 s. Time
-  is linear in leaves and pages. **Steps 4–6 are needed:** a realistic IND reaches the 60 s edge, and production's
-  API task has half these cores. Found on the way and fixed: a study leaf with an undefined STF tag made sequence
-  assemble answer 500. It now answers the recorded 422 with the sentence that says how to correct it.
+- **Stage 6, done in code 2026-11-12** (`docs/evidence/D1/2026-11-12-edge-timeouts/`).
+  - **Step 2 measured** on the production code and toolchain. The image could not be built in the cloud session, so it
+    ran on a 4-core host. A 200-leaf IND of 80-page documents compiles in p95 59.3 s and assembles in p95 56.0 s.
+  - **Steps 4–6, compile (`37e55e96a`) and the test package (`114773a67`).** Asked with `Prefer: respond-async`,
+    each answers 202 with a job once its refusals are decided. The work goes on in the request's scope, and the full
+    answer is stored on a row of `artifact_compute_jobs`. `GET …/jobs/:jobId` reads it for the session's organization
+    only. `EctdCompile.tsx` and `SequenceAssembleTestPackage.tsx` poll every 2 s and show the seconds elapsed. A sweep
+    marks a job abandoned when its task stopped.
+  - **Live, at 200 × 80 pages:** 202 in 19–36 ms, and the job complete in 49–59 s.
+  - **Package assemble is not changed.** No screen calls it: Gateway Transmittals became read-only on 2026-10-17
+    (LX-13), and transmitting happens on the sequence's Dispatch tab.
+  - **Found and fixed on the way (`3a99c6ce2`):** an undefined STF tag made the test package answer 500. It now
+    answers the recorded 422.
+  - **Left for Stage 5:** the staging acceptance, a 200-leaf compile behind CloudFront with no 504.
 - Stage 7 steps 2–3 (shared rate-limit counters in Postgres). **This now waits for the founder:** the step creates
   `public.rate_limit_counters`, and since RULE 6 (P-80) a new table needs an `approvedAdditions` entry in
   `docs/design/one-design-plan.json` under a founder decision. NEW-2 (confirm B6 for rate limits) is the same decision.
