@@ -29,6 +29,12 @@ vi.mock('../editor/authoringCurrentRead', async importOriginal => ({ ...(await i
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest,
 }));
+/* The navigation verdicts' platform-administrator answer, which the SSO tab's door reads (7dfb49b645). */
+const navAccess = vi.hoisted(() => ({ platformAdmin: false }));
+vi.mock('../navEntitlements', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../navEntitlements')>();
+  return { ...actual, useNavEntitlements: () => ({ ...actual.useNavEntitlements(), platformAdmin: navAccess.platformAdmin }) };
+});
 
 import { AdminAccess } from '../surfaces/AdminAccess';
 import { ClientCredentialVaultCard, AiPlacementPolicyCard } from '../surfaces/AdminSettings';
@@ -103,7 +109,7 @@ const reasonInput = () => document.querySelector('input[aria-label="Reason for c
 const saveButton = () => Array.from(document.querySelectorAll('button')).find((b) => /Save to organization|No unsaved changes|Saving/.test(b.textContent || '')) as HTMLButtonElement;
 
 beforeEach(() => {
-  sent = []; published = null; seen = []; adminBody = admin();
+  sent = []; published = null; seen = []; adminBody = admin(); navAccess.platformAdmin = false;
   apiRequest.mockReset(); serve();
   sessionStorage.setItem('trialsage_access_token', tokenFor(TOKEN_ORG));
   // useIndustryProfile reads with its own fetch.
@@ -172,6 +178,22 @@ describe('the SSO tab says where single sign-on is governed', () => {
     mount(); await openTab('SSO');
     expect(await screen.findByText("Couldn't load SSO and provisioning")).toBeTruthy();
     expect(screen.getByText(/set up for your organisation by Concept2Cure/)).toBeTruthy();
+  });
+
+  it('offers a platform administrator the door, which opens the Identity console', async () => {
+    navAccess.platformAdmin = true;
+    const p = mount(); await openTab('SSO');
+    fireEvent.click(await screen.findByRole('button', { name: /Open Identity console/ }));
+    expect(p.onNav).toHaveBeenCalledWith('identity-console');
+    expect(p.onAsk).not.toHaveBeenCalled();
+  });
+
+  it('still offers a platform administrator the door when the SSO read failed', async () => {
+    navAccess.platformAdmin = true;
+    adminBody = { ...admin({ sso: null }), meta: { count: 1, unavailable: ['sso'] } };
+    mount(); await openTab('SSO');
+    expect(await screen.findByText("Couldn't load SSO and provisioning")).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Open Identity console/ })).toBeTruthy();
   });
 });
 
