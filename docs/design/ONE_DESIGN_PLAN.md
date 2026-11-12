@@ -705,6 +705,16 @@ capture of another project may be assembled into, or filed for, this project's d
 the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
 "S2: the walk of the CSR example and AnA's tools, recorded".
 
+**2026-11-11, for GA** ("R1: the data catalog lists the Vault's documents, graded and usable, beside the captures",
+`docs/evidence/SPINE/S2/2026-11-11-ga-surface-walk/`). Walked at head, the catalog was Quality records and almost no
+files: documents and study data are filed in the project's Vault, and the catalog read captures only. It now also
+lists the Vault's current documents of the same projects (step 2 of §1: items get in "from Vault"), organized by Vault
+folder, graded by the same engine from the Vault's facts, with **Use in this project** (kind `vault_doc`, checked
+against the person's catalog), and AnA's catalog tool answers them. A read only: **LX-03** (every Vault version a
+data-room source) still needs the founder's decision. Also fixed: the project's "what this project uses" read failed
+for any pinned item that was not a capture. 2026-11-10: the project's data room lists files first and shows a Quality
+record as a record (`docs/evidence/SPINE/S2/2026-11-10-quality-records/`).
+
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
 **What already exists.** The six-component audit and completion contracts are in §1d. These changes extend those
