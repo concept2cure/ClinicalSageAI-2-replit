@@ -45,6 +45,15 @@ export interface Program {
    * pathway on that surface. Absent when the server did not send it.
    */
   regulatoryPath?: string;
+  /**
+   * The server's program_type ('510k' | 'mdr' | 'ivdr' | 'cer' | …), the
+   * project's recorded filing, as the server spells it. The kit pathway folds
+   * an EU MDR technical documentation project into `cer`, so the EU technical
+   * file needs the recorded filing to tell the two apart, and to know that a
+   * project files in the EU and not with FDA (shared/constants/mdx.ts
+   * euTechnicalFileRegulation). Absent when the server did not send it.
+   */
+  programType?: string;
 }
 
 /* REMOVED 2026-10-14: MDX_PROGRAMS — fourteen invented device programs

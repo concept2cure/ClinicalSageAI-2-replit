@@ -1,0 +1,36 @@
+{
+ "nav": "device-diagnostics",
+ "bad": [
+  "404 /api/ivdr/gspr-checklist/3027b362-da97-4541-abeb-25a4302113cc/matrix"
+ ],
+ "posts": [],
+ "url": "/concept2cure/device-diagnostics?program=3027b362-da97-4541-abeb-25a4302113cc",
+ "sectionTitles": [
+  "IVDR pathway · Helix spinal cage",
+  "Official eSTAR · 510(k) · nIVD eSTAR",
+  "eSTAR filing readiness",
+  "Correspondent and declaration",
+  "Assess a submission",
+  "Tracked submissions"
+ ],
+ "headerButtons": [
+  "Assemble technical file",
+  "Generate official eSTAR (PDF)",
+  "Start tracking"
+ ],
+ "saysEstar": [
+  "Official eSTAR · 510(k) · nIVD eSTAR",
+  "Generate official eSTAR (PDF)",
+  "Not set — eSTAR registration · correspondent company name",
+  "Not set — eSTAR registration · correspondent contact email",
+  "Not set — eSTAR registration · correspondent telephone",
+  "Not set — eSTAR registration · correspondent contact email",
+  "Not set — eSTAR registration · declaration company address",
+  "eSTAR filing readiness"
+ ],
+ "assembleOffered": 1,
+ "assembleTitle": null,
+ "status": null,
+ "anaAsks": [],
+ "downloaded": null
+}

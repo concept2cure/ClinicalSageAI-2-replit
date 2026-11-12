@@ -1,0 +1,40 @@
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptDeviation > derives resolved from the resolution date, not a flag 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptDeviation > coerces capa_required strictly and defaults category 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptAe > coerces safety flags strictly — only true is true 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptAe > marks FDA-reported only when a report date is present 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptAe > prefers the MedDRA term but keeps the ae_id available 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptEndpoint > keeps met as a tri-state (true / false / null) 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptEndpoint > stringifies a numeric p-value and leaves an absent one null 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > .mdx-shell .status-pill.empty is drawn in the muted ink, on the same ground 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > .mdx-shell .status-pill.na is drawn in the muted ink, on the same ground 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > the empty pill still says it is empty by its dashed border 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceTextMeetsContrast.test.ts > device text and the disabled ink (D8 slice 2c) > the eSTAR section number is drawn in the muted ink 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > resolves legacy aliases only at the compatibility boundary 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVDR/null as IVDR 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVD/null as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivdr as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivd as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > does not coerce unknown or 510(k) programs into IVDR 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA phase list is a taxonomy, not a programme > names the ten phases 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA phase list is a taxonomy, not a programme > carries no position, and nothing supplies one 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > carries no invented device name or filing date 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts > the PMA surface names nothing the program did not supply > does not claim a current phase when no program is selected 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > narrows to the resolved specialization 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > falls back to the full registry when no specialization is on file 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > falls back to the full registry when the context resolve fails 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > holds the fetch while the context is unresolved 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > groupArchetypesByDomain > splits device and ivd archetypes preserving registry order 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > groupArchetypesByDomain > returns empty groups for an empty list 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > adaptItem > maps the raw columns to the camelCase item shape 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > adaptItem > keeps absent optional fields null and defaults status to draft 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > kindLabel > gives a regulatory label for known deliverable kinds 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > kindLabel > degrades an unknown kind to a readable fallback, not a raw token 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > leaves unassessed documents out of both the sum and the count 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > is null — not 0 — when nothing was assessed 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts > averageAssessedCompletion — one definition for every surface average > rounds the mean of assessed values 0ms
+
+ Test Files  115 passed (115)
+      Tests  1134 passed (1134)
+   Start at  22:25:27
+   Duration  132.07s (transform 4.75s, setup 10.59s, import 23.72s, tests 40.10s, environment 41.21s)
+

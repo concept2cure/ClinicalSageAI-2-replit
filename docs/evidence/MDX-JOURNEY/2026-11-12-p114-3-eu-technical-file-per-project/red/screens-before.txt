@@ -1,0 +1,20 @@
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > assembles the project's own IVDR technical file: the per-project route, not an ask to AnA 54
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > is not offered the FDA eSTAR 114ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > still offers the ask to AnA, beside the button (P-122) 712ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > says a file is not yet complete, and how many of its sections are not approved 5117ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > says nothing was written when the project has no written IVDR section, and downloads nothing
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > gives the server's sentence when a filed copy is not the text its document holds 5090ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > says the browser blocked a file it was sent 5075ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > a US IVD 510(k) project, on the IVD screen > keeps the FDA eSTAR, and its "Assemble technical file" is unchanged: an ask to AnA 84m
+ × client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU MDR technical documentation project, on the CER screen > assembles the project's own MDR technical file 5010ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > a CER project, on the CER screen > is offered no technical file: its filing is the report 29ms
+AssertionError: expected [] to have a length of 1 but got +0
+AssertionError: expected <div class="section-title"></div> to be null
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Ask AnA what the technical file still needs"
+TestingLibraryElementError: Unable to find an element by: [data-testid="technical-file-status"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="technical-file-status"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="technical-file-status"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="technical-file-status"]
+TestingLibraryElementError: Unable to find role="button" and name `/^Assemble technical file/`
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
