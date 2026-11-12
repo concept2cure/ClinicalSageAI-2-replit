@@ -1,0 +1,20 @@
+V2 drop UTC conversion: CAUGHT (rc 1); restored sha256 c675a3afc3f5519256ea6f76e9ff5aaa8a1d47ecc1414546d72051f069b22191
+  × server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > places a frozen, sealed document whose section creation is chained 404ms
+  Tests  1 failed | 3 passed (4)
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  FAIL  server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > places a frozen, sealed document whose section creation is chained
+V6 always say not required: CAUGHT (rc 1); restored sha256 7f26f12a6a46a71037da7d2ad0dd4f523dae89650d0f987601258038960bf492
+  × client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a finding names its section in words 57ms
+  Tests  1 failed | 3 passed (4)
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  FAIL  client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a finding names its section in words
+V7 no untitled fallback: CAUGHT (rc 1); restored sha256 7f26f12a6a46a71037da7d2ad0dd4f523dae89650d0f987601258038960bf492
+  × client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a section with neither a number nor a title reads "Untitled section" 5024ms
+  Tests  1 failed | 3 passed (4)
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  FAIL  client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a section with neither a number nor a title reads "Untitled section"
+V1 restate the wrong rule: CAUGHT (rc 1); restored sha256 7f26f12a6a46a71037da7d2ad0dd4f523dae89650d0f987601258038960bf492
+  × client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > says checks are not required for this document, instead of "(optional)" 89ms
+  Tests  1 failed | 3 passed (4)
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  FAIL  client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > says checks are not required for this document, instead of "(optional)"

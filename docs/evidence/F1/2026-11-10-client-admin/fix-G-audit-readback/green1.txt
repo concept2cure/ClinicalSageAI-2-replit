@@ -1,0 +1,6 @@
+ ✓ server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > three signed exports, each recorded by the trigger, verify as an intact chain of three 54ms
+ ✓ server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a row written with a microsecond timestamp verifies (the case the walk hit) 10ms
+ ✓ server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a changed reason on a written row still reads BROKEN: the verifier is not lenient 24ms
+ ✓ server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a changed timestamp on a written row reads BROKEN 17ms
+ ✓ server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a changed actor on a written row reads BROKEN 13ms
+      Tests  5 passed (5)

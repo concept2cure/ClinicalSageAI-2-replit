@@ -1,0 +1,9 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > reads the flag as recorded 7ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > counts one result outside limits and says how many were not assessed 439ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > marks an unflagged result "not assessed", never OOS, in the study detail 345ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > the shelf-life evidence line says within, outside and not assessed separately 162ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > DS-2502-R2 reads as a contradicted pass in the error colour 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > a pass its result supports reads as a pass 30ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > the count line does not count a contradicted pass as a pass 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > with no server verdict, the recorded disposition is shown as recorded 33ms
+      Tests  8 passed (8)

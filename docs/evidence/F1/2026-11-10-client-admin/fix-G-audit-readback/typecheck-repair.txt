@@ -1,0 +1,35 @@
+Scoped typecheck after the repair (V-5), 2026-11-12, NODE_OPTIONS=--max-old-space-size=4096, in batches.
+== batch a: 10 files
+exit 2 ; total error lines 16
+== batch b: 6 files
+exit 2 ; total error lines 16
+== batch c: 7 files
+exit 2 ; total error lines 16
+== batch d: 4 files
+exit 137 ; total error lines 0
+== client/src/concept2cure/v2/RecordHistory.tsx: exit 2 ; error lines 6; in audit files: 0
+== client/src/concept2cure/v2/surfaces/AuditEventChain.tsx: exit 2 ; error lines 6; in audit files: 0
+== client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx: exit 2 ; error lines 20; in audit files: 0
+
+Batch a: the lane's 4 sources and 6 tests. b: snapshot-export.ts, csv.ts, audit-trail-routes.ts, mdx-admin.ts, vault-history-access.ts, submission-history-read.ts. c: project-vault.ts, audit-compliance-reports.ts, audited-export.ts, vault-seal-archive.ts, signed-report.ts, integrity-checks.ts, auth-event-audit.ts. d (4 client files together) ran out of memory at 4 GB, so each client importer was checked alone.
+
+Every error line, deduplicated (all in files outside the lane: Request augmentation and untyped modules a scoped include does not load):
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx: error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx: error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx: error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/shellProject.ts: error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/surfaceActions.ts: error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+server/db/requestDbLease.ts: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/export/renderers.ts: error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+server/export/renderers.ts: error TS7016: Could not find a declaration file for module 'pdfkit'. '/home/user/ClinicalSageAI-2-replit/node_modules/pdfkit/js/pdfk
+server/middleware/establishRequestTenantScope.ts: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record
+server/middleware/requirePlatformAdmin.ts: error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string
+server/routes/c2c/shared.ts: error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.j
+server/services/ana-ri/proposal-seal.ts: error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_mod
+server/services/authoring/authoring-permissions.ts: error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Reco
+server/services/cmc/link-to-module3.ts: error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/serve
+server/services/mfaService.ts: error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonw
+server/services/mfaService.ts: error TS7016: Could not find a declaration file for module 'qrcode'. '/home/user/ClinicalSageAI-2-replit/node_modules/qrcode/lib/
+server/services/token-revocation.ts: error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules
+server/utils/jwtVerify.ts: error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebto

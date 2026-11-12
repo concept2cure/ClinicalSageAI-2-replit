@@ -1,0 +1,10 @@
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > does not count a filed MDR past its due date, which the server says is not overdue, as due within 72h 219ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > still counts what the server marks overdue and what is due within 72h 23ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > calls no figure a running clock, and says filed MDRs are left out now that the read leaves them out 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > says only what the server's overdue means, beside an MDR filed after its date 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > shows 0, not "Not yet read", when the triage read answered with nothing 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > keeps "—" while the triage read is in flight 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > calls no figure a running clock, and says filed MDRs are left out now that the read leaves them out
+AssertionError: expected 'WorkstreamPost-market vigilance21 CFR…' not to match /not yet excluded/
+      Tests  1 failed | 5 passed (6)
