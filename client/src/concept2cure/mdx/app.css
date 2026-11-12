@@ -414,7 +414,7 @@
 .mdx-shell .tbl thead th {
   background: var(--bg-100); padding: 8px 12px;
   font-weight: 500; color: var(--text-300); text-align: left;
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: var(--fs-caption);
   border-bottom: 1px solid var(--border); white-space: nowrap;
 }
 .mdx-shell .tbl tbody td {
@@ -1449,8 +1449,8 @@
   border-bottom: 1px solid var(--border);
 }
 .mdx-shell .page-eyebrow {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  font-size: var(--fs-caption); font-weight: 500;
+  color: var(--text-300);
   margin-bottom: 4px;
 }
 .mdx-shell .page-title {
@@ -1474,12 +1474,13 @@
   transition: border-color var(--dur) var(--ease);
 }
 .mdx-shell .metric-card:hover { border-color: var(--border-strong); }
-.mdx-shell .metric-card[data-tone="err"]  { background: var(--error-muted); border-color: color-mix(in oklab, var(--error) 20%, transparent); }
-.mdx-shell .metric-card[data-tone="warn"] { background: var(--warning-muted); border-color: color-mix(in oklab, var(--warning) 20%, transparent); }
-.mdx-shell .metric-card[data-tone="ok"]   { background: var(--success-muted); border-color: color-mix(in oklab, var(--success) 20%, transparent); }
+/* D8 slice 1 (P-128): a tile is not filled by its tone (ONE_DESIGN_PLAN §2: status colour only for meaning). The
+   figure says the tone, as .reg-kpi-v does in the canonical register; "ok" needs no colour. */
+.mdx-shell .metric-card[data-tone="err"] .metric-val { color: var(--error); }
+.mdx-shell .metric-card[data-tone="warn"] .metric-val { color: var(--warning); }
 .mdx-shell .metric-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-200); margin-bottom: 8px;
+  font-size: var(--fs-caption); font-weight: 500;
+  color: var(--text-300); margin-bottom: 8px;
 }
 .mdx-shell .metric-val {
   font-family: var(--font-serif);
@@ -1532,8 +1533,8 @@
 }
 .mdx-shell .ctable-head {
   background: var(--bg-050); color: var(--text-300);
-  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; border-bottom: 1px solid var(--border);
+  font-size: var(--fs-caption); font-weight: 500;
+  border-bottom: 1px solid var(--border);
 }
 .mdx-shell .ctable-row {
   border-bottom: 1px solid var(--border);
