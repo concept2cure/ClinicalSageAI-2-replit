@@ -105,7 +105,7 @@ import {
   claimDetachSlot,
   detachedCount,
 } from '../../../services/ana/detach-slots.js';
-import { harness as h, resetHarness, streamApp, turn, type ToolUse } from './support/stream-route-harness.js';
+import { harness as h, resetHarness, streamApp, turn, APPROVED_DRAFTING_MODEL, type ToolUse } from './support/stream-route-harness.js';
 import { MAX_PAUSE_MS } from '@shared/ana/run-control-limits';
 
 const app = streamApp(router => {
@@ -150,6 +150,8 @@ afterAll(() => {
 });
 beforeEach(() => {
   resetHarness();
+  // Their subject is the approval of a governed write, so the turn is served by a model that may draft.
+  h.state.servedBy = { ...APPROVED_DRAFTING_MODEL };
   Object.assign(io, { response: null, duringCall: null, calls: 0, records: [], notices: [], budgetExceeded: false });
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);

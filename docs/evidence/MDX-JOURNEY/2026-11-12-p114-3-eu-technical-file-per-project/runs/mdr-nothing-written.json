@@ -1,0 +1,35 @@
+{
+ "nav": "device-cer",
+ "bad": [
+  "422 /api/submissions/programs/871d7801-229b-4296-9e5b-71263302a8df/technical-file/export"
+ ],
+ "posts": [
+  {
+   "url": "/api/submissions/programs/871d7801-229b-4296-9e5b-71263302a8df/technical-file/export",
+   "sent": {
+    "regulation": "mdr"
+   },
+   "status": 422,
+   "answer": {
+    "error": {
+     "code": "NO_AUTHORED_CONTENT",
+     "message": "No authored MDR technical-documentation section exists for project 871d7801-229b-4296-9e5b-71263302a8df in this organization — there is nothing to package. Author and save at least one Annex II/III section first."
+    }
+   }
+  }
+ ],
+ "url": "/concept2cure/device-cer?program=871d7801-229b-4296-9e5b-71263302a8df",
+ "sectionTitles": [
+  "Clinical Evaluation Report · Helix spinal cage"
+ ],
+ "headerButtons": [
+  "Generate draft",
+  "Assemble technical file"
+ ],
+ "saysEstar": [],
+ "assembleOffered": 1,
+ "assembleTitle": "Assemble a ZIP of this project’s written MDR Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.",
+ "status": "Nothing to assemble yet. No section of this project’s MDR technical documentation has been written and saved.",
+ "anaAsks": [],
+ "downloaded": null
+}

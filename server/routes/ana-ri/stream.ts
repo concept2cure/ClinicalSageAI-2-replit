@@ -68,7 +68,7 @@ import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { submissionContextBlockFor } from '../../services/ana/submission-context-block.js';
 import { getToolHandler, servedModelOf, ownerPrivateToolRefusal, requireOwnerPrivateToolLane, type ToolContext } from '../../services/ana/AnaToolExecutor.js';
 import { commandBlockProposer } from '../../services/ana/command-attribution.js';
-import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
+import { requestsGovernedDraft, governedWriteModelRefusal, MODEL_MAY_NOT_DRAFT } from '../../services/ana/governed-write-tools.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
   directiveFromToolResult,
@@ -2867,6 +2867,12 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             const readOnlyRefusal = readOnlyToolRefusal(toolUse.name, toolUse.input, readOnly);
             if (readOnlyRefusal) {
               out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true, readOnly: true });
+              continue;
+            }
+            // The model gate answers before anyone is asked: a yes cannot make this turn's model an approved one.
+            const modelRefusal = governedWriteModelRefusal(toolUse.name, lastServedModel);
+            if (modelRefusal) {
+              out.set(toolUse.id, { ok: false, why: MODEL_MAY_NOT_DRAFT, result: modelRefusal, heldBack: true });
               continue;
             }
             let verdict = classifyToolCall(toolUse);

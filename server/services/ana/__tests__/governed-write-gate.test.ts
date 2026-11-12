@@ -228,8 +228,28 @@ describe('drafting turns get an approved model up front', () => {
     'create the device description section',
   ])('detects a governed draft request: %s', (m) => expect(requestsGovernedDraft(m)).toBe(true));
 
+  // 2026-11-12: the names people actually use for these documents. Each of these went to the Balanced model, whose
+  // draft the gate then refused (docs/evidence/SPINE/S4/2026-11-09-claude-path-walk/FINDINGS.md, open item 1).
+  it.each([
+    'Draft the CSR for study 301',
+    'write the IB',
+    "Draft the investigator's brochure",
+    'Prepare the SAP',
+    'Write a protocol synopsis',
+    'draft the QOS',
+    'Prepare the DSUR for this year',
+    'Write the CER for this device',
+    'Revise the safety narrative',
+    'Insert this paragraph into section 3',
+  ])('detects a draft request by the document\'s everyday name: %s', (m) => expect(requestsGovernedDraft(m)).toBe(true));
+
   it.each(['take me to CMC', 'what does section 2.5 require?', 'summarise this thread', 'is the submission ready?'])(
     'does not flag an ordinary turn: %s',
+    (m) => expect(requestsGovernedDraft(m)).toBe(false),
+  );
+
+  it.each(['what is a CSR?', 'when is the DSUR due?', 'who signs the IB?', 'update me on the submission', 'any update on the report?'])(
+    'does not flag a question that only names a document: %s',
     (m) => expect(requestsGovernedDraft(m)).toBe(false),
   );
 

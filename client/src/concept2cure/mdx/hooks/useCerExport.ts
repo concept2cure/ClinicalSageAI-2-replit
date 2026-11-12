@@ -23,10 +23,19 @@
  * Mirrors the raw-fetch mutator shape of useEstarExport (deliberately not
  * imported — that hook belongs to the 510(k) surface), with the same auth
  * headers as useFetchJson (Bearer + x-organization-id).
+ *
+ * 2026-11-12 (P-114 item 3): also the EU technical file, the other governed
+ * export of an EU device project, consuming server/routes/submissions.ts:
+ *
+ *   useTechnicalFileExport(programId).assemble('mdr' | 'ivdr')
+ *     POST /api/submissions/programs/:programId/technical-file/export
+ *
+ * It answers through the same governed-export consequence as the CER export,
+ * so the one reader below reads both.
  */
 
 import { useCallback, useState } from 'react';
-import { serverMessage } from '@/lib/queryClient';
+import { errorCodeOf, serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders } from './useFetchJson';
 import { downloadBase64 } from '../../v2/download';
 import type { ExportReviewGovernance } from '../../v2/ExportReviewConfirmation';
@@ -80,7 +89,13 @@ function triggerDownload(ref: DownloadRef): boolean {
   }
 }
 
-async function postExport(url: string, body: unknown): Promise<CerExportOutcome> {
+/** The outcome, and the answer's own body for a caller that reads more of it. */
+interface PostedExport {
+  outcome: CerExportOutcome;
+  json: Record<string, unknown> | null;
+}
+
+async function postExport(url: string, body: unknown): Promise<PostedExport> {
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -97,31 +112,30 @@ async function postExport(url: string, body: unknown): Promise<CerExportOutcome>
       // refuses an enum-shaped `error` token and infrastructure text. The bare
       // `HTTP <status>` fallback is gone: on its own it was not a sentence.
       const message = serverMessage(json) ?? `the server gave no reason (HTTP ${res.status})`;
-      return { ok: false, delivered: false, governed: false, audited: false, filename: null, error: message };
+      return { outcome: { ok: false, delivered: false, governed: false, audited: false, filename: null, error: message }, json };
     }
 
     const ref = json?.downloadable_output_ref as DownloadRef | undefined;
     const delivered = ref?.data ? triggerDownload(ref) : false;
 
     return {
-      ok: true,
-      delivered,
-      governed: json?.governed === true,
-      audited: json?.audited === true,
-      filename: ref?.filename ?? null,
-      error: null,
+      outcome: {
+        ok: true,
+        delivered,
+        governed: json?.governed === true,
+        audited: json?.audited === true,
+        filename: ref?.filename ?? null,
+        error: null,
+      },
+      json,
     };
   } catch {
     // A throw here is the fetch itself failing (offline, DNS, abort). Its
     // native message is "Failed to fetch" / "Load failed", so the hook's own
     // wording is the only thing worth showing.
     return {
-      ok: false,
-      delivered: false,
-      governed: false,
-      audited: false,
-      filename: null,
-      error: 'Export request failed',
+      outcome: { ok: false, delivered: false, governed: false, audited: false, filename: null, error: 'Export request failed' },
+      json: null,
     };
   }
 }
@@ -146,7 +160,7 @@ export function useCerExport(): UseCerExportResult {
     async (program: CerProgramRef, format: CerExportFormat, governance: CerExportGovernance) => {
       setBusy(true);
       try {
-        const result = await postExport(`/api/cerv2/export/${format}`, {
+        const { outcome: result } = await postExport(`/api/cerv2/export/${format}`, {
           docType: 'cerv2_cer',
           meta: {
             id: program.code || program.id,
@@ -166,4 +180,109 @@ export function useCerExport(): UseCerExportResult {
   );
 
   return { busy, outcome, exportCer };
+}
+
+/* ── The EU technical file (MDR / IVDR Annex II and III) ──────────────────────
+   P-114 item 3 (2026-11-09, decided under the founder's delegation; MDX journey
+   M3): EU technical documentation is assembled per project, not per eCTD
+   sequence. The route packages the project's own governed `mdr` or `ivdr`
+   document. It had no caller until 2026-11-12. */
+
+export type TechnicalFileRegulation = 'mdr' | 'ivdr';
+
+export interface TechnicalFileOutcome extends CerExportOutcome {
+  /**
+   * The assembler's verdict on the package it built: every required Annex II
+   * and III section is in the ZIP, and nothing written was left out. Null when
+   * no package was built or the server did not say; never read as true.
+   */
+  ready: boolean | null;
+  /** Sections in the ZIP whose text is still a draft or in review. Null when not reported. */
+  unfinalized: number | null;
+  /** The server's refusal code (`NO_AUTHORED_CONTENT`, `FILING_DIVERGED`, …), when it refused with one. */
+  code: string | null;
+}
+
+export const technicalFileExportUrl = (programId: string): string =>
+  `/api/submissions/programs/${encodeURIComponent(programId)}/technical-file/export`;
+
+/**
+ * The one line an EU screen shows for its technical file (pure, so the wording
+ * is pinned by a test). A file the assembler did not call ready is said to be
+ * incomplete: a Notified Body's completeness check holds a file with a required
+ * section missing, so a download alone must not read as a finished file.
+ */
+export function technicalFileStatusLine(
+  busy: boolean,
+  outcome: TechnicalFileOutcome | null,
+  regulation: TechnicalFileRegulation,
+): string | null {
+  if (busy) return 'Assembling the technical file from this project’s written sections…';
+  if (!outcome) return null;
+  if (!outcome.ok) {
+    if (outcome.code === 'NO_AUTHORED_CONTENT') {
+      return `Nothing to assemble yet. No section of this project’s ${regulation.toUpperCase()} technical documentation has been written and saved.`;
+    }
+    // The filing-agreement refusal is already a whole sentence that begins with the outcome.
+    if (outcome.code === 'FILING_DIVERGED' && outcome.error) return outcome.error;
+    return `The technical file was not assembled — ${outcome.error ?? 'the server gave no reason'}`;
+  }
+  const verb = outcome.delivered
+    ? `Downloaded ${outcome.filename ?? 'the technical file'}`
+    : outcome.filename
+      ? `${outcome.filename} was produced but the browser blocked the download`
+      : 'The technical file was assembled, but the server returned no file to download';
+  const completeness = outcome.ready === true
+    ? ''
+    : outcome.ready === false
+      ? ' · not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section and whether it is present'
+      : ' · the server did not say whether the file is complete';
+  const n = outcome.unfinalized;
+  const drafts = n === null
+    ? ' · the server did not say whether its sections are approved'
+    : n > 0 ? ` · ${n} of its sections ${n === 1 ? 'is' : 'are'} still in draft or review` : '';
+  const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
+  return `${verb}${completeness}${drafts}${registry}`;
+}
+
+export interface UseTechnicalFileExportResult {
+  /** True while this project's assembly is in flight. */
+  busy: boolean;
+  /** The most recent outcome for the project on screen; another project's is never shown. */
+  outcome: TechnicalFileOutcome | null;
+  assemble: (regulation: TechnicalFileRegulation) => Promise<TechnicalFileOutcome | null>;
+}
+
+/**
+ * POST /api/submissions/programs/:programId/technical-file/export for the
+ * project on screen. The outcome is kept with the project it was asked for, so
+ * a "Downloaded …" line never sits under another project's header.
+ */
+export function useTechnicalFileExport(programId: string | null): UseTechnicalFileExportResult {
+  const [busyFor, setBusyFor] = useState<string | null>(null);
+  const [answered, setAnswered] = useState<{ programId: string; outcome: TechnicalFileOutcome } | null>(null);
+
+  const assemble = useCallback(async (regulation: TechnicalFileRegulation) => {
+    if (!programId) return null;
+    setBusyFor(programId);
+    try {
+      const { outcome: posted, json } = await postExport(technicalFileExportUrl(programId), { regulation });
+      const outcome: TechnicalFileOutcome = {
+        ...posted,
+        ready: posted.ok && typeof json?.ready === 'boolean' ? json.ready : null,
+        unfinalized: posted.ok && typeof json?.unfinalized === 'number' ? json.unfinalized : null,
+        code: posted.ok ? null : errorCodeOf(json) ?? null,
+      };
+      setAnswered({ programId, outcome });
+      return outcome;
+    } finally {
+      setBusyFor((current) => (current === programId ? null : current));
+    }
+  }, [programId]);
+
+  return {
+    busy: busyFor !== null && busyFor === programId,
+    outcome: answered && answered.programId === programId ? answered.outcome : null,
+    assemble,
+  };
 }
