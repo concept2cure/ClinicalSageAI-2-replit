@@ -406,15 +406,25 @@ function isAnaRiNonModelRequest(path: string, method?: string): boolean {
  * editor, sent it for review and opened Reassign within the minute, and the
  * reassign sheet's candidates read was refused 429, so no one could be chosen.
  *
+ * 2026-11-11 (GA click-through, measured at a person's pace in the running
+ * app): a selected Vault document's catalog record (GET …/documents/:id/catalog)
+ * and the controlled-document register with its review-due list
+ * (GET /api/mdx/qms/documents, …/review-due), which the project page and Quality
+ * read as they open. One project page, five Vault documents and one Quality
+ * visit spent the bucket, and the Download that followed was refused 429. The
+ * catalog record's confirm and correct, a new controlled document and a
+ * controlled document itself (/documents/:id) stay in `documents`.
+ *
  * Every download, section text read, compare and write stays in `documents`:
  * those move content or change it.
  */
 const DOCUMENT_METADATA_READS: readonly RegExp[] = [
-  /(^|\/)c2c\/project-vault\/[^/]+\/documents\/[^/]+\/(versions|history|annotations|relationships)\/?$/,
+  /(^|\/)c2c\/project-vault\/[^/]+\/documents\/[^/]+\/(versions|history|annotations|relationships|catalog)\/?$/,
   /(^|\/)c2c\/documents\/?$/,
   /(^|\/)c2c\/documents\/[^/]+\/outline\/?$/,
   /(^|\/)authoring\/documents\/[^/]+\/(reviews|comments|tracked-change-decisions|review-route|route-candidates)\/?$/,
   /(^|\/)mdx\/qms\/documents\/[^/]+\/(review-route|route-candidates)\/?$/,
+  /(^|\/)mdx\/qms\/documents(\/review-due)?\/?$/,
   /(^|\/)data-origins\/document\/?$/,
 ];
 

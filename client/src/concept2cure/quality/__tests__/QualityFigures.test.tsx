@@ -8,7 +8,7 @@
  */
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 
 type Read = { data: unknown; loading: boolean; error: string | null; failure: null; refresh: () => void };
 const H = vi.hoisted(() => ({ reads: {} as Record<string, Read>, refreshed: [] as string[] }));
@@ -18,6 +18,7 @@ vi.mock('../../mdx/hooks/useFetchJson', () => ({
 }));
 
 import { QualityFigures, QUALITY_FIGURE_READS } from '../QualityFigures';
+import { qualityWritten } from '../qmsWrites';
 
 const ok = (data: unknown, url: string): Read => ({ data, loading: false, error: null, failure: null, refresh: () => H.refreshed.push(url) });
 const failed = (url: string): Read => ({ data: null, loading: false, error: 'The server did not answer.', failure: null, refresh: () => H.refreshed.push(url) });
@@ -90,6 +91,16 @@ describe("Quality's figures", () => {
     expect(screen.getByTestId('quality-figures-unread').textContent).toBe('Not read: change control; CAPA, complaints and MDR reports.');
     fireEvent.click(screen.getByRole('button', { name: 'Read the figures again' }));
     expect(H.refreshed.sort()).toEqual([QUALITY_FIGURE_READS.changes, QUALITY_FIGURE_READS.triage].sort());
+  });
+
+  /* Walked 2026-11-11 (w39): after a complaint was recorded the line still said "0 open complaints" beside a register
+     saying "Open: 1", until the page was reloaded. The line is the server's numbers, so a confirmed write re-reads them. */
+  it("re-reads the server's figures when a Quality write is confirmed", () => {
+    serve();
+    render(<QualityFigures organisationWide={false} />);
+    expect(H.refreshed).toEqual([]);
+    act(() => qualityWritten());
+    expect(H.refreshed.sort()).toEqual(Object.values(QUALITY_FIGURE_READS).sort());
   });
 
   it('leaves out a readiness block the server could not read', () => {

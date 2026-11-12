@@ -116,7 +116,7 @@ async function stateStrategy(page, strategy, before) {
     await drawer.getByLabel(/^Reason/).fill('Agreed at the program kickoff');
     await shot(page, 'desk-02-strategy-form.png');
     const put = page.waitForResponse((r) => r.url().includes('/objectives') && r.request().method() === 'PUT');
-    await drawer.getByRole('button', { name: 'Record objective' }).click();
+    await drawer.getByRole('button', { name: 'Record strategy' }).click();
     const res = await put;
     expect(res.status() < 300, `the strategy was recorded (${res.status()})`);
     await strategy.locator('.pj-strategy-t').waitFor({ timeout: 15000 });

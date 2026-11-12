@@ -80,6 +80,10 @@ export interface CtTurn {
   interjections?: string[];
   /** The CRL/RTF pre-mortem artifact, when the turn assembled one (CrlPremortemPanel). */
   crlPremortem?: import('../../components/ana/CrlPremortemPanel').CrlPremortemArtifact;
+  /** The war game this turn ran: findings, and how many checks could be assessed (WarGameReportPanel). */
+  warGameReport?: import('@shared/types/intelligence-questions').WarGameReport;
+  /** The interview this turn finished: summary, issues and next actions (InterviewCompletePanel). */
+  interviewComplete?: import('@shared/types/intelligence-questions').IntelligenceFlowCompleteEvent;
   /** What was checked about the answer (AnaGrounding): the engine's check and AnA's labels. */
   evidence?: AnaGroundingEvidence;
   doc?: any;
