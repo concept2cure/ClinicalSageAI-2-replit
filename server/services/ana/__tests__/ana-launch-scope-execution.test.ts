@@ -18,10 +18,13 @@
  *
  * The write probe was create_ha_interaction until Communication Center joined
  * the launch catalog on 2026-10-16 (327bc9fb6); that tool serves it, so it is in
- * scope and moved to inScope in the inventory (0bce953b4). The write probe is
- * now create_regulatory_commitment (agency-meetings + lifecycle-mgmt, both
- * hidden), also class `confirm` and also a governed change that asks for a
- * stated reason, so the refusal is still seen to come first.
+ * scope and moved to inScope in the inventory (0bce953b4). It was then
+ * create_regulatory_commitment, until 2026-11-11: commitments are Communication's
+ * records, so that tool is in scope too, and is here as the proof that a
+ * commitment can be recorded in production. The write probe is now
+ * create_lifecycle_obligation (lifecycle-mgmt, hidden: renewals have no launch
+ * screen and no deployed table), also class `confirm` and also a governed change
+ * that asks for a stated reason, so the refusal is still seen to come first.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -35,11 +38,13 @@ const run = async (tool: string, ctx: Record<string, unknown> = CTX) =>
 /* Real tool names, their handlers replaced by probes so "it did not run" can be seen.
    answer_intelligence_question: IN SCOPE since P-28 (cmc), class `self` — the fast path's tool.
    review_ha_interaction:        hidden (agency-meetings), class `read`.
-   create_regulatory_commitment: hidden (agency-meetings, lifecycle-mgmt), class `confirm`.
+   create_lifecycle_obligation:  hidden (lifecycle-mgmt), class `confirm`.
+   create_regulatory_commitment: IN SCOPE since 2026-11-11 (Communication's commitments), class `confirm`.
    search_literature:            in scope (AnA's own knowledge). */
 const probes = {
   answer_intelligence_question: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
   review_ha_interaction: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
+  create_lifecycle_obligation: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
   create_regulatory_commitment: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
   search_literature: vi.fn(async () => JSON.stringify({ ok: 'ran' })),
 };
@@ -58,7 +63,11 @@ const production = () => {
 describe('a hidden-app tool reached by name', () => {
   it('the probes stand for hidden tools and two in-scope tools', () => {
     expect(HIDDEN_APP_TOOLS.has('review_ha_interaction')).toBe(true);
-    expect(HIDDEN_APP_TOOLS.has('create_regulatory_commitment')).toBe(true);
+    expect(HIDDEN_APP_TOOLS.has('create_lifecycle_obligation')).toBe(true);
+    // Commitments are Communication's records: the three commitment tools are not hidden.
+    for (const tool of ['create_regulatory_commitment', 'fulfill_regulatory_commitment', 'review_commitment_portfolio']) {
+      expect(HIDDEN_APP_TOOLS.has(tool), tool).toBe(false);
+    }
     // Communication Center joined the catalog (327bc9fb6): no longer a hidden probe.
     expect(HIDDEN_APP_TOOLS.has('create_ha_interaction')).toBe(false);
     expect(HIDDEN_APP_TOOLS.has('search_literature')).toBe(false);
@@ -68,7 +77,7 @@ describe('a hidden-app tool reached by name', () => {
 
   it('in production, is refused and its handler never runs', async () => {
     production();
-    for (const tool of ['review_ha_interaction', 'create_regulatory_commitment']) {
+    for (const tool of ['review_ha_interaction', 'create_lifecycle_obligation']) {
       const out = await run(tool);
       expect(out.error, tool).toBe('LAUNCH_SCOPE');
       expect(out.tool).toBe(tool);
@@ -86,10 +95,16 @@ describe('a hidden-app tool reached by name', () => {
 
   it('in production, a hidden write is refused before a person is asked to confirm it', async () => {
     production();
-    const out = await run('create_regulatory_commitment');
+    const out = await run('create_lifecycle_obligation');
     expect(out.error).toBe('LAUNCH_SCOPE');
-    expect(out.tool).toBe('create_regulatory_commitment');
-    expect(probes.create_regulatory_commitment).not.toHaveBeenCalled();
+    expect(out.tool).toBe('create_lifecycle_obligation');
+    expect(probes.create_lifecycle_obligation).not.toHaveBeenCalled();
+  });
+
+  it('in production, recording an agency commitment is not refused by launch scope: Communication is in the catalog', async () => {
+    production();
+    const out = await run('create_regulatory_commitment');
+    expect(out.error).not.toBe('LAUNCH_SCOPE');
   });
 
   it('in production, an in-scope tool still runs', async () => {
