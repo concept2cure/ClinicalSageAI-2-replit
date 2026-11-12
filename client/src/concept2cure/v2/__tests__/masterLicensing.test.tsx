@@ -654,5 +654,20 @@ describe('the console tab strip stays on the screen', () => {
     // and the page scrolled sideways to 509-823px at 390px (2026-11-12).
     const box = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-scroll'));
     expect(box.some((r) => decl(r.body, 'position') === 'relative'), 'hidden labels widen the page').toBe(true);
+    // A prospect's multi-line request keeps its lines.
+    const enterprise = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-table-enterprise .ml-sub'));
+    expect(enterprise.some((r) => decl(r.body, 'white-space') === 'pre-line'), 'the request reads as one run-on line').toBe(true);
+  });
+
+  // With one class the request tables' templates tied the base `.ml-table` and
+  // lost to the later stylesheet: five cells on a three-column grid (2026-11-12).
+  it("the access-request tables' templates outrank the base table template", async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const { rules } = await import('./_cssRules');
+    const css = readFileSync(resolve(__dirname, '../styles/licensing-access-requests.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const selectors = rules(css).filter((r) => /--ml-cols/.test(r.body)).flatMap((r) => r.selector.split(',').map((s) => s.trim()));
+    expect(selectors).toEqual(expect.arrayContaining(['.c2c-v2 .ml-table.ml-table-requests', '.c2c-v2 .ml-table.ml-table-requests-all']));
+    expect(selectors.filter((s) => /^\.c2c-v2 \.ml-table-requests(-all)?$/.test(s))).toEqual([]);
   });
 });

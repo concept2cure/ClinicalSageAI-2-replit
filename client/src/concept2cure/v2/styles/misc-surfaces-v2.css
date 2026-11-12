@@ -756,6 +756,10 @@
 
 .c2c-v2 .ml-table-trials{ --ml-cols: minmax(150px,1fr) minmax(150px,1fr) 140px minmax(230px,1.6fr) 160px; min-width:900px; }
 .c2c-v2 .ml-table-enterprise{ --ml-cols: 150px minmax(170px,1fr) minmax(200px,1.2fr) minmax(230px,1.8fr) 100px; min-width:900px; }
+/* A prospect's request is several lines ("Organization type: …", "Pricing
+   model: …"); collapsed into one, the organisation type read as "Biotech
+   Pricing model" (2026-11-12). No other cell in this table holds a newline. */
+.c2c-v2 .ml-table-enterprise .ml-sub{ white-space:pre-line; }
 
 .c2c-v2 .ml-thead,
 .c2c-v2 .ml-row{ display:grid; grid-template-columns:var(--ml-cols); gap:14px; align-items:start; }
