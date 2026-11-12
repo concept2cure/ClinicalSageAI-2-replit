@@ -14,6 +14,7 @@ import * as React from 'react';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { formatDate } from './data';
 import { useTrainingExpiring, type TrainingExpiryRow, type TrainingLapseRow, type TrainingOutstandingRow } from './hooks';
+import { useOnQualityWrite } from './registerContext';
 
 /** The window the Quality register shows training lapsing within. */
 export const TRAINING_EXPIRY_DAYS = 60;
@@ -57,6 +58,9 @@ function nothingLapsing(assignment: ExpiryAssignment | undefined, own: boolean):
 
 export function TrainingExpiry({ assignment }: { assignment?: ExpiryAssignment }) {
   const st = useTrainingExpiring(TRAINING_EXPIRY_DAYS);
+  /* The list is the server's assessment, so a confirmed write re-reads it: a person acknowledged a document and was
+     still listed as due on it beside a coverage saying "1 of 1 acknowledged" (walked 2026-11-12, w41). */
+  useOnQualityWrite(st.refresh);
   const own = st.scope === 'own';
   /* An all-clear only over what was assessed (Quality review, 2026-11-10): not over documents whose text cannot be read,
      nor past the document cap; and a member who sees only their own rows is told about their own. */

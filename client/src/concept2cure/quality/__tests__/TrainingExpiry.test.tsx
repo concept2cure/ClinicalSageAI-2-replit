@@ -5,17 +5,18 @@
  */
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, act } from '@testing-library/react';
 
-const H = vi.hoisted(() => ({ reads: {} as Record<string, { data: unknown; loading: boolean; error: string | null }> }));
+const H = vi.hoisted(() => ({ reads: {} as Record<string, { data: unknown; loading: boolean; error: string | null }>, refreshed: [] as string[] }));
 vi.mock('../../mdx/hooks/useFetchJson', () => ({
-  useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: vi.fn() }),
+  useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: () => { H.refreshed.push(url); } }),
 }));
 
 import { TrainingExpiry } from '../TrainingExpiry';
+import { qualityWritten } from '../qmsWrites';
 
 const PATH = '/api/mdx/qms/training/expiring?within=60';
-afterEach(() => { cleanup(); H.reads = {}; });
+afterEach(() => { cleanup(); H.reads = {}; H.refreshed = []; });
 
 describe('Training lapsing soon', () => {
   it('names the person, the document and when their training lapses', () => {
@@ -31,6 +32,17 @@ describe('Training lapsing soon', () => {
     expect(screen.getByText(/SOP-001 Controlled procedure · v1\.0 · lapses .* \(in 10 days\)/)).toBeTruthy();
     expect(screen.getByText('Member 2')).toBeTruthy();
     expect(screen.getByText(/SOP-001 Controlled procedure · v1\.0 · lapsed /)).toBeTruthy();
+  });
+
+  /* Walked 2026-11-12 (w41): a person read and acknowledged a document, the coverage beside this list said "1 of 1
+     acknowledged", and this list still said their training on it was due, until the page was reloaded. The list is the
+     server's assessment, so a confirmed Quality write (an acknowledgement, an assignment, an approval) re-reads it. */
+  it('re-reads the list when a Quality write is confirmed', () => {
+    H.reads[PATH] = { data: { data: [] }, loading: false, error: null };
+    render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
+    expect(H.refreshed).toEqual([]);
+    act(() => qualityWritten());
+    expect(H.refreshed).toEqual([PATH]);
   });
 
   it('says a failed read failed, and never that no one lapses', () => {
