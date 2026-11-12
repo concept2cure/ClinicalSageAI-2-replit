@@ -1,0 +1,34 @@
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > is a tab of Quality beside CAPA, and AnA can open it 9ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > lists the organisation's complaints and MDR reports, with the server's reportability and reporting clock 307ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > narrowed to the project, reads its complaints and reports only 11ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > says a failed read is a failure, never an empty register 10ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records a complaint in the open project, every event fact stated, through the audited route 333ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > refuses to record a complaint with no project open, and sends nothing 107ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > moves a complaint only along the server lifecycle, with its reason 100ms
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records the MDR decision a complaint needs, in the complaint's project, linked to it 5114ms
+   → expected "vi.fn()" to be called with arguments: [ '/api/capa-mdr/mdr-events' ]
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > opens a complaint's vigilance timeline under its row 76ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > tells AnA both registers as read, and that a failed read is a failure 31ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > reads only the server routes that compute them 2ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says the quality system as one line of the server's numbers, not tiles 40ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > leaves out a figure whose server read failed, and says which, with a retry; never a zero in its place 146ms
+ × client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > re-reads the server's figures when a Quality write is confirmed 8ms
+   → qualityWritten is not a function
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > leaves out a readiness block the server could not read 5ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says it is reading while nothing has answered, and states no number 3ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says a capped queue is a floor, not a count 3ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says the figures are the organisation's while the registers are narrowed to a project 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/api/capa-mdr/mdr-events' ]
+ ❯ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx:175:43
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+TypeError: qualityWritten is not a function
+ ❯ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx:102:15
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx:102:5
+ Test Files  2 failed (2)
+      Tests  2 failed | 16 passed (18)

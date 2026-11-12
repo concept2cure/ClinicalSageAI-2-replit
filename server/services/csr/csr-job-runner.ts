@@ -28,6 +28,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
 import { verifySavedCsrSectionIntegrity } from './csr-output-integrity';
+import { NARRATIVE_COMPOSER } from './csr-narrative-job';
 
 import {
   csrBuildJobs,
@@ -189,9 +190,20 @@ async function verifySavedTargetEvidence(
 ): Promise<void> {
   for (const row of rows) {
     if (!targets.has(row.sectionNumber)) continue;
+    // The narrative run writes its cross-reference heading (§12.3.2) from the ADaM rows, not from this heading's
+    // engine tables, and records its own composer and the study data it read. It is that run's row, checked on
+    // that path; read here as a builder result it has no evidence lineage, and a build on which the narratives
+    // had been built could never be resumed or finished (2026-11-10).
+    if (composedByNarrativeRun(row.lineage, source.runId)) continue;
     const evidence = await loadSectionEvidence(source, row.sectionNumber, job);
     if (evidence) assertSavedCsrJobEvidence(row.lineage, evidence);
   }
+}
+
+/** True for a row the narrative run composed over this build's own study data; a row that only names the composer is not. */
+function composedByNarrativeRun(lineage: unknown, runId: string): boolean {
+  const row = lineage && typeof lineage === 'object' ? lineage as { composer?: unknown; runId?: unknown } : null;
+  return row?.composer === NARRATIVE_COMPOSER && typeof row.runId === 'string' && row.runId.toLowerCase() === runId.toLowerCase();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -237,7 +249,100 @@ const FAILURE_BY_REASON: Readonly<Record<string, string>> = {
   study_identity_mismatch: 'The study recorded on this build no longer matches its study data, so nothing more was drafted.',
   invalid_section_selection: 'The build’s section selection does not name ICH E3 report sections, so nothing was drafted.',
 };
+/**
+ * What a running build is writing now: the heading, how many headings are written, and the prose so far. The build
+ * panel shows it (GET /api/csr/jobs, `writing`) so a person can watch a report being drafted. Until 2026-11-10 a
+ * drafting build showed one line with a percentage.
+ *
+ * In memory, in the process that runs the build, and gone when the build ends: it is a view of work in progress, not
+ * a record. The text is not yet checked against the study's tables and is never saved from here; the saved section
+ * is the complete reply, after its checks. A second server process answers with no live text, and the panel then
+ * shows the progress alone.
+ */
+export interface CsrLiveBuild { number: string; title: string; text: string; written: number; total: number }
+const LIVE_TEXT_LIMIT = 40_000;
+const liveBuilds = new Map<number, CsrLiveBuild>();
+
+/** The prose of a draft in progress: a results heading ends with a fenced claims block, which is not prose. */
+const liveProse = (text: string): string => text.split('```')[0].replace(/`+$/, '').trimEnd();
+
+export function csrLiveBuild(jobId: number): CsrLiveBuild | null {
+  const live = liveBuilds.get(jobId);
+  return live ? { ...live, text: liveProse(live.text) } : null;
+}
+
+/** Begin showing `section` as the heading build `jobId` is writing; returns the sink its drafting call writes to. */
+function showWriting(jobId: number, section: { number: string; title: string }, written: number, total: number) {
+  const live: CsrLiveBuild = { number: section.number, title: section.title, text: '', written, total };
+  liveBuilds.set(jobId, live);
+  return {
+    start: () => { live.text = ''; },
+    text: (chunk: string) => { if (live.text.length < LIVE_TEXT_LIMIT) live.text += chunk; },
+  };
+}
+
+/**
+ * A build the provider or the gateway would not draft for (csr-builder.ts CsrDraftingUnavailableError): what stopped
+ * it and who can change that. Fixed sentences by typed code; the provider's own text is never stored or shown.
+ */
+const DRAFTING_STOPPED: Readonly<Record<string, string>> = {
+  CSR_DRAFTING_KEY_REFUSED: 'The AI provider refused this deployment’s API key, so nothing more was drafted. An administrator must set a valid key.',
+  CSR_DRAFTING_ACCOUNT_REFUSED: 'The AI provider would not serve this deployment’s account: it has no credit left, or no access to the drafting model. An administrator must add credit or model access.',
+  CSR_DRAFTING_RATE_LIMITED: 'Drafting was refused by a rate limit for several minutes running, so the build stopped rather than save headings with no text.',
+  CSR_DRAFTING_PROVIDER_UNAVAILABLE: 'The AI provider did not answer, or no AI provider is configured for drafting, so nothing more was drafted.',
+  CSR_DRAFTING_MODEL_NOT_QUALIFIED: 'No model approved for regulatory drafting is configured on this deployment, so nothing was sent to a model that is not.',
+  CSR_DRAFTING_PLACEMENT_REFUSED: 'This organization’s AI placement policy excludes every model that could draft this report, so nothing was sent.',
+};
 const SECTION_CODE = /^\d+(?:\.\d+)*$/;
+
+/**
+ * Why a model's draft of a heading was not saved, in words: the builder's typed refusal reasons (csr-builder.ts
+ * acceptSectionReply, unsupplied-statistics.ts). A heading with no template then has no text at all, and until
+ * 2026-11-10 its build read "has no saved text" whether the provider never answered or a figure check refused the
+ * draft. A reason not listed here is not stated.
+ */
+const DRAFT_REFUSED: Readonly<Record<string, string>> = {
+  unreconciled_figures: 'stated a figure that is not a cell of its study tables',
+  unsupplied_statistics: 'stated a figure the study information does not carry',
+  synopsis_observed_figures_unclaimed: 'reported a result without naming the table cell it came from',
+  unreconciled_claims: 'named a table cell that does not hold the value it stated',
+  claims_invalid: 'listed its table cells in a form that could not be checked',
+  unsubstantiated_outcome_conclusion: 'stated a conclusion the tables alone cannot support',
+  outcome_cell_mismatch: 'attributed a death count to a row that does not report deaths',
+  unsupported_conduct_claim: 'stated how the study was conducted with no record to support it',
+  draft_truncated: 'was cut off before its end',
+  gateway_policy_refused: 'was refused by the AI gateway’s data policy before it reached a model',
+  gateway_input_too_large: 'was too large to send to a model in one request',
+  no_model_provider: 'was not written, because no AI model is configured',
+  csr_evidence_unavailable: 'was not written, because its study tables hold no results',
+};
+
+function draftRefusalReason(lineage: unknown): string | null {
+  const rejected = lineage && typeof lineage === 'object' ? (lineage as { rejectedModelDraft?: { reason?: unknown } }).rejectedModelDraft : null;
+  const reason = rejected && typeof rejected.reason === 'string' ? rejected.reason : '';
+  return Object.prototype.hasOwnProperty.call(DRAFT_REFUSED, reason) ? reason : null;
+}
+
+/** The `refused` field of a receipt: the reason of each missing heading that has one. */
+function refusedAmong(sections: string[], reasons: Record<string, string>): { refused?: Record<string, string> } {
+  const refused = Object.fromEntries(sections.filter(number => reasons[number]).map(number => [number, reasons[number]]));
+  return Object.keys(refused).length ? { refused } : {};
+}
+
+/** " The draft of §11.1 and §11.2 stated a figure …, so it was not saved." for each reason, at most three reasons. */
+function refusedDraftsText(value: unknown, named: Set<string>): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  const byReason = new Map<string, string[]>();
+  for (const [number, reason] of Object.entries(value as Record<string, unknown>)) {
+    if (!SECTION_CODE.test(number) || !named.has(number) || typeof reason !== 'string' ||
+      !Object.prototype.hasOwnProperty.call(DRAFT_REFUSED, reason)) continue;
+    byReason.set(reason, [...(byReason.get(reason) ?? []), number]);
+  }
+  return [...byReason].slice(0, 3).map(([reason, numbers]) => {
+    const list = sectionList(numbers)!;
+    return ` The ${list.one ? 'draft' : 'drafts'} of ${list.text} ${DRAFT_REFUSED[reason]}, so ${list.one ? 'it was' : 'they were'} not saved.`;
+  }).join('');
+}
 
 /** "§2, §5.1 and §9.8" (at most 12 named), and whether it names one section or several; null when none is valid. */
 function sectionList(value: unknown): { text: string; one: boolean } | null {
@@ -251,7 +356,7 @@ function sectionList(value: unknown): { text: string; one: boolean } | null {
 }
 
 /** The reasons that name the sections they concern. */
-function sectionFailure(reason: string, sections: ReturnType<typeof sectionList>): string | null {
+function sectionFailure(reason: string, sections: ReturnType<typeof sectionList>, refused = ''): string | null {
   if (reason === 'saved_section_integrity_failed') {
     return sections
       ? `The saved text of ${sections.text} no longer matches its recorded checksum. Nothing was overwritten; review ${sections.one ? 'it' : 'them'} before building again.`
@@ -262,7 +367,7 @@ function sectionFailure(reason: string, sections: ReturnType<typeof sectionList>
     return `Not complete: ${sections.text} still ${sections.one ? 'holds' : 'hold'} a data placeholder (“[…]”) where the study’s data is missing.`;
   }
   if (reason === 'missing_section_outputs') {
-    return `Not complete: ${sections.text} ${sections.one ? 'has' : 'have'} no saved text. The sections already saved are kept.`;
+    return `Not complete: ${sections.text} ${sections.one ? 'has' : 'have'} no saved text. The sections already saved are kept.${refused}`;
   }
   return null;
 }
@@ -275,13 +380,16 @@ function receiptOf(error: unknown) {
     code: typeof receipt.code === 'string' && CSR_JOB_SAFE_CODE.test(receipt.code) ? receipt.code : '',
     section: typeof receipt.section === 'string' && SECTION_CODE.test(receipt.section) ? receipt.section : '',
     sections: sectionList(receipt.sections),
+    refused: refusedDraftsText(receipt.refused, new Set(Array.isArray(receipt.sections) ? receipt.sections.filter((v): v is string => typeof v === 'string') : [])),
   };
 }
 
 /** Why a failed build stopped, in plain words, from its recorded receipt (csr_build_jobs.error). */
 export function csrBuildFailureText(error: unknown): string {
-  const { reason, code, section, sections } = receiptOf(error);
-  const known = sectionFailure(reason, sections) ?? (code ? recoveryMessage(code) ?? FAILURE_BY_CODE[code] : undefined)
+  const { reason, code, section, sections, refused } = receiptOf(error);
+  const stopped = code ? DRAFTING_STOPPED[code] : undefined;
+  if (stopped) return `${stopped} ${section ? `The build stopped at §${section}. ` : ''}The sections already saved are kept.`;
+  const known = sectionFailure(reason, sections, refused) ?? (code ? recoveryMessage(code) ?? FAILURE_BY_CODE[code] : undefined)
     ?? FAILURE_BY_REASON[reason];
   if (known) return known;
   const where = section ? ` while drafting §${section}` : '';
@@ -562,6 +670,8 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 
     const totalSections = allTargets.length;
     let sectionsCompleted = persistedSet.size;
+    // Why a heading's draft was not saved, by heading: the typed reason only, never the draft or its figures.
+    const refusedDrafts: Record<string, string> = {};
 
     // Seed initial progress so a resumed run reports the right number
     if (totalSections > 0) {
@@ -603,7 +713,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       const drafted = await draftCSRSectionWithProvenance(
         section,
         request,
-        aiCtx,
+        { ...aiCtx, live: showWriting(jobId, section, sectionsCompleted, totalSections) },
         evidence
       );
 
@@ -632,6 +742,8 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 
       // Missing output remains retryable work; never persist whitespace as a draft.
       if (typeof drafted.content !== 'string' || !drafted.content.trim()) {
+        const why = draftRefusalReason(drafted.lineage);
+        if (why) refusedDrafts[section.number] = why;
         continue;
       }
 
@@ -706,6 +818,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     if (missingSections.length) {
       await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
         error: { reason: 'missing_section_outputs', sections: missingSections,
+          ...refusedAmong(missingSections, refusedDrafts),
           message: 'Requested CSR sections have no nonblank saved output; retained sections are preserved for resume.' },
       }).where(ownsAttempt);
       return;
@@ -798,7 +911,23 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         }': ${refusal.message}`
       );
     }
+  } finally {
+    // The live view is of a build in progress; a build that has ended, however it ended, has none.
+    liveBuilds.delete(jobId);
   }
+}
+
+/**
+ * Resume a failed build in the background, as the same build (POST /api/csr/jobs/:jobId/resume). runCSRBuildJob
+ * accepts a failed job, keeps every section it saved and drafts the headings that have no saved text. Until
+ * 2026-11-10 nothing called it for one: a stopped build could only be followed by a new build, and a CSR document
+ * takes its imported sections from one build, so the document that held the first build's sections refused the
+ * second's. The run records its own outcome on the job; a rejection here would be a fault outside it.
+ */
+export function resumeCSRBuildInBackground(jobId: number): void {
+  setTimeout(() => {
+    runCSRBuildJob(jobId).catch(() => console.error(`[csr-job-runner] Resumed job ${jobId} failed outside its own handler.`));
+  }, 0);
 }
 
 /**

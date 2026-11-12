@@ -58,8 +58,9 @@ describe('MDX project context isolation', () => {
   it('says which postmarket panels are this project\'s, without changing the selected project', () => {
     publishShellProject({ id: A });
     render(<MdxSurfaceHost {...props()} nav="device-postmarket" />);
-    /* Slice 0: the organisation-wide surveillance panels are no longer shown on a project, so the banner no longer says they are. */
-    expect(screen.getByText('Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project')).toBeTruthy();
+    /* P-122: the surveillance read takes the project, so the banner says the panels are this project's, and names
+       what has no store yet. */
+    expect(screen.getByText('Reporting clocks, signals and the CAPA board are for this project; PMS plan execution and vigilance trends are not tracked yet')).toBeTruthy();
     expect(screen.queryByText(/organization-wide surveillance feeds/)).toBeNull();
     expect(screen.getByTestId('selected-program').textContent).toBe(A);
   });

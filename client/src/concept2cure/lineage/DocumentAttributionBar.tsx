@@ -100,7 +100,10 @@ function segmentsOf(s: DocumentAttributionSummary): Segment[] {
     {
       key: 'authorAsserted',
       label: 'Author-asserted',
-      hint: 'a person stands behind it; nothing is cited',
+      /* "nothing is cited" was untrue on a cited section (walked 2026-11-12): a
+         citation marker in a sentence the author wrote does not make its
+         recorded origin a source, so the bar counts it here either way. */
+      hint: 'a person stands behind it, cited or not',
       chars: s.byKind.authorAsserted,
       fill: INK,
       textured: false,

@@ -1,0 +1,408 @@
+# Repair re-run, 2026-11-12, on the tree as it is now. Files:
+client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx
+client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx
+client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx
+client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx
+client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx
+client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts
+client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx
+client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx
+client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx
+client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx
+client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx
+client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx
+client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts
+client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx
+client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts
+server/bootstrap/__tests__/routes-reach-the-bundle.test.ts
+server/routes/__tests__/capa-mdr-complaint-intake.test.ts
+server/services/ana/__tests__/capa-governed-service-handoff.test.ts
+server/services/ana/__tests__/capa-mdr-tools.test.ts
+server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts
+server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts
+server/services/capa-mdr/__tests__/governed-context.test.ts
+server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts
+server/services/capa-mdr/__tests__/triage-queue-open-mdrs.pglite.test.ts
+server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts
+server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts
+tests/concept2cure/design-system-surfaces-smoke.test.tsx
+tests/concept2cure/mdx-pathway-panes-smoke.test.tsx
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx
+
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > CAPAS 9ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > DEVIATIONS 1ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > NONCONFORMANCES 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > SUPPLIERS 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > AUDITS 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > REVIEWS 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > is a table: column headers, one body per record, its state's actions inline with Ask AnA, and no More with nothing left 664ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > lists nonconformances and dispositions one only through a signature, its reason the rationale 219ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a deviation's investigation along the server lifecycle, and closes it only by a signature (P-57) 393ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows a failed supplier read as a failure, not an empty register 8ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > names a supplier's quality agreement by its controlled document, and records a new one by id 109ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > signs a supplier's standing, and sends nothing before the signature 135ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a supplier's quality agreement is unread when the controlled documents could not be read 11ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > moves a CAPA only along the server lifecycle, and closes it only with its effectiveness result 162ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > refuses to raise a CAPA with no project open 180ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > raises a CAPA from a nonconformance, in the open project, with the record as its source 136ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a register read refused by this release as that, with no retry, and keeps a failure retryable 38ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the register on screen while a re-read is in flight 29ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > completes a CAPA action only with its evidence, along the server action lifecycle 243ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a management-review action and closes it only with its note 174ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register 30ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a capped read is the most recent rows, and its figures are theirs 743ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the facts the figures carried, in brackets, and tells AnA what the register is 17ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > reads the organisation's CAPAs with a project open, until the person narrows Quality to the project 82ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > narrowed, reads the open project's CAPAs and nonconformances, and says the other registers are the organisation's 98ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > files a new nonconformance under the open project by default 175ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > tells the shell for AnA what the register read, and that a failed read is a failure 26ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > preserves a reopened CAPA task when a committed older close snapshot arrives last 53ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > preserves a dated CAPA task when an older no-date cancellation arrives last 41ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_record plan with either the same assignee or no open task 71ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_action plan with either the same assignee or no open task 107ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses stale capa_record dates even when the task assignee already matches 31ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses stale capa_action dates even when the task assignee already matches 13ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA named owner' with unchanged-assignee task=true 13ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA named owner' with unchanged-assignee task=false 10ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA creator fallback' with unchanged-assignee task=true 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA creator fallback' with unchanged-assignee task=false 10ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'action owner' with unchanged-assignee task=true 22ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'action owner' with unchanged-assignee task=false 15ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > retains the existing initial capa_record assignment policy when its numeric owner is current 26ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > retains the existing initial capa_action assignment policy when its numeric owner is current 21ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > retains initial free-text action owner fallback without inventing a canonical numeric owner 40ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_record only with its current canonical UPDATE capa_records SET state='closed_effective' outcome 44ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_record only with its current canonical UPDATE capa_records SET state='closed_not_effective' outcome 70ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_record only with its current canonical UPDATE capa_records SET target_close_date=NULL outcome 79ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_action only with its current canonical UPDATE capa_actions SET state='done' outcome 52ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_action only with its current canonical UPDATE capa_actions SET state='cancelled' outcome 55ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_action only with its current canonical UPDATE capa_actions SET due_date=NULL outcome 41ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_record completion or cancellation reason 48ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_record completion or cancellation reason 28ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason 33ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason 22ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason 14ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on missing record 46ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on foreign program 12ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on deleted program 16ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on ambiguous anchor 16ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on actor revoked 12ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on private project 12ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > checks current closure and admission even when no open task remains 18ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > rolls the native close task transition back if its audit fails 15ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves the existing free-text action owner policy for active and terminal records 17ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > replaces capa_record atomically for its current canonical numeric assignee 26ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > replaces capa_action atomically for its current canonical numeric assignee 19ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > keeps a task when the date and assignee both already match 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_record producer after the native owner changed again 18ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_action producer after the native owner changed again 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation 38ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation 14ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation 18ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation 13ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on inactive member 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on reader role 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on private project 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on create audit failure 10ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > uses the CAPA creator fallback only when the native record names no numeric assignee 18ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses to invent an action assignee from a free-text owner and the latest caller 9ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > is a tab of Quality beside CAPA, and AnA can open it 7ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > lists the organisation's complaints and MDR reports, with the server's reportability and reporting clock 964ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > narrowed to the project, reads its complaints and reports only 26ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > says a failed read is a failure, never an empty register 20ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records a complaint in the open project, every event fact stated, through the audited route 687ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > refuses to record a complaint with no project open, and sends nothing 451ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > moves a complaint only along the server lifecycle, with its reason 226ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records the MDR decision a complaint needs, in the complaint's project, linked to it 294ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > opens a complaint's vigilance timeline under its row 64ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > tells AnA both registers as read, and that a failed read is a failure 24ms
+ ✓ server/services/capa-mdr/__tests__/triage-queue-open-mdrs.pglite.test.ts > triage queue: MDR events > leaves out filed, acknowledged and closed MDRs from the open queue 84ms
+ ✓ server/services/capa-mdr/__tests__/triage-queue-open-mdrs.pglite.test.ts > triage queue: MDR events > still lists every state when the caller asks for closed items too 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/Shell.tsx keeps its Projects index door: the sidebar’s Projects place 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/LaunchScopeGate.tsx retains its Projects index door 18ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > mdx/MdxSurfaceHost.tsx retains its Projects index door 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CommunicationCenter.tsx retains its Projects index door 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CroPortfolio.tsx retains its Projects index door 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/ProjectHome.tsx retains its Projects index door 176ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/HomeSections.tsx retains its Projects index door 5ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/Surfaces.tsx retains its Projects index door 13ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/WorkflowCatalog.tsx retains its Projects index door 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > quality/ControlledDocumentDialogs.tsx retains its Projects index door 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/Vault.tsx lists the projects it can open in place of a Projects door 212ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CmcModule3Build.tsx retains the canonical choose-or-create action 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CmcQuality.tsx retains the canonical choose-or-create action 20ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/CmcModule.tsx retains the canonical choose-or-create action 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/cmcAgencyQuestions.tsx retains the canonical choose-or-create action 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > mdx/components/DataGate.tsx retains the canonical choose-or-create action 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > the shell listener uses the same Projects destination as the leaf action 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > rejects the former Mission Control destination and a detached event listener 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > the MDX catalog door is passed from the existing Projects index navigation 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > onboarding define-project remains a choose-or-create index recommendation 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > does not count a filed MDR past its due date, which the server says is not overdue, as due within 72h 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > still counts what the server marks overdue and what is due within 72h 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > calls no figure a running clock, and says filed MDRs are left out now that the read leaves them out 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > says only what the server's overdue means, beside an MDR filed after its date 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > shows 0, not "Not yet read", when the triage read answered with nothing 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > keeps "—" while the triage read is in flight 9ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: undefined 30ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: null 31ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {} 29ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: [] 34ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: "effective" 26ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective"} 16ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective","narrative":"  "} 35ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"not_effective","narrative":"Failed."} 11ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is planned 76ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is in_progress 36ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is blocked 28ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is cancelled 64ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > rechecks actions for effective closure, including a legacy record already at effectiveness check 38ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: undefined 37ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: [] 122ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: [{}] 22ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: [{"kind":"reference","label":" "}] 19ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > completes a documented action and closes with the matching effective result under the actual actor 108ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > records unsuccessful effectiveness honestly and keeps its existing reopen path 51ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_effective CAPA 29ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_not_effective CAPA 29ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PathwayPanes(k510) mounts every tab without errors 507ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PathwayPanes(pma) mounts every tab without errors 98ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PathwayPanes(cer) mounts every tab without errors 93ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > the audit pane gates honestly — no fixture chain stands in for a failed read 99ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > K510Surface mounts the pathway tab bar 175ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > PmaSurface mounts the pathway tab bar 82ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > MDX pathway panes smoke > CerSurface mounts the pathway tab bar 32ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > dossierStore round-trip > seeds section bodies and persists an edit — without authoring an audit event 1ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > dossierStore round-trip > lists the dossier tree under the program root 1ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > Approvals: disables signing when the approval names no document revision 60ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > Approvals: a confirmed signature renders the server-issued record 79ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > Approvals: a rejected signature shows the reason and stays unsigned 92ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > pathway panes — operational flows > DossierDrawer opens from a LIVE audit row and switches its three tabs 349ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > live backend wiring > renders live audit / correspondence / approvals from the backend 395ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > honest empty states — sample mode off, no live data > renders empty states with zero fixture audit rows on resolved-empty feeds 72ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > honest empty states — sample mode off, no live data > renders an error state — not fixtures — when the feeds fail 72ms
+ ✓ tests/concept2cure/mdx-pathway-panes-smoke.test.tsx > live dossier wiring > async-seeds the Files tree + drawer from the c2c/documents backend 333ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > returns the identical set when every selected row survives 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > returns the identical set when the whole selection survives 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > drops a K-number the new list no longer offers 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > falls back to the top candidate when nothing survives 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > reseedSelection — an unchanged selection is the same object > leaves an empty candidate list alone rather than clearing the selection 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > PUTs the claimed candidate to the governed device profile 347ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > claims a reduced openFDA clearance too — it is a real FDA record 316ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > states what is already on file, and withdraws it on request 146ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > says so when nothing is claimed, rather than leaving the form silent 113ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > claiming a predicate of record > reports stored entries it cannot read instead of naming the first it can 104ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510PredicateOfRecord.test.tsx > example rows are never claimable > offers no example K-number to claim 154ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe 98ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe 639ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe 152ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510) 1121ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > reads only the server routes that compute them 10ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says the quality system as one line of the server's numbers, not tiles 118ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > leaves out a figure whose server read failed, and says which, with a retry; never a zero in its place 325ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > leaves out a readiness block the server could not read 3ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says it is reading while nothing has answered, and states no number 2ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says a capped queue is a floor, not a count 5ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says the figures are the organisation's while the registers are narrowed to a project 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx > 510(k) predicate selection is operable without a mouse > exposes each predicate as a real checkbox control 384ms
+ ✓ client/src/concept2cure/mdx/__tests__/mdxKeyboardReachable.test.tsx > 510(k) predicate selection is operable without a mouse > reports the selection through aria-checked, not a data attribute alone 270ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > retires engineering working state when the selected project changes 97ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > draws no portfolio and no creation door; with no project open it sends the person to Projects 328ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project 8ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > requires an explicit project selection before mounting a project feature 20ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > never substitutes another same-pathway project for an unavailable selection 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > software does not borrow the first project 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps the selected project and responds when the shell switches projects 36ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > withholds the leaf on a failed context read and offers a retry 50ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > routes an IVD away from MDR CER into performance evaluation 75ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > opens the CER document type for the selected project, preserving pathway-specific authoring 41ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps a secondary IVDR performance section out of the primary 510(k) document 168ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > shows none of another project's signals, CAPAs or PMS plan rows 156ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no organisation-wide count as this project’s 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > says why each of the signals, CAPA board, trends and PMS plan panels is not shown 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > names what has no per-project store: PMS plan execution, not the PMS plan 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > keeps this project's reporting clocks, read by project 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > names the project the reporting clocks are limited to by its title, not its class and pathway 95ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > asks AnA to triage only what its triage tool reads, for this project 70ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no scope for PMS plan entries, which have no store 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > the Situational awareness toggle names only what it holds 110ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > PmsPmcfTab — live complaint and PMCF feeds > renders the program’s complaints and PMCF activities, with figures from the rows 142ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > PmsPmcfTab — live complaint and PMCF feeds > a failed complaint read is an error with a retry, not an empty queue — and the PMCF panel still renders 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > PmsPmcfTab — live complaint and PMCF feeds > an empty tenant gets empty states, and a PMCF store that is unavailable is reported as such 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > PmsPmcfTab — live complaint and PMCF feeds > a device program asks for its own regulation, and sends no class 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > PmsPmcfTab — live complaint and PMCF feeds > a ivd program asks for its own regulation, and sends no class 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > PmsPmcfTab — live complaint and PMCF feeds > without a program the feeds are not requested 3ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > complaintFigures > reports no mean time to triage when nothing has been triaged, and marks a capped page 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/cer/__tests__/PmsPmcfTab.feeds.test.tsx > complaintFigures > averages receipt-to-triage over the triaged rows only 0ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: undefined 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: {"userId":null} 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: {"userId":0} 0ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a missing or malformed trusted actor before connecting: {"userId":1.1} 0ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > uses the verified caller/current role rather than a stale or supplied role 3ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > refuses a caller from another active tenant scope and does not run the action 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > cannot commit a mutation that omitted its critical audit write 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > returns the truthful success receipt only after confirmed commit 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > does not claim rollback after a lost commit completion and supplies record readback 2ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > rolls back a known critical-audit refusal before any commit attempt 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > contains a failed connection without running business code or leaking store details 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > allows a current viewer to read but never adds a mutation audit receipt 0ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > uses canonical private-program authority on the same transaction before locking the programme 3ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > propagates canonical unresolved-anchor refusal and does not substitute a programme policy 1ms
+ ✓ server/services/capa-mdr/__tests__/governed-context.test.ts > CAPA transaction completion and current authority > does not disguise a lost actor during list admission as an empty queue 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > resolves the old id to Submission Center from a link, an in-app move and AnA, with or without a project open 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > lands on Submission Center, which lists the tracked device filings; each filing's readiness is EstarFilingPanel's 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > leaves no client code that lists the organization's blockers or names the retired screen 445ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts > device-validation is retired into each filing's own readiness > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > requests the open queue for the whole portfolio by default 59ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > narrows to a program when given one 9ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > asks for closed items only when explicitly requested 6ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > reports the server overdue flag rather than recomputing it 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > buckets due-soon items without double-counting the overdue ones 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > honours a caller-supplied due-soon window 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > excludes items with no due date from due-soon 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > excludes a negative daysToDue the server did not call overdue 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > surfaces an empty queue as empty, never as an all-clear fixture 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > surfaces a failed fetch as an error, not as zero overdue items 54ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > asks for this project's records 110ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > shows this project's signals, CAPA board, trends and PMS plan execution when the server says they are its 97ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > says a failed read is a failure, with a retry, and never an empty or unkeyed panel 57ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > keeps the panels hidden when the server does not say the rows are this project's 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > K510Surface — an unread submission is not a clean one > does not report "0 blockers" for eSTAR sections it never read 201ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > K510Surface — an unread submission is not a clean one > still reports a real count once the sections are read 146ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > K510Surface — an unread submission is not a clean one > renders no predicate, match score or SE comparison a live read did not return 126ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.unread.test.tsx > the 510(k) data module states no assessment > exports the real eSTAR section list and no findings about any submission 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > renders no fixture device, stage, clock or subject name 85ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with no program selected (sample mode off) > states no section or blocker count when no sections were read 49ms
+ ✓ client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx > 510(k) surface with a program whose predicate service is unreachable > shows its own stage and clock, and a banner that does not promise example rows 113ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an SE attribute with no verdict is unassessed, not equivalent 74ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > an IVD with no Annex VIII class is not classified, not class B 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > no favourable default for a missing regulatory value > a submitted program is in flight, not cleared 59ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > explains the mixed scope and keeps reporting-clock requests narrowed to the project 82ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > shows no count while the triage read has failed 65ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > counts MDRs due within 72h and open CAPAs from the server-computed queue 30ms
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > DocumentsPanel renders an empty doc list without error 37ms
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with program context 120ms
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with null program 12ms
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders for a project 27ms
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders with no project 2ms
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > PostmarketSurface renders 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > finds the bar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100, unclipped 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > counts this project's open CAPAs, open change controls, undispositioned product and its documents by status 1236ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > says a read failed, for that record only, and never shows it as 0 452ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > opens Quality from its door 399ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > is not offered when Quality is not in this release 327ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-510k renders inside the .mdx-shell scope root 36ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-pma renders inside the .mdx-shell scope root 6ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-cer renders inside the .mdx-shell scope root 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-diagnostics renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-clinical-studies renders inside the .mdx-shell scope root 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-software renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-engineering renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-udi renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-postmarket renders inside the .mdx-shell scope root 7ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > device-presub renders inside the .mdx-shell scope root 4ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > the scope root opts out of the shell grid 6ms
+ ✓ client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx > MdxSurfaceHost draws every surface it claims > keeps the kit content measure around the surface 4ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none does not suppress an FDA-reportable malfunction 51ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury does not suppress an FDA-reportable malfunction 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > none leaves FDA reportability unknown when malfunction risk was not stated 10ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > injury leaves FDA reportability unknown when malfunction risk was not stated 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > no actual harm does not settle an EU malfunction serious-incident determination 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a serious injury with nothing else stated is FDA reportable, and the rest is not determined 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction whose recurrence risk is not stated is not "not reportable" 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction in the EU leaves EU vigilance not assessed, not "not reportable" 49ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a country stated as unknown leaves EU vigilance undetermined, not "outside the EU" 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > records the facts it used, and is complete when every one it turns on is stated 5ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "       de       ", within the varchar(8) limit 2ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the normalized country for "  UnKnOwN  ", within the varchar(8) limit 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without anticipatesCorrection, and stores nothing 1ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without isMalfunction 19ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without eventLocationCountry 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a complaint without trendThresholdCrossed 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > refuses a country it cannot read rather than read it as outside the EU 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > createComplaint stores no classification computed from an unstated fact > stores the facts as stated; a country stated as unknown leaves EU vigilance undetermined 0ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > { patientHarm: "serious_injury" } is not a 30-day report: it names each fact it was not given 3ms
+ ✓ server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > assess_mdr_reportability asks for each omitted fact > computes from stated facts, and says what a country stated as unknown leaves undetermined 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > CAPA_MDR_TOOLS contract > exposes the five post-market safety tools with object schemas 2ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > CAPA_MDR_TOOLS contract > only assess_mdr_reportability is context-free; the DB tools require a programId 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > a death is FDA MDR reportable 4ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > a plain malfunction with recurrence potential is FDA reportable 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > a non-serious event is computed as not FDA reportable 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > refuses {} rather than determining "no MDR" for a harm nobody assessed 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > refuses {"patientHarm":"unknown"} rather than determining "no MDR" for a harm nobody assessed 1ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > create_complaint requires the harm and severity assessments, and asks for them 7ms
+ ✓ server/services/ana/__tests__/capa-mdr-tools.test.ts > assess_mdr_reportability (live deterministic triage) > the DB reads refuse to run without organization context 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links the CAPA chosen from the register, with its own number and title 494ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links a deviation chosen from the deviation register (P-57) 118ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > says so when the register could not be read, and keeps the typed reference 52ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > asks why the record is linked when the change is past proposal 87ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > K510Surface: the clearance lookup says why it could not run, in words > does not print the raw "fetch failed" reason the rehearsal app showed 243ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: fetch failed" reads as words 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: getaddrinfo ENOTFOUND api.fda.gov" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json timed out after 10000ms" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json responded 500" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA unavailable" reads as words 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json returned an unexpected body" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "device/510k.json parse error" reads as words 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > keeps a reason already written as a sentence for a person 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > says this project's post-market documents are not read here yet 130ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > counts no documents it did not read 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > keeps the regulations the panel serves in the header 26ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > refuses a complaint with no patientHarm, and records nothing 69ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > refuses a harm outside the vocabulary rather than reading it as none 10ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > refuses a complaint with no severityAssessment 11ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > records the assessments it was given, as given 14ms
+ ✓ server/routes/__tests__/capa-mdr-complaint-intake.test.ts > complaint intake requires the assessments the classification is computed from > passes an unstated event fact on unread for the service to refuse, not as false 13ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('x') 2ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('pdfkit' as any) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > /* prose mentioning /*) inside */ await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > const s = 'has /* inside'; await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > // await import(v)
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(`../routes/${n}`) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > sees the whole of the largest bootstrap file 4ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > no guarded file imports a module by computed specifier 24ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > the families that were missing are imported statically by name 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > every regional blueprint is imported statically by both catalogs 6ms
+ ✓ server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > passes the trusted context actor to both writes and carries the committed critical audit receipt 8ms
+ ✓ server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > create_complaint returns readback uncertainty instead of a definite failed or successful creation 2ms
+ ✓ server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > open_device_capa returns readback uncertainty instead of a definite failed or successful creation 1ms
+ ✓ server/services/ana/__tests__/capa-governed-service-handoff.test.ts > CAPA AnA service handoff > passes the verified context actor to both read entrypoints 1ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm undefined is refused, not read as "no harm" 2ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm "unknown" is refused, not read as "no harm" 0ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm "None" is refused, not read as "no harm" 0ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > patientHarm "" is refused, not read as "no harm" 0ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > classify refuses a harm nobody assessed > an explicit "none" is still classified as not reportable 0ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > createComplaint requires both assessments > refuses a complaint with no patient harm, before touching the database 1ms
+ ✓ server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts > createComplaint requires both assessments > refuses a complaint with no severity assessment 5ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves the QMS readiness read under Quality, no longer excluded as dead 3ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/mdx/qms/documents/review-due, which the line also reads 1ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/mdx/qms/changes/summary, which the line also reads 0ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/capa-mdr/triage, which the line also reads 0ms
+ Test Files  36 passed (36)
+      Tests  368 passed (368)

@@ -161,9 +161,11 @@ describe('header controls (findings 131, 132), now in the sidebar’s account', 
     }
   });
 
-  it('Help is the account menu’s "Get help", and the top bar draws no Help of its own', () => {
+  /* D1-2 took Help out of the top bar; P-122 (2026-11-10) put it back. Both go to one
+     place (p122TopBarSearchHelp.test.tsx pins the bar's). */
+  it('Help is the account menu’s "Get help", and the top bar’s Help goes to the same place', () => {
     renderBar();
-    expect(screen.queryByRole('button', { name: 'Get help' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Get help' })).toBeTruthy();
     cleanup();
     const { onNav, account } = mountRail();
     fireEvent.click(account);

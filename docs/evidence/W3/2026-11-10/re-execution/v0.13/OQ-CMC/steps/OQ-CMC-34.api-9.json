@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/comparability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "title": "OQ probe comparability",
+      "type": "process",
+      "product": "Scale",
+      "status": "approved",
+      "owner": 1
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 21,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "Approval of a comparability assessment (ICH Q5E) is a governed action and is recorded with a signature; \"approved\" is one of the words it writes, so an ordinary edit cannot set it. POST /api/cmc/comparability-studies/:id/approve with a reason and re-authentication."
+    }
+  }
+}

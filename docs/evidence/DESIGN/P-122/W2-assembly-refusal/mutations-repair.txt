@@ -1,0 +1,36 @@
+M1 packager refusal not converted -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names the do
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > POST /assemble answers 422 in the packager's words, never 500 "Re
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a device filing is not held to the drug Study Tagging File rule > POST /assemble on a 510(k) sequence names the device rule only, never
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names th
+M2 device not skipped from 1789 -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a device filing is not held to the drug Study Tagging File rule > POST /assemble on a 510(k) sequence names the device rule only, never
+     × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789 9ms
+     × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a device named only by fda.applicationType (510(k)) is not refused for 1789 5ms
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a device filing is not held to the drug Study Tagging File rule > POST /assemble on a 510(k) sequence names the device rule only, n
+M3 device refusal sentence removed -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a device filing is not held to the drug Study Tagging File rule > POST /assemble on a 510(k) sequence names the device rule only, never
+     × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789 50ms
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a device filing is not held to the drug Study Tagging File rule > POST /assemble on a 510(k) sequence names the device rule only, n
+     FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789
+M4 named by file name -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names the do
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > POST /assemble answers 422 in the packager's words, never 500 "Re
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names th
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > POST /assemble answers 422 in the packager's words, never 500
+M5 section not normalized -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names the do
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names th
+M6 refusal audit row reason dropped -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names the do
+     FAIL  server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names th
+M7 (V-W2-1) diagnostics not a device: medical_devices segment only -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789 7ms
+     FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789
+M8 (V-W2-2) fda.applicationType ignored -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a device named only by fda.applicationType (510(k)) is not refused for 1789 8ms
+     FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a device named only by fda.applicationType (510(k)) is not refused for 1789
+M9 (V-W2-3) always the quoted title -> FAILED (caught) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+     × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged leaf with no title is named by its file name, not by empty quotes 28ms
+     FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged leaf with no title is named by its file name, not by empty quotes
+all restored; sha256 match

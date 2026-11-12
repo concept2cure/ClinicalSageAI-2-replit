@@ -1,0 +1,7 @@
+ × client/src/concept2cure/v2/__tests__/cmcAnswerHere.test.tsx > a Module 3 question is answered inside CMC, on its letter > opens the letter’s own controls here, reading the letter’s questions 425ms
+   → Unable to find an accessible element with the role "button" and name "Answer here"
+ × client/src/concept2cure/v2/__tests__/cmcAnswerHere.test.tsx > a Module 3 question is answered inside CMC, on its letter > keeps the door to Communication, and Done closes the panel 150ms
+   → Unable to find an accessible element with the role "button" and name "Answer here"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

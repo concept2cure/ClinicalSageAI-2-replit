@@ -1,0 +1,7 @@
+# Walk fixes, green: Quality's suites with the three fixes
+# base 7ec909c63 2026-11-10T13:32:39Z
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > reads the whole organisation with a project open, narrows to the project and back 373ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > lists the organisation's complaints and MDR reports, with the server's reportability and reporting clock 266ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > scrolls a wide register inside its own box, so its pinned actions are never clipped by the page 9ms
+ Test Files  33 passed (33)
+      Tests  404 passed (404)

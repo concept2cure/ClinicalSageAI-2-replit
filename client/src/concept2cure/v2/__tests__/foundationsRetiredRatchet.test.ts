@@ -88,8 +88,8 @@ const RETIRED: Retired[] = [
   cls('sp-primary', 50),
   { name: 'btn sm', baseline: 14, kind: 'btn-sm', css: /\.btn\.sm(?![\w-])|\.sm\.btn(?![\w-])/ },
   cls('reg-card', 15),
-  cls('reg-tabs', 11),
-  cls('reg-tab', 13),
+  cls('reg-tabs', 10), // D7-C (2026-11-12): RBM's ten tabs are `.tabs`/`.tab`.
+  cls('reg-tab', 12),
   cls('cm-subtab', 0),
   cls('sc-ws', 0), // D7-A1 (2026-11-09): Submission Center's workspace tabs are `.tabs`/`.tab`; the alias is gone.
   cls('cc-tab', 1),
@@ -103,7 +103,7 @@ const RETIRED: Retired[] = [
   /* D0 review fix 15: the rest of §4.7's migration table, so no retired name's use rises either.
      Measured 2026-11-09 at 37f520f3be with this file's rule (docs/evidence/DESIGN/D0/D0-12-readme-claims/). */
   /* tabs → `.tabs`/`.tab` */
-  cls('rbm-tabs', 1), cls('ml-tab', 1), cls('pd-tab', 1), cls('ra-tab', 1), cls('rl-tab', 0), cls('adm-tab', 1), cls('company-tabs', 1), cls('rpk-tab', 1), cls('cl-tab', 2), cls('qms-tabbar', 1),
+  cls('rbm-tabs', 0), cls('ml-tab', 1), cls('pd-tab', 1), cls('ra-tab', 1), cls('rl-tab', 0), cls('adm-tab', 1), cls('company-tabs', 1), cls('rpk-tab', 1), cls('cl-tab', 2), cls('qms-tabbar', 1),
   /* segments → `.seg`/`.seg-b` */
   cls('qms-seg', 1), cls('pdev-seg', 3), cls('seg-btn', 7),
   /* cards → `.pj-card` */
@@ -113,7 +113,7 @@ const RETIRED: Retired[] = [
   /* chips → `.rd-chip` + tone */
   cls('status-pill', 49), cls('sp-tag', 17), cls('reg-pill', 10), cls('ml-chip', 10), cls('pg-badge', 8), cls('rc-chip', 3),
   /* drawers → `.de` */
-  cls('tt-panel', 3), cls('pdev-sheet', 4), cls('py-sheet', 1), cls('de-sheet', 5), cls('ana-sheet', 1), cls('adm-drawer', 4), cls('risk-drawer', 1),
+  cls('tt-panel', 3), cls('pdev-sheet', 4), cls('py-sheet', 1), cls('de-sheet', 4), cls('ana-sheet', 1), cls('adm-drawer', 4), cls('risk-drawer', 1),
   /* composers → the composer chrome */
   cls('ec-composer', 1), cls('rc-composer', 0), cls('rbm-ana-composer', 1),
   /* header meta → `.ph-sub` */

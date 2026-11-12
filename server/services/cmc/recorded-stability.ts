@@ -907,6 +907,9 @@ export async function estimateRecordedShelfLife(
         pointsRecorded: points.length,
         pointsUsable: usable.length,
         pointsUsed: usable.length,
+        /* The (time, value) pairs this fit used, so the Stability register's
+           chart draws exactly what was fitted, beside `band` (P-122). */
+        observations: usable,
         ...(criterion.twoSided && criterion.upperLimit !== null
           ? {
               acceptanceCriterion: {

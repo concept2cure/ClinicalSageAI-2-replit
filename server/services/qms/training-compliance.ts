@@ -4,9 +4,12 @@ import { verifiedTrainingReceipt } from './training-content';
 import { readQmsTrainingReleaseContext } from './current-release-approval';
 import { readInForceReleases } from './in-force-release';
 import { readQmsTrainingAssignees, type QmsDocumentAssignees } from './training-assignment';
+import { planTrainingTasks } from './training-task';
 import { QMS_TRAINABLE_DOCUMENT_TYPES, type QmsTrainingAcknowledgement } from '../../../shared/qms/training';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** The trainable documents one read covers (`LIMIT` below); a view at the cap says so. */
+const TRAINABLE_DOCUMENT_CAP = 200;
 
 /**
  * The verified current receipts per release in force: the exact released
@@ -21,8 +24,8 @@ async function readCurrentReceipts(client: TrainingSqlClient, organizationId: nu
   // the signed predecessor is what members are trained on (in-force-release.ts).
   const candidates = await client.query(
     `SELECT * FROM qms_documents WHERE organization_id = $1 AND deleted_at IS NULL
-      AND status IN ('effective', 'draft', 'in_review') AND doc_type = ANY($2::text[]) ORDER BY doc_number LIMIT 200`,
-    [organizationId, QMS_TRAINABLE_DOCUMENT_TYPES],
+      AND status IN ('effective', 'draft', 'in_review') AND doc_type = ANY($2::text[]) ORDER BY doc_number LIMIT $3`,
+    [organizationId, QMS_TRAINABLE_DOCUMENT_TYPES, TRAINABLE_DOCUMENT_CAP],
   );
   const today = now.toISOString().slice(0, 10);
   const inForce = await readInForceReleases(client, organizationId, candidates.rows as unknown as QmsDocumentRow[]);
@@ -51,7 +54,11 @@ async function readCurrentReceipts(client: TrainingSqlClient, organizationId: nu
       receipt.documentId === document.id && receipt.documentVersion === document.version && receipt.contentDigest === context.contentDigest) : [];
     releases.push({ document, context, coverage, people, released, matching: released.filter(receipt => people.has(receipt.userId)) });
   }
-  return { releases };
+  // Every trainable document read, including one whose first version takes effect later: who trains on it next is the
+  // task resolver's question (training-task.ts), asked of these.
+  const trainable = new Map((candidates.rows as unknown as QmsDocumentRow[]).map(row =>
+    [Number(row.id), { docNumber: String(row.doc_number), title: String(row.title) }]));
+  return { releases, trainable, documentsCapped: candidates.rows.length >= TRAINABLE_DOCUMENT_CAP };
 }
 
 /**
@@ -125,19 +132,34 @@ export function summarizeQmsTrainingCompliance(rows: readonly QmsTrainingComplia
   };
 }
 
-export interface QmsTrainingExpiry {
+interface QmsTrainingPersonRow {
   userId: number;
   userName: string | null;
   documentId: number;
   docNumber: string;
   title: string;
   documentVersion: string;
+  /** Days from today to the lapse or due day; negative once it has passed. */
+  daysLeft: number;
+}
+/** A person's training on a release in force that lapses within the window, or lapsed (G10). */
+export interface QmsTrainingLapse extends QmsTrainingPersonRow {
+  kind: 'lapsing';
   /** When the member's training on this release lapses, or lapsed: the latest expiry among their receipts. */
   expiresAt: string;
-  daysLeft: number;
   /** True when it has lapsed: the member has no current receipt, and their last one on this release expired. */
   lapsed: boolean;
 }
+/** A person assigned who has not acknowledged the version they train on next (G10 slice 5): the task resolver's state. */
+export interface QmsTrainingOutstanding extends QmsTrainingPersonRow {
+  kind: 'due' | 'overdue';
+  /** The version's effective day, or, for someone assigned after it, 14 days after they were (training-task.ts). */
+  dueDate: string;
+  lateAssignment: boolean;
+}
+export type QmsTrainingExpiry = QmsTrainingLapse | QmsTrainingOutstanding;
+/** At most this many rows reach the per-person view; the route says when there were more (design §3.6). */
+export const QMS_TRAINING_EXPIRY_ROW_CAP = 500;
 
 type Release = Awaited<ReturnType<typeof readCurrentReceipts>>['releases'][number];
 
@@ -176,9 +198,9 @@ function releaseExpiry(release: Release, lapsedReceipts: QmsTrainingAcknowledgem
   const current = latestExpiry(matching);
   const ofRelease = lapsedReceipts.filter(r => members.has(r.userId) && !current.has(r.userId) && context.eligible &&
     r.documentId === document.id && r.documentVersion === document.version && r.contentDigest === context.contentDigest);
-  const rows: Array<Omit<QmsTrainingExpiry, 'userName'>> = [];
+  const rows: Array<Omit<QmsTrainingLapse, 'userName'>> = [];
   const push = (userId: number, expiresAt: string, lapsed: boolean) => rows.push({
-    userId, documentId: Number(document.id), docNumber: String(document.doc_number),
+    kind: 'lapsing', userId, documentId: Number(document.id), docNumber: String(document.doc_number),
     title: String(document.title), documentVersion: String(document.version), expiresAt,
     daysLeft: Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / DAY_MS), lapsed,
   });
@@ -189,9 +211,45 @@ function releaseExpiry(release: Release, lapsedReceipts: QmsTrainingAcknowledgem
   return rows;
 }
 
+/** Whole days from `from` to `to`, both YYYY-MM-DD. */
+const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
+
 /**
- * Each person assigned (P-49) whose training on a release in force has lapsed, or
- * lapses within `withinDays`: who must train again, on what, and by when (G10). A member
+ * Each person assigned who has not acknowledged the version they train on next, as the task resolver states it
+ * (training-task.ts planTrainingTasks: its target, due day and late-assignment grace), so this view and the Tasks
+ * board never disagree. Overdue whatever the window; due only when its day falls inside it.
+ */
+async function outstandingTraining(
+  client: TrainingSqlClient, organizationId: number, trainable: Map<number, { docNumber: string; title: string }>, now: Date, horizonDay: string,
+): Promise<Array<Omit<QmsTrainingOutstanding, 'userName'>>> {
+  if (trainable.size === 0) return [];
+  const today = now.toISOString().slice(0, 10);
+  const plans = await planTrainingTasks(client, organizationId, { documentIds: [...trainable.keys()] }, now);
+  const out: Array<Omit<QmsTrainingOutstanding, 'userName'>> = [];
+  for (const plan of plans) {
+    const doc = trainable.get(plan.documentId);
+    if (!doc) continue;
+    for (const task of plan.desired.values()) {
+      const meta = task.next.metadata as { version?: unknown; dueDate?: unknown; lateAssignment?: unknown };
+      if (typeof meta.dueDate !== 'string' || typeof meta.version !== 'string') continue;
+      const kind = today >= meta.dueDate ? 'overdue' : 'due';
+      if (kind === 'due' && meta.dueDate > horizonDay) continue;
+      out.push({ kind, userId: task.userId, documentId: plan.documentId, docNumber: doc.docNumber, title: doc.title,
+        documentVersion: meta.version, dueDate: meta.dueDate, daysLeft: daysBetween(today, meta.dueDate), lateAssignment: meta.lateAssignment === true });
+    }
+  }
+  return out;
+}
+
+/** A row before its name is read: `Omit` per member of the union, so each keeps its own day. */
+type UnnamedRow = Omit<QmsTrainingLapse, 'userName'> | Omit<QmsTrainingOutstanding, 'userName'>;
+const KIND_ORDER: Record<QmsTrainingExpiry['kind'], number> = { overdue: 0, due: 1, lapsing: 2 };
+const dayOf = (r: UnnamedRow) => (r.kind === 'lapsing' ? r.expiresAt : r.dueDate);
+
+/**
+ * The per-person view of training (G10): each person assigned whose training is overdue, due within `withinDays`
+ * (slice 5), or on a release in force has lapsed or lapses within `withinDays`: who must train, on what, and by when.
+ * Overdue first, then due, then the lapses. A person whose training lapsed is listed once, as the lapse. A member
  * is current until the latest expiry among their current receipts, so a renewal
  * replaces the receipt it renews, and a receipt with no expiry means no lapse. A
  * member has lapsed when they hold no current receipt and their last receipt on
@@ -202,10 +260,35 @@ function releaseExpiry(release: Release, lapsedReceipts: QmsTrainingAcknowledgem
 export async function readQmsTrainingExpiring(
   client: TrainingSqlClient, organizationId: number, withinDays: number, now = new Date(),
 ): Promise<QmsTrainingExpiry[]> {
-  const { releases } = await readCurrentReceipts(client, organizationId, now);
+  return (await readQmsTrainingView(client, organizationId, withinDays, now)).rows;
+}
+
+/** The per-person view and what it could not assess: assigned documents whose released text cannot be read (they give
+ *  no row of any kind), and whether the trainable documents read stopped at their cap (Quality review, 2026-11-10).
+ *  With `forUser`, a reader who sees only their own rows, the unassessed count is of the documents assigned to them. */
+export interface QmsTrainingView { rows: QmsTrainingExpiry[]; unassessed: number; documentsCapped: boolean }
+
+export async function readQmsTrainingView(
+  client: TrainingSqlClient, organizationId: number, withinDays: number, now = new Date(), forUser: number | null = null,
+): Promise<QmsTrainingView> {
+  const { releases, trainable, documentsCapped } = await readCurrentReceipts(client, organizationId, now);
+  const unassessed = releases.filter(r => !r.context.eligible
+    && (forUser === null ? r.coverage.assignees.length > 0 : r.coverage.assignees.some(a => a.userId === forUser))).length;
+  const rows = await personRows(client, organizationId, { withinDays, now }, { releases, trainable });
+  return { rows, unassessed, documentsCapped };
+}
+
+async function personRows(
+  client: TrainingSqlClient, organizationId: number, { withinDays, now }: { withinDays: number; now: Date },
+  { releases, trainable }: { releases: Release[]; trainable: Map<number, { docNumber: string; title: string }> },
+): Promise<QmsTrainingExpiry[]> {
   const lapsedReceipts = await readLapsedReceipts(client, organizationId, releases.map(r => Number(r.document.id)), now);
   const horizon = now.getTime() + withinDays * DAY_MS;
-  const out = releases.flatMap(release => releaseExpiry(release, lapsedReceipts, now, horizon));
+  const lapses = releases.flatMap(release => releaseExpiry(release, lapsedReceipts, now, horizon));
+  const lapsedKeys = new Set(lapses.filter(r => r.lapsed).map(r => `${r.userId}:${r.documentId}:${r.documentVersion}`));
+  const outstanding = (await outstandingTraining(client, organizationId, trainable, now, new Date(horizon).toISOString().slice(0, 10)))
+    .filter(r => !lapsedKeys.has(`${r.userId}:${r.documentId}:${r.documentVersion}`));
+  const out: UnnamedRow[] = [...outstanding, ...lapses];
   if (out.length === 0) return [];
   // Names only for the people listed, and only as this organization's members
   // (every one is: the resolver counts active members only); coverage reads no name.
@@ -216,6 +299,7 @@ export async function readQmsTrainingExpiring(
     [[...new Set(out.map(r => r.userId))], organizationId],
   );
   const names = new Map(named.rows.map(row => [Number(row.id), typeof row.name === 'string' ? row.name : null]));
-  return out.map(r => ({ ...r, userName: names.get(r.userId) ?? null }))
-    .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt) || a.docNumber.localeCompare(b.docNumber));
+  return out.map(r => ({ ...r, userName: names.get(r.userId) ?? null }) as QmsTrainingExpiry)
+    .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || dayOf(a).localeCompare(dayOf(b))
+      || a.docNumber.localeCompare(b.docNumber) || a.userId - b.userId);
 }

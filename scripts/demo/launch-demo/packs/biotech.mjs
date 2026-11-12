@@ -27,15 +27,15 @@
  * biotech-protocol.mjs, biotech-submission.mjs and biotech-qms.mjs. This file
  * owns the program, the Vault, the audit-trail check, and seed/purge.
  */
-import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
+import { connectSigner, ensureSyntheticReviewer, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { ensureAuthoring } from './biotech-authoring.mjs';
-import { INDICATION, MOLECULE, PRODUCT_NAME, PROGRAM_NAME, PROVENANCE, SOPS, CHANGE, T, VAULT_DOCS, findDemoByTitle, inDays } from './biotech-content.mjs';
+import { C2C101_IDENTITY, C2C101_OBJECTIVE, INDICATION, MOLECULE, PRODUCT_NAME, PROGRAM_NAME, PROVENANCE, SOPS, CHANGE, T, VAULT_DOCS, findDemoByTitle, inDays } from './biotech-content.mjs';
 import { ensureProtocol } from './biotech-protocol.mjs';
 import { ensureQms } from './biotech-qms.mjs';
-import { NOT_EXECUTED_NO_SIGNER, asArray, makeTally } from './biotech-shared.mjs';
+import { NOT_EXECUTED_NO_SIGNER, asArray, ensureApplicantIdentity, ensureObjective, makeTally } from './biotech-shared.mjs';
 import { ensureSubmission } from './biotech-submission.mjs';
-import { BIOTECH_CMC, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
-import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { BIOTECH_ADAPTIVE_PLAN, BIOTECH_CMC, C2C201_OBJECTIVE, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
+import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks, ensureAdaptivePlan, ensureDesignTasks } from './work-areas.mjs';
 
 /* ───────────────────────── 1. Projects ───────────────────────── */
 
@@ -90,6 +90,8 @@ function describeProgram(d, row) {
     status: d.status ?? null,
     indication: d.indication ?? INDICATION,
     sponsor: 'Concept2Cure Therapeutics (fictional) — the organisation the founder is signed into',
+    // The client workspace the project is recorded under; null when it has none.
+    clientWorkspaceId: d.client_workspace_id == null ? null : Number(d.client_workspace_id),
   };
 }
 
@@ -126,6 +128,21 @@ async function ensureProgram(ctx, spec = PROGRAMS.mab, recordAs = 'program') {
     return `${created ? 'created' : 'found'} ${row.id} (${program.code ?? '?'})`;
   });
   return program;
+}
+
+/**
+ * The context C2C-201 is created in: C2C-101's own client workspace, when the
+ * run named none. C2C-201 is the same fictional sponsor's programme. Once the
+ * organisation holds a second sponsor (the Lumen pack's, seeded by `--pack all`)
+ * the intake refuses a project that names no client (409
+ * AMBIGUOUS_CLIENT_WORKSPACE), and the pack stopped there: the demo then had no
+ * programme whose Module 3 composes (found 2026-11-10 on a re-seed at head).
+ * A run that named a workspace keeps it; a C2C-101 with no workspace sends none,
+ * as before.
+ */
+export function sameSponsor(ctx, program) {
+  if (ctx.clientWorkspaceId !== undefined || program.clientWorkspaceId == null) return ctx;
+  return { ...ctx, clientWorkspaceId: program.clientWorkspaceId };
 }
 
 /**
@@ -215,6 +232,7 @@ async function ensureVaultDoc(ctx, program, spec) {
     folderId: spec.folderId,
     sectionCode: spec.sectionCode,
     leafTitle: spec.leafTitle,
+    studyId: spec.studyId, stfFileTag: spec.stfFileTag,
     pages,
     bytes: pdf.length,
     sha256: bytesSha,
@@ -291,15 +309,30 @@ export async function seed(ctx) {
   });
   run.record('provenance', PROVENANCE);
   if (!signer) run.note(NOT_EXECUTED_NO_SIGNER);
+  /* With no second signer, a synthetic reviewer completes the documents' review rounds, so an approval is not
+     refused for want of one (P-95; P-122). It signs reviews only: the freeze and approval stay a person's. */
+  const reviewer = signer ? null : await ensureSyntheticReviewer({ api, baseUrl, identity });
+  run.record('identities.reviewer', reviewer
+    ? { email: reviewer.email ?? null, state: reviewer.state, userId: reviewer.userId ?? null, canSign: Boolean(reviewer.password), note: reviewer.note ?? null }
+    : (signer ? 'the second signer reviews' : 'not added'));
 
   const before = await readLedger(api);
-  const c = { api, run, tally, me, signer, clientWorkspaceId: ctx.clientWorkspaceId };
+  const c = { api, run, tally, me, signer, reviewer: reviewer?.api ? reviewer : null, clientWorkspaceId: ctx.clientWorkspaceId };
 
   const program = await ensureProgram(c);
   const vaultDocs = await ensureVault(c, program);
   await ensureAuthoring(c, program);
   const protocol = await ensureProtocol(c, program);
   await ensureStudyDesign(c, program, protocol.id, BIOTECH_STUDY_DESIGN);
+  /* The rest of the Biostatistics work area: the plan its interim looks sit on,
+     and the statistical deliverables the design assessment proposes raised onto
+     the task board. Without these the area listed a design and nothing else
+     (2026-11-09). */
+  await ensureAdaptivePlan(c, BIOTECH_ADAPTIVE_PLAN);
+  await ensureDesignTasks(c, BIOTECH_STUDY_DESIGN.title);
+  // Who files it, so the sequence's package identity is complete ("Download an inspection copy" was refused without).
+  await ensureApplicantIdentity(c, { id: program.id, label: PRODUCT_NAME }, C2C101_IDENTITY);
+  await ensureObjective(c, program, C2C101_OBJECTIVE);
   await ensureSubmission(c, program, vaultDocs);
   await ensureQms(c, program);
   await ensureCmc(c, program, BIOTECH_CMC, 'C2C-101');
@@ -308,7 +341,8 @@ export async function seed(ctx) {
      here so the demo's §3.2 board has content a person can read; C2C-101's
      build is refused by the boundary, which is correct and is the other half
      of what the demo shows. */
-  const smallMolecule = await ensureProgram(c, PROGRAMS.smallMolecule, 'programSmallMolecule');
+  const smallMolecule = await ensureProgram(sameSponsor(c, program), PROGRAMS.smallMolecule, 'programSmallMolecule');
+  await ensureObjective(c, smallMolecule, C2C201_OBJECTIVE);
   await ensureCmc(c, smallMolecule, BIOTECH_SM_CMC, BIOTECH_SM.molecule);
   await ensureModule3Build(c, smallMolecule, BIOTECH_SM.molecule);
   await ensureTasks(c, program, BIOTECH_TASKS, 'C2C-101');

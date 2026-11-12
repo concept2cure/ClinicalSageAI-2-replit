@@ -1,0 +1,22 @@
+# The same pins with the change
+ Test Files  4 passed (4)
+      Tests  53 passed (53)
+
+# AnA's tool governance suites (authorization, launch scope, definitions, plan labels, stated reasons, schemas, inventory, register, catalog)
+ Test Files  19 passed (19)
+      Tests  265 passed (265)
+
+# The eTMF server suites
+ Test Files  11 passed (11)
+      Tests  157 passed (157)
+
+# Typecheck (typecheck-no-regression --incremental)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+# Gates
+ci:sql-interpolation: ok
+ci:unreferenced-modules: ok
+ci:launch-scope-api: ok
+ci:ana-surface-context: ok
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

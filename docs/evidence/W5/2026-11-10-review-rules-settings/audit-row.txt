@@ -1,0 +1,6 @@
+audit_logs, action tenant_settings_changed, organisation 68 (Lumen Bioscience (demo)), newest first
+created_at | reason | reviewers before | self-approval before | reviewers after | self-approval after
+2026-11-10 05:15:47.278635|Restore the defaults after the walk|1|false|1|true
+2026-11-10 05:15:45.652604|Try zero reviewers|2|false|1|false
+2026-11-10 05:15:32.753984|(none: the Codespace start set the idle window)|2|false|2|false
+2026-11-10 05:15:12.785688|Two reviewers per SOP-014; no self-approval|||2|false

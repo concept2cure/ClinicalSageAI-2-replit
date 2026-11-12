@@ -1,0 +1,16 @@
+ FAIL  server/routes/c2c/__tests__/project-vault-one-outline.test.ts [ server/routes/c2c/__tests__/project-vault-one-outline.test.ts ]
+Error: Cannot find module '../../../services/vault/vault-binder-outline' imported from /home/user/ClinicalSageAI-2-replit/server/routes/c2c/__tests__/project-vault-one-outline.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ Test Files  1 failed (1)
+      Tests  no tests
+--- client: the editor door from a binder heading, against Vault.tsx as it stood
+ × client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > a section placed in the binder carries its own filing identity > opens the editor at its filing and section, though no folder above it names the filing 101ms
+ × client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > a section placed in the binder carries its own filing identity > refuses one whose own filing identity is not valid, as a folder's would be 73ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { docType: null, docId: null, …(6) } to match object { …(4) }
+- Expected
++ Received
+AssertionError: expected { docType: null, docId: null, …(6) } to be null
+- Expected:
++ Received:
+      Tests  2 failed | 30 passed (32)

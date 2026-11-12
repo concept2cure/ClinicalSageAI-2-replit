@@ -1,0 +1,27 @@
+$ npx vitest run shared/__tests__/canonical-json.test.ts
+
+ ✓ canonical JSON — golden vectors > agrees with JSON.stringify once keys are already sorted
+ ✓ canonical JSON — the property the hashes depend on > is insensitive to key insertion order
+ ✓ canonical JSON — the property the hashes depend on > is sensitive to array order, which is content and not layout
+ ✓ canonical JSON — the property the hashes depend on > distinguishes an absent key from a null one
+ ✓ canonical JSON — the property the hashes depend on > is sensitive to content, so two different records do not collide
+ ✓ canonical JSON — the property the hashes depend on > exports no hash function, only the serializer
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+
+$ npx vitest run server/services/cmc/__tests__/batch-release-fingerprint.test.ts
+ ✓ no server module hashes through shared/canonical-json > finds the server tree at all, so an empty sweep cannot pass
+ ✓ no server module hashes through shared/canonical-json > imports neither sha256Hex nor stableHash from it
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+
+$ npx eslint shared/canonical-json.ts shared/__tests__/canonical-json.test.ts
+(no output)
+
+$ grep -n '^export function' shared/canonical-json.ts
+65:export function stableStringify(value: unknown): string {
+
+$ grep -rn 'canonical-json' --include=*.ts --include=*.tsx . | grep -v node_modules | grep import | wc -l
+84
+# every one of them imports stableStringify. Nothing imported the two deleted exports.

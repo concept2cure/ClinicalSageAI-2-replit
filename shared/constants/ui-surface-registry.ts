@@ -174,7 +174,14 @@ export const UI_SURFACES: UiSurface[] = [
     // (free tier) but neither of those was refused its own projects. They
     // keep their claims; the gate serves a holder of any claimant, so nobody
     // loses access (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/).
-    apiPrefixes: ['/api/projects', '/api/c2c/projects'],
+    // 2026-11-10 (P-122 §3.2 and §3.5, Plan: R1): "Which projects are at risk this week?" is answered on Projects by
+    // the server's risk engines, so production serves their three reads, each listing only the projects the person
+    // can open: Sentinel's findings (deadline risk, cross-project conflicts; sentinel-routes.ts), and submission-ops'
+    // open blockers and work due within seven days (submission-ops.ts). Claimed narrowly: the rest of /api/sentinel
+    // and /api/submission-ops stays unclaimed. Under these paths the only other routes are the finding and blocker
+    // updates, which refuse a project the person cannot open (the blocker's also keeps its editor gate).
+    apiPrefixes: ['/api/projects', '/api/c2c/projects', '/api/sentinel/findings', '/api/submission-ops/blockers',
+      '/api/submission-ops/due-soon'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -228,8 +235,23 @@ export const UI_SURFACES: UiSurface[] = [
     // 2026-11-09 (S12, P-83/P-109): '/api/project-hierarchy': the project's work projects (ProjectCoreWork.tsx
     // ProjectWorkProjects, GET /:anchor/children?programId=), program-checked and project-admitted before anything is
     // read; project home is the only client caller of the namespace.
+    // 2026-11-10 (P-122 §3.5, Plan: R1): '/api/project-sections/summary' and '/api/project-sections/timeline': the Plan
+    // step's section owners, deadlines and milestones, read by the project's id and admitted by the project sharing
+    // policy before any read (project-sections.ts admitNamedProject). Only the regulatory workspace, outside the
+    // catalog, claimed the namespace, so production refused it. Claimed narrowly: the section writes, milestone writes
+    // and the rest stay unclaimed, and no section route answers to "summary" or "timeline" as a section code.
+    // '/api/concept2cure/submission-milestones': the catalogue of each filing type's milestones the project's task
+    // list is generated from (c2c/tasks.ts; read-only, the same for every organization). Its tasks are under
+    // '/api/concept2cure/projects', already claimed.
+    // 2026-11-10 (P-122, Plan: R1): '/api/project-sections/milestones': the Schedule records a milestone (POST), moves
+    // its date or marks it done (PATCH /:id). The claim is a path, so it also serves the milestone list (GET, read
+    // admitted) and DELETE /:id; every write is admitted as a write on the project (project-sections.ts
+    // admitMilestoneWrite: a role that writes, edit permission, not archived), and no section route answers to
+    // "milestones" as a section code. The section list and section writes stay unclaimed
+    // (tests/db/p122-milestone-writes.dbtest.ts).
     apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
-      '/api/project-hierarchy'],
+      '/api/project-hierarchy', '/api/project-sections/summary', '/api/project-sections/timeline', '/api/project-sections/milestones',
+      '/api/concept2cure/submission-milestones'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -494,7 +516,13 @@ export const UI_SURFACES: UiSurface[] = [
       // the vocabulary listing and its lists, and the spec-version register. Exactly these two,
       // not ectd-publishing's whole /api/ectd: /api/ectd/v4 and the rest of /api/ectd/qualification
       // stay refused at launch (launch-reproof-narrowing.test.ts).
-      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],
+      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions',
+      // P-122 (2026-11-10): the sequence QC (EctdSequenceQc.tsx): what changed against the previous sequence and the
+      // package manifest, with their PDFs. Built and never called (CLAUDE.md Rule 3 names them). Exactly these two,
+      // by a `:param` segment (api-prefix-map.ts): the segment above the id would admit the uncalled dispatch gate
+      // and its persisted snapshot too. The routes admit the sequence's project first
+      // (tests/db/p122-sequence-qc.dbtest.ts).
+      '/api/ind-lifecycle/sequence/:id/diff', '/api/ind-lifecycle/sequence/:id/manifest'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -603,8 +631,21 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',
+      /* 2026-11-12 (P-122 inventory B5, Plan: R1): the ICH Q6A/Q6B specification test sets, read under the
+         specification table (CmSpecReference in surfaces/cmcSpecReference.tsx). Claimed at the one route the
+         screen calls; the rest of '/api/global-ri' stays with the locked Global RI screen, so production still
+         refuses it. The route is a reference with no tenant data: it reads no record, takes a product type and a
+         dosage form, and needs a signed-in author role (server/routes/global-ri/cmc.routes.ts). */
+      '/api/global-ri/cmc/specifications',
       // Deferred UI caller; the route itself refuses when launch scope is on.
       '/api/cmc/variations/classify',
+      /* 2026-11-10 (P-122, Plan: R1): the same deferred assessment records the
+         change it classified (POST, CmcVariationAssessment.tsx). Claimed exactly;
+         its two handlers are org-scoped (403 without an organization), the write
+         is editor-only and refuses a project not the organization's (404), and
+         both refuse themselves 409 while launch scope is on, because they carry
+         post-approval categories P-28 withholds (cmc-changes.routes.ts). */
+      '/api/cmc-changes',
       '/api/cmc/specifications',
       '/api/cmc/batch-records',
       '/api/cmc/module3-board',
@@ -676,6 +717,21 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/ind-lifecycle/annual-report',
       '/api/ind-lifecycle/amendment-plan',
       '/api/ind-lifecycle/amendment',
+      // P-122 (2026-11-10): the registers the IND lifecycle routes keep, shown on this screen
+      // (SubmissionIndRegisters.tsx). Built and never called; each is claimed by a `:param` segment
+      // (api-prefix-map.ts), because the segment above the id would admit the IND safety-report and
+      // ICSR registers beside them, which P-32 keeps shut. The routes admit the submission's project
+      // first (tests/db/p122-ind-registers.dbtest.ts). The cross-reference / LOA register: its list
+      // and recording one, filing the letter beneath it, the LOA-coverage QC, and marking or removing one.
+      '/api/ind-lifecycle/submission/:id/cross-references',
+      '/api/ind-lifecycle/submission/:id/cross-reference-register',
+      '/api/ind-lifecycle/cross-references',
+      // The annual-report tracker (21 CFR 312.33): the tracked reports and tracking one, and the server's overdue
+      // feed beneath it. One report by its id (/annual-reports/:id) has no caller and stays unclaimed.
+      '/api/ind-lifecycle/submission/:id/annual-reports',
+      // The amendment tracker (21 CFR 312.30, 312.31): the tracked amendments and tracking one. One amendment by its
+      // id (/amendments/:id) has no caller and stays unclaimed.
+      '/api/ind-lifecycle/submission/:id/amendments',
     ],
     anaToolFamilies: [],
     sharedContract: null,
@@ -865,30 +921,16 @@ export const UI_SURFACES: UiSurface[] = [
     // The existing design assessment now also reaches stored-run reproduction, shared with protocol statistics.
     // Claim those two namespaces, not the bridge root: filing-placements and unrelated children remain excluded
     // by the launch re-proof (launch-reproof-narrowing.test.ts).
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs'],
+    /* Gained '/api/statistical-defensibility' and '/api/diagnostics-performance'
+       on 2026-11-09, when the `biostat-workbench` surface was retired into this
+       one and its two capabilities became sections here. */
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs', '/api/statistical-defensibility', '/api/diagnostics-performance'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program\'s persisted study designs through the biostatistics bridge: gaps, filing placement per application type, governed sample-size write-back and task raising.',
-  },
-  {
-    id: 'biostat-workbench',
-    label: 'Design calculators',
-    navTier: 'specialist',
-    layoutMode: 'biostatistics',
-    icon: 'sigma',
-    group: 'clinical',
-    uiKit: null,
-    // The diagnostic-accuracy calculators (biostatCalculatorsIvd.ts) are served by the CLSI engines.
-    apiPrefixes: ['/api/statistical-defensibility', '/api/biostat', '/api/diagnostics-performance'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
   },
   // 'rbm-operations' is retired. It was a second, thinner RBM destination
   // holding the write/compute layer (KRI value capture, site-risk recompute,

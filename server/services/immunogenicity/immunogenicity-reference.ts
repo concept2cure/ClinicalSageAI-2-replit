@@ -215,9 +215,9 @@ export function oneOfInput(field: string, value: unknown, allowed: readonly stri
   };
 }
 
-/** "a", "a and b", "a, b and c". */
-export function listed(items: readonly string[]): string {
-  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+/** "a", "a and b", "a, b and c"; with `last` 'or', "a, b or c". */
+export function listed(items: readonly string[], last: 'and' | 'or' = 'and'): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} ${last} ${items[items.length - 1]}`;
 }
 
 /* ── Text and list readers (Rule 2 S5d, 2026-11-09) ───────────────────────────

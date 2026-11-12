@@ -1,0 +1,53 @@
+// Walk 2, flow 6d: company documents on Settings and from Account (own org): save the identity, download, the record.
+const c = require('./lib.cjs');
+const audit = (n = 2) => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(coalesce(old_values::text,''),140), left(new_values::text, 380) from audit_logs where tenant_id=7 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (r.url().includes('/api/client-branding') && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 300); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} -> ${b}`); } });
+  await c.step('company documents: save the identity (no reason, then with one)', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200);
+    await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(4000);
+    const name = page.getByLabel('Company legal name').first(); await name.scrollIntoViewIfNeeded();
+    s.notes.push('fields: ' + JSON.stringify(await page.locator('main section, main .txw-set-card').filter({ hasText: 'Company identity, letterhead & legal documents' }).last().locator('input:visible, textarea:visible, select:visible').evaluateAll(els => els.map(e => `${e.type || e.tagName.toLowerCase()}:${e.getAttribute('aria-label') || e.id || e.name || e.placeholder || ''}${e.disabled ? ' [disabled]' : ''}`))));
+    await name.fill('Walk Two Biologics, Inc.');
+    await page.getByLabel('Company address').first().fill('100 Example Way, Suite 2, Cambridge, MA 02139, USA').catch(() => {});
+    const save = page.getByRole('button', { name: 'Save company documents' });
+    calls.length = 0; s.notes.push('save enabled with no reason: ' + await save.isEnabled());
+    await save.click({ timeout: 2500 }).catch(() => {}); await c.sleep(1200);
+    const card = page.locator('main section, main .txw-set-card').filter({ hasText: 'Company identity, letterhead & legal documents' }).last();
+    s.notes.push('no reason -> requests ' + JSON.stringify(calls) + ' | says: ' + (await card.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 400));
+    await page.getByLabel('Reason for company document change').fill('F1 walk 2: record the company legal name and address for documents');
+    await save.click(); await c.sleep(3500);
+    s.notes.push('with reason -> requests ' + JSON.stringify(calls));
+    s.notes.push('says: ' + (await card.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 500));
+    const t = await c.mainText(page, 60000); s.notes.push('revision line: ' + (t.match(/Revision \d+[^\n]*/) || [''])[0]);
+    s.notes.push('audit:\n' + audit(2));
+    await name.scrollIntoViewIfNeeded(); await c.shot(page, 'w2-62-company-documents-saved.png');
+  });
+  await c.step('company documents: the downloads', async (s) => {
+    for (const label of ['Download saved Word letterhead', 'Download unsaved Word proof']) {
+      const b = page.getByRole('button', { name: label }); await b.scrollIntoViewIfNeeded();
+      const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }).catch(() => null), b.click()]);
+      await c.sleep(1500);
+      if (dl) { const p = `${c.SCRATCH}/walk2/dl-${dl.suggestedFilename()}`; await dl.saveAs(p); s.notes.push(`${label}: ${dl.suggestedFilename()} ${c.fs.statSync(p).size} bytes, starts ${c.fs.readFileSync(p).subarray(0, 2).toString('latin1')}`); }
+      else s.notes.push(`${label}: no file; says: ` + (await page.locator('main [role=status]:visible, main [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(-300));
+    }
+    s.notes.push('audit:\n' + audit(2));
+  });
+  await c.step('company documents from Account (a member)', async (s) => {
+    const m = (await c.pageFor(browser, 'w2member', 'walk2.member2@example.test')).page;
+    await m.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1000);
+    await m.locator('button', { hasText: 'Miles Member' }).first().click(); await c.sleep(500);
+    await m.locator('[role=menu]').getByText('Account', { exact: true }).first().click(); await c.sleep(1500);
+    const d = m.locator('[role=dialog]').first();
+    await d.getByRole('button', { name: 'Open company documents' }).click(); await c.sleep(3500);
+    const t = await d.innerText();
+    s.notes.push('member sees: ' + t.slice(t.indexOf('Company documents')).replace(/\n+/g, ' | ').slice(0, 900));
+    s.notes.push('member controls: ' + JSON.stringify(await d.locator('button:visible, input:visible, textarea:visible').evaluateAll(els => els.map(e => `${e.tagName.toLowerCase()}:${(e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 40)}${e.disabled || e.readOnly ? ' [locked]' : ''}`).filter(x => /company|save|reason|download|legal|address/i.test(x)))));
+    await d.getByText('Company legal name').first().scrollIntoViewIfNeeded().catch(() => {});
+    await c.shot(m, 'w2-62-company-documents-member-account.png');
+  });
+  c.report(); c.save('w2-28-company-docs');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

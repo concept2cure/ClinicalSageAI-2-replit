@@ -1,0 +1,69 @@
+desktop: signed in, organisation 7
+desktop: chain-integrity 200 {"s":"intact","total":3,"verified":3,"broken":0}
+desktop: header: Audit trail | Admin — compliance | Audit trail | 159 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e) | Hash chain | Compliance reports | Export signed bundle | Hash chain intact | Hash chain verifies intact over 156 chained entries verified server-side (156 sequenced, 0 legacy) — SHA-256 — append-only ledger | HEAD f310e517971785007ab35fbf70590188a2103bdfec567a8a333aad74ad616d96 | Audit-event chain intact | 3 chained entries re-computed on the server — SHA-256 | A second chain, kept per organisation, that some services write to instead of the ledger | HEAD 280efd426535f43aa1bc79dc… | All | 159 | E-sign | 0 | Authoring | 7 | Review | 0 | Submission | 0 | Vault | 0 | Validation | 1 | Admin | 151 | ID | When | Actor | Event | Target | Sig | AUD-9b6c
+export contains sessionTimeoutMinutes: 30 times
+export contains "before": 0 times
+export contains requirePdfA: 2 times
+export contains seatsPurchased: 8 times
+export contains change_summary: 159 times
+export contains target_name: 159 times
+after export: chain-integrity {"s":"intact","total":4,"verified":4,"broken":0}
+after export banner: Audit-event chain intact | 4 chained entries re-computed on the server — SHA-256
+shot audit-trail-desktop-chain-intact.png
+desktop: search "Idle sign-out": 6 rows
+desktop: detail: AUD-3014b56f-3daf-4ebc-91b0-1cc893f46725 — Entry detail | Event | Organisation settings changed: idle sign-out (minutes) from 16 to 15 | Actor | Wanda Walkeruser:5 | Timestamp | 2026-11-10 06:52 | Target | Organisation settings | Record | organization_settings:7 | Kind | admin | Origin IP | 127.0.0.1 | Reason for change | F1 walk 2: restore the platform defaults after the enforcement check | Entry hash | SHA-256: <hash> | Previous hash | f803ddf58b006aa7ef2f6e7522d9d0c86f3976668c31c38aca7284012e89f000
+shot audit-trail-walk2-desktop-settings-change.png
+desktop: search "PDF/A": 2 rows; first: AUD-9eafbfd2-0763-49c9-ac48-2c66903bda9d | 2026-11-10 07:23 | Wanda Walkeruser:5 | Organisation settings changed: the values before and after were not recorded for: PDF/A required. | Organisation settings | --
+desktop: search "API key revoked": 1 rows; first: AUD-a5db2103-8f32-4df4-91e8-9287f249509e | 2026-11-10 06:46 | Wanda Walkeruser:5 | API key revoked. No reason was recorded. | API key | --
+desktop: search "Purchased seats": 3 rows; first: AUD-49c4030b-32be-4786-9eb1-f5d2225c12cd | 2026-11-10 07:16 | Wanda Walkeruser:5 | Purchased seats changed: purchased seats from 50 to 5 | Purchased seats | --
+desktop: search "Client type": 6 rows; first: AUD-78858340-fdf9-4741-8455-a4f1c177fd86 | 2026-11-10 12:34 | Wanda Walkeruser:5 | Organisation profile changed: client type from Pharma to Biotech | Organisation profile | --
+phone: signed in, organisation 7
+phone: chain-integrity 200 {"s":"intact","total":4,"verified":4,"broken":0}
+phone: header: Audit trail | Admin — compliance | Audit trail | 162 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e) | Hash chain | Compliance reports | Export signed bundle | Hash chain intact | Hash chain verifies intact over 158 chained entries verified server-side (158 sequenced, 0 legacy) — SHA-256 — append-only ledger | HEAD 279f6452449e5674b9343875eb94cbcb194fa08956c23bd89244c8f95c3a3124 | Audit-event chain intact | 4 chained entries re-computed on the server — SHA-256 | A second chain, kept per organisation, that some services write to instead of the ledger | HEAD 06451fbe074a3810f28b4afd… | All | 162 | E-sign | 0 | Authoring | 7 | Review | 0 | Submission | 0 | Vault | 0 | Validation | 1 | Admin | 154 | ID | When | Actor | Event | Target | Sig | AUD-5745
+phone: search "Idle sign-out": 6 rows
+phone: detail: AUD-3014b56f-3daf-4ebc-91b0-1cc893f46725 — Entry detail | Event | Organisation settings changed: idle sign-out (minutes) from 16 to 15 | Actor | Wanda Walkeruser:5 | Timestamp | 2026-11-10 06:52 | Target | Organisation settings | Record | organization_settings:7 | Kind | admin | Origin IP | 127.0.0.1 | Reason for change | F1 walk 2: restore the platform defaults after the enforcement check | Entry hash | SHA-256: <hash> | Previous hash | f803ddf58b006aa7ef2f6e7522d9d0c86f3976668c31c38aca7284012e89f000
+shot audit-trail-walk2-phone-settings-change.png
+phone: search "PDF/A": 2 rows; first: AUD-9eafbfd2-0763-49c9-ac48-2c66903bda9d | 2026-11-10 07:23 | Wanda Walkeruser:5 | Organisation settings changed: the values before and after were not recorded for: PDF/A required. | Organisation settings | --
+phone: search "API key revoked": 1 rows; first: AUD-a5db2103-8f32-4df4-91e8-9287f249509e | 2026-11-10 06:46 | Wanda Walkeruser:5 | API key revoked. No reason was recorded. | API key | --
+phone: search "Purchased seats": 3 rows; first: AUD-49c4030b-32be-4786-9eb1-f5d2225c12cd | 2026-11-10 07:16 | Wanda Walkeruser:5 | Purchased seats changed: purchased seats from 50 to 5 | Purchased seats | --
+phone: search "Client type": 6 rows; first: AUD-78858340-fdf9-4741-8455-a4f1c177fd86 | 2026-11-10 12:34 | Wanda Walkeruser:5 | Organisation profile changed: client type from Pharma to Biotech | Organisation profile | --
+--- second desktop pass: one more signed export, the bundle searched with its escaping ---
+desktop: signed in, organisation 7
+desktop: chain-integrity 200 {"s":"intact","total":4,"verified":4,"broken":0}
+desktop: header: Audit trail | Admin — compliance | Audit trail | 164 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e) | Hash chain | Compliance reports | Export signed bundle | Hash chain intact | Hash chain verifies intact over 160 chained entries verified server-side (160 sequenced, 0 legacy) — SHA-256 — append-only ledger | HEAD 710768970b6d7dbdfdc66aa3414b66b64e22ed5019dcc77dc209b2e9dc3eaa3c | Audit-event chain intact | 4 chained entries re-computed on the server — SHA-256 | A second chain, kept per organisation, that some services write to instead of the ledger | HEAD 06451fbe074a3810f28b4afd… | All | 164 | E-sign | 0 | Authoring | 7 | Review | 0 | Submission | 0 | Vault | 0 | Validation | 1 | Admin | 156 | ID | When | Actor | Event | Target | Sig | AUD-f430
+export contains sessionTimeoutMinutes: 30 times
+export contains \"before\": 58 times
+export contains requirePdfA: 2 times
+export contains seatsPurchased: 8 times
+export contains change_summary: 164 times
+export contains target_name: 164 times
+after export: chain-integrity {"s":"intact","total":5,"verified":5,"broken":0}
+after export banner: Audit-event chain intact | 5 chained entries re-computed on the server — SHA-256
+shot audit-trail-desktop-chain-intact.png
+desktop: search "Idle sign-out": 6 rows
+desktop: detail: AUD-3014b56f-3daf-4ebc-91b0-1cc893f46725 — Entry detail | Event | Organisation settings changed: idle sign-out (minutes) from 16 to 15 | Actor | Wanda Walkeruser:5 | Timestamp | 2026-11-10 06:52 | Target | Organisation settings | Record | organization_settings:7 | Kind | admin | Origin IP | 127.0.0.1 | Reason for change | F1 walk 2: restore the platform defaults after the enforcement check | Entry hash | SHA-256: <hash> | Previous hash | f803ddf58b006aa7ef2f6e7522d9d0c86f3976668c31c38aca7284012e89f000
+shot audit-trail-walk2-desktop-settings-change.png
+desktop: search "PDF/A": 2 rows; first: AUD-9eafbfd2-0763-49c9-ac48-2c66903bda9d | 2026-11-10 07:23 | Wanda Walkeruser:5 | Organisation settings changed: the values before and after were not recorded for: PDF/A required. | Organisation settings | --
+desktop: search "API key revoked": 1 rows; first: AUD-a5db2103-8f32-4df4-91e8-9287f249509e | 2026-11-10 06:46 | Wanda Walkeruser:5 | API key revoked. No reason was recorded. | API key | --
+desktop: search "Purchased seats": 3 rows; first: AUD-49c4030b-32be-4786-9eb1-f5d2225c12cd | 2026-11-10 07:16 | Wanda Walkeruser:5 | Purchased seats changed: purchased seats from 50 to 5 | Purchased seats | --
+desktop: search "Client type": 6 rows; first: AUD-78858340-fdf9-4741-8455-a4f1c177fd86 | 2026-11-10 12:34 | Wanda Walkeruser:5 | Organisation profile changed: client type from Pharma to Biotech | Organisation profile | --
+--- third desktop pass, after the export row is named in words ---
+desktop: signed in, organisation 7
+desktop: chain-integrity 200 {"s":"intact","total":5,"verified":5,"broken":0}
+desktop: header: Audit trail | Admin — compliance | Audit trail | 169 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e) | Hash chain | Compliance reports | Export signed bundle | Hash chain intact | Hash chain verifies intact over 164 chained entries verified server-side (164 sequenced, 0 legacy) — SHA-256 — append-only ledger | HEAD 1b91f70b1e61e30c1fa3a2962b914d137124dc95c49974acc5a90dd8a22c1fcf | Audit-event chain intact | 5 chained entries re-computed on the server — SHA-256 | A second chain, kept per organisation, that some services write to instead of the ledger | HEAD 65c6c82ed81cd61cf6b4976c… | All | 169 | E-sign | 0 | Authoring | 7 | Review | 0 | Submission | 0 | Vault | 0 | Validation | 1 | Admin | 161 | ID | When | Actor | Event | Target | Sig | AUD-e8d3
+export contains sessionTimeoutMinutes: 30 times
+export contains \"before\": 58 times
+export contains requirePdfA: 2 times
+export contains seatsPurchased: 8 times
+export contains change_summary: 169 times
+export contains target_name: 169 times
+after export: chain-integrity {"s":"intact","total":6,"verified":6,"broken":0}
+after export banner: Audit-event chain intact | 6 chained entries re-computed on the server — SHA-256
+shot audit-trail-desktop-chain-intact.png
+desktop: search "Idle sign-out": 6 rows
+desktop: detail: AUD-3014b56f-3daf-4ebc-91b0-1cc893f46725 — Entry detail | Event | Organisation settings changed: idle sign-out (minutes) from 16 to 15 | Actor | Wanda Walkeruser:5 | Timestamp | 2026-11-10 06:52 | Target | Organisation settings | Record | organization_settings:7 | Kind | admin | Origin IP | 127.0.0.1 | Reason for change | F1 walk 2: restore the platform defaults after the enforcement check | Entry hash | SHA-256: <hash> | Previous hash | f803ddf58b006aa7ef2f6e7522d9d0c86f3976668c31c38aca7284012e89f000
+shot audit-trail-walk2-desktop-settings-change.png
+desktop: search "PDF/A": 2 rows; first: AUD-9eafbfd2-0763-49c9-ac48-2c66903bda9d | 2026-11-10 07:23 | Wanda Walkeruser:5 | Organisation settings changed: the values before and after were not recorded for: PDF/A required. | Organisation settings | --
+desktop: search "API key revoked": 1 rows; first: AUD-a5db2103-8f32-4df4-91e8-9287f249509e | 2026-11-10 06:46 | Wanda Walkeruser:5 | API key revoked. No reason was recorded. | API key | --
+desktop: search "Purchased seats": 3 rows; first: AUD-49c4030b-32be-4786-9eb1-f5d2225c12cd | 2026-11-10 07:16 | Wanda Walkeruser:5 | Purchased seats changed: purchased seats from 50 to 5 | Purchased seats | --
+desktop: search "Client type": 6 rows; first: AUD-78858340-fdf9-4741-8455-a4f1c177fd86 | 2026-11-10 12:34 | Wanda Walkeruser:5 | Organisation profile changed: client type from Pharma to Biotech | Organisation profile | --

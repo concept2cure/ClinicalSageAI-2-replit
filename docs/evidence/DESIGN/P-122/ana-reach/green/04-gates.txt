@@ -1,0 +1,40 @@
+# GREEN — the gates, on the final working tree (acdeb9739 plus the study-design re-file).
+# 2026-11-12T00:53:25Z
+
+$ npm run -s ci:launch-scope-api
+ci:launch-scope-api: 666 API paths named by launch and shell screens; none refused. {"launch":608,"infrastructure":9,"never-gated":49}
+exit 0
+
+$ npm run -s ci:sql-interpolation
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1045 baselined interpolation(s) in 221 file(s); the baseline may only shrink.
+exit 0
+
+$ npm run -s ci:step-presentation
+ci:step-presentation OK — 676 in-scope tools each have a present entry (683 entries in all); 139 engine claims, none with a reachable model call.
+exit 0
+
+$ npm run -s ci:launch-scope
+[ci:launch-scope] 9 apps · 43 surfaces · 12 modules · 32 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit 0
+
+$ npm run -s audit:repo-health:ceiling
+
+✅ repo health strict gate passed.
+exit 0
+
+$ ESLint warnings and errors per changed file: before this work (1ac0b70fb) -> now
+server/services/ha-interactions/ha-service.ts: 2 -> 2  no change
+server/routes/ha-interactions.ts: 0 -> 0  no change
+server/services/ana/AnaToolExecutor.ts: 93 -> 93  no change
+server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts: new -> 0  no change
+server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts: new -> 0  no change
+server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts: new -> 0  no change
+server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts: new -> 0  no change
+server/services/ana/__tests__/ana-launch-scope-execution.test.ts: 0 -> 0  no change
+server/services/ana-ri/__tests__/command-rbac.test.ts: 0 -> 0  no change
+
+$ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck-no-regression/tsconfig.tsbuildinfo
+(run 2026-11-12T00:43Z to 00:49Z on the same tree, 6m02s) no output: 0 errors
+exit 0

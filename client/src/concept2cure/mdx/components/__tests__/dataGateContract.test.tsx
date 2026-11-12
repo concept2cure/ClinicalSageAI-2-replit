@@ -172,6 +172,35 @@ describe('DataGate — one announcement per state', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
   });
 
+  /* GA-DEMO-07 (2026-11-10): a browser or server network failure arrives as its
+     runtime's own words ("Failed to fetch", "fetch failed", "Load failed",
+     "NetworkError when attempting to fetch resource."). None is a sentence for
+     a person, and the internals filter does not know them. */
+  it.each(['Failed to fetch', 'fetch failed', 'TypeError: fetch failed', 'Load failed',
+    'NetworkError when attempting to fetch resource.'])(
+    'a network failure (%j) is said in words, not in the runtime\'s', (raw) => {
+      render(
+        <DataGate state={{ status: 'error', message: raw }} label="eSTAR sections" onRetry={() => {}}>
+          {child}
+        </DataGate>,
+      );
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).not.toContain(raw);
+      expect(alert.textContent).toMatch(/could not be reached/);
+      expect(alert.textContent).toContain('Could not load eSTAR sections');
+    },
+  );
+
+  it('a server sentence that is not a network failure is still shown', () => {
+    // Over-correction guard.
+    render(
+      <DataGate state={{ status: 'error', message: 'This submission has no sequence yet.' }} label="eSTAR sections">
+        {child}
+      </DataGate>,
+    );
+    expect(screen.getByRole('alert').textContent).toContain('This submission has no sequence yet.');
+  });
+
   it('loading is a polite status that says it is busy', () => {
     render(
       <DataGate state={{ status: 'loading' }} label="UDI records">

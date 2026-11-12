@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 29,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "contradictions": [
+        {
+          "contradictionType": "batch_rejected",
+          "severity": "critical",
+          "details": "At least one batch is rejected while Module 3 composition may include releasable assertions.",
+          "impactedSections": [
+            "3.2.P.3",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "QA/Release",
+            "MSAT/Process Engineer"
+          ]
+        }
+      ],
+      "sweep": {
+        "inserted": 0,
+        "kept": 0,
+        "keptResolved": 1,
+        "cleared": 1
+      },
+      "examined": {
+        "specifications": 2,
+        "methods": 1,
+        "stability": 2,
+        "batches": 2,
+        "comparability": 0
+      },
+      "impactTasks": [
+        {
+          "title": "Resolve batch_rejected",
+          "impactedSections": [
+            "3.2.P.3",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "QA/Release",
+            "MSAT/Process Engineer"
+          ],
+          "priority": "P0"
+        }
+      ],
+      "tasks": {
+        "created": 0,
+        "existing": 1
+      }
+    }
+  }
+}

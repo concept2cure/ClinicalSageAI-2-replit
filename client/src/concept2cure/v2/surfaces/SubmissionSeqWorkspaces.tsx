@@ -177,13 +177,19 @@ function messageFromBody(p: unknown, status: number): string {
   return serverMessage(p) ?? `The server did not accept that (HTTP ${status}).`;
 }
 
+/** The request, with extra headers only when there are some (a Prefer, for one). */
+function sendWith(method: 'POST' | 'PUT' | 'DELETE' | 'PATCH', path: string, body: unknown, headers?: Record<string, string>) {
+  return headers ? apiRequest(method, path, body, headers) : apiRequest(method, path, body);
+}
+
 export async function mutateVerbatim<T>(
   method: 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   path: string,
   body?: unknown,
+  headers?: Record<string, string>,
 ): Promise<MutateResult<T>> {
   try {
-    const res = await apiRequest(method, path, body);
+    const res = await sendWith(method, path, body, headers);
     if (!res.ok) {
       const p = (await res.json().catch(() => null)) as unknown;
       const code = mutationCode(p);

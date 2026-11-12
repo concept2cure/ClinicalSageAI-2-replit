@@ -1,0 +1,89 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 66,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "contradictions": [
+        {
+          "contradictionType": "batch_rejected",
+          "severity": "critical",
+          "details": "At least one batch is rejected while Module 3 composition may include releasable assertions.",
+          "impactedSections": [
+            "3.2.P.3",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "QA/Release",
+            "MSAT/Process Engineer"
+          ]
+        },
+        {
+          "contradictionType": "method_validation_gap",
+          "severity": "high",
+          "details": "1 analytical method(s) lack validated status: RP-HPLC Assay. Specifications reference these methods.",
+          "impactedSections": [
+            "3.2.S.4",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "Analytical Lead",
+            "Method Validation Scientist"
+          ]
+        }
+      ],
+      "sweep": {
+        "inserted": 2,
+        "kept": 0,
+        "keptResolved": 0,
+        "cleared": 0
+      },
+      "examined": {
+        "specifications": 2,
+        "methods": 1,
+        "stability": 2,
+        "batches": 2,
+        "comparability": 0
+      },
+      "impactTasks": [
+        {
+          "title": "Resolve batch_rejected",
+          "impactedSections": [
+            "3.2.P.3",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "QA/Release",
+            "MSAT/Process Engineer"
+          ],
+          "priority": "P0"
+        },
+        {
+          "title": "Resolve method_validation_gap",
+          "impactedSections": [
+            "3.2.S.4",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "Analytical Lead",
+            "Method Validation Scientist"
+          ],
+          "priority": "P1"
+        }
+      ],
+      "tasks": {
+        "created": 2,
+        "existing": 0
+      }
+    }
+  }
+}

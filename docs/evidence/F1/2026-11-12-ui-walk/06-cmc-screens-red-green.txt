@@ -1,0 +1,32 @@
+CMC client tests, red first, on the screens as they stood.
+
+cmcRegisterForms.test.ts, the proposed shelf life:
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > stability studies — stability_studies > the proposed shelf life > is offered at registration, and is not required: a study is registered before its da
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > stability studies — stability_studies > the proposed shelf life > is sent with the registration when given, and left out when blank 2ms
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > stability studies — stability_studies > the proposed shelf life > can be set on a running study by an ordinary edit, with what is recorded now as the 
+   → stabilityShelfLifeForm is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: stabilityShelfLifeForm is not a function
+      Tests  3 failed | 96 skipped (99)
+
+cmcBatchMapping.test.ts, the signed disposition:
+ × client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > the signed disposition > release_status rejected over status in-progress reads rejected 4ms
+ × client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > the signed disposition > release_status released over status completed reads released 1ms
+ × client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > the signed disposition > release_status conditional over status in-progress reads conditional 1ms
+ × client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > the signed disposition > the release answer is read where the route puts it, and not at all when it carries no batch 1ms
+ × client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > the signed disposition > says the decision in the words a person signed 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 10 passed (15)
+
+cmcPlacementVerdict.test.ts:
+ × client/src/concept2cure/v2/__tests__/cmcPlacementVerdict.test.ts > placementWords > a first placement: every section placed 3ms
+ × client/src/concept2cure/v2/__tests__/cmcPlacementVerdict.test.ts > placementWords > a repeat with nothing changed: already placed, nothing written 1ms
+ × client/src/concept2cure/v2/__tests__/cmcPlacementVerdict.test.ts > placementWords > a repeat after a change: the changed section is filed again, the rest are unchanged 0ms
+ × client/src/concept2cure/v2/__tests__/cmcPlacementVerdict.test.ts > placementWords > new sections beside unchanged ones, and what was skipped 0ms
+ × client/src/concept2cure/v2/__tests__/cmcPlacementVerdict.test.ts > the last placement of a project stays on screen across a remount > is recalled for the same project and sequence only, and forgotten when the target 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed (5)
+
+After the repairs, every CMC client suite (32 files):
+ Test Files  32 passed (32)
+      Tests  396 passed (396)

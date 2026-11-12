@@ -1,0 +1,22 @@
+{
+ "device-510k": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 390,
+  "wide": []
+ },
+ "device-pma": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 390,
+  "wide": []
+ },
+ "device-cer": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 390,
+  "wide": []
+ },
+ "device-diagnostics": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 390,
+  "wide": []
+ }
+}

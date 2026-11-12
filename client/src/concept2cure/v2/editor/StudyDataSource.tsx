@@ -84,6 +84,25 @@ async function request(method: 'GET' | 'POST', path: string, body?: unknown): Pr
   return result.body;
 }
 
+/**
+ * The SHA-256 of each current data-room capture this project uses ("Use in this project", S2). A Vault file with
+ * the same bytes is that capture, filed: the chooser lists it first. A failed read only loses that ordering.
+ */
+async function usedCaptureChecksums(programId: string): Promise<Set<string>> {
+  type Used = { checksum?: unknown; isCurrent?: unknown } | null;
+  const result = await apiCall<{ evidence?: Array<{ evidence_kind?: string; data_room?: Used; vault?: Used }> }>(
+    'GET', `/api/c2c/projects/${encodeURIComponent(programId)}/evidence`);
+  const rows = result.ok && Array.isArray(result.body?.evidence) ? result.body.evidence : [];
+  /* A capture the project uses, or a Vault document it uses from the catalog (2026-11-11): either names its bytes. */
+  const used = rows.map(r => (r.evidence_kind === 'data_room' ? r.data_room : r.evidence_kind === 'vault_doc' ? r.vault : null));
+  return new Set(used.filter(u => u && u.isCurrent !== false && sha(u.checksum)).map(u => String(u?.checksum)));
+}
+
+/** The project's used captures first, each list otherwise in the server's order. */
+export function usedFirst<T extends { sha256: string }>(list: T[], used: ReadonlySet<string>): T[] {
+  return [...list.filter(s => used.has(s.sha256)), ...list.filter(s => !used.has(s.sha256))];
+}
+
 /** Frozen clinical tables, checked whole: a document's study data or an earlier package run's, by the same id. */
 export async function readSavedClinicalTables(programId: string, runId: string): Promise<SavedTables> {
   const value = await request('GET', `${RUNS}/${encodeURIComponent(runId)}/clinical-tables?programId=${encodeURIComponent(programId)}`);
@@ -140,6 +159,12 @@ export function StudyDataSource({ programId, documentId, onFrozen, onNav }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [contract, setContract] = useState<unknown>(null);
+  const [used, setUsed] = useState<ReadonlySet<string>>(() => new Set());
+  useEffect(() => {
+    let live = true;
+    void usedCaptureChecksums(programId).then(found => { if (live) setUsed(found); }, () => undefined);
+    return () => { live = false; };
+  }, [programId, refresh]);
   useEffect(() => {
     let live = true;
     setSources(null); setSourcesError(null); setChoiceId(''); setPreview(null); setError(null);
@@ -194,7 +219,7 @@ export function StudyDataSource({ programId, documentId, onFrozen, onNav }: {
       <button type="button" className="btn ghost" disabled={busy} onClick={() => setRefresh(value => value + 1)}>Reload clinical sources</button>
     </div>
     {contract !== null && <details open><summary>Clinical source format</summary><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 350, overflow: 'auto' }}>{JSON.stringify(contract, null, 2)}</pre></details>}
-    <SourcePicker sources={sources} sourcesError={sourcesError} busy={busy} choiceId={choiceId} choose={choose} />
+    <SourcePicker sources={sources} sourcesError={sourcesError} busy={busy} choiceId={choiceId} choose={choose} used={used} />
     {choice && <button type="button" className="btn ghost" disabled={busy} onClick={() => void previewTables()}>{busy && !preview ? 'Preparing tables…' : 'Preview clinical tables'}</button>}
     {error && <p role="alert">{error}</p>}
     {preview && <SourcePreview preview={preview} busy={busy} freeze={() => void freeze()} />}
@@ -216,9 +241,9 @@ function SourceListNotes({ sources }: { sources: SourceList }) {
   </>;
 }
 
-function SourcePicker({ sources, sourcesError, busy, choiceId, choose }: {
+function SourcePicker({ sources, sourcesError, busy, choiceId, choose, used }: {
   sources: SourceList | null; sourcesError: string | null; busy: boolean;
-  choiceId: string; choose: (id: string) => void;
+  choiceId: string; choose: (id: string) => void; used: ReadonlySet<string>;
 }) {
   if (sourcesError) return <p role="alert">{sourcesError}</p>;
   if (!sources) return <p role="status">Listing the project’s clinical sources…</p>;
@@ -230,7 +255,7 @@ function SourcePicker({ sources, sourcesError, busy, choiceId, choose }: {
     <label>Clinical source{' '}
       <select className="c2c-input" aria-label="Clinical source" disabled={busy} value={choiceId} onChange={event => choose(event.target.value)}>
         <option value="">Choose a source</option>
-        {sources.list.map(source => <option key={source.documentId} value={source.documentId}>{source.documentTitle} · v{source.version} · {source.approved ? 'approved' : 'not approved'}</option>)}
+        {usedFirst(sources.list, used).map(source => <option key={source.documentId} value={source.documentId}>{source.documentTitle} · v{source.version} · {source.approved ? 'approved' : 'not approved'}{used.has(source.sha256) ? ' · used in this project' : ''}</option>)}
       </select></label>
     <SourceListNotes sources={sources} />
   </>;

@@ -123,6 +123,8 @@ describe('POST /api/c2c/documents/:id/lock — the high-risk gate', () => {
     const res = await lock({});
     expect(res.status, 'a document was locked on the session alone').toBe(401);
     expect(res.body.error).toBe('REAUTH_PASSWORD_REQUIRED');
+    // The sentence the signer reads, beside the code (2026-11-12): the code alone was shown as "HTTP 401".
+    expect(res.body.message).toBe('Enter your password to sign. Nothing was signed.');
     expect(h.writeMutation).not.toHaveBeenCalled();
     expect(lockedIt()).toBe(false);
   });
@@ -131,6 +133,7 @@ describe('POST /api/c2c/documents/:id/lock — the high-risk gate', () => {
     const res = await lock({ reauth: { password: 'wrong' } });
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('REAUTH_PASSWORD_INVALID');
+    expect(res.body.message).toBe('The password was not accepted. Nothing was signed.');
     expect(h.failures).toHaveBeenCalledWith(SIGNER);
     expect(h.writeMutation).not.toHaveBeenCalled();
   });

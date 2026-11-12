@@ -141,6 +141,22 @@ export interface EstarResult {
   };
 }
 
+/**
+ * A section's category or key as the `documentType` token the matchers below
+ * compare ('device_description', 'labeling', …): trimmed, lower-cased, each run
+ * of spaces, hyphens and slashes folded to one underscore.
+ *
+ * In one place so that a leaf built from an authored section
+ * (estar-content-leaves) and a leaf built from an outline section
+ * (estar-outline-requirements) carry the same token, and a section cannot be
+ * required by one reader and uncounted by the other.
+ */
+export function leafDocumentType(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  const t = raw.trim().toLowerCase().replace(/[\s\-/]+/g, '_');
+  return t.length > 0 ? t : undefined;
+}
+
 type Matcher = (l: EstarInputLeaf) => boolean;
 const dt = (...t: string[]): Matcher => (l) => !!l.documentType && t.includes(l.documentType);
 const ti = (...n: string[]): Matcher => (l) => n.some((x) => l.title.toLowerCase().includes(x));
@@ -336,8 +352,24 @@ const baseSlots: SlotDef[] = [
     any(dt('class_iii_certification'), ti('class iii summary', 'class iii certification'))),
 ];
 
+/*
+ * Risk management in a 510(k), per FDA's template and not per habit (P-107, P-123, 2026-11-10).
+ *
+ * This slot was `always` for every 510(k). FDA's eSTAR shows "Benefits, Risks, and Mitigation Measures" for a
+ * Special 510(k), a De Novo and a PMA, and hides it for a Traditional or Abbreviated 510(k)
+ * (migrations/20261005c_k510_denovo_estar_outline_v1_1.sql, which made the outline's D6 optional for that reason
+ * and named this mapper as the side to correct). The product does not record which kind of 510(k) a project is, so
+ * the honest answer is `when-applicable`, with the property that decides it: reported for a person to confirm,
+ * never scored as missing on a Traditional 510(k) and never called simply optional on a Special one. A De Novo
+ * keeps it required.
+ */
+const RISK_510K = whenApplicable('risk-management', 'Risk management file',
+  'ISO 14971; FDA eSTAR "Benefits, Risks, and Mitigation Measures"',
+  'the submission is a Special 510(k) (FDA\'s eSTAR asks for this section in a Special 510(k) and hides it in a Traditional or Abbreviated one)',
+  any(dt('risk_management', 'risk_analysis'), ti('risk management', 'risk analysis', '14971')));
+
 const SLOTS_510K: SlotDef[] = [
-  ...baseSlots,
+  ...baseSlots.map((s) => (s.id === 'risk-management' ? RISK_510K : s)),
   always('510k-summary-or-statement', '510(k) Summary or 510(k) Statement',
     '21 CFR 807.92 (summary) or 807.93 (statement) — one or the other is mandatory',
     any(dt('510k_summary', '510k_statement'), ti('510(k) summary', '510k summary', '510(k) statement'))),

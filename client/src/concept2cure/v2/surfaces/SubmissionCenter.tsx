@@ -40,6 +40,7 @@
  * real regulatory reference config, not sample data.
  */
 import React from 'react';
+import { PATHWAYS } from '@shared/types/submission-constants';
 import { useAuthUser } from '@/services/portal/authService';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
@@ -50,7 +51,7 @@ import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyS
 import { EsignModal, type EsignModalProps } from '../../_shared/components/EsignModal';
 import { FiledBaselineSlot, nextAfterFiled, numberingKnown, useFiledBaseline, type FiledBaselineView } from './FiledElsewhereBaseline';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
-import { isUsInd, notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
+import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
@@ -87,11 +88,12 @@ import {
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
 import { NewSubmissionForm } from './NewSubmissionForm';
+import { SubmissionCenterDoors } from './SubmissionCenterDoors';
 import { gatewayLabel, heldSendDay } from '../gatewayLabels';
 import { dispatchWords } from './CommitmentRow';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
-import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../navParams';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { ceremonyOpen } from '../ceremony';
 import { readSubmissionNavTarget, useOpenOnNavTarget, type SubmissionNavTarget } from './submissionNavTarget';
 import { TrackedFilingDetail } from './TrackedFilingDetail';
@@ -200,6 +202,11 @@ interface RegionProfile {
  * An ABSENT `requiredFor` means "every application type", per the server's own
  * contract — so it is kept, not dropped.
  */
+/** A filing pathway in words ("eCTD v3.2.2"), from the product's one list of them; a pathway it has no name for is
+ * shown as recorded, never as blank. The Planner printed the stored codes, "ectd_v322 · ectd_v40 · estar"
+ * (showcase walk, 2026-11-10). */
+const pathwayName = (code: string): string => PATHWAYS.find((p) => p.value === code)?.label ?? code;
+
 function requiredModule1For(
   sections: RegionProfileSection[],
   applicationType: string | null | undefined,
@@ -1517,31 +1524,8 @@ export function SubmissionCenter({
           <p className="ph-sub" data-testid="sc-state">{headSub}</p>
         </div>
         <div className="ph-acts">
-          {/* P-32: the IND forms and letters are a feature of this app, reached from the US IND they are filed in.
-              The IND screen reads { submissionId } once on mount and opens that submission's checklist. */}
-          {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
-            <button
-              type="button"
-              className="btn ghost"
-              title="Form FDA 1571, the cover letter and the Letter of Authorization for this IND, on the IND screen"
-              onClick={() => {
-                stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
-                onNav('ind-checklist');
-              }}
-            >
-              Forms and letters
-            </button>
-          )}
-          {/* The compile screen, opened on the working sequence (FILING_SPINE.md F14). */}
-          {seq && onNav && available('ectd-compile') && (
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
-            >
-              Compile &amp; export
-            </button>
-          )}
+          {/* Forms and letters, Compile & export, Submission readiness and Gateway transmittals (P-122). */}
+          <SubmissionCenterDoors sub={sub ?? null} seq={seq ?? null} onNav={onNav} />
           <button
             type="button"
             className="btn primary"
@@ -1831,7 +1815,7 @@ export function SubmissionCenter({
                     <div className="tl-spec-row">
                       <span className="tl-spec-k">Pathways</span>
                       <span className="tl-spec-v">
-                        {profile.data.pathways?.length ? profile.data.pathways.join(' · ') : '—'}
+                        {profile.data.pathways?.length ? profile.data.pathways.map(pathwayName).join(' · ') : '—'}
                       </span>
                     </div>
                     <div className="tl-spec-row">

@@ -589,7 +589,7 @@ router.post('/:id/approve', async (req, res) => {
   const reauthResult = await verifyReauth(userId, reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
-    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    return res.status(401).json({ error: reauthResult.error, message: reauthResult.message });
   }
 
   const pool = getPool();

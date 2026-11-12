@@ -162,3 +162,15 @@ describe('scheduleSummary', () => {
     expect(sum.next?.phaseId).not.toBe('phase1');
   });
 });
+
+// GA: a schedule says what its task lengths rest on, so a screen never shows hours laid end to end as a forecast.
+describe("backSchedule's durations", () => {
+  it('is hours-only where the engine has no typical duration for any task, mixed for the IND family', () => {
+    const of = (type: Parameters<typeof getPyramidForProject>[0]) => backSchedule(getPyramidForProject(type), '2027-06-04').durations;
+    for (const type of ['510K', 'DE_NOVO', 'PMA', 'NDA', 'BLA', 'MAA', 'JNDA'] as const) expect(of(type), type).toBe('hours-only');
+    for (const type of ['IND', 'IND_AMENDMENT', 'IND_ANNUAL_REPORT', 'IND_SAFETY_SUPPLEMENT'] as const) expect(of(type), type).toBe('mixed');
+  });
+  it('is typical only when every task has one', () => {
+    expect(backSchedule(pyramid([task('a', [], 8, 1), task('done', ['a'], 8, 1)]), '2027-06-04').durations).toBe('typical');
+  });
+});

@@ -512,6 +512,13 @@ exec: SourceExecutor,
   return adaptSource(rows[0]);
 }
 
+/** The sources a list's readable check covers: only those the list can return. Checked across the organization, one
+ *  project's Quality record that changed after its capture refused every other project's list, and every Vault
+ *  answered 500 (2026-11-10). Unscoped rows are outside any project, so a list that includes them checks them all. */
+function listReadScope(target: { programId: string } | null, includeUnscoped: boolean | undefined) {
+  return target && !includeUnscoped ? { programId: target.programId } : {};
+}
+
 /**
  * The Data Room read: every client document a project holds, newest first.
  *
@@ -544,7 +551,8 @@ export async function listClientDocuments(q: RequestSqlClient, orgId: number, op
     // supply an authoritative parent before a workspace-only read can proceed.
     throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_ACCESS_UNRESOLVED','Select the recorded project before reading this workspace source scope.');
   }
-  const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
+  const scopeProgram = listReadScope(target, opts.includeUnscoped);
+  const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId,...scopeProgram});
   const args: unknown[] = [orgId,readable.sourceIds];
   let where = `${visibleSourceOrgSql('s',1)} AND s.id=ANY($2::int[])
     AND s.deleted_at IS NULL AND s.source_type='client_document'`;
@@ -560,7 +568,7 @@ export async function listClientDocuments(q: RequestSqlClient, orgId: number, op
     ${capturedBinaryAvailableSql('s')} AS original_file_available,
     ${capturedDispositionChoiceSql('s')} AS disposition FROM cre_evidence_sources s
     WHERE ${where} ORDER BY s.created_at DESC,s.id DESC LIMIT $${args.length}`,args);
-  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},readable);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,...scopeProgram},readable);
   return rows.map(adaptSource);
 }
 

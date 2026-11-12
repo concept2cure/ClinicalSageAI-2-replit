@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scopeType": "project",
+      "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
+      "reportTypeId": "usa_fda.pma_submission_readiness"
+    }
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 17,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "No engine computes the FDA PMA Submission Readiness Pack over this scope in this release, so it is not run. The readiness digest is not shown under its name.",
+      "code": "REPORT_TYPE_NOT_COMPUTED"
+    }
+  }
+}

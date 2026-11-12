@@ -291,6 +291,23 @@ describe('SubmissionCenter — the Planner over a region profile', () => {
     expect(body()).not.toMatch(/Couldn’t load/i);
   });
 
+  /* Showcase walk, 2026-11-10: the Planner printed the stored pathway codes, "ectd_v322 · ectd_v40 · estar". The
+     product already names each pathway (shared/types/submission-constants.ts PATHWAYS). */
+  it('names the profile\'s pathways in words, not by their stored codes', async () => {
+    serve({ submissions: () => rows([SUBMISSION]) });
+    await openPlanner();
+    const row = (await screen.findByText('Pathways')).closest('.tl-spec-row') as HTMLElement;
+    expect(row.textContent).toBe('PathwayseCTD v3.2.2 · eSTAR');
+    expect(body()).not.toMatch(/ectd_v322|\bestar\b/);
+  });
+
+  it('shows a pathway the product has no name for as it is recorded, never as blank', async () => {
+    serve({ submissions: () => rows([SUBMISSION]), regionProfile: () => ok({ ...FDA_PROFILE, pathways: ['ectd_v322', 'future_format'] }) });
+    await openPlanner();
+    const row = (await screen.findByText('Pathways')).closest('.tl-spec-row') as HTMLElement;
+    expect(row.textContent).toBe('PathwayseCTD v3.2.2 · future_format');
+  });
+
   it('shows the codified profile, scoped to THIS application type', async () => {
     // The over-correction guard, and the requiredFor check in one: SUBMISSION
     // is an `nda`, so the debarment certification is owed and the IND-only

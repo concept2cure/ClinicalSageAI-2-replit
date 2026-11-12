@@ -112,7 +112,9 @@ describe('native change closure and concurrent work', () => {
     throw new Error('The actual QMS writer did not wait on the locked parent record.');
   }
 
-  it.each(['content', 'requirement'])('a waiting closure cannot overwrite a concurrent %s change', async kind => {
+  /* A content edit can no longer race a closure: in verification the content is what the approval signed, and
+     updateChange refuses it (CHANGE_EDITABLE_STATES, 2026-11-10). A required record linked meanwhile still can. */
+  it('a waiting closure cannot overwrite a concurrent requirement change', async () => {
     const id = await verification();
     const blocker = await owner.connect();
     let pending: Promise<request.Response> | undefined;
@@ -123,11 +125,7 @@ describe('native change closure and concurrent work', () => {
       pending = closure(id);
       await waitForBlockedMutation(pid);
       const service = await import('../../server/services/qms/changeControl.service');
-      if (kind === 'content') {
-        await service.updateChange(orgA.id, id, { implementationPlan: 'Revised while the verifier was closing.' }, blocker);
-      } else {
-        await service.addLink(orgA.id, id, { linkType: 'validation', linkedRef: `${TAG}-VP-LATE`, relationship: 'requires' }, blocker);
-      }
+      await service.addLink(orgA.id, id, { linkType: 'validation', linkedRef: `${TAG}-VP-LATE`, relationship: 'requires' }, blocker);
       await blocker.query('COMMIT');
       const response = await pending;
       expect(response.status, JSON.stringify(response.body)).toBe(409);
@@ -151,8 +149,10 @@ describe('native change closure and concurrent work', () => {
       await blocker.query('SELECT id FROM qms_change_controls WHERE id=$1 AND organization_id=$2 FOR UPDATE', [id, orgA.id]);
       closing = closure(id);
       await waitForBlockedMutation(pid);
+      // Past proposal a link states why it is added (979554ff60), or the route refuses it before it reaches the lock.
       linking = call(A.admin, 'post', `/changes/${id}/links`, {
         linkType: 'validation', linkedRef: `${TAG}-VP-TOO-LATE`, relationship: 'requires',
+        note: 'The late validation plan is required before closure.',
       }).then(response => response);
       await waitForBlockedMutation(pid, 2);
       await blocker.query('COMMIT');

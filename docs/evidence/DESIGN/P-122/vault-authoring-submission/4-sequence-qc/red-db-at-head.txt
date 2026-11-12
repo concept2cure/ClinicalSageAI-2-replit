@@ -1,0 +1,19 @@
+ × tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > what changed against the previous sequence, leaf by leaf 75ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > the package manifest, every leaf by module with its checksum 13ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > the PDF of each 11ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected [ 200, 503 ] to include 403
+ × tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > another organisation 15ms
+   → expected 403 to be 404 // Object.is equality
+ × tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > a colleague who is not on a private project 10ms
+   → expected 'LAUNCH_SCOPE' to be 'PROJECT_PERMISSION_DENIED' // Object.is equality
+ × tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > a diff across two submissions 13ms
+   → expected 403 to be 400 // Object.is equality
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > validation 11ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > the dispatch gate 16ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > a persisted readiness snapshot 10ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > the snapshot list 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)

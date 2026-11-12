@@ -1,0 +1,16 @@
+The repeat-placement cases on trunk's service (first written into place-module3-into-submission.test.ts, then moved to their own file): the unchanged repeat wrote a new filing document.
+
+ × server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > placing again into the same sequence, with a section unchanged > writes nothing: no new filing document, no leaf write, no provenance event, and says the section is unchanged
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > placing again into the same sequence, with a section unchanged > a section whose text changed is filed again: a new document, and the same leaf updated in place
+ ✓ server/services/cmc/__tests__/place-module3-into-submission.test.ts > placeModule3IntoSubmission > placing again into the same sequence, with a section unchanged > a leaf whose filing document cannot be read is filed again, never assumed unchanged
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { organizationId: 7, …(7) } ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+
+With the repair (place-module3-into-submission-repeat.test.ts):
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-repeat.test.ts > placeModule3IntoSubmission > placing again into the same sequence, with a section unchanged > writes nothing: no new filing document, no leaf write, no provenance event, and says the section is unchanged
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-repeat.test.ts > placeModule3IntoSubmission > placing again into the same sequence, with a section unchanged > a section whose text changed is filed again: a new document, and the same leaf updated in place
+ ✓ server/services/cmc/__tests__/place-module3-into-submission-repeat.test.ts > placeModule3IntoSubmission > placing again into the same sequence, with a section unchanged > a leaf whose filing document cannot be read is filed again, never assumed unchanged
+ Test Files  1 passed (1)
+      Tests  3 passed (3)

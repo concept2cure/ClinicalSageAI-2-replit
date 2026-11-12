@@ -1,0 +1,58 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/stability-studies/17",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "shelfLife": "24 months at 25C/60%RH"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 37,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 17,
+        "organizationId": 2,
+        "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "studyTitle": null,
+        "productName": "OQ-CLO-20261110025315",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "12",
+          "24"
+        ],
+        "stabilityData": null,
+        "notes": null,
+        "shelfLife": "24 months at 25C/60%RH",
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-10T02:59:22.146Z",
+        "updatedAt": "2026-11-10T02:59:30.910Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

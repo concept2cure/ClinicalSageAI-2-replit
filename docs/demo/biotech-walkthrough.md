@@ -53,6 +53,19 @@ Open the filing cabinet if you want to see the CTD structure the IND scaffolds �
 sections for an FDA IND, Module 1 per the FDA eCTD spec, Modules 2–5 per ICH M4."*
 Optionally open the IB: it is a real two-page document, not a placeholder.
 
+**The data catalog (30 s, optional).** Still in Vault, open the **Data catalog** tab. It lists every captured file
+across this sponsor's projects, organized by study; use **Organize by** to regroup by project, kind, CTD section or
+Vault folder. Point at one item's grade and open it: the grade is A to D with a score, and under it each criterion
+with the recorded fact behind it (the SHA-256 at capture, whether the bytes are filed and their fixity proven,
+whether it is the current version, whether a person confirmed what it is, and for a dataset the CDISC validator).
+
+Say: *"The grade is computed from what the system records about the file, by a fixed engine. AnA reports it; AnA
+cannot set it. 'Use in this project' subscribes this project to an item, and the project's Data room then lists what
+it uses first."* Press **Use in this project** on one item, then show it under **Used in this project** on the
+project page (Evidence → Project files → Data room), with **Remove** beside it. A file captured only in the Vault's
+upload does not appear here: the catalog lists what came through the data room (the project page's Evidence step, or
+a file attached to AnA with the project open).
+
 ## 3 · Authoring (2 min) — draft, comment, resolve, freeze, sign
 
 Open **Document editor & authoring**. The open document is
@@ -120,6 +133,19 @@ one."* Be candid about the six errors: *"They are the product's own defect — l
 placed from the Vault by UUID are reported as unresolvable because the checker only
 reads integer document ids. It's logged as a finding; the gate is doing exactly what a
 gate should do with it: refusing."*
+
+## 6b · CMC / Module 3 (1 min, optional) — the dossier that composes, and the one that says why not
+
+Open **Projects** and choose **C2C-201 oral JAK1 inhibitor** (the same sponsor's small molecule), then **CMC /
+Module 3** in the rail, tab **Module 3 build**. Point at the line "21 sections in CTD §3.2 · 0 of 21 approved · 18
+ready to compile", then **Export readiness**: "Not export ready", with the reason beside it (sections not approved,
+and sections with no recorded source lineage).
+
+Say: *"Module 3 is compiled from the study's own registers: drug substance and product, methods, specifications,
+stability, batches and release results. The export gate fails closed: nothing leaves until every section is approved
+and traced to its source."* Then, if asked about biologics, open **CMC / Module 3** on C2C-101: it says Module 3 is
+not composed here for a biologic and names the guidelines that apply (ICH Q6B, Q5A(R2), Q5C). That boundary is
+deliberate; the platform says it instead of composing something wrong.
 
 ## 7 · Quality (1 min) — the SOPs the work runs under
 

@@ -71,32 +71,41 @@ import {
   artifactGovernance,
   artifactRegistryStatus,
   artifactSponsor,
+  askedSponsorScope,
   formatContentBytes,
+  narrowToOneSponsor,
   narrowToSponsorOf,
   readArtifactRegistry,
+  sponsorRefusal,
   type ArtifactSponsor,
+  type SponsorAsk,
 } from '../services/artifact-registry-read.js';
 import type { ArtifactOrigin } from '../../shared/artifact-governance.js';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
 import { canAccessReportProject, getAccessibleReportProjectIds } from '../services/report-os/project-access.js';
 
-const PROGRAM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** `sameClientAs`: '' when not asked, the project id when asked, null when it is not a project id. */
-function sameClientAsParam(raw: unknown): string | null {
-  const value = typeof raw === 'string' ? raw.trim() : '';
-  return !value || PROGRAM_ID.test(value) ? value : null;
-}
-
-/** The projects the caller can open, narrowed to one project's sponsor's when asked from inside that project. */
-async function accessibleArtifactProjects(orgId: number, userId: number | null | undefined, sameClientAs: string): Promise<{
-  projectIds: number[]; scoped: { client?: ArtifactSponsor | null };
-}> {
+/**
+ * The projects the caller can open, inside one sponsor: the open project's (`sameClientAs`), the one asked for
+ * (`client`), or the only one there is. Projects of more than one sponsor with none named are refused (P-107).
+ */
+async function accessibleArtifactProjects(orgId: number, userId: number | null | undefined,
+  asked: SponsorAsk): Promise<{ projectIds: number[]; scoped: { client?: ArtifactSponsor | null } }> {
   const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: userId ?? undefined });
   const projectIds = await getAccessibleReportProjectIds(orgId, actor, pool);
-  if (!sameClientAs) return { projectIds, scoped: {} };
-  const narrowed = await narrowToSponsorOf(orgId, projectIds, sameClientAs);
-  return { projectIds: narrowed.projectIds, scoped: { client: narrowed.client } };
+  const narrowed = asked.sameClientAs
+    ? await narrowToSponsorOf(orgId, projectIds, asked.sameClientAs)
+    : await narrowToOneSponsor(orgId, projectIds, asked.client);
+  return { projectIds: narrowed.projectIds, scoped: 'client' in narrowed ? { client: narrowed.client } : {} };
+}
+
+/** What the listing answers when its projects cannot be settled: the refusal's own status and words, and the clients to choose from. */
+function sendArtifactAccessFailure(res: Response, accessError: unknown): Response {
+  const sponsor = sponsorRefusal(accessError);
+  if (sponsor) return res.status(sponsor.status).json(sponsor.body);
+  const failure = accessError instanceof ProgramReadAccessError
+    ? accessError
+    : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified, so no governed artifact was listed.');
+  return res.status(failure.status).json({ success: false, error: failure.code, message: failure.message });
 }
 
 /* The sponsor narrowing (narrowToSponsorOf) and the sponsor naming (artifactSponsor) are the registry read's
@@ -229,19 +238,14 @@ export default function createArtifactsCenterRoutes(): Router {
          installProjectRouteAccess). Bound into the read before the window and
          the count, so neither says anything about a project the caller cannot
          open. A refusal, or a check that could not run, is not "none". */
-      const sameClientAs = sameClientAsParam(req.query.sameClientAs);
-      if (sameClientAs === null) {
-        return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the listing is scoped by must be a project id.' });
-      }
+      const asked = askedSponsorScope(req.query, 'listing');
+      if ('refusal' in asked) return res.status(400).json({ success: false, ...asked.refusal });
       let projectIds: number[];
       let scoped: { client?: ArtifactSponsor | null };
       try {
-        ({ projectIds, scoped } = await accessibleArtifactProjects(orgId, authedUserId(req), sameClientAs));
+        ({ projectIds, scoped } = await accessibleArtifactProjects(orgId, authedUserId(req), asked));
       } catch (accessError) {
-        const failure = accessError instanceof ProgramReadAccessError
-          ? accessError
-          : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified, so no governed artifact was listed.');
-        return res.status(failure.status).json({ success: false, error: failure.code, message: failure.message });
+        return sendArtifactAccessFailure(res, accessError);
       }
 
       // One past the window, so a full window can say it is full.

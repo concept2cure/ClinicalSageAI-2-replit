@@ -1,32 +1,32 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-26T23:35:03.591Z",
+  "generatedAt": "2026-11-12T01:00:22.114Z",
   "generator": "scripts/validation/build-traceability.mjs",
-  "runDate": "2026-09-27",
+  "runDate": "2026-11-10",
   "summary": {
-    "requirements": 117,
-    "pass": 69,
+    "requirements": 132,
+    "pass": 124,
     "partial": 2,
     "fail": 0,
-    "open": 0,
-    "uncovered": 46
+    "open": 4,
+    "uncovered": 2
   },
   "byApp": {
     "Projects": {
       "requirements": 15,
-      "pass": 13,
+      "pass": 14,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 2
+      "uncovered": 1
     },
     "Vault": {
       "requirements": 21,
-      "pass": 10,
+      "pass": 21,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 11
+      "uncovered": 0
     },
     "Authoring": {
       "requirements": 15,
@@ -38,11 +38,11 @@
     },
     "Submission Center": {
       "requirements": 15,
-      "pass": 12,
+      "pass": 13,
       "partial": 0,
       "fail": 0,
-      "open": 0,
-      "uncovered": 3
+      "open": 1,
+      "uncovered": 1
     },
     "Submission Readiness": {
       "requirements": 8,
@@ -62,96 +62,128 @@
     },
     "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)": {
       "requirements": 30,
-      "pass": 0,
+      "pass": 28,
       "partial": 0,
       "fail": 0,
-      "open": 0,
-      "uncovered": 30
+      "open": 2,
+      "uncovered": 0
+    },
+    "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.": {
+      "requirements": 15,
+      "pass": 14,
+      "partial": 0,
+      "fail": 0,
+      "open": 1,
+      "uncovered": 0
     }
   },
   "stepTotals": {
-    "pass": 101,
+    "pass": 175,
     "fail": 0,
-    "deviation": 2,
+    "deviation": 6,
     "not-executed": 0,
-    "steps": 103
+    "steps": 181
   },
   "protocols": [
     {
       "protocolId": "OQ-003",
       "app": "Authoring",
-      "executedAt": "2026-09-28T01:22:20.123Z",
+      "executedAt": "2026-11-10T02:48:17.937Z",
       "counts": {
-        "pass": 23,
+        "pass": 25,
         "fail": 0,
         "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-27/OQ-AUTHORING/"
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-AUTHORING/"
+    },
+    {
+      "protocolId": "OQ-008",
+      "app": "CMC / Module 3",
+      "executedAt": "2026-11-12T00:34:30.495Z",
+      "counts": {
+        "pass": 41,
+        "fail": 0,
+        "deviation": 2,
+        "not-executed": 0
+      },
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-CMC/"
     },
     {
       "protocolId": "OQ-001",
       "app": "Projects",
-      "executedAt": "2026-09-28T01:19:00.181Z",
+      "executedAt": "2026-11-10T03:05:59.119Z",
       "counts": {
         "pass": 20,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-27/OQ-PROJECTS/"
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-PROJECTS/"
     },
     {
       "protocolId": "OQ-006",
       "app": "QMS controlled documents",
-      "executedAt": "2026-09-28T01:34:50.271Z",
+      "executedAt": "2026-11-10T03:11:18.613Z",
       "counts": {
-        "pass": 21,
+        "pass": 22,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-27/OQ-QMS/"
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-QMS/"
+    },
+    {
+      "protocolId": "OQ-007",
+      "app": "Reporting & analytics",
+      "executedAt": "2026-11-10T03:35:45.244Z",
+      "counts": {
+        "pass": 17,
+        "fail": 0,
+        "deviation": 1,
+        "not-executed": 0
+      },
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-REPORTING/"
     },
     {
       "protocolId": "OQ-004",
       "app": "Submission Center",
-      "executedAt": "2026-09-28T01:22:48.309Z",
+      "executedAt": "2026-11-10T03:54:12.805Z",
       "counts": {
-        "pass": 15,
+        "pass": 16,
         "fail": 0,
-        "deviation": 0,
+        "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-27/OQ-SUBMISSION-CENTER/"
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-SUBMISSION-CENTER/"
     },
     {
       "protocolId": "OQ-005",
       "app": "Submission Readiness",
-      "executedAt": "2026-09-28T01:34:24.555Z",
+      "executedAt": "2026-11-10T02:50:26.335Z",
       "counts": {
         "pass": 10,
         "fail": 0,
         "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-27/OQ-SUBMISSION-READINESS/"
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-SUBMISSION-READINESS/"
     },
     {
       "protocolId": "OQ-002",
       "app": "Vault",
-      "executedAt": "2026-09-28T01:22:05.909Z",
+      "executedAt": "2026-11-10T03:08:36.980Z",
       "counts": {
-        "pass": 12,
+        "pass": 24,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-27/OQ-VAULT/"
+      "evidence": "docs/evidence/W3/2026-11-10/OQ-VAULT/"
     }
   ],
   "iq": {
-    "executedAt": "2026-09-28T01:18:32.421Z",
+    "executedAt": "2026-11-10T02:41:53.540Z",
     "counts": {
       "pass": 12,
       "fail": 0,
@@ -366,14 +398,7 @@
           "step": "OQ-PROJ-11",
           "status": "pass",
           "evidenceDir": "OQ-PROJECTS",
-          "title": "Program journey read model answers"
-        },
-        {
-          "protocol": "OQ-001",
-          "step": "OQ-PROJ-12",
-          "status": "pass",
-          "evidenceDir": "OQ-PROJECTS",
-          "title": "Filings catalog surface renders"
+          "title": "The program journey is outside this release"
         }
       ],
       "ra": {
@@ -391,14 +416,22 @@
       "requirement": "The former filings-catalog bookmark opens the Projects New-project wizard through the shared alias/action, retaining query and hash without creating a project. Filing browsing/search and selected description, segment, authority/region, submission format, CTD and workflow reference remain reachable there, beside the server's offer/build limits or explicit read failure; unavailable filings remain read-only. The wizard and the recorded project's Plan show a collapsed, clearly authored filing-family lifecycle guide (stages, timing examples and return loop) only where the exact filing has a guide; project selection also requires matching recorded program type and agency. Missing, unknown or conflicting identity gives explicit unavailability. Reference content creates no offer, task, deadline or readiness verdict; the existing project plan remains available.",
       "part11": "none",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-12",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Former filing catalog reaches Projects intake and recorded Plan reference"
+        }
+      ],
       "ra": {
         "intendedUse": "Reach filing reference in Projects intake and the exact recorded project's Plan",
         "risk": "medium — incorrect identity, support or clock presentation can misdirect recoverable filing work",
         "assurance": "scripted",
         "rationale": "assert legacy-bookmark destination, retained query/hash, no browser project creation, selected facts, collapsed authored guide and missing-identity state beside the existing plan; actual offer-read failures remain explicit. OQ-PROJ-12 v0.10 awaits formal execution and review; focused automated/browser proof is supplemental"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-PROJ-008",
@@ -516,7 +549,7 @@
           "step": "OQ-PROJ-18",
           "status": "pass",
           "evidenceDir": "OQ-PROJECTS",
-          "title": "An account taken out of use can do nothing, and works again when restored"
+          "title": "An account taken out of use can do nothing, and works again when restored and signed in again"
         }
       ],
       "ra": {
@@ -821,14 +854,22 @@
       "requirement": "A new version of a document is recorded by naming the document (`supersedesDocumentId`). The server assigns the next major version (1.0 → 2.0), keeps the document code and filing, and links the predecessor. It refuses a version that is not the current one, bytes the document already holds, and a document outside the caller's program or organisation, and the database refuses a link outside the document's family.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-11",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A new version of a document is checked in, numbered and linked by the server"
+        }
+      ],
       "ra": {
         "intendedUse": "Version check-in: server-assigned version, kept code and filing, a validated predecessor link",
         "risk": "high — a wrong link or number misstates which bytes a filing used",
         "assurance": "scripted",
         "rationale": "positive check-in, known-bytes and stale-head negatives; database refusals in `tests/db/vault-version-checkin.dbtest.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-012",
@@ -837,14 +878,22 @@
       "requirement": "A document is listed once, at its current version, with how many versions it has. Every version of a document is listed newest first with its version, SHA-256, size, uploader and date, and each downloads hash-verified. The document's history carries the events of every version, each naming its version. Search lists current versions unless earlier ones are asked for. A predecessor link the lineage rule would refuse is shown as not linked, never as lineage.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-12",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A document is listed once, and every version of it is listed, downloadable and in its history"
+        }
+      ],
       "ra": {
         "intendedUse": "One entry per document at its current version; every version listed, hash-verified on download, and in the document's history; search shows current versions unless asked",
         "risk": "high — a superseded version shown as current, or a version missing from the list or history, puts the wrong bytes in a filing or hides who changed what",
         "assurance": "scripted",
         "rationale": "tree, versions, download, history and search checks; the legacy-link, cross-tenant and check-in agreement cases in `tests/db/vault-versions.dbtest.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-013",
@@ -853,14 +902,29 @@
       "requirement": "A Vault version is reviewed and approved on the document lifecycle, apart from its filing. Sending it for review starts one record per version, taking title, type and content hash from the stored version. The review and the approval are electronic signatures: the signer re-authenticates, states a reason, and the record holds the printed name, meaning and time, bound to the version's SHA-256. The uploader and whoever sent the version for review may neither review nor approve it, the reviewer does not approve it, and only the current version is approved. Approving a version supersedes the earlier approved versions of the same document in the same transaction. An approved version's details cannot be edited. A version counts as settled only when approved.",
       "part11": "§11.10(e), §11.50, §11.70, §11.200",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-13",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "CREDENTIALED: a version is sent for review only on a review route; the uploader may not review it; the named reviewer signs the review over its bytes; the reviewer may not approve it"
+        },
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-14",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "CREDENTIALED: the route's approver approves v1, then v2, by signing on the route; approving v2 supersedes v1; the approved version's details cannot be edited"
+        }
+      ],
       "ra": {
         "intendedUse": "Review and approval of a Vault version: e-signatures bound to the version's bytes, separation of duties, only the current version approved, supersession in the same transaction, approved details frozen",
         "risk": "high: an approval over other bytes, a self-approval, or two approved versions of one document misstates what was approved for a filing",
         "assurance": "scripted (credentialed)",
         "rationale": "OQ-VAULT-13/14. The refusals, supersession, rollback and the start's audit row are in `tests/db/vault-lifecycle.dbtest.ts`, on PostgreSQL with RLS on"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-014",
@@ -869,14 +933,22 @@
       "requirement": "A person files captured sources from the project's data room into the Vault. Each source goes through the same governed ingest as a Vault upload and lands suggested or unfiled, never confirmed by the system. The answer names each source as filed (with its version and where it landed), already in the Vault (with its version), or refused with the reason. One source's refusal does not undo another's filing, and the batch reports that it is not complete. A source whose stored bytes no longer match the checksum recorded at capture is refused and nothing is stored. A viewer is refused. Another organisation's or another project's source is refused as not found.",
       "part11": "§11.10(c), §11.10(d), §11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-15",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A file captured in the project's data room is filed into the Vault from the room, with a result for every source"
+        }
+      ],
       "ra": {
         "intendedUse": "File captured sources from the data room through the governed ingest, with a result for each",
         "risk": "high: changed bytes filed under a capture's name, a source filed into the wrong project, or a partial batch read as done would put the wrong evidence in the Vault",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-15. The byte-check, antivirus, cross-tenant, cross-project, superseded and viewer cases are in `tests/db/vault-data-room-file.dbtest.ts`, on PostgreSQL with RLS on"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-015",
@@ -885,14 +957,22 @@
       "requirement": "A person confirms the suggested filings in one folder together, with one reason for change that is required, and is recorded on each document's filing and in its own audit row. Each document is confirmed on its own. A document whose folder or status changed since the person loaded the list is refused, and not touched. The answer names each document, and the batch reports when not every filing was confirmed. The Vault shows how many suggested filings await confirmation, counted over the whole program.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-16",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Suggested filings in one folder are confirmed together with one reason, each answered; a second confirmation is refused"
+        }
+      ],
       "ra": {
         "intendedUse": "Confirm suggested filings together with one required reason, each with its own audit row; a filing changed since the list was loaded is refused",
         "risk": "high: a confirmation without a reason, or one that lands on a placement the person did not see, puts a machine's guess in the dossier under a person's name",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-16. The reason, conflict, viewer and count cases are in `tests/db/vault-placement-batch.dbtest.ts`, on PostgreSQL with RLS on"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-016",
@@ -901,14 +981,22 @@
       "requirement": "Two versions of one document are compared: whether their bytes are the same (from the recorded SHA-256s), each recorded detail that differs, and the lines of their extracted text that changed, unchanged runs collapsed. A comparison that was capped says so. A version with no extracted text gets no text comparison and the answer names it. Versions of different documents are refused, and another organisation's document is not found.",
       "part11": "none",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-17",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Two versions of a document are compared: bytes, recorded details and text; another document is refused"
+        }
+      ],
       "ra": {
         "intendedUse": "Compare two versions of one document: bytes, details and text",
         "risk": "medium: a comparison that hides a change, or shows two documents as versions of one, misleads a reviewer, but changes no record",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-17. The family, tenancy, missing-text and refusal cases are in `tests/db/vault-version-compare.dbtest.ts`; the caps and the edit budget in `server/services/vault/__tests__/vault-version-compare.test.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-017",
@@ -917,14 +1005,22 @@
       "requirement": "A search across every project the organisation holds finds documents by title, file name and content, each named with its project, ranked, paginated with a real total, current versions unless earlier ones are asked for. Another organisation's documents are never among them. An empty query answers no results, and a failed search is reported as a failure, not as no matches. A project's own search still searches only that project.",
       "part11": "§11.10(d)",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-18",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "The library search finds a document in another project of the organisation, named with its project"
+        }
+      ],
       "ra": {
         "intendedUse": "Search every project of the organisation at once",
         "risk": "medium: the risk is disclosure across tenants, which RLS and the statement's own organisation predicate each prevent; a missed hit misleads but changes no record",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-18. The cross-tenant, version and empty-query cases are in `tests/db/vault-library-search.dbtest.ts`, and the predicate itself in `server/services/vault/__tests__/vault-search.test.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-018",
@@ -933,14 +1029,22 @@
       "requirement": "A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused.",
       "part11": "§11.10(c), §11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-19",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Every stored version of the program is re-proven against its recorded SHA-256, each verdict in the document's history"
+        }
+      ],
       "ra": {
         "intendedUse": "Re-prove every stored version against its recorded SHA-256, each verdict chained",
         "risk": "high: undetected alteration or loss of a stored record defeats ALCOA \"original\"; a check that called a changed file intact would be worse than none",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-19 on an untampered installation. The altered and missing cases, with real files changed on disk, and the chained verdicts are in `tests/db/vault-fixity.dbtest.ts`; unreadable, unverifiable and the batch limit in `server/services/vault/__tests__/vault-fixity.test.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-019",
@@ -949,14 +1053,22 @@
       "requirement": "A person can relate one Vault version to another version of the organisation, in any of its projects, as supported by, references or based on it, with an optional note. Both documents list the relationship, each in its own words, and a related version that has since been superseded says so. A document cannot be related to itself or to another version of itself, nor twice in the same way, nor to another organisation's document. Removing a relationship requires a reason for change and keeps the record; nothing changes or deletes a relationship otherwise. Each relate and removal is written to the audit chain against both documents, naming the person. A viewer is refused.",
       "part11": "§11.10(c), §11.10(e)",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-20",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A document names a supporting document, both ends list it, and removing it needs a reason; each change is in both histories"
+        }
+      ],
       "ra": {
         "intendedUse": "Relate one Vault version to another, remove a relationship with a reason, each change chained on both documents",
         "risk": "medium: a relationship is context a reviewer follows, not the record itself, so a wrong one misleads but alters no document; a relationship that changed or vanished silently, or reached another organisation's document, would be a data-integrity and confidentiality failure",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-20. The refusals (self, same document, duplicate, unknown kind, another organisation's document or project, a viewer), the table's refusal of every other change, DELETE and TRUNCATE for every role, row security, and the tenant purge are in `tests/db/vault-document-relationships.dbtest.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-020",
@@ -965,14 +1077,22 @@
       "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is. The version also names each official eSTAR export whose record names it as an attachment's source, from the artifact registry or the export's audit row; an export whose record names no source is not inferred from a hash. Each version also carries the server's own verdict on whether it would be transmitted (null when it is approved and current, otherwise the reason the transmit refusal prints), and each placement its sequence's dispatch status; the Vault and the Place dialog print that verdict and never judge approval themselves.",
       "part11": "§11.10(e)",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-21",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A version placed in a submission sequence lists that placement; an unplaced version says it is placed nowhere"
+        }
+      ],
       "ra": {
         "intendedUse": "List the live submission leaves that carry each Vault version",
         "risk": "medium: a read that informs a revision (replace, not new), and transmits nothing. A placement left off could lead to a wrong lifecycle operation in the next sequence; another organisation's placement shown would be a confidentiality failure",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-21. The removed leaf and removed sequence, another organisation's leaf, and the read's organisation filter with row security bypassed are in `tests/db/vault-where-used.dbtest.ts`, with the eSTAR exports written by both real export writers: the registry and the unplaced audit row, a record naming no source (not inferred), and another organisation's record"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-021",
@@ -981,14 +1101,22 @@
       "requirement": "A person annotates a Vault version with a comment or a change request, anchored to the whole version, to a page of a version with a recorded page count (the count is recorded with it), or to a passage of its extracted text. A passage is accepted only where it is found at its stated position in the version's stored text, counted in characters (code points); the annotation records that text's SHA-256, so a later change of the text, or of the page count, is shown, and the quote stays as written. Reading a version's text to select a passage is recorded in the audit trail; a read that cannot be recorded is refused. Others reply. An open annotation is resolved with a note, optionally naming the version of its document that addressed it, or retracted by its author with a reason; never both. Its words, author, anchor and time cannot change; its outcome cannot be undone; it cannot be deleted while its version exists, not by a cascade from its program either. Each act is written to the audit chain against the version, with the words, their SHA-256 and the person's name. The review and approval dialogs say which annotations were open on every version when they opened; signing does not resolve them and is not refused for them. A viewer is refused; another organisation's annotations are never read. The document history says when older entries are not shown.",
       "part11": "§11.10(c), §11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-22",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A version is annotated on a page and on a passage; a thread is replied to and resolved with a note; one is retracted with a reason; each act is in the history"
+        }
+      ],
       "ra": {
         "intendedUse": "Annotate a Vault version; reply; resolve with a note or retract with a reason; read its text to quote a passage",
         "risk": "high: a change request that silently vanished, was reworded or was attributed to the wrong person, a quote that drifted from the text it named, a program DELETE that erased the review record, an unrecorded disclosure of document text, or a cross-tenant read, would each misstate the review record",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-22. The record's own guards (posted open and checked in SQL, frozen words and anchor, write-once outcome, author-only retraction, DELETE only by the owner once the version is gone, proven against the trigger-depth bypass and the program cascade, no TRUNCATE), the purge, the history window and 15 mutants are in `tests/db/vault-version-annotations-record.dbtest.ts`; the flows, code-point anchoring and roles in `tests/db/vault-version-annotations.dbtest.ts`. Accepted: a page anchor is checked against the page count only (a passage carries no page); re-anchoring after a text change is not attempted, it is shown as stale"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-AUTH-001",
@@ -1237,7 +1365,7 @@
           "step": "OQ-AUTH-11",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Freeze the settled document into an immutable snapshot"
+          "title": "Freeze the settled document into an immutable snapshot, signed by the ceremony"
         }
       ],
       "ra": {
@@ -1272,10 +1400,17 @@
         },
         {
           "protocol": "OQ-003",
+          "step": "OQ-AUTH-13b",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "On a live review route, a REVIEWER signature from a person the route does not name is refused before the credential"
+        },
+        {
+          "protocol": "OQ-003",
           "step": "OQ-AUTH-14",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot"
+          "title": "CREDENTIALED: the route's named reviewer applies a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot"
         }
       ],
       "ra": {
@@ -1299,7 +1434,7 @@
           "step": "OQ-AUTH-14",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot"
+          "title": "CREDENTIALED: the route's named reviewer applies a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot"
         }
       ],
       "ra": {
@@ -1354,14 +1489,28 @@
           "step": "OQ-AUTH-17",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Request review and submit the document into its approval workflow (before freeze — submit requires DRAFT)"
+          "title": "CREDENTIALED: request review on a review route naming the second identity; the route refuses what it may not name; submit the document into its approval workflow (before freeze — submit requires DRAFT)"
         },
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-17b",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "The reviewer sees the pending review on the Review surface"
+          "title": "CREDENTIALED: the named reviewer sees the review awaiting them on the Review surface and in their work"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-13b",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "On a live review route, a REVIEWER signature from a person the route does not name is refused before the credential"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-14b",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "CREDENTIALED: the review signature closes the reviewer's route task and completes the route; the Review board no longer has it awaiting them"
         },
         {
           "protocol": "OQ-003",
@@ -1392,7 +1541,7 @@
           "step": "OQ-AUTH-18",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Template stores answer"
+          "title": "The template library is outside this release; the global reference answers"
         }
       ],
       "ra": {
@@ -1647,22 +1796,14 @@
       "requirement": "Historical: the dossier map answers per-module (M1–M5) completeness for the program open in the shell; superseded by URS-SUBC-009a in A2.7.",
       "part11": "none",
       "risk": "medium",
-      "steps": [
-        {
-          "protocol": "OQ-004",
-          "step": "OQ-SUBC-10",
-          "status": "pass",
-          "evidenceDir": "OQ-SUBMISSION-CENTER",
-          "title": "Dossier map for the open program"
-        }
-      ],
+      "steps": [],
       "ra": {
         "intendedUse": "Historical dossier map for the open program; superseded by 009a",
         "risk": "medium",
         "assurance": "scripted",
         "rationale": "Historical id-space control and its executed evidence are retained."
       },
-      "verdict": "pass"
+      "verdict": "uncovered"
     },
     {
       "id": "URS-SUBC-009a",
@@ -1671,14 +1812,22 @@
       "requirement": "The canonical project dossier answers for the exact accepted program/anchor/client relationship; governed readiness, artifact section counts/status/dates and tracked CTD module completion retain distinct bases and explicit failed/unavailable states.",
       "part11": "11.10(d)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-10",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Canonical dossier for the accepted project"
+        }
+      ],
       "ra": {
         "intendedUse": "Project dossier preserves governed, artifact and tracking records for the exact accepted project",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Wrong-project or stale-anchor reads and substituted readiness could silently misstate a filing; scripted scope/refusal checks plus SQL and browser parity evidence."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-SUBC-010",
@@ -1708,7 +1857,7 @@
       "id": "URS-SUBC-011",
       "app": "Submission Center",
       "doc": "URS-004-SUBMISSION-CENTER.md",
-      "requirement": "The Submission Center, eCTD Compile and Publishing surfaces render the organisation's submissions and the open program's sequence.",
+      "requirement": "The Submission Center and eCTD Compile surfaces render the organisation's submissions and the open program's sequence; eCTD Compile carries the eCTD reference the Publishing surface held (folded 2026-10-29, `302d632db6`; `ectd-publishing` is an alias).",
       "part11": "none",
       "risk": "medium",
       "steps": [
@@ -1766,14 +1915,22 @@
       "requirement": "A Shadow Review waiver is offered only while the sequence has no completed Shadow Review, is not frozen, and its newest run failed within 24 hours because every AI provider failed or was overloaded (`provider_unavailable`, `provider_overloaded`); a missing configuration or any other failure is not an outage. It is recorded only with a Part 11 signature on `ectd-sequence:<id>` with intent `shadow-waiver` and the meaning responsibility or approval, by someone who did not author the sequence; without one it is refused and nothing is recorded. An active waiver clears the dispatch verdict's Shadow Review presence gate as *not assessed*, naming the signature; it lapses when the leaves change, and it never clears an open critical finding.",
       "part11": "§11.10(e) §11.50 §11.70 §11.200",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-15",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "A Shadow Review waiver is offered only after a provider outage, and only by signature (P-34)"
+        }
+      ],
       "ra": {
         "intendedUse": "Shadow Review waived only after a provider outage, only by signature, never over a critical finding",
         "risk": "high — a waiver offered for anything but an outage, or recorded without a signature, sends a never-reviewed dossier to the agency as cleared",
         "assurance": "scripted (negative) / PGlite (positive)",
         "rationale": "an outage cannot be produced on demand on an installation; the offer, act, lapse and revocation are proven over the real act in `shadow-review-waiver.pglite.integration.test.ts`"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-SUBC-014",
@@ -1782,14 +1939,22 @@
       "requirement": "A submission run's clinical and nonclinical inputs come from the record, never from the request. Outside development, `POST /api/submission-orchestrator/runs` and `POST /api/submission-orchestrator/runs/:runId/regenerate` refuse, before anything is read or a run starts: a non-empty `csrInputs`, `nonclinicalStudies` or `clinicalStudyData` (400 `INLINE_RUN_INPUTS_REFUSED`, naming the field); a `ctdProgramId` (400 `CTD_PROGRAM_INPUTS_REFUSED`); and a regenerate that names a `projectId` (400 `REGENERATE_MODE_A_UNSUPPORTED`). Each refusal names `POST /api/submission-orchestrator/runs/for-program` and does not echo the figures it refused. Empty arrays are not refused.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-16",
+          "status": "deviation",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "A submission run takes no clinical or nonclinical figures from the request"
+        }
+      ],
       "ra": {
         "intendedUse": "Submission-run inputs come from records; inline figures are refused outside development",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Existing URS-004 v0.4 and OQ-SUBC-16 v0.6; production refusal requires its stated posture. Not formally executed at this version."
       },
-      "verdict": "uncovered"
+      "verdict": "open"
     },
     {
       "id": "URS-SRDY-001",
@@ -1876,7 +2041,7 @@
           "step": "OQ-SRDY-04",
           "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
-          "title": "Readiness review template is registered and execute validates inputs"
+          "title": "The readiness review's orchestration is outside this release"
         }
       ],
       "ra": {
@@ -1907,7 +2072,7 @@
           "step": "OQ-SRDY-05b",
           "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
-          "title": "The readiness review names the project it assessed"
+          "title": "The readiness review of the anchored project is outside this release"
         }
       ],
       "ra": {
@@ -2041,7 +2206,7 @@
           "step": "OQ-QMS-03",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Create an SOP; it is draft at version 1.0 and audited"
+          "title": "Create an SOP; it is draft at version 1.0, audited, and its procedure text is written"
         },
         {
           "protocol": "OQ-006",
@@ -2055,7 +2220,7 @@
           "step": "OQ-QMS-06a",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Create a second SOP (fixture for the credential refusals, training, review-due and retire steps)"
+          "title": "Create a second SOP and send it for review on its route (fixture for the credential refusals, training, review-due and retire steps)"
         }
       ],
       "ra": {
@@ -2079,7 +2244,7 @@
           "step": "OQ-QMS-03",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Create an SOP; it is draft at version 1.0 and audited"
+          "title": "Create an SOP; it is draft at version 1.0, audited, and its procedure text is written"
         }
       ],
       "ra": {
@@ -2098,6 +2263,13 @@
       "part11": "§11.10(e)",
       "risk": "high",
       "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-04b",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "CREDENTIALED: SOP A is sent for review on a review route naming its QMS approver; a send without a route is refused"
+        },
         {
           "protocol": "OQ-006",
           "step": "OQ-QMS-05",
@@ -2162,7 +2334,7 @@
           "step": "OQ-QMS-06c",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "CREDENTIALED: the author cannot approve their own document (two-person rule)"
+          "title": "CREDENTIALED: the author cannot be named to approve their own document, nor approve it (two-person rule)"
         }
       ],
       "ra": {
@@ -2241,7 +2413,7 @@
           "step": "OQ-QMS-08",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Training acknowledgement is recorded against the document version"
+          "title": "Personal acknowledgement is bound to the exact readable released revision"
         }
       ],
       "ra": {
@@ -2313,14 +2485,14 @@
           "step": "OQ-QMS-12",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Quality Management Plan create and list (governed: reason required)"
+          "title": "Quality management plans are outside this release"
         },
         {
           "protocol": "OQ-006",
           "step": "OQ-QMS-15",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "QMP surface renders the plan"
+          "title": "The QMP surface shows it is outside this release"
         }
       ],
       "ra": {
@@ -2351,7 +2523,7 @@
           "step": "OQ-QMS-15",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "QMP surface renders the plan"
+          "title": "The QMP surface shows it is outside this release"
         }
       ],
       "ra": {
@@ -2393,14 +2565,36 @@
       "requirement": "Every `/api/cmc` endpoint requires an authenticated member of the organisation; a read-only (viewer) session is refused on every write and still served every read and every computation that saves nothing.",
       "part11": "§11.10(d)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-01",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Anonymous access refused"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-02",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A read-only session reads every register and writes none"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-31",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Anything the tester observed that no step above covers"
+        }
+      ],
       "ra": {
         "intendedUse": "Every `/api/cmc` endpoint requires an authenticated member of the organisation; a read-only (viewer) session is refused on every write and still served every read and every computation that saves nothing.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-01, OQ-CMC-02, OQ-CMC-31. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-002",
@@ -2409,14 +2603,36 @@
       "requirement": "A register write files under the open programme, is scoped to the caller's organisation, and a programme of another organisation is not found.",
       "part11": "§11.10(d)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-03",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The programme and its reference records"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-04",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A programme of another organisation is not found"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-03b",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A second programme whose records compose a complete Module 3"
+        }
+      ],
       "ra": {
         "intendedUse": "A register write files under the open programme, is scoped to the caller's organisation, and a programme of another organisation is not found.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-03, OQ-CMC-04. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-003",
@@ -2425,14 +2641,22 @@
       "requirement": "Each register write reaches Module 3 only as a canonical source object; no screen or request body writes a Module 3 section record.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-05",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Each register write reaches Module 3 as a canonical source only"
+        }
+      ],
       "ra": {
         "intendedUse": "Each register write reaches Module 3 only as a canonical source object; no screen or request body writes a Module 3 section record.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-05. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-004",
@@ -2441,14 +2665,29 @@
       "requirement": "Module 3 is composed by one deterministic engine from the programme's own canonical sources — core §3.2.S / §3.2.P / 3.1 / 3.3, the emittable 3.2.A appendices, and 3.2.R for the region the linked submission records. A compile of a programme with no sources is refused and says what to record.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-06",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "One deterministic compile from the programme’s own records"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-07",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A compile with nothing recorded is refused and says what to record"
+        }
+      ],
       "ra": {
         "intendedUse": "Module 3 is composed by one deterministic engine from the programme's own canonical sources — core §3.2.S / §3.2.P / 3.1 / 3.3, the emittable 3.2.A appendices, and 3.2.R for the region the linked submission records. A compile of a programme with no sources is refused and says what to record.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-06, OQ-CMC-07. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-005",
@@ -2457,14 +2696,29 @@
       "requirement": "Composition is refused, 409, for a biologic or ATMP substance, a programme recorded as anything but a drug, an application that is not a US IND, and a substance whose modality the record does not establish. Each refusal names the guidelines not modelled and the path that does author it.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-08",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A biologic programme composes nothing"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-09",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A marketing application, and a substance whose modality is not established"
+        }
+      ],
       "ra": {
         "intendedUse": "Composition is refused, 409, for a biologic or ATMP substance, a programme recorded as anything but a drug, an application that is not a US IND, and a substance whose modality the record does not establish. Each refusal names the guidelines not modelled and the path that does author it.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-08, OQ-CMC-09. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-006",
@@ -2473,14 +2727,22 @@
       "requirement": "A section's stored record is the compiler's own output and its completeness is the compiler's verdict; a request body cannot supply either.",
       "part11": "§11.10(a)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-10",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A request body cannot supply a section’s record or its completeness"
+        }
+      ],
       "ra": {
         "intendedUse": "A section's stored record is the compiler's own output and its completeness is the compiler's verdict; a request body cannot supply either.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-10. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-007",
@@ -2489,14 +2751,43 @@
       "requirement": "A section approval is an electronic signature: it requires a role with signing authority, a stated reason of at least the governed minimum, and re-authentication of the signer; it records the signature, the version snapshot and a chained audit row, or nothing.",
       "part11": "§11.10(e) §11.50 §11.70",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-11",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "An approval states its own reason"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-12",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Identity is not authority"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-13",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A section approval is an electronic signature"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-14",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The bound digest is a digest of the stored section version"
+        }
+      ],
       "ra": {
         "intendedUse": "A section approval is an electronic signature: it requires a role with signing authority, a stated reason of at least the governed minimum, and re-authentication of the signer; it records the signature, the version snapshot and a chained audit row, or nothing.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-11, OQ-CMC-12, OQ-CMC-13, OQ-CMC-14. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-008",
@@ -2505,14 +2796,22 @@
       "requirement": "What the signer read is what is signed: a section recompiled since the read is refused 409, and the state change is guarded on the content hash the transaction itself read.",
       "part11": "§11.70",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-15",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "What the signer read is what is signed"
+        }
+      ],
       "ra": {
         "intendedUse": "What the signer read is what is signed: a section recompiled since the read is refused 409, and the state change is guarded on the content hash the transaction itself read.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-15. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-009",
@@ -2521,14 +2820,29 @@
       "requirement": "The contradiction sweep reports what it examined, keeps a recorded resolution across sweeps, treats changed data as a new finding, and clears a finding the data no longer shows. Resolving a critical finding requires signing authority and a reason.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-16",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The sweep reports what it examined and keeps a recorded resolution"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-17",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Resolving a critical finding needs signing authority and a reason"
+        }
+      ],
       "ra": {
         "intendedUse": "The contradiction sweep reports what it examined, keeps a recorded resolution across sweeps, treats changed data as a new finding, and clears a finding the data no longer shows. Resolving a critical finding requires signing authority and a reason.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-16, OQ-CMC-17. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-010",
@@ -2537,14 +2851,22 @@
       "requirement": "The final-export gate refuses unless every composed section is approved, no critical contradiction is open, no approved section is stale, the provenance chain is complete, each approved section matches what the compiler established, and no critical finding in the current records is unrecorded. Each blocker is named.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-18",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The final-export gate names every blocker"
+        }
+      ],
       "ra": {
         "intendedUse": "The final-export gate refuses unless every composed section is approved, no critical contradiction is open, no approved section is stale, the provenance chain is complete, each approved section matches what the compiler established, and no critical finding in the current records is unrecorded. Each blocker is named.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-18. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-011",
@@ -2553,14 +2875,29 @@
       "requirement": "Placement writes the approved sections into the programme's own US IND sequence as leaves, in one transaction, requires the regulatory-author role and a reason, is idempotent on retry, and refuses a sequence or submission that is not the programme's.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-19",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Placement writes the approved sections into the programme’s own sequence"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-20",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Placement requires the regulatory-author role"
+        }
+      ],
       "ra": {
         "intendedUse": "Placement writes the approved sections into the programme's own US IND sequence as leaves, in one transaction, requires the regulatory-author role and a reason, is idempotent on retry, and refuses a sequence or submission that is not the programme's.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-19, OQ-CMC-20. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-012",
@@ -2569,14 +2906,22 @@
       "requirement": "The Module 3 version history and the provenance events are append-only in the database: the runtime role cannot update, delete or truncate them.",
       "part11": "§11.10(c) §11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-21",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The version history and the provenance events are append-only in the database"
+        }
+      ],
       "ra": {
         "intendedUse": "The Module 3 version history and the provenance events are append-only in the database: the runtime role cannot update, delete or truncate them.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-21. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-013",
@@ -2585,14 +2930,29 @@
       "requirement": "A signed or released record is closed to an ordinary edit (409); a batch cannot be created already released, nor dispositioned twice; a release is refused over QC results that are not recorded and reviewed.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-22",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A batch release rests on recorded, reviewed QC results and happens once"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-23",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Editing an approved specification withdraws the approval, with the reason recorded"
+        }
+      ],
       "ra": {
         "intendedUse": "A signed or released record is closed to an ordinary edit (409); a batch cannot be created already released, nor dispositioned twice; a release is refused over QC results that are not recorded and reviewed.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-22, OQ-CMC-23. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-014",
@@ -2601,14 +2961,22 @@
       "requirement": "The quality engines — ICH compliance judged at the programme's stage against current revisions, QbD, control strategy, process capability, shelf-life estimation, stability trending, poolability, dissolution comparison — are deterministic, cite what they judged, and answer 404 for a programme of another organisation.",
       "part11": "none",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-24",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The deterministic engines cite what they judged and refuse a foreign programme"
+        }
+      ],
       "ra": {
         "intendedUse": "The quality engines — ICH compliance judged at the programme's stage against current revisions, QbD, control strategy, process capability, shelf-life estimation, stability trending, poolability, dissolution comparison — are deterministic, cite what they judged, and answer 404 for a programme of another organisation.",
         "risk": "medium",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-24. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-015",
@@ -2617,14 +2985,22 @@
       "requirement": "The Overview board states section approvals, the portfolio, the build state and a readiness lead taken from the gate's own verdict; a figure it cannot compute is reported as not computed, never as zero.",
       "part11": "none",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-25",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The Overview and Module 3 build screens tell the truth about their own state"
+        }
+      ],
       "ra": {
         "intendedUse": "The Overview board states section approvals, the portfolio, the build state and a readiness lead taken from the gate's own verdict; a figure it cannot compute is reported as not computed, never as zero.",
         "risk": "medium",
         "assurance": "unscripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-25. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-016",
@@ -2633,14 +3009,22 @@
       "requirement": "Only the CMC specification interview commits to a record; an interview of any other kind is refused where the launch boundary is enforced, because its answers reach no record.",
       "part11": "none",
       "risk": "medium",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-26",
+          "status": "deviation",
+          "evidenceDir": "OQ-CMC",
+          "title": "Only the interview that commits is offered"
+        }
+      ],
       "ra": {
         "intendedUse": "Only the CMC specification interview commits to a record; an interview of any other kind is refused where the launch boundary is enforced, because its answers reach no record.",
         "risk": "medium",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-26. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "open"
     },
     {
       "id": "URS-CMC-017",
@@ -2649,14 +3033,22 @@
       "requirement": "A release signature clears a dispatch only when its signed leaf manifest is the sequence's current manifest; a signature over different content reads as no release signature for that sequence.",
       "part11": "§11.70",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-27",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A release signature covers the manifest that would be transmitted"
+        }
+      ],
       "ra": {
         "intendedUse": "A release signature clears a dispatch only when its signed leaf manifest is the sequence's current manifest; a signature over different content reads as no release signature for that sequence.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-27. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-018",
@@ -2665,14 +3057,22 @@
       "requirement": "An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-28",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "An original IND carrying no 3.2.S and no 3.2.P is not dispatch-ready"
+        }
+      ],
       "ra": {
         "intendedUse": "An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-28. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-019",
@@ -2681,14 +3081,22 @@
       "requirement": "The CMC surface claims only the API paths its screens call; every other path under `/api/cmc` is unattributed and refused in production.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-29",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The surface claims only the paths its screens call"
+        }
+      ],
       "ra": {
         "intendedUse": "The CMC surface claims only the API paths its screens call; every other path under `/api/cmc` is unattributed and refused in production.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-29. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-020",
@@ -2697,14 +3105,22 @@
       "requirement": "A submission package carries a programme's Module 3 only when that programme's export gate is open; the orchestrator composes none from unapproved records, and inline CMC data in a request is refused outside development.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-30",
+          "status": "deviation",
+          "evidenceDir": "OQ-CMC",
+          "title": "A submission package carries Module 3 only when the gate is open"
+        }
+      ],
       "ra": {
         "intendedUse": "A submission package carries a programme's Module 3 only when that programme's export gate is open; the orchestrator composes none from unapproved records, and inline CMC data in a request is refused outside development.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-30. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "open"
     },
     {
       "id": "URS-CMC-021",
@@ -2713,14 +3129,22 @@
       "requirement": "Every register create records the person who recorded it, on the tenant's audit chain, in the same transaction as the row: a create that names no operator writes nothing, and no register row is created by any other path.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-32",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Every register create names the person who recorded it"
+        }
+      ],
       "ra": {
         "intendedUse": "Every register create records the person who recorded it, on the tenant's audit chain, in the same transaction as the row: a create that names no operator writes nothing, and no register row is created by any other path.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-32. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-022",
@@ -2729,14 +3153,29 @@
       "requirement": "A section approval is independent of the people who entered the records the section was composed from: the operator of a cited record cannot approve it, a cited record with no recorded operator refuses the approval and is named, and an authorship-meaning signature is not accepted at all. A failed check refuses; it never reads as no conflict.",
       "part11": "§11.10(g) §11.50(a)(3)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-33",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The approver is not one of the people who entered the records"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-31",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Anything the tester observed that no step above covers"
+        }
+      ],
       "ra": {
         "intendedUse": "A section approval is independent of the people who entered the records the section was composed from: the operator of a cited record cannot approve it, a cited record with no recorded operator refuses the approval and is named, and an authorship-meaning signature is not accepted at all. A failed check refuses; it never reads as no conflict.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-33, OQ-CMC-31. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-023",
@@ -2745,14 +3184,29 @@
       "requirement": "A register's signed state — a method *validated*, a process-validation record or a comparability assessment *approved*, a QC result *reviewed* — is reached only under a signature with a reason and re-authentication, never by a create or an ordinary edit, and the record names the person who signed it. A record already in that state is closed to content edits and is retired rather than reversed. The signature is refused when the thing it would accept is not recorded.",
       "part11": "§11.10(a) §11.50 §11.70 §11.200",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-34",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A register record cannot be born, or edited, into its signed state"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-35",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The signature the refusal names records the signer, and closes the record"
+        }
+      ],
       "ra": {
         "intendedUse": "A register's signed state — a method *validated*, a process-validation record or a comparability assessment *approved*, a QC result *reviewed* — is reached only under a signature with a reason and re-authentication, never by a create or an ordinary edit, and the record names the person who signed it. A record already in that state is closed to content edits and is retired rather than reversed. The signature is refused when the thing it would accept is not recorded.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-34, OQ-CMC-35. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-024",
@@ -2761,14 +3215,22 @@
       "requirement": "A shelf-life claim is judged against the data the programme's own stability studies cover: a claim within the coverage passes, one beyond it is reported, and one beyond the ICH Q1E extrapolation ceiling fails for a marketing application. The verdict is reported at the programme's stage, because Q1E governs a registration application's proposed shelf life and a clinical-trial application answers 21 CFR 312.23(a)(7)(ii) instead. A claim or a coverage the register states in text the rule cannot read unambiguously is reported *not evaluated*, never as a pass.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-36",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A shelf-life claim is judged against the data the studies cover"
+        }
+      ],
       "ra": {
         "intendedUse": "A shelf-life claim is judged against the data the programme's own stability studies cover: a claim within the coverage passes, one beyond it is reported, and one beyond the ICH Q1E extrapolation ceiling fails for a marketing application. The verdict is reported at the programme's stage, because Q1E governs a registration application's proposed shelf life and a clinical-trial application answers 21 CFR 312.23(a)(7)(ii) instead. A claim or a coverage the register states in text the rule cannot read unambiguously is reported *not evaluated*, never as a pass.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-36. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-025",
@@ -2777,14 +3239,22 @@
       "requirement": "Every register edit records the person who changed the record, which fields moved and both values, on the tenant's audit chain and in the same transaction as the row itself. An edit that moves nothing is not recorded; an edit of a record that does not exist records nothing. No register edit reaches a table by any other path.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-37",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "An ordinary register edit records who changed it, and what moved"
+        }
+      ],
       "ra": {
         "intendedUse": "Every register edit records the person who changed the record, which fields moved and both values, on the tenant's audit chain and in the same transaction as the row itself. An edit that moves nothing is not recorded; an edit of a record that does not exist records nothing. No register edit reaches a table by any other path.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-37. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-026",
@@ -2793,14 +3263,22 @@
       "requirement": "A register record's chained history is readable in the product, against the record it is about: every act, oldest first, with the person, the fields that moved and both values, and the §11.50 signature where one is bound to the act. A read that fails is reported as a failure and never as a record with no changes; a record with no chained act says so and why. The history of another organisation's record is not readable.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-38",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A record’s change history is readable against the record it is about"
+        }
+      ],
       "ra": {
         "intendedUse": "A register record's chained history is readable in the product, against the record it is about: every act, oldest first, with the person, the fields that moved and both values, and the §11.50 signature where one is bound to the act. A read that fails is reported as a failure and never as a record with no changes; a record with no chained act says so and why. The history of another organisation's record is not readable.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-38. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-027",
@@ -2809,14 +3287,22 @@
       "requirement": "A CMC route that judges, derives from or files a record under a programme establishes first that the programme is this organisation's. A programme the organisation does not hold — one that does not exist, one of another organisation, or an id that is not well formed — is refused by every such route: a read or a derivation answers 404 stating that nothing was assessed, and a create answers 409 naming the problem and writes nothing. A record with no programme is organisation-wide and is not refused.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-39",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "No verdict and no filing for a programme the organisation does not hold"
+        }
+      ],
       "ra": {
         "intendedUse": "A CMC route that judges, derives from or files a record under a programme establishes first that the programme is this organisation's. A programme the organisation does not hold — one that does not exist, one of another organisation, or an id that is not well formed — is refused by every such route: a read or a derivation answers 404 stating that nothing was assessed, and a create answers 409 naming the problem and writes nothing. A record with no programme is organisation-wide and is not refused.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-39. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-028",
@@ -2825,14 +3311,22 @@
       "requirement": "A stability study reaches its terminal state only under a signature with a reason and re-authentication, and the signature names the signer and the date. The signature is refused when the study records no shelf life, when it records no pull-point results — a planned schedule is not data — and when the recorded series cannot be read. A study cannot be created already closed out, an ordinary edit cannot reach the close-out or write its signature columns, a closed-out study is closed to content edits and may be retired but not reopened, and the act cannot be signed twice.",
       "part11": "§11.10(a) §11.50 §11.70 §11.200",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-40",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A stability study’s shelf life is recorded under a signature"
+        }
+      ],
       "ra": {
         "intendedUse": "A stability study reaches its terminal state only under a signature with a reason and re-authentication, and the signature names the signer and the date. The signature is refused when the study records no shelf life, when it records no pull-point results — a planned schedule is not data — and when the recorded series cannot be read. A study cannot be created already closed out, an ordinary edit cannot reach the close-out or write its signature columns, a closed-out study is closed to content edits and may be retired but not reopened, and the act cannot be signed twice.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-40. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-029",
@@ -2841,14 +3335,22 @@
       "requirement": "The composed §3.2.P.8 states the provenance of the shelf life it prints: a period accepted on a signed study close-out, or one recorded on a study that has not been closed out under signature. The signature and the claim must be on the same study and the same side, so a signed study with no claim lends its signature to nothing and a signed drug-substance close-out does not make the product's claim read as accepted. The sentence states the provenance only; whether the period is supported by the data is the ICH Q1E verdict.",
       "part11": "none",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-41",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "The composed section says whether its shelf-life claim was signed for"
+        }
+      ],
       "ra": {
         "intendedUse": "The composed §3.2.P.8 states the provenance of the shelf life it prints: a period accepted on a signed study close-out, or one recorded on a study that has not been closed out under signature. The signature and the claim must be on the same study and the same side, so a signed study with no claim lends its signature to nothing and a signed drug-substance close-out does not make the product's claim read as accepted. The sentence states the provenance only; whether the period is supported by the data is the ICH Q1E verdict.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-41. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-030",
@@ -2857,14 +3359,417 @@
       "requirement": "Agency questions about Module 3 are the agency letter's record. CMC reads a programme's questions from the letters they came in and shows each as that record states it: its response state, its owner, and overdue only when its letter is past its due date with responses not approved as they stand, so an approved answer is never shown overdue. A letter is counted as overdue for Module 3 only when a Module 3 question on it is overdue, or when it is a Module 3 letter with no question to answer recorded; a letter overdue only on its other questions is said as that. Letters the person may not see are neither listed nor counted, and their number is said; questions with no CTD section are counted as not placed, never dropped, and never added to a count of letters. CMC records, answers, approves and closes nothing about an agency question: each opens on its letter, where that happens, and where its owner is set with a reason to a member who may open the letter. The earlier CMC question file refuses every INSERT, UPDATE, DELETE and TRUNCATE, in the route and in the database, for the owner role as for the runtime role, and is shown only as the history its rows hold.",
       "part11": "§11.10(a) §11.10(e) §11.70",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-42",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "Agency questions on Module 3 are the letter's record; the earlier CMC file is read-only"
+        }
+      ],
       "ra": {
         "intendedUse": "Agency questions about Module 3 are the agency letter's record. CMC reads a programme's questions from the letters they came in and shows each as that record states it: its response state, its owner, and overdue only when its letter is past its due date with responses not approved as they stand, so an approved answer is never shown overdue. A letter is counted as overdue for Module 3 only when a Module 3 question on it is overdue, or when it is a Module 3 letter with no question to answer recorded; a letter overdue only on its other questions is said as that. Letters the person may not see are neither listed nor counted, and their number is said; questions with no CTD section are counted as not placed, never dropped, and never added to a count of letters. CMC records, answers, approves and closes nothing about an agency question: each opens on its letter, where that happens, and where its owner is set with a reason to a member who may open the letter. The earlier CMC question file refuses every INSERT, UPDATE, DELETE and TRUNCATE, in the route and in the database, for the owner role as for the runtime role, and is shown only as the history its rows hold.",
         "risk": "high",
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-42. No execution or admission is claimed."
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-001",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "Reporting and compliance-report endpoints require an authenticated organisation member; anonymous requests are refused.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-01",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "Anonymous access refused"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate the reporting and compliance-report endpoints",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "anonymous negative on the run history, the canvas bootstrap and the compliance catalog"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-002",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "The release serves the paths the two surfaces call (`/api/report-os/runs`, `/api/report-os/bundles`, `/api/insights-canvas`, `/api/insights/subscriptions`, `/api/audit`, `/api/tenant-export/attestation`) and refuses a reporting path no launch screen calls with 403 `LAUNCH_SCOPE`.",
+      "part11": "§11.10(d)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-02",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The release serves the paths the two surfaces call and refuses the rest"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Serve the paths the two surfaces call and refuse the rest",
+        "risk": "medium — an out-of-scope reporting route reachable in production is a route no screen was validated against",
+        "assurance": "scripted",
+        "rationale": "five served paths and three refused, with launch scope and unattributed-path refusal enforced"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-003",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "The organisation is the session's. A run, its rendered report, its seal and its export are not found (404) for another organisation's run id, and a run over another organisation's project is not found. A run over another organisation's program is answered as a program with no tracking record here (409 `PROGRAM_NOT_ANCHORED`), and one over another organisation's account 403 `REPORT_ACCOUNT_SCOPE_MISMATCH`; nothing is created.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-06",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "Another organisation's run and project are not found"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A run, its report, its seal and its export belong to the session's organisation",
+        "risk": "high — a report about another tenant's records is a disclosure nothing on the page shows",
+        "assurance": "scripted",
+        "rationale": "another organisation's run and project, by id"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-004",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "A report's figures come from an engine. A run request carries no figure: a status, confidence or blocker supplied in the request is not stored. A report type no engine computes is refused 422 `REPORT_TYPE_NOT_COMPUTED`, a prediction 422 `PREDICTION_NOT_A_RUN`, and neither creates a run.",
+      "part11": "§11.10(a)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-03",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The catalog, and a run an engine computed"
+        },
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-04",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "A run request carries no figure"
+        },
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-05",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "A type no engine computes is not run"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A report's figures come from an engine, never from the request or a model",
+        "risk": "high — a report claiming an analysis nothing performed is a silent failure, and a regulator-facing one once sealed",
+        "assurance": "scripted",
+        "rationale": "supplied figures are not stored; a type no engine computes and a prediction are refused"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-005",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "A run is created by a member with a writing role; a read-only member's run is refused 403. The run, its snapshot and a chained audit row are written together.",
+      "part11": "§11.10(d) §11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-03",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The catalog, and a run an engine computed"
+        },
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-07",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "A read-only member reads the run history and creates no run"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A run is created by a writing member and recorded with its audit row",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "viewer negative; the run's creation on the ledger"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-006",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "Finalizing a run is an electronic signature. It requires a reason (at least 8 characters), a declared meaning and re-authentication with the signer's password and, when one is enrolled, an authenticator code; a wrong password is refused 401 and nothing is written. An approval is refused to the person who requested the run (separation of duties) and to a member without signing authority.",
+      "part11": "§11.50 §11.200 §11.10(g)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-08",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "CREDENTIALED: a finalize is refused without its reason, its meaning, the signer's credential, independence, authority or an admissible report"
+        },
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-09",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "CREDENTIALED: the signer finalizes the run; it is sealed and signed once"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Finalizing is an electronic signature with reason, meaning, re-authentication, authority and independence",
+        "risk": "high — §11.50/§11.200: a report declared final without a verified signer",
+        "assurance": "scripted (credentialed, with negatives)",
+        "rationale": "each refusal, then the signer's signature with password and authenticator code"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-007",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "A finalized run is sealed: the answer carries a SHA-256 content hash of the rendered report, the run reads `final`, one `electronic_signatures` row names the signer and the meaning, and the finalization is a chained audit row. A second finalize is refused 409 `RUN_ALREADY_FINAL`; a seal is never replaced.",
+      "part11": "§11.70 §11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-09",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "CREDENTIALED: the signer finalizes the run; it is sealed and signed once"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A finalized run is sealed once",
+        "risk": "high — §11.70: a seal that could be replaced binds nothing",
+        "assurance": "scripted (credentialed)",
+        "rationale": "the seal, the signature row, the second finalize refused"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-008",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "A seal can be verified afterwards. The seal read re-hashes the stored document and checks it against the stored seal, the audit chain's record of the finalization and the signature, and answers `intact`, `mismatch` or `not-verifiable`, with the signer's printed name, the time and the meaning. A run that is not final reads `sealed: false`.",
+      "part11": "§11.10(c) §11.50",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-10",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The seal verifies"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A seal can be verified afterwards",
+        "risk": "high — a seal that reads intact when the stored report changed is a silent failure",
+        "assurance": "scripted",
+        "rationale": "the verdict and its four checks on a finalized run; an unfinalized run reads not-verifiable. The mismatch verdict is covered by the unit suite, not by this OQ"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-009",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "An export is recorded before it is sent. The run's PDF carries an `X-Export-Sha256` header equal to the SHA-256 of the bytes sent, and the same hash is on the chained audit row.",
+      "part11": "§11.10(b) §11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-11",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The export carries the SHA-256 of the bytes sent, and is on the audit trail"
+        }
+      ],
+      "ra": {
+        "intendedUse": "An export is recorded with the hash of the bytes sent",
+        "risk": "high — §11.10(b): a copy that cannot be shown to be the record",
+        "assurance": "scripted",
+        "rationale": "the header against the SHA-256 of the body; the export on the ledger"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-010",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "The reporting library reads the organisation's own run history, bundles and schedules.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-12",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The reporting library's reads"
+        }
+      ],
+      "ra": {
+        "intendedUse": "The library reads the organisation's runs, bundles and schedules",
+        "risk": "low",
+        "assurance": "ad-hoc",
+        "rationale": "three GETs"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-011",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "The compliance report catalog is listed for any member and says whether the caller may run a report. A run is limited to organisation owners, admins, managers and approvers and platform administrators; another member is refused 403.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-13",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The compliance catalog is listed for a member; a run is the readers'"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A compliance report is run by an audit reader only",
+        "risk": "high — the reports list every member, sign-in and signature of the organisation",
+        "assurance": "scripted",
+        "rationale": "the catalog for a member; the member's run refused"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-012",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "A compliance report is sealed and recorded: the answer carries the data, a manifest with the data's SHA-256 and the signing key id, and an HMAC-SHA256 signature, the `X-Report-Data-Hash` header carries the same hash, and the run is a chained audit row. With no signing key the run is refused 503 `REPORT_SIGNING_UNAVAILABLE`, never sent unsealed. A saved report verifies, and a changed one does not.",
+      "part11": "§11.10(c) §11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-14",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "A compliance report is sealed, and a saved one verifies until it is changed"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A compliance report is sealed and recorded, and a saved one verifies until changed",
+        "risk": "high — an unsealed or altered report handed to an inspector",
+        "assurance": "scripted",
+        "rationale": "the manifest's hash, the header, verification, and a one-character change. The no-key refusal is production's and is owed on a production build"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-013",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "The audit trail integrity report states what was verified and what could not be: the `audit_logs` hash chain walk, the `audit_events` linkage and the HMAC seals each carry their own verdict, and a check that could not run reads *not verified*, never *intact*.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-15",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The integrity report says what it verified and what it could not"
+        }
+      ],
+      "ra": {
+        "intendedUse": "The integrity report says what it verified and what it could not",
+        "risk": "high — \"intact\" reported over a check that never ran is the failure §1 names",
+        "assurance": "scripted",
+        "rationale": "each verdict row and the overall statement"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-RPT-014",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "A report above the organisation's plan is refused 403 with the feature and the required tier; a plan that could not be read refuses every report.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-16",
+          "status": "deviation",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The catalog states the plan, and what each report needs"
+        }
+      ],
+      "ra": {
+        "intendedUse": "A report above the plan is refused; an unread plan refuses every report",
+        "risk": "medium — commercial, visible and recoverable",
+        "assurance": "scripted",
+        "rationale": "the catalog's tier and flags; the refusal needs an organisation on a lower plan"
+      },
+      "verdict": "open"
+    },
+    {
+      "id": "URS-RPT-015",
+      "app": "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.",
+      "doc": "URS-008-REPORTING-ANALYTICS.md",
+      "requirement": "The Reporting & analytics surface renders its heading and its five views (Reports, Catalog, Run history, Schedules, Bundles); the Audit & compliance reports surface renders its heading and the report catalog.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-17",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The Reporting & analytics surface renders its views and the run history"
+        },
+        {
+          "protocol": "OQ-007",
+          "step": "OQ-RPT-18",
+          "status": "pass",
+          "evidenceDir": "OQ-REPORTING",
+          "title": "The Audit & compliance reports surface renders the catalog"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Render the two surfaces",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "screenshots of the reporting views, the run history and the compliance catalog"
+      },
+      "verdict": "pass"
     }
   ],
   "problems": []

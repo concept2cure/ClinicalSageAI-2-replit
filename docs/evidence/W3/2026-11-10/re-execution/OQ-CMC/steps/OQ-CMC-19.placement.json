@@ -1,0 +1,200 @@
+{
+  "success": true,
+  "data": {
+    "placed": true,
+    "submissionId": 101,
+    "sequenceId": 18,
+    "placements": [
+      {
+        "sectionKey": "3.1",
+        "leafSectionCode": "m3.1",
+        "title": "Module 3 — Quality — Table of Contents (§3.1)",
+        "coauthorDocumentId": 170,
+        "leafId": 73,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.A.1",
+        "leafSectionCode": "m3.2.A.1",
+        "title": "Module 3 — Facilities and Equipment (§3.2.A.1)",
+        "coauthorDocumentId": 171,
+        "leafId": 74,
+        "tableCount": 3,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.A.2",
+        "leafSectionCode": "m3.2.A.2",
+        "title": "Module 3 — Adventitious Agents Safety Evaluation (§3.2.A.2)",
+        "coauthorDocumentId": 172,
+        "leafId": 75,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.A.3",
+        "leafSectionCode": "m3.2.A.3",
+        "title": "Module 3 — Excipients (§3.2.A.3)",
+        "coauthorDocumentId": 173,
+        "leafId": 76,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.1",
+        "leafSectionCode": "m3.2.P.1",
+        "title": "Module 3 — Description & Composition (§3.2.P.1)",
+        "coauthorDocumentId": 174,
+        "leafId": 77,
+        "tableCount": 2,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.2",
+        "leafSectionCode": "m3.2.P.2",
+        "title": "Module 3 — Pharmaceutical Development (§3.2.P.2)",
+        "coauthorDocumentId": 175,
+        "leafId": 78,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.3",
+        "leafSectionCode": "m3.2.P.3",
+        "title": "Module 3 — Manufacture (Drug Product) (§3.2.P.3)",
+        "coauthorDocumentId": 176,
+        "leafId": 79,
+        "tableCount": 4,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.4",
+        "leafSectionCode": "m3.2.P.4",
+        "title": "Module 3 — Control of Excipients (§3.2.P.4)",
+        "coauthorDocumentId": 177,
+        "leafId": 80,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.5",
+        "leafSectionCode": "m3.2.P.5",
+        "title": "Module 3 — Control of Drug Product (§3.2.P.5)",
+        "coauthorDocumentId": 178,
+        "leafId": 81,
+        "tableCount": 6,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.6",
+        "leafSectionCode": "m3.2.P.6",
+        "title": "Module 3 — Reference Standards (Drug Product) (§3.2.P.6)",
+        "coauthorDocumentId": 179,
+        "leafId": 82,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.7",
+        "leafSectionCode": "m3.2.P.7",
+        "title": "Module 3 — Container Closure System (Drug Product) (§3.2.P.7)",
+        "coauthorDocumentId": 180,
+        "leafId": 83,
+        "tableCount": 3,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.P.8",
+        "leafSectionCode": "m3.2.P.8",
+        "title": "Module 3 — Stability (Drug Product) (§3.2.P.8)",
+        "coauthorDocumentId": 181,
+        "leafId": 84,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.R.1.US",
+        "leafSectionCode": "m3.2.R.1.US",
+        "title": "Module 3 — Regional Information — United States (FDA) (§3.2.R.1.US)",
+        "coauthorDocumentId": 182,
+        "leafId": 85,
+        "tableCount": 2,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.1",
+        "leafSectionCode": "m3.2.S.1",
+        "title": "Module 3 — General Information (§3.2.S.1)",
+        "coauthorDocumentId": 183,
+        "leafId": 86,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.2",
+        "leafSectionCode": "m3.2.S.2",
+        "title": "Module 3 — Manufacture (Drug Substance) (§3.2.S.2)",
+        "coauthorDocumentId": 184,
+        "leafId": 87,
+        "tableCount": 3,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.3",
+        "leafSectionCode": "m3.2.S.3",
+        "title": "Module 3 — Characterisation (§3.2.S.3)",
+        "coauthorDocumentId": 185,
+        "leafId": 88,
+        "tableCount": 4,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.4",
+        "leafSectionCode": "m3.2.S.4",
+        "title": "Module 3 — Control of Drug Substance (§3.2.S.4)",
+        "coauthorDocumentId": 186,
+        "leafId": 89,
+        "tableCount": 6,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.5",
+        "leafSectionCode": "m3.2.S.5",
+        "title": "Module 3 — Reference Standards (Drug Substance) (§3.2.S.5)",
+        "coauthorDocumentId": 187,
+        "leafId": 90,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.6",
+        "leafSectionCode": "m3.2.S.6",
+        "title": "Module 3 — Container Closure System (Drug Substance) (§3.2.S.6)",
+        "coauthorDocumentId": 188,
+        "leafId": 91,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.2.S.7",
+        "leafSectionCode": "m3.2.S.7",
+        "title": "Module 3 — Stability (Drug Substance) (§3.2.S.7)",
+        "coauthorDocumentId": 189,
+        "leafId": 92,
+        "tableCount": 1,
+        "updatedInPlace": false
+      },
+      {
+        "sectionKey": "3.3",
+        "leafSectionCode": "m3.3",
+        "title": "Module 3 — Literature References (§3.3)",
+        "coauthorDocumentId": 190,
+        "leafId": 93,
+        "tableCount": 1,
+        "updatedInPlace": false
+      }
+    ],
+    "skipped": []
+  }
+}

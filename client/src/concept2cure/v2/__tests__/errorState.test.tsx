@@ -173,6 +173,20 @@ describe('ErrorState — a refused read is said as the refusal it is', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
+  /* Quality review, 2026-11-10: a record's 404 said "This project was not found", the classifier's default subject,
+     so Quality overrode it locally twice. The panel takes the subject instead. */
+  it('names the record that was not found when given its subject, and keeps the project as the default', () => {
+    render(<ErrorState title="The action items could not be read" retry={vi.fn()} read={{ status: 404 }} readWhat="its action list" readSubject="this CAPA" />);
+    expect(screen.getByRole('alert').textContent).toContain('This CAPA was not found in your organization, so its action list was not read.');
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    cleanup();
+    render(<EmptyState tone="error" title="The register could not be read" read={{ status: 404 }} readWhat="the register" readSubject="this register" />);
+    expect(screen.getByRole('alert').textContent).toContain('This register was not found in your organization, so the register was not read.');
+    cleanup();
+    render(<ErrorState title="The task board could not be read" read={{ status: 404 }} readWhat="the task board" />);
+    expect(screen.getByRole('alert').textContent).toContain('This project was not found in your organization, so the task board was not read.');
+  });
+
   it('an unavailable ownership check keeps a retry, with the classifier\'s words', () => {
     const retry = vi.fn();
     render(<ErrorState title="The task board could not be read" retry={retry} read={{ status: 503, code: 'VERIFICATION_UNAVAILABLE' }} readWhat="the task board" />);

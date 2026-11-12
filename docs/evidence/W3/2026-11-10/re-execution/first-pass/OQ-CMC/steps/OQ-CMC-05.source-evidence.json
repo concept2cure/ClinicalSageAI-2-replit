@@ -1,0 +1,47 @@
+{
+  "success": true,
+  "data": [
+    {
+      "sourceObjectId": "b8595da6-9be3-4feb-b2d8-9fe633276d89",
+      "sourceType": "batch",
+      "sourceKey": "batch:0350e58e-3dac-4089-b5f4-40756ea888f7",
+      "label": "batch B-20261110025315",
+      "evidence": []
+    },
+    {
+      "sourceObjectId": "37429016-b855-4584-bf16-5a2d86a758bf",
+      "sourceType": "drug_product",
+      "sourceKey": "drug_product:2",
+      "label": "drug product BX-701 5 mg film-coated tablet",
+      "evidence": []
+    },
+    {
+      "sourceObjectId": "d02e2c15-9954-43b4-be43-142baf877353",
+      "sourceType": "drug_substance",
+      "sourceKey": "drug_substance:5",
+      "label": "drug substance BX-701",
+      "evidence": []
+    },
+    {
+      "sourceObjectId": "a67b1de6-527e-42ca-a4a5-530f24dec370",
+      "sourceType": "method",
+      "sourceKey": "method:4",
+      "label": "method RP-HPLC Assay",
+      "evidence": []
+    },
+    {
+      "sourceObjectId": "77a6b4c4-4b0b-4f2f-a961-347d94715cbc",
+      "sourceType": "specification",
+      "sourceKey": "specification:56fa6310-ea01-40f1-95ff-3500af357034",
+      "label": "specification BX-701",
+      "evidence": []
+    },
+    {
+      "sourceObjectId": "408f7a8f-b48f-4dc4-9d71-d10acf128568",
+      "sourceType": "stability",
+      "sourceKey": "stability:6",
+      "label": "stability:6",
+      "evidence": []
+    }
+  ]
+}

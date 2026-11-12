@@ -39,12 +39,27 @@ async function resolvedLegacyProgram(q: RequestSqlClient, row: Record<string,unk
   return parent.programId;
 }
 /** Canonical recorded CRE parent admission reused by exact upload/selected-source reads. */
+/**
+ * One project's access answer, asked once per scope evaluation (2026-11-12). A list of a hundred sources of four
+ * projects asked the same question a hundred times, three statements each, in every one of the read's evaluations.
+ * The cache lives for one evaluation only: the next evaluation (the end-of-read recheck included) asks again, so a
+ * grant revoked during the read is still caught. A refusal is cached as itself, so every source of that project is
+ * refused exactly as before.
+ */
+type ParentAccessCache = Map<string, ReturnType<typeof requireCurrentProgramAccess>>;
+function currentProgramAccess(q: RequestSqlClient, input: { organizationId: number; userId: number }, programId: string, cache?: ParentAccessCache) {
+  if (!cache) return requireCurrentProgramAccess(q, { ...input, programId });
+  let asked = cache.get(programId);
+  if (!asked) { asked = requireCurrentProgramAccess(q, { ...input, programId }); cache.set(programId, asked); }
+  return asked;
+}
+
 async function admitRecordedSourceParent(q: RequestSqlClient,
-  input:{organizationId:number;userId:number},row:Record<string,unknown>):Promise<string | null> {
+  input:{organizationId:number;userId:number},row:Record<string,unknown>,parents?:ParentAccessCache):Promise<string | null> {
   let programId:string | null=null;
   if (row.client_program_id!=null) {
     programId=String(row.client_program_id).toLowerCase();
-    const parent=await requireCurrentProgramAccess(q,{...input,programId});
+    const parent=await currentProgramAccess(q,input,programId,parents);
     if (row.client_workspace_id!=null && Number(row.client_workspace_id)!==parent.clientWorkspaceId) throw unresolved();
   } else if (row.client_workspace_id!=null) {
     programId=await resolvedLegacyProgram(q,row,input.organizationId,input.userId);
@@ -91,13 +106,14 @@ function evaluatedSourceOmission(error:unknown):boolean {
 }
 async function admitReadableIdentity(q:RequestSqlClient, row:Record<string,unknown>, context: {
   organizationId:number; programs:CurrentAccessibleProgramScope; selected:number[] | undefined; admitNative:ReturnType<typeof createNativeRecordAdmission>;
+  parents:ParentAccessCache;
 }):Promise<void> {
-  const { organizationId, programs, selected, admitNative } = context;
+  const { organizationId, programs, selected, admitNative, parents } = context;
   if (row.organization_id==null && row.visibility_class==='global_public') return;
   if (!selected && row.client_program_id!=null && !programs.programIds.includes(String(row.client_program_id).toLowerCase())) {
     throw new SourceReadAccessError(403,'SOURCE_ACCESS_DENIED','Source not available with current access.');
   }
-  try {await admitRecordedSourceParent(q,{organizationId,userId:programs.actor.userId},row); await admitNative(row);}
+  try {await admitRecordedSourceParent(q,{organizationId,userId:programs.actor.userId},row,parents); await admitNative(row);}
   catch(error) {
     if (error instanceof ProgramReadAccessError && error.code==='PROJECT_PERMISSION_DENIED') {
       throw new SourceReadAccessError(403,'SOURCE_ACCESS_DENIED','Source not available with current access.');
@@ -155,13 +171,14 @@ export async function getCurrentReadableSourceScope(q: RequestSqlClient, input: 
       AND ($3::uuid IS NULL OR s.client_program_id=$3::uuid) ORDER BY s.id`,[input.organizationId,selected ?? null,input.programId ?? null]);
     if (selected && rows.rows.length!==new Set(selected).size) throw new SourceReadAccessError(404,'SOURCE_NOT_FOUND','Source not found.');
     const admitNative = createNativeRecordAdmission(q,{organizationId:input.organizationId,userId:programs.actor.userId});
+    const parents: ParentAccessCache = new Map();
     const readable: number[] = [];
     const unverified: UnverifiedSource[] = [];
     const report = input.unverified === 'report' && !selected;
     for (const row of rows.rows) {
       try {
         const failed = await admitEvaluated(q, row,
-          () => admitReadableIdentity(q,row,{organizationId:input.organizationId,programs,selected,admitNative}), report);
+          () => admitReadableIdentity(q,row,{organizationId:input.organizationId,programs,selected,admitNative,parents}), report);
         if (failed) unverified.push(failed); else readable.push(Number(row.id));
       } catch (error) {
         // Evaluated lists omit inaccessible/unresolved identities. Failed verification does not become empty success.

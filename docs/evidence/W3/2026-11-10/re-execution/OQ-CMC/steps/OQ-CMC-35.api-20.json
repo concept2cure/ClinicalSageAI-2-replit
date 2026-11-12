@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=comparability_study%3A42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 38,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 172,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "comparability_study:42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
+          "signature_type": "governed-action",
+          "signature_purpose": "OQ-008: the comparability assessment is approved on the evidence recorded against it.",
+          "signer_id": 1,
+          "signer_name": "oq-runner@validation.local",
+          "signer_title": null,
+          "signer_email": "oq-runner@validation.local",
+          "signature_meaning": "approval",
+          "signature_hash": "d6b90ae1481432ef084c1c3d4165563d1f40743aced6c228c25a809307e67907",
+          "binding_basis": "governed-action-sha256-chain",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-11-12T00:55:30.704Z",
+          "ip_address": "127.0.0.1",
+          "approvals_recorded": null,
+          "approvals_required": null,
+          "interim_approval": false
+        }
+      ]
+    }
+  }
+}

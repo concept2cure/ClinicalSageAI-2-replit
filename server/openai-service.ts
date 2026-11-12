@@ -310,7 +310,14 @@ export async function extractTextFromPdf(pdfPathOrBuffer: string | Buffer): Prom
     let buffer: Buffer;
 
     if (typeof pdfPathOrBuffer === 'string') {
-      const fs = require('fs');
+      /* The module's own `import fs from 'fs'` at the top. A `const fs =
+         require('fs')` stood here and SHADOWED it: this package is
+         "type": "module" and the server bundle is esbuild format:'esm', so
+         `require` is undefined in both runtimes and the line threw
+         ReferenceError the first time a caller passed a path — reading a PDF
+         from disk, a 500 at click time. It was invisible to
+         ci:commonjs-require, whose sweep could not reach a file directly under
+         server/ (its glob used '**', which needs a directory level). */
       buffer = fs.readFileSync(pdfPathOrBuffer);
     } else {
       buffer = pdfPathOrBuffer;

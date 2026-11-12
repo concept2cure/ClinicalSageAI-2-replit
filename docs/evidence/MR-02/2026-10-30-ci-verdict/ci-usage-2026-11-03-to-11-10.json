@@ -1,0 +1,311 @@
+{
+  "window": "2026-11-03T00:00Z..2026-11-10T00:00Z",
+  "branch": "concept2cure-v2",
+  "event": "push",
+  "read": "GitHub Actions API",
+  "pushes": 627,
+  "workflows": {
+    "c2c-agent.yml": {
+      "runs": 628,
+      "outcomes": {
+        "skipped": 628
+      },
+      "runner_minutes_per_completed_run_median": 0.0,
+      "runner_minutes_per_completed_run_p90": 0,
+      "runner_minutes_total_completed": 0,
+      "job_queue_minutes_median": null,
+      "job_queue_minutes_p90": null,
+      "push_to_verdict_minutes_median": 0.0,
+      "push_to_verdict_minutes_p90": 0.2
+    },
+    "ci.yml": {
+      "runs": 627,
+      "outcomes": {
+        "queued": 148,
+        "in_progress": 7,
+        "failure": 470,
+        "cancelled": 2
+      },
+      "runner_minutes_per_completed_run_median": 267.7,
+      "runner_minutes_per_completed_run_p90": 332.3,
+      "runner_minutes_total_completed": 110009,
+      "job_queue_minutes_median": 766.1,
+      "job_queue_minutes_p90": 1433.7,
+      "push_to_verdict_minutes_median": 2785.6,
+      "push_to_verdict_minutes_p90": 3045.6
+    },
+    "codeql.yml": {
+      "runs": 628,
+      "outcomes": {
+        "queued": 16,
+        "in_progress": 1,
+        "failure": 6,
+        "success": 604,
+        "cancelled": 1
+      },
+      "runner_minutes_per_completed_run_median": 18.2,
+      "runner_minutes_per_completed_run_p90": 32.4,
+      "runner_minutes_total_completed": 12077,
+      "job_queue_minutes_median": 620.7,
+      "job_queue_minutes_p90": 960.0,
+      "push_to_verdict_minutes_median": 635.8,
+      "push_to_verdict_minutes_p90": 984.6
+    },
+    "repo-health-baseline-refresh.yml": {
+      "runs": 628,
+      "outcomes": {
+        "cancelled": 592,
+        "success": 34,
+        "failure": 2
+      },
+      "runner_minutes_per_completed_run_median": 0.0,
+      "runner_minutes_per_completed_run_p90": 0,
+      "runner_minutes_total_completed": 23,
+      "job_queue_minutes_median": 7.0,
+      "job_queue_minutes_p90": 836.6,
+      "push_to_verdict_minutes_median": 2.7,
+      "push_to_verdict_minutes_p90": 20.8
+    },
+    "semgrep.yml": {
+      "runs": 628,
+      "outcomes": {
+        "queued": 16,
+        "failure": 611,
+        "cancelled": 1
+      },
+      "runner_minutes_per_completed_run_median": 20.2,
+      "runner_minutes_per_completed_run_p90": 22.9,
+      "runner_minutes_total_completed": 11717,
+      "job_queue_minutes_median": 618.6,
+      "job_queue_minutes_p90": 959.2,
+      "push_to_verdict_minutes_median": 636.4,
+      "push_to_verdict_minutes_p90": 987.8
+    },
+    "tier5-browser-smoke.yml": {
+      "runs": 627,
+      "outcomes": {
+        "queued": 15,
+        "failure": 612
+      },
+      "runner_minutes_per_completed_run_median": 3.4,
+      "runner_minutes_per_completed_run_p90": 10.3,
+      "runner_minutes_total_completed": 3261,
+      "job_queue_minutes_median": 606.6,
+      "job_queue_minutes_p90": 930.2,
+      "push_to_verdict_minutes_median": 608.9,
+      "push_to_verdict_minutes_p90": 932.0
+    }
+  },
+  "ci_yml_jobs": {
+    "Test (shard */8)": {
+      "ran": 2808,
+      "median_minutes": 25.4,
+      "p90_minutes": 34.9,
+      "max_minutes": 91.3,
+      "at_or_over_timeout": 35,
+      "conclusions": {
+        "failure": 2434,
+        "cancelled": 1003,
+        "success": 339
+      }
+    },
+    "Lint": {
+      "ran": 471,
+      "median_minutes": 31.4,
+      "p90_minutes": 33.8,
+      "max_minutes": 38.4,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 471,
+        "cancelled": 1
+      }
+    },
+    "Integration Tests": {
+      "ran": 366,
+      "median_minutes": 15.7,
+      "p90_minutes": 17.5,
+      "max_minutes": 49.8,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 366,
+        "cancelled": 106
+      }
+    },
+    "Secret scan (full history)": {
+      "ran": 470,
+      "median_minutes": 11.9,
+      "p90_minutes": 12.8,
+      "max_minutes": 17.2,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 470,
+        "cancelled": 2
+      }
+    },
+    "Production Image Boot (built image, empty database, sign-in)": {
+      "ran": 372,
+      "median_minutes": 7.2,
+      "p90_minutes": 7.5,
+      "max_minutes": 7.9,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 19,
+        "cancelled": 100,
+        "success": 353
+      }
+    },
+    "Security Scan": {
+      "ran": 470,
+      "median_minutes": 3.3,
+      "p90_minutes": 3.9,
+      "max_minutes": 7.3,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 337,
+        "cancelled": 2,
+        "success": 133
+      }
+    },
+    "Security Contract Tests": {
+      "ran": 471,
+      "median_minutes": 2.6,
+      "p90_minutes": 2.9,
+      "max_minutes": 4.3,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "cancelled": 1,
+        "success": 471
+      }
+    },
+    "Production Boot Smoke (RLS on, non-superuser role)": {
+      "ran": 369,
+      "median_minutes": 3.0,
+      "p90_minutes": 3.3,
+      "max_minutes": 4.0,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 24,
+        "cancelled": 103,
+        "success": 345
+      }
+    },
+    "Blank DB Provisioning + Deploy Migration": {
+      "ran": 374,
+      "median_minutes": 2.5,
+      "p90_minutes": 2.8,
+      "max_minutes": 13.6,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 44,
+        "cancelled": 98,
+        "success": 330
+      }
+    },
+    "Test": {
+      "ran": 472,
+      "median_minutes": 1.7,
+      "p90_minutes": 1.9,
+      "max_minutes": 2.8,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 472
+      }
+    },
+    "AnA Readiness Tests": {
+      "ran": 371,
+      "median_minutes": 2.0,
+      "p90_minutes": 2.2,
+      "max_minutes": 3.1,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "cancelled": 101,
+        "success": 371
+      }
+    },
+    "Codespace (devcontainer image, post-create + post-start)": {
+      "ran": 144,
+      "median_minutes": 0.6,
+      "p90_minutes": 9.8,
+      "max_minutes": 18.5,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "failure": 17,
+        "success": 127
+      }
+    },
+    "AIOS Audit Assets": {
+      "ran": 363,
+      "median_minutes": 0.6,
+      "p90_minutes": 0.7,
+      "max_minutes": 1.9,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "cancelled": 109,
+        "success": 363
+      }
+    },
+    "Nightly Governance Strict": {
+      "ran": 0,
+      "median_minutes": null,
+      "p90_minutes": null,
+      "max_minutes": null,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "skipped": 472
+      }
+    },
+    "Coverage (shard ${{ matrix.shard }}/8)": {
+      "ran": 0,
+      "median_minutes": null,
+      "p90_minutes": null,
+      "max_minutes": null,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "skipped": 472
+      }
+    },
+    "Coverage (ratchet)": {
+      "ran": 0,
+      "median_minutes": null,
+      "p90_minutes": null,
+      "max_minutes": null,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "skipped": 472
+      }
+    },
+    "Build": {
+      "ran": 0,
+      "median_minutes": null,
+      "p90_minutes": null,
+      "max_minutes": null,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "skipped": 472
+      }
+    },
+    "Assemble Release Evidence": {
+      "ran": 0,
+      "median_minutes": null,
+      "p90_minutes": null,
+      "max_minutes": null,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "skipped": 472
+      }
+    },
+    "Release evidence gate": {
+      "ran": 0,
+      "median_minutes": null,
+      "p90_minutes": null,
+      "max_minutes": null,
+      "at_or_over_timeout": 0,
+      "conclusions": {
+        "skipped": 472
+      }
+    }
+  },
+  "runner_minutes_completed_runs_total": 137087,
+  "runner_minutes_per_day_completed_runs": 19584,
+  "ci_green_runs": 0
+}

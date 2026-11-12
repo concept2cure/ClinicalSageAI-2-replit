@@ -1,0 +1,9 @@
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > the request client answers a timestamptz as text, as PostgreSQL does through Drizzle 76ms
+ × server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > places a frozen, sealed document whose section creation is chained 195ms
+ × server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > a ledger that cannot be read answers 503 in words, and nothing is written 129ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > a chained row that no longer derives is still refused 409 339ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"error":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}: expected 409 to be 201 // Object.is equality
+AssertionError: {"error":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}: expected 409 to be 503 // Object.is equality
+      Tests  2 failed | 2 passed (4)
+DIAG integrity {"link":"broken","seal":"no-key"} string 2026-11-12 00:28:39.444+00 1

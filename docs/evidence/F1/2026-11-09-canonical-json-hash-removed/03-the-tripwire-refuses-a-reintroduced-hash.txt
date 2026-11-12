@@ -1,0 +1,28 @@
+The tripwire exists to refuse a hash put back into this module. A replacement
+here would be written under the same constraint that produced the original
+defect — five client files import stableStringify, so a static node:crypto
+import would reach the browser bundle — and would reach for the same dynamic
+require, which does not exist in an ESM runtime. So: shown refusing it.
+
+$ cat >> shared/canonical-json.ts <<'MUTATION'
+
+export function stableHash(value: unknown): string {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require('crypto').createHash('sha256').update(stableStringify(value)).digest('hex');
+}
+MUTATION
+
+$ npx vitest run shared/__tests__/canonical-json.test.ts
+
+ × canonical JSON — the property the hashes depend on > exports no hash function, only the serializer 6ms
+   → expected [ 'stableHash', 'stableStringify' ] to deeply equal [ 'stableStringify' ]
+
+ FAIL  shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > exports no hash function, only the serializer
+AssertionError: expected [ 'stableHash', 'stableStringify' ] to deeply equal [ 'stableStringify' ]
+    105|   it('exports no hash function, only the serializer', () => {
+    106|     expect(Object.keys(canonicalJson).sort()).toEqual(['stableStringif…
+       |                                               ^
+
+$ # mutation reverted
+$ grep -n '^export function' shared/canonical-json.ts
+65:export function stableStringify(value: unknown): string {

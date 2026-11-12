@@ -1,0 +1,40 @@
+# Each guarantee of tests/monitoring.tftest.hcl broken in a scratch copy of terraform/stack, one at a time; the run that guards it must fail.
+
+--- 0. unchanged
+Success! 9 passed, 0 failed.
+
+--- 1. the topic key without CloudWatch's grant
+  run "cloudwatch_can_publish_to_the_encrypted_topic"... fail
+  on tests/monitoring.tftest.hcl line 154, in run "cloudwatch_can_publish_to_the_encrypted_topic":
+Failure! 8 passed, 1 failed.
+
+--- 2. production's 'at least one address' validation removed
+  run "production_needs_someone_to_page"... fail
+  on tests/monitoring.tftest.hcl line 302, in run "production_needs_someone_to_page":
+  run "an_address_must_be_an_address"... skip
+  run "staging_may_have_no_subscribers"... skip
+Failure! 6 passed, 1 failed, 2 skipped.
+
+--- 3. the security-alert filter widened to every [SECURITY] line
+0
+  run "the_logs_that_mean_trouble_page"... fail
+  on tests/monitoring.tftest.hcl line 232, in run "the_logs_that_mean_trouble_page":
+Failure! 8 passed, 1 failed.
+
+--- 4. alarms that notify only when firing (no ok_actions)
+  run "every_alarm_publishes_to_the_one_topic"... fail
+  on tests/monitoring.tftest.hcl line 136, in run "every_alarm_publishes_to_the_one_topic":
+Failure! 8 passed, 1 failed.
+
+--- 5. the staleness alarms treat a missing day as fine
+  run "a_sweep_that_stops_running_pages"... fail
+  on tests/monitoring.tftest.hcl line 282, in run "a_sweep_that_stops_running_pages":
+Failure! 8 passed, 1 failed.
+
+--- 6. the CloudTrail filters dropped
+  run "every_alarm_publishes_to_the_one_topic"... fail
+  on tests/monitoring.tftest.hcl line 132, in run "every_alarm_publishes_to_the_one_topic":
+  run "account_activity_from_cloudtrail_pages"... fail
+  on tests/monitoring.tftest.hcl line 262, in run "account_activity_from_cloudtrail_pages":
+  on tests/monitoring.tftest.hcl line 267, in run "account_activity_from_cloudtrail_pages":
+  on tests/monitoring.tftest.hcl line 271, in run "account_activity_from_cloudtrail_pages":

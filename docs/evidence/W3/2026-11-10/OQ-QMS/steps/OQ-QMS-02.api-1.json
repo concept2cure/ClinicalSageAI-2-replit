@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "docNumber": "SOP-BAD-20261110020650",
+      "title": "no type",
+      "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
+      "reason": "OQ-006 step 02: missing type must be refused"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 16,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Choose an owned project, document type and title, and state a reason of at least eight characters.",
+      "details": {
+        "code": "QMS_CREATE_INVALID"
+      }
+    }
+  }
+}

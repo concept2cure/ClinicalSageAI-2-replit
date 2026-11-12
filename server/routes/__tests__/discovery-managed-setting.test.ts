@@ -78,3 +78,26 @@ describe('discovery has one managed settings door', () => {
     expect(res.body.error).toBe(DISCOVERY_NOT_A_GENERAL_SETTING);
   });
 });
+
+describe("the organisation's review rules go through the same door (P-117)", () => {
+  const send = (security: Record<string, unknown>) =>
+    request(app).patch('/api/organizations/2/settings').send({ settings: { security }, reason: 'Two reviewers per SOP-014' });
+
+  it('refuses a rule outside its bounds before the writer: 400, nothing stored', async () => {
+    for (const security of [{ independentReviewersRequired: 0 }, { independentReviewersRequired: 6 },
+      { independentReviewersRequired: 1.5 }, { soleMemberSelfApproval: 'yes' }]) {
+      expect((await send(security)).status, JSON.stringify(security)).toBe(400);
+    }
+    expect(writer).not.toHaveBeenCalled();
+  });
+
+  it("admits the administrator's rules, laid over the stored security settings, with the reason", async () => {
+    const stored = { security: { mfaEnabled: true } };
+    writer.mockImplementation(async (_req: unknown, _id: number, change: { next: (s: unknown, tier: string) => unknown }) => change.next(stored, 'standard'));
+    const res = await send({ independentReviewersRequired: 2, soleMemberSelfApproval: false });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const change = writer.mock.calls[0][2];
+    expect(change.reason).toBe('Two reviewers per SOP-014');
+    expect(change.next(stored, 'standard').security).toEqual({ mfaEnabled: true, independentReviewersRequired: 2, soleMemberSelfApproval: false });
+  });
+});

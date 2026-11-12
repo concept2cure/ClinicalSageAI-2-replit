@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/9471baa2-4354-44d6-beb5-d88364d5fa3d/replies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "body": "Agreed."
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 28,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "5f63fdcc-6a12-4042-800b-29747e07c46b"
+      }
+    }
+  }
+}

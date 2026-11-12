@@ -55,6 +55,7 @@ import {
 import { GatewayAuditLogger } from './audit';
 import {
   GatewayPolicyEngine,
+  piiDisposition,
   type ContentPolicyAction,
   type PolicyFinding,
   type RateLimitDenial,
@@ -1748,6 +1749,21 @@ export class AIGateway {
     if (piiVerdict.action === 'redact' && piiVerdict.messages) {
       request = { ...request, messages: piiVerdict.messages };
     }
+    // The input-tier wall judges the copy that is dispatched (founder decision, 2026-11-09). The class above was read
+    // before the PII pass: an email or SSN the pass has since removed, or a phone number its disposition table sends
+    // and audits by design (policy.ts PII_DETECTOR_DISPOSITION), forced Tier 3 and refused every Claude turn that
+    // carried one, and every later turn of that conversation. Re-read what will leave: anything still redact- or
+    // block-class (or PHI) keeps its class; if it cannot be read, it is 'unknown'. Only the tier wall reads this:
+    // the placement-approval gate keeps the pre-redaction class.
+    if (request.sensitiveDataClass === 'pii') {
+      try {
+        const residual = await getContentClassifier().classify(extractRequestText(request));
+        const stillPersonal = residual.matches.some(m => { const d = piiDisposition(m); return d === 'redact' || d === 'block'; });
+        request = { ...request, dispatchedDataClass: residual.phi ? 'phi' : stillPersonal ? 'pii' : 'none' };
+      } catch {
+        request = { ...request, dispatchedDataClass: 'unknown' };
+      }
+    }
 
     // Non-blocking findings (injection flags, applied redactions, coverage
     // gaps) ride into the audit entry alongside the prompt hash.
@@ -2471,7 +2487,7 @@ export class AIGateway {
     // and of audit-only mode. It also runs on every fallback and embeddings.
     if (request.inputSensitivityTiers !== undefined) {
       const decision = decideInputTierPlacement({ tiers: request.inputSensitivityTiers,
-        provider: modelConfig.provider, detectedDataClass: request.sensitiveDataClass });
+        provider: modelConfig.provider, detectedDataClass: request.dispatchedDataClass ?? request.sensitiveDataClass });
       const routing = { ...decision, provider: modelConfig.provider,
         lane: derivativeOf(request) ? 'C_derivative' : modelConfig.provider === 'local' ? 'A_local' : 'B_frontier' };
       inputTierPlacement = routing;

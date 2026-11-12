@@ -135,3 +135,18 @@ describe('native creation belongs to its actual signed-in owner', () => {
     expect(apiRequest).toHaveBeenCalledOnce();
   });
 });
+
+describe('a refused creation is said once, in the server’s words', () => {
+  // GA-D4-12, the production walk (2026-11-12): a member without edit access read
+  // "You cannot author this project with your current access.. Nothing was created."
+  it('ends the server’s sentence once before "Nothing was created."', async () => {
+    const { ApiRequestError } = await import('@/lib/queryClient');
+    apiRequest.mockRejectedValueOnce(new ApiRequestError('You cannot author this project with your current access.', 403));
+    const p = options();
+    const { result } = renderHook(() => useAuthoringCreation(p));
+    await act(async () => { result.current.create('document', payload, vi.fn()); await Promise.resolve(); await Promise.resolve(); });
+    await vi.waitFor(() => expect(result.current.state('document')?.phase).toBe('failed'));
+    expect(result.current.state('document')?.message)
+      .toBe('Couldn’t create the document — You cannot author this project with your current access. Nothing was created.');
+  });
+});

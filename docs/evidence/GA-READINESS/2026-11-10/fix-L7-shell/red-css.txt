@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-03: the bell count sits beside the bell > the count is in the button flow, not on its corner 21ms
+   → expected 'position:absolute;top:-5px;right:-7px…' not to match /position:absolute/
+ × client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-03: the bell count sits beside the bell > a trigger with a count widens to hold the bell and the count side by side 14ms
+   → expected '' to match /width:auto/
+ × client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-07: every filing picker reaches all its tabs at 390 > the base .rpk-tabs rule scrolls sideways, and its tabs keep their width 16ms
+   → expected 'display:flex;gap:2px;border-bottom:1p…' to match /overflow-x:auto/
+ × client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-05: the audit notice has a background of its own > the root-mounted notice is opaque, bordered and padded 11ms
+   → expected '' to match /background:[^;]*var\(--bg-000\)/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-03: the bell count sits beside the bell > the count is in the button flow, not on its corner
+AssertionError: expected 'position:absolute;top:-5px;right:-7px…' not to match /position:absolute/
+
+- Expected:
+/position:absolute/
+
++ Received:
+"position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:04px;border-radius:999px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);font-weight:600;line-height:16px;text-align:center;pointer-events:none;"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts:38:23
+     36|     const badge = declsOf('.c2c-v2 .tt-badge');
+     37|     expect(badge).not.toBe('');
+     38|     expect(badge).not.toMatch(/position:absolute/);
+       |                       ^
+     39|   });
+     40|   it('a trigger with a count widens to hold the bell and the count sid…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-03: the bell count sits beside the bell > a trigger with a count widens to hold the bell and the count side by side
+AssertionError: expected '' to match /width:auto/
+
+- Expected:
+/width:auto/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts:42:21
+     40|   it('a trigger with a count widens to hold the bell and the count sid…
+     41|     const trigger = declsOf('.c2c-v2 .tt-trigger:has(.tt-badge)');
+     42|     expect(trigger).toMatch(/width:auto/);
+       |                     ^
+     43|     expect(trigger).toMatch(/gap:/);
+     44|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-07: every filing picker reaches all its tabs at 390 > the base .rpk-tabs rule scrolls sideways, and its tabs keep their width
+AssertionError: expected 'display:flex;gap:2px;border-bottom:1p…' to match /overflow-x:auto/
+
+- Expected:
+/overflow-x:auto/
+
++ Received:
+"display:flex;gap:2px;border-bottom:1pxsolidvar(--border);padding-bottom:0;"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts:49:42
+     47| describe('GA-UI-07: every filing picker reaches all its tabs at 390', …
+     48|   it('the base .rpk-tabs rule scrolls sideways, and its tabs keep thei…
+     49|     expect(declsOf('.c2c-v2 .rpk-tabs')).toMatch(/overflow-x:auto/);
+       |                                          ^
+     50|     expect(declsOf('.c2c-v2 .rpk-tabs>*')).toMatch(/flex-shrink:0/);
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts > GA-UI-05: the audit notice has a background of its own > the root-mounted notice is opaque, bordered and padded
+AssertionError: expected '' to match /background:[^;]*var\(--bg-000\)/
+
+- Expected:
+/background:[^;]*var\(--bg-000\)/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/shellChromeStyles.test.ts:57:20
+     55|   it('the root-mounted notice is opaque, bordered and padded', () => {
+     56|     const notice = declsOf('.c2c-global-errors .c2c-error-state');
+     57|     expect(notice).toMatch(/background:[^;]*var\(--bg-000\)/);
+       |                    ^
+     58|     expect(notice).toMatch(/border:1pxsolidvar\(--error\)/);
+     59|     expect(notice).toMatch(/padding:/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  12:43:17
+   Duration  574ms (transform 111ms, setup 124ms, import 23ms, tests 66ms, environment 0ms)
+

@@ -1,0 +1,57 @@
+// Walk 2, flow 0: self-serve sign-up of the walker's own organization.
+const c = require('./common.cjs');
+const EMAIL = 'walk2.admin@example.test';
+const ORG = 'Walk Two Biologics';
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'w2admin' });
+  await c.step('sign-up: person', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/signup', { waitUntil: 'networkidle' });
+    s.notes.push('url ' + page.url());
+    await page.fill('#firstName', 'Wanda'); await page.fill('#lastName', 'Walker');
+    await page.fill('#email', EMAIL);
+    await page.fill('#password', process.env.WALK_PASSWORD); await page.fill('#confirmPassword', process.env.WALK_PASSWORD);
+    await page.fill('#jobTitle', 'Head of Regulatory Operations');
+    await c.shot(page, 'w2-00-signup-1-person.png');
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.locator('#organization').waitFor({ timeout: 8000 });
+  });
+  await c.step('sign-up: organization', async () => {
+    await page.fill('#organization', ORG);
+    await page.selectOption('#organizationType', 'biotech');
+    await page.fill('#country', 'United States');
+    await page.selectOption('#useCase', 'ind');
+    await c.shot(page, 'w2-00-signup-2-org.png');
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.getByText('Researcher').first().waitFor({ timeout: 8000 });
+  });
+  await c.step('sign-up: plan (free)', async (s) => {
+    s.notes.push(await page.locator('body').innerText().then(t => t.slice(0, 900)));
+    await page.getByText('Researcher').first().click();
+    await c.shot(page, 'w2-00-signup-3-plan.png');
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.getByText('Legal Agreements').waitFor({ timeout: 8000 });
+  });
+  await c.step('sign-up: agreements and create', async (s) => {
+    for (const el of await page.locator('div.h-40.overflow-y-auto').all()) { await el.evaluate((n) => { n.scrollTop = n.scrollHeight; n.dispatchEvent(new Event('scroll', { bubbles: true })); }); await c.sleep(200); }
+    const boxes = page.locator('input[type=checkbox]');
+    const n = await boxes.count();
+    s.notes.push('checkboxes ' + n);
+    for (let i = 0; i < n; i += 1) { if (!(await boxes.nth(i).isDisabled())) await boxes.nth(i).check().catch(() => {}); }
+    await c.shot(page, 'w2-00-signup-4-agreements.png', { fullPage: true });
+    await page.getByRole('button', { name: /create/i }).click();
+    await c.sleep(4000);
+    s.notes.push('after: ' + await page.locator('body').innerText().then(t => t.replace(/\n+/g, ' | ').slice(0, 700)));
+    await c.shot(page, 'w2-00-signup-5-after.png');
+  });
+  await c.step('sign-up: open the product', async (s) => {
+    const open = page.getByRole('button', { name: /open concept2cure/i }).or(page.getByRole('link', { name: /open concept2cure/i }));
+    if (await open.count()) { await open.first().click(); await page.waitForLoadState('networkidle'); await c.sleep(2500); }
+    s.notes.push('url ' + page.url());
+    s.notes.push('text: ' + await page.locator('body').innerText().then(t => t.replace(/\n+/g, ' | ').slice(0, 900)));
+    await c.shot(page, 'w2-00-signup-6-first-screen.png');
+  });
+  console.log(JSON.stringify(c.log.steps.map(s => ({ n: s.name, o: s.outcome, e: s.error, http: s.http, console: s.console, notes: s.notes })), null, 1));
+  c.save('w2-00-signup');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

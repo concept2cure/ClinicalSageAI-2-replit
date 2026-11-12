@@ -92,11 +92,12 @@ async function source(program: string, title: string, text: string | null, extra
     `INSERT INTO cre_evidence_sources
        (organization_id, visibility_class, source_type, title, checksum, client_program_id,
         ingestion_status, extraction_status, extracted_text, char_count, metadata, provenance)
-     VALUES ($1, 'project_private', 'client_document', $2, $3, $4, 'ingested', $5, $6, $7, $8::jsonb, '{}'::jsonb)
+     VALUES ($1, 'project_private', 'client_document', $2, $3, $4, 'ingested', $5, $6, $7, $8::jsonb, $9::jsonb)
      RETURNING id`,
     [
       extra.org ?? orgId, `${PROBE} ${title}`, createHash('sha256').update(`${RUN}${program}${title}${text}`).digest('hex'), program,
       text ? 'extracted' : 'pending', text, text ? text.length : null, JSON.stringify(extra.metadata ?? {}),
+      JSON.stringify(extra.provenance ?? {}),
     ],
   );
   return Number(rows[0].id);
@@ -368,6 +369,15 @@ describe('the Vault lane counts every current source of the project', () => {
     await source(roomProgram, 'proposed', 'text', { metadata: { dossier: { suggestedFolder: 'module-3' } } });
     await source(roomProgram, 'refused', 'text', { metadata: { dossier: { suggestedFolder: null, needsReview: true } } });
     const filedId = await source(roomProgram, 'filed', 'filed text');
+    // The project's Quality records, captured as sources with no original file (record-source.ts). They are not files
+    // the classifier reads, and the lane's list leaves them out; counted, C2C-101's Vault read "25 need review — the
+    // classifier would not propose a folder" over one listed source (the click-through, 2026-11-10).
+    for (const n of [1, 2]) {
+      await source(roomProgram, `quality record ${n}`, `Controlled procedure ${n}`, {
+        metadata: { dossier: { evidenceKind: 'qms' }, nativeRecord: true, originalFileAvailable: false },
+        provenance: { origin: 'native_record_snapshot', extractionMethod: 'native-record-projection' },
+      });
+    }
     const { rows: [filed] } = await owner.query('SELECT checksum FROM cre_evidence_sources WHERE id = $1', [filedId]);
     await owner.query(
       `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, file_name, content_hash)

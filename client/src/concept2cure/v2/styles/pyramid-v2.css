@@ -158,7 +158,7 @@
 .c2c-v2 .py-res-row[data-over] .bar span{background:var(--error);}
 .c2c-v2 .py-res-row .v{text-align:right;}
 .c2c-v2 .py-over{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-caption);font-weight:600;color:var(--error);}
-.c2c-v2 .py-over.ok{color:var(--text-500);font-weight:600;}
+.c2c-v2 .py-over.ok{color:var(--text-400);font-weight:600;}
 .c2c-v2 .py-over svg{width:11px;height:11px;}
 .c2c-v2 .py-ana-note{font-size:11px;line-height:1.55;color:var(--text-400);padding:10px 15px;border-top:1px solid var(--bg-100);}
 .c2c-v2 .py-cov{padding:12px 15px;display:flex;flex-direction:column;gap:12px;}
@@ -172,7 +172,7 @@
 .c2c-v2 .py-cov-row .bar span[data-pc="1"]{background:var(--warning);}
 .c2c-v2 .py-cov-row .bar span[data-pc="2"]{background:var(--success);}
 .c2c-v2 .py-cov-row .v{text-align:right;}
-.c2c-v2 .py-cov-row .n{font-size:10px;color:var(--text-500);}
+.c2c-v2 .py-cov-row .n{font-size:10px;color:var(--text-400);}
 .c2c-v2 .py-cp{display:flex;align-items:stretch;gap:2px;flex-wrap:wrap;padding:14px 15px;}
 .c2c-v2 .py-cp-node{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;max-width:170px;transition:border-color var(--dur) var(--ease);position:relative;}
 .c2c-v2 .py-cp-node:hover{border-color:var(--text-400);}
@@ -252,10 +252,10 @@
 .c2c-v2 .py-ws-h{font-size:14px;font-weight:600;color:var(--text-100);margin:0 0 4px;}
 .c2c-v2 .py-ws-row{border-bottom:1px solid var(--bg-100);}
 .c2c-v2 .py-ws-row>summary{display:flex;align-items:baseline;gap:12px;padding:9px 0;cursor:pointer;font-size:13px;color:var(--text-300);}
-.c2c-v2 .py-ws-name{flex:1;min-width:0;color:var(--text-100);font-weight:500;}
-.c2c-v2 .py-ws-lead{width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .py-ws-n{width:130px;white-space:nowrap;font-variant-numeric:tabular-nums;}
-.c2c-v2 .py-ws-date{width:150px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-ws-name{flex:1;min-width:170px;color:var(--text-100);font-weight:500;}
+.c2c-v2 .py-ws-lead{width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .py-ws-n{width:76px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-ws-date{width:164px;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .c2c-v2 .py-ws-status{width:84px;text-align:right;white-space:nowrap;color:var(--text-200);}
 .c2c-v2 .py-ws-row[data-status="blocked"] .py-ws-status{color:var(--error);}
 .c2c-v2 .py-ws-row[data-status="at-risk"] .py-ws-status{color:var(--warning);}
@@ -313,3 +313,12 @@
 @media(max-width:760px){
   .c2c-v2 .py-gs-row{grid-template-columns:minmax(0,1fr);}
 }
+
+/* THE_PROGRAM §8 item 1: the strategy at the head of the Plan step (ProjectObjective.tsx PlanStrategy). Its line
+   breaks are the author's. */
+.c2c-v2 .pj-strategy-t{white-space:pre-line;color:var(--text-100);}
+
+/* GA polish: the method note is one quiet disclosure under the schedule sentence. */
+.c2c-v2 .py-how{margin:2px 0 6px;}
+.c2c-v2 .py-how>summary{font-size:var(--fs-caption);color:var(--text-400);cursor:pointer;}
+@media(max-width:800px){.c2c-v2 .py-ws-name{min-width:0;}}

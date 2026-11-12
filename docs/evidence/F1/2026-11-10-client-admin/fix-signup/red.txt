@@ -1,0 +1,16 @@
+ × client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > sign-up can be typed into > keeps the whole of what is typed in a text field, and keeps focus in it 398ms
+   → every key press reaches the field: expected 'A' to be 'Avery' // Object.is equality
+ × client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > sign-up can be typed into > lets a person tab from one field to the next while typing 155ms
+   → expected '' to be 'Lind' // Object.is equality
+ × client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > sign-up can be typed into > keeps focus in the second step, where a select sits between two text fields 177ms
+   → expected 'N' to be 'Northgate Biologics' // Object.is equality
+ × client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > a refused sign-up field says so to everyone > ties the refusal to its field and marks the field invalid 78ms
+   → expected null to be 'true' // Object.is equality
+ ✓ client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > a refused sign-up field says so to everyone > marks no field invalid before anything is refused 19ms
+ × client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > a refused sign-up field says so to everyone > shows a visible focus indicator on a field: the outline is not removed with nothing in its place 10ms
+   → a focus ring is drawn: expected '\n          w-full px-4 py-3 text-bas…' to match /focus-visible:ring-2/
+ × client/src/concept2cure/auth/__tests__/signupTyping.test.tsx > sign-up offers only choices the product keeps > has no "AI Model Improvement" switch: nothing stored it and nothing read it 378ms
+   → the switch and its title are gone: expected 'C2Csignup.titlesignup.subtitle4signup…' not to contain 'AI Model Improvement'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)

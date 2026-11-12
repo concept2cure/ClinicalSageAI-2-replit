@@ -1,0 +1,25 @@
+Four cases added to scripts/ci/__tests__/commonjs-require-strings.test.mjs, each
+running the REAL gate in a throwaway git repository (the existing harness).
+
+$ node --test scripts/ci/__tests__/commonjs-require-strings.test.mjs
+# tests 25
+# pass 25
+# fail 0
+
+=== against the OLD '**' glob ===
+$ # revert the sweep to 'server/**/*.ts' 'shared/**/*.ts' 'workers/**/*.ts' 'services/**/*.ts'
+$ node --test scripts/ci/__tests__/commonjs-require-strings.test.mjs
+
+not ok 22 - a require() in shared/canonical-json.ts, directly under its top-level directory, is reported
+not ok 23 - a require() in server/openai-service.ts, directly under its top-level directory, is reported
+not ok 24 - a require() in services/capability-unavailable.ts, directly under its top-level directory, is reported
+# pass 22
+# fail 3
+
+The fourth case — 'shared/cmc/qc-sample-types.ts', one directory deeper — passes
+under BOTH globs. That is the point: the correction closes the hole and takes
+nothing with it.
+
+$ # restored
+# pass 25
+# fail 0

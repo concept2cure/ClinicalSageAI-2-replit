@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5200/api/mdx/qms/documents/1",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "in_review",
+      "reason": "OQ-006 step 04b: SOP A ready for QA approval",
+      "route": {
+        "reviewers": [],
+        "approvers": [
+          2
+        ],
+        "order": "parallel",
+        "approvalDueDate": "2026-11-15"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 18,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "OQ Signer is not a QMS approver: until an administrator designates QMS approvers, members with the Approver role approve controlled documents. Nothing was sent.",
+      "details": {
+        "code": "MEMBER_NOT_QMS_APPROVER"
+      }
+    }
+  }
+}

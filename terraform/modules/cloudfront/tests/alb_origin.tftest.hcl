@@ -15,6 +15,12 @@ mock_provider "aws" {
   mock_resource "aws_s3_bucket" {
     defaults = { arn = "arn:aws:s3:::c2c-test-frontend" }
   }
+  mock_resource "aws_wafv2_web_acl" {
+    defaults = { arn = "arn:aws:wafv2:us-east-1:111122223333:global/webacl/c2c-test-frontend-edge/abc" }
+  }
+  mock_data "aws_region" {
+    defaults = { name = "us-east-1" }
+  }
 }
 
 variables {
@@ -208,3 +214,76 @@ run "a_bad_publish_can_be_reverted" {
   }
 }
 
+
+# P-11: the web ACL is on the distribution, with the decided rules.
+run "the_distribution_is_behind_the_decided_web_acl" {
+  command = apply
+
+  assert {
+    condition     = aws_cloudfront_distribution.this.web_acl_id == aws_wafv2_web_acl.this.arn
+    error_message = "The distribution must be attached to the module's web ACL (P-11)."
+  }
+  assert {
+    condition     = aws_wafv2_web_acl.this.scope == "CLOUDFRONT"
+    error_message = "A distribution's web ACL has scope CLOUDFRONT."
+  }
+  assert {
+    condition = toset([for r in aws_wafv2_web_acl.this.rule : r.name]) == toset([
+      "aws-ip-reputation", "aws-known-bad-inputs", "per-ip-rate", "aws-common-rule-set",
+    ])
+    error_message = "P-11 decides four rules: IP reputation, known bad inputs, a per-IP rate rule and the common rule set."
+  }
+  assert {
+    condition = alltrue([for r in aws_wafv2_web_acl.this.rule :
+    length(r.override_action[0].none) == 1 if contains(["aws-ip-reputation", "aws-known-bad-inputs"], r.name)])
+    error_message = "The IP-reputation and known-bad-inputs groups block (override none)."
+  }
+  assert {
+    condition = one([for r in aws_wafv2_web_acl.this.rule :
+    r.statement[0].rate_based_statement[0].aggregate_key_type if r.name == "per-ip-rate"]) == "IP"
+    error_message = "The rate rule is per IP."
+  }
+  assert {
+    condition = one([for r in aws_wafv2_web_acl.this.rule :
+    length(r.override_action[0].count) if r.name == "aws-common-rule-set"]) == 1
+    error_message = "The common rule set starts in count mode (P-11: two weeks before it blocks)."
+  }
+}
+
+run "the_common_set_can_block_but_its_body_size_rule_still_counts" {
+  command = apply
+  variables {
+    waf_common_rule_set_action = "block"
+  }
+
+  assert {
+    condition = one([for r in aws_wafv2_web_acl.this.rule :
+    length(r.override_action[0].none) if r.name == "aws-common-rule-set"]) == 1
+    error_message = "With waf_common_rule_set_action = block, the common set blocks."
+  }
+  assert {
+    condition = one([for r in aws_wafv2_web_acl.this.rule :
+      one([for o in r.statement[0].managed_rule_group_statement[0].rule_action_override :
+    length(o.action_to_use[0].count) if o.name == "SizeRestrictions_BODY"]) if r.name == "aws-common-rule-set"]) == 1
+    error_message = "The 8 KB body-size rule counts even when the set blocks: it would refuse uploads, AnA turns and editor saves."
+  }
+}
+
+run "a_web_acl_outside_us_east_1_is_refused" {
+  command = plan
+
+  override_data {
+    target = data.aws_region.current
+    values = { name = "eu-west-1" }
+  }
+
+  expect_failures = [aws_wafv2_web_acl.this]
+}
+
+run "an_unknown_common_set_action_is_refused" {
+  command = plan
+  variables {
+    waf_common_rule_set_action = "allow"
+  }
+  expect_failures = [var.waf_common_rule_set_action]
+}

@@ -33,6 +33,9 @@ process.env.JWT_SECRET_DEV = FILING_JWT_SECRET;
 process.env.AUDIT_HMAC_KEY = 'filing-lock-test-audit-hmac-key-not-a-real-secret';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+// P-95: this document's review is complete (release-governance-reads.ts, read 5). This suite approves to show a locked filing's sections are not approved; the review route has its own suites.
+vi.mock('../../authoring/authoring-review-route', async (orig) =>
+  (await import('../../authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
 vi.mock('../../../db', () => ({
   get db() { return h.db; },
   get pool() { return h.pool; },

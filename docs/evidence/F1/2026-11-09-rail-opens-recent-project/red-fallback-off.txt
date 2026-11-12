@@ -1,0 +1,7 @@
+      Tests  2 failed | 43 passed (45)
+ FAIL  client/src/concept2cure/v2/__tests__/railOpensWithoutProject.test.ts > the rail with no project open > with nothing remembered, reopens the most recent project the rail lists
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > a work area opens from the rail > with no project ever opened, CMC opens on the most recent project the rail lists
+ Test Files  2 failed (2)
+AssertionError: CMC landed on Projects: nothing was reopened: expected null to match object { …(2) }
+AssertionError: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

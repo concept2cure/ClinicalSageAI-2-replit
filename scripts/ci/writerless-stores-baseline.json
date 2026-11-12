@@ -26,6 +26,10 @@
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
+    "ctdOnboardingDocuments": {
+      "readerCount": 3,
+      "reason": "Retired as a source of new content by founder decision P-108 3(b) (2026-11-08); its only writer, POST /api/ctd/projects/:id/upload, had no client caller in any history and was removed in 217f501532. The rows written before stay as history (RULE 1). The three readers serve that history: a leaf already placed or filed from an upload still resolves to its bytes (leaf-document-resolver, leaf-source-resolver, submission-service), readiness judges it (P-94: released only when the same bytes are approved in the project's Vault), and it can be withdrawn. An empty read is correct: a leaf naming a row that is not there is refused as not found, never treated as none. New uploads go through the Vault (VaultPlaceIntoSubmission.tsx)."
+    },
     "ctdPrograms": {
       "readerCount": 1,
       "reason": "An empty read is correct here (2026-10-15). Nothing in server/ inserts ctd_programs rows: migrations/0005_csr_knowledge_database.sql creates the table and preclinical-ingest-service writes nonclinical studies under a program id that must already exist. The one reader, preclinical/nonclinical-program-loader.ts, checks the program by id and organization first and refuses with CTD_PROGRAM_NOT_FOUND (422 on the routes, a refusal in AnA) when it is absent, so no reader presents an empty set as 'no studies'. Giving programs a creation path is a product decision, not a session's."

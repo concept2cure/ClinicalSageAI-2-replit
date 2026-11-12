@@ -1,0 +1,4 @@
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > completes a CAPA action only with its evidence, along the server action lifecycle 272ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a management-review action and closes it only with its note 280ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 20 passed (22)

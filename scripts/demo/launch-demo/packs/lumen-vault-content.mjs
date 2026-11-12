@@ -94,6 +94,7 @@ export function vaultPdf(doc) {
 const LMN201 = [
   { key: 'protocol', code: 'LMN201-CDI02-PROT-v2.0.pdf', name: 'LMN-201-CDI02 (RePreve) clinical protocol v2.0', type: 'PROTOCOL', cls: 'CONFIDENTIAL',
     filing: ['module-5', 'protocol', '5.3.5.1'], stage: 'approved', version: '2.0 (amendment 1)',
+    stf: { studyId: 'lmn-201-cdi-02', fileTag: 'protocol-or-amendment' },
     subtitle: 'A randomized, double-blind, placebo-controlled Phase 2/3 study of LMN-201 with standard-of-care antibiotics',
     sections: [
       p('1. Synopsis',
@@ -140,6 +141,7 @@ const LMN201 = [
     ] },
   { key: 'icf', code: 'LMN201-CDI02-ICF-v2.0.pdf', name: 'LMN-201-CDI02 informed consent form template v2.0', type: 'OTHER', cls: 'INTERNAL',
     filing: ['module-5', 'clinical', '5.3.5.1'], stage: 'approved', version: '2.0',
+    stf: { studyId: 'lmn-201-cdi-02', fileTag: 'iec-irb-consent-form-list' },
     subtitle: 'Master informed consent form for adult participants, English, for local adaptation by each site',
     sections: [
       p('1. Why is this study being done?',
@@ -262,6 +264,7 @@ const LMN201 = [
     ] },
   { key: 'tox', code: 'LMN201-TOX-13WK-RAT.pdf', name: '13-week oral repeat-dose toxicity study of LMN-201 in rats (GLP), report summary', type: 'MODULE_4', cls: 'CONFIDENTIAL',
     filing: ['module-4', 'nonclinical', '4.2.3.2'], stage: 'approved', version: 'Final report summary',
+    stf: { studyId: 'lmn201-tox-13wk', fileTag: 'pre-clinical-study-report' },
     subtitle: `Summary of a GLP study conducted at ${TOX}`,
     sections: [
       p('1. Design',
@@ -412,12 +415,12 @@ const LMN401 = [
 export const VAULT_DOCUMENTS = { 'LMN-201': LMN201, 'LMN-801': LMN801, 'LMN-301': LMN301, 'LMN-401': LMN401 };
 
 /**
- * The governed artifacts of LMN-201: memos a person wrote in the project
+ * The governed artifacts of each project: memos a person wrote in the project
  * (POST /api/concept2cure/projects/:id/artifacts). `stage`: 'approved' is
  * moved to review and approved by a second person with an e-signature,
  * 'review' is moved to review, 'draft' is left as created.
  */
-export const LMN201_ARTIFACTS = [
+const LMN201_ARTIFACTS = [
   { name: 'Endpoint justification: sustained clinical cure at week 12 (synthetic)', type: 'endpoint_justification', documentClass: 'endpoint_justification', ctdSection: '2.5', stage: 'approved',
     content: 'SYNTHETIC / NOT ACTUAL DATA.\n\nSustained clinical cure at week 12 combines resolution of the initial episode with absence of recurrence, which is the outcome that matters to patients after C. difficile infection. Recurrence after a first episode occurs in roughly one in five patients and most recurrences happen within eight weeks of stopping antibiotics, so a twelve-week window captures the clinically relevant period. The endpoint was accepted in the fictional pre-IND minutes, provided recurrence is toxin-confirmed and adjudicated blind.' },
   { name: 'Evidence memo: delivery of LMN-201 proteins to the terminal ileum, CDI01 (synthetic)', type: 'evidence_memo', documentClass: 'evidence_memo', ctdSection: '2.7', stage: 'review',
@@ -425,3 +428,19 @@ export const LMN201_ARTIFACTS = [
   { name: 'Risk-benefit summary for the RePreve Phase 2/3 design (synthetic)', type: 'risk_benefit', documentClass: 'risk_benefit', ctdSection: '2.5', stage: 'draft',
     content: 'SYNTHETIC / NOT ACTUAL DATA.\n\nExpected benefit: fewer recurrences of C. difficile infection when LMN-201 is added to standard-of-care antibiotics. Identified risks: mild gastrointestinal effects. Potential risks: hypersensitivity to spirulina-derived material, mitigated by exclusion of known allergy. The double-blind placebo-controlled design, blinded adjudication and an independent data monitoring committee keep the risk to participants proportionate to the expected benefit.' },
 ];
+
+export const VAULT_ARTIFACTS = {
+  'LMN-201': LMN201_ARTIFACTS,
+  'LMN-801': [
+    { name: 'Evidence memo: lean-mass preservation in the DIO mouse study (synthetic)', type: 'evidence_memo', documentClass: 'evidence_memo', ctdSection: '2.4', stage: 'review',
+      content: 'SYNTHETIC / NOT ACTUAL DATA.\n\nIn the diet-induced obese mouse study (synthetic results), the high dose of oral LMN-801 reduced body weight by 13 percent relative to placebo, and 86 percent of the weight lost was fat mass, compared with 72 percent for the injected positive control. This supports carrying lean mass by DXA into the Phase 2 study as a key endpoint. Limitations: one species, male animals only, 28 days.' },
+  ],
+  'LMN-301': [
+    { name: 'Safety evidence brief: Phase 1 nasal tolerability, COV01 (synthetic)', type: 'safety_evidence_brief', documentClass: 'safety_evidence_brief', ctdSection: '2.5', stage: 'approved',
+      content: 'SYNTHETIC / NOT ACTUAL DATA.\n\nAcross 35 healthy volunteers dosed intranasally (synthetic interim), no serious adverse event or discontinuation for an adverse event occurred. Nasal discomfort was the most common event (40 percent), all mild. Mild erythema at endoscopy in three daily-dosing participants resolved at follow-up. The rabbit local tolerance study (synthetic) showed minimal, reversible changes at four times the clinical dose. Together these support the next study.' },
+  ],
+  'LMN-401': [
+    { name: 'Strategy memo: pre-IND questions for an oral antibody cocktail (synthetic)', type: 'strategy_memo', documentClass: 'strategy_memo', ctdSection: '2.4', stage: 'draft',
+      content: 'SYNTHETIC / NOT ACTUAL DATA.\n\nThe pre-IND meeting should settle three points before the field proof-of-concept study: whether a prophylaxis indication may be studied first in travelers without a controlled human infection model; whether a non-absorbed oral biologic needs nonclinical toxicology in more than one species; and what evidence of delivery to the gut, from the ileostomy PK study, is enough before dosing travelers.' },
+  ],
+};

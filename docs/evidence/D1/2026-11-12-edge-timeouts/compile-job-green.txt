@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/routes/ectd-compile-async-job.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-async-job.test.ts
+{
+  "timestamp": "2026-11-12T16:37:25.745Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > answers 202 with a job before the 70 s assembly ends, and the job holds the full result once it has
+{
+  "timestamp": "2026-11-12T16:37:29.838Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T16:37:29.839Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > answers 202 with a job before the 70 s assembly ends, and the job holds the full result once it has
+{
+  "timestamp": "2026-11-12T16:37:29.839Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > answers 202 with a job before the 70 s assembly ends, and the job holds the full result once it has
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > another organization's session reads 404 for the job
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > a compile that throws is stored as failed with a sentence and a reference, never as an empty result
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-async-job.test.ts > POST /compile without the preference > answers synchronously with the result, as before, and records no job
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > answers 202 with a job before the 70 s assembly ends, and the job holds the full result once it has 2735ms
+ ✓ tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > another organization's session reads 404 for the job 7ms
+ ✓ tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > a malformed job id is 404 and reads nothing 2ms
+ ✓ tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > a compile that throws is stored as failed with a sentence and a reference, never as an empty result 3ms
+ ✓ tests/routes/ectd-compile-async-job.test.ts > POST /compile with Prefer: respond-async > a refusal is still decided before any job: a contradicting region is 409, with no job and no assembly 2ms
+ ✓ tests/routes/ectd-compile-async-job.test.ts > POST /compile without the preference > answers synchronously with the result, as before, and records no job 5ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  16:37:24
+   Duration  5.69s (transform 3.55s, setup 122ms, import 2.62s, tests 2.76s, environment 0ms)
+

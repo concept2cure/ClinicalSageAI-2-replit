@@ -1,0 +1,12 @@
+Source files at HEAD 81d5e9363: client/src/concept2cure/v2/Shell.tsx client/src/concept2cure/v2/styles/app-v2.css
+ × client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > a visible Search control, with its words and the ⌘K hint, opens the command palette 269ms
+   → Unable to find an accessible element with the role "button" and name `/^Search/`
+ × client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > Help goes where the account menu’s "Get help" goes 94ms
+   → Unable to find an accessible element with the role "button" and name "Get help"
+ × client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > on Home too, with no project open: Search first among the controls, Help after Your work 18ms
+   → expected [ 'Collaborate on this screen', …(2) ] to deeply equal [ …(5) ]
+ × client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > both stay visible at phone width: Search as its icon, Help as it is 33ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

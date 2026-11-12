@@ -1,0 +1,63 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/batch-records/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+    "anonymous": false,
+    "identity": "oq-viewer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 27,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "2c35450c-02e7-40d3-a417-b28672a46e72",
+          "organization_id": 2,
+          "project_id": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+          "batch_number": "B-20261112003432",
+          "batch_type": null,
+          "material_type": null,
+          "scale": null,
+          "site": null,
+          "manufacturing_date": null,
+          "expiry_date": null,
+          "batch_size": null,
+          "batch_size_unit": null,
+          "yield": null,
+          "yield_unit": null,
+          "purpose": null,
+          "process_version": null,
+          "deviations": {
+            "open": 0
+          },
+          "disposition": null,
+          "linked_analyses": null,
+          "linked_stability_study_id": null,
+          "specification_compliance": null,
+          "oos_events": null,
+          "created_at": "2026-11-12T00:34:34.524Z",
+          "updated_at": "2026-11-12T00:34:34.524Z",
+          "product_name": "Drug substance",
+          "manufacturing_site": null,
+          "status": "in-progress",
+          "process_parameters": null,
+          "in_process_controls": null,
+          "yield_data": {
+            "percent": 94
+          },
+          "release_testing": null,
+          "release_status": null,
+          "released_by": null,
+          "released_at": null,
+          "tenant_id": "2"
+        }
+      ],
+      "count": 1,
+      "timestamp": "2026-11-12T00:34:36.525Z"
+    }
+  }
+}

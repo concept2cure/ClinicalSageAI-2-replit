@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/8c05d32c-f5b2-4a79-87d5-ddd208dfb428/file",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "documentId": "9181592b-4d08-464c-8116-8215e43147e3",
+      "folderId": "k510"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 180,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "INVALID_FOLDER",
+      "message": "Folder 'k510' does not exist in this project's Vault (its pharma folders, its binder or the folders made in it)."
+    }
+  }
+}

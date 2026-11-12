@@ -9,7 +9,7 @@
  */
 import { useMemo } from 'react';
 import { useLiveData } from './dataConnect';
-import { openProjectHome } from './shellProject';
+import { openProjectHome, type ShellProject } from './shellProject';
 
 /** One row of GET /api/c2c/projects, as the palette uses it. */
 export interface PaletteProject {
@@ -53,9 +53,14 @@ export function usePaletteProjects(open: boolean): PaletteProjectsRead {
 }
 
 /** Open a project found in the palette on its page, as Projects and Home open one. */
+/** A listed project as the shell's open project (shellProject.ts ShellProject). */
+export function shellProjectOfPalette(p: PaletteProject): ShellProject & { title: string } {
+  return { id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}),
+    ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) };
+}
+
 export function openPaletteProject(p: PaletteProject, onNav: (id: string) => void): void {
-  openProjectHome({ id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}),
-    ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) }, onNav);
+  openProjectHome(shellProjectOfPalette(p), onNav);
 }
 
 /** Projects whose title or code contains the search, in the list's order. */

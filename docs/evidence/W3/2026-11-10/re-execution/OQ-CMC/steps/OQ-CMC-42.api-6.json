@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/concept2cure/projects/8655492d-c15c-4585-9ed2-6a645fc7c7f6/agency-communications/ace_1794445083525_cb561475/questions",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "questionRef": "Q1",
+      "questionText": "Provide the container closure integrity data for the 100-count bottle.",
+      "discipline": "CMC",
+      "ctdSection": "3.2.P.7",
+      "reason": "OQ-CMC-42: recording the information request as the agency worded it."
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 77,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 7,
+        "questionRef": "Q1",
+        "state": "unanswered",
+        "ctdSection": "3.2.P.7"
+      },
+      "governance": {
+        "actionId": "act_a6cfb014a3324f2fb5d40bfb6d3d8782",
+        "auditId": "9b79ee46-57fb-43fc-baea-74fff74f736c",
+        "sha256Chain": "c5af90d7b5e3d58dc8b996faae1f9e26fcf50fc79be0ae1725bff6bb8471ac7d"
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "apiErrors": [
+    {
+      "who": "author",
+      "width": 1440,
+      "status": 409,
+      "url": "/api/c2c/projects/5d669ca3-055f-48b1-9c34-364eb33ecb95/sources?limit=200&offset=0",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "reader",
+      "dialog": "Read and acknowledge",
+      "cls": "de",
+      "backdrop": "de-bd",
+      "left": 1000,
+      "width": 440,
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "z": "120",
+      "railVisible": true,
+      "eyebrow": false,
+      "textFont": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+      "footer": [
+        "Reload record",
+        "Acknowledge this revision (disabled)"
+      ]
+    },
+    {
+      "name": "reader-declared",
+      "ring": {
+        "outline": "rgb(173, 81, 50)",
+        "accent200": "#ad5132"
+      },
+      "footer": [
+        "Reload record",
+        "Acknowledge this revision"
+      ]
+    },
+    {
+      "name": "created",
+      "status": 201,
+      "number": "SOP-008"
+    },
+    {
+      "name": "written",
+      "saveEnabledAfter": false
+    },
+    {
+      "name": "route-form",
+      "dialog": "Send for review",
+      "cls": "de",
+      "backdrop": "de-bd",
+      "left": 1012,
+      "width": 440,
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "z": "120",
+      "railVisible": true,
+      "eyebrow": false,
+      "textFont": null,
+      "footer": [
+        "Cancel",
+        "Send for review (disabled)"
+      ]
+    },
+    {
+      "name": "sent",
+      "refused": null
+    },
+    {
+      "name": "route-panel",
+      "dialog": "Review route",
+      "cls": "de",
+      "backdrop": "de-bd",
+      "left": 1000,
+      "width": 440,
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "z": "120",
+      "railVisible": true,
+      "eyebrow": false,
+      "textFont": null,
+      "footer": [
+        "Close"
+      ],
+      "lineButtons": [
+        "Remind: btn ghost small, rgb(61, 61, 58)",
+        "Reassign: btn ghost small, rgb(61, 61, 58)"
+      ]
+    },
+    {
+      "name": "reassign-sheet",
+      "dialog": "Reassign Theo Trainee’s approval",
+      "cls": "de",
+      "backdrop": "de-bd de-sheet",
+      "left": 1000,
+      "width": 440,
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "z": "120",
+      "railVisible": true,
+      "eyebrow": true,
+      "textFont": null,
+      "footer": [
+        "Cancel",
+        "Reassign (disabled)"
+      ],
+      "offered": 1,
+      "reading": 0
+    },
+    {
+      "name": "w23-reader-route",
+      "ok": true
+    }
+  ]
+}

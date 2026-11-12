@@ -1,0 +1,28 @@
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project (lock: false) 6ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project (lock: true) 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch (lock: false) 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch (lock: true) 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > retains the complete evidence projection and fingerprint in the final locked read 4ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints the recorded result and criterion even if pass/review flags are unchanged 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints who reviewed and when the result changed 4ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > compares the recorded value with the recorded criterion 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > a result exactly at a limit is within it 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > a pass recorded as "Passed" over an out-of-criterion value is contradicted too (V-L1-04) 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > reads DS-2502-R2 as contradicted and not passed, and DS-2502-R1 as passed 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > refuses a approved release of the batch and names the contradicted result 12ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > refuses a conditional release of the batch and names the contradicted result 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > still lets the batch be rejected 8ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > a result with no comparable criterion keeps its recorded disposition 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > reads the flag as recorded 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > counts one result outside limits and says how many were not assessed 312ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > marks an unflagged result "not assessed", never OOS, in the study detail 234ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > the shelf-life evidence line says within, outside and not assessed separately 92ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > the shelf-life evidence per-study chip counts only the results assessed within (V-L1-03) 82ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > DS-2502-R2 reads as a contradicted pass in the error colour 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > a pass its result supports reads as a pass 29ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > the count line does not count a contradicted pass as a pass 32ms
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > a contradicted pass recorded as "Passed" reads as contradicted too, as release reads it (V-L1-04) 23ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > with no server verdict, the recorded disposition is shown as recorded 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > a contradicted pass recorded as "Passed" reads as contradicted too, as release reads it (V-L1-04)
+      Tests  1 failed | 24 passed (25)

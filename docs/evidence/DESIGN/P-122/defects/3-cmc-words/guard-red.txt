@@ -1,0 +1,9 @@
+# The guard, made to fail: shared/cmc/module3-input-words.ts with manufacturingProcessDev's words removed (2026-11-10T14:48:38Z)
+ × server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > has words for every input the composer can report as missing 12ms
+   → expected [ 'manufacturingProcessDev' ] to deeply equal []
+ ✓ server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > says none of them as a key 2ms
+ × server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > says the demo's missing inputs as a reader says them 3ms
+   → expected 'manufacturing process dev; the drug p…' to be 'the drug product’s manufacturing proc…' // Object.is equality
+ ✓ server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > says a key nobody has worded yet as words, never as the key 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

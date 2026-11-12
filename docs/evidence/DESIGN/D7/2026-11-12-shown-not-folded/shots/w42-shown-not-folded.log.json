@@ -1,0 +1,262 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "target-date",
+      "alreadyDated": null,
+      "set": {
+        "change": "CC-W31-451228",
+        "status": 200
+      }
+    },
+    {
+      "name": "SOP register @1440",
+      "disclosures": [
+        {
+          "summary": "How coverage is counted",
+          "open": true,
+          "bodyHeight": 40
+        }
+      ],
+      "rowGaps": [
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-more-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        }
+      ]
+    },
+    {
+      "name": "Change control @1440",
+      "disclosures": [
+        {
+          "summary": "How a change is raised",
+          "open": true,
+          "bodyHeight": 117
+        }
+      ],
+      "targetDates": [
+        {
+          "text": "2026-12-15",
+          "dateTime": "2026-12-15",
+          "whiteSpace": "nowrap",
+          "lines": 1
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1440",
+      "disclosures": []
+    },
+    {
+      "name": "Complaints and MDR @1440",
+      "disclosures": []
+    },
+    {
+      "name": "Deviations @1440",
+      "disclosures": []
+    },
+    {
+      "name": "Nonconformances @1440",
+      "disclosures": []
+    },
+    {
+      "name": "Suppliers @1440",
+      "disclosures": []
+    },
+    {
+      "name": "Internal audits @1440",
+      "disclosures": []
+    },
+    {
+      "name": "Management reviews @1440",
+      "disclosures": []
+    },
+    {
+      "name": "SOP register @390",
+      "disclosures": [
+        {
+          "summary": "How coverage is counted",
+          "open": true,
+          "bodyHeight": 81
+        }
+      ],
+      "documentFacts": [
+        [
+          {
+            "text": "QM-001",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "Quality manual",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "1.0",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "Under reviewWaitin",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "—",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "—",
+            "whiteSpace": "nowrap"
+          }
+        ],
+        [
+          {
+            "text": "QM-002",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "Quality manual",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "1.0",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "Effective",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "2026-11-12",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "—",
+            "whiteSpace": "nowrap"
+          }
+        ],
+        [
+          {
+            "text": "QM-003",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "Quality manual",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "1.0",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "Effective",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "2026-11-12",
+            "whiteSpace": "nowrap"
+          },
+          {
+            "text": "—",
+            "whiteSpace": "nowrap"
+          }
+        ]
+      ],
+      "rowGaps": [
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-more-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        },
+        {
+          "row": "qms-row-acts-tr",
+          "paddingTop": "0px"
+        }
+      ]
+    },
+    {
+      "name": "Change control @390",
+      "disclosures": [
+        {
+          "summary": "How a change is raised",
+          "open": true,
+          "bodyHeight": 197
+        }
+      ],
+      "targetDates": [
+        {
+          "text": "2026-12-15",
+          "dateTime": "2026-12-15",
+          "whiteSpace": "nowrap",
+          "lines": 1
+        }
+      ]
+    },
+    {
+      "name": "CAPA @390",
+      "disclosures": []
+    },
+    {
+      "name": "Complaints and MDR @390",
+      "disclosures": []
+    },
+    {
+      "name": "Deviations @390",
+      "disclosures": []
+    },
+    {
+      "name": "Nonconformances @390",
+      "disclosures": []
+    },
+    {
+      "name": "Suppliers @390",
+      "disclosures": []
+    },
+    {
+      "name": "Internal audits @390",
+      "disclosures": []
+    },
+    {
+      "name": "Management reviews @390",
+      "disclosures": []
+    },
+    {
+      "name": "w42-shown-not-folded",
+      "ok": true
+    }
+  ]
+}

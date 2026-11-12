@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/submissions-assemble-async-job.test.ts
+{
+  "timestamp": "2026-11-12T17:51:05.775Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T17:51:05.777Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts
+{
+  "timestamp": "2026-11-12T17:51:05.777Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-assemble-async-job.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts
+{
+  "timestamp": "2026-11-12T17:51:07.690Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > answers 202 while the assembly runs, and the job holds the full answer once it ends 83ms
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > an assembly that throws is stored as failed with a sentence and a reference, not its error text
+{
+  "timestamp": "2026-11-12T17:51:12.340Z",
+  "level": "error",
+  "message": "[submissions-routes] the test-package job failed",
+  "context": {
+    "jobId": "rjob_1794505872339_ac2885e71e30b63f",
+    "sequenceId": 11,
+    "error": "cannot read properties of undefined (reading \"bundle\")"
+  }
+}
+
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a refused assembly is stored as the 422 refusal, with the record of it 26ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > an assembly that throws is stored as failed with a sentence and a reference, not its error text 26ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > another organization's session reads 404 for the job, as does a malformed id 29ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a refusal decided before any work is still answered at once, with no job 2ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a sequence with no tracking project is assembled synchronously 2ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble without the preference > answers synchronously, as before, and records no job 3ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:51:04
+   Duration  8.19s (transform 5.34s, setup 110ms, import 7.73s, tests 174ms, environment 0ms)
+

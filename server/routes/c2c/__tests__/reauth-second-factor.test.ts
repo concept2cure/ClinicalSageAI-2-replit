@@ -15,6 +15,12 @@
  * whenever a code is present), so a code that is presented must also verify —
  * even for a signer with no factor enrolled, where the canonical re-verification
  * does not look at it. Both rules are pinned here.
+ *
+ * Every refusal also carries the sentence the signer is told (2026-11-12). The
+ * routes that verify a signer answered the code alone, so a CMC signer whose
+ * authenticator code was not accepted read "HTTP 401", and the shared request
+ * helper's "Sign in again" where it worded the status. The sentences were the
+ * ceremony's; they now come back with the code, from here, for every caller.
  */
 import bcrypt from 'bcryptjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -72,6 +78,7 @@ describe('an account taken out of use (VSR-001 F-28)', () => {
       expect(await verifyReauth(7, { password: PASSWORD, totp: h.validCode })).toEqual({
         ok: false,
         error: 'REAUTH_ACCOUNT_INACTIVE',
+        message: 'This account is not active. Contact your administrator. Nothing was signed.',
       });
     }
   });
@@ -83,7 +90,7 @@ describe('a signer with a second factor enrolled', () => {
   });
 
   it('cannot sign with the password alone', async () => {
-    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_TOTP_REQUIRED' });
+    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_TOTP_REQUIRED', message: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.' });
   });
 
   it('signs with the password and a current code', async () => {
@@ -91,7 +98,7 @@ describe('a signer with a second factor enrolled', () => {
   });
 
   it('is refused with a wrong code', async () => {
-    expect(await verifyReauth(7, { password: PASSWORD, totp: '000000' })).toEqual({ ok: false, error: 'REAUTH_TOTP_INVALID' });
+    expect(await verifyReauth(7, { password: PASSWORD, totp: '000000' })).toEqual({ ok: false, error: 'REAUTH_TOTP_INVALID', message: 'The authenticator code was not accepted. Nothing was signed.' });
   });
 
   it('is refused, not waved through, when the enrolment state cannot be read', async () => {
@@ -99,6 +106,7 @@ describe('a signer with a second factor enrolled', () => {
     expect(await verifyReauth(7, { password: PASSWORD, totp: h.validCode })).toEqual({
       ok: false,
       error: 'REAUTH_MFA_STATE_UNKNOWN',
+      message: 'Your second factor could not be checked, so the signature was refused. Try again. Nothing was signed.',
     });
   });
 });
@@ -109,23 +117,23 @@ describe('a signer with no second factor enrolled', () => {
   });
 
   it('is refused when it presents a code that does not verify — callers record a present code as verified', async () => {
-    expect(await verifyReauth(7, { password: PASSWORD, totp: '000000' })).toEqual({ ok: false, error: 'REAUTH_TOTP_INVALID' });
+    expect(await verifyReauth(7, { password: PASSWORD, totp: '000000' })).toEqual({ ok: false, error: 'REAUTH_TOTP_INVALID', message: 'The authenticator code was not accepted. Nothing was signed.' });
   });
 });
 
 describe('the first factor', () => {
   it('is required', async () => {
-    expect(await verifyReauth(7, {})).toEqual({ ok: false, error: 'REAUTH_PASSWORD_REQUIRED' });
-    expect(await verifyReauth(7, undefined)).toEqual({ ok: false, error: 'REAUTH_PASSWORD_REQUIRED' });
+    expect(await verifyReauth(7, {})).toEqual({ ok: false, error: 'REAUTH_PASSWORD_REQUIRED', message: 'Enter your password to sign. Nothing was signed.' });
+    expect(await verifyReauth(7, undefined)).toEqual({ ok: false, error: 'REAUTH_PASSWORD_REQUIRED', message: 'Enter your password to sign. Nothing was signed.' });
   });
 
   it('must verify', async () => {
-    expect(await verifyReauth(7, { password: 'wrong' })).toEqual({ ok: false, error: 'REAUTH_PASSWORD_INVALID' });
+    expect(await verifyReauth(7, { password: 'wrong' })).toEqual({ ok: false, error: 'REAUTH_PASSWORD_INVALID', message: 'The password was not accepted. Nothing was signed.' });
   });
 
   it('is refused the same way when the signer has no stored password', async () => {
     h.hash = null;
-    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_PASSWORD_INVALID' });
+    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_PASSWORD_INVALID', message: 'The password was not accepted. Nothing was signed.' });
   });
 });
 
@@ -142,7 +150,7 @@ describe('in production, a signer with no authenticator (ADR-0014 P1-2b)', () =>
   it('is refused REAUTH_AUTHENTICATOR_REQUIRED, with the right password', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     h.mfaEnabled = false;
-    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_AUTHENTICATOR_REQUIRED' });
+    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_AUTHENTICATOR_REQUIRED', message: 'Enrol an authenticator in Account to sign. Nothing was signed.' });
   });
 
   it('control: outside production the password alone still re-authenticates', async () => {

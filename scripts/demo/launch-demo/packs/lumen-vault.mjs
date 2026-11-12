@@ -1,7 +1,8 @@
 /**
  * launch-demo/packs/lumen-vault.mjs — a faux client Data Room in each Lumen
  * demonstration project's Vault: 14 documents in LMN-201, 3 or 4 in each
- * other project, three governed artifacts in LMN-201, and a seal on each.
+ * other project, governed artifacts (three in LMN-201, one in each other
+ * project), and a seal on each.
  *
  * 2026-11-06: before a founder demo every Lumen project's Vault held one or two
  * uploads. Required documents read "0 of 9", Governed artifacts 0, and Seals &
@@ -37,7 +38,7 @@
 import { createApiClient, devLogin } from '../../../../tests/validation/lib/harness.mjs';
 import { makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { T } from './lumen-content.mjs';
-import { LMN201_ARTIFACTS, VAULT_DOCUMENTS, vaultPdf } from './lumen-vault-content.mjs';
+import { VAULT_ARTIFACTS, VAULT_DOCUMENTS, vaultPdf } from './lumen-vault-content.mjs';
 
 const DOCS = '/api/regulatory/documents';
 const vaultPath = (programId) => `/api/c2c/project-vault/${encodeURIComponent(programId)}`;
@@ -66,7 +67,7 @@ export async function connectApprover({ baseUrl, excludeEmails = [], onRecord } 
 }
 
 /** The people for the signed steps, or null with why. */
-function signingPeople({ identity, signer, approver }) {
+export function signingPeople({ identity, signer, approver }) {
   if (!signer || !approver) return null;
   const emails = [identity?.email, signer.email, approver.email].map((e) => String(e ?? '').toLowerCase());
   if (new Set(emails).size !== 3) throw new Error('The uploader, reviewer and approver must be three different people; nothing was sent for review.');
@@ -96,7 +97,14 @@ async function readCabinet(api, programId) {
       if (Array.isArray(n.children)) { walk(n.children, n.id); continue; }
       if (n.src !== 'upload' || !n.docId) continue;
       if (byTitle.has(n.title)) twice.add(n.title);
-      byTitle.set(n.title, { id: n.docId, folder, placement: n.status, num: n.num });
+      /* The document's own filing record, not the node it hangs under: since the Vault's filing binders
+         (2026-11-06) a filed upload sits under a binder node (cab-bn:1.14.4.1), so the parent's id never equalled
+         the folder and every found document was filed again on each run (vault-filing 21 on a second run). */
+      const f = n.filing ?? {};
+      byTitle.set(n.title, {
+        id: n.docId, folder: f.folderId ? `cab-${f.folderId}` : folder,
+        placement: f.placementStatus ?? n.status, num: f.ctdSection ?? n.num,
+      });
     }
   };
   walk((d.tree ?? []).filter((f) => f.id === 'cabinet'), null);
@@ -177,7 +185,7 @@ async function stageOf(api, program, docId) {
  * reviewer signs the review, the approver signs the approval. Each step is
  * taken only when the version has not reached it.
  */
-async function ensureStage({ api, run, tally }, program, doc, docId, people) {
+export async function ensureStage({ api, run, tally }, program, doc, docId, people) {
   const want = RANK[doc.stage];
   if (!want) return 'draft (not sent for review)';
   if (!people) return NO_PEOPLE;
@@ -238,23 +246,23 @@ async function ensureDocument(ctx, program, doc, cabinet, people, out) {
     else hit = await upload(ctx, program, doc, title, pdf);
     const filed = await ensureFiled(ctx, program, doc, hit);
     const stage = await ensureStage(ctx, program, doc, hit.id, people);
-    out.push({ key: doc.key, code: doc.code, id: hit.id, title, type: doc.type, filing: doc.filing, stage: doc.stage, pages, sha256: sha256(pdf) });
+    out.push({ key: doc.key, code: doc.code, id: hit.id, title, type: doc.type, filing: doc.filing, stf: doc.stf ?? null, stage: doc.stage, pages, sha256: sha256(pdf) });
     return `${created ? 'uploaded' : 'found'} ${hit.id} (${pages} pages); ${filed}; ${stage}`;
   });
 }
 
-/* ───────────────────────── Governed artifacts (LMN-201) ───────────────────────── */
+/* ───────────────────────── Governed artifacts ───────────────────────── */
 
 /**
  * The project's governed artifacts: created by the signed-in account, moved to
  * review by it, and approved by the approver with an e-signature (approval is
  * refused to an author).
  */
-async function ensureArtifacts({ api, run, tally }, program, people) {
+async function ensureArtifacts({ api, run, tally }, program, label, artifacts, people) {
   const base = `/api/concept2cure/projects/${encodeURIComponent(program.id)}/artifacts`;
-  for (const a of LMN201_ARTIFACTS) {
+  for (const a of artifacts) {
     const title = T(a.name);
-    await run.step(`Governed artifact: ${a.type} on LMN-201`, async () => {
+    await run.step(`Governed artifact: ${a.type} on ${label}`, async () => {
       const rows = must(await api('GET', base), 200, 'list the project\'s governed artifacts').data ?? [];
       const same = rows.filter((r) => r.title === title);
       if (same.length > 1) throw new Error(`Two governed artifacts are titled "${title}"; reconcile them before seeding.`);
@@ -281,17 +289,51 @@ async function ensureArtifacts({ api, run, tally }, program, people) {
       }
       if (want >= 2 && have < 2) {
         if (!people) return `${steps.join(', ') || status}; approval ${NO_PEOPLE}`;
-        must(await people.approver.api('PUT', `${base}/${encodeURIComponent(row.id)}/status`, {
+        steps.push(await ensureArtifactReview(api, `${base}/${encodeURIComponent(row.id)}`, a.name, people));
+        const approval = await people.approver.api('PUT', `${base}/${encodeURIComponent(row.id)}/status`, {
           status: 'approved', reason: 'Demo seed: approved for the demonstration project.',
           attestation: { meaning: 'approval', attestationText: 'I approve this synthetic memo as the current version for the demonstration project.' },
           reauth: { password: people.approver.password },
-        }), 200, `approve "${a.name}"`);
+        });
+        /* A document placed in a CTD section needs more independent reviewers than this organisation has besides
+           its author and approver (P-95 Q2, server/services/artifact-approval-act.ts). It stays in review with its
+           review recorded, and the step says so; the server's floor is not worked around. */
+        if (approval.status === 409 && /independent reviewers/.test(String(approval.text ?? ''))) {
+          return `${row.id}: ${steps.join(', ')}; approval not executed: ${String(approval.json?.error?.message ?? approval.text).slice(0, 160)}`;
+        }
+        must(approval, 200, `approve "${a.name}"`);
         tally.created('governed-artifact-approval');
         steps.push(`approved by ${people.approver.email}`);
       }
       return `${row.id}: ${steps.length ? steps.join(', ') : `${status} (already)`}`;
     });
   }
+}
+
+/**
+ * The artifact's review, before its approval: since 2026-11-09 (P-95, server/services/artifact-approval-act.ts) an
+ * artifact is approved only after every reviewer named in its current round has approved it. The author names the
+ * second person, who approves, through the routes the artifact card's Review step uses
+ * (ConversationArtifactReview.tsx). A round that already holds that person's approval is left as it is.
+ */
+async function ensureArtifactReview(api, artifactPath, name, people) {
+  const read = async () => must(await api('GET', `${artifactPath}/reviews/status`), 200, `read the review of "${name}"`).data ?? {};
+  let status = await read();
+  const live = () => (status.reviewers ?? []).filter((r) => r.status !== 'withdrawn');
+  let mine = live().find((r) => Number(r.reviewerId) === people.reviewerId) ?? null;
+  if (mine?.decision?.decision === 'approve') return `reviewed by ${people.signer.email} (already)`;
+  if (!mine) {
+    must(await api('POST', `${artifactPath}/reviewers`, {
+      reviewerIds: [people.reviewerId], notes: 'Demo seed: please review this synthetic memo before its approval.',
+    }), [200, 201], `name the reviewer of "${name}"`);
+    status = await read();
+    mine = live().find((r) => Number(r.reviewerId) === people.reviewerId) ?? null;
+    if (!mine) throw new Error(`the review of "${name}" does not name ${people.signer.email} after naming them`);
+  }
+  must(await people.signer.api('POST', `${artifactPath}/reviews/submit`, {
+    decision: 'approve', comment: 'Demo seed: reviewed; consistent with the synthetic study record.',
+  }), [200, 201], `approve the review of "${name}"`);
+  return `reviewed by ${people.signer.email}`;
 }
 
 /* ───────────────────────── Fixity and seal ───────────────────────── */
@@ -356,7 +398,7 @@ export async function ensureLumenVault(ctx, programs) {
     const cabinet = await readCabinet(ctx.api, program.id);
     documents[label] = [];
     for (const doc of docs) await ensureDocument(ctx, program, { ...doc, project: label }, cabinet, people, documents[label]);
-    if (label === 'LMN-201') await ensureArtifacts(ctx, program, people);
+    await ensureArtifacts(ctx, program, label, VAULT_ARTIFACTS[label] ?? [], people);
     await ensureSeal(ctx, program, label, people);
     await readBack(ctx, program, label);
   }

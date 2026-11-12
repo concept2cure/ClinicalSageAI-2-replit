@@ -360,7 +360,10 @@ describe('the palette’s rules (app-v2.css, §D1.F step 6)', () => {
   it('the field is a large quiet line with no ring of its own; D0’s focus rule still steps the outline aside', () => {
     expect(body('.c2c-v2 .cmdk-in input')).toMatch(/border:0;background:none;font-size:var\(--fs-section,\s*15px\);color:var\(--text-100\)/);
     expect(palette.filter((r) => /\.cmdk-in/.test(r.selector) && /box-shadow|outline/.test(r.body)).map((r) => r.selector)).toEqual([]);
-    expect(body('.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .cmdk-in input):focus-visible')).toMatch(/outline:\s*none/);
+    // Found by what it covers, not by its whole list: D0's input block names every composer, and it grows (845a63b2bf).
+    const focus = ALL.filter((r) => r.media === null && /:is\([^)]*\.cmdk-in input[^)]*\):focus-visible/.test(r.selector));
+    expect(focus.map((r) => r.selector)).toHaveLength(1);
+    expect(focus[0].body).toMatch(/outline:\s*none/);
   });
 
   it('no orange and nothing under 12px in the palette’s rules', () => {

@@ -366,13 +366,17 @@ function independentRefused(): never {
 interface IndependentReceipt extends IndependentCheckResult { receiptId: string; checkerVersion: string }
 
 /** Reconcile both ledger sides: changing a trail's type/metadata cannot hide
- * its original chained operation and expose an older favorable receipt. */
+ * its original chained operation and expose an older favorable receipt.
+ * occurred_at is read as the ISO text the chain writer hashed (Date.toISOString), whatever the executor: a Drizzle
+ * transaction (placement) gets a timestamptz as PostgreSQL's own text, a pg client (freeze) as a Date, and the text
+ * hashed differently, so every chained row read as broken on placement alone (B1, 2026-11-12). */
 async function independentLedger(q: Queryable, docId: string, organizationId: number, extraOperations: string[] = []) {
   try {
   const result = await q.query(`WITH trails AS (SELECT * FROM authoring_audit_trail WHERE doc_id=$1::uuid AND tenant_id=$2),
     chains AS (SELECT * FROM audit_logs WHERE tenant_id=$2 AND new_values->>'docId'=$1::uuid::text)
     SELECT t.*,t.id::text AS trail_id,a.id::text AS audit_id,a.new_values AS chain_details,a.payload_hash,a.action,
-      a.actor_id AS chain_actor_id,a.target,a.tenant_id AS chain_tenant_id,a.sha256_chain,a.hmac_seal,a.occurred_at,
+      a.actor_id AS chain_actor_id,a.target,a.tenant_id AS chain_tenant_id,a.sha256_chain,a.hmac_seal,
+      to_char(a.occurred_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS occurred_at,
       to_jsonb(a)->>'chain_seq' AS sequence
     FROM trails t FULL OUTER JOIN chains a ON a.new_values->>'trailId'=t.id::text
     WHERE t.operation_type='CREATE' OR t.operation_type=ANY($3::text[]) OR t.metadata::jsonb ? 'independentCheck'
@@ -381,8 +385,19 @@ async function independentLedger(q: Queryable, docId: string, organizationId: nu
     ORDER BY a.chain_seq NULLS FIRST,t.created_at,t.id`, [docId, organizationId, [...CHECK_OPERATIONS, ...extraOperations]]);
   for (const row of result.rows) await verifyIndependentLedgerRow(q, row, { docId, organizationId });
   return result.rows as Array<Record<string, any>>;
-  } catch { return independentRefused(); }
+  } catch (error) { return ledgerReadRefused(error); }
 }
+
+/**
+ * A refusal of what the ledger says stands; anything else means the ledger was not read (B1, 2026-11-12). It had
+ * answered INDEPENDENT_CHECK_REQUIRED for both, so a placement whose read failed told the author to run checks.
+ */
+function ledgerReadRefused(error: unknown): never {
+  if (error instanceof WorkflowImportGovernanceError) throw error;
+  throw new WorkflowImportGovernanceError(503, 'INDEPENDENT_CHECK_LEDGER_UNREADABLE',
+    'The document’s audit record could not be read, so whether it needs independent checks could not be confirmed. Nothing was released. Try again; if it persists, contact an administrator.');
+}
+
 function legacyManualCreation(row: Record<string, any>): boolean {
   return !row.audit_id && row.operation_type === 'CREATE' && row.metadata?.provenance?.source !== 'ana' && row.metadata?.independentCheck?.required !== true;
 }

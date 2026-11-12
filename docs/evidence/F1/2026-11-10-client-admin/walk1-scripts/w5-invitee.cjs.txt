@@ -1,0 +1,90 @@
+// Flow 3 (the invited person): Vik Osei (Viewer). Reissue the link, try the old one, set the password with the new
+// one, sign in, and try the link again.
+const L = require('./lib.cjs');
+const fs = require('fs'); const path = require('path');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const LINKS = path.join(__dirname, '.setup-links.json');
+const links = JSON.parse(fs.readFileSync(LINKS, 'utf8'));
+const redact = (s) => String(s).replace(/token=[A-Za-z0-9._%-]+/g, 'token=<redacted>').replace(/"token":"[^"]+"/g, '"token":"<redacted>"').replace(new RegExp(process.env.WALK_PASSWORD.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '<WALK_PASSWORD>');
+const VIK = 'vik.osei@northgate-bio.example.test';
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  // filters
+  for (const f of ['Active', 'Invited', 'Disabled', 'All']) {
+    await page.locator('.seg-btn', { hasText: new RegExp(`^${f}$`) }).click(); await L.sleep(400);
+    note(`filter ${f}`, await page.locator('.ctable-row .ctable-strong').allInnerTexts().then(a => a.length ? a : await_empty(page)));
+    if (f === 'Disabled') await L.shot(page, 'w1-49-members-filter-disabled.png');
+    if (f === 'Invited') await L.shot(page, 'w1-50-members-filter-invited.png');
+  }
+  async function await_empty(p) { return [await p.locator('.adm-empty').innerText().catch(() => '(nothing)')]; }
+  // Vik's drawer
+  await page.locator('.ctable-row', { hasText: 'Vik Osei' }).click(); await L.sleep(500);
+  note('Vik drawer', await page.locator('aside.adm-drawer').innerText());
+  await L.shot(page, 'w1-51-member-drawer-invited.png');
+  L.drain(page);
+  const linkA = links['__vik_first'] || links[VIK]; links['__vik_first'] = linkA;
+  await page.getByTestId('member-reissue').click(); await L.sleep(400);
+  const dialog = page.getByRole('dialog');
+  note('reissue dialog', await dialog.innerText());
+  await L.shot(page, 'w1-52-reissue-dialog.png');
+  await dialog.getByRole('button', { name: 'Issue new link' }).click(); await L.sleep(2000);
+  note('reissue writes', L.drain(page).map(redact).map(x => x.slice(0, 500)));
+  const got = await page.locator('input[aria-label^="Setup link for"]').evaluateAll(els => els.map(e => [e.getAttribute('aria-label').replace('Setup link for ', ''), e.value]));
+  const linkB = (got.find(([who]) => who === VIK) || [])[1];
+  note('new link issued and differs from the first', Boolean(linkB) && linkB !== linkA);
+  links[VIK] = linkB; fs.writeFileSync(LINKS, JSON.stringify(links, null, 1), { mode: 0o600 });
+  note('handover', (await page.locator('section', { hasText: 'Invitation handover' }).last().innerText().catch(() => '')).slice(0, 700));
+  await L.shot(page, 'w1-53-reissue-handover.png');
+
+  // the invited person, clean context
+  const ctx = await browser.newContext({ viewport: L.VIEWPORTS.desktop });
+  const p2 = await ctx.newPage();
+  const seen = [];
+  p2.on('response', async (r) => { if (r.url().includes('/api/') && (r.request().method() !== 'GET' || r.status() >= 400)) { let b = ''; try { b = (await r.text()).slice(0, 400); } catch {} seen.push(redact(`${r.status()} ${r.request().method()} ${r.url().replace(L.BASE, '')} ${b}`)); } });
+  const cons = []; p2.on('console', (m) => { if (m.type() === 'error') cons.push(m.text().slice(0, 200)); });
+  // 1. the first link (replaced)
+  await p2.goto(linkA, { waitUntil: 'networkidle' }); await L.sleep(800);
+  note('OLD link: page', (await L.textOf(p2, 'body')).split('Română')[1]?.slice(0, 600));
+  note('OLD link: address bar', redact(p2.url()));
+  await L.shot(p2, 'w1-54-old-setup-link-page.png');
+  await p2.fill('#reset-password', process.env.WALK_PASSWORD); await p2.fill('#reset-password-confirm', process.env.WALK_PASSWORD);
+  await p2.getByRole('button', { name: 'Update password' }).click(); await L.sleep(2000);
+  note('OLD link: after submit', (await L.textOf(p2, 'body')).split('Română')[1]?.slice(0, 600));
+  note('OLD link: calls', seen.splice(0));
+  await L.shot(p2, 'w1-55-old-setup-link-refused.png');
+  // 2. the new link: mismatched, weak, then good
+  await p2.goto(linkB, { waitUntil: 'networkidle' }); await L.sleep(800);
+  note('NEW link: page', (await L.textOf(p2, 'body')).split('Română')[1]?.slice(0, 700));
+  await L.shot(p2, 'w1-56-setup-link-page.png');
+  note('NEW link: controls', await L.controls(p2, 'body'));
+  await p2.fill('#reset-password', 'password1234'); await p2.fill('#reset-password-confirm', 'password12345');
+  await p2.getByRole('button', { name: 'Update password' }).click(); await L.sleep(1200);
+  note('mismatch', (await L.textOf(p2, 'body')).split('Română')[1]?.slice(0, 400));
+  await p2.fill('#reset-password', 'password1234'); await p2.fill('#reset-password-confirm', 'password1234');
+  await p2.getByRole('button', { name: 'Update password' }).click(); await L.sleep(1800);
+  note('weak password', (await L.textOf(p2, 'body')).split('Română')[1]?.slice(0, 500));
+  note('weak password calls', seen.splice(0));
+  await L.shot(p2, 'w1-57-setup-weak-password.png');
+  await p2.fill('#reset-password', process.env.WALK_PASSWORD); await p2.fill('#reset-password-confirm', process.env.WALK_PASSWORD);
+  await p2.getByRole('button', { name: 'Update password' }).click(); await L.sleep(2500);
+  note('good password: page', (await L.textOf(p2, 'body')).split('Română')[1]?.slice(0, 600));
+  note('good password: calls', seen.splice(0));
+  note('good password: url', redact(p2.url()));
+  await L.shot(p2, 'w1-58-setup-password-set.png');
+  // 3. the same link again, in another clean context
+  const ctx3 = await browser.newContext({ viewport: L.VIEWPORTS.desktop }); const p3 = await ctx3.newPage();
+  const seen3 = []; p3.on('response', async (r) => { if (r.url().includes('/api/') && (r.request().method() !== 'GET' || r.status() >= 400)) { let b = ''; try { b = (await r.text()).slice(0, 400); } catch {} seen3.push(redact(`${r.status()} ${r.request().method()} ${r.url().replace(L.BASE, '')} ${b}`)); } });
+  await p3.goto(linkB, { waitUntil: 'networkidle' }); await L.sleep(800);
+  await p3.fill('#reset-password', process.env.WALK_PASSWORD + 'x'); await p3.fill('#reset-password-confirm', process.env.WALK_PASSWORD + 'x');
+  await p3.getByRole('button', { name: 'Update password' }).click(); await L.sleep(2000);
+  note('SECOND USE: page', (await L.textOf(p3, 'body')).split('Română')[1]?.slice(0, 500));
+  note('SECOND USE: calls', seen3.splice(0));
+  await L.shot(p3, 'w1-59-setup-link-second-use.png');
+  await ctx3.close();
+  note('invitee console errors', cons);
+  note('errors', L.errs());
+  await ctx.close();
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

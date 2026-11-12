@@ -26,11 +26,28 @@ const query = async (sql: string, params?: unknown[]) => {
   return { rows: r.rows as any[], rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length };
 };
 
-vi.mock('../../../db', () => {
-  const pool = {
-    query: (s: string, p?: unknown[]) => query(s, p),
-    connect: async () => ({ query: (s: string, p?: unknown[]) => query(s, p), release: () => undefined }),
+/*
+ * A checked-out connection as row-level security leaves it: the pool sets the
+ * tenant on one only at BEGIN (server/db/poolInstrumentation.ts), so a read on
+ * it outside a transaction sees no row of a tenant table. The tool read that
+ * way until 2026-11-12 and answered "IRB submission not found" for every
+ * organization; a mock that handed connect() the same executor as query()
+ * could not see it.
+ */
+function connection() {
+  let scoped = false;
+  return {
+    query: async (s: string, p?: unknown[]) => {
+      if (/^\s*BEGIN\s*$/i.test(s)) { scoped = true; return { rows: [], rowCount: 0 }; }
+      if (/^\s*(COMMIT|ROLLBACK)\s*$/i.test(s)) { scoped = false; return { rows: [], rowCount: 0 }; }
+      return scoped ? query(s, p) : { rows: [], rowCount: 0 };
+    },
+    release: () => undefined,
   };
+}
+
+vi.mock('../../../db', () => {
+  const pool = { query: (s: string, p?: unknown[]) => query(s, p), connect: async () => connection() };
   return { pool, getPool: () => pool, db: {} };
 });
 

@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-11-09T19:22:20.066Z",
+  "generatedAt": "2026-11-12T21:04:35.074Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 291,
+  "totalMigrations": 292,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -614,7 +614,8 @@
     "20260920_audit_trigger_jsonb_entity_names.sql",
     "20261014_ai_feedback_persistence.sql",
     "20261014_orchestrator_continuation_inputs.sql",
-    "20261014_qms_controlled_authoring_content.sql"
+    "20261014_qms_controlled_authoring_content.sql",
+    "20261112_etmf_module_professional_tier.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

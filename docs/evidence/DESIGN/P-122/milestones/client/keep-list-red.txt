@@ -1,0 +1,225 @@
+# The committed test, run against the committed ProjectSchedule.tsx with one line reverted (Read shows "Reading…" whenever it is loading, as on HEAD): both copied to temporary files beside the originals, run, and removed. Paths rewritten to the committed names.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > records it with its name, due date and linked sections, for this project, and reads the list again 387ms
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > keeps the list, and the button that opened the drawer, on screen while the list is read again 112ms
+   → Unable to find an accessible element with the role "list" and name "Deadlines and milestones"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------status:
+
+  Name "":
+  [36m<p[39m
+    [33maria-busy[39m=[32m"true"[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<p[39m
+    [33maria-busy[39m=[32m"true"[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m>[39m
+    [0mReading [0m
+    [0mthe project's deadlines and milestones[0m
+    [0m…[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m9 11 3 3L22 4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [0mMilestone "IND submitted" recorded.[0m
+  [36m</div>[39m
+[36m</div>[39m
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > sends no linked sections when none are given, and needs a name and a due date 125ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > refuses a linked section that is not a CTD section number, and sends nothing 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > a refused record keeps the drawer open, says why, and says nothing was recorded 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > moves an open milestone's date 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > marks it done 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > a done milestone and a section deadline offer no update 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > a person who may not change the project > is offered neither control 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > keeps the list, and the button that opened the drawer, on screen while the list is read again
+TestingLibraryElementError: Unable to find an accessible element with the role "list" and name "Deadlines and milestones"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------status:
+
+  Name "":
+  [36m<p[39m
+    [33maria-busy[39m=[32m"true"[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<p[39m
+    [33maria-busy[39m=[32m"true"[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m>[39m
+    [0mReading [0m
+    [0mthe project's deadlines and milestones[0m
+    [0m…[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"ico"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-circle-check-big"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M21.801 10A10 10 0 1 1 17 3.335"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m9 11 3 3L22 4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [0mMilestone "IND submitted" recorded.[0m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:103:27
+    101|     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull(…
+    102|     await waitFor(() => expect(apiRequest.mock.calls.filter(([m, u]) =…
+    103|     expect(within(module).getByRole('list', { name: 'Deadlines and mil…
+       |                           ^
+    104|     expect(within(module).getByRole('button', { name: 'Record a milest…
+    105|     expect(within(module).queryByText("Reading the project's deadlines…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  16:41:00
+   Duration  2.36s (transform 434ms, setup 195ms, import 494ms, tests 948ms, environment 525ms)
+

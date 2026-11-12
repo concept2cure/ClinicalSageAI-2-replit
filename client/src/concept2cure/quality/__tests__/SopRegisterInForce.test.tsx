@@ -34,13 +34,13 @@ afterEach(() => { cleanup(); clearAuthToken(); localStorage.clear(); vi.unstubAl
 describe('a controlled document under revision', () => {
   it('shows the version in force beside its draft, dated by that version', async () => {
     render(<SopRegister onAsk={() => {}} filter="all" onFilterChange={() => {}} />);
-    const revising = (await screen.findByText('Document control', { selector: '.qms-title' })).closest('.qms-row') as HTMLElement;
-    expect(within(revising).getByTestId('qms-in-force').textContent).toBe('v1.0 in force');
+    const revising = (await screen.findByText('Document control', { selector: '.qms-title' })).closest('tbody') as HTMLElement;
+    expect(within(revising).getByTestId('qms-in-force').textContent).toBe('In force: v1.0');
     expect(within(revising).getByTitle('Version 1.0 stays in force until version 2.0 is approved.')).toBeTruthy();
     expect(revising.textContent).toMatch(/2026|Sep/);
-    const fresh = screen.getByText('New procedure', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    const fresh = screen.getByText('New procedure', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
     expect(within(fresh).queryByTestId('qms-in-force')).toBeNull();
-    // The KPI counts what is in force: the revised SOP, not the new draft.
-    expect(screen.getByText('Effective documents').parentElement?.textContent).toMatch(/^Effective documents1/);
+    // The register's figures count what is in force: the revised SOP, not the new draft (D7-B: the sentence that replaced the tiles).
+    expect(screen.getByTestId('qms-register-figures').textContent).toMatch(/^2 controlled documents: 1 in force, 2 draft;/);
   });
 });

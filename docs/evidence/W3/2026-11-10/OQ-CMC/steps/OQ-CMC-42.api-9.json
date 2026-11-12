@@ -1,0 +1,73 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/concept2cure/projects/808060af-b01c-4b94-b24f-58138b33098d/agency-questions?ctdModule=3",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "module": 3,
+        "today": "2026-11-10",
+        "questions": [
+          {
+            "id": 1,
+            "questionRef": "Q1",
+            "questionText": "Provide the container closure integrity data for the 100-count bottle.",
+            "discipline": "CMC",
+            "severity": "major",
+            "ctdSection": "3.2.P.7",
+            "section": "3.2.P.7",
+            "sectionSource": "question",
+            "state": "unanswered",
+            "outstanding": true,
+            "overdue": false,
+            "approval": null,
+            "owner": {
+              "userId": 3,
+              "name": "OQ Approver"
+            },
+            "letter": {
+              "id": "ace_1794276550491_be59a791",
+              "communicationType": "OQ-CMC-42 information request",
+              "receivedDate": "2026-11-10T02:09:10.491Z",
+              "dueDate": "2099-12-31T00:00:00.000Z",
+              "closureStatus": "open",
+              "responseRequired": true,
+              "overdue": false
+            }
+          }
+        ],
+        "lettersWithoutQuestions": [],
+        "summary": {
+          "questions": 1,
+          "outstanding": 1,
+          "questionsOverdue": 0,
+          "lettersOverdue": 0,
+          "lettersWithoutQuestionsOverdue": 0,
+          "lettersOverdueOnOtherQuestions": 0,
+          "byState": {
+            "unanswered": 1,
+            "drafted": 0,
+            "changed-after-approval": 0,
+            "approved": 0,
+            "withdrawn": 0
+          }
+        },
+        "notCounted": {
+          "unclassifiedOutstanding": 0,
+          "overdueLettersWithoutQuestions": 0
+        },
+        "truncated": false,
+        "withheld": 0
+      }
+    }
+  }
+}

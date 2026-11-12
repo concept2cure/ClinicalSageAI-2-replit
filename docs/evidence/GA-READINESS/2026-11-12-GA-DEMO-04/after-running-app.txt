@@ -1,0 +1,14 @@
+read before: 404 {"error":"API endpoint not found","path":"/api/ana-ri/conversations","method":"GET","messa
+turn 1: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 2: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 3: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 4: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 5: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 6: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 7: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 8: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 9: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 10: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 11: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+turn 12: 503 {"success":false,"error":{"message":"No AI providers available.","code":"GATEWAY_UNAVAILABLE","details":null}}
+read after: 404 {"error":"API endpoint not found","path":"/api/ana-ri/conversations","method":"GET","messa

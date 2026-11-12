@@ -132,10 +132,12 @@ describe('the impersonation detector behind the /api boundary (enforce)', () => 
       action: 'tenant_impersonation_attempt',
       resourceType: 'security_event',
       tenantId: 7,
-      userId: '42',
+      // A number, as the organisation is: the per-route authenticator copied the token's text "42" until
+      // GA-D6-05 (2026-11-12), so this row recorded one id as a number and the other as text.
+      userId: 42,
       resourceId: '9',
     });
-    expect(row.details).toMatchObject({ jwtOrg: 7, headerOrg: '9', userId: '42', method: 'GET' });
+    expect(row.details).toMatchObject({ jwtOrg: 7, headerOrg: '9', userId: 42, method: 'GET' });
     // Express 5 gives a '/api'-mounted handler a mount-relative req.path; the
     // row must carry the /api prefix the client sent, not '/vault/documents'.
     expect(row.details?.path, 'the audited path lost its /api prefix').toBe('/api/vault/documents');

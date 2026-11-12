@@ -1,0 +1,16 @@
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > reads the flag as recorded 7ms
+   → stabilityConformance is not a function
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > counts one result outside limits and says how many were not assessed 548ms
+   → expected '2 active studies · 3 outside limits' to contain '1 outside limits'
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > marks an unflagged result "not assessed", never OOS, in the study detail 1078ms
+   → Unable to find an accessible element with the role "button" and name `/2 recorded · 2 not assessed/`
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-01 — only an explicit "no" is out of specification > the shelf-life evidence line says within, outside and not assessed separately 146ms
+   → Unable to find an element with the text: /1 within acceptance criteria, 1 outside, 2 not assessed/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > DS-2502-R2 reads as a contradicted pass in the error colour 39ms
+   → Unable to find an element with the text: /contradicted/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > a pass its result supports reads as a pass 35ms
+ × client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > the count line does not count a contradicted pass as a pass 21ms
+   → Unable to find an element with the text: /3 samples — 2 pass \/ 0 fail — 1 contradicted/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx > GA-DEMO-02 — a recorded pass the result contradicts is shown as contradicted > with no server verdict, the recorded disposition is shown as recorded 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 2 passed (8)

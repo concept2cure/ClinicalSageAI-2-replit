@@ -1,0 +1,6 @@
+{
+  "reg_questions.INSERT": "refused: 42501",
+  "reg_questions.UPDATE": "refused: 42501",
+  "reg_questions.DELETE": "refused: 42501",
+  "reg_questions.TRUNCATE": "refused: 42501"
+}

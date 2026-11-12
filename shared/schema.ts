@@ -3524,9 +3524,11 @@ export const projectMilestones = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* A milestone is a project's (2026-11-10, P-122 defects): this named cerProjects, so no milestone could be recorded
+       on any project. Deployed databases are repaired by db/migrations/20260220_ind_section_tracking.sql, its creator. */
     projectId: integer('project_id')
       .notNull()
-      .references(() => cerProjects.id),
+      .references(() => projects.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     description: text('description'),
     dueDate: timestamp('due_date').notNull(),
@@ -3626,7 +3628,6 @@ export const cerProjectsRelations = relations(cerProjects, ({ one, many }) => ({
   }),
   documents: many(projectDocuments),
   activities: many(projectActivities),
-  milestones: many(projectMilestones),
   approvals: many(cerApprovals),
 }));
 
@@ -5741,7 +5742,10 @@ export const projects = pgTable(
      */
     therapeuticArea: text('therapeutic_area'),
     criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
-    riskLevel: text('risk_level').default('medium'), // low, medium, high
+    /* low, medium, high, critical — as recorded by a person or a rule; null until one is. No default (2026-11-10, P-122
+       defects): 'medium' was given to every project at creation, a risk nobody assessed, and the hierarchy roll-up
+       reported it as one. Deployed databases: migrations/20261110_projects_risk_level_not_defaulted.sql. */
+    riskLevel: text('risk_level'),
     riskAssessment: json('risk_assessment'),
     qualityTargets: json('quality_targets'),
     moduleReferences: json('module_references'), // References to specific module instances
@@ -19064,6 +19068,12 @@ export const rbmQtls = pgTable(
     rationale:         text('rationale'),
     threshold:         numeric('threshold', { precision: 12, scale: 4 }),
     secondaryLimit:    numeric('secondary_limit', { precision: 12, scale: 4 }),
+    // Which way the limit bites, and for a range its lower bound and lower early-warning limit
+    // (migrations/20260930_rbm_qtl_direction.sql). The routes have read and written these in SQL since then; this
+    // definition did not carry them, so the board, which reads through it, could not send them to the screen.
+    direction:           text('direction').default('upper').notNull(),
+    thresholdLower:      numeric('threshold_lower', { precision: 12, scale: 4 }),
+    secondaryLimitLower: numeric('secondary_limit_lower', { precision: 12, scale: 4 }),
     currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
     breached:          boolean('breached').default(false),
     breachActionTaken: text('breach_action_taken'),

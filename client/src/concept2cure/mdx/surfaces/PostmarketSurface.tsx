@@ -42,15 +42,18 @@ export interface PostmarketSurfaceProps {
 const EMPTY_DOCS: KitDocument[] = [];
 
 /* Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, the
-   `device-postmarket` row): GET /api/mdx/postmarket reads signals and CAPAs
-   for the whole organization, with no project key
-   (server/routes/mdx-postmarket.ts:43-91), and has no store for PMS plan
-   execution or trends (:111). Their rows may be another project's, so the
-   signals, CAPA board, vigilance trending and PMS plan execution panels are
-   not shown until that read takes the project (slice 21 turns this on).
-   Trends are gated too although none are computed yet: the day the route
-   computes them, another project's device must not draw a sparkline here. */
-const SURVEILLANCE_KEYED_TO_PROJECT = false;
+   `device-postmarket` row) hid the signals, CAPA board, vigilance trending and
+   PMS plan execution panels from 2026-10-26 (10bbeeeea): GET /api/mdx/postmarket
+   read the whole organization, so their rows could be another project's.
+   P-122 (2026-11-10): the read takes the open project (`?program_id=`), after
+   the caller's current access to it, and says so (`meta.scope: 'program'`;
+   server/routes/mdx-postmarket.ts). The panels are drawn when, and only when,
+   the server says the rows are this project's, as Engineering's are since
+   P-60. A read in flight or failed is said as that by each panel's DataGate;
+   an answer that does not say 'program' keeps the panels hidden and says why.
+   Trends and PMS plan execution still have no store (`[]`); their panels say
+   so, not that the project has none. */
+type Surveillance = 'keyed' | 'unkeyed' | 'pending';
 
 /* Slice 0, same row: `documents` is EMPTY_DOCS — nothing reads it — so the
    panel drew an empty list with "All 0" filter counts, which reads as "no
@@ -85,15 +88,18 @@ export function PostmarketSurface({
 }: PostmarketSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
-  const live = usePostmarket();
+  const live = usePostmarket(program ? String(program.id) : null);
   /* No fixture fallbacks. On a vigilance surface an example feed reading
      "0 critical signals" is indistinguishable from a genuine all-clear,
      so every panel below states which of loading / error / empty / real
      it is showing. */
-  /* Slice 0: an organization-wide read contributes no rows here, so another
-     project's signals and CAPAs reach no panel or count. */
-  const signals = SURVEILLANCE_KEYED_TO_PROJECT ? readyRows(live.signals) : [];
-  const capas = SURVEILLANCE_KEYED_TO_PROJECT ? readyRows(live.capas) : [];
+  /* An answer that is not this project's contributes no rows here, so another
+     project's signals and CAPAs reach no panel or count (slice 0). */
+  const surveillance: Surveillance = live.scope === 'program' ? 'keyed'
+    : live.loading || live.error ? 'pending' : 'unkeyed';
+  const keyed = surveillance === 'keyed';
+  const signals = keyed ? readyRows(live.signals) : [];
+  const capas = keyed ? readyRows(live.capas) : [];
 
   /* Complaints, MDR events and CAPAs merged into one queue ordered by
      regulatory urgency, with the reporting clocks computed server-side.
@@ -154,10 +160,10 @@ export function PostmarketSurface({
     : null;
   const openCapas = triageRows ? triageRows.filter((t) => t.kind === 'capa') : null;
   const overdueCapas = openCapas ? openCapas.filter((t) => t.overdue).length : null;
-  const pmsEntries = SURVEILLANCE_KEYED_TO_PROJECT && (live.pmsPlan.status === 'ready' || live.pmsPlan.status === 'empty') ? readyRows(live.pmsPlan).length : null;
-  const signalsRead = SURVEILLANCE_KEYED_TO_PROJECT && (live.signals.status === 'ready' || live.signals.status === 'empty');
-  /* Slice 0: the PMS plan and open-signals cards say why they hold no figure. */
-  const notYetRead = SURVEILLANCE_KEYED_TO_PROJECT ? 'Not yet read' : 'Not read for this project yet';
+  const pmsEntries = keyed && (live.pmsPlan.status === 'ready' || live.pmsPlan.status === 'empty') ? readyRows(live.pmsPlan).length : null;
+  const signalsRead = keyed && (live.signals.status === 'ready' || live.signals.status === 'empty');
+  /* The PMS plan and open-signals cards say why they hold no figure. */
+  const notYetRead = surveillance === 'unkeyed' ? 'Not read for this project yet' : live.error ? 'Could not be read' : 'Not yet read';
   const openSignals = signals.filter((s) => s.state !== 'closed-trend');
   const criticalSignals = signals.filter((s) => s.severity === 'critical').length;
 
@@ -186,9 +192,9 @@ export function PostmarketSurface({
               `program.code` is a class and pathway ("Class II · 510(k)",
               useMdxPrograms.deriveCode) that many projects share. */}
           <div className="page-sub" data-testid="postmarket-scope">
-            {SURVEILLANCE_KEYED_TO_PROJECT
-              ? ''
-              : "Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records. PMS plan execution is not tracked yet. "}
+            {surveillance === 'unkeyed'
+              ? "Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records. PMS plan execution is not tracked yet. "
+              : `${program ? `Surveillance signals and the CAPA board are read for ${program.title}. ` : ''}PMS plan execution is not tracked yet. `}
             {program
               ? `Reporting clocks and the MDR/CAPA deadline metrics are limited to ${program.title}.`
               : 'Reporting clocks and the MDR/CAPA deadline metrics cover all projects.'}
@@ -230,16 +236,18 @@ export function PostmarketSurface({
       </div>
 
 
+      {/* D8 slice 1a (P-128): a figure takes a status colour only when it means it. An MDR due within 72 hours is
+          an error and an open CAPA a warning; 0, and a read that has not answered, are neither. */}
       <div className="metrics-row metrics-compact">
-        <div className="metric-card" data-tone="err">
+        <div className="metric-card" data-tone={mdrDue ? 'err' : undefined}>
           <div className="metric-label">MDRs due ≤72h</div>
           <div className="metric-val" data-testid="pm-mdr-due">{mdrDue ?? '—'}</div>
-          {/* Slice 0: the triage read lists MDR events in every state, so an MDR
-              already filed whose due date is still ahead is counted here until
-              the read leaves it out (server, getTriageQueueTx). Say so. */}
-          <div className="metric-meta">FDA 5-day · 30-day · EU 15-day · filed MDRs not yet excluded</div>
+          {/* GA-DEMO-08 (2026-11-10): the triage read leaves out filed, acknowledged
+              and closed MDRs (server, getTriageQueueTx), so the caveat this card
+              carried is gone. */}
+          <div className="metric-meta">FDA 5-day · 30-day · EU 15-day</div>
         </div>
-        <div className="metric-card" data-tone="warn">
+        <div className="metric-card" data-tone={openCapas && openCapas.length > 0 ? 'warn' : undefined}>
           <div className="metric-label">CAPAs open</div>
           <div className="metric-val" data-testid="pm-capas">{openCapas ? openCapas.length : '—'}</div>
           <div className="metric-meta">
@@ -291,8 +299,8 @@ export function PostmarketSurface({
             {/* Slice 0: the project by its title, and what the MDR rows include. */}
             {program ? `${program.title} only` : 'All projects'} · complaints · MDR
             events · CAPAs — overdue first, then soonest due. FDA 5-day and
-            30-day, EU MDR Article 87 15-day. MDR events are listed in every
-            state, filed and closed included.
+            30-day, EU MDR Article 87 15-day. Filed, acknowledged and closed
+            MDRs are left out.
           </span>
         </div>
         <DataGate
@@ -319,11 +327,11 @@ export function PostmarketSurface({
                 <div className="metric-card" data-tone={triage.dueSoon.length > 0 ? 'warn' : 'ok'}>
                   <div className="metric-label">Due within 7 days</div>
                   <div className="metric-val">{triage.dueSoon.length}</div>
-                  {/* Slice 0: by due date, not a running clock — filed MDRs are in the read. */}
-                  <div className="metric-meta">By due date · filed MDRs not yet excluded</div>
+                  {/* Slice 0: by due date, not a running clock. Filed MDRs are not in the read (GA-DEMO-08). */}
+                  <div className="metric-meta">By due date</div>
                 </div>
                 <div className="metric-card">
-                  {/* Slice 0: not "Open items" — MDR events arrive in every state. */}
+                  {/* Slice 0: "In the queue": open complaints, CAPAs and unfiled MDRs (GA-DEMO-08). */}
                   <div className="metric-label">In the queue</div>
                   <div className="metric-val">{items.length}</div>
                   <div className="metric-meta">
@@ -383,13 +391,22 @@ export function PostmarketSurface({
         <div className="section-head">
           <h2>Signal triage queue</h2>
           <span className="section-sub">
-            {SURVEILLANCE_KEYED_TO_PROJECT ? `${triageQueue.length} critical` : 'Critical'} or under-review signals not yet wrapped
+            {keyed ? `${triageQueue.length} critical` : 'Critical'} or under-review signals not yet wrapped
             in an MDR or CAPA · oldest first
           </span>
         </div>
-        {/* Slice 0: the signals read is organization-wide (SURVEILLANCE_KEYED_TO_PROJECT). */}
-        {!SURVEILLANCE_KEYED_TO_PROJECT ? (
-          <NotKeyedNote panel="signals" reason="today it reads every project's signals in this organization" />
+        {/* Drawn only for this project's rows (P-122); in flight or failed, the gate says so. */}
+        {surveillance === 'unkeyed' ? (
+          <NotKeyedNote panel="signals" reason="the read did not say these signals are this project's" />
+        ) : (
+        <DataGate
+          state={live.signals}
+          label="vigilance signals"
+          onRetry={live.refresh}
+          emptyHint="Signals appear here as complaints, MDR events and CAPAs are recorded for this project."
+        >
+        {() => triageQueue.length === 0 ? (
+          <p className="eng-trace-summary" data-testid="pm-signals-none">No critical or under-review signal is waiting for an MDR or CAPA.</p>
         ) : (
         <div className="eng-blockers-feed">
           {triageQueue.map((s) => (
@@ -424,6 +441,8 @@ export function PostmarketSurface({
           ))}
         </div>
         )}
+        </DataGate>
+        )}
       </section>
 
       <section className="section eng-awareness" data-open={awarenessOpen}>
@@ -442,7 +461,7 @@ export function PostmarketSurface({
               the notes saying why. */}
           <span className="section-sub">
             CAPA board · vigilance trending · PMS plan execution
-            {SURVEILLANCE_KEYED_TO_PROJECT ? '' : ' — not shown for this project yet'}
+            {surveillance === 'unkeyed' ? ' — not shown for this project yet' : ''}
           </span>
         </button>
 
@@ -452,13 +471,16 @@ export function PostmarketSurface({
               <div className="section-head" style={{ marginTop: 0 }}>
                 <h2 style={{ fontSize: 14 }}>CAPA workflow</h2>
                 <span className="section-sub">
-                  {SURVEILLANCE_KEYED_TO_PROJECT ? `${capas.length} active · ` : ''}5-stage
+                  {keyed ? `${capas.length} active · ` : ''}5-stage
                 </span>
               </div>
-              {/* Slice 0: the CAPA read is organization-wide (SURVEILLANCE_KEYED_TO_PROJECT). */}
-              {!SURVEILLANCE_KEYED_TO_PROJECT ? (
-                <NotKeyedNote panel="capas" reason="today it reads every project's CAPAs in this organization" />
+              {/* Drawn only for this project's rows (P-122). */}
+              {surveillance === 'unkeyed' ? (
+                <NotKeyedNote panel="capas" reason="the read did not say these CAPAs are this project's" />
               ) : (
+              <DataGate state={live.capas} label="CAPAs" onRetry={live.refresh} dense
+                emptyHint="No CAPA is recorded for this project.">
+              {() => (
               <div className="pv-capa-board">
                 {PV_CAPA_STAGES.map((stage) => {
                   const inStage = capas.filter((c) => c.stage === stage.id);
@@ -499,6 +521,8 @@ export function PostmarketSurface({
                 })}
               </div>
               )}
+              </DataGate>
+              )}
             </section>
 
             <div className="eng-grid eng-grid-awareness">
@@ -506,8 +530,8 @@ export function PostmarketSurface({
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>Vigilance trending</h2>
                 </div>
-                {/* Slice 0: trends come from the same organization-wide read (SURVEILLANCE_KEYED_TO_PROJECT). */}
-                {!SURVEILLANCE_KEYED_TO_PROJECT ? (
+                {/* Trends come from the same read; drawn only when it is this project's (P-122). */}
+                {surveillance === 'unkeyed' ? (
                   <NotKeyedNote panel="trends" reason="vigilance trends are not computed per project yet" />
                 ) : (
                 <DataGate
@@ -556,9 +580,9 @@ export function PostmarketSurface({
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>PMS plan execution</h2>
                 </div>
-                {/* Slice 0: PMS plan execution has no per-project store (SURVEILLANCE_KEYED_TO_PROJECT).
-                    The PMS plan itself is a per-project document (`pms_plan`); this says what is missing. */}
-                {!SURVEILLANCE_KEYED_TO_PROJECT ? (
+                {/* PMS plan execution has no store yet (`pmsPlan: []`); its gate says so when the read is this
+                    project's. The PMS plan itself is a per-project document (`pms_plan`). */}
+                {surveillance === 'unkeyed' ? (
                   <NotKeyedNote panel="pms" reason="PMS plan execution is not tracked per project yet" />
                 ) : (
                 <DataGate

@@ -10,6 +10,12 @@
 //                      are load-checked only
 //   env DISCOVER=1     also click each rail button and each account-menu item from Home, record where it lands
 //   env MAXSTOPS       stop after this many stops (default 400)
+//   env MAXPERSTOP     click at most this many controls on one stop, an even sample of its list, and record a "sampled"
+//                      line saying how many of how many (a Vault lists a hundred document rows that run the same code)
+//   env MAXCLICKS      end this process after this many new clicks, with no "end" line, so a shell loop can start it
+//                      again from its log: a headless browser holds temporary files until it exits (several GB over a
+//                      long run, which filled a disk on 2026-11-10). Loop until the log holds an "end" line:
+//                        until grep -q '"kind":"end"' out/A/clicks.jsonl; do MAXCLICKS=60 node clickcrawl.cjs …; done
 // Each account holds 5 concurrent sessions (shared/auth/session-policy.ts): run at most 3 of these as one person,
 // and sign any other test browser out, or the runs' sessions are superseded and every screen shows sign-in.
 /* global getComputedStyle, innerHeight -- page code passed to page.evaluate runs in the browser */
@@ -18,7 +24,10 @@ const fs = require('fs');
 const [BASE, EMAIL, OUT, SEEDS] = process.argv.slice(2);
 fs.mkdirSync(OUT, { recursive: true });
 const LOG = `${OUT}/clicks.jsonl`;
-const SKIP = /^(sign out|log out|delete account|reset|revoke all|end all sessions)$/i;
+// Also skipped: a control that makes a new record and a new, differently named control each time. "Start sequence
+// 0001" leaves "Start sequence 0002" behind it, so a resumed run never ran out of them (it reached 0014 on 2026-11-10).
+// The first one, 0000, is still clicked.
+const SKIP = /^(sign out|log out|delete account|reset|revoke all|end all sessions|start sequence (?!0000$)\d{4}|type of sequence (?!0000$)\d{4})$/i;
 const FAIL_TEXT = /couldn['’]t load|could not be loaded|could not load|something went wrong|unexpected error|failed to (load|fetch)|\[object object\]|\bNaN\b|\bundefined\b|internal server error|cannot read propert|is not a function|try again later/gi;
 const LOADING_TEXT = /\b(loading|reading|fetching)(…|\.\.\.)/gi;
 // Tabs, and controls that behave as tabs: a project's lifecycle steps (.pj-lc-stage, the current one aria-current="step").
@@ -26,6 +35,33 @@ const TAB_SEL = '[role="tab"], button.pj-lc-stage';
 const TAB_ON = '[role="tab"][aria-selected="true"], button.pj-lc-stage[aria-current="step"]';
 const CONTROL_SEL = 'button, a[href], [role="tab"], [role="button"], [role="menuitem"], summary, select, input[type="checkbox"], input[type="radio"]';
 let sessionEnded = false;
+
+// Resume (2026-11-10): a run stopped part way (a push needing the memory, a full disk) starts again from its own log.
+// A click already recorded is not clicked again, a stop already recorded is not recorded twice, and the screens the
+// recorded clicks reached are queued as they were.
+const clickKey = (stop, c) => `${JSON.stringify(stop)}|${c.role}|${c.name}`;
+function priorRun() {
+  const done = { stops: new Set(), clicks: new Set(), reached: [], discovered: false };
+  const lines = fs.existsSync(LOG) ? fs.readFileSync(LOG, 'utf8').split('\n').filter(Boolean) : [];
+  for (const line of lines) {
+    let r; try { r = JSON.parse(line); } catch { continue; }
+    if (r.kind === 'stop') done.stops.add(JSON.stringify(r.stop));
+    if (r.kind !== 'click') continue;
+    if ((r.stop?.tabs || [])[0] === '(rail)') done.discovered = true;
+    done.clicks.add(clickKey(r.stop, r.control));
+    if (r.effect === 'navigated' && r.url) done.reached.push(r.url);
+    if (r.control?.href?.startsWith('/concept2cure')) done.reached.push(r.control.href);
+  }
+  return done;
+}
+const DONE = priorRun();
+const BUDGET = { left: Number(process.env.MAXCLICKS || Infinity) };
+
+// The app must answer before a stop is crawled: with it down, every click would be recorded as the app's failure.
+async function requireApp(page) {
+  const up = await page.request.get(`${BASE}/healthz`, { timeout: 10_000 }).then((r) => r.ok()).catch(() => false);
+  if (!up) throw new Error('the app did not answer /healthz; stopping so nothing is recorded against an app that is down');
+}
 // The browser storage just after sign-in. Screens remember UI state there (a collapsed folder, a filter, the last
 // step), so every reopen starts from this snapshot and finds the controls it first listed.
 let FRESH = null;
@@ -102,7 +138,9 @@ function watch(page) {
     if (u.includes('/api/') && r.status() >= 400) ev.api.push(`${r.status()} ${r.request().method()} ${u.replace(BASE, '').slice(0, 160)}`);
     if (r.status() === 401 && /\/api\/(users\/me|tenants|v1\/auth\/session)/.test(u)) sessionEnded = true;
   });
-  page.on('download', () => { ev.downloads++; });
+  // A download is counted, then discarded. Kept, the browser held every clicked file until it closed: 3.6 GB of
+  // them filled the disk and took the app down mid-run (2026-11-10).
+  page.on('download', (d) => { ev.downloads++; d.cancel().catch(() => {}).then(() => d.delete().catch(() => {})); });
   page.on('dialog', (d) => d.dismiss().catch(() => {}));
   return ev;
 }
@@ -153,7 +191,6 @@ async function discover(page, ev, add) {
   }
 }
 
-// One control on a freshly opened stop: click it and record what happened.
 // What the click did, from the page before (b) and after (a) it.
 function effectOf(clickErr, b, a, downloaded) {
   if (clickErr) return 'click-failed';
@@ -179,8 +216,19 @@ async function afterClick(page, bt) {
   return { a, stuck, newFail };
 }
 
+// A control inside a collapsed <details> has a box in current Chromium but is not visible, so its click timed out
+// (2026-11-10: a seal's "Open", a version's "View", a readiness finding's fix). The section is opened first, as a
+// person opens it, and the record says so.
+const openCollapsed = (loc) => loc.evaluate((el) => {
+  let n = 0;
+  for (let d = el.closest('details:not([open])'); d; d = d.closest('details:not([open])')) { d.open = true; n++; }
+  return n;
+}).catch(() => 0);
+
 // One control on a freshly opened stop: click it and record what happened.
 async function clickOne(page, ev, add, stop, c) {
+  if (DONE.clicks.has(clickKey(stop, c)) || BUDGET.left <= 0) return;
+  BUDGET.left--;
   await openStop(page, stop);
   const b = await snapshot(page).catch(() => null);
   const bt = await bodyText(page).catch(() => '');
@@ -188,21 +236,37 @@ async function clickOne(page, ev, add, stop, c) {
   if (!loc) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, outcome: 'not-found-after-reopen' }) + '\n'); return; }
   ev.errors.length = 0; ev.api.length = 0; const dl0 = ev.downloads;
   let clickErr = null;
+  const opened = await openCollapsed(loc);
   try { await loc.click({ timeout: 4000 }); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
   const { a, stuck, newFail } = await afterClick(page, bt);
   const effect = effectOf(clickErr, b, a, ev.downloads > dl0);
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr }) + '\n');
+  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr, ...(opened ? { opened } : {}) }) + '\n');
   if (effect === 'navigated') add(a.url);
   if (c.href?.startsWith('/concept2cure')) add(c.href);
   await page.keyboard.press('Escape').catch(() => {});
 }
 
 // One stop: open it, record how it loaded, queue its tabs, and click each control (full projects only).
+function logStop(stop, ev, t0) {
+  const rec = { kind: 'stop', stop, errors: ev.errors.splice(0), api: ev.api.splice(0), fail: t0.match(FAIL_TEXT) || [], loading: t0.match(LOADING_TEXT) || [] };
+  if (!DONE.stops.has(JSON.stringify(stop))) fs.appendFileSync(LOG, JSON.stringify(rec) + '\n');
+}
+
+// An even sample of a long list, the same one on every run so a resumed run continues it.
+function sampled(list, stop) {
+  const cap = Number(process.env.MAXPERSTOP || 0);
+  if (!cap || list.length <= cap) return list;
+  const pick = list.filter((_, i) => Math.floor(i * cap / list.length) !== Math.floor((i - 1) * cap / list.length));
+  const line = JSON.stringify({ kind: 'sampled', stop, clicked: pick.length, of: list.length });
+  if (!fs.readFileSync(LOG, 'utf8').includes(line)) fs.appendFileSync(LOG, line + '\n');
+  return pick;
+}
+
 async function crawlStop(page, ev, add, stop) {
+  await requireApp(page);
   ev.errors.length = 0; ev.api.length = 0;
   await openStop(page, stop);
-  const t0 = await bodyText(page).catch(() => '');
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'stop', stop, errors: ev.errors.splice(0), api: ev.api.splice(0), fail: t0.match(FAIL_TEXT) || [], loading: t0.match(LOADING_TEXT) || [] }) + '\n');
+  logStop(stop, ev, await bodyText(page).catch(() => ''));
   if ((stop.tabs || []).length < 2) {
     const tabs = await page.$$eval(TAB_SEL, (ts) => ts.filter((t) => t.getBoundingClientRect().width > 2).map((t) => (t.getAttribute('aria-label') || t.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean)).catch(() => []);
     for (const t of tabs) add(stop.url, [...(stop.tabs || []), t]);
@@ -212,7 +276,7 @@ async function crawlStop(page, ev, add, stop) {
   if (prog && full.length && !full.includes(prog)) return 0;
   const stepNames = await page.$$eval('button.pj-lc-stage', (bs) => bs.map((b) => (b.getAttribute('aria-label') || b.innerText || '').replace(/\s+/g, ' ').trim())).catch(() => []);
   const list = (await controls(page)).filter((c) => c.role !== 'tab' && !stepNames.includes(c.name) && !SKIP.test(c.name) && !(c.href && /^https?:/.test(c.href) && !c.href.startsWith(BASE)));
-  for (const c of list) await clickOne(page, ev, add, stop, c);
+  for (const c of sampled(list, stop)) await clickOne(page, ev, add, stop, c);
   return list.length;
 }
 
@@ -223,13 +287,16 @@ async function crawlStop(page, ev, add, stop) {
   await login(page);
   FRESH = await page.evaluate(() => ({ l: { ...localStorage }, s: { ...sessionStorage } }));
   const { queue, add } = stopQueue();
-  if (process.env.DISCOVER === '1') await discover(page, ev, add);
-  let clicks = 0;
+  for (const url of DONE.reached) add(url);
+  if (process.env.DISCOVER === '1' && !DONE.discovered) await discover(page, ev, add);
   for (let qi = 0; qi < queue.length && qi < Number(process.env.MAXSTOPS || 400); qi++) {
     if (sessionEnded) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'fatal', error: 'session ended (401 on the session read); stopping' }) + '\n'); break; }
-    clicks += await crawlStop(page, ev, add, queue[qi]);
+    await crawlStop(page, ev, add, queue[qi]);
+    if (BUDGET.left <= 0) break;
   }
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'end', stops: queue.length, clicks }) + '\n');
+  // The end line counts every click on record, this process's and the ones it resumed over.
+  const recorded = fs.readFileSync(LOG, 'utf8').split('\n').filter((l) => l.includes('"kind":"click"')).length;
+  if (BUDGET.left > 0) fs.appendFileSync(LOG, JSON.stringify({ kind: 'end', stops: queue.length, clicks: recorded }) + '\n');
   // Sign out, so this run's session does not hold one of the account's five slots.
   await page.evaluate(async () => { const t = localStorage.getItem('trialsage_access_token'); await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }).catch(() => {}); }).catch(() => {});
   await browser.close();

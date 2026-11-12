@@ -1,0 +1,6 @@
+after-1440-light/01-device-510k.png: {"differingPixels":104,"box":{"left":480,"top":13,"right":1250,"bottom":148}}
+after-1440-light/02-device-pma.png: {"differingPixels":87,"box":{"left":457,"top":141,"right":469,"bottom":148}}
+after-1440-light/04-device-diagnostics.png: {"differingPixels":88,"box":{"left":490,"top":141,"right":501,"bottom":148}}
+after-1440-dark/01-device-510k.png: {"differingPixels":89,"box":{"left":480,"top":141,"right":491,"bottom":148}}
+after-1440-dark/02-device-pma.png: {"differingPixels":42,"box":{"left":463,"top":141,"right":469,"bottom":148}}
+after-1440-dark/04-device-diagnostics.png: {"differingPixels":41,"box":{"left":496,"top":141,"right":501,"bottom":148}}

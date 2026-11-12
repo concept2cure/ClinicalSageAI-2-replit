@@ -24,6 +24,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   reviewRows: [] as unknown[],
   docs: [] as unknown[],
@@ -119,6 +126,9 @@ describe('the Periodic review panel records a signed review of the version in fo
     // The last review describes the row's controls, so it is heard with them.
     const open = within(rows[1]).getByRole('button', { name: /Open SOP-016 Training records for its periodic review/ });
     expect(document.getElementById(open.getAttribute('aria-describedby')!)?.textContent).toContain('remains current');
+    // C5: its tooltip names the document, not reading for training. The door itself (it reaches the editor) is
+    // pinned in qmsGovernedActions.test.tsx, "a periodic-review row opens the document".
+    expect(open.getAttribute('title')).toBe('Open the controlled document');
     expect(screen.getByRole('list', { name: 'Periodic review' })).toBeTruthy();
   });
 
@@ -158,10 +168,22 @@ describe('the Periodic review panel records a signed review of the version in fo
     expect(H.reviewRefresh).toHaveBeenCalled();
   });
 
+  // C15: an approval that set no review date: the drawer does not claim one is kept (walked: the walk's SOP had none).
+  it('says so when the approval set no review date, rather than claiming one is kept', () => {
+    H.reviewRows = [{ ...DUE, signedReviewDate: null }];
+    const { dialog } = openDecision();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Revision required' }));
+    expect(dialog.textContent).toContain('Its approval set no periodic review date, and recording this does not set one.');
+    expect(dialog.textContent).not.toContain('keeps the review date its approval set');
+  });
+
   it('signs "revision required" with no date, saying the document keeps the date its approval set', async () => {
     H.apiRequest.mockResolvedValue(signedAnswer());
     const { dialog } = openDecision();
-    fireEvent.click(within(dialog).getByLabelText('Revision required'));
+    // C15: the outcome is the product's single choice (C2CForm's seg), a radiogroup.
+    expect(within(dialog).getByRole('radio', { name: 'Remains current' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Revision required' }));
+    expect(within(dialog).getByRole('radio', { name: 'Revision required' }).getAttribute('aria-checked')).toBe('true');
     expect(within(dialog).queryByLabelText('Next periodic review')).toBeNull();
     expect(dialog.textContent).toContain(`The document keeps the review date its approval set (${day(5)}).`);
     expect(dialog.textContent).toContain('Recording this does not open a revision');
@@ -210,6 +232,7 @@ describe('the register row shows and takes a review beyond the panel', () => {
     expect(last.textContent).toBe('Reviewed 2026-10-22');
     expect(last.parentElement!.getAttribute('title')).toBe(
       `v1.0 reviewed 2026-10-22 09:12 UTC by R. Reviewer: remains current. The date its approval signed: ${day(30)}.`);
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: 'Record review: SOP-018 Calibration' }));
     expect(screen.getByRole('dialog', { name: 'Record periodic review' }).textContent).toContain('You are reviewing v1.0');
   });

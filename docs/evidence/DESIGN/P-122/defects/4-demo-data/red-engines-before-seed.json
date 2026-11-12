@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-10T14:58:21.711Z",
+  "organizationId": "5",
+  "projects": {
+    "C2C-101": {
+      "projectId": 2,
+      "sectionsTracked": 0,
+      "sectionsWithOwner": 0,
+      "sectionsOverdue": 0,
+      "sectionOwners": 0,
+      "timeline": {
+        "sectionDeadlines": 0,
+        "milestones": 0
+      },
+      "milestoneTasks": 0,
+      "tasksByStatus": {},
+      "rollup": {
+        "workProjects": 0,
+        "tasksAcrossHierarchy": 0,
+        "done": 0,
+        "blocked": 0,
+        "overdue": 0,
+        "worstRiskLevel": "medium"
+      }
+    },
+    "LMN-201": {
+      "projectId": 5,
+      "sectionsTracked": 0,
+      "sectionsWithOwner": 0,
+      "sectionsOverdue": 0,
+      "sectionOwners": 0,
+      "timeline": {
+        "sectionDeadlines": 0,
+        "milestones": 0
+      },
+      "milestoneTasks": 0,
+      "tasksByStatus": {},
+      "rollup": {
+        "workProjects": 0,
+        "tasksAcrossHierarchy": 0,
+        "done": 0,
+        "blocked": 0,
+        "overdue": 0,
+        "worstRiskLevel": "medium"
+      }
+    }
+  },
+  "atRisk": {
+    "sentinelOpenFindings": 11,
+    "blockers": 0,
+    "dueOrOverdueIn7Days": []
+  }
+}

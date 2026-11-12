@@ -107,18 +107,21 @@ describe('the seal list: what each seal holds (S6, binders as a view)', () => {
     sealed_by: 7, sealed_at: '2026-10-29T10:00:00Z', sealed_by_name: 'Sol',
   });
   /** A client answering the seals read, keeping every statement it was sent. */
-  function lister(rows: Array<Record<string, unknown>>) {
+  function lister(rows: Array<Record<string, unknown>>, successors: Array<Record<string, unknown>> = []) {
     const sent: string[] = [];
     return {
       sent,
       async query(sql: string) {
         sent.push(sql);
-        return /FROM public\.vault_data_room_seals/.test(sql) ? { rows } : { rows: [{ id: 'a', document_title: 'Renamed since' }] };
+        if (/FROM public\.vault_data_room_seals/.test(sql)) return { rows };
+        // The version chain's read (P-107): which sealed versions a later version has since replaced.
+        if (/succ\.supersedes_id/.test(sql)) return { rows: successors };
+        return { rows: [{ id: 'a', document_title: 'Renamed since' }] };
       },
     };
   }
 
-  it("lists each seal's documents from its stored manifest, and reads no document as it is now", async () => {
+  it("lists each seal's documents from its stored manifest, and reads no document's own fields as they are now", async () => {
     const sealed = sealManifest(PROGRAM, [
       row('a', hash('A'), { version: '2.0', lifecycle_stage: 'approved' }),
       row('b', hash('b'), { document_title: null, file_name: 'b.pdf', content_hash: null }),
@@ -127,11 +130,37 @@ describe('the seal list: what each seal holds (S6, binders as a view)', () => {
     const [listed] = await listSeals(q, 7, PROGRAM);
     expect(listed).toMatchObject({ id: SEAL, documentCount: 2, manifestSha256: sealManifestSha256(sealed), sealedByName: 'Sol' });
     expect(listed.documents).toEqual([
-      { id: 'a', title: 'Title a', version: '2.0', indexNumber: '3.2.P.8', shortHash: 'aaaaaaaaaaaa', lifecycleStage: 'approved' },
-      { id: 'b', title: 'b.pdf', version: '1.0', indexNumber: null, shortHash: null, lifecycleStage: null },
+      { id: 'a', title: 'Title a', version: '2.0', indexNumber: '3.2.P.8', shortHash: 'aaaaaaaaaaaa', lifecycleStage: 'approved', supersededBy: null },
+      { id: 'b', title: 'b.pdf', version: '1.0', indexNumber: null, shortHash: null, lifecycleStage: null, supersededBy: null },
     ]);
-    expect(q.sent).toHaveLength(1);
-    expect(q.sent.some((s) => /vault\.documents/.test(s))).toBe(false);
+    // The manifest, then the version chain only: never a sealed document's title, stage or hash as it is now.
+    expect(q.sent).toHaveLength(2);
+    expect(q.sent[1]).toMatch(/succ\.supersedes_id/);
+    expect(q.sent[1]).not.toMatch(/document_title|lifecycle|content_hash/);
+  });
+
+  /* P-107 (2026-11-08): "A seal says when its version has been superseded ('superseded by version n on date'), read
+     from the version chain. What was sealed, and whether it is intact, is unchanged." */
+  it('says which sealed version a later version has replaced, and when; what was sealed is unchanged', async () => {
+    const sealed = sealManifest(PROGRAM, [row('a', hash('A'), { version: '1.0' }), row('b', hash('B'))], () => null);
+    const q = lister([sealRow(SEAL, sealed, sealManifestSha256(sealed), 2)],
+      [{ id: 'a', version: '2.0', created_at: '2026-11-03T09:30:00Z' }]);
+    const [listed] = await listSeals(q, 7, PROGRAM);
+    expect(listed.documents).toEqual([
+      expect.objectContaining({ id: 'a', version: '1.0', shortHash: 'aaaaaaaaaaaa', supersededBy: { version: '2.0', at: '2026-11-03T09:30:00.000Z' } }),
+      expect.objectContaining({ id: 'b', supersededBy: null }),
+    ]);
+    expect(listed.manifestSha256).toBe(sealManifestSha256(sealed));
+  });
+
+  it('when the version chain cannot be read, says nothing of supersession rather than "current"', async () => {
+    const sealed = manifestOf(['a']);
+    const q = lister([sealRow(SEAL, sealed, sealManifestSha256(sealed), 1)]);
+    const inner = q.query.bind(q);
+    q.query = async (sql: string) => { if (/succ\.supersedes_id/.test(sql)) throw new Error('chain unavailable'); return inner(sql); };
+    const [listed] = await listSeals(q, 7, PROGRAM);
+    expect(listed.documents).toEqual([expect.objectContaining({ id: 'a' })]);
+    expect(listed.documents![0]).not.toHaveProperty('supersededBy');
   });
 
   it('lists a seal of a Vault with no current documents as holding none', async () => {

@@ -15,8 +15,8 @@
 #   - alias alias/fda-signing-key-{YYYY}; rotation = a new year's key, the old
 #     one kept enabled for Verify (asymmetric KMS keys do not auto-rotate);
 #   - the application task role holds kms:Sign; no human principal does;
-#   - multi-Region, which can only be chosen at creation — the replica in a
-#     second region (§8) is a separate, later resource.
+#   - multi-Region, which can only be chosen at creation; the replica in the
+#     DR region (§8) is below (MR-04 Stage 1).
 # Every Sign/Verify/GetPublicKey call is recorded by CloudTrail (module.evidence).
 
 data "aws_caller_identity" "current" {}
@@ -38,14 +38,9 @@ locals {
   ]
 }
 
-resource "aws_kms_key" "release_signing" {
-  description              = "Concept2Cure release signatures (21 CFR Part 11 11.70) - ${var.environment} ${local.release_signing_key_year}"
-  key_usage                = "SIGN_VERIFY"
-  customer_master_key_spec = "RSA_4096"
-  multi_region             = true
-  deletion_window_in_days  = 30
-
-  policy = jsonencode({
+# One policy document for the key and its replica, so they cannot differ.
+locals {
+  release_signing_key_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
@@ -81,8 +76,30 @@ resource "aws_kms_key" "release_signing" {
       },
     ]
   })
+}
+
+resource "aws_kms_key" "release_signing" {
+  description              = "Concept2Cure release signatures (21 CFR Part 11 11.70) - ${var.environment} ${local.release_signing_key_year}"
+  key_usage                = "SIGN_VERIFY"
+  customer_master_key_spec = "RSA_4096"
+  multi_region             = true
+  deletion_window_in_days  = 30
+
+  policy = local.release_signing_key_policy
 
   tags = var.tags
+}
+
+# The replica in the DR region (SOP §8; database_keys.tf, MR-04 Stage 1). A
+# release signed before a failover still verifies after it. The same policy:
+# no human principal holds kms:Sign in either region.
+resource "aws_kms_replica_key" "release_signing" {
+  provider                = aws.dr
+  description             = "Concept2Cure release signatures (21 CFR Part 11 11.70) - ${var.environment} ${local.release_signing_key_year} (replica)"
+  primary_key_arn         = aws_kms_key.release_signing.arn
+  deletion_window_in_days = 30
+  policy                  = local.release_signing_key_policy
+  tags                    = var.tags
 }
 
 resource "aws_kms_alias" "release_signing" {

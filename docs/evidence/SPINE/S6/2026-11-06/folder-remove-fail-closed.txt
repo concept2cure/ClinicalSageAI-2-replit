@@ -1,0 +1,16 @@
+# Found live, 2026-11-10: with no person in the database scope, row security hides the project's documents, and a
+# folder holding adsl.xpt counted as empty and was removed. removeProgramFolder now asks the database whether this
+# session can read the project's documents, and refuses when it cannot. Same call, after the fix (uf:5 holds a file):
+holds a file  {"ok":false,"status":409,"code":"FOLDER_CONTENTS_UNVERIFIED","message":"The folder’s contents could not be read for this session, so it cannot be shown to be empty. Nothing was removed."}
+other org mv  {"ok":false,"status":404,"code":"PROJECT_NOT_FOUND","message":"Project not found."}
+other org rm  {"ok":false,"status":404,"code":"PROJECT_NOT_FOUND","message":"Project not found."}
+
+# In the app, where the person is in scope, the same folder is refused by its contents (walk-folder-moves.json, step 1).
+# The walked folder's audit rows (owner read):
+         created_at         |       action        | record_id |                     why                     |               moved_to               
+----------------------------+---------------------+-----------+---------------------------------------------+--------------------------------------
+ 2026-11-10 02:21:41.002511 | vault.folder.create | uf:12     | A place for working copies during the walk. | 
+ 2026-11-10 02:21:42.804351 | vault.folder.move   | uf:12     | It belongs with the nonclinical reports.    | Module 4 · Nonclinical study reports
+ 2026-11-10 02:21:44.665905 | vault.folder.remove | uf:12     | Made for the walk; it is empty.             | 
+(3 rows)
+

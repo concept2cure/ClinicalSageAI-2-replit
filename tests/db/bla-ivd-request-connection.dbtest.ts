@@ -113,7 +113,16 @@ describe('native BLA and IVD saved work survives refresh without a privileged re
   it('refuses foreign tenant exact records and foreign-program saves without changing org-scoped read policy', async () => {
     expect((await read(`/api/biopharma/bla/assessments/${foreignBlaId}`)).status).toBe(404);
     expect((await read(`/api/ivd-assessments/${foreignIvdId}`)).status).toBe(404);
-    expect((await read(`/api/ivd-assessments/documents?program_id=${FOREIGN_PROGRAM}`)).body.rows).toEqual([]);
+    // A list naming another organization's project is refused, not answered with
+    // an empty list (1a6701ea65, D2 2026-10-29: admitProject runs first, 404 and
+    // nothing listed). With no project named the list stays the organization's
+    // own: this caller's saved document, none of the foreign organization's.
+    const foreignDocs = await read(`/api/ivd-assessments/documents?program_id=${FOREIGN_PROGRAM}`);
+    expect(foreignDocs.status).toBe(404); expect(foreignDocs.body.rows).toBeUndefined();
+    const orgDocs = await read('/api/ivd-assessments/documents');
+    expect(orgDocs.status).toBe(200); expect(orgDocs.body.rows.some((row: { id: string }) => row.id === documentId)).toBe(true);
+    expect(orgDocs.body.rows.every((row: { organization_id: number; program_id: string | null }) =>
+      row.organization_id === ORG && row.program_id !== FOREIGN_PROGRAM)).toBe(true);
     expect((await post('/api/biopharma/bla/comparability', blaBody(FOREIGN_PROGRAM))).status).toBe(404);
     expect((await post('/api/ivd-assessments', ivdBody(FOREIGN_PROGRAM))).status).toBe(404);
   });

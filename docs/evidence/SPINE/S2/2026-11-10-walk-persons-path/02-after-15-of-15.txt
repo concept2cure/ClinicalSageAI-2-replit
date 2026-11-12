@@ -1,0 +1,105 @@
+npx vitest run tests/lineage/founder-path-lineage.pglite.test.ts
+on trunk e9cbbc1a53 with this change, 2026-11-10
+
+== per case ==
+ ✓ hop 1 · project — a project of org A, created the way the Projects surface creates it 217ms
+ ✓ hop 2 · capture — bytes X into the project’s Data Room through the upload route 594ms
+ ✓ hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx; as drafted it cannot be signed for review 331ms
+ ✓ hop 4 · edit-save — a person rewrites both sections in their own words, cites the Data Room source, and saves through the section save path 275ms
+ ✓ hop 5 · seal — the independent check is run, the reviewer decides its findings and signs, and the document is frozen and approved under Part 11 signatures 719ms
+ ✓ hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 1799ms
+ ✓ hop 6b · vault approval — the Vault copy stands approved by the Authoring approval (FD5 (c): reviewed and approved in Authoring, so the approval carries) 10ms
+ ✓ hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 403ms
+ ✓ hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 2064ms
+ ✓ walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 28ms
+ ✓ walk forward · from the project and from the source to the transmittal 221ms
+ ✓ adopt · a conversation file becomes a project’s source only through one audited adopt 219ms
+ ✓ retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 227ms
+ ✓ the database the walk ran on held every table and column the code asked for 1ms
+ ✓ the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+
+== per check (the hops that reached their verdict) ==
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  green  bytes-durable — the bytes behind stored_artifact_ref read back through the storage provider and hash to the checksum
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  green  model-recorded — provenance names the model the gateway served
+  green  turn-recorded — provenance names the conversation and turn that drafted it
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+  green  draft-not-signed-as-drafted — the independent check holds AnA’s uncited figure as a hard finding, and a review signature on the draft is refused 409 INDEPENDENT_CHECK_REQUIRED: nothing is signed
+[founder-path] edit-save
+  green  save-accepted — both saves are accepted
+  green  citation-registered — the editor’s Cite registered the source to the figure’s section at its checksum, and the saved sentence carries it
+  green  revision-chained — doc_revisions grows by each edit, chained to the section’s genesis row and hashing the saved text
+  green  machine-text-replaced — no machine span is live on either section, AnA’s quoted sentence is gone, and each section’s text is the after-text of the person’s chained UPDATE row
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+[founder-path] seal
+  green  check-current-and-findings-decided — the independent check’s receipt is for the saved text, it reports no hard finding, and the reviewer’s decision on the earlier one is on the document’s trail
+  green  seal-hash-verifies — frozen_documents holds the freeze and the approval seal, each hashing its own content
+  green  signature-binds-seal — the APPROVER signature names the snapshot its approval sealed, by version and content hash
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+[founder-path] file-to-vault
+  green  approval-carry-decided — reviewed and approved in Authoring by two people who did not write it, so the approval carries to the Vault copy, and the filing says whose (FD5 (c))
+  green  vault-row-in-project — vault.documents holds the filed bytes in the same project, under their content hash
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+[founder-path] vault-approval
+  green  vault-copy-approved-for-its-bytes — the Vault copy's lifecycle record is approved, for the bytes the Vault holds
+  green  carried-approval-names-authoring-signatures — one chained vault.version.approval_carried row names the Authoring review and approval signatures, their signers and the bytes they are bound to
+[founder-path] place
+  green  filing-copy-names-seal — the filing copy is aliased to the authoring document and names the seal it was taken under
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  green  placement-audit-names-document-and-pin — each LEAF_CREATED ledger row names the document it placed and the pin it took
+[founder-path] transmit
+  green  transmitted — the transmittal records the sha256 of exactly the bytes that left, and the ledger names it
+  green  reachable-from-the-product — a Submission Center control calls the sequence transmit route
+  green  bytes-retained — the bytes the agency received can be read back by the transmittal and hash to its bundle_sha256
+  green  transmittal-names-project — the transmittal row names its project, taken from its submission
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  green  transmit-record-names-bundle — the ECTD_TRANSMITTED ledger row carries the bundle sha256
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  green  transmittal-to-sequence — the transmittal resolves to exactly one sequence
+  green  sequence-to-pinned-leaves — the sequence’s leaves each name a document and pin its digest
+  green  leaves-to-project — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+  green  sequence-to-project — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+  green  filing-copy-leaf-to-seal — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+  green  document-to-source-by-citation — the sealed document’s registered citation reaches cre_evidence_sources.checksum = sha256(X), at the checksum it was cited under
+[founder-path] walk-forward
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  green  project-read-lists-its-records — one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys
+  green  project-activity-shows-its-records — the project activity feed shows the governed actions on its own records, not only rows keyed to the project id
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  green  document-to-transmittal — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+  green  data-room-shows-use — the project’s Data Room reports the source as used by a document
+[founder-path] adopt
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+[founder-path] retention
+  green  filed-project-not-deleted — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+  green  anchor-row-not-hard-deleted — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  filed-project-archived — the same project can be archived, and its records still read from it
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+  green  source-changes-of-a-deleted-or-malformed-project — a deleted project's source changes, and a malformed id's, are not found
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)

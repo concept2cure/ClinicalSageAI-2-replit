@@ -43,6 +43,14 @@ const RAW = readFileSync(
  */
 const SRC = RAW.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 
+/** One POST handler's body: from its registration to the `});` that closes it at column 0. */
+const postHandler = (path: string): string => {
+  const start = SRC.indexOf(`router.post('${path}',`);
+  if (start < 0) return '';
+  const end = SRC.indexOf('\n});', start);
+  return end < 0 ? '' : SRC.slice(start, end);
+};
+
 describe('§11.50(a)(1) — the signer name is a printed name, not an address', () => {
   it('neither signing path reads a name off req.user', () => {
     // The exact dead expression, in either spelling.
@@ -62,8 +70,24 @@ describe('§11.50(a)(1) — the signer name is a printed name, not an address', 
 
   it('every signing path resolves the name from the user record', () => {
     // /e-sign, /sign and — since DP-35 (2026-10-01) made a freeze a signature — /freeze.
-    const calls = SRC.match(/await resolveSignerName\(/g) ?? [];
-    expect(calls.length, 'expected /e-sign, /sign and /freeze to each resolve').toBe(3);
+    //
+    // Asserted per handler, not as a count over the file. The resolver is also
+    // how a comment's author name is printed (1e341685f2, 2026-11-06: the rail
+    // showed "jm.smith@…" for JM Smith), and a comment is not a signature, so it
+    // may fall back to the email for display. A file-wide count let that call
+    // stand in for a signing path that had lost its own.
+    for (const path of ['/docs/:docId/e-sign', '/docs/:docId/sign', '/docs/:docId/freeze']) {
+      const body = postHandler(path);
+      expect(body, `POST ${path} handler not found`).toBeTruthy();
+      expect(body, `POST ${path} must resolve the signer's printed name`).toMatch(
+        /await resolveSignerName\(/,
+      );
+      // And never substitutes the address for it on a miss: NULL is what lets
+      // a manifestation say the printed name is not on record.
+      expect(body, `POST ${path} must not fall back to the email`).not.toMatch(
+        /resolveSignerName\([^)]*\)\)?\s*(?:\|\||\?\?)/,
+      );
+    }
   });
 
   it('the resolver reads users.name and returns NULL rather than the email', () => {

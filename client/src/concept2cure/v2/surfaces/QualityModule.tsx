@@ -4,9 +4,10 @@
  * Thin adapter that mounts the self-contained quality module
  * (client/src/concept2cure/quality) inside the v2 `.page`, mapping the shell's
  * SurfaceViewProps onto the module's host contract: `onAsk` → the real AnA
- * conversation, `onNav` → shell navigation. The module carries its own topbar,
- * tab bar (SOP register · Change control) and scoped stylesheet, so it renders
- * full-bleed (SURFACE_VIEWS `full: true`).
+ * conversation, `onNav` → shell navigation. Quality is a work area on the
+ * product's page (D7-B, C18): D0's header, tabs and sections, and a stylesheet
+ * for its own records only. SURFACE_VIEWS still marks it `full: true`; with no
+ * background or type of its own that is only its padding (outside D7).
  *
  * @module client/src/concept2cure/v2/surfaces/QualityModule
  */

@@ -1,0 +1,63 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/report-os/runs/23/seal",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "runId": 23,
+        "sealed": true,
+        "seal": {
+          "algorithm": "sha256",
+          "contentHash": "f24511c39ff99d4a3fcc2f5e174a00ecb229b328e0ddba92d752090866a25935",
+          "atomCount": 100,
+          "sealedAt": "2026-11-10T03:38:30.327Z"
+        },
+        "finalizedAt": "2026-11-10T03:38:30.613Z",
+        "signature": {
+          "signerName": "OQ Signer",
+          "signedAt": "2026-11-10T03:38:30.617Z",
+          "meaning": "approval"
+        },
+        "finalization": {
+          "reason": "OQ-007: the report was read against the register it is drawn from.",
+          "meaning": "approval",
+          "priorStatus": "completed"
+        },
+        "verification": {
+          "verdict": "intact",
+          "checks": [
+            {
+              "check": "audit-chain",
+              "ok": true,
+              "detail": "The audit chain records seal f24511c39ff9…; the row links to the organisation's audit chain, but no audit HMAC key is configured here, so the link is not checked against a key held outside the database."
+            },
+            {
+              "check": "stored-seal",
+              "ok": true,
+              "detail": "The stored seal agrees with the audit chain, field by field."
+            },
+            {
+              "check": "stored-document",
+              "ok": true,
+              "detail": "The stored document hashes to the recorded seal, and its provenance atoms match."
+            },
+            {
+              "check": "signature",
+              "ok": true,
+              "detail": "The electronic signature signed the seal the audit chain recorded."
+            }
+          ]
+        }
+      }
+    }
+  }
+}

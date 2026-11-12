@@ -1,0 +1,25 @@
+== npm run ci:migration-drop-safety (2026-11-10T14:57:19Z)
+[ci:migration-drop-safety] OK — 469 migrations, 45 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 21 dynamic DROP(s) in 21 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0
+== npm run ci:migration-drop-safety:selftest (2026-11-10T14:57:19Z)
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit 0
+== npm run ci:migration-guard-order (2026-11-10T14:57:20Z)
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+exit 0
+== npm run ci:migration-set-order (2026-11-10T14:57:21Z)
+[ci:migration-set-order] OK — 469 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0

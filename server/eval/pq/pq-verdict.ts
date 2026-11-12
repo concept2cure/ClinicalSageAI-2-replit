@@ -29,6 +29,7 @@
 import { RAG_EMPTY_CONTEXT_REFUSAL } from '../../services/rag-generation-request.js';
 
 import { verifyCanonicalPqClaim, type CanonicalPqEvidence } from './verify-pq-record.js';
+import { csrDraftingFindings, type PqCsrDraftingRecord } from './pq-csr-drafting';
 import {
   extractionCriteriaProblems,
   isFloor,
@@ -54,7 +55,12 @@ export interface PqProtocol {
   approvedBy: string | null;
   approvedOn: string | null;
   components: Record<string, PqComponentProtocol>;
+  /** The uses a qualification is for, each with the components it needs (P-118). Absent on a protocol that names none. */
+  scope?: { uses?: Record<string, { components: string[] }> };
 }
+
+/** What a run was made for, and the CSR drafting record it retained. Absent: every required component applies. */
+export interface PqVerdictOptions { use?: string; csrDrafting?: PqCsrDraftingRecord }
 
 /** One generation task as it actually ran. */
 export interface PqGenerationResult {
@@ -217,7 +223,19 @@ function unexecutableComponents(protocol: PqProtocol): string[] {
  * this change — dropped out of the verdict by omission and a PQ could PASS
  * without it (D4 evidence docs/evidence/D4/2026-09-28-pq-rag-unblock-misdescribed/, E6).
  */
-const MEASURED_COMPONENTS = new Set(['generation', 'extraction', 'rag']);
+const MEASURED_COMPONENTS = new Set(['generation', 'extraction', 'rag', 'csrDrafting']);
+
+/**
+ * The protocol as a run for `use` is judged on: the components that use needs, and no others (the protocol's own
+ * `scope.rule`: "a model is qualified for a use only on the components that use needs. A component a use does not
+ * need is not waived for the uses that do"). Null when the protocol declares no such use over components it holds,
+ * or the use leaves generation out: this verdict's first rule reads the generation tasks.
+ */
+function protocolForUse(protocol: PqProtocol, use: string): PqProtocol | null {
+  const names = protocol.scope?.uses?.[use]?.components;
+  if (!Array.isArray(names) || !names.includes('generation') || names.some((name) => typeof name !== 'string' || !protocol.components[name])) return null;
+  return { ...protocol, components: Object.fromEntries(names.map((name) => [name, protocol.components[name]])) };
+}
 
 function unmeasuredComponents(protocol: PqProtocol): string[] {
   return Object.entries(protocol.components)
@@ -621,11 +639,14 @@ function isApproved(protocol: PqProtocol): boolean {
 }
 
 export function computeVerdict(
-  protocol: PqProtocol,
+  declared: PqProtocol,
   generation: PqGenerationResult[],
   extraction: PqExtractionResult[] = [],
   rag?: PqRagRecord,
+  options: PqVerdictOptions = {},
 ): PqVerdictResult {
+  const protocol = options.use === undefined ? declared : protocolForUse(declared, options.use);
+  if (!protocol) return { verdict: 'INCOMPLETE', reasons: [`the protocol declares no use "${options.use}" whose components this verdict can apply`] };
   const gen = protocol.components.generation;
   if (!gen) return { verdict: 'INCOMPLETE', reasons: ['protocol declares no generation component'] };
 
@@ -637,6 +658,7 @@ export function computeVerdict(
 
   const ext = extractionFindings(protocol, extraction);
   const ragF = ragFindings(protocol, rag);
+  const csr = csrDraftingFindings(protocol.components.csrDrafting, options.csrDrafting);
   const incomplete = [
     ...unexecutableComponents(protocol),
     ...unmeasuredComponents(protocol),
@@ -644,11 +666,13 @@ export function computeVerdict(
     ...sampleShortfall(gen.criteria.minTasksPerDocType, scored),
     ...ext.incomplete,
     ...ragF.incomplete,
+    ...csr.incomplete,
   ];
   const missed = [
     ...criteriaMissed(gen.criteria, scored.filter((g) => g.servedModelVerified)),
     ...ext.missed,
     ...ragF.missed,
+    ...csr.missed,
   ];
 
   // FAIL outranks INCOMPLETE: a model that missed a criterion has failed
@@ -664,7 +688,8 @@ export function computeVerdict(
       ],
     };
   }
-  return { verdict: 'PASS', reasons: ['every required component executed and met approved criteria'] };
+  return { verdict: 'PASS', reasons: [options.use === undefined ? 'every required component executed and met approved criteria'
+    : `every component the use "${options.use}" needs executed and met approved criteria`] };
 }
 
 /** The record the runner writes, and the registry's `pq.reference` points at. */
@@ -692,6 +717,10 @@ export interface PqRecord {
    * items and provider/source/scope evidence; missing execution is INCOMPLETE.
    */
   rag?: PqRagRecord;
+  /** The use the run was made for (protocol `scope.uses`). Absent: judged on every required component. */
+  use?: string;
+  /** The CSR drafting run's record (pq-csr-drafting.ts). Absent unless the use needs that component. */
+  csrDrafting?: PqCsrDraftingRecord;
   verdict: PqVerdict;
   reasons: string[];
 }

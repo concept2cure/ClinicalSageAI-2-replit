@@ -1,0 +1,29 @@
+// Walk 2, flow 1e: does the audit trail (screen, ledger, signed export) carry WHAT a settings change changed?
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  await c.step('what the reader of the audit trail can learn about the session policy change', async (s) => {
+    const exp = await c.api(page, 'GET', '/api/audit/export/signed?format=json');
+    const text = JSON.stringify(exp.body);
+    s.notes.push('signed export: ' + exp.status + ', ' + text.length + ' chars; export keys ' + JSON.stringify(Object.keys(exp.body?.export || {})) + '; mentions sessionTimeoutMinutes ' + (text.split('sessionTimeoutMinutes').length - 1) + ' times; "before" ' + (text.split('"before"').length - 1) + '; requirePdfA ' + (text.split('requirePdfA').length - 1) + '; seatsPurchased ' + (text.split('seatsPurchased').length - 1));
+    const data = exp.body?.export?.data; const arr = Array.isArray(data) ? data : (data?.entries || data?.events || data?.rows || []); s.notes.push('export data: ' + (Array.isArray(data) ? 'array' : JSON.stringify(Object.keys(data || {}))) + ' entries ' + arr.length + '; one entry: ' + String(JSON.stringify(arr.find((e) => /settings/i.test(JSON.stringify(e))) || arr[0])).slice(0, 600)); s.notes.push('manifest: ' + JSON.stringify(exp.body?.export?.manifest).slice(0, 400) + ' | signature: ' + JSON.stringify(exp.body?.export?.signature).slice(0, 160) + ' | verification: ' + JSON.stringify(exp.body?.export?.verification).slice(0, 300));
+    await page.goto(`${c.BASE}/concept2cure/audit-trail`, { waitUntil: 'networkidle' }); await c.sleep(3000);
+    const row = page.locator('main').getByText('Tenant Settings Changed').last();
+    await row.scrollIntoViewIfNeeded(); await row.click(); await c.sleep(1500);
+    const t = await page.locator('body').innerText();
+    s.notes.push('after clicking the oldest "Tenant Settings Changed" row: dialogs ' + await page.locator('[role=dialog]:visible').count() + '; "sessionTimeoutMinutes" or "Idle" on screen: ' + /sessionTimeoutMinutes|Idle sign-out|idle/i.test(t) + '; reason on screen: ' + /prove the idle window/.test(t));
+    const d = page.locator('[role=dialog]:visible, [class*=drawer]:visible, [class*=detail]:visible').first();
+    s.notes.push('opened: ' + (await d.innerText().catch(() => '(nothing)')).replace(/\n+/g, ' | ').slice(0, 900));
+    await c.shot(page, 'w2-70-audit-trail-settings-row.png');
+    await page.keyboard.press('Escape'); await c.sleep(300);
+    const search = page.locator('main input[type=search], main input[placeholder*="earch"]').first();
+    if (await search.count()) { await search.fill('Mona Manager'); await c.sleep(1500); s.notes.push('search "Mona Manager": ' + (await c.mainText(page, 1500)).replace(/\n+/g, ' | ').slice(300, 900)); }
+    else s.notes.push('no search field on the audit trail');
+    await page.getByRole('button', { name: 'Compliance reports' }).or(page.getByRole('tab', { name: 'Compliance reports' })).first().click().catch(() => {}); await c.sleep(2000);
+    s.notes.push('Compliance reports: ' + (await c.mainText(page, 2500)).replace(/\n+/g, ' | ').slice(200, 1500));
+    await c.shot(page, 'w2-70-audit-trail-compliance-reports.png');
+  });
+  c.report(); c.save('w2-29b-audit-detail');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -190,7 +190,7 @@ export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string 
 }
 
 export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP' | 'FILING_DIVERGED'
-  | 'EFFECTIVE_DATE_BACKDATED';
+  | 'EFFECTIVE_DATE_BACKDATED' | 'CHANGED_SINCE_READ';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
 export class QmsApprovalRefusedError extends Error {

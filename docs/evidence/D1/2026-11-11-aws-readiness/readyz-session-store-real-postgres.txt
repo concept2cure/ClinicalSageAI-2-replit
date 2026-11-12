@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-12T00:19:04.669Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:04.670Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:04.670Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T00:19:04.850Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:04.851Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:04.851Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > a deploy does not sign out a session that was active a minute ago 1524ms
+{"level":30,"time":"2026-11-12T00:19:04.995Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:04.995Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:04.995Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T00:19:05.119Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:05.120Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:05.120Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > a session idle past its window is refused on every process 265ms
+{"level":30,"time":"2026-11-12T00:19:05.236Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:05.348Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:05.236Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:05.236Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T00:19:05.349Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:05.349Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T00:19:05.366Z","pid":7631,"hostname":"vm","context":{"account":"903","limit":2,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+{"level":30,"time":"2026-11-12T00:19:05.473Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:05.474Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:05.474Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > the concurrent-session limit counts every process's sign-ins, and a session it ends is ended everywhere 359ms
+{"level":30,"time":"2026-11-12T00:19:05.625Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:05.751Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:05.625Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:05.625Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-12T00:19:05.751Z","pid":7631,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:05.751Z","pid":7631,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > signing out on one process frees the slot for every process 278ms
+{"level":30,"time":"2026-11-12T00:19:06.673Z","pid":7653,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:19:06.676Z","pid":7653,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:19:06.676Z","pid":7653,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/readyz-session-store.dbtest.ts > /readyz's session-store read, as the runtime role with RLS enforcing > runs as a role that is neither a superuser nor exempt from RLS 8ms
+ ✓ tests/db/readyz-session-store.dbtest.ts > /readyz's session-store read, as the runtime role with RLS enforcing > a provisioned database: the store answers 2ms
+ ✓ tests/db/readyz-session-store.dbtest.ts > /readyz's session-store read, as the runtime role with RLS enforcing > a database without the table: down, and the detail says which table 4ms
+ ✓ tests/db/readyz-session-store.dbtest.ts > /readyz's session-store read, as the runtime role with RLS enforcing > a runtime role that cannot read the table: down 3ms
+ ✓ tests/db/readyz-session-store.dbtest.ts > /readyz's session-store read, as the runtime role with RLS enforcing > outside production it is skipped, and nothing is read 1ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  00:19:02
+   Duration  4.00s (transform 871ms, setup 95ms, import 113ms, tests 3.43s, environment 0ms)
+

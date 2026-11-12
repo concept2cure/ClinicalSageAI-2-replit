@@ -167,3 +167,16 @@ Once the place is decided:
 - **At the head of the Plan step (THE_PROGRAM §8):** `ProjectObjective` is written once (D3's markup) and rendered
   first in `ProjectPlan.tsx` (S11/D3), before "Due for you", and D3's place under the name is dropped. The strategy
   line follows when (3) exists.
+
+## Update, 2026-11-10: what has closed since
+
+Read at trunk `d40585f37f`.
+
+- **Step 6b is built**, by the Reporting session from the proposal above (`c0729896d7`, `3707064475`; evidence
+  `docs/evidence/SPINE/S11/2026-11-09-global-schedule/`). The handoff is closed.
+- **§8 item 1, the objective:** it is rendered on the project page under the project's name
+  (`surfaces/ProjectObjective.tsx`, mounted in `ProjectHome.tsx`), D3 §4.3's place, said once. So reason 1 above no
+  longer holds, and the Plan step does not repeat it. Moving it to the head of the Plan step instead remains the
+  lead's or the founder's choice. The charter's strategy still has no read.
+- **Still open:** typical durations for the non-IND pyramids; a due-date write in tasking (S9) for "Use the
+  schedule's date".

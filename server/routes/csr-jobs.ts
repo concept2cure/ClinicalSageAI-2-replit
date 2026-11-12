@@ -15,6 +15,7 @@
  *                                            (csr-headings.ts; the CSR card's section
  *                                            review, D2/W1 2026-10-30)
  *   POST   /api/csr/jobs/:jobId/cancel    — terminal cancel transition
+ *   POST   /api/csr/jobs/:jobId/resume    — resume a failed build, as the same build
  *   POST   /api/csr/jobs/:jobId/sections/:sectionNumber/review
  *                                          — record one section review decision
  *                                            (submit | approve | send_back), as the
@@ -57,8 +58,10 @@ import {
 } from '../services/csr-builder.js';
 import {
   csrBuildFailureText,
+  csrLiveBuild,
   getCSRBuildJobStatus,
   getCSRSectionOutputs,
+  resumeCSRBuildInBackground,
 } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError, parseCsrScopeId, requireCsrJobAccess, resolveCsrScope } from '../services/csr/project-scope';
@@ -70,6 +73,7 @@ import {
   type CsrReviewDecision,
 } from '../services/csr/csr-section-review';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { csrBuildOfDocument } from '../services/authoring/csr-import-into-document';
 import { buildHeadings } from '../services/csr/csr-headings';
 import { csrAssemblyRouter } from './csr-jobs-assembly';
 import { csrNarrativeRouter } from './csr-jobs-narratives';
@@ -299,6 +303,12 @@ router.get('/', async (req: Request, res: Response) => {
   if (typeof req.query.programId !== 'string') {
     return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
   }
+  // Asked from a CSR document's build section, the list also says which build that document holds imported
+  // sections from (`documentBuild`), so the section opens on it. A document takes its imports from one build.
+  const documentId = typeof req.query.documentId === 'string' ? req.query.documentId : null;
+  if (documentId !== null && !RUN_ID.test(documentId)) {
+    return res.status(400).json({ code: 'CSR_DOCUMENT_INVALID', error: 'documentId must identify a document.' });
+  }
   try {
     const database = requireDb();
     const scope = await resolveCsrScope(database, organizationId, { programId: req.query.programId }, { forWrite: false, actorUserId: resolveUserId(req) });
@@ -310,12 +320,18 @@ router.get('/', async (req: Request, res: Response) => {
       eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.projectId, scope.projectId),
       sql`${csrBuildJobs.studyInfoSnapshot} -> 'evidenceSource' ->> 'runId' = ${runId}`,
     )).orderBy(desc(csrBuildJobs.updatedAt), desc(csrBuildJobs.id)).limit(25);
+    const documentBuild = documentId === null ? undefined
+      : await csrBuildOfDocument(queryableFromDrizzle(database), organizationId, req.query.programId, documentId);
     // A failed build says why it stopped, in plain words from its receipt's typed reason (csrBuildFailureText);
     // the receipt's stored message is never sent.
-    return res.json({ jobs: rows.map(row => ({
+    return res.json({ ...(documentBuild === undefined ? {} : { documentBuild }), jobs: rows.map(row => ({
       jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
       updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       failure: row.status === 'failed' ? csrBuildFailureText(row.error) : null,
+      // What a drafting build is writing now, for the person watching it (csr-job-runner.ts csrLiveBuild): the
+      // heading, how far the build is and the prose so far. Unsaved, unchecked work in progress, to this project's
+      // readers only; null when the build is not drafting or another process runs it.
+      writing: row.status === 'drafting' ? csrLiveBuild(row.id) : null,
     })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
@@ -455,6 +471,52 @@ router.get('/:jobId/headings', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/csr/jobs/:jobId/cancel — terminal cancel transition
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/csr/jobs/:jobId/resume — resume a failed build, as the same build
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A build that stopped (a rate limit that did not lift, a refused key, a provider that did not answer) is resumed
+ * rather than replaced: the runner keeps every section it saved and drafts the headings that have no saved text.
+ * It matters because a CSR document takes its imported sections from one build (workflow-source-import.ts): once a
+ * document holds the first build's sections, a second build's are refused. A failed build is resumed, and so is one
+ * a person stopped (recorded `cancelled`; the page's "Stop build", 2026-11-11), which is queued again first. The
+ * runner claims the build with its own conditional update, so two presses run one resume.
+ */
+router.post('/:jobId/resume', async (req: Request, res: Response) => {
+  const jobId = parseJobIdParam(req.params.jobId);
+  if (jobId == null) return res.status(400).json({ error: 'Valid numeric job id required' });
+  const organizationId = resolveOrganizationId(req);
+  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+  try {
+    // 404 for a build that does not exist or is another organization's, as cancel answers.
+    if (!await requireCsrJobWriteAccess(organizationId, jobId, resolveUserId(req) ?? 0)) return res.status(404).json({ error: 'Job not found' });
+    // The recorded status, not the derived one: a build recorded complete whose saved output fails its integrity
+    // check reads as failed elsewhere, and the runner would not take it.
+    const [row] = await requireDb().select({ status: csrBuildJobs.status }).from(csrBuildJobs)
+      .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
+    if (!row) return res.status(404).json({ error: 'Job not found' });
+    const notResumable = (status: string) => res.status(409).json({ code: 'CSR_BUILD_NOT_RESUMABLE', status,
+      error: `This build is ${status} and cannot be resumed. Only a build that stopped before it finished is resumed.` });
+    if (row.status === 'cancelled') {
+      // A person stopped it (POST …/cancel). The runner takes a queued or failed build only, so it is queued again,
+      // as the same build, in one statement: a second request finds it queued and hands nothing over.
+      const requeued = await requireDb().update(csrBuildJobs).set({ status: 'queued', updatedAt: new Date() })
+        .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.status, 'cancelled')))
+        .returning({ id: csrBuildJobs.id });
+      if (!requeued.length) return notResumable((await getCSRBuildJobStatus(jobId, organizationId))?.status ?? 'unknown');
+    } else if (row.status !== 'failed') {
+      return notResumable(row.status);
+    }
+    resumeCSRBuildInBackground(jobId);
+    return res.status(202).json({ jobId, status: 'queued', resumed: true });
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    log.error('Failed to resume CSR build job', { code: 'CSR_INTERNAL_ERROR', organizationId });
+    return res.status(500).json({ error: 'Failed to resume CSR build job' });
+  }
+});
 
 router.post('/:jobId/cancel', async (req: Request, res: Response) => {
   const jobId = parseJobIdParam(req.params.jobId);

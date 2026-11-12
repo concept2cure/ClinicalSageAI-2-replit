@@ -1,0 +1,21 @@
+# The editor's paused-attribution note, true for a read-only section. 2026-11-12.
+# Red first:
+ × client/src/concept2cure/v2/editor/__tests__/attributionPausedNote.test.ts > attributionPausedNote > on a section that can be edited, it says the highlighting describes the text as last saved 3ms
+ × client/src/concept2cure/v2/editor/__tests__/attributionPausedNote.test.ts > attributionPausedNote > on a read-only section it does not speak of editing 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: attributionPausedNote is not a function
+TypeError: attributionPausedNote is not a function
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+# With the change, plus every suite that renders the section editor:
+ Test Files  27 passed (27)
+      Tests  389 passed (389)
+
+# Real PostgreSQL (disposable, deploy-shaped databases, app_service, RLS on), for the leaf evidence changes:
+$ test:db tests/db/{vault-placement,cmc-source-evidence,vault-versions}.dbtest.ts
+ Test Files  1 failed | 3 passed (4)
+      Tests  41 passed | 38 skipped (79)
+#   (submission-required-deliverables did not start there: its fixture accepts only the CI database name)
+$ test:db tests/db/submission-required-deliverables.dbtest.ts   (on a copy named concept2cure-ri_dbtest)
+ Test Files  1 passed (1)
+      Tests  38 passed (38)

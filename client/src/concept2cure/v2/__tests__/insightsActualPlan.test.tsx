@@ -115,7 +115,7 @@ describe('actual known Free plan — generation controls', () => {
   });
   it.each(['Standard', 'Enterprise'])('a %s preview keeps catalog controls disabled with the actual plan reason', async name => {
     await canvas(); preview(name); await catalog();
-    const control = screen.getByRole('button', { name: 'Run' }) as HTMLButtonElement;
+    const control = screen.getByRole('button', { name: /^Run / }) as HTMLButtonElement;
     expect(control.disabled).toBe(true);
     expectPlanRefusal(control.getAttribute('title'));
     expect(document.querySelector('.rl-card')?.textContent).toMatch(/Standard plan/);
@@ -180,7 +180,7 @@ describe('actual plan — existing reads and positive execution', () => {
   it('opens a retained history report on Free without generating one', async () => {
     await canvas();
     fireEvent.click(screen.getByRole('tab', { name: 'Run history' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the / }));
     await waitFor(() => expect(document.querySelector('.ro-report')).not.toBeNull());
     expect(runs()).toHaveLength(0);
   });

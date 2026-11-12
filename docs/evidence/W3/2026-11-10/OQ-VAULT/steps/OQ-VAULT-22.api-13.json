@@ -1,0 +1,111 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/8c05d32c-f5b2-4a79-87d5-ddd208dfb428/documents/710b569d-be5b-40f2-8de9-5ac786183b39/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "annotations": [
+          {
+            "id": "f9a31eec-3cda-45b7-abd2-a3e20b94fdd2",
+            "parentId": null,
+            "versionId": "710b569d-be5b-40f2-8de9-5ac786183b39",
+            "versionLabel": "1.0",
+            "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428",
+            "kind": "request_changes",
+            "anchor": {
+              "kind": "text",
+              "quote": "The dosing table",
+              "charStart": 11,
+              "charEnd": 27,
+              "textSha256": "5d4c36f7f7a8aec19de53b35dac6fd5398c200eb25ac8d4484d9b09025320595"
+            },
+            "anchorCurrent": true,
+            "status": "resolved",
+            "body": "Give the dose per kilogram.",
+            "bodySha256": "b5d58b65cc744024ee9249745cbfcb01517934bc141e1b8fd6f093e835bed146",
+            "authorId": 1,
+            "authorName": "oq-runner@validation.local",
+            "createdAt": "2026-11-10T02:03:15.566Z",
+            "lifecycleStage": null,
+            "resolution": {
+              "byId": 1,
+              "byName": "oq-runner@validation.local",
+              "at": "2026-11-10T02:03:16.396Z",
+              "note": "Dose per kilogram added in the next version.",
+              "addressedIn": null
+            },
+            "retraction": null,
+            "replies": [
+              {
+                "id": "d0de3341-2134-4595-a4f3-c5a633865c45",
+                "parentId": "f9a31eec-3cda-45b7-abd2-a3e20b94fdd2",
+                "versionId": "710b569d-be5b-40f2-8de9-5ac786183b39",
+                "versionLabel": "1.0",
+                "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428",
+                "kind": "comment",
+                "anchor": null,
+                "anchorCurrent": null,
+                "status": "open",
+                "body": "Agreed.",
+                "bodySha256": "49721faa8421febb20dcbfb1501817c14af322c3323990fead880c2c9b360363",
+                "authorId": 1,
+                "authorName": "oq-runner@validation.local",
+                "createdAt": "2026-11-10T02:03:15.844Z",
+                "lifecycleStage": null,
+                "resolution": null,
+                "retraction": null,
+                "replies": []
+              }
+            ]
+          },
+          {
+            "id": "5f84994e-64b2-4050-82a7-02233ba50fcc",
+            "parentId": null,
+            "versionId": "710b569d-be5b-40f2-8de9-5ac786183b39",
+            "versionLabel": "1.0",
+            "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428",
+            "kind": "comment",
+            "anchor": {
+              "kind": "document"
+            },
+            "anchorCurrent": null,
+            "status": "retracted",
+            "body": "Posted on the wrong document.",
+            "bodySha256": "3bd61b1fe282041f6a4f9e8d8dc6fe474d2a19cb3d29e89fcfe47260f7a14c3a",
+            "authorId": 1,
+            "authorName": "oq-runner@validation.local",
+            "createdAt": "2026-11-10T02:03:16.668Z",
+            "lifecycleStage": null,
+            "resolution": null,
+            "retraction": {
+              "byId": 1,
+              "byName": "oq-runner@validation.local",
+              "at": "2026-11-10T02:03:17.203Z",
+              "reason": "Posted on the wrong document by mistake."
+            },
+            "replies": []
+          }
+        ],
+        "openByVersion": [
+          {
+            "versionId": "710b569d-be5b-40f2-8de9-5ac786183b39",
+            "versionLabel": "1.0",
+            "current": true,
+            "open": 0,
+            "openChangeRequests": 0
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+[
+ {
+  "entry": "CMC / Module 3",
+  "before": {
+   "lastProject": null,
+   "open": false
+  },
+  "url": "/concept2cure/cmc?program=77c7f5cf-94b3-4190-8c8e-8c98337d19f2",
+  "h1": "CMC / Module 3",
+  "project": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+  "notice": [
+   "No Module 3 sections yetThis project has no governed §3.2 sections yet. They appear here with their approval state once created."
+  ],
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "entry": "Vault",
+  "before": {
+   "lastProject": null,
+   "open": false
+  },
+  "url": "/concept2cure/vault",
+  "h1": "Vault",
+  "project": null,
+  "notice": [
+   "Choose a project's VaultEach project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
+  ],
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "entry": "Quality",
+  "before": {
+   "lastProject": null,
+   "open": false
+  },
+  "url": "/concept2cure/quality",
+  "h1": "Quality system",
+  "project": null,
+  "notice": [],
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "entry": "Biostatistics",
+  "before": {
+   "lastProject": null,
+   "open": false
+  },
+  "url": "/concept2cure/biostatistics",
+  "h1": "Biostatistics",
+  "project": null,
+  "notice": [
+   "No governed statistical documents yetStatistical documents persisted for this project appear here, with their real status."
+  ],
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "entry": "Submission Center",
+  "before": {
+   "lastProject": null,
+   "open": false
+  },
+  "url": "/concept2cure/submission-center?program=77c7f5cf-94b3-4190-8c8e-8c98337d19f2",
+  "h1": "Submission Center",
+  "project": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+  "notice": [],
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "entry": "Risk-based monitoring",
+  "before": {
+   "lastProject": null,
+   "open": false
+  },
+  "url": "/concept2cure/rbm",
+  "h1": "Risk-based monitoring",
+  "project": null,
+  "notice": [
+   "Choose a project for risk-based monitoringChoose an accessible monitoring project from the project selector. Another project is never opened automatically."
+  ],
+  "apiFailures": [],
+  "consoleErrors": []
+ }
+]

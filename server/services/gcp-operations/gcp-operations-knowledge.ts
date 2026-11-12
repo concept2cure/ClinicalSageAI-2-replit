@@ -41,19 +41,19 @@ import {
   INFORMED_CONSENT_ELEMENTS,
   type InformedConsentElement,
 } from '../../../shared/regulatory/informed-consent-elements';
+import { TMF_REFERENCE_MODEL } from '../../../shared/constants/domain/tmf-reference-model';
 // The reference tables (E6(R3) principles, common Form FDA-483 observations,
-// essential records and TMF zones) live in the sibling data module, same
+// essential records) live in the sibling data module, same
 // purity contract; their types are re-exported so this module's surface is unchanged.
 import {
   COMMON_483_FINDINGS,
   E6R3_PRINCIPLES,
   ESSENTIAL_DOCUMENTS,
-  TMF_ZONES,
+  essentialDocument,
   type Common483Finding,
   type E6Principle,
   type EssentialDocument,
   type InspectionTarget,
-  type TmfZone,
   type TrialStage,
 } from './gcp-operations-reference';
 import { ComputationRefusal } from '../ana-biostats/computation-engine';
@@ -71,7 +71,6 @@ export type {
   E6Principle,
   EssentialDocument,
   InspectionTarget,
-  TmfZone,
   TrialStage,
 } from './gcp-operations-reference';
 
@@ -1910,7 +1909,8 @@ export interface EssentialDocumentsResult {
     during: EssentialDocument[];
     after: EssentialDocument[];
   };
-  tmfStructure: TmfZone[];
+  /** The TMF Reference Model's zones and the artifacts the platform's catalog holds in each: the one catalog, not a list of this engine's. */
+  tmfStructure: Array<{ zone: number; name: string; artifacts: string[] }>;
   completenessAndQcPlan: QcCheckItem[];
   retentionGuidance: string[];
   regulatoryCitations: string[];
@@ -1951,15 +1951,18 @@ export function planEssentialDocuments(
 
   // Device-specific augmentation.
   if (params.usesInvestigationalDevice === true) {
-    const deviceDoc: EssentialDocument = {
+    // Zone 3, a stated exception (gcp-operations-reference.ts): the IDE application and its approval are regulatory
+    // records. It is not tied to one catalog artifact, because it also names malfunction reports and device
+    // accountability, which are not regulatory submissions. QA confirms the placement.
+    const deviceDoc: EssentialDocument = essentialDocument({
       id: 'ED-DEVICE-IDE',
       name: 'IDE application/approval and device-specific records (malfunction reports, device accountability)',
       stage: stageFilter === 'after' ? 'after' : 'before',
-      tmfZone: 'IP & Trial Information',
+      tmfZone: 3,
       heldBy: ['sponsor', 'investigator'],
       purpose: 'Documents IDE status and device-specific obligations.',
       citation: '21 CFR Part 812 (IDE)',
-    };
+    });
     if (stageFilter === 'all' || stageFilter === deviceDoc.stage) {
       documents = [...documents, deviceDoc];
     }
@@ -2011,7 +2014,7 @@ export function planEssentialDocuments(
   return {
     documents,
     byStage,
-    tmfStructure: TMF_ZONES.map((z) => ({ ...z, exampleSections: [...z.exampleSections] })),
+    tmfStructure: TMF_REFERENCE_MODEL.map((z) => ({ zone: z.number, name: z.name, artifacts: z.artifacts.map((a) => a.name) })),
     completenessAndQcPlan,
     retentionGuidance,
     regulatoryCitations,

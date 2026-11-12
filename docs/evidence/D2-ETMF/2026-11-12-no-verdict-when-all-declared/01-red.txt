@@ -1,0 +1,40 @@
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > eTMF AnA tools — registration > classify_tmf_artifact is registered and defined 2ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > eTMF AnA tools — registration > get_tmf_view is registered and defined 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > eTMF AnA tools — context + input guards > a confirm-class call with no identified member is refused before its handler runs 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > eTMF AnA tools — context + input guards > classify_tmf_artifact validates required inputs 7ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > eTMF AnA tools — context + input guards > get_tmf_view reads only for an identified person 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > get_tmf_view with study_id: the store's readiness and counts as they are, the filings, and the declarations apart 42ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > get_tmf_view: a study with every required record declared not applicable is given no readiness, and says why 8ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > get_tmf_view named by the retired store's id is refused, never read as "list everything" 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > reads the scope asked for, and a study the person cannot open is the store's own refusal 2ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > files the record the name is, for the study, against the Vault document, with the person's reason 17ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > a record noted with no document is said not to count as filed 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > "holiday-photos-notes" is no record of the reference model: refused, nothing filed, AnA asks which record 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > "Monitoring visit report site 04" is no record of the reference model: refused, nothing filed, AnA asks which record 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > without the person's reason nothing is filed 1ms
+ ✓ server/services/ana/__tests__/etmf-tools.test.ts > classify_tmf_artifact files through the deployed store > a refusal of the store is passed on with its code 1ms
+ ✓ server/services/etmf/__tests__/tmf-inspection-package.test.ts > buildTmfInspectionPackage > assembles a ZIP with the four expected members and an honest manifest 28ms
+ ✓ server/services/etmf/__tests__/tmf-inspection-package.test.ts > buildTmfInspectionPackage > names its file with characters that are safe in a header, whatever the study id holds 5ms
+ ✓ server/services/etmf/__tests__/tmf-inspection-package.test.ts > buildTmfInspectionPackage > orders artifacts deterministically by zone then code 7ms
+ ✓ server/services/etmf/__tests__/tmf-inspection-package.test.ts > buildTmfInspectionPackage > propagates a not-ready verdict honestly 4ms
+ × server/services/etmf/__tests__/tmf-inspection-package.test.ts > buildTmfInspectionPackage > a study with no required record left to check says no verdict, and why 8ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > TMF_REFERENCE_MODEL > has 11 zones, each with ≥1 essential artifact and unique codes 4ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > ready when all essential artifacts are present (default scope) 1ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > flags missing essential artifacts per zone and is not ready 1ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > scope 'all' requires non-essential artifacts too 1ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > reports an empty TMF as not ready with all essentials missing 0ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > assessTmfCompleteness > is deterministic 2ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > leave the required set, are counted as neither present nor missing, and are counted on their own 2ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a study that files every other essential record and declares one is ready, and says one was declared 1ms
+ × server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a study whose every record in scope is declared not applicable has no verdict: nothing was checked 7ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a code both filed and declared is counted as declared, never twice 0ms
+ ✓ server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a declaration outside the scope checked is not counted; nothing declared reads as before 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > get_tmf_view: a study with every required record declared not applicable is given no readiness, and says why
+AssertionError: expected 'ready' to be 'not determined' // Object.is equality
+Expected: "not determined"
+Received: "ready"
+ FAIL  server/services/etmf/__tests__/tmf-completeness.test.ts > records declared not applicable (P-124 item 5) > a study whose every record in scope is declared not applicable has no verdict: nothing was checked
+AssertionError: expected true to be null
+- Expected:
++ Received:

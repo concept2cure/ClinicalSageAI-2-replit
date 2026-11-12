@@ -32,6 +32,11 @@
  * where the test demands `true`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+// The Vault refreshes the project's captured Quality records before its data room (2026-11-10); this suite's
+// database is mocked, so the refresh is too, as its source list is.
+vi.mock('../../services/clinical-regulatory-evidence/record-source.js', async (importOriginal) => ({
+  ...(await importOriginal<object>()), syncQualityProjectSources: vi.fn(async () => ({ created: 0, unchanged: 0, superseded: 0 })),
+}));
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
@@ -233,7 +238,8 @@ describe("a source's filed stage is answered by the database, not by the page", 
     // The Filed COUNT is one aggregate over the whole project since 2026-10-08
     // (countDataRoomStages), proven on PostgreSQL in data-room-processing.dbtest.ts.
     const counted = query.mock.calls.find(([sql]) => /AS needs_review/.test(String(sql)));
-    expect(counted?.[1]).toEqual([PROGRAM, 7]);
+    // The third value keeps the project's captured Quality records (no original file) out of the counts.
+    expect(counted?.[1]).toEqual([PROGRAM, 7, 'native_record_snapshot']);
   });
 
   it('still reports not-filed when the database says the checksum is absent', async () => {

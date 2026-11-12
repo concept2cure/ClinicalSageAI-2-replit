@@ -1,0 +1,53 @@
+// Walk 2, flow 2a: the session policy in the walk's own organization (id 7): refusals, save, stored, audited, ENFORCED.
+const c = require('./lib.cjs');
+const ORG = 7;
+const settingsRow = () => c.psql(`select settings->'security' from organizations where id=${ORG}`);
+const lastAudit = (n = 3) => c.psql(`select id, action, actor_id, reason, left(coalesce(old_values::text,''),200), left(coalesce(new_values::text,''),400) from audit_logs where tenant_id=${ORG} order by id desc limit ${n}`);
+const card = (page) => page.locator('section[aria-label="Session security policy"]');
+async function openSettings(page) {
+  await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200);
+  await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(3000);
+  await card(page).scrollIntoViewIfNeeded(); await c.sleep(400);
+}
+const noteOf = (page) => card(page).locator('[role=status]').last().innerText().catch(() => '');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  await c.step('session policy: as found', async (s) => {
+    await openSettings(page);
+    s.notes.push('card: ' + (await card(page).innerText()).replace(/\n+/g, ' | '));
+    s.notes.push('idle=' + await card(page).getByLabel('Idle sign-out in minutes').inputValue() + ' concurrent=' + await card(page).getByLabel('Maximum concurrent sessions').inputValue());
+    s.notes.push('db security: ' + settingsRow());
+    await card(page).screenshot({ path: `${c.SHOTS}/w2-20-session-policy-as-found.png` });
+  });
+  await c.step('session policy: save with no reason', async (s) => {
+    await card(page).getByLabel('Idle sign-out in minutes').fill('1');
+    await card(page).getByRole('button', { name: 'Save session policy' }).click(); await c.sleep(1200);
+    s.notes.push('note: ' + await noteOf(page)); s.notes.push('db security: ' + settingsRow());
+    await card(page).screenshot({ path: `${c.SHOTS}/w2-20-session-policy-no-reason.png` });
+  });
+  await c.step('session policy: out of range (0 and 2000)', async (s) => {
+    await card(page).getByLabel('Reason for session policy change').fill('F1 walk 2: range check');
+    for (const v of ['0', '2000', '1.5']) {
+      await card(page).getByLabel('Idle sign-out in minutes').fill(v);
+      await card(page).getByRole('button', { name: 'Save session policy' }).click().catch(() => {}); await c.sleep(1000);
+      s.notes.push(`idle ${v} -> note: ` + await noteOf(page) + ' | db: ' + settingsRow());
+    }
+  });
+  await c.step('session policy: set idle 1 minute, 2 concurrent sessions, with a reason', async (s) => {
+    await card(page).getByLabel('Idle sign-out in minutes').fill('1');
+    await card(page).getByLabel('Maximum concurrent sessions').fill('2');
+    await card(page).getByLabel('Reason for session policy change').fill('F1 walk 2: prove the idle window and the session limit are enforced');
+    await card(page).getByRole('button', { name: 'Save session policy' }).click(); await c.sleep(2000);
+    s.notes.push('note: ' + await noteOf(page));
+    await card(page).screenshot({ path: `${c.SHOTS}/w2-20-session-policy-saved.png` });
+    s.notes.push('db security: ' + settingsRow());
+    s.notes.push('audit rows:\n' + lastAudit(2));
+  });
+  await c.step('session policy: reload shows what was stored', async (s) => {
+    await openSettings(page);
+    s.notes.push('idle=' + await card(page).getByLabel('Idle sign-out in minutes').inputValue() + ' concurrent=' + await card(page).getByLabel('Maximum concurrent sessions').inputValue());
+  });
+  c.report(); c.save('w2-09-session-policy');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -1,5 +1,6 @@
 import { serverMessage } from '@/lib/queryClient';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { module3InputList } from '@shared/cmc/module3-input-words';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
@@ -20,8 +21,12 @@ import {
 } from './cmcSpec';
 import {
   batchRowsFromApi,
+  batchFromReleaseAnswer,
+  dispositionWord,
   batchCreateBody,
   batchReleaseBody,
+  batchUpdateBody,
+  batchEditBlocked,
   type CmcBatch,
   type BatchApiRow,
 } from './cmcBatch';
@@ -40,12 +45,13 @@ import {
   CmFormulationRecords,
   CmManufacturingProcesses,
   CmCharacterizationStudies,
-  CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
   CmDrugSubstances,
   CmDrugProducts,
 } from './cmcRegisters';
+import { CmChangeRegister } from './cmcChangeRegister';
+import { CmSpecReference } from './cmcSpecReference';
 /* Each of these two tabs carries its own ask list. They are imported, not
    restated here, so the page's starter row offers the same words the tab
    has always offered and there is one copy of each prompt (RULE 3). */
@@ -57,6 +63,8 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutForm,
+  stabilityShelfLifeForm,
+  stabilityShelfLifeBody,
   qualifyBody,
   stabilityCloseoutBody,
   readStabilityResults,
@@ -70,6 +78,8 @@ import {
   cmcProjectUuid,
   cmcWriteError,
   cmcWriteFailed,
+  cmcRefusal,
+  cmcThrownRefusal,
   cmcWriteThrew,
   cmcAssessmentThrew,
 } from './cmcShared';
@@ -82,6 +92,8 @@ import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
    for "what is open, what to do on it, what comes next" across the product. */
 import { CmcVariationAssessment } from './CmcVariationAssessment';
 import { RecordHistoryPanel } from './cmcRecordHistory';
+/* The Q1E fit, drawn from the engine's own line and bound (P-122). */
+import { StabilityFitCharts, useAutoQ1e, type Q1eChartEstimate } from './cmcStabilityChart';
 /* Agency questions on Module 3 are the letter's record (2026-10-19, P-38 /
    P-39 item 1): read once at this module's root, shown by the Overview, the
    per-tab signposts and Program records, and worked on the letter in
@@ -158,7 +170,7 @@ import '../styles/project-home-v2.css';
  * It used to be a superset of `LifecycleStage` so `StageBand` could render
  * these nine as a project-style band. That band is retired (D5 §A.4.3,
  * ONE_DESIGN_PLAN §2 "Retired patterns"), so the shape is now only what the
- * two tab rows and the AnA context read.
+ * one tab row, its "what to do now" line and the AnA context read.
  */
 interface CmcNavItem {
   id: string;
@@ -166,16 +178,17 @@ interface CmcNavItem {
   icon: string;
   blurb: string;
   /**
-   * What to do on this destination. It is no longer PRINTED (D5 §A.4.3 retires
-   * the "What to do now / Next step" box, ONE_DESIGN_PLAN §2 "Retired
-   * patterns"): it reaches AnA as `facts.whatToDoHere`, so the first starter
-   * — "What do I do on <tab>?" — answers with the same sentence the box showed.
+   * What to do on this destination. Printed again under the tab row as one
+   * quiet line with its "Next: …" (P-122, 2026-11-10): D5-1 had moved it into
+   * AnA only, as `facts.whatToDoHere`, which it still reaches. The retired
+   * pattern was the grey box above the title, not the sentence.
    */
   now: string;
   /**
    * Which half of the work area the destination belongs to (D5 §A.3): what is
    * captured while the study runs, and what is composed for the IND from it.
-   * The founder named the two halves; they are modes, not nested tabs.
+   * The founder named the two halves. Since P-122 they are groups in one tab
+   * row, divided by a hairline, never a toggle that hides one of them.
    */
   half: 'module3' | 'records';
 }
@@ -196,6 +209,8 @@ interface CmcSection {
       compiled record by the same rule the approve route and the export gate
       refuse on (server/services/cmc/compiled-record.ts). */
   completeness?: number | null; missingInputs?: string[];
+  /** A source record changed after the compile (the board's read of cmc_module3_sections.stale): the approve route refuses it until recompiled. */
+  stale?: boolean; staleReason?: string | null;
 }
 
 /* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ──
@@ -253,35 +268,21 @@ interface CmcBoardData {
    once there — the founder's recorded complaint about the catalog, inside one
    work area.
 
-   The order is the two halves the founder named (ONE_DESIGN_PLAN §1a, D5 §A.3):
-   Module 3 — what is composed for the IND — first, then Study records — what is
-   captured while the study runs and composed from. Within each half the order is
-   still the order the work is done. Every `id` is unchanged: the `cmc.open-tab`
-   surface action, `__cmSetTab('build')`, `__cmSetTab('pathway')` and the tests
-   address destinations by id, never by position. */
+   The order is the order the work is done (P-122, 2026-11-10, restoring the
+   row D5-1 split): Overview first, then the Study records — what is captured
+   while the study runs — then the Module 3 destinations composed from them.
+   It is also the order of each tab's "Next: …". All nine are one row: D5-1
+   showed only the open half's tabs, so the eighteen registers in Study records
+   sat behind a toggle and a first-time viewer saw none of them. `half` stays
+   the founder's grouping (ONE_DESIGN_PLAN §1a) and draws the row's divider.
+   Every `id` is unchanged: the `cmc.open-tab` surface action,
+   `__cmSetTab('build')`, `__cmSetTab('pathway')` and the tests address
+   destinations by id, never by position. */
 const CMC_NAV: CmcNavItem[] = [
   {
     id: 'overview', label: 'Overview', icon: 'beaker', half: 'module3',
     blurb: 'How far Module 3 has got, and what is blocking it',
     now: 'Start here. See how far Module 3 has got, what the export gate still refuses, and which agency questions on Module 3 are open — then open the destination that holds the work.',
-  },
-  {
-    id: 'quality', label: 'Quality by design', icon: 'sigma', half: 'module3',
-    blurb: 'The control strategy and the ICH check over these records',
-    now: 'Derive this project’s critical attributes and process parameters from the study records, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
-  },
-  {
-    id: 'build', label: 'Module 3 build', icon: 'layers', half: 'module3',
-    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
-    now: 'Compile §3.2 from the study records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
-  },
-  {
-    /* Label 2026-11-01 (D5 §A.4.1): "Project records" → "Approvals & audit".
-       The blurb already said what it holds, and "Project records" collided with
-       the project page's own Knowledge "Records" (D3). The id stays `pathway`. */
-    id: 'pathway', label: 'Approvals & audit', icon: 'scroll', half: 'module3',
-    blurb: 'Who did what, and the agency’s questions about it',
-    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
   },
   {
     id: 'materials', label: 'Substance & product', icon: 'atom', half: 'records',
@@ -307,6 +308,24 @@ const CMC_NAV: CmcNavItem[] = [
     id: 'change', label: 'Change control', icon: 'gitBranch', half: 'records',
     blurb: 'Changes to the substance, product or process, and what they affect',
     now: 'Record each change with its justification and disposition, and see which Module 3 sections read the evidence it touches, so those sections are rebuilt before the next approval.',
+  },
+  {
+    id: 'quality', label: 'Quality by design', icon: 'sigma', half: 'module3',
+    blurb: 'The control strategy and the ICH check over these records',
+    now: 'Derive this project’s critical attributes and process parameters from the study records, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
+  },
+  {
+    id: 'build', label: 'Module 3 build', icon: 'layers', half: 'module3',
+    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
+    now: 'Compile §3.2 from the study records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
+  },
+  {
+    /* Label 2026-11-01 (D5 §A.4.1): "Project records" → "Approvals & audit".
+       The blurb already said what it holds, and "Project records" collided with
+       the project page's own Knowledge "Records" (D3). The id stays `pathway`. */
+    id: 'pathway', label: 'Approvals & audit', icon: 'scroll', half: 'module3',
+    blurb: 'Who did what, and the agency’s questions about it',
+    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
   },
 ];
 
@@ -383,13 +402,45 @@ const CMC_SUGGEST: Record<string, string[]> = {
 function sectionIncomplete(s: CmcSection): boolean {
   return s.completeness !== 100 || (s.missingInputs ?? []).length > 0;
 }
+/** Why a stale section cannot be signed as it stands: the reason the compile recorded, in the approve route's terms. */
+function staleReason(s: CmcSection): string {
+  return `§${s.key} is out of date: ${s.staleReason || 'a source record changed after it was compiled'}. Recompile it on the Module 3 build board, then approve it.`;
+}
+
+const openBuildBoard = () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build');
+
+/**
+ * The approvals table's action for one section. A stale section is withheld
+ * like an incomplete one, with the build board offered (walked 2026-11-12: it
+ * read "Draft" with a live "Approve section", which the approve route refused
+ * as out of date). An approved section that went stale says it owes a new
+ * approval.
+ */
+function SectionApprovalAction({ section: s, incomplete, onApprove }: { section: CmcSection; incomplete: boolean; onApprove: () => void }) {
+  if (s.st === 'approved' && !s.stale) return <span className="cm-meta">{I.check} approved</span>;
+  if (!s.stale && !incomplete) return <button className="nda-open" onClick={onApprove}>{I.lock} Approve section</button>;
+  const why = s.stale ? staleReason(s) : incompleteReason(s);
+  return (
+    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {s.st === 'approved'
+        ? <span title={why}>Approved before its sources changed: recompile, then approve again.</span>
+        : <button className="nda-open" disabled title={why}>{I.lock} Approve section</button>}
+      <button
+        className="cm-linkish"
+        title={s.stale ? 'Recompile this section on the Module 3 build board' : 'Record the missing inputs and recompile on the Module 3 build board'}
+        onClick={openBuildBoard}
+      >{s.stale ? 'Recompile on the build board' : 'Open the build board'}</button>
+    </span>
+  );
+}
+
 /** Why the control is withheld, in the signer's terms — the same shape the approve route's 409 uses. */
 function incompleteReason(s: CmcSection): string {
   const missing = s.missingInputs ?? [];
   return (
     '§' + s.key + (s.completeness == null ? ' has no compiled completeness record' : ' is ' + s.completeness + '% complete') +
     ' and cannot be approved.' +
-    (missing.length ? ' Missing required inputs: ' + missing.join(', ') + '.' : '') +
+    (missing.length ? ' Missing required inputs: ' + module3InputList(missing) + '.' : '') +
     ' Record the inputs on the Module 3 build board and recompile.'
   );
 }
@@ -452,7 +503,7 @@ function CmcSectionReview({
             <>
               <div className="pj-dim" style={{ marginBottom: 10 }}>
                 {d.completeness == null ? 'No compiled completeness record' : `${d.completeness}% complete`}
-                {d.missingInputs.length > 0 ? ` · missing: ${d.missingInputs.join('; ')}` : ''}
+                {d.missingInputs.length > 0 ? ` · missing: ${module3InputList(d.missingInputs)}` : ''}
                 {d.compiledHash ? ` · content hash ${d.compiledHash.slice(0, 12)}…` : ''}
               </div>
               {d.stale && (
@@ -565,7 +616,7 @@ function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C
    relabel removes. */
 function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void; bar?: boolean }) {
   return (
-    <span className={bar ? 'pj-sec-acts cm-push cm-pushbar' : 'pj-sec-acts cm-push'}>
+    <span className={bar ? 'pj-sec-acts cm-pushbar' : 'pj-sec-acts'}>
       <button type="button" className="btn ghost small" onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Open the Module 3 dossier with this in context">{I.gitBranch} Module 3 doc</button>
       <button type="button" className="btn ghost small" onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Open the Vault — compiled §3.2 artifacts are filed there automatically">{I.vault} Vault</button>
       <button type="button" className="btn ghost small" onClick={() => cmcTask(label)} title="Create a task">{I.checkSquare} Task</button>
@@ -645,41 +696,30 @@ function cmStarters(tab: string, label: string): Array<{ label: string; prompt: 
   return [first, ...(CMC_SUGGEST[tab] ?? []).slice(0, 2).map((t) => ({ label: t, prompt: t }))];
 }
 
-/** Which half of the work area a tab belongs to; `module3` for an unknown id. */
-function halfOf(tab: string): 'module3' | 'records' {
-  return CMC_NAV.find((n) => n.id === tab)?.half ?? 'module3';
-}
+/* All nine destinations in one tab row (P-122, 2026-11-10). D5-1 rendered two
+   halves as a segmented control and showed only the open half's tabs, so CMC
+   opened on four tabs and the eighteen registers of Study records were behind
+   a toggle a first-time viewer had no reason to press. The founder's grouping
+   stays legible as a hairline between the groups — a presentational divider
+   inside the tablist, hidden from assistive technology, so the row is still
+   nine tabs to a screen reader and arrow keys move tab to tab.
 
-/* The two halves the founder named, then the active half's views (D5 §A.3).
-   The half is DERIVED from the open tab, never stored: one piece of state means
-   the AnA action `cmc.open-tab`, `__cmSetTab` and these two rows cannot
-   disagree about which half is showing. The ids are untouched, so every caller
-   that addresses a destination by id still reaches it.
-
-   The half button remembers where you were in that half (§A.6 item 2). It is a
-   ref, not state: it changes nothing on screen by itself, and the rendered half
-   is still read off `tab` alone. Without it, glancing at Module 3 from
-   Stability and coming back drops you on Substance & product — the first tab
-   of the half — and you lose your place for having looked. */
-function CmHalves({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
-  const half = halfOf(tab);
-  const inHalf = CMC_NAV.filter((n) => n.half === half);
-  const lastIn = useRef<Record<string, string>>({});
-  lastIn.current[half] = tab;
-  const openHalf = (want: 'module3' | 'records') => {
-    const first = CMC_NAV.find((n) => n.half === want)?.id;
-    onTab(lastIn.current[want] ?? first ?? 'overview');
-  };
+   One piece of state, the tab, as before: `cmc.open-tab`, `__cmSetTab` and
+   this row cannot disagree about what is open. */
+function CmTabs({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  /* On a phone the row scrolls sideways; a tab opened by "Next: …" or by AnA
+     is brought into view so the row never shows a selection off its edge. */
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const open = row.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    open?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [tab]);
   return (
-    <>
-      <div className="seg" role="group" aria-label="CMC / Module 3">
-        <button type="button" className="seg-b" aria-pressed={half === 'module3'} onClick={() => openHalf('module3')}>Module 3</button>
-        <button type="button" className="seg-b" aria-pressed={half === 'records'} onClick={() => openHalf('records')}>Study records</button>
-      </div>
-      <div className="tabs" role="tablist" aria-label={half === 'module3' ? 'Module 3' : 'Study records'}>
-        {inHalf.map((n) => (
+    <div ref={row} className="tabs cm-tabs" role="tablist" aria-label="CMC / Module 3">
+      {CMC_NAV.map((n, i) => (
+        <React.Fragment key={n.id}>
+          {i > 0 && CMC_NAV[i - 1].half !== n.half && <span className="cm-tabs-sep" role="presentation" aria-hidden="true" />}
           <button
-            key={n.id}
             type="button"
             role="tab"
             className="tab"
@@ -689,9 +729,42 @@ function CmHalves({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
           >
             {n.label}
           </button>
-        ))}
-      </div>
-    </>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* What to do on the open tab, and its next step — one quiet line under the row
+   (P-122). The tab's own `now` sentence, then "Next: …" to the following
+   destination in the order the work is done, worded as the project page words
+   its stages (`ProjectStages.tsx`). It is a grey line and a link, not the boxed
+   band above the title that ONE_DESIGN_PLAN §2 retires, and it carries none of
+   that band's retired label. The last destination has no next step and offers
+   none. */
+function CmNow({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  const at = CMC_NAV.findIndex((n) => n.id === tab);
+  const step = CMC_NAV[at];
+  if (!step) return null;
+  const next = CMC_NAV[at + 1];
+  return (
+    <p className="sec-sub cm-now" data-testid="cm-now">
+      {step.now}
+      {next && (
+        <>
+          {' '}
+          <button
+            type="button"
+            className="cm-linkish cm-now-next"
+            aria-label={`Next: ${next.label}`}
+            title={next.blurb}
+            onClick={() => onTab(next.id)}
+          >
+            Next: {next.label} <span aria-hidden="true">→</span>
+          </button>
+        </>
+      )}
+    </p>
   );
 }
 
@@ -799,10 +872,14 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      that motivated this work (21/21 approved, three at 0% complete) the card
      was green while the gate refused. The percentage stays as what it is:
      approvals. */
+  /* Read again after an approval lands (walked 2026-11-12: the card said
+     "export blocked: 1 not approved" until a reload). */
+  const [readinessEpoch, setReadinessEpoch] = useState(0);
+  const readinessPath = ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null;
   const readiness = useLiveData<{
     totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
     sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
-  }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  }>(readinessPath, [readinessPath, readinessEpoch]);
   /* The refusal's own words, or null when the read failed to answer and the
      chip's own sentence stands (D0, `readRefusalWords`). */
   const readinessRefusal = readiness.error || (!readiness.loading && !readiness.data)
@@ -874,20 +951,24 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         return;
       }
       if (!res.ok) {
-        fireToast('Couldn’t approve section ' + target.key + ' — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error');
+        /* A refused signature carries its own sentence ("The authenticator code was not accepted.
+           Nothing was signed."); the route used to send the code alone and this read "HTTP 401..". */
+        fireToast(cmcRefusal('Couldn’t approve section ' + target.key + ' — ', specErr(json, res.status)), 'error');
         return;
       }
       setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
+      setReadinessEpoch((e) => e + 1);
       const ver = (json as { versionNumber?: number })?.versionNumber;
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
       fireToast(
         'Section ' + target.key + ' approved and signed' +
           (ver ? ' · v' + ver : '') +
-          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.',
+          /* No full stop after the shortened hash's ellipsis ("…e25e3d60402d….", walked 2026-11-12). */
+          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '.'),
       );
       setSign(null);
     } catch (e) {
-      fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t approve section ' + target.key + ' — ', e), 'error');
     }
   };
 
@@ -1107,7 +1188,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                       {s.completeness == null
                         ? <span className="cm-meta">not established — never scored by the compiler</span>
                         : <b className={incomplete ? 'sp-tone-warn' : undefined} style={{ fontVariantNumeric: 'tabular-nums' }}>{s.completeness}%</b>}
-                      {missing.length > 0 && <div className="cm-meta">missing: {missing.join(', ')}</div>}
+                      {missing.length > 0 && <div className="cm-meta">Missing: {module3InputList(missing)}</div>}
                     </td>
                     <td>
                       <span className={'rd-chip tone-' + stTone(s.st)}>{cmcStateWord(s.st)}</span>
@@ -1115,20 +1196,10 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                           chips in lower case and read as one of them. Sentence case,
                           same word, same reason on hover. */}
                       {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>Incomplete</span>}
+                      {s.stale && <span className="rd-chip tone-warn" style={{ marginLeft: 6 }} title={staleReason(s)}>Stale</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {s.st === 'approved'
-                        ? <span className="cm-meta">{I.check} approved</span>
-                        : incomplete
-                          ? <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                              <button className="nda-open" disabled title={incompleteReason(s)}>{I.lock} Approve section</button>
-                              <button
-                                className="cm-linkish"
-                                title="Record the missing inputs and recompile on the Module 3 build board"
-                                onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
-                              >Open the build board</button>
-                            </span>
-                          : <button className="nda-open" onClick={() => setReview(s)}>{I.lock} Approve section</button>}
+                      <SectionApprovalAction section={s} incomplete={incomplete} onApprove={() => setReview(s)} />
                     </td>
                   </tr>);
                 })}</tbody></table>
@@ -1364,7 +1435,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       }
       setEdit(null);
     } catch (e) {
-      fireToast('Couldn’t save the specification — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t save the specification — ', e), 'error');
     }
   };
   // doSign — REAL governed approval. POSTs to the ONLY approval path
@@ -1383,12 +1454,12 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       });
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.', 'error'); return; }
+      if (res.status === 401) { fireToast(joinSentence('The specification was not approved — ', specErr(json, 401)), 'error'); return; }
       if (!res.ok) { fireToast(joinSentence('Couldn’t approve the specification — ', specErr(json, res.status), 'Nothing was persisted.'), 'error'); return; }
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
       setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
-      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '.'));
       setSign(null);
     } catch (e) {
       fireToast(joinSentence('Couldn’t approve the specification — ', e instanceof Error ? e.message : String(e)), 'error');
@@ -1459,6 +1530,9 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
           onClose={() => setHistoryFor(null)}
         />
       )}
+      {/* What ICH Q6A or Q6B expects a specification to carry (P-122, inventory B5): a reference under the table,
+          from the engine the Global RI catalog has always served. It gives no verdict on the rows above. */}
+      <CmSpecReference />
       {/* specification (the limit) -> method (how it is measured) -> QC test
           (the measurement actually performed against it) -> reference standard
           (what the measurement is reported against). */}
@@ -1558,7 +1632,7 @@ function stabConditionText(codes: string[] | null | undefined): string | undefin
    too few numeric points, or with no recorded acceptance criterion for the
    confidence bound to intersect, is reported as such rather than dropped or
    given a default limit. */
-interface Q1eEstimate {
+interface Q1eEstimate extends Q1eChartEstimate {
   parameter: string;
   estimable: boolean;
   reason?: string;
@@ -1721,6 +1795,19 @@ function AncovaCell({ test }: { test: AncovaTest | null | undefined }) {
   );
 }
 
+/**
+ * A recorded stability result's conformance, as recorded: only an explicit
+ * "no" is out of specification, and a result recorded with no flag was not
+ * assessed. GA-DEMO-01 (2026-11-10): `!withinSpecification` read a missing
+ * flag as OOS, and C2C-201's fourteen unflagged results showed as 14 of 14
+ * outside their limits, where one is.
+ */
+export function stabilityConformance(r: { withinSpecification?: unknown }): 'within' | 'outside' | 'not assessed' {
+  if (r.withinSpecification === true) return 'within';
+  if (r.withinSpecification === false) return 'outside';
+  return 'not assessed';
+}
+
 /** Sort pull points numerically — '12' must follow '9', not precede it. */
 function byTimePoint(a: StabilityResult, b: StabilityResult): number {
   const na = parseFloat(a.timePoint);
@@ -1758,10 +1845,20 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      shown is the half of §11.10(e) an inspector reads for a changed record. */
   const [historyFor, setHistoryFor] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
+  const [proposing, setProposing] = useState<StabilityStudyApiRow | null>(null);
   /* ICH Q1E estimates, keyed by study. Held per study rather than globally
      because the estimate belongs to the batch and condition it was fitted from —
      a shelf life is not a property of the programme. */
   const [q1e, setQ1e] = useState<Record<number, Q1eReport>>({});
+  /* Estimated when the register opens, for every study with results (P-122):
+     the estimate is a read, and its chart is the register's. A refusal is kept
+     per study and said in the table. */
+  const q1eRefused = useAutoQ1e<Q1eReport>(
+    rows.map((r) => ({ id: r.id, hasResults: readStabilityResults(r.stabilityData).length > 0 })),
+    q1e,
+    (id, report) => setQ1e((m) => ({ ...m, [id]: report })),
+    (v): v is Q1eReport => Array.isArray((v as Q1eReport | null)?.estimates),
+  );
   /* One trend report per study, keyed by study id — the same shape the Q1E fit
      beside it uses, so a study can carry both and neither replaces the other. */
   const [trend, setTrend] = useState<Record<number, TrendReport>>({});
@@ -1783,7 +1880,9 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      their acceptance criteria — the number a stability coordinator is actually
      tracking, computed from the recorded series and nothing else. */
   const allResults = rows.flatMap((r) => readStabilityResults(r.stabilityData));
-  const oos = allResults.filter((r) => !r.withinSpecification);
+  const oos = allResults.filter((r) => stabilityConformance(r) === 'outside');
+  const notAssessed = allResults.filter((r) => stabilityConformance(r) === 'not assessed');
+  const withinCount = allResults.length - oos.length - notAssessed.length;
 
   /** Adopt the server's row after a write; never the values that were typed. */
   const adopt = (json: unknown): StabilityStudyApiRow | null => {
@@ -1973,6 +2072,33 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
   };
 
   /**
+   * The shelf life a running study proposes, by the ordinary audited edit the
+   * register takes. Until 2026-11-12 the only way to record one was the
+   * close-out below, which ends the study and needs signing authority, so an
+   * author could not complete §3.2.P.8 for a study that is still running.
+   */
+  const proposeShelfLife = async (v: Record<string, string>) => {
+    if (!proposing) return;
+    const study = proposing;
+    try {
+      const res = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
+        ...stabilityShelfLifeBody(v),
+        ...(projectId ? { projectId } : {}),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
+      if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
+      const row = adopt(json);
+      if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
+      setProposing(null);
+      fireToast(`Proposed shelf life saved: ${row.shelfLife}. ${row.scope === 'DS' ? '§3.2.S.7' : '§3.2.P.8'} prints it at the next compile.`);
+    } catch (e) {
+      fireToast(cmcWriteThrew('shelf life', e), 'error');
+    }
+  };
+
+  /**
    * The close-out, in the two acts the server governs it as: the shelf life and
    * its basis recorded by an ordinary (audited) edit, then the terminal status
    * under a 21 CFR Part 11 signature.
@@ -1997,16 +2123,24 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       const recordedJson = await recorded.json().catch(() => null);
       if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
 
-      const signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
-      const signedJson = await signed.json().catch(() => null);
-      if (!signed.ok) {
-        /* The shelf life IS recorded; only the signature failed. Say both. */
-        const why = cmcWriteFailed('close-out', signedJson, signed.status);
-        fireToast(`${why} The shelf life is recorded; the study is still running until the close-out is signed.`, 'error');
+      /* The close-out is refused either way apiRequest reports it: thrown
+         (403, 409, 422…) or returned (401, a password or code not accepted).
+         Both are one branch, checked before anything is said: the shelf life
+         IS saved and the study is still running, and the row shows what was
+         saved. An author whose role may not sign was told only "Nothing was
+         signed" before 2026-11-12. */
+      const signed: unknown = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v))
+        .catch((e: unknown) => e);
+      if (!(signed instanceof Response) || !signed.ok) {
+        const why = signed instanceof Response
+          ? cmcWriteFailed('close-out', await signed.json().catch(() => null), signed.status)
+          : cmcWriteThrew('close-out', signed);
         const partial = adopt(recordedJson);
         if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
+        fireToast(`The shelf life is saved and the study is still running. ${why}`, 'error');
         return;
       }
+      const signedJson = await signed.json().catch(() => null);
       reportCmcLinkage(signedJson, 'CMC record');
       const row = adopt(signedJson);
       if (!row) { fireToast('Signed, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -2035,6 +2169,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       <p className="sec-sub" data-testid="cmc-stability-counts">
         {active} active {active === 1 ? 'study' : 'studies'}
         {' · '}<span data-tone={oos.length ? 'err' : undefined}>{oos.length} outside limits</span>
+        {notAssessed.length > 0 && <>{' · '}{notAssessed.length} not assessed</>}
       </p>
       {oos.length > 0 && (
         <div className="pj-con" style={{ marginBottom: 14 }}>
@@ -2084,7 +2219,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
               <tbody>
                 {rows.map((r) => {
                   const results = readStabilityResults(r.stabilityData);
-                  const failing = results.filter((x) => !x.withinSpecification).length;
+                  const failing = results.filter((x) => stabilityConformance(x) === 'outside').length;
+                  const unassessed = results.filter((x) => stabilityConformance(x) === 'not assessed').length;
                   const isOpen = expanded === r.id;
                   return (
                     <React.Fragment key={r.id}>
@@ -2102,10 +2238,12 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                           ) : (
                             <button className="cm-linkish" onClick={() => setExpanded(isOpen ? null : r.id)}>
                               {results.length} recorded{failing ? <span className="sp-tone-warn"> · {failing} OOS</span> : null}
+                              {/* Plain words in the control: `cm-meta` is retired (D0), and this line is part of the button's label. */}
+                              {unassessed ? ` · ${unassessed} not assessed` : null}
                             </button>
                           )}
                         </td>
-                        <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
+                        <StabilityShelfLifeCell study={r} onPropose={setProposing} />
                         {/* The store holds "COMPLETED", "ON-HOLD" and the rest in caps; the
                             chip showed them that way, which is a stored token on screen
                             (§WA.4.2 rule 10) and the uppercase §2 retires. One map, the
@@ -2134,9 +2272,14 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                                     <td style={{ fontWeight: 600 }}>{x.result}</td>
                                     <td>{x.specification || '--'}</td>
                                     <td>
-                                      <span className={'rd-chip tone-' + (x.withinSpecification ? 'ok' : 'err')}>
-                                        {x.withinSpecification ? 'within' : 'OOS'}
-                                      </span>
+                                      {(() => {
+                                        const c = stabilityConformance(x);
+                                        return (
+                                          <span className={'rd-chip tone-' + (c === 'within' ? 'ok' : c === 'outside' ? 'err' : 'dim')}>
+                                            {c === 'outside' ? 'OOS' : c}
+                                          </span>
+                                        );
+                                      })()}
                                     </td>
                                     <td>{x.testedOn ? new Date(x.testedOn).toLocaleDateString() : '--'}</td>
                                     <td>{x.recordedBy || '--'}</td>
@@ -2177,7 +2320,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
             <>
               <div className="cm-meta" style={{ marginBottom: 10 }}>
                 {allResults.length} {allResults.length === 1 ? 'result' : 'results'} across {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).length} {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).length === 1 ? 'study' : 'studies'} ·
-                {' '}{allResults.length - oos.length} within acceptance criteria, {oos.length} outside ·
+                {' '}{withinCount} within acceptance criteria, {oos.length} outside{notAssessed.length > 0 ? `, ${notAssessed.length} not assessed` : ''} ·
                 {' '}longest pull point recorded: {Math.max(...allResults.map((r) => parseFloat(r.timePoint) || 0))} months
               </div>
               <table className="reg-tbl">
@@ -2186,7 +2329,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                   {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).map((r) => {
                     const res = readStabilityResults(r.stabilityData);
                     const longest = Math.max(...res.map((x) => parseFloat(x.timePoint) || 0));
-                    const bad = res.filter((x) => !x.withinSpecification).length;
+                    const bad = res.filter((x) => stabilityConformance(x) === 'outside').length;
+                    const good = res.filter((x) => stabilityConformance(x) === 'within').length;
                     const fit = q1e[r.id];
                     return (
                       <tr key={r.id}>
@@ -2204,10 +2348,10 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                         <td>{r.batchNumber || <span className="cm-meta">--</span>}</td>
                         <td>{stabConditionText(r.storageConditions) || '--'}</td>
                         <td>{longest} mo</td>
-                        <td><span className={'rd-chip tone-' + (bad ? 'err' : 'ok')}>{res.length - bad}/{res.length}</span></td>
+                        <td><span className={'rd-chip tone-' + (bad ? 'err' : good === res.length ? 'ok' : 'dim')}>{good}/{res.length}</span></td>
                         <td>
                           {!fit ? (
-                            <span className="cm-meta">not run</span>
+                            <span className="cm-meta">{q1eRefused[r.id] ?? 'estimating…'}</span>
                           ) : fit.supportedShelfLife == null ? (
                             <span className="sp-tone-warn">not estimable</span>
                           ) : (
@@ -2266,6 +2410,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                       </tbody>
                     </table>
                     <div className="cm-meta">{fit.basis}. {fit.scopeLimit}</div>
+                    <StabilityFitCharts estimates={fit.estimates} />
                   </div>
                 );
               })}
@@ -2477,6 +2622,13 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
           onSubmit={recordResult}
         />
       )}
+      {proposing && (
+        <C2CForm
+          config={stabilityShelfLifeForm({ shelfLife: proposing.shelfLife, scope: proposing.scope })}
+          onCancel={() => setProposing(null)}
+          onSubmit={proposeShelfLife}
+        />
+      )}
       {closing && (
         <C2CForm
           config={stabilityCloseoutForm({ shelfLife: closing.shelfLife })}
@@ -2497,7 +2649,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
 function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: bound to the governed cmc_batch_records table
      (server/api/cmc/batchRecordRoutes.ts, mounted at /api/cmc/batch-records).
-     Reads GET /:projectId, logs a batch via POST /, and releases ONLY through
+     Reads GET /:projectId, logs a batch via POST /, corrects one via PUT /:id
+     with a reason for change (P-122), and releases ONLY through
      the governed POST /:id/release endpoint (§11 re-authentication + hash-chained
      recordGovernedAction, carrying a disposition decision). The jsonb yield/
      deviation columns are crossed by the reversible, unit-tested mapping in
@@ -2522,6 +2675,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
   }, [mapped]);
   const [form, setForm] = useState(false);
   const [releasing, setReleasing] = useState<CmcBatch | null>(null);
+  const [editing, setEditing] = useState<CmcBatch | null>(null);
   const [toast, fireToast] = useToast();
   const { user } = useAuth();
   const releasedByName = user?.displayName || user?.email || 'current user';
@@ -2549,7 +2703,28 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       setForm(false);
       fireToast('Batch ' + adopted.id + ' logged · ' + adopted.st);
     } catch (e) {
-      fireToast('Couldn’t log the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t log the batch — ', e), 'error');
+    }
+  };
+  // edit — PUT /:id (P-122: the route had no caller). The route records the
+  // reason and the field-by-field diff on an audit row (§11.10(e)) and refuses
+  // a batch with a signed disposition. Adopts the server's row; nothing on
+  // screen changes on a refusal.
+  const edit = async (v: Record<string, string>) => {
+    if (!editing) return;
+    const target = editing;
+    if (target.dbId == null) { fireToast('This batch isn’t in the governed file yet — reload before editing it.', 'error'); return; }
+    try {
+      const res = await apiRequest('PUT', '/api/cmc/batch-records/' + target.dbId, batchUpdateBody(v));
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fireToast('Couldn’t save batch ' + target.id + ' — ' + specErr(json, res.status) + '. Nothing was changed.', 'error'); return; }
+      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
+      if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((x) => (x.dbId === target.dbId ? { ...adopted, _new: true } : x)));
+      setEditing(null);
+      fireToast('Batch ' + adopted.id + ' saved, with your reason on its audit trail.');
+    } catch (e) {
+      fireToast(cmcThrownRefusal('Couldn’t save the batch — ', e), 'error');
     }
   };
   // doRelease — REAL governed release. POSTs to the ONLY release path
@@ -2565,15 +2740,18 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.', 'error'); return; }
+      if (res.status === 401) { fireToast(joinSentence('The disposition was not signed — ', specErr(json, 401)), 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
-      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
-      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...(adopted ?? { ...x, st: 'released' }), _new: true } : x));
-      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
-      fireToast('Batch ' + target.id + ' ' + (adopted?.st ?? 'released') + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      /* The row the server signed, read where the route puts it. The answer was read as `data` when the batch
+         is `data.batchRecord`, so the row showed "undefined" and, with nothing adopted, was called released. */
+      const adopted = batchFromReleaseAnswer(json);
       setReleasing(null);
+      if (!adopted) { fireToast('The disposition was signed, but the answer did not carry the batch. Reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...adopted, _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Batch ' + target.id + ' ' + dispositionWord(adopted.st) + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '.'));
     } catch (e) {
-      fireToast('Couldn’t release the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t release the batch — ', e), 'error');
     }
   };
   return (
@@ -2613,7 +2791,12 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td className={r.dev ? 'sp-tone-warn' : ''}>{r.dev}</td>
                 <td>{eligible(r) ? <span className="rd-chip tone-ok">yes</span> : <span className="rd-chip tone-warn">no</span>}</td>
                 <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : r.st === 'rejected' ? 'err' : 'warn')}>{r.st}</span></td>
-                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Release</button>}</td>
+                <td style={{ textAlign: 'right' }}>
+                  <span className="pj-sec-acts" style={{ justifyContent: 'flex-end' }}>
+                    <button type="button" className="btn ghost small" onClick={() => setEditing(r)} disabled={batchEditBlocked(r) != null} title={batchEditBlocked(r) ?? 'Correct this batch record, with a reason for the change'}>Edit</button>
+                    {r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Disposition</button>}
+                  </span>
+                </td>
               </tr>))}</tbody></table>
           )}
         </div>
@@ -2630,7 +2813,14 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
-      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+      {editing && <C2CForm config={{ eyebrow: 'Batch — edit', title: 'Edit batch ' + editing.id, sub: 'The change and your reason are recorded on the batch’s audit trail. A disposition is set only by a signed release.', submitLabel: 'Save batch', fields: [
+        { key: 'id', label: 'Batch number', type: 'text', required: true, default: editing.id },
+        { key: 'stage', label: 'Product', type: 'text', required: true, half: true, default: editing.stage },
+        { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true, default: String(editing.yield) },
+        { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: String(editing.dev) },
+        { key: 'reason', label: 'Reason for change', type: 'textarea', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. Recorded with the change.`, placeholder: 'What was corrected and why…' },
+      ] }} onCancel={() => setEditing(null)} onSubmit={edit} />}
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Disposition of batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign the disposition', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
         { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -2650,6 +2840,34 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
  * reads that series, and a button that is live over no data is an action that
  * can only fail.
  */
+/**
+ * The Shelf life cell is its own control: the proposed shelf life is an
+ * ordinary edit any author makes on a running study. Closing the study out,
+ * which fixes it under a signature, is the row's "Close out".
+ */
+function StabilityShelfLifeCell({ study, onPropose }: { study: StabilityStudyApiRow; onPropose: (s: StabilityStudyApiRow) => void }) {
+  const closedOut = String(study.status ?? '').toUpperCase() === 'COMPLETED';
+  const verb = study.shelfLife ? 'Change' : 'Set';
+  return (
+    <td>
+      {study.shelfLife || <span className="cm-meta">not set</span>}
+      {!closedOut && (
+        <>
+          {' '}
+          <button
+            className="cm-linkish"
+            aria-label={`${verb} shelf life`}
+            title="Record the shelf life this study proposes. The study stays open."
+            onClick={() => onPropose(study)}
+          >
+            {verb}
+          </button>
+        </>
+      )}
+    </td>
+  );
+}
+
 function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
   study: StabilityStudyApiRow;
   hasResults: boolean;
@@ -2685,7 +2903,14 @@ function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
       >
         {I.barChart} {busy.trending === study.id ? 'Assessing…' : 'Trend'}
       </button>
-      <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => on.closeOut(study)}>{I.checkCircle} Shelf life</button>
+      <button
+        className="nda-open"
+        style={{ marginLeft: 6 }}
+        title="Close the study out with the shelf life its data support, under your signature"
+        onClick={() => on.closeOut(study)}
+      >
+        {I.checkCircle} Close out
+      </button>
       <button
         className="nda-open"
         style={{ marginLeft: 6 }}
@@ -3188,7 +3413,7 @@ function provenanceDetail(payload: Record<string, unknown> | null): string {
     parts.push(`${label} ${Array.isArray(value) ? value.join(', ') : String(value)}`);
   };
   push('completeness', payload.completeness != null ? `${payload.completeness}%` : null);
-  push('missing', Array.isArray(payload.missingInputs) && payload.missingInputs.length ? payload.missingInputs : null);
+  push('missing', Array.isArray(payload.missingInputs) && payload.missingInputs.length ? module3InputList(payload.missingInputs.map(String)) : null);
   push('reason', payload.reason);
   push('note', payload.resolutionNote);
   push('version', payload.versionNumber);
@@ -3340,8 +3565,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
 
   const Surf = CMC_SURF[tab] || CmOverview;
   /* One calm column (D5 §WA.3): the project, the title, one sentence, the ask
-     row, the two halves, the active half's tabs, then the work. Nothing above
-     the title. What used to be above it — a sticky nine-tab bar, the
+     row, all nine tabs in one row, the open tab's "what to do now" line, then
+     the work (P-122). Nothing above the title. What used to be above it — a sticky nine-tab bar, the
      "What to do now / NEXT STEP" band and the "THIS WORK FLOWS INTO" chip row,
      three bands that filled the first screen at 1440 and pushed the title
      below the fold at 390 — is gone; D5 §A.5 records where each outcome
@@ -3350,7 +3575,7 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
      pending. */
   return (
     <CmcQuestionsContextProvider value={questionsRead}>
-      <div className="page-inner cm" data-work-area="cmc">
+      <div className="page-inner" data-work-area="cmc">
         <ProjectBack onNav={onNav} />
         <header className="ph">
           <div>
@@ -3361,7 +3586,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
         {/* P-111: opened from a CMC work project's door, its tasks above the whole project's records (placed with the CMC session). */}
         <WorkProjectTasks area="cmc" />
         <CmStarters tab={tab} label={tabLabel} ask={ask} />
-        <CmHalves tab={tab} onTab={setTab} />
+        <CmTabs tab={tab} onTab={setTab} />
+        <CmNow tab={tab} onTab={setTab} />
         <CmcRegisterLinks onRecovered={() => setTab('build')} />
         <Surf ask={ask} nav={onNav} />
       </div>

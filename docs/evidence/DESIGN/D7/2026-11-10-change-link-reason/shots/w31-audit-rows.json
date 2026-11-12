@@ -1,0 +1,24 @@
+[
+ {
+  "action": "mdx.qms.change.link",
+  "record": "29",
+  "reason": null,
+  "details": {
+   "linkType": "validation",
+   "linkedRef": "VP-W31-P",
+   "relationship": "references",
+   "note": null
+  }
+ },
+ {
+  "action": "mdx.qms.change.link",
+  "record": "12",
+  "reason": "The validation protocol this change is assessed against.",
+  "details": {
+   "linkType": "validation",
+   "linkedRef": "VP-W31-49398",
+   "relationship": "references",
+   "note": "The validation protocol this change is assessed against."
+  }
+ }
+]

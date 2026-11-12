@@ -253,7 +253,7 @@ describe('a live prompt', () => {
  * the browser could be trusted to supply.
  */
 describe('a confirmed tool', () => {
-  // A write that records no reason for change: confirmed with a yes. (seed_tmf,
+  // A write that records no reason for change: confirmed with a yes. (log_inspection_finding,
   // which records one, is put at the reason tier — see the describe below.)
   const heldTool = () => ({
     toolUseId: 'tu-9',
@@ -351,10 +351,10 @@ describe('a confirmed tool', () => {
  * what they submit is what the tool records — the sign-off row keeps both.
  */
 describe('a tool that records a reason for change', () => {
-  const MODEL_REASON = 'Seeding the TMF for the Phase 1 study';
+  const MODEL_REASON = 'Recording the inspection finding for the Phase 1 study';
   const heldReasonTool = () => ({
     toolUseId: 'tu-7',
-    command: 'seed_tmf',
+    command: 'log_inspection_finding',
     params: { study_id: 12, reason: MODEL_REASON },
     tier: 'reason',
     toolContext: { projectId: 5, projectRef: '5', servingModel: { provider: 'anthropic', model: 'claude-opus-5-5' } },

@@ -1,0 +1,62 @@
+== BEFORE (bracket disabled), same data ==
+— pass 1: 4288 ms, 176 readable, 2008 statements —
+  334 ×    638 ms  SELECT p.id, p.owner_id, p.created_by_id, p.settings, v.visibility, COALESCE((SELECT jsonb_agg(jsonb_build_obj
+  334 ×    371 ms  SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1
+  334 ×    352 ms  SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects WHERE regulatory_program_id=$1 AND organiz
+  213 ×    292 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.orga
+  176 ×    207 ms  SELECT extracted_text AS native_text FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2 AND client_p
+  121 ×    152 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.
+  121 ×    136 ms  SELECT client_program_id FROM authoring_documents WHERE id=$1::uuid AND tenant_id=$2
+  121 ×    112 ms  SELECT id::text AS doc_id, tenant_id, status, created_by FROM authoring_documents WHERE id = $1 AND tenant_id 
+  121 ×     97 ms  SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2
+   26 ×     40 ms  SELECT d.* FROM qms_documents d WHERE d.id=$1 AND d.organization_id=$2 AND d.authoring_document_id=$3::uuid AN
+   26 ×     31 ms  SELECT s.id,s.code,s.title,s.content,s.order_index FROM authoring_sections s WHERE s.doc_id=$1::uuid AND s.ten
+   16 ×     15 ms  SELECT d.id,d.organization_id,d.authoring_document_id,jsonb_build_object('retainedAuthoringDocuments',d.metada
+    8 ×     13 ms  SELECT id,organization_id,signed_target,signature_type,signer_id,signer_name,signer_email,signed_at, signature
+    8 ×     10 ms  SELECT * FROM qms_document_versions WHERE organization_id = $1 AND document_id = $2 AND version = $3 AND recor
+— pass 2: 2127 ms, 176 readable, 2008 statements —
+  334 ×    494 ms  SELECT p.id, p.owner_id, p.created_by_id, p.settings, v.visibility, COALESCE((SELECT jsonb_agg(jsonb_build_obj
+  334 ×    248 ms  SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1
+  334 ×    233 ms  SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects WHERE regulatory_program_id=$1 AND organiz
+  213 ×    215 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.orga
+  176 ×    166 ms  SELECT extracted_text AS native_text FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2 AND client_p
+  121 ×    124 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.
+  121 ×     90 ms  SELECT client_program_id FROM authoring_documents WHERE id=$1::uuid AND tenant_id=$2
+  121 ×     84 ms  SELECT id::text AS doc_id, tenant_id, status, created_by FROM authoring_documents WHERE id = $1 AND tenant_id 
+  121 ×     67 ms  SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2
+   26 ×     30 ms  SELECT d.* FROM qms_documents d WHERE d.id=$1 AND d.organization_id=$2 AND d.authoring_document_id=$3::uuid AN
+   26 ×     21 ms  SELECT s.id,s.code,s.title,s.content,s.order_index FROM authoring_sections s WHERE s.doc_id=$1::uuid AND s.ten
+    8 ×     11 ms  SELECT id,organization_id,signed_target,signature_type,signer_id,signer_name,signer_email,signed_at, signature
+   16 ×     11 ms  SELECT d.id,d.organization_id,d.authoring_document_id,jsonb_build_object('retainedAuthoringDocuments',d.metada
+    8 ×      9 ms  SELECT * FROM qms_document_versions WHERE organization_id = $1 AND document_id = $2 AND version = $3 AND recor
+== AFTER ==
+— pass 1: 2953 ms, 176 readable, 1176 statements —
+  126 ×    247 ms  SELECT p.id, p.owner_id, p.created_by_id, p.settings, v.visibility, COALESCE((SELECT jsonb_agg(jsonb_build_obj
+  176 ×    183 ms  SELECT extracted_text AS native_text FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2 AND client_p
+  121 ×    149 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.
+  126 ×    124 ms  SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects WHERE regulatory_program_id=$1 AND organiz
+  121 ×    116 ms  SELECT client_program_id FROM authoring_documents WHERE id=$1::uuid AND tenant_id=$2
+  126 ×    105 ms  SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1
+  121 ×     95 ms  SELECT id::text AS doc_id, tenant_id, status, created_by FROM authoring_documents WHERE id = $1 AND tenant_id 
+  121 ×     85 ms  SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2
+   26 ×     40 ms  SELECT d.* FROM qms_documents d WHERE d.id=$1 AND d.organization_id=$2 AND d.authoring_document_id=$3::uuid AN
+   26 ×     36 ms  SELECT s.id,s.code,s.title,s.content,s.order_index FROM authoring_sections s WHERE s.doc_id=$1::uuid AND s.ten
+   16 ×     17 ms  SELECT d.id,d.organization_id,d.authoring_document_id,jsonb_build_object('retainedAuthoringDocuments',d.metada
+    5 ×     11 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.orga
+    8 ×      9 ms  SELECT id,organization_id,signed_target,signature_type,signer_id,signer_name,signer_email,signed_at, signature
+    8 ×      8 ms  SELECT v.* FROM qms_document_versions v WHERE v.id=$1 AND v.organization_id=$2 AND v.authoring_document_id=$3:
+— pass 2: 1142 ms, 176 readable, 1176 statements —
+  126 ×    185 ms  SELECT p.id, p.owner_id, p.created_by_id, p.settings, v.visibility, COALESCE((SELECT jsonb_agg(jsonb_build_obj
+  176 ×    164 ms  SELECT extracted_text AS native_text FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2 AND client_p
+  121 ×    124 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.
+  126 ×     89 ms  SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects WHERE regulatory_program_id=$1 AND organiz
+  121 ×     81 ms  SELECT client_program_id FROM authoring_documents WHERE id=$1::uuid AND tenant_id=$2
+  121 ×     75 ms  SELECT id::text AS doc_id, tenant_id, status, created_by FROM authoring_documents WHERE id = $1 AND tenant_id 
+  126 ×     62 ms  SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1
+  121 ×     62 ms  SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2
+   26 ×     25 ms  SELECT s.id,s.code,s.title,s.content,s.order_index FROM authoring_sections s WHERE s.doc_id=$1::uuid AND s.ten
+   26 ×     23 ms  SELECT d.* FROM qms_documents d WHERE d.id=$1 AND d.organization_id=$2 AND d.authoring_document_id=$3::uuid AN
+   16 ×     17 ms  SELECT d.id,d.organization_id,d.authoring_document_id,jsonb_build_object('retainedAuthoringDocuments',d.metada
+    8 ×      7 ms  SELECT id,organization_id,signed_target,signature_type,signer_id,signer_name,signer_email,signed_at, signature
+    5 ×      6 ms  SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.orga
+    8 ×      6 ms  SELECT * FROM qms_document_versions WHERE organization_id = $1 AND document_id = $2 AND version = $3 AND recor

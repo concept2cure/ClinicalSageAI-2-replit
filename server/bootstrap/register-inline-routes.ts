@@ -15,7 +15,7 @@
  * @module server/bootstrap/register-inline-routes
  */
 
-import express, { type Express } from 'express';
+import type { Express } from 'express';
 import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
@@ -492,25 +492,14 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Platform capabilities route:', error);
   }
 
-  // eTMF — one /api/etmf mount for both eTMF route families. They were
-  // previously mounted twice at the same prefix (here and again ~260 lines
-  // below), which ran authMiddleware twice per request and left a latent
-  // shadowing hazard (first-registered wins the day either router adds a path
-  // the other already defines). Their path sets are disjoint — etmf.routes is
-  // deterministic completeness / inspection-readiness (trial-scoped), etmf is
-  // governed C2C-08 CRUD (file-scoped) — so a single gateway router preserves
-  // every endpoint with one auth pass. Pattern mirrors the /api/programs
-  // gateway in register-document-routes.ts.
+  // eTMF — the trial master file of a study (routes/etmf.routes.ts, the deployed store: filings, declarations,
+  // readiness, the recorded inspection package). The second route family (routes/etmf.ts: tmf_files and
+  // tmf_artifacts, which no deploy creates) shared this mount until 2026-11-12, when it was deleted with its metrics
+  // (eTMF convergence E4 step 4, docs/design/ETMF_CONVERGENCE_E4_PLAN_2026-11-10.md; founder decisions P-74, P-124).
   try {
-    const [etmfCompletenessModule, etmfGovernedModule] = await Promise.all([
-      import('../routes/etmf.routes'),
-      import('../routes/etmf'),
-    ]);
-    const etmfGateway = express.Router();
-    etmfGateway.use(etmfCompletenessModule.default);
-    etmfGateway.use(etmfGovernedModule.default);
-    app.use('/api/etmf', authMiddleware, etmfGateway);
-    console.info('✅ eTMF routes mounted (/api/etmf — completeness + governed CRUD)');
+    const etmfModule = await import('../routes/etmf.routes');
+    app.use('/api/etmf', authMiddleware, etmfModule.default);
+    console.info('✅ eTMF routes mounted (/api/etmf — a study\'s trial master file)');
   } catch (error) {
     console.error('❌ Failed to mount eTMF routes:', error);
   }
@@ -768,11 +757,6 @@ export async function registerInlineAiWorkflowRoutes({
   } catch (error) {
     console.error('❌ Failed to mount Lifecycle Obligation routes:', error);
   }
-
-  // (eTMF governed CRUD — routes/etmf — is now mounted once via the single
-  // /api/etmf gateway above, alongside routes/etmf.routes. The former second
-  // mount here was removed to end the double authMiddleware pass and the
-  // latent route-shadowing hazard.)
 
   // Research compliance — roster, training-gating, compliance-checklist engine.
   try {

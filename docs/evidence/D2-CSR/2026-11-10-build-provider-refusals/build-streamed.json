@@ -1,0 +1,12 @@
+{
+  "label": "streamed",
+  "startedAt": "2026-11-10T02:18:28.735Z",
+  "jobId": 7,
+  "status": "complete",
+  "progress": 100,
+  "failure": null,
+  "waitedMs": 142718,
+  "onScreen": null,
+  "screenshot": "screens/streamed.png",
+  "finishedAt": "2026-11-10T02:21:13.071Z"
+}

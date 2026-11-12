@@ -1,0 +1,10 @@
+{
+  "/api/report-os/runs": 200,
+  "/api/report-os/bundles": 200,
+  "/api/insights-canvas/overview": 200,
+  "/api/insights/subscriptions": 200,
+  "/api/audit/reports": 200,
+  "/api/report-os/scopes": "403 LAUNCH_SCOPE",
+  "/api/report-os/taxonomy": "403 LAUNCH_SCOPE",
+  "/api/insights/quality": "403 LAUNCH_SCOPE"
+}

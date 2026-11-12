@@ -16,7 +16,8 @@
  *
  * @module concept2cure/v2/surfaces/RbmIngest
  */
-import { ErrorState } from '../dataConnect';
+import { ErrorState, useLiveRows } from '../dataConnect';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
@@ -44,6 +45,8 @@ interface IngestResult {
     siteObservations: number;
     unmatched: string[];
   };
+  /** Present when the extract carried site rows: the study's sites were rescored from them, or why they were not. */
+  siteRisk?: { rescored: number; source: string } | { notRescored: string };
 }
 
 const TEMPLATE = 'metric_key,scope_level,scope_id,value,numerator,denominator,unit,observed_at';
@@ -69,7 +72,15 @@ function IngestOutcome({ result }: { result: IngestResult }) {
         {p.qtlUpdates} QTL value{p.qtlUpdates === 1 ? '' : 's'} ·{' '}
         {p.subjectProfiles} subject profile{p.subjectProfiles === 1 ? '' : 's'} ·{' '}
         {p.siteObservations} site/country observation{p.siteObservations === 1 ? '' : 's'} stored
+        {result.siteRisk && 'rescored' in result.siteRisk && (
+          <> · site risk rescored for {result.siteRisk.rescored} site{result.siteRisk.rescored === 1 ? '' : 's'}</>
+        )}
       </div>
+      {result.siteRisk && 'notRescored' in result.siteRisk && (
+        <div className="rbm-ingest-warn">
+          {I.alertTriangle}<b>Site risk was not rescored from this load.</b> {result.siteRisk.notRescored} The site rows are stored; use “Recompute site risk” on Site risk once this is resolved.
+        </div>
+      )}
       {/* Rows landed but bound to no indicator. Stated plainly: without this,
           "accepted 400, rejected 0" would read as a clean load while every
           indicator stayed unevaluated. */}
@@ -109,6 +120,58 @@ function IngestOutcome({ result }: { result: IngestResult }) {
  * text; both go through the same server-side validation, so the rules cannot
  * differ between the two.
  */
+/** One recorded load (a row of GET /api/mdx/rbm-data-runs, as the store keeps it). */
+interface DataRun {
+  id: number; source: string; source_ref: string | null; data_cutoff: string | null; status: string;
+  rows_accepted: number; rows_rejected: number; started_at: string | null;
+  supersedes_run_id: number | null; superseded_at: string | null; reprocess_reason: string | null; error: string | null;
+}
+/** A malformed history is reported as a failed read, never shown as "no loads". */
+function isDataRuns(value: unknown): value is DataRun[] {
+  return Array.isArray(value) && value.every((r: DataRun) => r && typeof r.id === 'number' && typeof r.source === 'string' && typeof r.status === 'string');
+}
+const RUN_OUTCOME: Record<string, string> = { succeeded: 'Loaded', partial: 'Loaded, some rows rejected', failed: 'Failed', running: 'Running' };
+
+/**
+ * The study's earlier loads, newest first: which feed, the date the extract represents, what landed and what was
+ * refused, and whether a later load replaced it and why. The server has kept this for every load since loads were
+ * recorded (`rbm_data_runs`, read by GET /rbm-data-runs) and no screen showed it: the overview said only how old
+ * each feed's newest load was. A read that fails says so; it is not an empty history.
+ */
+export function RbmLoadHistory({ programId, after }: { programId: string; after?: { runId?: number } | null }) {
+  // Read again once a load has landed, so the load just made is in the list.
+  const runs = useLiveRows<DataRun>(`/api/mdx/rbm-data-runs?program_id=${programId}`, [programId, after?.runId], isDataRuns);
+  return (
+    <div className="rbm-ingest-hist">
+      <div className="rbm-ingest-rejects-h">Earlier loads</div>
+      {runs.loading ? <div role="status" className="rbm-ingest-more">Reading the load history…</div>
+        : runs.error ? <ErrorState variant="inline" title="The load history could not be read" message="Nothing is shown in its place. The loads themselves are unaffected." />
+        : runs.rows.length === 0 ? <div className="rbm-ingest-more">No extract has been loaded for this study yet.</div>
+        : (
+          <table className="rbm-tbl">
+            <caption className="rbm-sr">Every extract loaded for this study, newest first</caption>
+            <thead><tr><th scope="col">Run</th><th scope="col">Loaded</th><th scope="col">Feed</th><th scope="col">Data cut-off</th><th scope="col">Rows</th><th scope="col">Outcome</th></tr></thead>
+            <tbody>{runs.rows.map(r => (
+              <tr key={r.id} data-superseded={r.superseded_at ? '' : undefined}>
+                <th scope="row" className="mono">{r.id}</th>
+                <td>{r.started_at ? <GovernedTimestamp value={r.started_at} layout="inline" /> : <span className="mut">—</span>}</td>
+                <td>{SOURCE_LABEL[r.source] ?? r.source}{r.source_ref ? <span className="rbm-owner">{r.source_ref}</span> : null}</td>
+                <td className="mono">{r.data_cutoff ? String(r.data_cutoff).slice(0, 10) : <span className="mut">Not stated</span>}</td>
+                <td className="mono">{r.rows_accepted} accepted{r.rows_rejected ? `, ${r.rows_rejected} rejected` : ''}</td>
+                <td>
+                  {RUN_OUTCOME[r.status] ?? r.status}
+                  {r.error ? <span className="rbm-owner">{r.error}</span> : null}
+                  {r.supersedes_run_id != null ? <span className="rbm-owner">Replaced run {r.supersedes_run_id}{r.reprocess_reason ? `: ${r.reprocess_reason}` : ''}</span> : null}
+                  {r.superseded_at ? <span className="rbm-owner">Replaced by a later load; its readings were retracted</span> : null}
+                </td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+    </div>
+  );
+}
+
 export function RbmIngestDialog({ programId, onClose, onReload }: {
   programId: string;
   onClose: () => void;
@@ -294,6 +357,8 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
           </div>
         )}
         {result && <IngestOutcome result={result} />}
+
+        <RbmLoadHistory programId={programId} after={result} />
 
         <div className="rbm-modal-note">
           The run is recorded with its source, cutoff and row counts. That provenance is what

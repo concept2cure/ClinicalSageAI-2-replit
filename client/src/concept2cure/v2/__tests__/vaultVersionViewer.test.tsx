@@ -126,3 +126,44 @@ describe('Vault Versions — View', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Download version 1.0 of Clinical protocol' })).toBeTruthy());
   });
 });
+
+/* P-107 item 3, renditions: a Word version is offered "View as PDF"; the note says what the rendition was made from. */
+describe('a PDF rendition of a Word version', () => {
+  it('is offered for a .docx version and for nothing else that is not a PDF', async () => {
+    const { viewableAsRendition, viewableAsPdf, renditionNote } = await import('../surfaces/VaultVersionViewer');
+    expect(viewableAsRendition({ fileName: 'Protocol v2.DOCX' })).toBe(true);
+    expect(viewableAsRendition({ fileName: 'report.pdf' })).toBe(false);
+    expect(viewableAsRendition({ fileName: 'adsl.xpt' })).toBe(false);
+    expect(viewableAsRendition({ fileName: null })).toBe(false);
+    expect(viewableAsPdf({ fileName: 'Protocol v2.docx' })).toBe(false);
+    expect(renditionNote('6012a4576b91' + 'f'.repeat(52))).toMatch(/made from the version with SHA-256 6012a4576b91…/);
+    expect(renditionNote(null)).toMatch(/made from this version/);
+    expect(renditionNote(null)).not.toMatch(/verified/);
+  });
+});
+
+/* 2026-11-10, the click-through: on Seals & fixity, "Open" framed the document under the seal's 17 rows, below the
+   fold, so the click looked as if it had done nothing. What a view opens, or says, is brought into view. */
+describe('what a view opens is brought into view', () => {
+  const scrolled: Element[] = [];
+  beforeEach(() => {
+    scrolled.length = 0;
+    (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = function scrollIntoView(this: Element) { scrolled.push(this); };
+  });
+  afterEach(() => { delete (Element.prototype as unknown as { scrollIntoView?: () => void }).scrollIntoView; });
+
+  it('scrolls to the framed version', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'View version 2.0 of Clinical protocol' }));
+    const viewer = await screen.findByTestId('vault-version-viewer');
+    await waitFor(() => expect(scrolled).toContain(viewer));
+  });
+
+  it('scrolls to what the Vault said when it refuses', async () => {
+    download = () => ({ ok: false, status: 409, json: async () => ({ error: { message: 'The stored bytes do not match the recorded hash' } }) });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'View version 2.0 of Clinical protocol' }));
+    const alert = await screen.findByRole('alert');
+    await waitFor(() => expect(scrolled).toContain(alert));
+  });
+});

@@ -21,12 +21,22 @@
  */
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within, act } from '@testing-library/react';
+
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
 
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
   regError: null as string | null,
+  regFailure: null as null | { kind: string; status: number; code?: string },
   reviewRows: [] as unknown[] | null,
+  reviewError: null as string | null,
+  reviewRefresh: vi.fn(),
   trainRows: [] as unknown[] | null,
   trainError: null as string | null,
   trainRefresh: vi.fn(),
@@ -46,9 +56,9 @@ const EFFECTIVE = {
 };
 
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, refresh: H.refresh }),
+  useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, failure: H.regFailure, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
-  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
+  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: H.reviewError, refresh: H.reviewRefresh }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
   useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
   useTrainingAssignments: () => ({ ...H.assigned, error: H.assigned.failed ? 'unavailable' : null, refresh: vi.fn() }),
@@ -85,6 +95,7 @@ vi.mock('../../_shared/components/EsignModal', () => ({
 }));
 
 import { SopRegister } from '../SopRegister';
+import { qualityWritten } from '../qmsWrites';
 
 const renderRegister = () =>
   render(<SopRegister onAsk={() => {}} filter="all" onFilterChange={() => {}} />);
@@ -92,10 +103,13 @@ const renderRegister = () =>
 beforeEach(() => {
   H.docs = [DRAFT];
   H.regError = null;
+  H.regFailure = null;
   H.reviewRows = [];
+  H.reviewError = null;
   H.trainRows = [];
   H.trainError = null;
   H.trainRefresh.mockReset();
+  H.reviewRefresh.mockReset();
   H.apiRequest.mockReset();
   H.refresh.mockReset();
   H.signed = null;
@@ -167,7 +181,7 @@ describe('SopRegister — a draft is sent for review before it can be approved',
   it('offers Approve only on a document under review; a draft offers Send for review instead', () => {
     H.docs = [DRAFT_ROW, DRAFT];
     renderRegister();
-    const rows = Array.from(document.querySelectorAll('.qms-row')) as HTMLElement[];
+    const rows = Array.from(document.querySelectorAll('tbody.qms-doc')) as HTMLElement[];
     const draftRow = rows.find((r) => r.textContent?.includes('WI-014'))!;
     const reviewRow = rows.find((r) => r.textContent?.includes('SOP-014'))!;
     expect(draftRow.textContent).not.toMatch(/Approve/);
@@ -190,11 +204,29 @@ describe('SopRegister — a draft is sent for review before it can be approved',
   });
 });
 
+// C3: an outcome is a toast in its own tone. A refused controlled copy was a grey line under the register's column
+// headers, in the same place and tone as "nothing here".
+describe('SopRegister — a refused controlled copy is said as a refusal', () => {
+  it('shows the server refusal as an alert, not as a line in the register', async () => {
+    H.docs = [EFFECTIVE];
+    H.apiRequest.mockResolvedValue({ status: 403, ok: false, json: async () => ({ error: 'Your role cannot issue controlled copies.' }) });
+    renderRegister();
+    openMore();
+    fireEvent.click(screen.getByRole('button', { name: /Download a controlled copy/ }));
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/Your role cannot issue controlled copies/);
+    // It is the toast, not a line inside the register.
+    expect(alert.closest('.de-toast')).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Controlled documents' })).queryByRole('alert')).toBeNull();
+  });
+});
+
 describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
   beforeEach(() => { H.docs = [EFFECTIVE]; });
 
   it('opens the e-signature dialog for Retire, offering the retirement meaning only (P-51)', () => {
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
     expect(dialog.getAttribute('data-meanings')).toBe('retirement');
@@ -210,6 +242,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
       }),
     });
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     fireEvent.click(screen.getByText('stub-sign'));
 
@@ -228,6 +261,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
   it('shows a refused password as not retired', async () => {
     H.apiRequest.mockResolvedValue({ status: 401, ok: false, json: async () => ({ error: 'Password did not verify.' }) });
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     fireEvent.click(screen.getByText('stub-sign'));
     await waitFor(() => expect(H.signError).toBeTruthy());
@@ -241,24 +275,59 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
    register — "Effective documents 0", "Review overdue 0 — All current" in the
    ok tone, "No documents due for review." */
 describe('SopRegister — a failed read is not an empty register', () => {
-  const kpi = (label: string) => screen.getByText(label).closest('.qms-kpi') as HTMLElement;
+  /* D7-B (2026-11-06): the four tiles became one sentence above the register's
+     rows, and the coverage figure the training section's line. Since C1
+     (2026-11-10) each state is said once: an unread or failed read is said by
+     the section's own line (the failure, or the loading line), so the figure
+     line is absent then, never a count. */
+  const figures = () => screen.queryByTestId('qms-register-figures')?.textContent ?? null;
+  const coverage = () => screen.queryByTestId('qms-coverage-figure')?.textContent ?? null;
 
   it('renders a failed register read as a failure, with no count and no all-clear', () => {
     H.docs = null;
     H.reviewRows = null;
     H.regError = 'Request failed (500)';
+    H.reviewError = 'Request failed (500)';
     renderRegister();
     expect(screen.getByTestId('sop-register-failed').textContent).toMatch(
       /controlled-document register could not be read/,
     );
     expect(screen.getByTestId('sop-review-failed')).toBeTruthy();
     expect(screen.queryByText('All current')).toBeNull();
-    expect(screen.queryByText('No documents due for review.')).toBeNull();
+    expect(screen.queryByText(/none is due for review/i)).toBeNull();
     expect(screen.queryByText(/No controlled documents in the register/)).toBeNull();
-    expect(kpi('Effective documents').querySelector('.val')?.textContent).toBe('—');
-    expect(kpi('Review overdue').getAttribute('data-tone')).toBe('');
+    expect(figures(), 'the failure is said once, by the section').toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0]);
     expect(H.refresh).toHaveBeenCalled();
+  });
+
+  // C4: a register read refused for the reader's role is said as that, with no Try again.
+  it('says a register read refused for this role as that, with no Try again', () => {
+    H.docs = null;
+    H.reviewRows = null;
+    H.regError = 'HTTP 403';
+    H.regFailure = { kind: 'role', status: 403, code: 'FORBIDDEN' };
+    renderRegister();
+    const refused = screen.getByTestId('sop-register-failed');
+    expect(refused.textContent).toMatch(/Your role cannot do this/);
+    expect(refused.textContent).toMatch(/so the controlled-document register was not read/);
+    expect(within(refused).queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  // C2's headline (review C2-3): a failed review schedule is shown as its own failure, never as rows derived from the
+  // register; its Try again re-reads the schedule, not the register; and the register states no overdue figure.
+  it('shows a failed review schedule as that failure, with no derived rows and no overdue figure', () => {
+    H.docs = [{ ...EFFECTIVE, nextReviewDate: '2020-01-01' }];
+    H.reviewRows = null;
+    H.reviewError = 'HTTP 500';
+    renderRegister();
+    const failed = screen.getByTestId('sop-review-failed');
+    expect(screen.queryAllByTestId('qms-review-row')).toHaveLength(0);
+    expect(screen.queryByTestId('qms-review-figure')).toBeNull();
+    expect(figures()).not.toMatch(/overdue/);
+    fireEvent.click(within(failed).getByRole('button', { name: 'Try again' }));
+    expect(H.reviewRefresh).toHaveBeenCalled();
+    expect(H.refresh).not.toHaveBeenCalled();
   });
 
   it('claims nothing while the register is still loading', () => {
@@ -266,6 +335,7 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.reviewRows = null;
     renderRegister();
     expect(screen.getByText('Loading the register…')).toBeTruthy();
+    expect(figures(), 'the loading line says it').toBeNull();
     expect(screen.queryByText('All current')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -274,10 +344,22 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.docs = [];
     renderRegister();
     expect(screen.getByText('No controlled documents in the register yet.')).toBeTruthy();
-    // Empty, and said as empty: not "All current", which an empty register is
-    // only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
-    expect(screen.getByText('Nothing in the register to review')).toBeTruthy();
+    // Empty, and said as empty: no figures at all, so no "none overdue", which an
+    // empty register is only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
+    expect(figures()).toBeNull();
     expect(screen.queryByTestId('sop-register-failed')).toBeNull();
+  });
+
+  /* Walked 2026-11-12 (w41): an approval puts a version in force, which changes who is due to train and what is due
+     for review, and an acknowledgement changes coverage. The register re-read its documents and left the review
+     schedule and coverage as they were first read. Both follow a confirmed Quality write. */
+  it('re-reads the review schedule and training coverage when a Quality write is confirmed', () => {
+    renderRegister();
+    expect(H.trainRefresh).not.toHaveBeenCalled();
+    expect(H.reviewRefresh).not.toHaveBeenCalled();
+    act(() => qualityWritten());
+    expect(H.trainRefresh).toHaveBeenCalledTimes(1);
+    expect(H.reviewRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('renders a failed training read as a failure, not "no training-controlled documents"', () => {
@@ -286,17 +368,16 @@ describe('SopRegister — a failed read is not an empty register', () => {
     renderRegister();
     expect(screen.getByTestId('sop-training-failed').textContent).toMatch(/Training records could not be read/);
     expect(screen.queryByText('No training-controlled documents yet.')).toBeNull();
-    expect(kpi('Acknowledgement coverage').querySelector('.val')?.textContent).toBe('—');
+    expect(coverage(), 'the failure says it').toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(H.trainRefresh).toHaveBeenCalled();
   });
 
   it('shows no training compliance figure when nothing is training-controlled, instead of a red 0%', () => {
     renderRegister();
-    const k = kpi('Acknowledgement coverage');
-    expect(k.querySelector('.val')?.textContent).toBe('—');
-    expect(k.getAttribute('data-tone')).toBe('');
-    expect(k.textContent).toMatch(/No training-controlled documents yet/);
+    expect(coverage(), 'the empty line says it').toBeNull();
+    expect(screen.getAllByText('No training-controlled documents yet.')).toHaveLength(1);
+    expect(document.body.textContent).not.toMatch(/\d+%/);
   });
 });
 

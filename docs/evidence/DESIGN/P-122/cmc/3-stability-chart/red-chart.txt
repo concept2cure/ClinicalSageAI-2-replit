@@ -1,0 +1,11 @@
+ × client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > estimates a study with results when the register opens, and draws its fit 5251ms
+   → Unable to find role="img" and name `/Assay/`
+ × client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > draws the server’s numbers, and computes none of its own 5070ms
+   → Unable to find role="img" and name `/Assay/`
+ × client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > draws nothing the engine did not return 5100ms
+   → expected [] to have a length of 1 but got +0
+ × client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > says a refused estimate in the register, without a failure toast 5069ms
+   → Unable to find an element with the text: /it records a biologic/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

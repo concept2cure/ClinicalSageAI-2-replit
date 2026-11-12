@@ -44,6 +44,21 @@ describe('the environment `npm run up` writes', () => {
   });
 });
 
+/* 2026-11-12 (F1). `PORT=5270 npm run up` then `npm run dev` served a blank
+   page: the server allows only localhost:5000 and :3000 as development
+   origins, so it refused its own page's requests (CORS_ORIGIN_BLOCKED).
+   Found walking the app, docs/evidence/DESIGN/P-122/ana-interview-war-game-consent/. */
+describe('a port other than the default', () => {
+  const at = (port: string) => envLocalContents({ appUrl: 'a', ownerUrl: 'o', port });
+  it('allows the app\'s own origin, by name and by loopback address', () => {
+    expect(at('5270')).toMatch(/^ALLOWED_ORIGINS=http:\/\/localhost:5270,http:\/\/127\.0\.0\.1:5270$/m);
+  });
+  it('adds nothing for the ports the server already allows', () => {
+    expect(at('5000')).not.toMatch(/ALLOWED_ORIGINS/);
+    expect(at('3000')).not.toMatch(/ALLOWED_ORIGINS/);
+  });
+});
+
 describe('the development defaults', () => {
   it.each([
     ['scripts/setup-local-db.sh', /^RLS_ENFORCE=on$/m],

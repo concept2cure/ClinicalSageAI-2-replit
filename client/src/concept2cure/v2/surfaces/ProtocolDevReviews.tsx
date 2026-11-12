@@ -10,16 +10,10 @@
  * signature (ProtocolDevSigning.tsx): only the assigned user can sign it, so the
  * button is disabled, with the reason, for anyone else.
  *
- * CONSENT: the tab used to read `consent: []` — hard-coded in the assembler —
- * and print "0 of 0 required elements present, 0% complete" over whatever had
- * been authored. That is a number invented by the screen. The assembler now
- * returns the latest linked consent form and its elements, so the tab is wired
- * to them. It stays READ-ONLY here on purpose: consent elements are authored
- * against a consent form (`/api/protocol-consent`), which is a different
- * record with its own version and approval, and giving this tab a tick box
- * would be a second writer for it. With no linked form the tab says so and
- * prints no percentage — a completeness figure over zero elements is not 0 %,
- * it is nothing.
+ * CONSENT (P-130, 2026-11-12): read-only, from the project's informed
+ * consent document and the editor's gate on its text, the gate the editor's
+ * Check and approval run. With no consent document the tab says so and prints
+ * no percentage: a completeness figure over nothing is not 0 %, it is nothing.
  */
 import React from 'react';
 import { useAuthUser } from '@/services/portal/authService';
@@ -27,6 +21,8 @@ import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
 import type { PdevSignatureFacet } from '../fixtures/protocol-data';
 import * as PG from './ProtocolGov';
+import { setEditorTarget } from '../editorTarget';
+import { publishShellProject, readShellProject } from '../shellProject';
 import { PaneHead, type PaneAction } from './ProtocolDevShared';
 import type { PdevFormKind, PdevFormTarget } from './ProtocolDevForms';
 
@@ -195,47 +191,83 @@ export function ReviewsTab({ doc, onEdit }: ReviewPaneProps) {
   );
 }
 
-export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
+interface ConsentGate { requiredTotal: number; requiredComplete: number; pct: number | null; readyToApprove: boolean; findings: string[] }
+
+/** What the gate says about the consent document: approved, approvable, or not yet and why (P-102, P-130). */
+function ConsentVerdict({ gate, status }: { gate: ConsentGate; status: string }) {
+  if (status.toLowerCase() === 'approved') {
+    return <div className="pde-note" role="status">This consent document is approved in the editor. The elements below are read from its approved text.</div>;
+  }
+  if (gate.readyToApprove) return <div className="pde-note" role="status">Every required element is complete, so the document can be approved in the editor.</div>;
+  return (
+    <div className="pde-note" role="status">
+      <strong>This consent document cannot be approved yet.</strong> {gate.findings.length === 1 ? 'One required element is' : gate.findings.length + ' required elements are'} incomplete:
+      {/* The gate's reasons, as sentences: drawn as rows they read as more unticked elements. */}
+      {gate.findings.map((text, i) => <div key={i}>{text}</div>)}
+    </div>
+  );
+}
+
+/* P-130 (2026-11-12): informed consent is one record, the project's consent
+   document in the one editor. The tab read the consent-form rows behind
+   /api/protocol-consent, a second store the editor could not open or approve;
+   it now reads the consent document and the editor's own gate on its text
+   (the Check and the approval run the same one). It stays read-only: the
+   document is written, reviewed and approved in the editor, which it opens. */
+function consentEmptyNote(hasProject: boolean) {
+  return hasProject
+    ? <><strong>This project has no informed consent document.</strong> Start one from the project&rsquo;s documents as an Informed Consent Form. It is written, reviewed and approved in the editor, and its required elements are reported here.</>
+    : <><strong>This protocol belongs to no project,</strong> so there is no consent document to read. A consent document is started from its project.</>;
+}
+
+/** Open the consent document in the editor, in its own project: the editor refuses a document of another project. */
+function openConsentDocument(form: Row, onNav: (id: string) => void): void {
+  const programId = str(form.programId);
+  if (programId && str(readShellProject()?.id) !== programId) publishShellProject({ id: programId });
+  setEditorTarget({ docType: null, docId: str(form.documentId), programId: programId || null });
+  onNav('document-authoring');
+}
+
+export function ConsentTab({ doc, onNav }: { doc: Record<string, unknown>; onNav?: (id: string) => void }) {
   const consent = asRows(doc.consent);
   const form = (doc.consentForm ?? null) as Row | null;
-  const required = consent.filter((c) => c.required !== false);
-  const present = required.filter((c) => c.present).length;
+  const gate = (doc.consentGate ?? null) as ConsentGate | null;
 
-  if (!form || consent.length === 0) {
+  if (!form || !gate) {
     return (
       <div className="pd-pane">
-        <PaneHead title="Informed consent" sub="Read from the linked consent form" />
-        <div className="pde-note">
-          {form
-            ? <>The linked consent form <strong>{str(form.title)}</strong> has no elements recorded, so there is no checklist to report against.</>
-            : <><strong>No consent form is linked to this protocol.</strong> Consent elements are authored on a consent form, which carries its own version and approval; until one is linked there is no completeness to report.</>}
-        </div>
+        <PaneHead title="Informed consent" sub="Read from the project's consent document" />
+        <div className="pde-note">{consentEmptyNote(Boolean(doc.programId))}</div>
         <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
       </div>
     );
   }
 
-  const pct = Math.round((present / required.length) * 100);
+  const open = onNav ? () => openConsentDocument(form, onNav) : null;
   return (
     <div className="pd-pane">
       <PaneHead
         title="Informed consent"
-        sub={present + ' of ' + required.length + ' required elements present'}
+        sub={gate.requiredComplete + ' of ' + gate.requiredTotal + ' required elements complete'}
+        actions={open ? [{ label: 'Open in the editor', icon: 'fileText', onAct: open, variant: 'outline' }] : undefined}
       />
       <div className="pde-note">
-        {str(form.title)} · version {str(form.version) || '—'} · {PG.labelize(str(form.status)) || 'no status'}
-        {Number(form.formsLinked) > 1 ? ` · ${Number(form.formsLinked)} forms linked, the most recently updated is shown` : ''}
+        {str(form.title)}{str(form.version) ? ` · version ${str(form.version)}` : ''} · {PG.labelize(str(form.status).toLowerCase()) || 'no status'}
+        {Number(form.formsLinked) > 1 ? ` · ${Number(form.formsLinked)} consent documents in this project, the most recently updated is shown` : ''}
       </div>
-      <div className="pd-consent-meter">
-        <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: pct + '%' }} /></div>
-        <span className="pd-consent-pct">{pct + '% complete'}</span>
-        <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
-      </div>
+      {gate.pct !== null && (
+        <div className="pd-consent-meter">
+          <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: gate.pct + '%' }} /></div>
+          <span className="pd-consent-pct">{gate.pct + '% complete'}</span>
+          <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
+        </div>
+      )}
+      <ConsentVerdict gate={gate} status={str(form.status)} />
       <ul className="pd-consent-list">{consent.map((c) => (
-        <li key={str(c.id)} className={'pd-consent-row' + (c.present ? '' : ' missing')}>
-          <span className="pd-consent-ck" data-on={Boolean(c.present)} aria-hidden="true">{c.present ? '✓' : ''}</span>
-          <span>{str(c.el)}</span>
-          <span className="sr-only">{c.present ? 'present' : 'not present'}</span>
+        <li key={str(c.id)} className={'pd-consent-row' + (c.complete ? '' : ' missing')}>
+          <span className="pd-consent-ck" data-on={Boolean(c.complete)} aria-hidden="true">{c.complete ? '✓' : ''}</span>
+          <span>{str(c.el)}{str(c.section) ? ` (section ${str(c.section)})` : ''}</span>
+          <span className="sr-only">{c.complete ? 'complete' : 'not complete'}</span>
         </li>))}</ul>
     </div>
   );

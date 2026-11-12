@@ -23,6 +23,7 @@ vi.mock('../data-room-capture-audit', () => ({ captureActor: () => null, recordC
 
 import { searchDataRoom } from '../data-room-search';
 import { getCurrentReadableSourceScope } from '../source-read-access';
+import { listClientDocuments } from '../evidence-spine.service';
 
 const ORG = 71, OTHER_ORG = 72, USER = 1;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
@@ -56,7 +57,10 @@ beforeAll(async () => {
     'migrations/20261006_document_data_dispositions.sql']) await pg.exec(readFileSync(file, 'utf8'));
   await pg.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN created_by integer, ADD COLUMN extracted_text text,
     ADD COLUMN char_count integer, ADD COLUMN page_count integer, ADD COLUMN study_ref integer;
-    CREATE TABLE quality_fixture_state(id integer PRIMARY KEY,content text,visible boolean);`);
+    CREATE TABLE quality_fixture_state(id integer PRIMARY KEY,content text,visible boolean);
+    -- The catalog read names each source's project and study (S2, 2026-11-06): the columns it reads.
+    CREATE TABLE IF NOT EXISTS cdisc_prm_studies(id serial PRIMARY KEY,tenant_id integer NOT NULL,study_id varchar(100),protocol_title text);
+    ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS name text;`);
 }, 90_000);
 afterAll(async () => { await pg?.close(); });
 beforeEach(async () => {
@@ -101,6 +105,17 @@ describe('native catalogue facts during a concurrent update', () => {
     expect(refreshed.sources.find(source => source.isCurrent)?.id).toBe(retained[1].id);
   });
 
+  it('lists a captured file before the Quality record snapshots, however old the file is', async () => {
+    await catalogue();
+    await pg.query(`INSERT INTO cre_evidence_sources (organization_id,client_program_id,source_type,title,checksum,is_current,
+        extraction_status,extracted_text,provenance,metadata,created_at)
+      VALUES ($1,$2,'client_document','Protocol.pdf',$3,true,'extracted','Protocol text','{}'::jsonb,'{}'::jsonb,now() - interval '30 days')`,
+    [ORG, PROGRAM, 'c'.repeat(64)]);
+    const listed = (await catalogue()).sources;
+    expect(listed.length).toBeGreaterThan(1);
+    expect(listed[0].title).toBe('Protocol.pdf');
+  });
+
   it('preserves stable source identities when no current native fact changed', async () => {
     const first = await catalogue(); const second = await catalogue();
     expect(first).toMatchObject({ total: 1, currentTotal: 1 });
@@ -135,5 +150,82 @@ describe('native catalogue omission stays private', () => {
   it('failed native verification still refuses the catalogue instead of creating an empty success', async () => {
     afterProjection = async () => { failRead = true; };
     await expect(catalogue()).rejects.toMatchObject({ status: 503 });
+  });
+});
+
+// 2026-11-10, the Codespace click-through: approving one project's controlled document left its captured Quality
+// source stale, and every project's Vault answered 500. The Vault's list checked every source in the organization.
+describe('a changed Quality record in one project', () => {
+  // A second project in the same organization, owned by the same person (the fixture's two are in two organizations).
+  const SIBLING = '44444444-4444-4444-8444-444444444444';
+  beforeAll(async () => {
+    await pg.query(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_type,primary_agency,product_name)
+      VALUES($1,$2,'Sibling programme','SOURCE-SIBLING','IND','drug','FDA','QA fixture')`, [SIBLING, ORG]);
+    await pg.query(`INSERT INTO projects(id,organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id,settings)
+      VALUES(171,$1,$1,'Sibling project','regulatory','active',1,1,$2,'{}')`, [ORG, SIBLING]);
+    await pg.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,171,'private')", [ORG]);
+  });
+  async function staleInOtherProgram() {
+    await searchDataRoom(ORG, { programId: SIBLING, limit: 200, offset: 0 }, { userId: USER });
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
+  }
+
+  it('does not refuse another project\'s list of its sources', async () => {
+    await staleInOtherProgram();
+    await expect(listClientDocuments(q, ORG, { userId: USER, programId: PROGRAM, currentOnly: true })).resolves.toEqual([]);
+  });
+
+  it('still refuses a list of its own project, so a stale record never reads as current', async () => {
+    await staleInOtherProgram();
+    await expect(listClientDocuments(q, ORG, { userId: USER, programId: SIBLING, currentOnly: true }))
+      .rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
+  });
+});
+
+// Walked 2026-11-12 (w41): the one editor's sources read took 7.5 to 8 s for a project with 168 sources. One scope
+// computation admitted the same project for the same person once per source it listed: 1,835 statements, 307 of them
+// the same four-statement admission. A read admits a project once; it still verifies the scope before it answers.
+describe('one read admits a project once, however many of its sources it lists', () => {
+  const admissions = () => queryTrace.filter(sql => sql.includes('FROM regulatory_programs WHERE id = $1')).length;
+  async function capture(count: number, from: number) {
+    for (let n = from; n < from + count; n++) {
+      await pg.query(`INSERT INTO cre_evidence_sources (organization_id,client_program_id,source_type,title,checksum,is_current,
+          extraction_status,extracted_text,provenance,metadata)
+        VALUES ($1,$2,'client_document',$3,$4,true,'extracted','Captured text','{}'::jsonb,'{}'::jsonb)`,
+      [ORG, PROGRAM, `Capture ${n}.pdf`, String(n).padStart(64, 'd')]);
+    }
+  }
+  const scope = () => getCurrentReadableSourceScope(q, { organizationId: ORG, userId: USER, programId: PROGRAM });
+
+  it('runs as many project admissions for eight sources as for two', async () => {
+    await capture(2, 1);
+    queryTrace = [];
+    expect((await scope()).sourceIds).toHaveLength(2);
+    const forTwo = admissions();
+    await capture(6, 3);
+    queryTrace = [];
+    expect((await scope()).sourceIds).toHaveLength(8);
+    expect(admissions()).toBe(forTwo);
+  });
+
+  it('still refuses the read when the person leaves the organization while its sources are being admitted', async () => {
+    await capture(3, 1);
+    // An admission ends with the project's sharing read. The second one is the first source's; once it has answered,
+    // the person is no longer a member, and the two sources after it are not asked about again.
+    let answered = 0;
+    const real = h.query.getMockImplementation()!;
+    h.query.mockImplementation(async (sql: string, args?: unknown[]) => {
+      const result = await real(sql, args);
+      if (sql.includes('v.visibility') && ++answered === 2) {
+        await pg.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=$2', [ORG, USER]);
+      }
+      return result;
+    });
+    try {
+      await expect(scope()).rejects.toMatchObject({ status: 403 });
+      expect(answered, 'the sharing read ran for the scope, the first source, and the check before answering').toBeGreaterThanOrEqual(2);
+    } finally {
+      await pg.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, USER]);
+    }
   });
 });

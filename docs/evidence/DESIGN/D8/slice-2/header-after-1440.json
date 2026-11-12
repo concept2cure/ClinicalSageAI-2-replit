@@ -1,0 +1,356 @@
+{
+ "device-clinical-studies": {
+  "viewport": 1440,
+  "contextLine": {
+   "height": 32,
+   "parts": [
+    {
+     "text": "Return to project workflow",
+     "width": 188,
+     "height": 32
+    },
+    {
+     "text": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+     "width": 243,
+     "height": 21
+    }
+   ]
+  },
+  "header": {
+   "left": 288,
+   "right": 1416,
+   "top": 104,
+   "width": 1128,
+   "height": 133
+  },
+  "textBlockWidth": 947,
+  "title": {
+   "text": "Clinical studies",
+   "fontSize": "28px",
+   "lines": 1,
+   "left": 320,
+   "right": 1267,
+   "top": 154,
+   "width": 947,
+   "height": 36
+  },
+  "descriptions": [
+   {
+    "width": 640,
+    "height": 20
+   }
+  ],
+  "actions": [
+   {
+    "name": "Ask AnA",
+    "left": 1291,
+    "right": 1384,
+    "top": 132,
+    "width": 93,
+    "height": 28,
+    "cutOff": false
+   }
+  ],
+  "actionsCutOff": [],
+  "firstTileTop": 257,
+  "pageOverflow": 0
+ },
+ "device-software": {
+  "viewport": 1440,
+  "contextLine": {
+   "height": 32,
+   "parts": [
+    {
+     "text": "Return to project workflow",
+     "width": 188,
+     "height": 32
+    },
+    {
+     "text": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+     "width": 243,
+     "height": 21
+    }
+   ]
+  },
+  "header": {
+   "left": 288,
+   "right": 1416,
+   "top": 104,
+   "width": 1128,
+   "height": 133
+  },
+  "textBlockWidth": 947,
+  "title": {
+   "text": "Software lifecycle",
+   "fontSize": "28px",
+   "lines": 1,
+   "left": 320,
+   "right": 1267,
+   "top": 154,
+   "width": 947,
+   "height": 36
+  },
+  "descriptions": [
+   {
+    "width": 640,
+    "height": 20
+   }
+  ],
+  "actions": [
+   {
+    "name": "Ask AnA",
+    "left": 1291,
+    "right": 1384,
+    "top": 132,
+    "width": 93,
+    "height": 28,
+    "cutOff": false
+   }
+  ],
+  "actionsCutOff": [],
+  "firstTileTop": 257,
+  "pageOverflow": 0
+ },
+ "device-engineering": {
+  "viewport": 1440,
+  "contextLine": {
+   "height": 32,
+   "parts": [
+    {
+     "text": "Return to project workflow",
+     "width": 188,
+     "height": 32
+    },
+    {
+     "text": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+     "width": 243,
+     "height": 21
+    }
+   ]
+  },
+  "header": {
+   "left": 288,
+   "right": 1416,
+   "top": 104,
+   "width": 1128,
+   "height": 133
+  },
+  "textBlockWidth": 947,
+  "title": {
+   "text": "Device engineering",
+   "fontSize": "28px",
+   "lines": 1,
+   "left": 320,
+   "right": 1267,
+   "top": 154,
+   "width": 947,
+   "height": 36
+  },
+  "descriptions": [
+   {
+    "width": 640,
+    "height": 20
+   }
+  ],
+  "actions": [
+   {
+    "name": "Ask AnA",
+    "left": 1291,
+    "right": 1384,
+    "top": 132,
+    "width": 93,
+    "height": 28,
+    "cutOff": false
+   }
+  ],
+  "actionsCutOff": [],
+  "firstTileTop": 257,
+  "pageOverflow": 0
+ },
+ "device-udi": {
+  "viewport": 1440,
+  "contextLine": {
+   "height": 32,
+   "parts": [
+    {
+     "text": "Return to project workflow",
+     "width": 188,
+     "height": 32
+    },
+    {
+     "text": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+     "width": 243,
+     "height": 21
+    }
+   ]
+  },
+  "header": {
+   "left": 288,
+   "right": 1416,
+   "top": 104,
+   "width": 1128,
+   "height": 133
+  },
+  "textBlockWidth": 947,
+  "title": {
+   "text": "UDI and labeling",
+   "fontSize": "28px",
+   "lines": 1,
+   "left": 320,
+   "right": 1267,
+   "top": 154,
+   "width": 947,
+   "height": 36
+  },
+  "descriptions": [
+   {
+    "width": 640,
+    "height": 20
+   }
+  ],
+  "actions": [
+   {
+    "name": "Ask AnA",
+    "left": 1291,
+    "right": 1384,
+    "top": 132,
+    "width": 93,
+    "height": 28,
+    "cutOff": false
+   }
+  ],
+  "actionsCutOff": [],
+  "firstTileTop": 257,
+  "pageOverflow": 0
+ },
+ "device-postmarket": {
+  "viewport": 1440,
+  "contextLine": {
+   "height": 42,
+   "parts": [
+    {
+     "text": "Return to project workflow",
+     "width": 188,
+     "height": 32
+    },
+    {
+     "text": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+     "width": 208,
+     "height": 42
+    },
+    {
+     "text": "Reporting clocks, signals and the CAPA board are for this pr",
+     "width": 712,
+     "height": 42
+    }
+   ]
+  },
+  "header": {
+   "left": 288,
+   "right": 1416,
+   "top": 114,
+   "width": 1128,
+   "height": 191
+  },
+  "textBlockWidth": 921,
+  "title": {
+   "text": "Post-market vigilance",
+   "fontSize": "28px",
+   "lines": 1,
+   "left": 320,
+   "right": 1241,
+   "top": 164,
+   "width": 921,
+   "height": 36
+  },
+  "descriptions": [
+   {
+    "width": 640,
+    "height": 20
+   },
+   {
+    "width": 640,
+    "height": 59
+   }
+  ],
+  "actions": [
+   {
+    "name": "Triage queue",
+    "left": 1265,
+    "right": 1384,
+    "top": 142,
+    "width": 119,
+    "height": 28,
+    "cutOff": false
+   }
+  ],
+  "actionsCutOff": [],
+  "firstTileTop": 325,
+  "pageOverflow": 0
+ },
+ "device-presub": {
+  "viewport": 1440,
+  "contextLine": {
+   "height": 32,
+   "parts": [
+    {
+     "text": "Return to project workflow",
+     "width": 188,
+     "height": 32
+    },
+    {
+     "text": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+     "width": 243,
+     "height": 21
+    }
+   ]
+  },
+  "header": {
+   "left": 288,
+   "right": 1416,
+   "top": 104,
+   "width": 1128,
+   "height": 152
+  },
+  "textBlockWidth": 761,
+  "title": {
+   "text": "Pre-Sub manager",
+   "fontSize": "28px",
+   "lines": 1,
+   "left": 320,
+   "right": 1081,
+   "top": 154,
+   "width": 761,
+   "height": 36
+  },
+  "descriptions": [
+   {
+    "width": 640,
+    "height": 39
+   }
+  ],
+  "actions": [
+   {
+    "name": "Export",
+    "left": 1105,
+    "right": 1187,
+    "top": 132,
+    "width": 82,
+    "height": 28,
+    "cutOff": false
+   },
+   {
+    "name": "Ask AnA to start a Q-Sub",
+    "left": 1197,
+    "right": 1384,
+    "top": 132,
+    "width": 187,
+    "height": 28,
+    "cutOff": false
+   }
+  ],
+  "actionsCutOff": [],
+  "firstTileTop": 276,
+  "pageOverflow": 0
+ }
+}

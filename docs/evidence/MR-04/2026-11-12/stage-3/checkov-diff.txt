@@ -1,0 +1,17 @@
+# Checkov 3.4.5 over terraform/, failed checks: trunk before Stage 3 against this change. '<' passes after the change, '>' is new.
+1d0
+< CKV2_AWS_11 /modules/vpc-secure/main.tf module.stack.module.vpc.aws_vpc.this
+13a13,14
+> CKV2_AWS_62 /stack/access_logs.tf module.stack.aws_s3_bucket.access_logs
+> CKV2_AWS_62 /stack/access_logs.tf module.stack.aws_s3_bucket.alb_logs
+19a21,22
+> CKV_AWS_144 /stack/access_logs.tf module.stack.aws_s3_bucket.access_logs
+> CKV_AWS_144 /stack/access_logs.tf module.stack.aws_s3_bucket.alb_logs
+21a25,26
+> CKV_AWS_145 /stack/access_logs.tf module.stack.aws_s3_bucket.access_logs
+> CKV_AWS_145 /stack/access_logs.tf module.stack.aws_s3_bucket.alb_logs
+28c33,34
+< CKV_AWS_18 /stack/vault_storage.tf module.stack.aws_s3_bucket.vault
+---
+> CKV_AWS_18 /stack/access_logs.tf module.stack.aws_s3_bucket.access_logs
+> CKV_AWS_18 /stack/access_logs.tf module.stack.aws_s3_bucket.alb_logs

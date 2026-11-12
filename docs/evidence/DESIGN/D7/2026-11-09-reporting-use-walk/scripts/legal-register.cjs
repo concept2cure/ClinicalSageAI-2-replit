@@ -1,0 +1,46 @@
+// Register the uploaded letter as a company legal document through Settings → Company documents, as a person would.
+const path = require('path'); const { chromium } = require('playwright');
+const BASE = 'http://127.0.0.1:5100', PROGRAM = 'e89b7009-bb05-4060-8bc0-6da509648e95', VAULT = process.argv[2], OUT = process.argv[3];
+(async () => {
+  const a = await (await fetch(`${BASE}/api/auth/dev-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'jm.smith@concept2cure.pro' }) })).json();
+  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await ctx.addInitScript((a) => { for (const s of [localStorage, sessionStorage]) { s.setItem('trialsage_access_token', a.accessToken); s.setItem('trialsage_token_expiry', new Date(Date.now() + 86400e3).toISOString()); s.setItem('trialsage_user', JSON.stringify(a.user || {})); } localStorage.setItem('c2c-v2-prefs', JSON.stringify({ dark: false, welcomeDismissed: true })); }, a);
+  const p = await ctx.newPage(); const http = []; p.on('response', (r) => { if (r.url().includes('/api/') && r.status() >= 400) http.push(`${r.status()} ${r.request().method()} ${r.url().replace(BASE, '')}`); });
+  await p.goto(`${BASE}/concept2cure/insights?program=${PROGRAM}`, { waitUntil: 'networkidle' });
+  await p.getByRole('button', { name: /JM Smith/ }).first().click(); await p.waitForTimeout(800);
+  const menu = await p.evaluate(() => [...document.querySelectorAll('[role="menu"] [role="menuitem"], [role="menu"] button, [role="dialog"] button')].map((x) => x.textContent.trim()).slice(0, 20));
+  console.info('MENU', JSON.stringify(menu));
+  const item = p.getByRole('menuitem', { name: /Account|Settings/ }).first();
+  if (await item.count()) await item.click(); else await p.getByRole('button', { name: /Account|Settings/ }).first().click();
+  await p.getByRole('button', { name: 'Open company documents' }).click();
+  await p.waitForTimeout(4000); await p.screenshot({ path: require('path').join(OUT, 'company-docs-open-1440.png') });
+  console.info('COMPANY', JSON.stringify(await p.evaluate(() => { const s = document.querySelector('section[aria-label="Company documents"]'); return s ? s.innerText.replace(/\s+/g, ' ').slice(0, 900) : null; })));
+  const lib = p.getByRole('tab', { name: 'Legal document library' }); if (await lib.count()) await lib.click(); else await p.getByText('Legal document library').first().click();
+  await p.waitForTimeout(1500);
+  const summary = p.getByText('Register a legal document from Vault');
+  await summary.waitFor({ timeout: 30000 }); await summary.click();
+  const reg = p.locator('details.company-register');
+  await reg.getByLabel('Search your accessible Vaults').fill('Letter of Authorization');
+  await reg.getByRole('button', { name: 'Search Vault' }).click();
+  await p.waitForTimeout(3500);
+  console.info('RESULTS', JSON.stringify(await reg.evaluate((d) => d.innerText.replace(/\s+/g, ' ').slice(0, 700))));
+  console.info('PICKER', JSON.stringify(await reg.evaluate((d) => [...d.querySelectorAll('button, [role="option"]')].map((b) => b.innerText.replace(/\s+/g, ' ').slice(0, 120)).slice(0, 12))));
+  const pick = reg.getByRole('button', { name: 'Select document' }).first();
+  await pick.click(); await p.waitForTimeout(800);
+  const vals = await reg.evaluate((d) => Object.fromEntries([...d.querySelectorAll('label')].filter((l) => /UUID|title/.test(l.innerText)).map((l) => [l.querySelector('span').innerText, (l.querySelector('input')||{}).value])));
+  console.info('FILLED', JSON.stringify(vals));
+  if (!vals['Legal document title']) await reg.getByLabel('Legal document title').fill('Letter of Authorization (US agent)');
+  await reg.locator('label:has-text("Document kind") select').selectOption('authorization');
+  await reg.getByLabel('Document language').fill('en');
+  if (!vals['Source project UUID']) await reg.getByLabel('Source project UUID').fill(PROGRAM);
+  if (!vals['Vault document version UUID']) await reg.getByLabel('Vault document version UUID').fill(VAULT);
+  await p.getByLabel('Reason for legal document registration').fill('US agent authorization for the IND');
+  await summary.scrollIntoViewIfNeeded();
+  await p.screenshot({ path: path.join(OUT, 'register-form-1440.png'), fullPage: false });
+  await p.getByRole('button', { name: 'Register Vault version' }).click();
+  await p.waitForTimeout(3000);
+  console.info(JSON.stringify({ http, status: await p.evaluate(() => [...document.querySelectorAll('[role="status"],[role="alert"]')].map((x) => x.innerText.slice(0, 200))),
+    registered: await p.getByText('Letter of Authorization (US agent)').count() }));
+  await p.screenshot({ path: path.join(OUT, 'registered-1440.png'), fullPage: false });
+  await b.close();
+})().catch((e) => { console.error(e); process.exit(1); });

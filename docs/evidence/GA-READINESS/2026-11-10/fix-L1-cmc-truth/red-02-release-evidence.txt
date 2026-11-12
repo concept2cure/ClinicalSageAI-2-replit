@@ -1,0 +1,30 @@
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project (lock: false) 6ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project (lock: true) 3ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch (lock: false) 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch (lock: true) 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > retains the complete evidence projection and fingerprint in the final locked read 4ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints the recorded result and criterion even if pass/review flags are unchanged 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints who reviewed and when the result changed 3ms
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > compares the recorded value with the recorded criterion 6ms
+   → recordedResultVerdict is not a function
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > reads DS-2502-R2 as contradicted and not passed, and DS-2502-R1 as passed 7ms
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > refuses a approved release of the batch and names the contradicted result 2ms
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > refuses a conditional release of the batch and names the contradicted result 2ms
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > still lets the batch be rejected 2ms
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > a result with no comparable criterion keeps its recorded disposition 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > compares the recorded value with the recorded criterion
+TypeError: recordedResultVerdict is not a function
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > reads DS-2502-R2 as contradicted and not passed, and DS-2502-R1 as passed
+AssertionError: expected { qcId: 5, …(14) } to match object { Object (passFail, passed, ...) }
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > refuses a approved release of the batch and names the contradicted result
+AssertionError: expected { releaseStatus: 'released', …(1) } to have property "refusal"
+    100|     const rows = await readRecordedReleaseTests(queryable, 7, ds);
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > refuses a conditional release of the batch and names the contradicted result
+AssertionError: expected { …(2) } to have property "refusal"
+    100|     const rows = await readRecordedReleaseTests(queryable, 7, ds);
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > still lets the batch be rejected
+AssertionError: expected { releaseStatus: 'rejected', …(1) } to deeply equal { releaseStatus: 'rejected', …(1) }
+    111|     const rows = await readRecordedReleaseTests(queryable, 7, ds);
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > a recorded pass that contradicts its own criterion is not a pass > a result with no comparable criterion keeps its recorded disposition
+AssertionError: expected { Object (qcId, sampleId, ...) } to match object { passed: true, contradicted: false }
