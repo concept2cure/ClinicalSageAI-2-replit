@@ -245,6 +245,7 @@ import { detachWarning, isWatchedNow } from '@shared/ana/run-detach';
 import { sessionEndCauseWarning, stopCause, type SessionEndDetail } from '@shared/ana/stop-lines';
 import { runWithTenantScope } from '../../db/tenantStore.js';
 import { extractBearerToken } from '../../middleware/auth.js';
+import { markExpectedUnavailable } from '../../middleware/circuitBreaker';
 import { readsEveryRecord } from './record-access.js';
 import {
   MAX_PAUSE_MS,
@@ -1036,6 +1037,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const gw = ensureGateway();
       const deterministicMode = gw?.isDeterministic?.() || false;
       if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
+        // A configured state, not a failure of the provider: the breaker does not count it (GA-DEMO-04).
+        markExpectedUnavailable(res);
         return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
       }
 
