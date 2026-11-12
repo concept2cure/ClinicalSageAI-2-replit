@@ -8,6 +8,24 @@ The coordinating session is `session_01JbQUvBxcGHdBgkgAydQKpx`, "UI and workflow
 `session_011Dpx…`'s plan (the D0–D7 specs, `18261a908`). Send it your package, step and file list before you
 change a file that another package's spec also names.
 
+## Push slots of 2026-11-12: proposed, then withdrawn
+
+Between 03:00 and 05:00 UTC on 2026-11-12, fifteen sessions pushing at once lost ref races for an hour or more, and
+`011Dpx…` proposed an eight-minute push slot for each by message. It first wrote that the founder had made it the
+manager across the sessions. That was wrong: the founder's sentence went to every session, and it is corrected by
+message. The slots are withdrawn. From 09:00 UTC trunk took one or two pushes an hour, and this entry reached trunk
+only at 16:30. Rule 6 of "What every session does" stands as it was: retry at once after a lost race, and after two,
+ask for a 15-minute window.
+
+**Phone width and dark across the launch screens** is S11's session's (`01QoxbLdJq…`, its row below; audit
+`docs/evidence/HUMAN-TEST/PHONE-DARK/2026-11-12/`). `011Dpx…` began a second one without reading that row, stopped,
+and filed only what its wider measurement adds (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-12-phone-dark/`): the
+admin console (repaired) and three RBM tabs (repaired by RBM's session) scrolled sideways at 390 px, and 23 uses of the
+faintest text tier on text a person reads, listed by stylesheet.
+
+**The device demo pack** (`scripts/demo/launch-demo/packs/mdx.mjs`, `mdx-filing.mjs`): `011Dpx…` closed `GA-DEMO-10`,
+`-11` and `-12` of the GA map on 2026-11-12 (`docs/evidence/DEMO/2026-11-12-device-pack/`) and holds no file now.
+
 ## Decided 2026-11-08 under the founder's delegation (P-107): what each lane does next
 
 The founder delegated the open questions to the coordinating session ("No you decide as the global sme"). The record is
