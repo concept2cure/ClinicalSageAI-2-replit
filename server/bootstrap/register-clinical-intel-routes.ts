@@ -174,6 +174,15 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount docs routes:', error);
   }
 
+  // ── Support requests (P-127, S13): the customer's tickets, request-scoped, every write audited ──
+  try {
+    const supportRoutes = await import('../routes/support');
+    app.use('/api/support', supportRoutes.default);
+    console.log('✅ Support request routes mounted successfully');
+  } catch (error) {
+    console.error('Failed to mount support request routes:', error);
+  }
+
   // ── Source tracer (recorded source lineage per authored section, Part 11) ──
   try {
     const sourceTracerModule = await import('../routes/source-tracer-routes');
