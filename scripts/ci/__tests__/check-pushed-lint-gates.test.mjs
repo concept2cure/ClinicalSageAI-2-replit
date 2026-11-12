@@ -10,7 +10,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import {
-  attribute, decide, gateCommands, gateFiles, hookCommands, namedPaths, resolveBase, restoreReports, runsHere, selectGates,
+  attribute, decide, gateCommands, gateFiles, hookCommands, namedPaths, resolveBase, runsHere, selectGates,
 } from '../check-pushed-lint-gates.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -154,14 +154,4 @@ test('a detached HEAD, or a branch with no upstream, lands on origin/concept2cur
 test("a gate's script files are found through package.json", () => {
   assert.deepEqual(gateFiles([{ id: 'ci:a' }, { id: 'scripts/ci/check-b.mjs' }], { 'ci:a': 'node scripts/ci/check-a.mjs --strict' }),
     ['scripts/ci/check-a.mjs', 'scripts/ci/check-b.mjs']);
-});
-
-test('reports are written back exactly as they were, a pusher\'s own edit included; unchanged ones are not touched', () => {
-  const disk = new Map([['docs/reports/a.json', Buffer.from('gate wrote this')], ['docs/reports/b.json', Buffer.from('same')]]);
-  const snap = new Map([['docs/reports/a.json', Buffer.from('pusher draft, uncommitted')], ['docs/reports/b.json', Buffer.from('same')]]);
-  const written = [];
-  const restored = restoreReports(snap, { read: (f) => disk.get(f), write: (f, b) => { written.push(f); disk.set(f, b); } });
-  assert.deepEqual(restored, ['docs/reports/a.json']);
-  assert.deepEqual(written, ['docs/reports/a.json']);
-  assert.equal(disk.get('docs/reports/a.json').toString(), 'pusher draft, uncommitted');
 });

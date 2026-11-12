@@ -1577,6 +1577,23 @@ the regulatory-author role. The `etmf` surface's row named an AnA tool that does
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 
+**Admission is done, 2026-11-12** (F1 `2dc105c1b7`; P-124 item 6, `df170752d8`). The trial master file is a
+section of the Vault's Required documents view, after the coverage, and the header's "Trial master file" brings it into
+view. Both appear only where the organisation can use the eTMF: in the release and in its plan. While that view is
+open, the Vault tells AnA what the section read. The `etmf` page is the door: it opens the Vault there, or with no
+project says so.
+- **The release:** the Vault app's surfaces are `vault` and `etmf`; its module stays `vault`.
+- **The catalogue:** `etmf` is in the professional band (P-75), by a migration in the set after every catalogue
+  writer. An organisation below the band keeps it only if it held filings before admission. On the replayed fixture
+  that is 57 of the 199 organisations below the band. Two catalogue migrations are amended in place (RULE 1): one had retired the row on every replay, and the
+  other refused a module with no tier.
+- **AnA:** `get_tmf_view` and `classify_tmf_artifact` are admitted. The three inspection tools that were filed beside
+  them stay withheld, under `qmp`: they write inspections, which no screen shows.
+- **Validation:** the eTMF is admitted as CMC was, with its URS and before its OQ is executed. It is not described as
+  validated until the OQ is executed and filed (Validation for GA).
+
+Evidence `docs/evidence/D2-ETMF/2026-11-12-admission/`.
+
 #### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
 
 Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just

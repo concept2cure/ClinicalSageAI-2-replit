@@ -3174,6 +3174,8 @@ behind it and every change says who made it and why.
    by the `etmf` page that the Vault's button opens, and in a release that page stays locked as the old screen was.
    The founder's sentence is fully answered only at admission, when the section sits in the Vault's Required
    documents view (the change is kept ready in `docs/evidence/D2-ETMF/2026-11-10-vault-section/held/`).
+   **Done at admission, 2026-11-12 (item 6):** the section is in the Vault's Required documents view, and the `etmf`
+   page is the door that opens the Vault there.
 5. **What retires with the second, undeployed store (slice E4), and what is carried.** That store's tables are on no
    deploy path, so no deployed database holds a row of it; its screens and tools were refused in a release.
    - **Carried onto the deployed store before admission: "not applicable", with a reason.** A study to which an
@@ -3193,6 +3195,21 @@ behind it and every change says who made it and why.
      deployed store.
 6. **Order to admission:** E4 (one store); "not applicable"; the URS and OQ; then the Vault app gains the `etmf`
    surface as a professional-tier module and the section moves into the Vault.
+   **Admitted 2026-11-12** (added that day), in the order CMC was admitted: its URS (URS-007) landed with admission,
+   and its OQ (OQ-008) was executed after it.
+   - **Done before it:** E4 and "not applicable". The URS and the OQ are drafted for Validation for GA (`ed03906b8f`),
+     not yet numbered, filed or executed. So the eTMF is in the release, and it is **not described as validated**
+     until its OQ is executed and filed.
+   - **The release:** the Vault app's surfaces are `vault` and `etmf`. Its module stays `vault`. `etmf` is a
+     professional-tier module (P-75), not a launch module.
+   - **Who keeps it below that band:** an organisation that held trial master file filings before admission, by a
+     subscription row naming the migration. Other organisations below the band receive nothing.
+   - **Decided here: AnA's three inspection tools are not admitted with it.** The AnA inventory had filed
+     `create_inspection`, `log_inspection_finding` and `review_inspection_readiness` under `etmf`, beside the trial
+     master file's two tools. They write the inspection record, which no screen shows and whose API (`/api/inspections`)
+     production refuses. Admitting them would release an app through the conversation. They stay withheld, filed under
+     the quality surface `qmp`, until a screen shows inspections.
+   - Built: F1 `2dc105c1b7`. Evidence: `docs/evidence/D2-ETMF/2026-11-12-admission/`.
 7. **A person who may read the project's Vault reads its study's trial master file** (added 2026-11-12, when the URS
    draft named it as a question). Every eTMF route required the regulatory-author role, reads included, which no
    organization viewer holds. So a monitor, auditor or inspector given read access met a failed read beneath the
@@ -3210,8 +3227,8 @@ behind it and every change says who made it and why.
    - Each read still admits the person to the study's project by the Vault's rule.
    - Built: `server/routes/etmf.routes.ts` (`READERS`); proven on PostgreSQL in `tests/db/etmf-study-binding.dbtest.ts`.
 
-Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`. The steps of E4
-are in the plan's §3a.
+Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`,
+`docs/evidence/D2-ETMF/2026-11-12-admission/`. The steps of E4 are in the plan's §3a.
 
 ### P-125 — Decided under the founder's delegation: client administration shows the work (P-122 applied to Administration, Licensing, Onboarding and the account)
 

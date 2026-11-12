@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { builtinAuthoringTemplateId } from '../../authoring/builtin-authoring-templates';
-import { CONSENT_TEMPLATE_IDS, consentDocumentGate, consentElementTemplates, isConsentTemplateId } from '../protocol-consent-logic';
+import { CONSENT_TEMPLATE_IDS, consentApprovalVerdict, consentDocumentGate, consentElementTemplates, isConsentTemplateId } from '../protocol-consent-logic';
 
 const TEXT: Record<string, string> = {
   '1': 'This study involves research. Its purpose is to test the drug; you will take part for 12 weeks.',
@@ -74,5 +74,58 @@ describe('the document is held to the same gate as the consent record', () => {
     const g = consentDocumentGate([]);
     expect(g.readyToApprove).toBe(false);
     expect(g.requiredComplete).toBe(0);
+  });
+});
+
+/*
+ * P-102, slice 2 (2026-11-12): the gate decides the approval. An element
+ * 21 CFR 50.25(a) requires cannot be approved over: there is no override. The
+ * ClinicalTrials.gov statement (50.25(c)) is required for an applicable
+ * clinical trial; nothing records a study's status, so the approver is asked,
+ * and a stated "not an applicable clinical trial" is recorded on the approval.
+ */
+describe('what the gate means for an approval', () => {
+  it('a complete document is clear', () => {
+    expect(consentApprovalVerdict(consentDocumentGate(doc()), false)).toEqual({ kind: 'clear' });
+  });
+
+  it('a missing 50.25(a) element refuses, names it by title, and no statement lifts it', () => {
+    for (const stated of [false, true]) {
+      const v = consentApprovalVerdict(consentDocumentGate(doc({ '6': 'Your records will be kept confidential.', '3': '' })), stated);
+      expect(v.kind).toBe('refused');
+      if (v.kind !== 'refused') return;
+      expect(v.code).toBe('CONSENT_INCOMPLETE');
+      expect(v.message).toMatch(/^Not approved — this informed consent form does not yet meet 2 required elements of informed consent \(21 CFR 50\.25\(a\)\)/);
+      expect(v.message).toContain('Reasonably foreseeable risks or discomforts');
+      expect(v.message).toContain('Extent of confidentiality of records');
+      expect(v.message).toMatch(/Nothing was signed\.$/);
+      expect(v.elements).toEqual(['risks', 'confidentiality']);
+    }
+  });
+
+  it('with the ClinicalTrials.gov statement also missing, the refusal says it is owed only by an applicable clinical trial', () => {
+    const v = consentApprovalVerdict(consentDocumentGate(doc({ '3': '', '11': null })), false);
+    expect(v.kind === 'refused' && v.code).toBe('CONSENT_INCOMPLETE');
+    expect(v.kind === 'refused' && v.message).toMatch(/ClinicalTrials\.gov statement is also missing/);
+  });
+
+  it('only the ClinicalTrials.gov statement missing asks whether the study is an applicable clinical trial', () => {
+    const v = consentApprovalVerdict(consentDocumentGate(doc({ '11': null })), false);
+    expect(v.kind).toBe('refused');
+    if (v.kind !== 'refused') return;
+    expect(v.code).toBe('CONSENT_TRIAL_STATUS_REQUIRED');
+    expect(v.message).toMatch(/21 CFR 50\.25\(c\)/);
+    expect(v.message).toMatch(/recorded with your approval/);
+    expect(v.message).toMatch(/Nothing was signed\.$/);
+  });
+
+  it('stated not an applicable clinical trial, the same document approves and the statement is to be recorded', () => {
+    expect(consentApprovalVerdict(consentDocumentGate(doc({ '11': null })), true)).toEqual({ kind: 'stated_not_applicable' });
+    // A statement that is present but lacks the prescribed wording is the same case.
+    expect(consentApprovalVerdict(consentDocumentGate(doc({ '11': 'Results will be posted.' })), true)).toEqual({ kind: 'stated_not_applicable' });
+  });
+
+  it('a stated "not applicable" on a complete document records nothing', () => {
+    expect(consentApprovalVerdict(consentDocumentGate(doc()), true)).toEqual({ kind: 'clear' });
   });
 });

@@ -104,7 +104,13 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // catalogue row is deprecated, never deleted (CLAUDE.md Rule 1;
     // db/migrations/20260810_reconcile_module_catalog.sql). The Vault is free at
     // the same tier, so no organisation loses a function.
-    surfaces: ['vault'],
+    //
+    // 2026-11-12 (P-74 item 1, P-75, P-124 item 6): the trial master file is admitted as a feature of the Vault. Its
+    // surface `etmf` is the Vault's, so the Vault's Required documents view may call /api/etmf, and the eTMF's page
+    // opens the Vault there. Its module is professional-tier and is NOT in `modules`, which would grant it to every
+    // organisation (P-75); `available_modules` carries the tier (db/migrations/20261112_etmf_module_professional_tier.sql).
+    // Admitted as CMC was (P-28): with its URS, its OQ drafted and not yet executed, so it is not described as validated.
+    surfaces: ['vault', 'etmf'],
     modules: ['vault'],
   },
   {

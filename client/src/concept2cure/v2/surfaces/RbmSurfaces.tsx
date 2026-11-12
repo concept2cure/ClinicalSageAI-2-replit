@@ -119,8 +119,62 @@ export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: num
   );
 }
 
-/* ── ThresholdGauge ── */
-export function ThresholdGauge({ current, secondary, threshold, unit }: { current: number; secondary: number; threshold: number; unit: string }) {
+/* ── ThresholdGauge ──
+   A tolerance limit and where the value stands against it. `upper` (higher is worse) is drawn as it always was.
+   The server has also kept `lower` limits (lower is worse: data completeness, consent documentation) and
+   `two_sided` ranges (a randomisation ratio, a dosing band) since 2026-09-30, and the screen could neither set nor
+   draw them. For those the bar shows the breach and early-warning zones on the side, or sides, where the limit
+   bites, and a mark at the value. The mark's tone is the engine's status: the screen does not band the value. */
+const QTL_TONE: Record<string, string> = { breached: 'err', approaching: 'warn', within: 'ok' };
+
+/** The limits in words, for the caption under the bar and for a reader who cannot see it. */
+export function toleranceWords(q: { direction?: string; threshold: number; secondary: number | null; thresholdLower?: number | null; secondaryLower?: number | null }, unit = ''): string {
+  const n = (v: number) => `${v}${unit}`;
+  if (q.direction === 'two_sided' && q.thresholdLower != null) {
+    const warn = [q.secondaryLower != null ? `below ${n(q.secondaryLower)}` : null, q.secondary != null ? `above ${n(q.secondary)}` : null].filter(Boolean).join(' or ');
+    return `range ${n(q.thresholdLower)} to ${n(q.threshold)}${warn ? ` — warn ${warn}` : ''}`;
+  }
+  if (q.direction === 'lower') return `limit ${n(q.threshold)} or below${q.secondary != null ? ` — warn at ${n(q.secondary)}` : ''}`;
+  return `warn ${n(q.secondary ?? q.threshold)} — limit ${n(q.threshold)}`;
+}
+
+interface GaugeProps {
+  current: number; secondary: number; threshold: number; unit: string;
+  /** `lower` or `two_sided`; absent or `upper` keeps the original drawing. */
+  direction?: string; thresholdLower?: number | null; secondaryLower?: number | null;
+  /** The engine's status for the value, which sets the mark's tone for a lower limit or a range. */
+  status?: string;
+}
+
+/** A lower limit or a range: the zones where the limit bites, and a mark at the value. */
+function BoundedGauge({ current, secondary, threshold, unit, direction, thresholdLower, secondaryLower, status }: GaugeProps) {
+  const lower = direction === 'two_sided' && thresholdLower != null ? thresholdLower : null;
+  const warnUpper = secondary === threshold ? null : secondary;
+  const warnLower = lower != null ? secondaryLower ?? null : null;
+  const words = toleranceWords({ direction, threshold, secondary: warnUpper, thresholdLower, secondaryLower }, unit);
+  const points = [current, threshold, warnUpper, lower, warnLower].filter((v): v is number => v != null && Number.isFinite(v));
+  const lo = Math.min(...points), hi = Math.max(...points), pad = ((hi - lo) || Math.abs(hi) || 1) * 0.12;
+  const pc = (v: number) => Math.max(0, Math.min(100, (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * 100));
+  // [from, to, kind] in percent of the bar: a range has a breach zone at each end, a lower limit at the low end.
+  const zones: [number, number, string][] = lower != null
+    ? [[0, pc(lower), 'err'], [pc(threshold), 100, 'err']]
+    : [[0, pc(threshold), 'err']];
+  if (lower != null && warnLower != null) zones.push([pc(lower), pc(warnLower), 'warn']);
+  if (warnUpper != null) zones.push(lower != null ? [pc(warnUpper), pc(threshold), 'warn'] : [pc(threshold), pc(warnUpper), 'warn']);
+  return (
+    <div className="rbm-gauge" role="img" aria-label={`Current ${current}${unit}; ${words}`}>
+      <div className="rbm-gauge-bar">
+        {zones.map(([from, to, kind], i) => <div key={i} className={`rbm-gauge-band ${kind}`} style={{ left: `${from}%`, width: `${Math.max(0, to - from)}%` }} />)}
+        <div className="rbm-gauge-mark" data-tone={QTL_TONE[status ?? ''] ?? 'neutral'} style={{ left: `${pc(current)}%` }} />
+      </div>
+      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">{words}</span></div>
+    </div>
+  );
+}
+
+export function ThresholdGauge(props: GaugeProps) {
+  if (props.direction === 'lower' || props.direction === 'two_sided') return <BoundedGauge {...props} />;
+  const { current, secondary, threshold, unit } = props;
   const max = Math.max(threshold * 1.25, current * 1.05);
   const pc = (v: number) => Math.min(100, v / max * 100);
   const tone = current >= threshold ? 'err' : current >= secondary ? 'warn' : 'ok';
