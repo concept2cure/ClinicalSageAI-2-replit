@@ -163,6 +163,7 @@ import { TurnTimeline } from '../../services/ana/turn-timeline-emitter.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS, CANVAS_DOCUMENT_TOOLS } from '../../services/ana/tool-selection.js';
+import { HELP_CENTER_TOOL_NAMES, asksHowToUseProduct } from '../../services/ana/help-support-tools.js';
 import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/history-window.js';
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
@@ -2596,6 +2597,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             // A document she drafts reaches the canvas this route renders only
             // through draft_authoring_document (tool-selection.ts).
             ...CANVAS_DOCUMENT_TOOLS,
+            // A question about using Concept2Cure is answered from the Help Center (P-127), whatever its wording scores.
+            ...(asksHowToUseProduct(typeof message === 'string' ? message : '') ? HELP_CENTER_TOOL_NAMES : []),
             // Delegation survives relevance trimming on a turn that may use it.
             ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
             // The engines a loaded skill's method names: a method that tells
