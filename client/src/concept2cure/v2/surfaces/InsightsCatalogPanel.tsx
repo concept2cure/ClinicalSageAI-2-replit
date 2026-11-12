@@ -87,6 +87,15 @@ function RunUnavailableNote({ reason }: { reason?: string }) {
   return <div className="rl-card-meta">{reason}</div>;
 }
 
+/** Where a report applies and who it is for, in words: "US · OLAW · For IACUC coordinator, quality assurance". */
+function TypeAudience({ type }: { type: LibraryReportType }) {
+  const said = [
+    type.region ? regionWords(type.region) : null,
+    type.allowedPersonas?.length ? `For ${type.allowedPersonas.map(reportingRoleWords).join(', ')}` : null,
+  ].filter(Boolean);
+  return said.length ? <div className="rl-card-meta">{said.join(' · ')}</div> : null;
+}
+
 function TypeCard({
   type,
   canRun,
@@ -114,12 +123,7 @@ function TypeCard({
             : 'Scope not declared'}
       </div>
       {type.computedScope === 'organization' && <OrganizationCountsNote className="rl-card-meta" />}
-      {(type.region || type.allowedPersonas?.length) && (
-        <div className="rl-card-meta">
-          {[type.region ? regionWords(type.region) : null,
-            type.allowedPersonas?.length ? `For ${type.allowedPersonas.map(reportingRoleWords).join(', ')}` : null].filter(Boolean).join(' · ')}
-        </div>
-      )}
+      <TypeAudience type={type} />
       {type.availabilityReason && <div className="rl-card-meta">{type.availabilityReason}</div>}
       {type.entitled !== false && <RunUnavailableNote reason={unavailableReason} />}
       {type.entitled === false ? (

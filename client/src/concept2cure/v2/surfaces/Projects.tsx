@@ -1407,7 +1407,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         (truncated ? ` — showing the first ${projects.length} only; more exist. Readiness, status and search cover this page${counts ? '; total and filing counts cover all matching projects' : '; counts are page floors'}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         (counts ? `; ${counts.filingWithin60Days} with a target filing date in the next 60 days, as the server counted. ` : '. The portfolio figures could not be read. ') +
-        `${averageReadinessSentence(counts) ?? 'No portfolio average readiness is computed.'} Each project\'s dossier readiness is listed. Blockers are not assessed on this list. ` +
+        `${averageReadinessSentence(counts) ?? 'No portfolio average readiness is computed.'} Each project's dossier readiness is listed. Blockers are not assessed on this list. ` +
         `Shown as a ${view}.`,
       facts: {
         totalPrograms: counts?.total ?? projects.length,
