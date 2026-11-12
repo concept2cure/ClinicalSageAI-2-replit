@@ -7,6 +7,15 @@
  * The monitoring tier is risk-proportionate per ICH E6(R3): higher risk →
  * more oversight (reduced / standard / enhanced).
  *
+ * A second source, 2026-11-11 (GA-S8-02, plan S8: "risk-based monitoring … runs over the project's study data").
+ * Site Intelligence has no writer a person can reach (its router is mounted nowhere), so every study read "0 sites"
+ * while its own site-level indicator readings, loaded through "Load extract…", sat in rbm_metric_observations
+ * unused: metric-ingestion.ts stored them "NOT folded into the site-risk composite". When Site Intelligence holds
+ * no site for the study, the snapshot is derived from those readings: each of the study's KRIs is banded at each
+ * site by the same kriStatus the study-level indicator uses, and the composite is the mean of red 100, amber 50,
+ * green 0 over the indicators evaluated at the site (snapshotsFromSiteIndicators). Each row records its source and
+ * every reading behind it in `metadata`, so a screen can say which it is showing and why a site has its tier.
+ *
  * Defensive by design: two divergent site_intel.sites shapes exist in the
  * codebase (composite_score/operational_score vs overall_score/compliance_score),
  * and the schema may be absent in some tenants. We SELECT * and read whichever
@@ -40,7 +49,7 @@
 
 import { pool } from '../../db';
 import { programInOrganization } from '../c2c/program-access';
-import { monitoringTierFromRisk, type MonitoringTier } from './rbm-engine';
+import { kriStatus, monitoringTierFromRisk, type KriDirection, type KriStatus, type MonitoringTier } from './rbm-engine';
 
 /** Minimal pg-compatible executor — matches rbm-actuator's `Exec`. */
 export interface Exec {
@@ -72,11 +81,31 @@ export type SiteReadFailure =
 
 export type SiteReadOutcome =
   | { ok: true; rows: Record<string, unknown>[] }
-  | { ok: false; reason: SiteReadFailure; detail?: string };
+  /** `notInstalled`: the site_intel schema or its sites table does not exist here, as opposed to being unreadable. */
+  | { ok: false; reason: SiteReadFailure; detail?: string; notInstalled?: boolean };
+
+/** Where a snapshot's figures came from. Stored on each row as `metadata.source`. */
+export type SiteRiskSource = 'site_intelligence' | 'study_indicators';
 
 export type RecomputeOutcome =
-  | { ok: true; snapshots: SiteRiskSnapshot[] }
+  | { ok: true; snapshots: SiteRiskSnapshot[]; source: SiteRiskSource }
   | { ok: false; reason: SiteReadFailure; detail?: string };
+
+/** One of the study's KRIs as last read at one site, with the limits it is banded against. */
+export interface SiteIndicatorReading {
+  siteNumber: string;
+  kriName: string;
+  unit: string | null;
+  value: number;
+  amber: number | null;
+  red: number | null;
+  direction: KriDirection;
+  observedAt: string | null;
+  dataCutoff: string | null;
+}
+
+/** A reading with the engine's band for it. */
+export interface SiteIndicatorResult extends SiteIndicatorReading { status: KriStatus }
 
 export interface SiteRiskSnapshot {
   siteId: string | null;
@@ -88,6 +117,10 @@ export interface SiteRiskSnapshot {
   operationalRisk: number | null;
   monitoringTier: MonitoringTier;
   drivers: string[];
+  /** Absent on a snapshot built by hand in a test; every stored row carries one. */
+  source?: SiteRiskSource;
+  /** The banded readings behind a study-indicator snapshot, in the order they are scored. */
+  indicators?: SiteIndicatorResult[];
 }
 
 function toRisk(score: unknown): number | null {
@@ -136,6 +169,86 @@ export function snapshotFromSiteRow(row: Record<string, unknown>): SiteRiskSnaps
   };
 }
 
+/**
+ * What a banded indicator contributes to a site's composite, on the 0–100 risk scale monitoringTierFromRisk reads.
+ * A red indicator is the full weight, an amber one half, a green one none. An indicator that is not evaluated
+ * (no limit configured) contributes nothing and is not counted: an unbanded reading is not evidence either way.
+ */
+export const SITE_INDICATOR_POINTS: Record<Exclude<KriStatus, 'not_evaluated'>, number> = { red: 100, amber: 50, green: 0 };
+export const SITE_INDICATOR_RULE =
+  'Each indicator is banded at the site against its own limits. Red counts 100, amber 50, green 0; the composite is the mean over the indicators evaluated at the site.';
+
+const limitWords = (r: SiteIndicatorResult): string => {
+  const limit = r.status === 'red' ? r.red : r.amber;
+  const unit = r.unit ? ` ${r.unit}` : '';
+  return `${r.kriName} ${r.value}${unit}: ${r.status}${limit == null ? '' : ` (limit ${limit}${unit})`}`;
+};
+
+/**
+ * Site-risk snapshots from the study's own site-level indicator readings. Pure.
+ *
+ * One snapshot per site that has a reading of at least one of the study's KRIs. The drivers are the red and amber
+ * indicators, in words, worst first. A site whose readings are all unbanded has no composite and stays on the
+ * standard tier: with nothing evaluated there is no ground for less oversight, or for more.
+ */
+export function snapshotsFromSiteIndicators(readings: SiteIndicatorReading[]): SiteRiskSnapshot[] {
+  const bySite = new Map<string, SiteIndicatorResult[]>();
+  for (const r of readings) {
+    const banded: SiteIndicatorResult = { ...r, status: kriStatus(r.value, r.amber, r.red, r.direction) };
+    bySite.set(r.siteNumber, [...(bySite.get(r.siteNumber) ?? []), banded]);
+  }
+  const order: Record<KriStatus, number> = { red: 0, amber: 1, green: 2, not_evaluated: 3 };
+  return [...bySite.entries()].map(([siteNumber, results]) => {
+    const indicators = [...results].sort((a, b) => order[a.status] - order[b.status] || a.kriName.localeCompare(b.kriName));
+    const evaluated = indicators.filter((i) => i.status !== 'not_evaluated');
+    const compositeRisk = evaluated.length === 0 ? null
+      : Math.round((evaluated.reduce((sum, i) => sum + SITE_INDICATOR_POINTS[i.status as 'red' | 'amber' | 'green'], 0) / evaluated.length) * 100) / 100;
+    return {
+      // The study data names a site by its number, and RBM's signals carry the same value as their site id.
+      siteId: siteNumber, siteNumber, siteName: null,
+      compositeRisk, enrollmentRisk: null, qualityRisk: null, operationalRisk: null,
+      monitoringTier: compositeRisk == null ? 'standard' as const : monitoringTierFromRisk(compositeRisk),
+      drivers: indicators.filter((i) => i.status === 'red' || i.status === 'amber').map(limitWords),
+      source: 'study_indicators' as const,
+      indicators,
+    };
+  });
+}
+
+/**
+ * The latest site-level reading of each of the study's KRIs at each site, from extracts that have not been
+ * superseded. A reading binds to a KRI the way a study-level one does in metric-ingestion.ts: by the KRI's name
+ * or its metadata.metricKey, case-insensitively. The caller has already proved the program is the organization's.
+ */
+export async function readSiteIndicatorReadings(
+  exec: Exec,
+  organizationId: number,
+  programId: string,
+): Promise<SiteIndicatorReading[]> {
+  const { rows } = await exec.query(
+    `SELECT DISTINCT ON (o.scope_id, k.id)
+            o.scope_id AS site_number, k.name AS kri_name, COALESCE(o.unit, k.unit) AS unit, o.value,
+            k.threshold_amber, k.threshold_red, k.direction, o.observed_at, o.data_cutoff
+       FROM rbm_metric_observations o
+       JOIN rbm_kris k
+         ON k.organization_id = o.organization_id AND k.program_id = o.program_id AND k.deleted_at IS NULL
+        AND (LOWER(k.name) = LOWER(o.metric_key) OR LOWER(COALESCE(k.metadata->>'metricKey','')) = LOWER(o.metric_key))
+       LEFT JOIN rbm_data_runs r ON r.id = o.run_id AND r.organization_id = o.organization_id
+      WHERE o.organization_id = $1 AND o.program_id = $2 AND o.scope_level = 'site'
+        AND o.scope_id IS NOT NULL AND o.value IS NOT NULL AND r.superseded_at IS NULL
+      ORDER BY o.scope_id, k.id, o.observed_at DESC, o.id DESC`,
+    [organizationId, programId],
+  );
+  const text = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
+  const limit = (v: unknown): number | null => (v == null ? null : Number(v));
+  return rows.map((row) => ({
+    siteNumber: String(row.site_number), kriName: String(row.kri_name), unit: text(row.unit), value: Number(row.value),
+    amber: limit(row.threshold_amber), red: limit(row.threshold_red),
+    direction: row.direction === 'lower_worse' ? 'lower_worse' : 'higher_worse',
+    observedAt: text(row.observed_at), dataCutoff: text(row.data_cutoff)?.slice(0, 10) ?? null,
+  }));
+}
+
 /** Map a pg error to the narrowest failure we can name. */
 function classify(err: unknown): { reason: SiteReadFailure; detail: string } {
   const code = (err as { code?: string })?.code;
@@ -175,7 +288,8 @@ export async function readProgramSites(
     return { ok: true, rows };
   } catch (err) {
     const { reason, detail } = classify(err);
-    return { ok: false, reason, detail };
+    const code = (err as { code?: string })?.code;
+    return { ok: false, reason, detail, ...(code === UNDEFINED_TABLE || code === INVALID_SCHEMA ? { notInstalled: true } : {}) };
   }
 }
 
@@ -187,8 +301,26 @@ async function recomputeOn(
   // Read BEFORE the transaction: a failed source read must not touch the
   // stored snapshot, and a statement error inside BEGIN would poison it.
   const read = await readProgramSites(exec, organizationId, programId);
-  if (!read.ok) return read;
-  const snapshots = read.rows.map(snapshotFromSiteRow);
+  // Any failure but "Site Intelligence is not installed here" stops, as before: ownership is unproved, a read went
+  // wrong, or the register exists and this role may not read it. None of those may look like a study with no
+  // sites, and none may quietly swap one source's figures for the other's.
+  if (!read.ok && !read.notInstalled) return read;
+  let snapshots: SiteRiskSnapshot[];
+  let source: SiteRiskSource;
+  if (read.ok && read.rows.length > 0) {
+    source = 'site_intelligence';
+    snapshots = read.rows.map((row) => ({ ...snapshotFromSiteRow(row), source }));
+  } else {
+    // Site Intelligence holds no site for this study (nothing in the product writes one), or is not installed.
+    // The study's own site-level indicator readings are the source. Ownership was proved by readProgramSites.
+    source = 'study_indicators';
+    try {
+      snapshots = snapshotsFromSiteIndicators(await readSiteIndicatorReadings(exec, organizationId, programId));
+    } catch (err) {
+      const { reason, detail } = classify(err);
+      return { ok: false, reason, detail };
+    }
+  }
 
   try {
     await exec.query('BEGIN');
@@ -201,17 +333,20 @@ async function recomputeOn(
         `INSERT INTO rbm_site_risk_scores (
            organization_id, program_id, site_id, site_number, site_name,
            composite_risk, enrollment_risk, quality_risk, operational_risk,
-           monitoring_tier, drivers
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+           monitoring_tier, drivers, metadata
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
         [
           organizationId, programId, s.siteId, s.siteNumber, s.siteName,
           s.compositeRisk, s.enrollmentRisk, s.qualityRisk, s.operationalRisk,
           s.monitoringTier, JSON.stringify(s.drivers),
+          JSON.stringify(source === 'study_indicators'
+            ? { source, rule: SITE_INDICATOR_RULE, indicators: s.indicators ?? [] }
+            : { source }),
         ],
       );
     }
     await exec.query('COMMIT');
-    return { ok: true, snapshots };
+    return { ok: true, snapshots, source };
   } catch (err) {
     await exec.query('ROLLBACK').catch(() => {});
     const { reason, detail } = classify(err);
