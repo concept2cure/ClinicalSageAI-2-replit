@@ -1,49 +1,57 @@
--- ============================================================================
--- AI-native eTMF (Capability C2C-08)
--- ============================================================================
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure — the Vault's trial master file
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ICH E6(R3)
+--             Appendix C (essential records), ALCOA+ principles
+-- Purpose: This file no longer creates the second trial master file store.
+--          AMENDED IN PLACE 2026-11-12 (eTMF convergence E4 step 5; founder
+--          decisions P-74, P-75, P-124). It creates nothing.
 --
--- Trial Master File management against the DIA TMF Reference Model: a per-study
--- container and its classified artifacts (zone/section/artifact), with a
--- completeness gap-check feeding inspection readiness.
+-- eCTD/CTD Context:
+--   - Module(s): clinical (the study's trial master file, filed in the Vault)
+--   - Integrity Risk Addressed: two stores answering "is this study's TMF
+--     complete" from different records, one of them typed statuses with no
+--     document behind them
 --
--- Grounded in the DIA TMF Reference Model (11 zones) and ICH E6(R2) §8.
--- Tenancy/audit mirror the platform; status/type columns are CHECK-constrained.
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - No statement. Nothing is created, altered or dropped. Idempotent.
 --
--- Schema:  shared/schema/etmf.ts
--- Service: server/services/etmf/*
--- Routes:  server/routes/etmf.ts (/api/etmf)
--- ============================================================================
-
-CREATE TABLE IF NOT EXISTS tmf_files (
-  id              serial PRIMARY KEY,
-  organization_id integer NOT NULL REFERENCES organizations(id),
-  study_id        integer REFERENCES clinical_studies(id),
-  title           text NOT NULL,
-  tmf_model       text NOT NULL DEFAULT 'dia_rm_v3',
-  status          text NOT NULL DEFAULT 'active' CHECK (status IN ('active','archived','locked')),
-  created_by      integer NOT NULL REFERENCES users(id),
-  created_at      timestamptz NOT NULL DEFAULT now(),
-  updated_at      timestamptz NOT NULL DEFAULT now(),
-  deleted_at      timestamptz
-);
-CREATE INDEX IF NOT EXISTS idx_tmf_files_org   ON tmf_files(organization_id);
-CREATE INDEX IF NOT EXISTS idx_tmf_files_study ON tmf_files(study_id);
-
-CREATE TABLE IF NOT EXISTS tmf_artifacts (
-  id                    serial PRIMARY KEY,
-  organization_id       integer NOT NULL REFERENCES organizations(id),
-  tmf_file_id           integer NOT NULL REFERENCES tmf_files(id),
-  zone                  integer NOT NULL CHECK (zone BETWEEN 1 AND 11),
-  section               text,
-  artifact_name         text NOT NULL,
-  expected              boolean NOT NULL DEFAULT true,
-  completeness_required boolean NOT NULL DEFAULT true,
-  status                text NOT NULL DEFAULT 'expected' CHECK (status IN ('expected','received','in_review','final','missing','not_applicable')),
-  document_date         date,
-  created_by            integer NOT NULL REFERENCES users(id),
-  created_at            timestamptz NOT NULL DEFAULT now(),
-  updated_at            timestamptz NOT NULL DEFAULT now(),
-  deleted_at            timestamptz
-);
-CREATE INDEX IF NOT EXISTS idx_tmf_artifacts_org  ON tmf_artifacts(organization_id);
-CREATE INDEX IF NOT EXISTS idx_tmf_artifacts_file ON tmf_artifacts(tmf_file_id);
+-- Notes:
+--   - Plan: docs/design/ETMF_CONVERGENCE_E4_PLAN_2026-11-10.md §1.5, §6 step 5.
+--   - Evidence: docs/evidence/D2-ETMF/2026-11-12-e4-step5-service-schema/.
+-- =============================================================================
+--
+-- WHAT THIS FILE USED TO DO
+-- From 2026-06-10 it made a second trial master file store: a per-study
+-- container (tmf_files: organization, study, title, reference model, status)
+-- and its artifacts (tmf_artifacts: zone, section, name, expected and
+-- completeness-required flags, a status a person typed, a document date), with
+-- four indexes and no policy. No artifact named a document. The model was
+-- shared/schema/etmf.ts; the service server/services/etmf/etmf-service.ts; the
+-- routes server/routes/etmf.ts; six AnA tools and a report pack read or wrote it.
+--
+-- WHY IT IS GONE
+-- The trial master file is tmf_artifact_filings (migrations/20260615_
+-- tmf_artifact_filings.sql and 20261110_tmf_filings_study_ref.sql, both in
+-- C2C_MIGRATION_FILES): per study, each reference-model record filed against a
+-- Vault document, declared not applicable, or removed, with who, when and why,
+-- and a chained audit row. Its readiness counts a record only when its document
+-- is verified. eTMF convergence E4 moved every caller of the second store onto
+-- it (steps 1-4: the report pack, AnA's reads, AnA's writes, the routes and
+-- metrics) and step 5 deleted the service, the verdict and the schema model.
+--
+-- WHY IN PLACE, AND NOT A DROP (CLAUDE.md RULE 1)
+-- This file is on no deploy path: it is in none of C2C_MIGRATION_FILES, the
+-- authoring subsystem's list or the drizzle journal. Only install-fresh's
+-- overlay ran it, once, on a new database. A database that only ever had
+-- deploy-migrate never had the two tables. Amending the file changes only what
+-- a future install-fresh creates, and registers no journal drift.
+--
+-- Tables an earlier install-fresh created are left as they are. They hold no
+-- document, nothing reads or writes them, and their rows (none on the fixtures
+-- this was checked against) are not migrated into filings: a typed status is
+-- not a filing (P-74, "the losing migration amended in place"). The file stays,
+-- empty, so this is not rediscovered, and it stays in
+-- scripts/ci/migration-deploy-path-baseline.json, which lists it as on no
+-- deploy path.

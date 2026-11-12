@@ -24,6 +24,13 @@
  * its audit row cannot exist. A removal marks the row (removed_at, removed_by,
  * removal_reason) and never deletes it; every reader here skips a removed row.
  *
+ * A record that does not apply to a study is declared not applicable, with the
+ * person's reason (P-124 item 5): a live row with `not_applicable_reason`, who
+ * and when on the row, its audit row written by the same transaction. It is
+ * neither filed nor missing; it names no document. It is withdrawn as a filing
+ * is removed, and a document filed against the record ends it on the same row.
+ * A filed record is not declared over: its filing is removed first.
+ *
  * An artifact code must be a known DIA TMF Reference Model code (the service
  * validates against `tmf-completeness`), keeping the store clean and the
  * completeness roll-up meaningful.
@@ -44,145 +51,18 @@ import {
   type TmfCompletenessResult,
   type TmfDocumentEvidence,
 } from './tmf-completeness';
-import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
-import { requireCurrentVaultProgramWrite } from '../vault/vault-write-authority';
+import {
+  TmfArtifactError, poolQueryable, requireTmfStudy, requireTmfStudyByRef, type Queryable, type TmfCtx, type TmfStudy,
+} from './tmf-study-access';
+
+// What the routes, the inspection package and the tests import from this module, kept here (split 2026-11-12).
+export { TmfArtifactError, getTmfStudy, type TmfCtx, type TmfErrorCode, type TmfStudy } from './tmf-study-access';
 
 const logger = createScopedLogger('tmf-artifact-persistence');
 
 /** A vault document reference: `vault://<document id>`. */
 const VAULT_REF = /^vault:\/\/(.+)$/;
 
-/** The caller, from the session; `ipAddress` and `userAgent` go on the audit row of a write. */
-export type TmfCtx = { organizationId: number; userId: number; ipAddress?: string; userAgent?: string };
-
-/** Every refusal this service gives, with the HTTP status its route answers. */
-const TMF_ERROR_STATUS = {
-  NOT_FOUND: 404,
-  STUDY_NOT_FOUND: 404,
-  UNKNOWN_ARTIFACT: 400,
-  UNRESOLVABLE_DOCUMENT_REF: 400,
-  REASON_REQUIRED: 400,
-  DOCUMENT_NOT_IN_PROJECT: 409,
-  VAULT_WRITE_ROLE_REQUIRED: 403,
-  STUDY_ACCESS_UNAVAILABLE: 503,
-} as const;
-export type TmfErrorCode = keyof typeof TMF_ERROR_STATUS;
-
-export class TmfArtifactError extends Error {
-  readonly status: number;
-  constructor(public code: TmfErrorCode, message: string) {
-    super(message);
-    this.name = 'TmfArtifactError';
-    this.status = TMF_ERROR_STATUS[code];
-  }
-}
-
-/** The pg-style statement runner the access rule and the writers share: the pool, or a transaction's client. */
-interface Queryable {
-  query: (text: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
-}
-const poolQueryable: Queryable = { query: (text, params) => pool.query(text, params) };
-
-/**
- * The study a TMF belongs to: the protocol-design study (cdisc_prm_studies),
- * named as GET /api/study-design lists it, with the row id a filing's
- * `study_ref` holds.
- */
-export interface TmfStudy {
-  /** cdisc_prm_studies.id: what a filing's study_ref holds. */
-  id: number;
-  /** The study's own id string, `studyId` in GET /api/study-design. The trial a route names. */
-  studyId: string;
-  /** The project the study belongs to (regulatory_programs.id). */
-  programId: string;
-  protocolId: string;
-  title: string;
-  phase: string;
-  indication: string;
-  status: string;
-}
-
-const text = (value: unknown, fallback = ''): string => (typeof value === 'string' ? value : fallback);
-
-/** A study row with a project, or null: a study filed under no project has no TMF. */
-function studyFromRow(row: Record<string, unknown> | undefined): TmfStudy | null {
-  const id = Number(row?.id);
-  const programId = text(row?.program_id);
-  if (!row || !Number.isSafeInteger(id) || id <= 0 || !programId) return null;
-  return {
-    id,
-    studyId: text(row.study_id),
-    programId,
-    protocolId: text(row.protocol_id),
-    title: text(row.protocol_title),
-    phase: text(row.study_phase),
-    indication: text(row.indication),
-    status: text(row.protocol_status, 'draft'),
-  };
-}
-
-const studyNotFound = () =>
-  new TmfArtifactError('STUDY_NOT_FOUND', 'No study with this id is in a project you can open. Nothing was read or changed.');
-
-/** What a refused project admission becomes here: the study is not disclosed, and an unverifiable check is an error. */
-function studyAccessRefusal(err: unknown): unknown {
-  if (!(err instanceof ProgramReadAccessError)) return err;
-  if (err.status === 503) {
-    return new TmfArtifactError('STUDY_ACCESS_UNAVAILABLE', "Current access to this study's project could not be verified. Nothing was read or changed.");
-  }
-  if (err.code === 'VAULT_WRITE_ROLE_REQUIRED') return new TmfArtifactError('VAULT_WRITE_ROLE_REQUIRED', err.message);
-  return studyNotFound();
-}
-
-/**
- * Admit the caller to a study row's project, by the Vault's rule. A write is
- * admitted on the writer's own transaction, which holds the membership it
- * decided on until commit.
- */
-async function admitToStudy(q: Queryable, row: Record<string, unknown> | undefined, ctx: TmfCtx, forWrite: boolean): Promise<TmfStudy> {
-  const study = studyFromRow(row);
-  if (!study) throw studyNotFound();
-  const input = { organizationId: ctx.organizationId, userId: ctx.userId, programId: study.programId };
-  try {
-    if (forWrite) await requireCurrentVaultProgramWrite(q, input);
-    else await requireCurrentProgramAccess(q, input);
-  } catch (err) {
-    throw studyAccessRefusal(err);
-  }
-  return study;
-}
-
-/** The study a route names by its own id string, when the caller can open its project. */
-async function requireTmfStudy(q: Queryable, trialId: string, ctx: TmfCtx, forWrite: boolean): Promise<TmfStudy> {
-  const studyId = typeof trialId === 'string' ? trialId.trim() : '';
-  // cdisc_prm_studies.study_id is varchar(100): a longer name is no study's.
-  if (!studyId || studyId.length > 100) throw studyNotFound();
-  const { rows } = await q.query(
-    `SELECT s.id, s.study_id, s.program_id::text AS program_id, s.protocol_id, s.protocol_title,
-            s.study_phase, s.indication, s.protocol_status
-       FROM cdisc_prm_studies s
-      WHERE s.study_id = $1 AND s.tenant_id = $2`,
-    [studyId, ctx.organizationId],
-  );
-  return admitToStudy(q, rows[0], ctx, forWrite);
-}
-
-/** The study a stored filing points at (its study_ref), when the caller can open its project. */
-async function requireTmfStudyByRef(q: Queryable, studyRef: number, ctx: TmfCtx, forWrite: boolean): Promise<TmfStudy> {
-  const { rows } = await q.query(
-    `SELECT s.id, s.study_id, s.program_id::text AS program_id, s.protocol_id, s.protocol_title,
-            s.study_phase, s.indication, s.protocol_status
-       FROM cdisc_prm_studies s
-      WHERE s.id = $1 AND s.tenant_id = $2`,
-    [studyRef, ctx.organizationId],
-  );
-  return admitToStudy(q, rows[0], ctx, forWrite);
-}
-
-/** The study a route names, for a caller who can open its project. STUDY_NOT_FOUND otherwise. */
-export async function getTmfStudy(trialId: string, ctx: TmfCtx): Promise<TmfStudy> {
-  return requireTmfStudy(poolQueryable, trialId, ctx, false);
-}
 
 /**
  * A `vault://<id>` reference must name a document that EXISTS, in the project
@@ -288,6 +168,14 @@ export interface RecordArtifactInput {
   reason: unknown;
 }
 
+export interface DeclareNotApplicableInput {
+  /** The study's own id string (cdisc_prm_studies.study_id). */
+  trialId: string;
+  artifactCode: string;
+  /** Why the record does not apply to this study, in the person's words (at least 8 characters). Kept on the row. */
+  reason: unknown;
+}
+
 export interface RemoveArtifactInput {
   /** The filing's id. */
   id: string;
@@ -329,6 +217,7 @@ function filingFromRow(row: Record<string, unknown>): TmfArtifactFiling {
     removedAt: asDateOrNull(row.removed_at),
     removedBy: asIntOrNull(row.removed_by),
     removalReason: asTextOrNull(row.removal_reason),
+    notApplicableReason: asTextOrNull(row.not_applicable_reason),
   };
 }
 
@@ -351,7 +240,29 @@ function priorFilingDetails(prior: FilingRow): Record<string, unknown> {
       clearedRemoval: { removedAt: isoOrNull(prior.removed_at), removedBy: asIntOrNull(prior.removed_by),
         reason: asTextOrNull(prior.removal_reason), documentRef } };
   }
+  if (prior.not_applicable_reason != null) {
+    return { outcome: 'filed_over_not_applicable', endedDeclaration: declarationOf(prior) };
+  }
   return { outcome: 'refiled', replacedDocumentRef: documentRef };
+}
+
+/** A declaration as an audit row names the one it replaces or ends: who, when and why. */
+const declarationOf = (row: FilingRow) => ({
+  reason: asTextOrNull(row.not_applicable_reason), declaredBy: asIntOrNull(row.created_by), declaredAt: isoOrNull(row.filed_at),
+});
+
+/** The row of (organization, study, artifact), held under its lock for a write that replaces it. */
+async function holdFiling(q: Queryable, organizationId: number, studyId: string, artifactCode: string): Promise<FilingRow> {
+  const held = await q.query(
+    `SELECT id, trial_id, study_ref, document_ref, created_by, filed_at, removed_at, removed_by, removal_reason,
+            not_applicable_reason
+       FROM tmf_artifact_filings
+      WHERE organization_id = $1 AND trial_id = $2 AND artifact_code = $3
+        FOR UPDATE`,
+    [organizationId, studyId, artifactCode],
+  );
+  if (held.rows.length === 0) throw new Error('TMF filing could not be read back for re-filing; nothing was changed.');
+  return held.rows[0];
 }
 
 interface FilingWrite { organizationId: number; userId: number; study: TmfStudy; artifactCode: string; zone: number; documentRef: string | null }
@@ -369,31 +280,75 @@ async function writeFiling(q: Queryable, w: FilingWrite): Promise<{ row: FilingR
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (organization_id, trial_id, artifact_code) DO NOTHING
      RETURNING id, organization_id, trial_id, artifact_code, zone_number, document_ref, created_by,
-               filed_at, updated_at, study_ref, removed_at, removed_by, removal_reason`,
+               filed_at, updated_at, study_ref, removed_at, removed_by, removal_reason, not_applicable_reason`,
     [w.organizationId, w.study.studyId, w.artifactCode, w.zone, w.documentRef, w.userId, w.study.id],
   );
   if (inserted.rows.length > 0) return { row: inserted.rows[0], prior: { outcome: 'filed' } };
-  const held = await q.query(
-    `SELECT id, trial_id, study_ref, document_ref, filed_at, removed_at, removed_by, removal_reason
-       FROM tmf_artifact_filings
-      WHERE organization_id = $1 AND trial_id = $2 AND artifact_code = $3
-        FOR UPDATE`,
-    [w.organizationId, w.study.studyId, w.artifactCode],
-  );
-  if (held.rows.length === 0) throw new Error('TMF filing could not be read back for re-filing; nothing was changed.');
-  // created_by is who made the row's present life: kept on a re-file, taken by a filing that follows a removal or an unlinked row.
+  const held = await holdFiling(q, w.organizationId, w.study.studyId, w.artifactCode);
+  // created_by is who made the row's present life: kept on a re-file, taken by a filing that follows a removal, an
+  // unlinked row or a declaration that the record does not apply (which the filing ends).
   const updated = await q.query(
     `UPDATE tmf_artifact_filings
         SET document_ref = $2, zone_number = $3, study_ref = $4,
-            created_by = CASE WHEN study_ref IS NULL OR removed_at IS NOT NULL THEN $5 ELSE created_by END,
+            created_by = CASE WHEN study_ref IS NULL OR removed_at IS NOT NULL OR not_applicable_reason IS NOT NULL
+                              THEN $5 ELSE created_by END,
             filed_at = now(), updated_at = now(),
-            removed_at = NULL, removed_by = NULL, removal_reason = NULL
+            removed_at = NULL, removed_by = NULL, removal_reason = NULL, not_applicable_reason = NULL
       WHERE id = $1
       RETURNING id, organization_id, trial_id, artifact_code, zone_number, document_ref, created_by,
-                filed_at, updated_at, study_ref, removed_at, removed_by, removal_reason`,
-    [held.rows[0].id, w.documentRef, w.zone, w.study.id, w.userId],
+               filed_at, updated_at, study_ref, removed_at, removed_by, removal_reason, not_applicable_reason`,
+    [held.id, w.documentRef, w.zone, w.study.id, w.userId],
   );
-  return { row: updated.rows[0], prior: priorFilingDetails(held.rows[0]) };
+  return { row: updated.rows[0], prior: priorFilingDetails(held) };
+}
+
+interface DeclarationWrite { organizationId: number; userId: number; study: TmfStudy; artifactCode: string; zone: number; reason: string }
+
+/** What stood in the row before this declaration, read under the row's lock; a live filing refuses it. */
+function priorDeclarationDetails(prior: FilingRow): Record<string, unknown> {
+  const documentRef = asTextOrNull(prior.document_ref);
+  if (prior.study_ref == null) {
+    return { outcome: 'declared_over_unlinked',
+      replacedUnlinkedFiling: { trialId: asTextOrNull(prior.trial_id), documentRef, filedAt: isoOrNull(prior.filed_at) } };
+  }
+  if (prior.removed_at != null) {
+    return { outcome: 'declared_after_removal',
+      clearedRemoval: { removedAt: isoOrNull(prior.removed_at), removedBy: asIntOrNull(prior.removed_by),
+        reason: asTextOrNull(prior.removal_reason), documentRef, notApplicableReason: asTextOrNull(prior.not_applicable_reason) } };
+  }
+  if (prior.not_applicable_reason != null) return { outcome: 'redeclared', replacedDeclaration: declarationOf(prior) };
+  throw new TmfArtifactError('RECORD_FILED',
+    'A document is filed for this record. Remove that filing, with its reason, before declaring the record not applicable. Nothing was changed.');
+}
+
+/**
+ * Write the one row of (organization, study, artifact) as a declaration: a new row, or the existing one under its
+ * lock (a removed or unlinked row, or an earlier declaration, whose reason it replaces). A live filing refuses it.
+ */
+async function writeDeclaration(q: Queryable, w: DeclarationWrite): Promise<{ row: FilingRow; prior: Record<string, unknown> }> {
+  const inserted = await q.query(
+    `INSERT INTO tmf_artifact_filings
+       (organization_id, trial_id, artifact_code, zone_number, document_ref, created_by, study_ref, not_applicable_reason)
+     VALUES ($1, $2, $3, $4, NULL, $5, $6, $7)
+     ON CONFLICT (organization_id, trial_id, artifact_code) DO NOTHING
+     RETURNING id, organization_id, trial_id, artifact_code, zone_number, document_ref, created_by,
+               filed_at, updated_at, study_ref, removed_at, removed_by, removal_reason, not_applicable_reason`,
+    [w.organizationId, w.study.studyId, w.artifactCode, w.zone, w.userId, w.study.id, w.reason],
+  );
+  if (inserted.rows.length > 0) return { row: inserted.rows[0], prior: { outcome: 'declared' } };
+  const held = await holdFiling(q, w.organizationId, w.study.studyId, w.artifactCode);
+  const prior = priorDeclarationDetails(held);
+  const updated = await q.query(
+    `UPDATE tmf_artifact_filings
+        SET document_ref = NULL, zone_number = $2, study_ref = $3, created_by = $4,
+            filed_at = now(), updated_at = now(),
+            removed_at = NULL, removed_by = NULL, removal_reason = NULL, not_applicable_reason = $5
+      WHERE id = $1
+      RETURNING id, organization_id, trial_id, artifact_code, zone_number, document_ref, created_by,
+               filed_at, updated_at, study_ref, removed_at, removed_by, removal_reason, not_applicable_reason`,
+    [held.id, w.zone, w.study.id, w.userId, w.reason],
+  );
+  return { row: updated.rows[0], prior };
 }
 
 /** How an audit row names the study a filing belongs to. */
@@ -451,6 +406,43 @@ export async function recordTmfArtifactFiling(input: RecordArtifactInput, ctx: T
 }
 
 /**
+ * Declare a record not applicable to a study, with the person's reason (P-124 item 5). A study to which an essential
+ * record does not apply could otherwise never read complete. The declaration says who (`created_by`), when
+ * (`filed_at`) and why (`not_applicable_reason`, at least 8 characters), names no document, and is counted as
+ * neither filed nor missing. Its audit row is written by this transaction and names the study, the record and what
+ * the row held before. A record with a live filing is refused (RECORD_FILED): the filing is removed first, with its
+ * own reason, so no filed document leaves the trial master file without one.
+ */
+export async function declareTmfArtifactNotApplicable(input: DeclareNotApplicableInput, ctx: TmfCtx): Promise<FiledTmfArtifact> {
+  const zone = ARTIFACT_ZONE.get(input.artifactCode);
+  if (zone === undefined) {
+    throw new TmfArtifactError('UNKNOWN_ARTIFACT', `"${input.artifactCode}" is not a known TMF Reference Model artifact code.`);
+  }
+  const reason = statedReason(input.reason);
+  const { row, study } = await transaction(async (q: Queryable) => {
+    const admitted = await requireTmfStudy(q, input.trialId, ctx, true);
+    const written = await writeDeclaration(q, {
+      organizationId: ctx.organizationId, userId: ctx.userId, study: admitted, artifactCode: input.artifactCode, zone, reason,
+    });
+    await writeChainedAuditRow(q, {
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'TMF_ARTIFACT_DECLARED_NOT_APPLICABLE',
+      resourceType: 'tmf_artifact',
+      resourceId: String(written.row.id),
+      reason,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+      details: { study: auditedStudy(admitted), programId: admitted.programId, artifactCode: input.artifactCode, zone,
+        ...written.prior, reason },
+    });
+    return { row: filingFromRow(written.row), study: admitted };
+  });
+  logger.info('Declared TMF artifact not applicable', { studyRef: study.id, artifactCode: input.artifactCode, organizationId: ctx.organizationId });
+  return { ...row, auditTrail: RECORDED_WITH_THE_CHANGE };
+}
+
+/**
  * A study's live filings (org-scoped, stable order). Never a row with no
  * study, whatever its trial_id says, and never a removed row.
  */
@@ -475,10 +467,36 @@ export interface TmfFilingDocument {
   version: string | null;
   /** False when a live later version has replaced it (the Vault's one link rule, vault-version-family.ts). */
   current: boolean;
+  /**
+   * The document's review stage, as the Vault's Library reads it (canonical_documents.stage: authoring, in_review,
+   * approved, placed, packaged, submitted, superseded, withdrawn), or null when it was never sent for review. A
+   * record's state is its document's (P-124 item 5): nobody types a status for a record.
+   */
+  lifecycleStage: string | null;
 }
 
-/** A listed filing: the row, and the document it is filed against when that is a live document of the study's project. */
-export type ListedTmfFiling = TmfArtifactFiling & { document: TmfFilingDocument | null };
+/**
+ * A listed filing: the row; the document it is filed against when that is a live document of the study's project;
+ * and who filed or declared it, by name (public.actor_name: a member or past actor of the organization), or null.
+ */
+export type ListedTmfFiling = TmfArtifactFiling & { document: TmfFilingDocument | null; filedByName: string | null };
+
+/** The names of the people who made the rows, by user id, in one read. A failed read throws. */
+async function actorNames(ids: readonly number[]): Promise<Map<number, string>> {
+  const names = new Map<number, string>();
+  if (ids.length === 0) return names;
+  const { rows } = await pool.query(
+    `SELECT a.id, COALESCE(NULLIF(btrim(n.name), ''), n.email) AS name
+       FROM unnest($1::int[]) AS a(id)
+       LEFT JOIN LATERAL public.actor_name(a.id) n ON TRUE`,
+    [ids],
+  );
+  for (const row of rows as Array<Record<string, unknown>>) {
+    const name = trimmedOrNull(row.name);
+    if (name) names.set(Number(row.id), name);
+  }
+  return names;
+}
 
 /** The id inside a filing's `vault://<id>` reference, or null: no reference, an off-platform one, or a path. */
 function vaultIdOf(filing: TmfArtifactFiling): string | null {
@@ -500,7 +518,9 @@ async function filedDocuments(ids: readonly string[], organizationId: number, pr
   const documents = new Map<string, TmfFilingDocument>();
   if (ids.length === 0) return documents;
   // "current" is VALID_LINK('succ', 'd') of services/vault/vault-version-family.ts written out, as that file's
-  // readSuccessors does, so this SQL text carries no interpolation (ci:sql-interpolation).
+  // readSuccessors does, so this SQL text carries no interpolation (ci:sql-interpolation). "lifecycle_stage" is
+  // vaultLifecycleStageSql('d') of services/vault/vault-document-filter.ts written out the same way: the stage the
+  // Library shows for the same document.
   // tenant-isolation-safe: d is bound to the organization and the program; the link holds succ to the same ones.
   const { rows } = await pool.query(
     `SELECT d.id::text AS id, d.document_title, d.file_name, d.version,
@@ -511,7 +531,8 @@ async function filedDocuments(ids: readonly string[], organizationId: number, pr
                  AND succ.document_code IS NOT DISTINCT FROM d.document_code
                  AND succ.organization_id = d.organization_id
                  AND succ.deleted_at IS NULL AND d.deleted_at IS NULL
-            ) AS current
+            ) AS current,
+            (SELECT c.stage FROM canonical_documents c WHERE c.organization_id = d.organization_id AND c.source_refs ? 'vault_documents' AND c.source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text ORDER BY c.created_at, c.canonical_id LIMIT 1) AS lifecycle_stage
        FROM vault.documents d
       WHERE d.id::text = ANY($1::text[])
         AND d.organization_id = $2 AND d.deleted_at IS NULL
@@ -532,6 +553,7 @@ async function filedDocuments(ids: readonly string[], organizationId: number, pr
       version: trimmedOrNull(row.version),
       // Current only when the database said so.
       current: row.current === true,
+      lifecycleStage: trimmedOrNull(row.lifecycle_stage),
     });
   }
   return documents;
@@ -549,9 +571,11 @@ export async function listTmfArtifacts(trialId: string, ctx: TmfCtx): Promise<Li
   const filings = await studyFilings(study, ctx.organizationId);
   const ids = [...new Set(filings.map(vaultIdOf).filter((id): id is string => id !== null))];
   const documents = await filedDocuments(ids, ctx.organizationId, study.programId);
+  const names = await actorNames([...new Set(filings.map((f) => f.createdBy).filter((n): n is number => Number.isSafeInteger(n)))]);
   return filings.map((filing) => {
     const id = vaultIdOf(filing);
-    return { ...filing, document: (id !== null && documents.get(id)) || null };
+    return { ...filing, document: (id !== null && documents.get(id)) || null,
+      filedByName: (filing.createdBy != null && names.get(filing.createdBy)) || null };
   });
 }
 
@@ -591,7 +615,7 @@ export async function removeTmfArtifactFiling(input: RemoveArtifactInput, ctx: T
       `UPDATE tmf_artifact_filings
           SET removed_at = now(), removed_by = $3, removal_reason = $4, updated_at = now()
         WHERE id::text = $1 AND organization_id = $2 AND removed_at IS NULL
-        RETURNING id, artifact_code, zone_number, document_ref`,
+        RETURNING id, artifact_code, zone_number, document_ref, not_applicable_reason`,
       [id, ctx.organizationId, ctx.userId, reason],
     );
     // Removed by someone else between the read and the write: there is no live filing to remove.
@@ -606,8 +630,11 @@ export async function removeTmfArtifactFiling(input: RemoveArtifactInput, ctx: T
       reason,
       ipAddress: ctx.ipAddress,
       userAgent: ctx.userAgent,
+      // A withdrawn declaration names the reason it carried; a removed filing, its document.
       details: { study: auditedStudy(study), programId: study.programId, artifactCode: String(row.artifact_code),
-        zone: asIntOrNull(row.zone_number), documentRef: asTextOrNull(row.document_ref), reason },
+        zone: asIntOrNull(row.zone_number), documentRef: asTextOrNull(row.document_ref),
+        ...(row.not_applicable_reason != null ? { withdrewDeclaration: { reason: asTextOrNull(row.not_applicable_reason) } } : {}),
+        reason },
     });
   });
   return { id, auditTrail: RECORDED_WITH_THE_CHANGE };
@@ -676,8 +703,11 @@ export interface TrialTmf {
 export async function readTrialTmf(trialId: string, ctx: TmfCtx, scope: 'essential' | 'all' = 'essential'): Promise<TrialTmf> {
   const study = await requireTmfStudy(poolQueryable, trialId, ctx, false);
   const filings = await studyFilings(study, ctx.organizationId);
-  const documentEvidence = await documentEvidenceFor(filings, ctx.organizationId, study.programId);
-  const assessed = assessTmfCompleteness({ providedArtifacts: filings.map((r) => r.artifactCode), scope, documentEvidence });
+  // A declaration is not a filing: it has no document to verify, and it leaves the study's required set.
+  const filed = filings.filter((r) => r.notApplicableReason == null);
+  const documentEvidence = await documentEvidenceFor(filed, ctx.organizationId, study.programId);
+  const assessed = assessTmfCompleteness({ providedArtifacts: filed.map((r) => r.artifactCode), scope, documentEvidence,
+    notApplicable: filings.filter((r) => r.notApplicableReason != null).map((r) => r.artifactCode) });
   return { study, filings, completeness: { ...assessed, study } };
 }
 

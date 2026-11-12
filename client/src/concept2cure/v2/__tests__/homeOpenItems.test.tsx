@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -24,6 +24,7 @@ vi.mock('@/services/portal/authService', () => ({
 
 import { Home } from '../surfaces/Surfaces';
 import { __resetSurfaceActionBus } from '../surfaceActions';
+import { peekEditorTarget } from '../editorTarget';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
 const fail = () => ({ ok: false, status: 503, json: async () => ({}) }) as Response;
@@ -81,12 +82,16 @@ describe('Home: your open items, listed', () => {
     expect(row.textContent).not.toContain('submission-center');
   });
 
-  it('lists the approval waiting for your signature, and opens Review', async () => {
+  // Since 4c6d882afd an approval opens its document in the editor, through the Review board's own opener
+  // (openReviewDocument), not the board.
+  it('lists the approval waiting for your signature, and opens its document', async () => {
     const { onNav } = mount();
     const section = await screen.findByTestId('home-open-items');
     expect(await within(section).findByText('Approvals — you sign')).toBeTruthy();
     fireEvent.click(within(section).getByRole('button', { name: /Clinical protocol v2/ }));
-    expect(onNav).toHaveBeenCalledWith('review');
+    await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
+    expect(peekEditorTarget()).toMatchObject({ docId: 'r-1' });
+    expect(onNav).not.toHaveBeenCalledWith('review');
   });
 
   it('a failed read of your tasks is said, never "nothing assigned"', async () => {

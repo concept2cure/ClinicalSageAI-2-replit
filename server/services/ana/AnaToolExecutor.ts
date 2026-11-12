@@ -14225,88 +14225,57 @@ registerToolHandler('review_lifecycle_calendar', async (_input, ctx) => {
 // path (recordGovernedAction, surface 'ana'); artifacts auto-classify by name.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('create_tmf', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_tmf requires tenant + user context.' });
-  const title = typeof input.title === 'string' ? input.title.trim() : '';
-  if (!title) return JSON.stringify({ error: 'title is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { createTmfTx } = await import('../etmf/etmf-service.js');
-  const reason = gatedReason(input);
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { id } = await createTmfTx(client, ctx.organizationId, ctx.userId, { title, studyId: typeof input.study_id === 'number' ? input.study_id : null });
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
-      target: `tmf-file:${id}`, reason,
-      payload: { title }, domain: 'etmf', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, id, message: `Opened TMF "${title}" (id ${id}).` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `create_tmf failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+/* 2026-11-12 (eTMF convergence E4 step 3, L-1; founder decision P-124 item 5): files a record of a study's trial master
+   file through the deployed store (recordTmfArtifactFiling), with the person's confirmation and reason, as the Vault's
+   Trial master file section files it: the same study admission, Vault write role, reason floor and chained audit row.
+   It wrote the retired store's tmf_artifacts with a typed status, which no deploy creates. The record is the catalog
+   record the name is (classifyArtifact's code): a name only near a zone, or naming two, is refused with the reason, and
+   AnA asks which record it is. A filing with no document is recorded and said not to count as filed. */
+/** A name the classifier did not find as one record of the reference model, said as the refusal it is. */
+function tmfRecordNotNamed(artifactName: string, found: import('../etmf/etmf-logic.js').Classification): string {
+  const why = found.confidence === 'matched'
+    ? `belongs in zone ${found.zone} (${found.zoneName}) but is not one of its records`
+    : found.conflict ? 'names records of two zones' : 'matches no record of the DIA TMF Reference Model';
+  return JSON.stringify({
+    error: `"${artifactName}" ${why}, so it was not filed: a trial master file files the reference model's records. Ask the user which record it is, by its name or code. Nothing was filed.`,
+    code: 'TMF_RECORD_NOT_NAMED',
+  });
+}
+
+/** What a filing came to, in words: against a document, or noted with none (which does not count as filed). */
+function tmfFiledMessage(name: string, zone: number, studyId: string, documentId: string | null): string {
+  return documentId
+    ? `Filed ${name} (zone ${zone}) for study ${studyId} against Vault document ${documentId}. The reason is recorded with the filing.`
+    : `Recorded ${name} (zone ${zone}) for study ${studyId} with no document: it does not count as filed until a Vault document is filed against it. The reason is recorded.`;
+}
+
+const trimmedText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 registerToolHandler('classify_tmf_artifact', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'classify_tmf_artifact requires tenant + user context.' });
-  const tmfFileId = typeof input.tmf_file_id === 'number' ? input.tmf_file_id : NaN;
-  const artifactName = typeof input.artifact_name === 'string' ? input.artifact_name.trim() : '';
-  if (!Number.isInteger(tmfFileId) || !artifactName) return JSON.stringify({ error: 'tmf_file_id and artifact_name are required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { addArtifactTx } = await import('../etmf/etmf-service.js');
-  const reason = gatedReason(input);
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { id, zone, classification } = await addArtifactTx(client, ctx.organizationId, ctx.userId, tmfFileId, {
-      artifactName,
-      zone: typeof input.zone === 'number' ? input.zone : null,
-      status: typeof input.status === 'string' ? (input.status as any) : undefined,
-      documentDate: typeof input.document_date === 'string' ? input.document_date : null,
-    });
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
-      target: `tmf-file:${tmfFileId}`, reason,
-      payload: { artifactId: id, zone, classification }, domain: 'etmf', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, artifactId: id, zone, classification, message: `Filed "${artifactName}" to TMF zone ${zone}${classification !== 'explicit' ? ' (auto-classified)' : ''}.` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `classify_tmf_artifact failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
+  const studyId = statedTmfStudyId(input);
+  const artifactName = trimmedText(input.artifact_name);
+  if (studyId === null || !artifactName) {
+    return JSON.stringify({ error: "study_id (the study's own id, as get_tmf_view lists it) and artifact_name are required. Nothing was filed.", code: 'TMF_FILING_INPUT_REQUIRED' });
   }
-});
-
-registerToolHandler('review_tmf_completeness', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_tmf_completeness requires tenant context.' });
-  const tmfFileId = typeof input.tmf_file_id === 'number' ? input.tmf_file_id : NaN;
-  if (!Number.isInteger(tmfFileId)) return JSON.stringify({ error: 'tmf_file_id is required.' });
-  const { getCompletenessInput } = await import('../etmf/etmf-service.js');
-  const { evaluateCompleteness } = await import('../etmf/etmf-logic.js');
+  const { classifyArtifact } = await import('../etmf/etmf-logic.js');
+  const found = classifyArtifact(artifactName);
+  if (found.confidence !== 'matched' || !found.code) return tmfRecordNotNamed(artifactName, found);
+  const documentId = trimmedText(input.document_id) || null;
+  // The person's reason, before anything is written; without one the registry's wrapper answers (reasonNotStated).
+  const reason = gatedReason(input);
   try {
-    const artifacts = await getCompletenessInput(ctx.organizationId, tmfFileId);
-    const r = evaluateCompleteness(artifacts);
-    return JSON.stringify({
-      ok: true, completenessPct: r.completenessPct, verdict: r.verdict, gapCount: r.gaps.length, gaps: r.gaps.slice(0, 20),
-      /* A TMF with no expected artifacts indexed used to come back here as
-         "TMF 100% complete — inspection ready". Nothing had been checked. */
-      message:
-        r.verdict === 'not_assessed'
-          ? 'This TMF has no expected artifacts indexed, so its completeness has not been assessed. This is not a complete TMF and not an inspection-readiness verdict.'
-          : `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
-    });
+    const { recordTmfArtifactFiling } = await import('../etmf/tmf-artifact-persistence.js');
+    const { tmfArtifactName } = await import('../../../shared/constants/domain/tmf-reference-model.js');
+    const filed = await recordTmfArtifactFiling(
+      { trialId: studyId, artifactCode: found.code, documentRef: documentId ? `vault://${documentId}` : null, reason },
+      { organizationId: Number(ctx.organizationId), userId: Number(ctx.userId) },
+    );
+    const name = tmfArtifactName(found.code);
+    return JSON.stringify({ ok: true, filingId: filed.id, studyId, artifactCode: found.code, artifactName: name, zone: found.zone,
+      documentRef: filed.documentRef, message: tmfFiledMessage(name, found.zone, studyId, documentId) });
   } catch (err) {
-    return JSON.stringify({ error: `review_tmf_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+    return tmfReadFailure('classify_tmf_artifact', err);
   }
 });
 
@@ -21549,39 +21518,202 @@ registerToolHandler('read_governed_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('get_tmf_view', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'get_tmf_view requires tenant context.' });
-  try {
-    const { listTmfFiles, listArtifacts, getCompletenessInput } = await import('../etmf/etmf-service.js');
-    const { evaluateCompleteness, zoneName } = await import('../etmf/etmf-logic.js');
-    const orgId = Number(ctx.organizationId);
+/* ── A study's trial master file, read from the deployed store ────────────────────────────────────────────────────
+   eTMF convergence slice E4, step 2 (founder decision P-124 item 5; docs/design/ETMF_CONVERGENCE_E4_PLAN_2026-11-10.md):
+   get_tmf_view and the trial master file part of search_all_documents read
+   services/etmf/tmf-artifact-persistence.ts. A trial master file belongs to a protocol-design study of a project, and
+   that store admits the person to the study's project by the Vault's rule. Until 2026-11-10 the three read a second
+   store that is on no deploy path: on a deployed database its tables do not exist, so the search named the trial
+   master file store unavailable on every call. Readiness, its basis and every count are the store's own and are
+   passed through unchanged; nothing is computed here. */
 
-    const tmfFileId = Number(input.tmf_file_id);
-    if (!Number.isFinite(tmfFileId)) {
-      const files = await listTmfFiles(orgId);
+interface TmfReadActor { organizationId: number; userId: number }
+type TmfStore = typeof import('../etmf/tmf-artifact-persistence.js');
+type TmfAssessment = Awaited<ReturnType<TmfStore['getTrialTmfCompleteness']>>;
+type TmfProgramScope = Exclude<Awaited<ReturnType<typeof programReadScope>>, string>;
+
+/** Who is asking, or the refusal: the deployed store admits a person, so a call with none reads nothing. */
+function tmfReadActor(tool: string, ctx: ToolContext | undefined): TmfReadActor | string {
+  const organizationId = Number(ctx?.organizationId);
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) return JSON.stringify({ error: `${tool} requires tenant context.` });
+  const userId = Number(ctx?.userId);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return JSON.stringify({
+      error: `${tool} reads a trial master file only for the person asking, and no identified member is known. Nothing was read.`,
+      code: 'PROJECT_ACTOR_REQUIRED',
+    });
+  }
+  return { organizationId, userId };
+}
+
+/** The study a call names by its own id string, as the study list gives it; null when it names none. */
+function statedTmfStudyId(input: Record<string, unknown>): string | null {
+  const raw = input.study_id;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+}
+
+/** tmf_file_id named a row of the retired store. It names no study, so the call is refused, never read as "list everything". */
+function tmfStudyIdRequired(tool: string): string {
+  return JSON.stringify({
+    error: `${tool} needs the study: pass the study's own id as study_id. A trial master file belongs to a study, and tmf_file_id no longer names one. `
+      + 'get_tmf_view with no study_id lists the studies of the projects you can open. Nothing was read.',
+    code: 'TMF_STUDY_ID_REQUIRED',
+  });
+}
+
+const tmfReadScopeOf = (input: Record<string, unknown>): 'essential' | 'all' => (input.scope === 'all' ? 'all' : 'essential');
+
+/** A refused or failed read as the tool answers it: the store's own words and code (TmfArtifactError), never an empty list. */
+function tmfReadFailure(tool: string, err: unknown): string {
+  const code = (err as { code?: unknown } | null)?.code;
+  if (err instanceof Error && err.name === 'TmfArtifactError' && typeof code === 'string') {
+    return JSON.stringify({ error: err.message, code });
+  }
+  return JSON.stringify({ error: `${tool} failed: ${err instanceof Error ? err.message : String(err)}` });
+}
+
+/** The store's verdict in words. null is "not determined": neither ready nor not ready. */
+function tmfReadinessWords(ready: boolean | null): 'ready' | 'not ready' | 'not determined' {
+  if (ready === true) return 'ready';
+  return ready === false ? 'not ready' : 'not determined';
+}
+
+/** The verdict and the store's own counts as a sentence. No percentage: the store gives none. */
+function tmfReadinessSentence(assessment: Omit<TmfAssessment, 'study'>): string {
+  const s = assessment.summary;
+  const unverified = s.totalUnverified > 0 ? ` (${s.totalUnverified} of them filed, but not against a document that could be verified)` : '';
+  // Declared not applicable (P-124 item 5): out of the required count, and said apart, never as filed.
+  const declared = s.totalNotApplicable > 0 ? `; ${s.totalNotApplicable} declared not applicable to this study, each with a reason` : '';
+  const counts = `${s.totalMissing} of ${s.totalRequired} required records are not counted as present${unverified}; `
+    + `${s.zonesComplete} of ${s.zoneCount} zones are complete${declared}`;
+  if (assessment.ready === null && s.totalRequired === 0) {
+    return `No readiness is stated: every required record (${s.totalNotApplicable}) is declared not applicable to this study, `
+      + 'each with a reason, so there is none to check.';
+  }
+  if (assessment.ready === null) {
+    return 'Readiness is not determined: every remaining gap is filed against a reference outside the platform, which cannot be checked here. '
+      + `This is neither ready nor not ready. ${counts}.`;
+  }
+  return `Readiness: ${tmfReadinessWords(assessment.ready)}. ${counts}.`;
+}
+
+/** What the store assessed, as both read tools answer it: the study, the verdict in words, the assessment unchanged. */
+async function tmfAssessmentAnswer(completeness: TmfAssessment) {
+  const { tmfArtifactName } = await import('../../../shared/constants/domain/tmf-reference-model.js');
+  const { study, ...assessment } = completeness;
+  const artifactNames: Record<string, string> = {};
+  for (const zone of assessment.zones) {
+    for (const code of [...zone.required, ...(zone.notApplicable ?? [])]) artifactNames[code] = tmfArtifactName(code);
+  }
+  const records = assessment.scope === 'all' ? 'every record of the reference model' : 'the essential records';
+  return {
+    study,
+    readiness: tmfReadinessWords(assessment.ready),
+    completeness: assessment,
+    artifactNames,
+    assessed: `Study ${study.studyId} ("${study.title}"), assessed against ${records} from the documents that could be verified now.`,
+  };
+}
+
+/** One study's trial master file: the study, the store's assessment, and each live filing with the document it is filed against. */
+async function tmfStudyView(studyId: string, actor: TmfReadActor, scope: 'essential' | 'all'): Promise<Record<string, unknown>> {
+  const { readTrialTmf, listTmfArtifacts } = await import('../etmf/tmf-artifact-persistence.js');
+  const { tmfArtifactName } = await import('../../../shared/constants/domain/tmf-reference-model.js');
+  const { completeness } = await readTrialTmf(studyId, actor, scope);
+  const listed = await listTmfArtifacts(studyId, actor);
+  const { assessed, ...answer } = await tmfAssessmentAnswer(completeness);
+  const evidence = completeness.documentEvidence ?? {};
+  // A declaration that a record does not apply is not a filing: it is listed apart, with who, when and why.
+  const filings = listed.filter((f) => f.notApplicableReason == null).map((f) => ({
+    id: f.id,
+    artifactCode: f.artifactCode,
+    artifactName: tmfArtifactName(f.artifactCode),
+    zoneNumber: f.zoneNumber,
+    documentRef: f.documentRef,
+    // The document, with its review stage as the Library reads it (a record's state is its document's).
+    document: f.document,
+    documentEvidence: evidence[f.artifactCode] ?? null,
+    filedAt: f.filedAt,
+    filedBy: f.filedByName,
+  }));
+  const notApplicable = listed.filter((f) => f.notApplicableReason != null).map((f) => ({
+    id: f.id,
+    artifactCode: f.artifactCode,
+    artifactName: tmfArtifactName(f.artifactCode),
+    zoneNumber: f.zoneNumber,
+    reason: f.notApplicableReason,
+    declaredBy: f.filedByName,
+    declaredAt: f.filedAt,
+  }));
+  const filed = filings.length ? '' : ' No record is filed in this trial master file.';
+  return { ok: true, ...answer, filings, notApplicable, message: `${assessed}${filed} ${tmfReadinessSentence(answer.completeness)}` };
+}
+
+/** The most studies one project lists (listStudyDesigns' own cap). A project at the cap is refused, never cut short. */
+const TMF_STUDY_LIST_CAP = 200;
+
+/** Each project of the scope as the organization names it, with its sponsor, by program id. */
+async function tmfProjectNames(scope: TmfProgramScope): Promise<Map<string, Record<string, unknown>>> {
+  const { getPool } = await import('../../db.js');
+  const { rows } = await getPool().query(
+    `SELECT sp.regulatory_program_id::text AS program_id, sp.id AS project_id, COALESCE(sp.code, sp.name) AS project,
+            sp.client_workspace_id, scw.name AS client_name
+       FROM projects sp
+       LEFT JOIN client_workspaces scw ON scw.id = sp.client_workspace_id AND scw.organization_id = sp.organization_id
+      WHERE sp.organization_id = $1 AND sp.id = ANY($2::int[])`,
+    [scope.organizationId, scope.anchorProjectIds],
+  );
+  const named = await withSponsor(rows);
+  return new Map(named.map(({ program_id, ...project }) => [String(program_id).toLowerCase(), project]));
+}
+
+/**
+ * The studies of the projects the person can open, each with its project. A trial master file exists with its study,
+ * so this is the list of trial master files. A project with no protocol-design study has none, and the answer says so.
+ */
+async function tmfStudyList(ctx: ToolContext): Promise<string> {
+  const scope = await programReadScope('get_tmf_view', ctx);
+  if (typeof scope === 'string') return scope;
+  const { listStudyDesigns: listProjectStudies } = await import('../study-design/study-design-repository.js');
+  const projects = await tmfProjectNames(scope);
+  const studies: Array<Record<string, unknown>> = [];
+  for (const programId of scope.programIds) {
+    const designs = await listProjectStudies(scope.organizationId, { programId, limit: TMF_STUDY_LIST_CAP });
+    if (designs.length >= TMF_STUDY_LIST_CAP) {
       return JSON.stringify({
-        ok: true,
-        count: files.length,
-        tmf_files: files,
-        message: files.length
-          ? 'Call again with tmf_file_id for a TMF index + completeness view.'
-          : 'No TMF files yet — create_tmf opens one.',
+        error: 'A project holds more studies than this list can show, so the list was not given: part of it would read as all of it. '
+          + 'Name the study by study_id. Nothing was listed.',
+        code: 'TMF_STUDY_LIST_TOO_LARGE',
       });
     }
-
-    const [artifacts, completenessInput] = await Promise.all([
-      listArtifacts(orgId, tmfFileId),
-      getCompletenessInput(orgId, tmfFileId),
-    ]);
-    const completeness = evaluateCompleteness(completenessInput);
-    const byZone: Record<string, unknown[]> = {};
-    for (const a of artifacts) {
-      const label = `Zone ${a.zone} · ${zoneName(Number(a.zone))}`;
-      (byZone[label] ??= []).push(a);
+    for (const d of designs) {
+      studies.push({ studyId: d.studyId, title: d.title, phase: d.phase, indication: d.indication, status: d.status,
+        programId, ...projects.get(programId.toLowerCase()) });
     }
-    return JSON.stringify({ ok: true, tmf_file_id: tmfFileId, zones: byZone, completeness });
+  }
+  const where = ctx.projectId || ctx.projectRef ? "The open project and its sponsor's other projects you can open hold" : 'The projects you can open hold';
+  return JSON.stringify({
+    ok: true,
+    count: studies.length,
+    studies,
+    message: studies.length
+      ? `${studies.length} ${studies.length === 1 ? 'study' : 'studies'}. Each has its own trial master file: call again with study_id set to a study's studyId for its filings and readiness.`
+      : `${where} no protocol-design study, so there is no trial master file. A trial master file exists with its study, which is made in Protocol Development.`,
+  });
+}
+
+registerToolHandler('get_tmf_view', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'get_tmf_view requires tenant context.' });
+  const actor = tmfReadActor('get_tmf_view', ctx);
+  if (typeof actor === 'string') return actor;
+  const studyId = statedTmfStudyId(input);
+  if (studyId === null && input.tmf_file_id != null && input.tmf_file_id !== '') return tmfStudyIdRequired('get_tmf_view');
+  try {
+    if (studyId === null) return await tmfStudyList(ctx);
+    return JSON.stringify(await tmfStudyView(studyId, actor, tmfReadScopeOf(input)));
   } catch (err) {
-    return JSON.stringify({ error: `get_tmf_view failed: ${err instanceof Error ? err.message : String(err)}` });
+    return tmfReadFailure('get_tmf_view', err);
   }
 });
 
@@ -21779,86 +21911,31 @@ registerToolHandler('compare_vault_versions', async (input, ctx) => {
   }
 });
 
-registerToolHandler('seed_tmf', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'seed_tmf requires tenant + user context.' });
-  const tmfFileId = Number(input.tmf_file_id);
-  const reason = gatedReason(input);
-  if (!Number.isInteger(tmfFileId)) return JSON.stringify({ error: 'tmf_file_id (integer) is required.' });
-  const scope = input.scope === 'essential' ? 'essential' as const : 'all' as const;
-  try {
-    const { getPool } = await import('../../db.js');
-    const { seedReferenceModelTx } = await import('../etmf/etmf-service.js');
-    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-    const { setTenantContextTx } = await import('../tenant/governed-tenant-context.js');
-    const orgId = Number(ctx.organizationId);
-    const userId = Number(ctx.userId);
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await setTenantContextTx(client, orgId);
-      const result = await seedReferenceModelTx(client, orgId, userId, tmfFileId, scope);
-      const gov = await recordGovernedAction(client, {
-        orgId, userId, command: 'update', target: `tmf-file:${tmfFileId}`,
-        reason, payload: { seeded: result.seeded, skipped: result.skipped, scope }, domain: 'etmf',
-      });
-      await client.query('COMMIT');
-      return JSON.stringify({
-        ok: true, tmf_file_id: tmfFileId, ...result, ...gov,
-        message: `Seeded ${result.seeded} expected artifact(s) (${result.skipped} already present, scope '${scope}'). Use get_tmf_view to see the index.`,
-      });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    return JSON.stringify({ error: `seed_tmf failed: ${err instanceof Error ? err.message : String(err)}` });
-  }
-});
-
-registerToolHandler('update_tmf_artifact_status', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_tmf_artifact_status requires tenant + user context.' });
-  const artifactId = Number(input.tmf_artifact_id);
-  const status = typeof input.status === 'string' ? input.status : '';
-  const reason = gatedReason(input);
-  if (!Number.isInteger(artifactId)) return JSON.stringify({ error: 'tmf_artifact_id (integer) is required.' });
-  try {
-    const { getPool } = await import('../../db.js');
-    const { setArtifactStatusTx } = await import('../etmf/etmf-service.js');
-    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-    const { setTenantContextTx } = await import('../tenant/governed-tenant-context.js');
-    const orgId = Number(ctx.organizationId);
-    const userId = Number(ctx.userId);
-    const documentDate = typeof input.document_date === 'string' && input.document_date.trim() ? input.document_date.trim() : null;
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await setTenantContextTx(client, orgId);
-      await setArtifactStatusTx(client, orgId, artifactId, status, documentDate);
-      const gov = await recordGovernedAction(client, {
-        orgId, userId, command: 'transition', target: `tmf-artifact:${artifactId}`,
-        reason, payload: { status, documentDate }, domain: 'etmf',
-      });
-      await client.query('COMMIT');
-      return JSON.stringify({ ok: true, tmf_artifact_id: artifactId, status, ...gov });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    return JSON.stringify({ error: `update_tmf_artifact_status failed: ${err instanceof Error ? err.message : String(err)}` });
-  }
-});
+/**
+ * The trial master file part of search_all_documents: the live filings of the studies of the projects in the scope,
+ * found by the deployed store's one read (searchTmfFilings), as rows shaped like the other two stores' hits. Until
+ * 2026-11-10 (eTMF convergence E4, step 2) this was the second store's artifacts of the whole organization, by name,
+ * not held to the person's projects; where that store's tables are absent it failed on every call.
+ */
+async function tmfSearchLeg(scope: TmfProgramScope, query: string, limit: number): Promise<{ rows: Array<Record<string, unknown>> }> {
+  const { searchTmfFilings } = await import('../etmf/tmf-filing-search.js');
+  const found = await searchTmfFilings({ organizationId: scope.organizationId, admittedProgramIds: scope.programIds, query, limit });
+  return {
+    rows: found.map((hit) => ({
+      id: hit.id, study_id: hit.studyId, study_title: hit.studyTitle, program_id: hit.programId,
+      artifact_code: hit.artifactCode, artifact_name: hit.artifactName, zone: hit.zoneNumber, zone_name: hit.zoneName,
+      document: hit.document, filed_at: hit.filedAt,
+    })),
+  };
+}
 
 registerToolHandler('search_all_documents', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'search_all_documents requires tenant context.' });
   const q = typeof input.query === 'string' ? input.query.trim() : '';
   if (!q) return JSON.stringify({ error: 'query (string) is required.' });
-  // The vault and governed stores of the projects the person can open, inside an open project its sponsor's (F1-C,
-  // 2026-11-05): it searched the organization's, a private project's titles included, as global_search did.
+  // The vault, governed and trial master file stores of the projects the person can open, inside an open project its
+  // sponsor's (F1-C, 2026-11-05): it searched the organization's, a private project's titles included, as
+  // global_search did. The trial master file part joined them on 2026-11-10 (tmfSearchLeg).
   const scope = await programReadScope('search_all_documents', ctx);
   if (typeof scope === 'string') return scope;
   try {
@@ -21878,10 +21955,7 @@ registerToolHandler('search_all_documents', async (input, ctx) => {
         `SELECT id, doc_type, agency, title, status, readiness FROM c2c_documents
           WHERE org_id = $1 AND project_id = ANY($4::uuid[]) AND title ILIKE $2
           ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit, scope.programIds]),
-      getPool().query(
-        `SELECT id, tmf_file_id, zone, artifact_name, status FROM tmf_artifacts
-          WHERE organization_id = $1 AND deleted_at IS NULL AND artifact_name ILIKE $2
-          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+      tmfSearchLeg(scope, q, limit),
     ]);
     const stores = ['vault', 'governed', 'tmf'] as const;
     const hits: Array<Record<string, unknown>> = [];
@@ -21895,7 +21969,7 @@ registerToolHandler('search_all_documents', async (input, ctx) => {
       ok: unavailable.length === 0, query: q, count: hits.length, hits,
       ...(unavailable.length ? { unavailable_stores: unavailable,
         error: 'Some document stores could not be searched. Missing results are not evidence that no records exist.' } : {}),
-      message: `${hits.length} hits${unavailable.length ? ' from the available stores only' : ''}. Open vault hits with read_vault_document, governed hits with read_governed_document, TMF hits with get_tmf_view.`,
+      message: `${hits.length} hits${unavailable.length ? ' from the available stores only' : ''}. Open vault hits with read_vault_document, governed hits with read_governed_document. A TMF hit is a record filed in a study's trial master file: open that study with get_tmf_view, passing the hit's study_id.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `search_all_documents failed: ${err instanceof Error ? err.message : String(err)}` });

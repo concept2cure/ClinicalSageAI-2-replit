@@ -93,7 +93,7 @@ import { readShellProject, publishShellProject } from '../shellProject';
 import { type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
-import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, vaultShowsCabinet, type CabinetFolder } from './vaultFolders';
 import { VaultPlanWork } from './VaultPlanWork';
 import { sponsorGate, useVaultProjects, type SponsorGate, type VaultProjectsRead } from './vaultSponsors';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
@@ -2818,98 +2818,101 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   ) : null;
 
   /* ── The views ── */
-  const libraryView = allDocs.length === 0 ? (
+  const libraryView = !vaultShowsCabinet(allDocs.length, cabinetFolders, folderEdit !== null) ? (
     <EmptyState
       icon={I.fileText}
       title="No documents in this project's vault yet"
       hint={
         vault?.pendingStore
           ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
+          : !canWrite
+            ? "Nothing has been filed into this project's vault yet. Your access to this project is view only."
           : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
       }
     />
   ) : (
     <div className={recordAsDrawer ? 'vd-grid' : 'vd-grid wa-split'}>
-      <div className="vd-browse" data-tree={treeAsDrawer ? 'drawer' : undefined}>
-        {/* Finding a document: the search, saved views, the two scopes and the six filters, across the structure
-            and the list. Inside the list's column the filters took three rows and the first document sat below
-            the fold at 1440px (P-122: a person's own work is on the first screen). */}
-        <div className="vd-findbar" data-testid="vault-findbar">
-        {/* One row: the search, saved views and the two scopes. THE SEARCH
-            BOX: `q` is driven by this field and by AnA's vault.search, the
-            same state. */}
-        <div className="vd-find">
-          {treeAsDrawer && (
-            <button type="button" className="btn ghost small" aria-expanded={treeOpen} onClick={() => setTreeOpen(true)}>
-              {I.folder} Structure
-            </button>
-          )}
-          <label className="vd-find-q">
-            <span className="vd-find-ic" aria-hidden="true">{I.search}</span>
-            <span className="sr-only">Search this vault</span>
-            <input
-              type="search"
-              className="c2c-input"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search titles and document text"
-              aria-label="Search this vault"
-            />
-          </label>
-          {projectId && (
-            <button
-              type="button"
-              className="btn ghost small"
-              aria-expanded={viewsOpen}
-              aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
-              onClick={() => setViewsOpen((open) => !open)}
-            >
-              Saved views
-            </button>
-          )}
-          <label className="vd-toggle">
-            <input type="checkbox" checked={includeEarlier} onChange={(e) => setIncludeEarlier(e.target.checked)} />
-            Earlier versions
-          </label>
-          <label className="vd-toggle">
-            <input
-              type="checkbox"
-              checked={allProjects}
-              disabled={folderHeld}
-              aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
-              onChange={(e) => setAllProjects(e.target.checked)}
-            />
-            All my projects
-          </label>
-        </div>
-        {folderHeld && (
-          <p id="vd-folder-held" className="vd-find-note">
-            A folder is one project&rsquo;s cabinet. Remove the folder filter to search all your projects.
-          </p>
+      {/* Finding a document: the search, saved views, the two scopes and the six filters, across the whole Library,
+          over the structure, the list and the record. Inside the list's column the filters took three rows and the
+          first document sat below the fold at 1440px; across the structure and the list they still took two rows
+          at 1280px, where the list's column is 308px (P-122: a person's own work is on the first screen). */}
+      <div className="vd-findbar" data-testid="vault-findbar">
+      {/* One row: the search, saved views and the two scopes. THE SEARCH
+          BOX: `q` is driven by this field and by AnA's vault.search, the
+          same state. */}
+      <div className="vd-find">
+        {treeAsDrawer && (
+          <button type="button" className="btn ghost small" aria-expanded={treeOpen} onClick={() => setTreeOpen(true)}>
+            {I.folder} Structure
+          </button>
         )}
-        {viewsOpen && projectId && (
-          <VaultSavedViews
-            projectId={projectId}
-            canWrite={canWrite}
-            current={findState}
-            searching={searching}
-            defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
-            applied={appliedView}
-            onApply={applySavedView}
-            onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
-            onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
+        <label className="vd-find-q">
+          <span className="vd-find-ic" aria-hidden="true">{I.search}</span>
+          <span className="sr-only">Search this vault</span>
+          <input
+            type="search"
+            className="c2c-input"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search titles and document text"
+            aria-label="Search this vault"
           />
+        </label>
+        {projectId && (
+          <button
+            type="button"
+            className="btn ghost small"
+            aria-expanded={viewsOpen}
+            aria-controls={viewsOpen ? 'vd-saved-views' : undefined}
+            onClick={() => setViewsOpen((open) => !open)}
+          >
+            Saved views
+          </button>
         )}
-        <VaultFindFilterRow
-          key={filterReset}
-          value={findFilters}
-          onChange={setFindFilters}
-          onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
-          facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
-          folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
-          view={libraryMode ? null : vaultView}
+        <label className="vd-toggle">
+          <input type="checkbox" checked={includeEarlier} onChange={(e) => setIncludeEarlier(e.target.checked)} />
+          Earlier versions
+        </label>
+        <label className="vd-toggle">
+          <input
+            type="checkbox"
+            checked={allProjects}
+            disabled={folderHeld}
+            aria-describedby={folderHeld ? 'vd-folder-held' : undefined}
+            onChange={(e) => setAllProjects(e.target.checked)}
+          />
+          All my projects
+        </label>
+      </div>
+      {folderHeld && (
+        <p id="vd-folder-held" className="vd-find-note">
+          A folder is one project&rsquo;s cabinet. Remove the folder filter to search all your projects.
+        </p>
+      )}
+      {viewsOpen && projectId && (
+        <VaultSavedViews
+          projectId={projectId}
+          canWrite={canWrite}
+          current={findState}
+          searching={searching}
+          defaultName={trimmedQ ? (filtering ? `${trimmedQ}, filtered` : trimmedQ) : 'Filtered documents'}
+          applied={appliedView}
+          onApply={applySavedView}
+          onChanged={(v, adopt) => { if (adopt || appliedView?.id === v.id) setAppliedView(v); }}
+          onDeleted={(id) => { if (appliedView?.id === id) setAppliedView(null); }}
         />
-        </div>
+      )}
+      <VaultFindFilterRow
+        key={filterReset}
+        value={findFilters}
+        onChange={setFindFilters}
+        onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
+        facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
+        folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
+        view={libraryMode ? null : vaultView}
+      />
+      </div>
+      <div className="vd-browse" data-tree={treeAsDrawer ? 'drawer' : undefined}>
         {!treeAsDrawer && (
           <aside className="vd-tree" aria-label="Document structure">
             {treeCaption}
@@ -2978,9 +2981,12 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
             </div>
           )}
           {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.binder ? (
-            /* Where the binder's folders come from: the filing's outline, by name and version. */
+            /* Where the binder's folders come from: the filing's outline, by name and version. The name is not said
+               twice: on the binder itself the line above already reads "Filing binder · <outline>". */
             <div className="vd-d-idx" data-testid="vault-binder-source">
-              Binder from the filing’s outline: {(cabinet as CabinetFolder).binder!.label} · version {(cabinet as CabinetFolder).binder!.version}
+              {folder.label.includes((cabinet as CabinetFolder).binder!.label)
+                ? <>From the filing’s outline, version {(cabinet as CabinetFolder).binder!.version}</>
+                : <>Binder from the filing’s outline: {(cabinet as CabinetFolder).binder!.label} · version {(cabinet as CabinetFolder).binder!.version}</>}
             </div>
           ) : null}
           {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.note ? (
@@ -3230,7 +3236,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
             </p>
           ) : null}
         </div>
-        <div className="ph-acts">
+        {/* With no project open the page asks only which sponsor's Vaults to show (UI walk, 2026-11-12): each control
+            here and each starter below needs a project, and returns with it. */}
+        {projectId ? <div className="ph-acts">
           {/* Offered only where the eTMF can be opened: outside this release it
               led to the locked panel (FILING_SPINE.md F16). */}
           {available('etmf') && (
@@ -3248,9 +3256,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               <button
                 type="button"
                 className="btn ghost"
-                disabled={!projectId || !cabinet}
+                disabled={!cabinet}
                 onClick={newFolder}
-                title={projectId ? 'Make a folder in this project’s Vault, in the folder open on the left' : 'Open a project first.'}
+                title="Make a folder in this project’s Vault, in the folder open on the left"
                 data-testid="vault-new-folder-button"
               >
                 {I.folder} New folder
@@ -3258,7 +3266,6 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               <button
                 type="button"
                 className="btn ghost"
-                disabled={!projectId}
                 onClick={addFolder}
                 title="Choose a folder of files on your computer to upload into this project’s Vault"
                 data-testid="vault-upload-folder-button"
@@ -3269,28 +3276,25 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
                 ref={addFilesButton}
                 type="button"
                 className="btn primary"
-                disabled={!projectId}
                 onClick={addFiles}
-                title={
-                  projectId
-                    ? 'Choose files to file into this project’s Vault'
-                    : 'Open a project first — a Vault document is filed against a project.'
-                }
+                title="Choose files to file into this project’s Vault"
                 data-testid="vault-upload-button"
               >
                 {I.upload} Add files
               </button>
             </>
           ) : null}
-        </div>
+        </div> : null}
       </header>
-      <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
-        {VAULT_STARTERS.map((s) => (
-          <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
-            <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
-          </button>
-        ))}
-      </div>
+      {projectId ? (
+        <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
+          {VAULT_STARTERS.map((s) => (
+            <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
+              <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* What qualifies every view: a transfer's outcome, a document that is
           not where it was looked for, a filing decision's outcome, a cabinet
@@ -3340,7 +3344,11 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
           <EmptyState
             icon={I.folder}
             title="Choose a project's Vault"
-            hint="Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
+            /* It said "the governed artifacts of every project you can open", and "Open one below" while the page asked
+               which sponsor first: no view spans sponsors (P-107 item 3a). 2026-11-12. */
+            hint={'Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. '
+              + (gate?.ask ? 'Choose a sponsor below, then one of its projects.'
+                : 'Open one below. The governed artifacts of the projects listed follow them.')}
           />
           <ProjectVaults onNav={onNav} read={projectList} gate={gate} onChooseSponsor={setSponsorKey} />
           {gate && !gate.ask ? organizationView : null}

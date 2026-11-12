@@ -1,0 +1,32 @@
+ ✓ server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > its service and its schema model are gone, and the schema index exports neither 2ms
+ ✓ server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > its migration creates nothing, and its header says what was removed and why 1ms
+ ✓ server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > no file under server/, shared/ or client/src names either table outside a comment 595ms
+ ✓ server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > etmf-logic.ts is the classifier only, and the seed skeleton is gone 46ms
+      Tests  4 passed (4)
+--- affected suites (eTMF, Vault, taxonomy, AnA eTMF tools and reads, disposition harness, report pack, eTMF routes)
+ × server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > no other server module that reads vault.documents builds its own metadata predicate 271ms
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > an empty result is a FAILURE with a reason, never "extracted, 0 chars" 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > no other server module that reads vault.documents builds its own metadata predicate
+ Test Files  1 failed | 87 passed (88)
+      Tests  1 failed | 1131 passed (1132)
+  (the one failure is vault-document-filter.test.ts naming server/services/clinical-regulatory-evidence/data-room-vault.ts, changed by R1 in a5043b4c49; this change touches neither file)
+--- typecheck
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+--- lint ratchet
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since HEAD.
+--- gates
+orm-reachability: [ci:orm-reachability] OK — 6 unreachable model(s) (baseline 7), none new.
+migration-reachability: [ci:migration-reachability] ✅ no new unreachable table references.
+migration-deploy-path: [ci:migration-deploy-path] OK — 100 baselined file(s) on no deploy path, none new.
+migration-drop-safety: [ci:migration-drop-safety] OK — 471 migrations, 45 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 21 dynamic DROP(s) in 21 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+install-fresh-overlay-deps: [ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+unbacked-tables: [ci:unbacked-tables] ✅ no new references to tables nothing creates.
+column-reachability: [ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+untracked-imports: [ci:untracked-imports] OK — every relative import in 6 file(s) resolves to a tracked file.
+unreferenced-modules: OK: no new unreachable modules.

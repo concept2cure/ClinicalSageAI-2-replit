@@ -34,6 +34,14 @@ optional props a host passes, so the hook-in now passes the Vault's `onAsk` (the
 Vault's own conversation) and `onVaultChanged={() => setVaultEpoch((n) => n + 1)}` (a file the section's filing form
 adds to the Vault is read back into the Vault's own lists), and the held test has a case for each.
 
+**Rebuilt 2026-11-12** (`26-hook-in-rebuilt-2026-11-12.txt`). `Vault.tsx` had moved on: the Required documents view
+gained `sectionName`, and the header's actions are shown only with a project open. So the patch no longer applied.
+It is rebuilt against `Vault.tsx` at `c3e5808c45`, with the same three changes, and `git apply --check` passes. With
+it applied, the held suite's 5 cases pass, and 838 of the 840 Vault and eTMF client tests pass. The 2 that fail are
+`etmfHostsTrialMasterFile.test.tsx`'s Vault-button cases. They pin the button opening the hosting page, and they
+exist to catch the Vault hosting the section before admission. **At admission they retire, replaced by the held
+suite.**
+
 **Why the Vault does not host it yet.** In the Vault the section makes a launch screen call `/api/etmf`. Only the
 `etmf` surface claims that prefix and `etmf` is outside the launch scope, so `ci:launch-scope-api` fails
 (`05-gates.txt`) and a release would refuse every read. P-75 admits the eTMF by the Vault app gaining the `etmf`

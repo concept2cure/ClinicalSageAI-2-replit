@@ -191,7 +191,8 @@ async function initializeMandatoryGateFixture() {
   pg = new PGlite();
   await createMandatorySkillFixture(pg, SOURCE);
   const { registerToolHandler } = await import('../../../services/ana/AnaToolExecutor.js');
-  for (const name of ['search_document', 'convene_drafting_council', 'check_dossier_consistency', 'seed_tmf']) {
+  // log_inspection_finding stands for a reason-tier write (seed_tmf did until it retired, 2026-11-12, eTMF E4 step 3).
+  for (const name of ['search_document', 'convene_drafting_council', 'check_dossier_consistency', 'log_inspection_finding']) {
     registerToolHandler(name, async (input, context) => {
       actualCalls.push({ name, input });
       policyHarness.contexts.push(context!);
@@ -232,12 +233,12 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
     expect(actualCalls.map(c => c.name)).toEqual(['convene_drafting_council']);
   });
   it('a mandatory rule preserves the stronger reason tier and records the person’s final exact action hash', async () => {
-    await addRule('seed_tmf');
-    await hold('seed_tmf', { reason: 'A proposed model reason' });
+    await addRule('log_inspection_finding');
+    await hold('log_inspection_finding', { reason: 'A proposed model reason' });
     expect((await approve()).status).toBe(400);
-    const res = await approve({ reasonForChange: 'The person corrected the seeding reason' });
+    const res = await approve({ reasonForChange: 'The person corrected the stated reason' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(actualCalls).toEqual([{ name: 'seed_tmf', input: { reason: 'The person corrected the seeding reason' } }]);
+    expect(actualCalls).toEqual([{ name: 'log_inspection_finding', input: { reason: 'The person corrected the stated reason' } }]);
     expect(audits[0].details).toMatchObject({ tier: 'reason', proposedReason: 'A proposed model reason', reasonAsProposed: false });
     expect((audits[0].details.executedSkillPolicyApproval as any).actionHash).not.toBe((audits[0].details.skillPolicyApproval as any).actionHash);
   });

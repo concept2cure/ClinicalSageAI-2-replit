@@ -45,6 +45,7 @@ export type TmfUnverifiedEvidence = Exclude<TmfDocumentEvidence, 'verified'>;
 export interface ZoneCompleteness {
   number: number;
   name: string;
+  /** The records this study must hold in the zone: the reference model's, less those declared not applicable. */
   required: string[];
   /** Required artifacts counted as present (basis 'verified_documents': filed against a verified document). */
   present: string[];
@@ -52,6 +53,11 @@ export interface ZoneCompleteness {
   missing: string[];
   /** The part of `missing` that HAS a filing, and what its document reference was found to be. */
   unverified: Array<{ code: string; evidence: TmfUnverifiedEvidence }>;
+  /**
+   * The reference model's records of the zone (per scope) declared not applicable to this study, each with a
+   * person's reason on the record (P-124 item 5). Neither filed nor missing, and not in `required`.
+   */
+  notApplicable: string[];
   complete: boolean;
 }
 
@@ -60,7 +66,9 @@ export interface TmfCompletenessResult {
    * true only when every required artifact is present. false when one is
    * unfiled, filed with no document, or filed against a vault document that no
    * longer resolves. null when every remaining gap is an off-platform reference
-   * this service cannot check: readiness is then undetermined, not "no".
+   * this service cannot check: readiness is then undetermined, not "no". Also
+   * null when no record is left to check (`summary.totalRequired` is 0: every one
+   * in scope is declared not applicable): nothing was checked, so no verdict.
    */
   ready: boolean | null;
   /**
@@ -79,6 +87,8 @@ export interface TmfCompletenessResult {
     totalMissing: number;
     /** Filed, but without a verified document. Included in totalMissing. */
     totalUnverified: number;
+    /** Declared not applicable to this study. Not in totalRequired, so neither filed nor missing. */
+    totalNotApplicable: number;
   };
   /** Per filed artifact code, what its document reference was found to be (basis 'verified_documents' only). */
   documentEvidence?: Record<string, TmfDocumentEvidence>;
@@ -95,6 +105,11 @@ export interface TmfCompletenessInput {
    * caller's assertion and the result says so (basis 'asserted_codes').
    */
   documentEvidence?: Record<string, TmfDocumentEvidence>;
+  /**
+   * Codes declared not applicable to this study (tmf-artifact-persistence). Each leaves the study's required set
+   * and is counted as `notApplicable`; a code both filed and declared is counted as declared.
+   */
+  notApplicable?: string[];
 }
 
 /**
@@ -109,6 +124,7 @@ export interface TmfCompletenessInput {
 export function assessTmfCompleteness(input: TmfCompletenessInput): TmfCompletenessResult {
   const scope = input.scope === 'all' ? 'all' : 'essential';
   const provided = new Set((input.providedArtifacts ?? []).map(String));
+  const declared = new Set((input.notApplicable ?? []).map(String));
   const evidence = input.documentEvidence;
   const counts = (c: string) => provided.has(c) && (!evidence || evidence[c] === 'verified');
   const unverifiedOf = (codes: string[]) =>
@@ -120,15 +136,21 @@ export function assessTmfCompleteness(input: TmfCompletenessInput): TmfCompleten
       : [];
 
   const zones: ZoneCompleteness[] = TMF_REFERENCE_MODEL.map((zone) => {
-    const required = zone.artifacts.filter((a) => (scope === 'all' ? true : a.essential)).map((a) => a.code);
+    const inScope = zone.artifacts.filter((a) => (scope === 'all' ? true : a.essential)).map((a) => a.code);
+    const required = inScope.filter((c) => !declared.has(c));
     const present = required.filter(counts);
     const missing = required.filter((c) => !counts(c));
-    return { number: zone.number, name: zone.name, required, present, missing, unverified: unverifiedOf(missing), complete: missing.length === 0 };
+    return { number: zone.number, name: zone.name, required, present, missing, unverified: unverifiedOf(missing),
+      notApplicable: inScope.filter((c) => declared.has(c)), complete: missing.length === 0 };
   });
 
   const totalRequired = zones.reduce((n, z) => n + z.required.length, 0);
   const gaps = zones.flatMap((z) => z.missing);
-  const ready = gaps.length === 0 ? true : evidence && gaps.every((c) => evidence[c] === 'unverifiable') ? null : false;
+  /* 2026-11-12: with every record in scope declared not applicable, no gap was left and this read `true` with nothing
+     filed. An empty required set is the absence of an assessment, not readiness (the retired store's verdict held the
+     same rule, and it is carried here before that verdict goes in eTMF E4 step 5). */
+  const ready = totalRequired === 0 ? null
+    : gaps.length === 0 ? true : evidence && gaps.every((c) => evidence[c] === 'unverifiable') ? null : false;
 
   return {
     ready,
@@ -141,41 +163,10 @@ export function assessTmfCompleteness(input: TmfCompletenessInput): TmfCompleten
       totalRequired,
       totalMissing: gaps.length,
       totalUnverified: zones.reduce((n, z) => n + z.unverified.length, 0),
+      totalNotApplicable: zones.reduce((n, z) => n + z.notApplicable.length, 0),
     },
     ...(evidence ? { documentEvidence: { ...evidence } } : {}),
   };
-}
-
-export interface TmfSeedArtifact {
-  zone: number;
-  code: string;
-  artifactName: string;
-  /** Essential documents drive completeness; optional ones are tracked only. */
-  completenessRequired: boolean;
-}
-
-/**
- * The expected-document skeleton a NEW study TMF is seeded with: every
- * reference-model artifact as an 'expected' placeholder, with
- * completeness_required = essential (ICH E6(R3) Appendix C essential records
- * drive the inspection-readiness denominator; optional artifacts are
- * tracked but never dilute it). Pure — the seeding transaction in
- * etmf-service.ts consumes this list.
- */
-export function seedArtifacts(scope: 'essential' | 'all' = 'all'): TmfSeedArtifact[] {
-  const out: TmfSeedArtifact[] = [];
-  for (const zone of TMF_REFERENCE_MODEL) {
-    for (const a of zone.artifacts) {
-      if (scope === 'essential' && !a.essential) continue;
-      out.push({
-        zone: zone.number,
-        code: a.code,
-        artifactName: a.name,
-        completenessRequired: a.essential,
-      });
-    }
-  }
-  return out;
 }
 
 /** The reference model (zones + artifacts) for a checklist UI. */

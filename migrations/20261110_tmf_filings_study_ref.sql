@@ -52,6 +52,19 @@
 --     reason of at least 8 characters, and a live row carries none of the
 --     three. Added only when absent; every existing row has all three NULL.
 --
+-- AMENDED 2026-11-12 (P-124 item 5, the Vault parity lane): "not applicable",
+-- with a reason, carried onto this store before admission. One more nullable
+-- column, not_applicable_reason TEXT: a live row that carries it is a
+-- declaration that the record does not apply to the study (who: created_by;
+-- when: filed_at; why: this), counted as neither filed nor missing. A
+-- declaration names no document, and its reason is at least 8 characters:
+-- tmf_artifact_filings_not_applicable_chk, added only when absent (every
+-- existing row has the column NULL, so it validates nothing). Withdrawing a
+-- declaration is a removal (the three removal columns above); filing a
+-- document over one clears the column on the same row, in the writer's
+-- transaction. Written only by server/services/etmf/tmf-artifact-persistence.ts.
+-- Amended in place, not appended (RULE 1): the journal records this as drift.
+--
 -- RULE 1: replayed on every deploy. Every statement runs only when its object
 -- is absent; a replay runs no DDL. No DROP. The table is public with an
 -- integer organization column and already policied; cdisc_prm_studies too.
@@ -86,6 +99,17 @@ BEGIN
   END IF;
   IF to_regclass('public.tmf_artifact_filings_study_ref_idx') IS NULL THEN
     CREATE INDEX tmf_artifact_filings_study_ref_idx ON public.tmf_artifact_filings (study_ref) WHERE study_ref IS NOT NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'public.tmf_artifact_filings'::regclass
+                    AND attname = 'not_applicable_reason' AND NOT attisdropped) THEN
+    ALTER TABLE public.tmf_artifact_filings ADD COLUMN not_applicable_reason TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tmf_artifact_filings_not_applicable_chk'
+                    AND conrelid = 'public.tmf_artifact_filings'::regclass) THEN
+    ALTER TABLE public.tmf_artifact_filings
+      ADD CONSTRAINT tmf_artifact_filings_not_applicable_chk
+      CHECK (not_applicable_reason IS NULL
+          OR (document_ref IS NULL AND char_length(btrim(not_applicable_reason)) >= 8));
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tmf_artifact_filings_removal_recorded_chk'
                     AND conrelid = 'public.tmf_artifact_filings'::regclass) THEN

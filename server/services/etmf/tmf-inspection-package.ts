@@ -7,11 +7,13 @@
  *
  *   manifest.json          — machine-readable package descriptor
  *   completeness.json      — the deterministic per-zone assessment
- *   inspection-index.csv   — every filed artifact (zone, code, filed, ref)
+ *   inspection-index.csv   — every filed artifact (zone, code, filed, ref), and every
+ *                            record declared not applicable with its reason (P-124 item 5)
  *   README.txt             — human-readable summary + honesty note
  *
- * HONESTY CONTRACT: tmf_artifacts stores metadata only — no document bytes. This
- * package therefore assembles the inspection *index and readiness picture*, and
+ * HONESTY CONTRACT: a filing (tmf_artifact_filings) names its document; it holds
+ * no document bytes. This package therefore assembles the inspection *index and
+ * readiness picture*, and
  * says so plainly. It never fabricates document content it does not hold. Where
  * a filing carries a documentRef the ref is listed so the inspector can locate
  * the source of record; the bytes themselves are not claimed to be inside.
@@ -64,6 +66,14 @@ function referenceLabelMap(): Map<string, { label: string; zone: number }> {
 }
 
 /** The README's account of what "filed" rests on. */
+/** The cover's readiness line. No record left to check (every one declared not applicable) is no verdict, never "YES". */
+function readinessLabel(completeness: TmfCompletenessResult): string {
+  if (completeness.ready === null) {
+    return completeness.summary.totalRequired === 0 ? 'NO VERDICT (every required record is declared not applicable)' : 'NOT DETERMINED';
+  }
+  return completeness.ready ? 'YES' : 'NO';
+}
+
 function contentBasisNote(basis: TmfCompletenessResult['basis']): string {
   return basis === 'verified_documents'
     ? '  An artifact counts as filed only when its filing references a vault\n' +
@@ -124,25 +134,30 @@ export async function buildTmfInspectionPackage(
   };
 
   // document_evidence: what each filing's reference was found to be when this
-  // package was built ('not_assessed' only if the assessment carried none).
-  const csvHeader = 'zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence';
+  // package was built ('not_assessed' only if the assessment carried none);
+  // 'not_applicable' for a record declared not applicable to the study, whose
+  // reason is the last column and whose filed_at is when it was declared.
+  const csvHeader = 'zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence,not_applicable_reason';
   const csvRows = orderedFilings.map((f) => {
     const meta = labels.get(f.artifactCode);
+    const declared = f.notApplicableReason != null;
     return [
       csvCell(meta?.zone ?? ''),
       csvCell(f.artifactCode),
       csvCell(meta?.label ?? ''),
       csvCell((f as any).filedAt instanceof Date ? (f as any).filedAt.toISOString() : (f as any).filedAt ?? ''),
       csvCell((f as any).documentRef ?? ''),
-      csvCell(completeness.documentEvidence?.[f.artifactCode] ?? 'not_assessed'),
+      csvCell(declared ? 'not_applicable' : completeness.documentEvidence?.[f.artifactCode] ?? 'not_assessed'),
+      csvCell(f.notApplicableReason ?? ''),
     ].join(',');
   });
+  const declaredCount = orderedFilings.filter((f) => f.notApplicableReason != null).length;
   const csv = [csvHeader, ...csvRows].join('\n') + '\n';
 
   /* 2026-10-15: this printed "Inspection ready: YES" whenever every essential
      code had a filing row — with or without a document — under a note that
      "nothing in this package is fabricated". */
-  const readyLabel = completeness.ready === null ? 'NOT DETERMINED' : completeness.ready ? 'YES' : 'NO';
+  const readyLabel = readinessLabel(completeness);
   const readme = [
     'TRIAL MASTER FILE — INSPECTION-READINESS PACKAGE',
     '='.repeat(50),
@@ -158,12 +173,14 @@ export async function buildTmfInspectionPackage(
     `Required docs:    ${completeness.summary.totalRequired}`,
     `Missing:          ${completeness.summary.totalMissing}`,
     `  of which filed without a verified document: ${completeness.summary.totalUnverified}`,
-    `Artifacts filed:  ${orderedFilings.length}`,
+    `Not applicable:   ${completeness.summary.totalNotApplicable} (declared, each with its reason; not required)`,
+    `Artifacts filed:  ${orderedFilings.length - declaredCount}`,
     ``,
     'CONTENTS',
     '  manifest.json         Machine-readable package descriptor',
     '  completeness.json     Per-zone readiness assessment',
-    '  inspection-index.csv  Every filed artifact (zone, code, filed, ref, evidence)',
+    '  inspection-index.csv  Every filed artifact (zone, code, filed, ref, evidence),',
+    '                        and every record declared not applicable, with its reason',
     '  README.txt            This file',
     ``,
     'NOTE ON CONTENT',

@@ -8,7 +8,8 @@
  * GET    /api/etmf/trials/:studyId/completeness?scope=essential|all     the verdict and the zones
  * GET    /api/etmf/trials/:studyId/artifacts                            each filing and its document
  * POST   /api/etmf/trials/:studyId/artifacts  { artifactCode, documentRef, reason }
- * DELETE /api/etmf/artifacts/:id              { reason }
+ * POST   /api/etmf/trials/:studyId/artifacts  { artifactCode, notApplicable: true, reason }   declare it not applicable
+ * DELETE /api/etmf/artifacts/:id              { reason }   remove a filing, or withdraw a declaration
  * GET    /api/etmf/trials/:studyId/inspection-package?scope=essential|all
  *
  * One verdict, computed once (`tmfVerdict`), is what the verdict line, the
@@ -17,7 +18,7 @@
  * failed or was refused is said as that, through the one read classifier, and
  * is never an empty trial master file.
  */
-import { tmfArtifactName } from '@shared/constants/domain/tmf-reference-model';
+import { TMF_REFERENCE_MODEL, tmfArtifactName } from '@shared/constants/domain/tmf-reference-model';
 import { VAULT_INGEST_DOCUMENT_TYPES, type VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 // The completeness response, typed by the service that computes it.
@@ -28,6 +29,7 @@ import { assessmentStateFor, mayReassure } from '../assessmentState';
 import type { DataState, ShapeGuard } from '../dataConnect';
 import { downloadBlob, safeFileName } from '../download';
 import { sha256Hex } from './vaultArchiveDownload';
+import { stageLabel } from './VaultLifecycle';
 
 export type TmfStudy = Pick<StudyDesignRow, 'studyId' | 'title' | 'phase'>;
 /** What is checked: the essential records (ICH E6(R3) Appendix C), or every record of the reference model. */
@@ -35,13 +37,17 @@ export type TmfScope = 'essential' | 'all';
 /** A filing as GET /api/etmf/trials/:studyId/artifacts lists it, with the document the server found for its reference. */
 export interface TmfFiling {
   id: string; artifactCode: string; documentRef: string | null; filedAt?: string | null;
-  document?: { id: string; title: string | null; version: string | null; current: boolean } | null;
+  document?: { id: string; title: string | null; version: string | null; current: boolean; lifecycleStage?: string | null } | null;
+  /** Set on a declaration that the record does not apply to the study (P-124 item 5): why, in the person's words. */
+  notApplicableReason?: string | null;
+  /** Who filed or declared it, by name; null where the server could not name them. */
+  filedByName?: string | null;
 }
 /** A document of the project's Vault as its host lists it: a second way to name what a record is filed against. */
 export interface TmfVaultDocument { docId: string; title: string }
 /** What an act came to, in words. `retry`: it failed in a way another try can change (never a refusal). */
 export type TmfNote = { tone: 'ok' | 'error'; text: string; retry?: true };
-export type TmfRecordState = 'filed' | 'missing' | TmfUnverifiedEvidence;
+export type TmfRecordState = 'filed' | 'missing' | 'not_applicable' | TmfUnverifiedEvidence;
 export interface TmfRecord { code: string; name: string; zone: number; state: TmfRecordState; filing: TmfFiling | null }
 export type TmfVerdict = 'complete' | 'incomplete' | 'undetermined' | 'not-assessed';
 
@@ -72,7 +78,8 @@ const isCodes = (v: unknown): v is string[] => Array.isArray(v) && v.every((c) =
 function isZone(v: unknown): v is ZoneCompleteness {
   const z = v as Partial<ZoneCompleteness> | null;
   return !!z && typeof z.number === 'number' && typeof z.name === 'string' &&
-    isCodes(z.required) && isCodes(z.present) && isCodes(z.missing) && Array.isArray(z.unverified);
+    isCodes(z.required) && isCodes(z.present) && isCodes(z.missing) && Array.isArray(z.unverified) &&
+    (z.notApplicable === undefined || isCodes(z.notApplicable));
 }
 /** `ready` must be stated: true, false or null (not determined). An absent one is not an answer. */
 function isCompleteness(v: unknown): v is TmfCompletenessResult {
@@ -160,6 +167,14 @@ const writeWords = (done: string, act: string, doing: string) => ({
 });
 export const FILE_WORDS = writeWords('filed', 'filing', 'filing');
 export const REMOVE_WORDS = writeWords('removed', 'removal', 'removing');
+export const DECLARE_WORDS = writeWords('declared', 'declaration', 'declaring');
+export const WITHDRAW_WORDS = writeWords('withdrawn', 'withdrawal', 'withdrawing');
+
+/** How many records the read says are declared not applicable; 0 from a read that predates the count. */
+export const declaredCount = (result: TmfCompletenessResult) =>
+  (Number.isSafeInteger(result.summary.totalNotApplicable) ? result.summary.totalNotApplicable : 0);
+/** "2 are declared not applicable to this study.", or nothing. */
+const declaredSentence = (n: number) => (n > 0 ? ` ${n} ${are(n)} declared not applicable to this study.` : '');
 
 /**
  * The Vault's ingest type for a file uploaded against a record. The record the
@@ -242,16 +257,23 @@ export function tmfVerdictSentence(verdict: TmfVerdict, result: TmfCompletenessR
   const { totalRequired, totalMissing } = result.summary;
   const filed = totalRequired - totalMissing;
   const records = scopeNoun(result.scope);
-  if (verdict === 'complete') return `Every ${scopeNoun(result.scope, 1)} is filed: all ${totalRequired}, each against a Vault document that exists now.`;
-  if (verdict === 'not-assessed') return `No verdict. The read listed no ${records} to check, so nothing is said about this trial master file.`;
+  const declared = declaredCount(result);
+  if (verdict === 'complete') {
+    return `Every ${scopeNoun(result.scope, 1)} is filed: all ${totalRequired}, each against a Vault document that exists now.${declaredSentence(declared)}`;
+  }
+  if (verdict === 'not-assessed') {
+    return declared > 0 && totalRequired <= 0
+      ? `No verdict. Every ${scopeNoun(result.scope, 1)} is declared not applicable to this study (${declared}), so there is none to check.`
+      : `No verdict. The read listed no ${records} to check, so nothing is said about this trial master file.`;
+  }
   if (verdict === 'undetermined') {
     return `Not determined. ${filed} of ${totalRequired} ${records} are filed against a Vault document. The other ${totalMissing} ${are(totalMissing)} ` +
-      'filed against a reference outside the Vault, which cannot be checked here, so this is neither complete nor incomplete.';
+      `filed against a reference outside the Vault, which cannot be checked here, so this is neither complete nor incomplete.${declaredSentence(declared)}`;
   }
   if (totalMissing <= 0) return `Not complete, by this read: it did not state every ${scopeNoun(result.scope, 1)} as filed, and it gave no count of what is missing.`;
   const unverified = result.summary.totalUnverified ?? 0;
   const without = unverified > 0 ? ` ${unverified} of them ${are(unverified)} filed, but not against a Vault document that exists now.` : '';
-  return `${filed} of ${totalRequired} ${records} are filed. ${totalMissing} ${are(totalMissing)} missing.${without}`;
+  return `${filed} of ${totalRequired} ${records} are filed. ${totalMissing} ${are(totalMissing)} missing.${without}${declaredSentence(declared)}`;
 }
 
 /** The verdict as the inspection package's cover states it. One word per verdict: the cover can say nothing the verdict line does not. */
@@ -272,7 +294,11 @@ export const readinessParagraph = (verdict: TmfVerdict, result: TmfCompletenessR
   `${tmfVerdictSentence(verdict, result)} ${READINESS_SENTENCE[verdict]}`;
 
 /** The three figures the section and the package state: zones complete, records filed, records open. */
-export interface TmfFigures { zonesComplete: number; zoneCount: number; filed: number; required: number; open: number; unverified: number | null }
+export interface TmfFigures {
+  zonesComplete: number; zoneCount: number; filed: number; required: number; open: number; unverified: number | null;
+  /** Declared not applicable to this study: not in `required`, neither filed nor open. */
+  notApplicable: number;
+}
 /**
  * The figures of an answer, or null where it has none to state: it checked
  * nothing (a row of zeros would read as a count), or it is not ready and gave
@@ -288,6 +314,7 @@ export function tmfFigures(result: TmfCompletenessResult): TmfFigures | null {
     zonesComplete: s.zonesComplete, zoneCount: s.zoneCount, filed: s.totalRequired - s.totalMissing, required: s.totalRequired, open: s.totalMissing,
     // How many open records have a filing with no verified document. Not reported is said, never read as none.
     unverified: Number.isSafeInteger(s.totalUnverified) ? s.totalUnverified : null,
+    notApplicable: declaredCount(result),
   };
 }
 /** "3 filed with no verified document", as the open figure qualifies itself. */
@@ -299,7 +326,8 @@ export function tmfFiguresSentence(result: TmfCompletenessResult): string {
   const f = tmfFigures(result);
   if (!f) return '';
   return `${f.zonesComplete} of ${f.zoneCount} zones are complete; ${f.filed} of ${f.required} ${scopeNoun(result.scope)} are filed; ` +
-    `${f.open} ${f.open === 1 ? 'is' : 'are'} open${f.open > 0 ? `, ${unverifiedWords(f.unverified)}` : ''}.`;
+    `${f.open} ${f.open === 1 ? 'is' : 'are'} open${f.open > 0 ? `, ${unverifiedWords(f.unverified)}` : ''}` +
+    `${f.notApplicable > 0 ? `; ${f.notApplicable} ${are(f.notApplicable)} declared not applicable` : ''}.`;
 }
 
 /** What "filed" rests on, as the completeness service reports it. */
@@ -315,15 +343,23 @@ export const tmfAskPrompt = (study: TmfStudy) =>
 
 /* ── The records of a zone ── */
 
+/**
+ * A zone's records, in the reference model's order: the ones the study must hold, and the ones declared not
+ * applicable to it (which the server lists apart, out of `required`).
+ */
 export function recordsOf(zone: ZoneCompleteness, filings: ReadonlyMap<string, TmfFiling> | null): TmfRecord[] {
   const present = new Set(zone.present);
   const unverified = new Map(zone.unverified.map((u) => [u.code, u.evidence]));
-  return zone.required.map((code) => ({
+  const declared = new Set(zone.notApplicable ?? []);
+  const listed = new Set([...zone.required, ...declared]);
+  const modelOrder = TMF_REFERENCE_MODEL.find((z) => z.number === zone.number)?.artifacts.map((a) => a.code) ?? [];
+  const codes = [...modelOrder.filter((c) => listed.has(c)), ...[...listed].filter((c) => !modelOrder.includes(c))];
+  return codes.map((code) => ({
     code,
     name: tmfArtifactName(code),
     zone: zone.number,
-    // Counted as filed only where the server lists it as present; anything else is open.
-    state: present.has(code) ? 'filed' : unverified.get(code) ?? 'missing',
+    // Counted as filed only where the server lists it as present; declared where it lists it so; anything else is open.
+    state: declared.has(code) ? 'not_applicable' : present.has(code) ? 'filed' : unverified.get(code) ?? 'missing',
     filing: filings?.get(code) ?? null,
   }));
 }
@@ -341,7 +377,20 @@ function documentName(filing: TmfFiling, documents: readonly TmfVaultDocument[])
   return title ? `“${title}”` : `Vault document ${id.slice(0, 8)}…`;
 }
 
+/** Who made a filing or a declaration and on what day, as a record's sentence ends: " by Dana Reyes on 2026-11-12". */
+function byOn(filing: TmfFiling | null): string {
+  const by = filing?.filedByName?.trim() ? ` by ${filing.filedByName.trim()}` : '';
+  const on = typeof filing?.filedAt === 'string' && filing.filedAt ? ` on ${filing.filedAt.slice(0, 10)}` : '';
+  return `${by}${on}`;
+}
+
 export function recordSentence(r: TmfRecord, documents: readonly TmfVaultDocument[]): string {
+  if (r.state === 'not_applicable') {
+    const why = r.filing?.notApplicableReason?.trim();
+    // A reason that ends its own sentence is not given a second full stop after the quotation.
+    const quoted = why ? `: “${why}”${/[.!?]$/.test(why) ? '' : '.'}` : '.';
+    return `Not applicable to this study${quoted} Declared${byOn(r.filing)}.`;
+  }
   if (r.state === 'missing') return 'Not filed.';
   if (r.state === 'no_document') return 'Filed with no document, so it does not count as filed.';
   if (r.state === 'unresolved') return 'Filed against a Vault document that no longer exists, so it does not count as filed.';
@@ -350,5 +399,16 @@ export function recordSentence(r: TmfRecord, documents: readonly TmfVaultDocumen
   }
   if (!r.filing) return 'Filed against a Vault document.';
   const on = typeof r.filing.filedAt === 'string' && r.filing.filedAt ? ` on ${r.filing.filedAt.slice(0, 10)}` : '';
-  return `Filed against ${documentName(r.filing, documents)}${on}.`;
+  return `Filed against ${documentName(r.filing, documents)}${on}.${documentStageSentence(r.filing)}`;
+}
+
+/**
+ * A record's state is its document's (P-124 item 5): the review stage of the Vault document it is filed against, in
+ * the words the Library uses for it. Said only where the server named the document; never a stage nobody recorded.
+ */
+function documentStageSentence(filing: TmfFiling): string {
+  const doc = filing.document;
+  if (!doc || doc.lifecycleStage === undefined) return '';
+  // "Review", as the Library's filter and rows name the same stage.
+  return ` Review: ${stageLabel(doc.lifecycleStage)}.`;
 }

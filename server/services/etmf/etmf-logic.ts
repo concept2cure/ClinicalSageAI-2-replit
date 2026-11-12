@@ -1,20 +1,26 @@
 /**
- * eTMF deterministic logic (Capability C2C-08)
+ * The trial master file classifier (Capability C2C-08)
  *
- * Pure, DB-free, LLM-free: the DIA TMF Reference Model zone names, an artifact
- * auto-classifier (the deterministic baseline an LLM can refine), and the
- * completeness gap-check that feeds inspection readiness. Grounded in the
- * DIA TMF Reference Model and ICH E6(R3) Appendix C (essential records).
+ * Pure, DB-free, LLM-free: the DIA TMF Reference Model zone names and an
+ * artifact classifier, which says which reference-model record a name is
+ * (catalog names and codes first, keyword rules after) and never guesses a zone.
+ * AnA's classify_tmf_artifact and the Vault's filing service
+ * (vault/vault-filing.service.ts) read it.
  *
  * The zones and artifacts are the one catalog in
  * shared/constants/domain/tmf-reference-model.ts. This module kept its own zone
  * list until 2026-10-30 (slice E1 of docs/design/ETMF_CONVERGENCE_2026-10-30.md),
  * with zone 4 spelled differently from the catalog it classified for.
  *
+ * 2026-11-12 (eTMF convergence E4 step 5): the completeness verdict over the
+ * retired store's typed statuses (evaluateCompleteness) is gone with that store.
+ * A study's readiness is tmf-completeness.ts's assessTmfCompleteness over its
+ * filings, which carries the verdict's one guard: no record left to check is no
+ * verdict, never readiness.
+ *
  * @module server/services/etmf/etmf-logic
  */
 
-import type { ArtifactStatus } from '../../../shared/schema/etmf';
 import { TMF_REFERENCE_MODEL } from '../../../shared/constants/domain/tmf-reference-model.js';
 
 /** DIA TMF Reference Model zones (v3), from the shared catalog. */
@@ -31,8 +37,8 @@ export function zoneName(zone: number): string {
 /**
  * A name as its words. `word` is the word with apostrophes dropped, so
  * "Investigator's" and "Investigators" read the same against the catalog.
- * `stem` also drops a possessive, so "IRB's approval" still holds the keyword
- * "irb". Every other run of non-alphanumerics separates words: a space, a
+ * `stem` drops a possessive or an elided article, so "IRB's approval" and
+ * "l'IRB" still hold the keyword "irb". Every other run of non-alphanumerics separates words: a space, a
  * hyphen, a full stop and an underscore alike. `used` marks a word already
  * taken by a longer phrase.
  */
@@ -42,7 +48,10 @@ function nameWords(s: string): NameWord[] {
   return s.toLowerCase().split(/[^a-z0-9'’]+/).flatMap((piece) => {
     const word = piece.replace(/['’]/g, '');
     if (!word) return [];
-    const stem = piece.replace(/['’]s$/, '').replace(/['’]/g, '') || word;
+    // "irb's" → irb (a possessive); "l'irb", "dell'iec" → irb, iec (an elided article).
+    const parts = piece.split(/['’]/).filter(Boolean);
+    const last = parts[parts.length - 1];
+    const stem = parts.length < 2 ? word : last === 's' ? parts.slice(0, -1).join('') : last;
     return [{ word, stem, used: false }];
   });
 }
@@ -91,6 +100,11 @@ function identity(s: string): string {
 const CATALOG_NAMES = TMF_REFERENCE_MODEL.flatMap((z) =>
   z.artifacts.map((a) => ({ zone: z.number, code: a.code, phrase: phraseOf(a.name) })),
 ).sort((x, y) => y.phrase.length - x.phrase.length);
+
+/** Whether `inner` stands, whole and in order, inside `outer`. */
+function within(inner: string[], outer: string[]): boolean {
+  return outer.some((_, i) => i + inner.length <= outer.length && inner.every((w, j) => outer[i + j] === w));
+}
 const CATALOG_CODES = new Map(
   TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.map((a) => [a.code, { zone: z.number, code: a.code }] as const)),
 );
@@ -106,8 +120,9 @@ const CATALOG_IDENTITIES = new Map(
  * zone's name.
  *
  * Which keyword decides: a longer keyword takes its words first, so a shorter
- * one inside it is not counted ("sample icf" is not also "icf"). Of the
- * keywords then found, the earliest rule decides, as it always did.
+ * one inside it is not counted twice ("sample icf" is not also "icf"), and it
+ * keeps that shorter keyword's place. Of the keywords then found, the earliest
+ * place decides, as the earliest rule always did.
  *
  * History of this table:
  * - Until 2026-11-10 the rules were regular expressions read against the raw
@@ -151,10 +166,49 @@ export const TMF_KEYWORD_RULES: ReadonlyArray<{ zone: number; section?: string; 
  */
 export const TMF_QUALIFIER_KEYWORDS: ReadonlySet<string> = new Set(['site', 'cro', 'vendor', 'protocol']);
 
-/** Every keyword, longest first; among equals the earlier rule first. */
-const KEYWORDS = TMF_KEYWORD_RULES.flatMap((rule, order) =>
-  rule.phrases.map((p) => ({ rule, order, phrase: p.split(' '), qualifier: TMF_QUALIFIER_KEYWORDS.has(p) })),
-).sort((x, y) => y.phrase.length - x.phrase.length || x.order - y.order);
+/**
+ * Words that say a document is ABOUT a record, not the record: the site's
+ * receipt or acceptance of the brochure, the signature page of the protocol,
+ * the cover letter of a submission. Beside a catalog name they are a second
+ * signal, so the name is left for a person: until 2026-11-12 "Investigators
+ * Brochure receipt site 04.pdf" was filed with the brochure. They name no zone
+ * themselves, and with no catalog name beside them they say nothing.
+ */
+export const TMF_ABOUT_PHRASES: readonly string[] = [
+  'receipt', 'acknowledgement', 'acknowledgment', 'acceptance', 'signature page', 'cover letter', 'transmittal',
+];
+const ABOUT = TMF_ABOUT_PHRASES.map((p) => p.split(' '));
+
+/**
+ * Every keyword, longest first. `rule` is the keyword's own place in the
+ * table. `place` is where it stands when keywords are compared: its own rule,
+ * or the earlier rule of a shorter keyword it holds. "sample icf" (the last
+ * rule but one) holds "icf" (the second), takes its words, and so must keep its
+ * place. Until 2026-11-12 it did not, and "Sample ICF - Site 101.pdf" went to
+ * whichever rule lay between: Site Management.
+ */
+const KEYWORDS = TMF_KEYWORD_RULES.flatMap((rule, index) =>
+  rule.phrases.map((p) => ({ rule, index, phrase: p.split(' '), qualifier: TMF_QUALIFIER_KEYWORDS.has(p) })),
+)
+  .map((k, _i, all) => ({
+    ...k,
+    place: Math.min(k.index, ...all.filter((o) => o !== k && within(o.phrase, k.phrase)).map((o) => o.index)),
+  }))
+  .sort((x, y) => y.phrase.length - x.phrase.length || x.index - y.index);
+
+/**
+ * Where each catalog name stands among the keyword rules: the place of the
+ * earliest keyword inside it that points to its own zone ("financial
+ * disclosure" in "Financial disclosure form"; "irb" in "IRB/IEC approval"), or
+ * nowhere. A catalog name that stands earlier than a keyword beside it keeps
+ * its zone, as that keyword alone would have.
+ */
+const CATALOG_STANDING = new Map(
+  CATALOG_NAMES.map((c) => [
+    c,
+    Math.min(Infinity, ...KEYWORDS.filter((k) => k.rule.zone === c.zone && within(k.phrase, c.phrase)).map((k) => k.place)),
+  ]),
+);
 
 /** The section an artifact classified into `zone` is recorded under: its rule's, or the zone's name. */
 function sectionOf(zone: number): string {
@@ -162,18 +216,12 @@ function sectionOf(zone: number): string {
 }
 
 /**
- * The keyword rule that decides among the words not yet taken: the earliest
- * rule with a keyword found. `qualifiers: false` leaves the whose-document
- * keywords out of the count.
+ * The keywords among the words not yet taken, the deciding one first: the
+ * earliest place, and between two at the same place the keyword whose own rule
+ * that is ("irb" before "sample icf", which only inherits it).
  */
-function keywordRule(name: NameWord[], qualifiers: boolean): (typeof TMF_KEYWORD_RULES)[number] | undefined {
-  let best: (typeof KEYWORDS)[number] | undefined;
-  for (const k of KEYWORDS) {
-    if (!take(name, k.phrase, 'stem')) continue;
-    if (k.qualifier && !qualifiers) continue;
-    if (!best || k.order < best.order) best = k;
-  }
-  return best?.rule;
+function keywordsIn(name: NameWord[]): Array<(typeof KEYWORDS)[number]> {
+  return KEYWORDS.filter((k) => take(name, k.phrase, 'stem')).sort((x, y) => x.place - y.place || x.index - y.index);
 }
 
 /**
@@ -181,15 +229,18 @@ function keywordRule(name: NameWord[], qualifiers: boolean): (typeof TMF_KEYWORD
  * only points to a zone: the zone is then known and the artifact is not.
  * `conflict` is set when the name was left unclassified because it points to
  * more than one zone, and absent when nothing in it points to any.
+ * `qualifierOnly` is set when the only thing that named the zone was a
+ * whose-document keyword ("Site 101"): a caller that reads a name and a title
+ * may let the other one decide.
  */
 export type Classification =
-  | { zone: number; zoneName: string; section: string; confidence: 'matched'; code: string | null }
+  | { zone: number; zoneName: string; section: string; confidence: 'matched'; code: string | null; qualifierOnly?: true }
   | { zone: null; zoneName: null; section: null; confidence: 'unclassified'; conflict?: true };
 
-const UNCLASSIFIED: Classification = { zone: null, zoneName: null, section: null, confidence: 'unclassified' };
-const TWO_ZONES: Classification = { ...UNCLASSIFIED, conflict: true };
+const UNCLASSIFIED: Classification = Object.freeze({ zone: null, zoneName: null, section: null, confidence: 'unclassified' });
+const TWO_ZONES: Classification = Object.freeze({ ...UNCLASSIFIED, conflict: true });
 
-function inZone(zone: number, code: string | null, section = sectionOf(zone)): Classification {
+function inZone(zone: number, code: string | null, section = sectionOf(zone)): Extract<Classification, { confidence: 'matched' }> {
   return { zone, zoneName: zoneName(zone), section, confidence: 'matched', code };
 }
 
@@ -206,9 +257,12 @@ function inZone(zone: number, code: string | null, section = sectionOf(zone)): C
  *      101", "LMN-201 Monitoring Plan v2". A keyword in the rest of the name
  *      that says what the document is, and points elsewhere, makes two signals:
  *      "IRB approval of Sample Informed Consent Form" is `unclassified`, and a
- *      person files it. So do two catalog names from different zones. A keyword
+ *      person files it. So do two catalog names from different zones, and a
+ *      word that says the document is about the record ("receipt"). A keyword
  *      inside the catalog name itself ("case report form" in "Sample Case Report
- *      Form") is not counted, and neither is a whose-document keyword.
+ *      Form") is not counted, and neither is a whose-document keyword. And a
+ *      catalog name that stands earlier among the rules than the keyword beside
+ *      it keeps its zone: "IRB/IEC approval - Case Report Form" is the IRB's.
  *   3. With no catalog name, the keyword rules name a zone, with no artifact.
  *   4. A name with neither is `unclassified`, with no zone.
  *
@@ -231,89 +285,20 @@ export function classifyArtifact(artifactName: string): Classification {
   if (named) return inZone(named.zone, named.code);
 
   const name = nameWords(artifactName);
-  const contained = new Set<number>();
-  for (const c of CATALOG_NAMES) if (take(name, c.phrase, 'word')) contained.add(c.zone);
-  if (contained.size > 1) return TWO_ZONES;
+  const contained = CATALOG_NAMES.filter((c) => take(name, c.phrase, 'word'));
+  const zones = new Set(contained.map((c) => c.zone));
+  if (zones.size > 1) return TWO_ZONES;
 
-  const [zone] = contained;
+  const keywords = keywordsIn(name);
+  const [zone] = zones;
   if (zone !== undefined) {
-    const other = keywordRule(name, false);
-    return !other || other.zone === zone ? inZone(zone, null) : TWO_ZONES;
+    if (ABOUT.some((phrase) => take(name, phrase, 'stem'))) return TWO_ZONES;
+    const other = keywords.find((k) => !k.qualifier && k.rule.zone !== zone);
+    const standing = Math.min(...contained.map((c) => CATALOG_STANDING.get(c) ?? Infinity));
+    return !other || standing < other.place ? inZone(zone, null) : TWO_ZONES;
   }
-  const rule = keywordRule(name, true);
-  return rule ? inZone(rule.zone, null, rule.section ?? zoneName(rule.zone)) : UNCLASSIFIED;
-}
-
-/** An artifact "counts as present" when it is received, in review, or final. */
-function isPresent(status: ArtifactStatus): boolean {
-  return status === 'received' || status === 'in_review' || status === 'final';
-}
-
-export interface CompletenessArtifact {
-  zone: number;
-  artifactName: string;
-  expected: boolean;
-  completenessRequired: boolean;
-  status: ArtifactStatus;
-}
-
-export interface CompletenessResult {
-  /**
-   * Percentage of required artifacts that are final — NULL when nothing is
-   * required, because there is then no ratio and no assessment. It was 100.
-   */
-  completenessPct: number | null;
-  totalRequired: number;
-  present: number;
-  gaps: Array<{ zone: number; zoneName: string; artifactName: string; status: ArtifactStatus }>;
-  byZone: Record<number, { required: number; present: number }>;
-  /**
-   * `not_assessed` is the state of a TMF whose expected artifact set is empty:
-   * nothing has been indexed, so nothing has been checked. It is NOT readiness.
-   */
-  verdict: 'not_assessed' | 'inspection_ready' | 'minor_gaps' | 'at_risk';
-}
-
-/**
- * Completeness gap-check. The denominator is the expected + completeness-required
- * artifacts; the numerator is those present (received/in_review/final). Missing,
- * still-expected, or in_review-but-not-final required artifacts are listed as
- * gaps. Pure — feeds inspection readiness (C2C-13).
- */
-export function evaluateCompleteness(artifacts: CompletenessArtifact[]): CompletenessResult {
-  const required = artifacts.filter((a) => a.expected && a.completenessRequired && a.status !== 'not_applicable');
-  const byZone: Record<number, { required: number; present: number }> = {};
-  const gaps: CompletenessResult['gaps'] = [];
-  let present = 0;
-  for (const a of required) {
-    byZone[a.zone] ??= { required: 0, present: 0 };
-    byZone[a.zone].required += 1;
-    // For inspection readiness, "present" means final; received/in_review are partial gaps.
-    if (a.status === 'final') {
-      present += 1;
-      byZone[a.zone].present += 1;
-    } else {
-      gaps.push({ zone: a.zone, zoneName: zoneName(a.zone), artifactName: a.artifactName, status: a.status });
-    }
-  }
-  const totalRequired = required.length;
-
-  /* An empty required set returned 100% and — since `present === totalRequired`
-     is 0 === 0 — the verdict `inspection_ready`. A trial whose TMF index holds
-     no expected artifacts was therefore reported to the sponsor, and by AnA in
-     conversation, as "TMF 100% complete — inspection ready". Nothing had been
-     indexed, so nothing had been checked: that is the absence of an assessment,
-     not the result of one. ICH E6(R3) Appendix C readiness is a claim a sponsor acts on
-     in front of an inspector; it is never the default. */
-  if (totalRequired === 0) {
-    return { completenessPct: null, totalRequired: 0, present: 0, gaps, byZone, verdict: 'not_assessed' };
-  }
-
-  const completenessPct = Math.round((present / totalRequired) * 100);
-  // inspection_ready requires EVERY required artifact present (zero gaps): a single
-  // missing required document is inspection-blocking and must never be masked by
-  // rounding completenessPct up to >= 98 (e.g. 199/200 final rounds to 100%).
-  const verdict: CompletenessResult['verdict'] =
-    present === totalRequired ? 'inspection_ready' : completenessPct >= 85 ? 'minor_gaps' : 'at_risk';
-  return { completenessPct, totalRequired, present, gaps, byZone, verdict };
+  const [first] = keywords;
+  if (!first) return UNCLASSIFIED;
+  const matched = inZone(first.rule.zone, null, first.rule.section ?? zoneName(first.rule.zone));
+  return keywords.every((k) => k.qualifier) ? { ...matched, qualifierOnly: true } : matched;
 }

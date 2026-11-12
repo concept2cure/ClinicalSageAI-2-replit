@@ -1,7 +1,8 @@
 /**
- * The trial master file's two governed acts: file a document against a record,
- * and remove a filing. Split out of VaultTrialMasterFile.tsx (2026-11-10), in
- * its folder.
+ * The trial master file's governed acts: file a document against a record,
+ * remove a filing, and declare a record not applicable to the study or
+ * withdraw that declaration (P-124 item 5). Split out of
+ * VaultTrialMasterFile.tsx (2026-11-10), in its folder.
  *
  * A record is filed against a document of this project's Vault, with the
  * person's reason. The document is one of two things:
@@ -23,7 +24,9 @@ import React, { useId, useRef, useState } from 'react';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { VAULT_UPLOAD_ACCEPT, useVaultUpload, type VaultUploadFileStatus, type VaultUploadState } from '../useVaultUpload';
 import { VaultVersionPicker } from './VaultLibraryResults';
-import { FILE_WORDS, REMOVE_WORDS, TmfWriteError, governedWrite, tmfBase, tmfIngestType, type TmfNote, type TmfRecord } from './vaultTmf';
+import {
+  DECLARE_WORDS, FILE_WORDS, REMOVE_WORDS, TmfWriteError, WITHDRAW_WORDS, governedWrite, tmfBase, tmfIngestType, type TmfNote, type TmfRecord,
+} from './vaultTmf';
 
 export interface TmfActProps { record: TmfRecord; onDone: (note: TmfNote) => void; onCancel: () => void }
 interface FileProps extends TmfActProps {
@@ -206,6 +209,9 @@ export function VaultTmfFileForm({ projectId, studyId, record, onDone, onCancel,
   const ready = Boolean(filing.file || filing.chosen) && reason.trim().length >= GOVERNED_REASON_MIN;
   return (
     <div className="vd-confirm-form" data-testid={`vault-tmf-file-${record.code}`}>
+      {record.state === 'not_applicable'
+        ? <p className="vd-dr-meta">Filing a document ends the declaration that {record.name} does not apply to this study. The declaration stays in the audit trail.</p>
+        : null}
       <DocumentChoice filing={filing} projectId={projectId} record={record} />
       <ReasonField id={reasonId} label="Reason for filing it. Recorded with the filing in the audit trail." value={reason} onChange={setReason} disabled={busy} />
       <div className="vd-confirm-acts">
@@ -219,6 +225,24 @@ export function VaultTmfFileForm({ projectId, studyId, record, onDone, onCancel,
   );
 }
 
+/** The removal's words: of a filing, or of a declaration that the record does not apply (a withdrawal). */
+function removalWords(record: TmfRecord) {
+  if (record.state === 'not_applicable') {
+    return {
+      write: WITHDRAW_WORDS,
+      label: `Reason for withdrawing the declaration that ${record.name} does not apply. The record is required again; the reason is recorded in the audit trail.`,
+      done: `The declaration that ${record.name} does not apply was withdrawn. It is required again. Your reason is recorded with the withdrawal.`,
+      act: 'Withdraw the declaration', doing: 'Withdrawing…',
+    };
+  }
+  return {
+    write: REMOVE_WORDS,
+    label: `Reason for removing the filing of ${record.name}. The document stays in the Vault; the reason is recorded in the audit trail.`,
+    done: `The filing of ${record.name} was removed from this study’s trial master file. Your reason is recorded with the removal. The document stays in the Vault.`,
+    act: 'Remove the filing', doing: 'Removing…',
+  };
+}
+
 export function VaultTmfRemoveForm({ record, onDone, onCancel }: TmfActProps) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -226,27 +250,65 @@ export function VaultTmfRemoveForm({ record, onDone, onCancel }: TmfActProps) {
   const reasonId = useId();
   const filingId = record.filing?.id;
   if (!filingId) return null;
+  const words = removalWords(record);
   const remove = async () => {
     setBusy(true);
     setError(null);
     try {
-      await governedWrite('DELETE', `/api/etmf/artifacts/${encodeURIComponent(filingId)}`, { reason: reason.trim() }, REMOVE_WORDS);
-      onDone({ tone: 'ok', text: `The filing of ${record.name} was removed from this study’s trial master file. Your reason is recorded with the removal. The document stays in the Vault.` });
+      await governedWrite('DELETE', `/api/etmf/artifacts/${encodeURIComponent(filingId)}`, { reason: reason.trim() }, words.write);
+      onDone({ tone: 'ok', text: words.done });
     } catch (e) {
       // A refusal stays in the form; an outcome that is not known closes it and is said above the list.
       if (e instanceof TmfWriteError && !e.unknown) setError(e.message);
-      else onDone({ tone: 'error', text: REMOVE_WORDS.unknown });
+      else onDone({ tone: 'error', text: words.write.unknown });
     } finally {
       setBusy(false);
     }
   };
   return (
     <div className="vd-confirm-form" data-testid={`vault-tmf-remove-${record.code}`}>
-      <ReasonField id={reasonId} label={`Reason for removing the filing of ${record.name}. The document stays in the Vault; the reason is recorded in the audit trail.`}
-        value={reason} onChange={setReason} disabled={busy} />
+      <ReasonField id={reasonId} label={words.label} value={reason} onChange={setReason} disabled={busy} />
       <div className="vd-confirm-acts">
         <button type="button" className="btn ghost small" disabled={busy || reason.trim().length < GOVERNED_REASON_MIN} onClick={() => void remove()}>
-          {busy ? 'Removing…' : 'Remove the filing'}
+          {busy ? words.doing : words.act}
+        </button>
+        <button type="button" className="vd-dr-toggle" onClick={onCancel} disabled={busy}>Cancel</button>
+      </div>
+      {error ? <div className="vd-dr-err" role="alert">{error}</div> : null}
+    </div>
+  );
+}
+
+/**
+ * Declare a record not applicable to this study, with the reason it does not apply (P-124 item 5). The server keeps
+ * who, when and why on the record and in the audit trail; the record is then neither filed nor missing. A record
+ * with a filing is not declared over (the server answers RECORD_FILED): its filing is removed first.
+ */
+export function VaultTmfDeclareForm({ studyId, record, onDone, onCancel }: TmfActProps & { studyId: string }) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const reasonId = useId();
+  const declare = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await governedWrite('POST', `${tmfBase(studyId)}/artifacts`, { artifactCode: record.code, notApplicable: true, reason: reason.trim() }, DECLARE_WORDS);
+      onDone({ tone: 'ok', text: `${record.name} is declared not applicable to this study. It is no longer counted as missing. Your reason is recorded on the record and in the audit trail.` });
+    } catch (e) {
+      if (e instanceof TmfWriteError && !e.unknown) setError(e.message);
+      else onDone({ tone: 'error', text: DECLARE_WORDS.unknown });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="vd-confirm-form" data-testid={`vault-tmf-declare-${record.code}`}>
+      <ReasonField id={reasonId} label={`Why ${record.name} does not apply to this study. Shown on the record and in the inspection package, and recorded in the audit trail.`}
+        value={reason} onChange={setReason} disabled={busy} />
+      <div className="vd-confirm-acts">
+        <button type="button" className="btn ghost small" disabled={busy || reason.trim().length < GOVERNED_REASON_MIN} onClick={() => void declare()}>
+          {busy ? 'Declaring…' : 'Declare not applicable'}
         </button>
         <button type="button" className="vd-dr-toggle" onClick={onCancel} disabled={busy}>Cancel</button>
       </div>

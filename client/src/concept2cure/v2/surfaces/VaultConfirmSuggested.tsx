@@ -118,9 +118,18 @@ function ConfirmGroup({ group, state, canWrite }: {
     return (
       <div className="vd-confirm-acts">
         <span className="vd-dr-meta">{n} suggested in {group.folderLabel}, awaiting confirmation{canWrite ? '' : ' by a member or administrator'}.</span>
+        {/* The sentence beside it names the folder, so the control reads "Confirm…" (it asks for a reason next);
+            its accessible name keeps the whole phrase. Said twice, the pair took four lines in the Library's
+            308px column at 1280px. */}
         {canWrite ? (
-          <button className="sp-ask" onClick={() => setOpen(true)} disabled={state.busy}>
-            Confirm {n} suggested in {group.folderLabel}
+          <button
+            type="button"
+            className="sp-ask"
+            aria-label={`Confirm ${n} suggested in ${group.folderLabel}`}
+            onClick={() => setOpen(true)}
+            disabled={state.busy}
+          >
+            Confirm…
           </button>
         ) : null}
       </div>
@@ -129,7 +138,7 @@ function ConfirmGroup({ group, state, canWrite }: {
   return (
     <div className="vd-confirm-form">
       <label className="vd-dr-meta" htmlFor={`confirm-reason-${group.folderId}`}>
-        Reason for confirming these {n} filings in {group.folderLabel}. It is recorded on each one.
+        Reason for confirming {n === 1 ? 'this filing' : `these ${n} filings`} in {group.folderLabel}. It is recorded on {n === 1 ? 'it' : 'each one'}.
       </label>
       <textarea
         id={`confirm-reason-${group.folderId}`}
