@@ -53,10 +53,12 @@ nearly cold, and it lost to the next slot's push. A slot must be as long as the 
   such push holds the branch for seven minutes.
 - The 15-minute window of rule 6 still exists for a push that cannot wait: ask `011Dpx…`.
 
-**Phone width and dark across the launch screens** was held by no session. `011Dpx…` takes it from 04:10 UTC on
-2026-11-12, by measurement (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-12-phone-dark/`): which screens scroll
-sideways at 390 px and what runs past the edge; in dark, light blocks and text under 3:1. It holds no screen's file
-for this. A finding goes to the session that holds the screen, or is repaired under F1 where none does.
+**Phone width and dark across the launch screens** is S11's session's (`01QoxbLdJq…`, its row below; audit filed
+03:41 UTC, `docs/evidence/HUMAN-TEST/PHONE-DARK/2026-11-12/`). `011Dpx…` wrote here at 04:10 UTC that it was taking
+it, without having read that row. That was wrong and it has stopped. What its wider measurement adds is filed as an
+addition to that audit (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-12-phone-dark/`): the admin console and three
+RBM tabs scroll sideways at 390 px, and 23 uses of the faintest text tier on text a person reads, listed by
+stylesheet. The routing in S11's row stands.
 
 ## Decided 2026-11-08 under the founder's delegation (P-107): what each lane does next
 
