@@ -1,60 +1,89 @@
 // @vitest-environment jsdom
 /**
- * The protocol's consent tab shows the approval gate's verdict (2026-11-11, F1).
+ * The protocol's Consent tab reads the project's informed consent document
+ * and the editor's gate on its text (P-102, P-130).
  *
- * It printed "% complete" from the `present` ticks. The gate that decides
- * approval also needs content, the wording 21 CFR 50.25 prescribes and every
- * element the form is now held to, so a form approval refuses could read
- * "100% complete". The tab now reads `consentGate`, the server's own verdict.
+ * It printed "% complete" from the old consent-form rows' `present` ticks,
+ * then (2026-11-11) that store's gate. P-130 retires that store: the consent
+ * document in the one editor is the record, so the tab shows the verdict the
+ * editor's Check and approval run, and opens the document in the editor.
  */
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+
+const setEditorTarget = vi.hoisted(() => vi.fn());
+vi.mock('../editorTarget', async (orig) => ({ ...(await orig<typeof import('../editorTarget')>()), setEditorTarget }));
+const shell = vi.hoisted(() => ({ current: { id: 'eee4d7be-af0d-4d7c-8bf5-b180d1a6439a' } as { id: string } | null, publish: vi.fn() }));
+vi.mock('../shellProject', async (orig) => ({ ...(await orig<typeof import('../shellProject')>()),
+  readShellProject: () => shell.current, publishShellProject: (p: { id: string }) => { shell.publish(p); shell.current = p; } }));
 
 import { ConsentTab } from '../surfaces/ProtocolDevReviews';
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); setEditorTarget.mockReset(); shell.publish.mockReset(); shell.current = { id: 'eee4d7be-af0d-4d7c-8bf5-b180d1a6439a' }; });
 
-const form = (status = 'in_review') => ({ id: '1', title: 'ICF', version: '0.2', status, formsLinked: 1 });
+const DOC = '997f8a1b-1bca-498f-aced-06121e8b382e';
+const PROJECT = 'd96fbfd8-de07-4253-bb1b-a48e6bbdeaa3';
+const form = (status = 'draft', formsLinked = 1) => ({ id: DOC, documentId: DOC, programId: PROJECT, title: 'LUM-201 ICF', version: '', status, formsLinked });
 const rows = [
-  { id: '1', el: 'Risks', key: 'risks', required: true, present: true, complete: true },
-  { id: '2', el: 'Confidentiality', key: 'confidentiality', required: true, present: true, complete: false },
+  { id: 'risks', el: 'Reasonably foreseeable risks or discomforts', key: 'risks', required: true, present: true, complete: true, section: '3' },
+  { id: 'confidentiality', el: 'Extent of confidentiality of records', key: 'confidentiality', required: true, present: false, complete: false, section: '6' },
 ];
+const refused = { requiredTotal: 11, requiredComplete: 1, pct: 9, readyToApprove: false,
+  findings: ['"Extent of confidentiality of records" does not state that the Food and Drug Administration may inspect the records (21 CFR 50.25(a)(5)).'] };
 
 describe('the consent tab', () => {
-  it('a form whose every element is ticked but which the gate refuses is not "100% complete"', () => {
-    const { container } = render(<ConsentTab doc={{
-      consent: rows, consentForm: form(),
-      consentGate: { requiredTotal: 11, requiredComplete: 1, pct: 9, readyToApprove: false, predates: [],
-        findings: ['Required consent element "confidentiality" does not state that the Food and Drug Administration may inspect the records (21 CFR 50.25(a)(5)).'] },
-    }} />);
+  it('shows the editor gate\'s count and reasons, and where each element is drafted', () => {
+    const { container } = render(<ConsentTab doc={{ programId: PROJECT, consent: rows, consentForm: form(), consentGate: refused }} />);
     const text = container.textContent ?? '';
     expect(text).toContain('1 of 11 required elements complete');
     expect(text).toContain('9% complete');
-    expect(text).not.toContain('100% complete');
-    expect(text).toContain('This form cannot be approved yet.');
+    expect(text).toContain('This consent document cannot be approved yet.');
     expect(text).toContain('Food and Drug Administration may inspect');
+    expect(text).toContain('Extent of confidentiality of records (section 6)');
+    expect(text).not.toMatch(/optional/);
   });
 
-  it('says a complete form can be approved', () => {
-    const { container } = render(<ConsentTab doc={{ consent: rows.map((r) => ({ ...r, complete: true })), consentForm: form(),
-      consentGate: { requiredTotal: 2, requiredComplete: 2, pct: 100, readyToApprove: true, findings: [], predates: [] } }} />);
-    expect(container.textContent).toContain('Every required element is complete, so this form can be approved.');
+  /* Found in the running app: the shell had another project open, and the
+     editor refused the document as "it belongs to a different project". */
+  it('opens the consent document in the editor, in its own project', () => {
+    const onNav = vi.fn();
+    render(<ConsentTab doc={{ programId: PROJECT, consent: rows, consentForm: form(), consentGate: refused }} onNav={onNav} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open in the editor' }));
+    expect(shell.publish).toHaveBeenCalledWith({ id: PROJECT });
+    expect(setEditorTarget).toHaveBeenCalledWith({ docType: null, docId: DOC, programId: PROJECT });
+    expect(onNav).toHaveBeenCalledWith('document-authoring');
   });
 
-  it('an approved form shows what it predates, and is not told it cannot be approved', () => {
-    const { container } = render(<ConsentTab doc={{ consent: rows, consentForm: form('approved'),
-      consentGate: { requiredTotal: 3, requiredComplete: 2, pct: 67, readyToApprove: false, findings: ['x'], predates: ['For an applicable clinical trial: the ClinicalTrials.gov statement'] } }} />);
-    const text = container.textContent ?? '';
-    expect(text).toContain('was approved before the platform held consent forms to');
-    expect(text).toContain('ClinicalTrials.gov statement');
+  it('does not re-open the project when it is already the open one', () => {
+    shell.current = { id: PROJECT };
+    render(<ConsentTab doc={{ programId: PROJECT, consent: rows, consentForm: form(), consentGate: refused }} onNav={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open in the editor' }));
+    expect(shell.publish).not.toHaveBeenCalled();
+    expect(setEditorTarget).toHaveBeenCalled();
+  });
+
+  it('says a complete document can be approved in the editor, and an approved one is approved', () => {
+    const done = { ...refused, requiredComplete: 11, pct: 100, readyToApprove: true, findings: [] };
+    expect(render(<ConsentTab doc={{ programId: PROJECT, consent: rows, consentForm: form(), consentGate: done }} />).container.textContent)
+      .toContain('Every required element is complete, so the document can be approved in the editor.');
+    cleanup();
+    const text = render(<ConsentTab doc={{ programId: PROJECT, consent: rows, consentForm: form('APPROVED'), consentGate: refused }} />).container.textContent ?? '';
+    expect(text).toContain('This consent document is approved in the editor.');
     expect(text).not.toContain('cannot be approved yet');
   });
 
-  it('with no verdict from the server it prints no percentage', () => {
-    const { container } = render(<ConsentTab doc={{ consent: rows, consentForm: form() }} />);
-    expect(container.textContent).not.toMatch(/% complete/);
-    expect(container.textContent).toContain('was not returned');
-    expect(container.textContent).not.toContain('no elements recorded');
+  it('names how many consent documents the project has when it has more than one', () => {
+    expect(render(<ConsentTab doc={{ programId: PROJECT, consent: rows, consentForm: form('draft', 2), consentGate: refused }} />).container.textContent)
+      .toContain('2 consent documents in this project, the most recently updated is shown');
+  });
+
+  it('with no consent document, says so, prints no percentage, and says where one starts', () => {
+    let text = render(<ConsentTab doc={{ programId: PROJECT, consent: [], consentForm: null, consentGate: null }} />).container.textContent ?? '';
+    expect(text).toContain('This project has no informed consent document.');
+    expect(text).not.toMatch(/% complete/);
+    cleanup();
+    text = render(<ConsentTab doc={{ programId: null, consent: [], consentForm: null, consentGate: null }} />).container.textContent ?? '';
+    expect(text).toContain('This protocol belongs to no project');
   });
 });

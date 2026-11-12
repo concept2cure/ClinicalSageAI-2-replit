@@ -116,7 +116,7 @@ import { importSourceDocument } from '../services/authoring/authoring-source-imp
 import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload, rollbackAuthoringTransaction, settleAuthoringTransactionFailure, type AuthoringTransactionState } from '../services/authoring/authoring-create-outcome';
 import { AuthoringSectionWriteOutcomeError, authoringSectionRecoveryPayload } from '../services/authoring/authoring-section-outcome';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
-import { consentApprovalVerdict, consentDocumentGate, isConsentTemplateId } from '../services/protocol-consent/protocol-consent-logic';
+import { consentApprovalVerdict, consentDocumentGate, isConsentDocument } from '../services/protocol-consent/protocol-consent-logic';
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
@@ -4560,8 +4560,8 @@ function consistencyField(check: DocumentConsistencyCheck | null): { document_fi
  * other document, and when the sections could not be read: an absent field says nothing, where an
  * empty checklist would read as "nothing is required".
  */
-async function consentElementsField(docId: unknown, tenantId: unknown, templateId: unknown): Promise<{ consent_elements?: Record<string, unknown> }> {
-  if (!isConsentTemplateId(templateId)) return {};
+async function consentElementsField(docId: unknown, tenantId: unknown, doc: { template_id?: unknown; product_code?: unknown }): Promise<{ consent_elements?: Record<string, unknown> }> {
+  if (!isConsentDocument(doc)) return {};
   try {
     const rows = await pool.query(
       `SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index ASC, code ASC`,
@@ -4601,15 +4601,15 @@ function keywordProfileAbsentReason(moduleLabel: string): string {
  * check reports below (`consent_elements`); the CTD guidance record has no entry for its section codes, and saying
  * only that read as if nothing were required.
  */
-function sectionRequirementsFor(code: unknown, templateId: unknown): RecordRequirements {
-  return isConsentTemplateId(templateId)
+function sectionRequirementsFor(code: unknown, doc: { template_id?: unknown; product_code?: unknown }): RecordRequirements {
+  return isConsentDocument(doc)
     ? { indexed: false, reason: 'This is an informed consent form. What it must contain is the 21 CFR 50.25 elements of informed consent, checked below.' }
     : recordRequirementsFor(code);
 }
 
 /** The heuristics not run on a document of this template, or null when all of them apply. */
-function heuristicsNotRunOn(templateId: unknown): ReadonlySet<string> | null {
-  return isConsentTemplateId(templateId) ? CONSENT_SKIPPED_HEURISTICS : null;
+function heuristicsNotRunOn(doc: { template_id?: unknown; product_code?: unknown }): ReadonlySet<string> | null {
+  return isConsentDocument(doc) ? CONSENT_SKIPPED_HEURISTICS : null;
 }
 
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
@@ -4621,7 +4621,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
 
     // Get section content
     const sectionResult = await pool.query(
-      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.template_id
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.template_id, d.product_code
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
@@ -4638,7 +4638,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
     // One engine run over every section of the open document, before the heuristics below.
     const documentConsistency = await documentFigureConsistency(section.doc_id, tenantId, section.code);
-    const consentElements = await consentElementsField(section.doc_id, tenantId, section.template_id);
+    const consentElements = await consentElementsField(section.doc_id, tenantId, section);
 
     // Perform deficiency analysis
     const deficiencies: Array<Record<string, unknown>> = [];
@@ -4659,7 +4659,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     /* 2026-11-12 (F1): three heuristics below are written for CTD sections. On an informed-consent form, which is
        meant to be short plain language with no tables, they told the author a correct section was "insufficient",
        had "no data tables" and "lacked structure". There they are skipped, saying why; the 50.25 elements are its check. */
-    const notForThisType = heuristicsNotRunOn(section.template_id);
+    const notForThisType = heuristicsNotRunOn(section);
     const runCheck = (id: string, fn: () => void) => {
       if (notForThisType?.has(id)) {
         checksSkipped.push({ id, reason: CONSENT_SKIP_REASON });
@@ -4841,7 +4841,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
            present: an omitted field reads as "nothing required", which is the
            one thing this must never say. It is not a check and not counted as
            one — see recordRequirementsFor above. */
-        record_requirements: sectionRequirementsFor(section.code, section.template_id),
+        record_requirements: sectionRequirementsFor(section.code, section),
         /* Whether the open DOCUMENT agrees with itself: the same figure stated
            twice in two sections with two different values. Absent when the
            sections could not be read — never an empty result, which would read
@@ -5214,7 +5214,7 @@ async function consentRefused(
   current: Awaited<ReturnType<typeof lockedSigningContent>>,
   ids: { docId: string | string[] | undefined },
 ): Promise<boolean> {
-  if (!isConsentTemplateId(current.doc?.template_id)) return false;
+  if (!isConsentDocument(current.doc)) return false;
   const gate = consentDocumentGate(current.sections.map((s: { code: unknown; content: string | null }) => ({
     code: String(s.code ?? ''), text: sectionReadableText(s.content ?? ''),
   })));

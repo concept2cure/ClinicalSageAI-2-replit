@@ -259,7 +259,7 @@ function DeviationsBody({ doc, canWrite, onReg, onEdit, onSign }: Pick<BodyProps
   return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} onEdit={write} onCloseDeviation={close} />;
 }
 
-function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit, onSign }: BodyProps): React.ReactElement | null {
+function RegisterTabBody({ tab, doc, canWrite, onNav, onReg, onEdit, onSign }: BodyProps): React.ReactElement | null {
   switch (tab) {
     case 'objectives': return <ObjectivesTab doc={doc} onAdd={() => onReg('objective')} />;
     case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => onReg('eligibility')} />;
@@ -269,7 +269,7 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit, onSign }: BodyProp
     case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} onEdit={canWrite ? onEdit : undefined} />;
     case 'deviations': return <DeviationsBody doc={doc} canWrite={canWrite} onReg={onReg} onEdit={onEdit} onSign={onSign} />;
     case 'reviews': return <ReviewsTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
-    case 'consent': return <ConsentTab doc={doc} />;
+    case 'consent': return <ConsentTab doc={doc} onNav={onNav} />;
     default: return null;
   }
 }

@@ -29,6 +29,7 @@ const h = vi.hoisted(() => {
     /** The consent document's sections, by outline code. */
     sections: {} as Record<string, string>,
     templateId: '' as string | null,
+    productCode: null as string | null,
     workflow: false,
   };
 });
@@ -138,7 +139,7 @@ const ANSWERS: Array<[RegExp, (params?: unknown[]) => Answer | null]> = [
   [/INSERT INTO frozen_documents/i, (params) => ({ rowCount: 1, rows: [{ version: 'approved', content_hash: (params ?? [])[3] }] })],
   [/FROM frozen_documents/i, () => ({ rowCount: 0, rows: [] })],
   [/SELECT d\.\*|SELECT \* FROM authoring_documents/i,
-    () => ({ rowCount: 1, rows: [{ id: DOC, title: 'LUM-201 informed consent form', status: 'DRAFT', tenant_id: 3, created_by: 9, template_id: h.templateId }] })],
+    () => ({ rowCount: 1, rows: [{ id: DOC, title: 'LUM-201 informed consent form', status: 'DRAFT', tenant_id: 3, created_by: 9, template_id: h.templateId, product_code: h.productCode }] })],
   [/FROM authoring_sections/i, () => ({ rowCount: sectionRows().length, rows: sectionRows() })],
   [/^\s*(SELECT|WITH)\b/i, () => ({ rowCount: 0, rows: [] })],
 ];
@@ -157,6 +158,7 @@ beforeEach(() => {
   h.sourcesUndecodable = false;
   h.sections = { ...COMPLETE };
   h.templateId = CONSENT_TEMPLATE_IDS[0];
+  h.productCode = null;
   h.workflow = false;
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: () => undefined }));
   h.clientQuery.mockImplementation(async (text: string, params?: unknown[]) => clientAnswer(String(text), params));
@@ -202,6 +204,15 @@ describe('an informed-consent form is approved only over its 21 CFR 50.25(a) ele
     expect(wrote(/INSERT INTO authoring_signatures/i)).toBe(true);
     expect(trailRow('CONSENT_NOT_APPLICABLE_CLINICAL_TRIAL_STATED')).toBeUndefined();
     expect(chainedRow('authoring.document.e-sign')?.details).not.toHaveProperty('consentTrialStatus');
+  });
+
+  it('a consent form AnA drafted, recorded by type and with no template, is held to the same gate (P-130)', async () => {
+    h.templateId = null;
+    h.productCode = 'informed_consent';
+    h.sections = { ...COMPLETE, '3': '' };
+    const res = await approve();
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('CONSENT_INCOMPLETE');
   });
 
   it('a document of another type is not asked (control)', async () => {

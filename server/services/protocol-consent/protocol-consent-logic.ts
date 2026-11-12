@@ -257,6 +257,24 @@ export const isConsentTemplateId = (value: unknown): boolean =>
   typeof value === 'string' && CONSENT_TEMPLATE_IDS.includes(value.toLowerCase());
 
 /**
+ * The recorded document types of an informed-consent document (P-130). AnA's
+ * draft_authoring_document records its type as `product_code`, and the filing
+ * catalog's legacy alias for the type is `ich_icf`.
+ */
+export const CONSENT_DOCUMENT_TYPES: readonly string[] = ['informed_consent', 'ich_icf'];
+
+/**
+ * Whether an authoring document is an informed-consent document (P-130): by its
+ * built-in template, or by its recorded type. A document drafted by AnA has no
+ * template, so the template alone missed every consent form AnA wrote.
+ */
+export function isConsentDocument(doc: { template_id?: unknown; product_code?: unknown } | null | undefined): boolean {
+  if (!doc) return false;
+  if (isConsentTemplateId(doc.template_id)) return true;
+  return typeof doc.product_code === 'string' && CONSENT_DOCUMENT_TYPES.includes(doc.product_code.trim().toLowerCase());
+}
+
+/**
  * The section of the consent outline each required element is drafted in
  * (ICF_SECTIONS, shared/regulatory/project-bootstrap.ts). Section 1 carries
  * the research statement and the purpose.

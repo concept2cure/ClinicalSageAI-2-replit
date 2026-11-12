@@ -28,11 +28,11 @@ const SECTIONS = [
   { code: '6', title: 'Confidentiality of Records', content: html('Your records will be kept confidential.') },
 ];
 
-function wire(templateId: string | null, list: 'ok' | 'fail' = 'ok') {
+function wire(templateId: string | null, list: 'ok' | 'fail' = 'ok', productCode: string | null = null) {
   mockQuery.mockImplementation(async (sql: unknown) => {
     const q = String(sql);
     if (q.includes('JOIN authoring_documents')) {
-      return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', code: '6', title: 'Confidentiality of Records', content: SECTIONS[1].content, module: 'M5', template_id: templateId }] };
+      return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', code: '6', title: 'Confidentiality of Records', content: SECTIONS[1].content, module: 'M5', template_id: templateId, product_code: productCode }] };
     }
     if (q.includes('FROM authoring_sections')) {
       if (list === 'fail') throw new Error('read failed');
@@ -125,5 +125,14 @@ describe('what a consent section is told it must contain', () => {
     expect(s.record_requirements.reason).not.toMatch(/CTD section entry/);
     const kw = (s.checks_skipped ?? []).find((c: { id: string }) => c.id === 'module_keywords');
     expect(kw.reason).not.toContain('""');
+  });
+});
+
+describe('a consent form AnA drafted (P-130)', () => {
+  it('has no template, records its type, and gets the same check', async () => {
+    wire(null, 'ok', 'informed_consent');
+    const s = await scan();
+    expect(s.consent_elements?.required_total).toBe(11);
+    expect((s.checks_skipped ?? []).map((c: { id: string }) => c.id)).toContain('data_presence');
   });
 });

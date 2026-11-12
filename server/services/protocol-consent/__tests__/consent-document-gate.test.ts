@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { builtinAuthoringTemplateId } from '../../authoring/builtin-authoring-templates';
-import { CONSENT_TEMPLATE_IDS, consentApprovalVerdict, consentDocumentGate, consentElementTemplates, isConsentTemplateId } from '../protocol-consent-logic';
+import { CONSENT_TEMPLATE_IDS, consentApprovalVerdict, consentDocumentGate, consentElementTemplates, isConsentDocument, isConsentTemplateId } from '../protocol-consent-logic';
 
 const TEXT: Record<string, string> = {
   '1': 'This study involves research. Its purpose is to test the drug; you will take part for 12 weeks.',
@@ -36,6 +36,20 @@ describe('an informed-consent document is recognised by its template', () => {
     expect(isConsentTemplateId(CONSENT_TEMPLATE_IDS[0].toUpperCase())).toBe(true);
     expect(isConsentTemplateId(builtinAuthoringTemplateId('component:clinical_study_report'))).toBe(false);
     expect(isConsentTemplateId(null)).toBe(false);
+  });
+});
+
+/* P-130 (2026-11-12): AnA's draft_authoring_document records a document's type
+   as product_code and no template, so the template alone missed every consent
+   form AnA drafted: its Check had no 50.25 elements and its approval no gate. */
+describe('an informed-consent document is recognised by its recorded type too', () => {
+  it('by template, or by product_code informed_consent or ich_icf, in any case', () => {
+    expect(isConsentDocument({ template_id: CONSENT_TEMPLATE_IDS[1] })).toBe(true);
+    expect(isConsentDocument({ template_id: null, product_code: 'informed_consent' })).toBe(true);
+    expect(isConsentDocument({ product_code: ' ICH_ICF ' })).toBe(true);
+    expect(isConsentDocument({ product_code: 'clinical_overview' })).toBe(false);
+    expect(isConsentDocument({})).toBe(false);
+    expect(isConsentDocument(null)).toBe(false);
   });
 });
 
