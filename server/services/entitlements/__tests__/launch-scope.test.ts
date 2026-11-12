@@ -23,6 +23,7 @@ import { MDX_PROJECT_FEATURE_SURFACE_IDS } from '../../../../shared/constants/md
 import {
   LAUNCH_APPS,
   LAUNCH_MODULE_IDS,
+  LAUNCH_SHELL_SURFACES,
   LAUNCH_SURFACE_IDS,
   isLaunchSurface,
 } from '../../../../shared/constants/launch-scope';
@@ -172,9 +173,17 @@ describe('the scope list itself', () => {
   it.each([
     ['ana-command', 'enterprise-only, and says runs are recorded that are not'],
     ['ana-memory', 'shows a store nothing writes, not the memory AnA loads'],
-    ['training', 'no path, lesson or certification exists'],
   ])('the shell no longer carries %s — %s', (surface) => {
     expect(isLaunchSurface(surface)).toBe(false);
+  });
+  // Training left the shell on 2026-10-08 (no path, lesson or certification)
+  // and returned as Help & training by P-127 (2026-11-12, 1207a3c307): the Help
+  // Center, courses and support requests, for every member. It is a shell
+  // surface, not an app, and not GxP training (that is the QMS read-and-understood record).
+  it('the shell carries Help & training again — P-127', () => {
+    expect(isLaunchSurface('training')).toBe(true);
+    expect(LAUNCH_SHELL_SURFACES.training).toMatch(/P-127/);
+    for (const a of LAUNCH_APPS) expect(a.surfaces, a.id).not.toContain('training');
   });
   it('every app keeps a screen a client can work in', () => {
     for (const a of LAUNCH_APPS) expect(a.surfaces.length).toBeGreaterThan(0);

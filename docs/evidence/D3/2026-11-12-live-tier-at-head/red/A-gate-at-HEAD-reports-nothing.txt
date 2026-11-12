@@ -1,0 +1,2 @@
+[ci:install-fresh-overlay-deps] 398 overlay file(s) · 695 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
