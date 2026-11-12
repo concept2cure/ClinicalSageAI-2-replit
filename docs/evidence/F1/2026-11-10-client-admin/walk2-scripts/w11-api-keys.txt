@@ -1,0 +1,101 @@
+// Walk 2, flow 3: API keys in the walk's own organization. The key value is never written to a file that is kept.
+const c = require('./lib.cjs');
+const http = (path, headers = {}, method = 'GET', body) => fetch(c.BASE + path, { method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined })
+  .then(async (r) => ({ status: r.status, body: (await r.text()).slice(0, 300) }));
+const mask = (s, key) => String(s).split(key).join('<the key>');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const tab = async () => { await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200); await page.getByRole('tab', { name: 'API keys' }).or(page.getByRole('button', { name: 'API keys', exact: true })).first().click(); await c.sleep(1500); };
+  const dlg = () => page.locator('[role=dialog]').first();
+  let key = null; let keyId = null;
+  await c.step('API keys: create form refusals', async (s) => {
+    await tab();
+    await page.getByRole('button', { name: 'Create API key' }).click(); await c.sleep(600);
+    s.notes.push('form: ' + (await dlg().innerText()).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-30-apikey-create-form-1440.png');
+    await dlg().getByRole('button', { name: /Create API key/ }).click(); await c.sleep(400);
+    s.notes.push('empty -> ' + await dlg().locator('[role=alert]').innerText().catch(() => '(none)'));
+    await dlg().getByLabel(/Key name/).fill('Walk 2 documents reader');
+    await dlg().getByRole('button', { name: /Create API key/ }).click(); await c.sleep(400);
+    s.notes.push('no scope -> ' + await dlg().locator('[role=alert]').innerText().catch(() => '(none)'));
+    await dlg().getByLabel('documents:read').check();
+    await dlg().getByRole('button', { name: /Create API key/ }).click(); await c.sleep(400);
+    s.notes.push('no reason -> ' + await dlg().locator('[role=alert]').innerText().catch(() => '(none)'));
+  });
+  await c.step('API keys: create with the narrowest scope; the value is shown once', async (s) => {
+    await dlg().getByLabel(/Reason/).fill('F1 walk 2: a read-only key for the document index, revoked at the end of the walk');
+    await dlg().getByRole('button', { name: /Create API key/ }).click(); await c.sleep(2500);
+    s.notes.push('drawer: ' + (await dlg().innerText()).replace(/\n+/g, ' | '));
+    key = await dlg().getByLabel('API key secret').inputValue();
+    s.notes.push(`key shape: ${key.slice(0, 5)}… length ${key.length}`);
+    await c.shot(page, 'w2-30-apikey-shown-once-1440.png', { mask: [dlg().getByLabel('API key secret')] });
+    await dlg().getByRole('button', { name: /Done/ }).click(); await c.sleep(1500);
+    const t = await c.mainText(page, 20000);
+    s.notes.push('list: ' + t.slice(t.indexOf('API keys\n', t.indexOf('Settings')), t.indexOf('Admin audit')).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-30-apikey-list-1440.png');
+    const html = await page.content();
+    s.notes.push('key value present in the page after the drawer closed: ' + html.includes(key));
+    const list = await c.api(page, 'GET', '/api/api-keys'); const admin = await c.api(page, 'GET', '/api/mdx/admin');
+    s.notes.push('key value in GET /api/api-keys: ' + JSON.stringify(list.body).includes(key) + ' | in GET /api/mdx/admin: ' + JSON.stringify(admin.body).includes(key));
+    s.notes.push('GET /api/api-keys: ' + mask(JSON.stringify(list.body), key).slice(0, 700));
+    keyId = list.body?.keys?.[0]?.id;
+    const stores = await page.evaluate((k) => ({ local: JSON.stringify(localStorage).includes(k), session: JSON.stringify(sessionStorage).includes(k) }), key);
+    s.notes.push('key value in browser storage: ' + JSON.stringify(stores));
+  });
+  await c.step('API keys: what is stored', async (s) => {
+    s.notes.push('api_keys columns: ' + c.psql(`select string_agg(column_name, ', ' order by ordinal_position) from information_schema.columns where table_name='api_keys' and table_schema='public'`));
+    s.notes.push('row: ' + c.psql(`select id, organization_id, name, key_prefix, length(key_hash) hash_len, scopes, rate_limit, status, expires_at, created_by, last_used_at from api_keys where organization_id=7`));
+    const whole = c.psql(`select row_to_json(k)::text from api_keys k where organization_id=7`);
+    s.notes.push('raw key value present in its api_keys row: ' + whole.includes(key));
+    s.notes.push('raw key value present in audit_logs: ' + (c.psql(`select count(*) from audit_logs where coalesce(new_values::text,'') like '%${key}%' or coalesce(old_values::text,'') like '%${key}%'`)));
+    const logText = c.fs.readFileSync(c.SCRATCH + '/server.log', 'utf8');
+    s.notes.push('raw key value present in the server log: ' + logText.includes(key) + ' (occurrences ' + (logText.split(key).length - 1) + ')');
+    s.notes.push('audit: ' + c.psql(`select action, actor_id, target, reason, left(new_values::text, 300) from audit_logs where tenant_id=7 and action like 'api_key%' order by occurred_at desc limit 2`));
+  });
+  await c.step('API keys: use the key where it should reach and where it should not', async (s) => {
+    const k = { 'X-API-Key': key };
+    for (const [label, p, h, m, b] of [
+      ['its scope (documents:read)', '/api/v1/documents?limit=1', k],
+      ['another scope (csr:read)', '/api/v1/csr/search?q=oncology', k],
+      ['another scope (regulatory:read)', '/api/v1/regulatory/pathways?indication=asthma', k],
+      ['the session API: admin estate', '/api/mdx/admin', k],
+      ['the session API: admin estate, key as a bearer token', '/api/mdx/admin', { Authorization: `Bearer ${key}` }],
+      ['the session API: change settings', '/api/organizations/7/settings', k, 'PATCH', { settings: { security: { sessionTimeoutMinutes: 30 } }, reason: 'walk 2 key probe' }],
+      ['the session API: list keys', '/api/api-keys', k],
+      ['no key at all', '/api/v1/documents?limit=1', {}],
+      ['a wrong key', '/api/v1/documents?limit=1', { 'X-API-Key': key.slice(0, -4) + 'AAAA' }],
+    ]) { const r = await http(p, h, m, b); s.notes.push(`${label}: ${m || 'GET'} ${p} -> ${r.status} ${mask(r.body, key).slice(0, 230)}`); }
+  });
+  await c.step('API keys: read its usage in the console', async (s) => {
+    await tab();
+    const row = page.locator('main').getByText('Walk 2 documents reader').first();
+    s.notes.push('row buttons: ' + JSON.stringify(await page.locator('main button:visible').evaluateAll(els => els.map(e => (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 60)).filter(t => /usage|revoke/i.test(t)))));
+    await page.getByRole('button', { name: /usage/i }).first().click(); await c.sleep(1800);
+    const where = (await dlg().count()) ? dlg() : page.locator('main');
+    const t = await where.innerText();
+    s.notes.push('usage view: ' + t.slice(Math.max(0, t.indexOf('sage') - 60), t.indexOf('sage') + 900).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-30-apikey-usage-1440.png');
+    const u = await c.api(page, 'GET', `/api/api-keys/${keyId}/usage`);
+    s.notes.push('GET usage: ' + JSON.stringify(u.body).slice(0, 600));
+    s.notes.push('db api_usage_logs for this key: ' + c.psql(`select count(*), string_agg(distinct coalesce(endpoint,'?') || ' ' || coalesce(status_code::text,'?'), ' ; ') from api_usage_logs where api_key_id=${keyId}`));
+    s.notes.push('db last_used_at: ' + c.psql(`select last_used_at from api_keys where id=${keyId}`));
+  });
+  await c.step('API keys: revoke, and use it again', async (s) => {
+    await tab();
+    await page.getByRole('button', { name: /Revoke/ }).first().click(); await c.sleep(700);
+    s.notes.push('confirmation: ' + (await dlg().innerText().catch(() => '(no dialog)')).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-30-apikey-revoke-confirm-1440.png');
+    await dlg().getByRole('button', { name: 'Revoke key' }).click(); await c.sleep(2000);
+    s.notes.push('toast: ' + await page.locator('[role=status], .c2c-toast').allInnerTexts().then(a => a.filter(Boolean).join(' / ').slice(0, 300)));
+    const t = await c.mainText(page, 20000);
+    s.notes.push('list after: ' + t.slice(t.indexOf('API keys\n', t.indexOf('Settings')), t.indexOf('Admin audit')).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-30-apikey-after-revoke-1440.png');
+    const r = await http('/api/v1/documents?limit=1', { 'X-API-Key': key });
+    s.notes.push('the revoked key on /api/v1/documents: ' + r.status + ' ' + mask(r.body, key));
+    s.notes.push('row: ' + c.psql(`select id, status, revoked_at is not null revoked from api_keys where id=${keyId}`));
+    s.notes.push('audit: ' + c.psql(`select action, actor_id, target, coalesce(reason,'(no reason)'), left(new_values::text, 260) from audit_logs where tenant_id=7 and action like 'api_key%' order by occurred_at desc limit 3`));
+  });
+  c.report(); c.save('w2-11-api-keys');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -1,0 +1,27 @@
+// Walk 2, flow 5g: "Usage & limits": every figure against what the server reports and what the database holds.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  for (const [who, email, org, label] of [['w2owner', 'walk2.owner@example.test', 7, 'own organisation (free)'], ['w2admin', 'walk2.admin@example.test', 2, 'seeded organisation (enterprise)']]) {
+    const { page } = await c.pageFor(browser, who, email, who === 'w2admin' ? { fresh: true } : {});
+    const calls = []; page.on('response', async (r) => { if (/\/api\/billing/.test(r.url())) { let b = ''; try { b = (await r.text()).slice(0, 900); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} -> ${b}`); } });
+    await c.step(`Usage & limits: ${label}`, async (s) => {
+      s.notes.push('signed in to: ' + (await page.locator('button', { hasText: 'Wanda Walker' }).first().innerText()).replace(/\n+/g, ' | '));
+      await page.goto(`${c.BASE}/concept2cure/usage`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+      s.notes.push('screen: ' + (await c.mainText(page, 3000)).replace(/\n+/g, ' | '));
+      s.notes.push('reads: ' + JSON.stringify(calls));
+      await c.shot(page, `w2-55-usage-${org}-1440.png`);
+      s.notes.push(`db org ${org}: usage_records ` + c.psql(`select count(*), coalesce(sum(credits_used),0), string_agg(distinct feature_id, ',') from usage_records where organization_id=${org}`) + ' | weekly_usage_limits ' + c.psql(`select count(*) from weekly_usage_limits where organization_id=${org}`) + ' | api_usage_logs ' + c.psql(`select count(*) from api_usage_logs where organization_id=${org}`) + ' | billing_budgets ' + c.psql(`select count(*) from billing_budgets where organization_id=${org}`));
+      calls.length = 0;
+      await page.getByRole('tab', { name: 'Rate limits' }).or(page.getByRole('button', { name: 'Rate limits' })).first().click(); await c.sleep(2000);
+      s.notes.push('Rate limits tab: ' + (await c.mainText(page, 5000)).replace(/\n+/g, ' | ').slice(0, 3000));
+      s.notes.push('reads: ' + JSON.stringify(calls));
+      await c.tallShot(page, `w2-55-usage-rate-limits-${org}-1440-tall.png`, 2200);
+      const ctl = await page.locator('main button:visible, main input:visible, main select:visible').evaluateAll(els => els.map(e => `${e.tagName.toLowerCase()}:${(e.getAttribute('aria-label') || e.textContent || e.getAttribute('placeholder') || '').trim().replace(/\s+/g, ' ').slice(0, 50)}${e.disabled ? ' [disabled]' : ''}`));
+      s.notes.push('controls: ' + JSON.stringify(ctl));
+    });
+    await page.context().close();
+  }
+  c.report(); c.save('w2-23-usage');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

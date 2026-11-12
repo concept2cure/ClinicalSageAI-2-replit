@@ -1,0 +1,28 @@
+// Walk 2, flow 6c: change what can be changed on the profile card and the PDF/A requirement (own org); read the records.
+const c = require('./lib.cjs');
+const audit = (n = 2) => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(coalesce(old_values::text,''),160), left(new_values::text, 380) from audit_logs where tenant_id=7 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (r.url().includes('/api/') && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 260); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} body=${(r.request().postData() || '').slice(0, 200)} -> ${b}`); } });
+  const open = async () => { await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200); await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(4000); };
+  const profileRow = () => 'org ' + c.psql('select name, industry_mode from organizations where id=7') + ' | profile ' + c.psql(`select primary_industry, coalesce(mdx_specialization,''), updated_by from organization_industry_profiles where organization_id=7`);
+  await c.step('PDF/A requirement: turn on, then off', async (s) => {
+    await open();
+    const change = page.getByRole('button', { name: 'Require PDF/A for production submissions' });
+    for (const want of ['off']) {
+      await change.scrollIntoViewIfNeeded(); calls.length = 0; await change.click(); await c.sleep(700);
+      const act = page.getByRole('button', { name: want === 'on' ? 'Require PDF/A' : 'Stop requiring PDF/A', exact: true });
+      s.notes.push(`(${want}) act enabled with no reason: ` + await act.isEnabled());
+      await page.getByPlaceholder('Reason (recorded)').first().fill(`F1 walk 2: PDF/A requirement ${want}, to read the record`);
+      if (want === 'on') { await act.scrollIntoViewIfNeeded(); await c.shot(page, 'w2-61-pdfa-editor.png'); }
+      await act.click(); await c.sleep(2500);
+      s.notes.push('requests: ' + JSON.stringify(calls));
+      s.notes.push('card now: ' + (await c.mainText(page, 60000)).split('Require PDF/A')[1]?.slice(0, 420).replace(/\n+/g, ' | '));
+      s.notes.push('db submissions settings: ' + c.psql(`select (settings->'submission')::text from organizations where id=7`));
+      s.notes.push('audit:\n' + audit(2));
+    }
+  });
+  c.report(); c.save('w2-27b-pdfa');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

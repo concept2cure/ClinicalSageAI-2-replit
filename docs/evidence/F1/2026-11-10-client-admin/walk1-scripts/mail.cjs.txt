@@ -1,0 +1,19 @@
+// Read the walk's local mail sink (walk1/mail.jsonl).
+const fs = require('fs'); const path = require('path');
+const FILE = path.join(__dirname, 'mail.jsonl');
+const qp = (s) => s.replace(/=\r?\n/g, '').replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+function mails() { if (!fs.existsSync(FILE)) return []; return fs.readFileSync(FILE, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).map((m) => ({ ...m, text: qp(m.data) })); }
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function mailFor(email, since, match = '') {
+  for (let i = 0; i < 60; i += 1) {
+    const hit = mails().filter((m) => Date.parse(m.time) >= since && m.to.join(' ').toLowerCase().includes(email.toLowerCase()) && m.text.includes(match)).pop();
+    if (hit) return hit;
+    await sleep(250);
+  }
+  throw new Error(`no mail for ${email} matching "${match}"`);
+}
+const subjectOf = (m) => (m.text.match(/^Subject: (.*)$/m) || [])[1];
+const plainOf = (m) => { const i = m.text.indexOf('Content-Type: text/plain'); if (i < 0) return m.text; const body = m.text.slice(i); const start = body.indexOf('\r\n\r\n'); const end = body.indexOf('\r\n--', start); return body.slice(start + 4, end < 0 ? undefined : end); };
+const linkIn = (m, re = /https?:\/\/[^\s"<>]+/) => (plainOf(m).match(re) || [])[0];
+const codeIn = (m) => (m.text.match(/code is: (\d{6})/) || [])[1];
+module.exports = { mails, mailFor, subjectOf, plainOf, linkIn, codeIn };

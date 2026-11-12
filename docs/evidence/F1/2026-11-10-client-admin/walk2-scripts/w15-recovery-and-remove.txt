@@ -1,0 +1,75 @@
+// Walk 2, flow 2f: a recovery code at password sign-in; the console's count while enrolled; removing the authenticator.
+const c = require('./lib.cjs');
+const { totp } = require('./totp.cjs');
+const EMAIL = 'walk2.manager@example.test';
+const P2 = c.fs.readFileSync(c.SCRATCH + '/walk2/.walk_pw2', 'utf8').trim();
+const { secret, recovery } = JSON.parse(c.fs.readFileSync(c.SCRATCH + '/walk2/.totp.json', 'utf8'));
+const dlg = (page) => page.locator('[role=dialog]').first();
+const audit = (n = 4) => c.psql(`select action, to_char(occurred_at,'HH24:MI:SS'), left(new_values::text, 170) from audit_logs where tenant_id=7 and user_id=8 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const ctx = await browser.newContext({ viewport: c.VIEWPORTS.desktop }); const page = await ctx.newPage();
+  await c.step('sign-in with the app lost: is a recovery code accepted on the page?', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await page.fill('#login-email', EMAIL); await page.fill('#login-password', P2);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await page.getByLabel('Digit 1').waitFor({ timeout: 20000 });
+    s.notes.push('controls on the challenge: ' + JSON.stringify(await page.locator('button:visible, a:visible, input:visible').evaluateAll(els => els.map(e => `${e.tagName.toLowerCase()}:${(e.getAttribute('aria-label') || e.textContent || e.id || '').trim().slice(0, 40)}`))));
+    s.notes.push('"recovery" anywhere on the page: ' + /recovery/i.test(await page.locator('body').innerText()));
+    // the server's answer to a recovery code for this same challenge
+    const r = await page.evaluate(async (code) => {
+      const read = (k) => sessionStorage.getItem(k) || localStorage.getItem(k);
+      const keys = Object.keys(sessionStorage).concat(Object.keys(localStorage));
+      const challengeId = read('trialsage_mfa_challenge');
+      if (!challengeId) return { status: 'no challenge in storage', keys };
+      const res = await fetch('/api/v1/auth/mfa/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challengeId, code, method: 'backup_code' }) });
+      const b = await res.json().catch(() => null);
+      return { status: res.status, ok: b?.success, error: b?.error, signedIn: Boolean(b?.data?.accessToken || b?.accessToken) };
+    }, recovery[0]);
+    s.notes.push('POST /api/v1/auth/mfa/verify with a recovery code: ' + JSON.stringify(r));
+    s.notes.push('audit:\n' + audit(2));
+  });
+  await c.step('the Admin console while one member has the app', async (s) => {
+    const owner = (await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test')).page;
+    await owner.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1800);
+    const t = await c.mainText(owner, 6000);
+    s.notes.push(t.slice(t.indexOf('Authenticator app'), t.indexOf('API keys')).replace(/\n+/g, ' | '));
+    s.notes.push('manager row: ' + (await owner.locator('main').getByText('walk2.manager@example.test').first().locator('xpath=ancestor::*[self::tr or @role="row" or contains(@class,"row")][1]').innerText().catch(() => '')).replace(/\n+/g, ' | '));
+    await c.shot(owner, 'w2-43-console-one-enrolled.png');
+  });
+  await c.step('Account: remove the authenticator (wrong code, a recovery code, the right code)', async (s) => {
+    await c.signIn(page, EMAIL, P2).catch(async () => {
+      // signIn expects an emailed code; this account now uses the app
+      await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+      await page.fill('#login-email', EMAIL); await page.fill('#login-password', P2);
+      await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await page.getByLabel('Digit 1').waitFor({ timeout: 20000 });
+      // a fresh 30-second step, so the code was not used by an earlier sign-in
+      await c.sleep(31000);
+      const code = totp(secret); for (let i = 0; i < 6; i += 1) await page.getByLabel(`Digit ${i + 1}`).fill(code[i]); await c.sleep(600);
+      const v = page.getByRole('button', { name: 'Verify', exact: true }); if (/\/login/.test(page.url()) && await v.isEnabled().catch(() => false)) await v.click().catch(() => {});
+      await page.waitForURL((u) => !u.pathname.endsWith('/login'), { timeout: 20000 });
+    });
+    await c.sleep(1500);
+    await page.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1000);
+    await page.locator('button', { hasText: 'Mona Manager' }).first().click(); await c.sleep(500);
+    await page.locator('[role=menu]').getByText('Account', { exact: true }).first().click(); await c.sleep(1500);
+    const d = dlg(page);
+    await d.getByRole('button', { name: 'Remove authenticator' }).scrollIntoViewIfNeeded();
+    s.notes.push('section: ' + (await d.innerText()).split('Authenticator app\n').pop().slice(0, 300).replace(/\n+/g, ' | '));
+    await d.getByRole('button', { name: 'Remove authenticator' }).click(); await c.sleep(800);
+    s.notes.push('remove form: ' + (await d.innerText()).split('Authenticator app\n').pop().slice(0, 400).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-43-authenticator-remove-form.png');
+    const field = d.getByLabel('Current code from the app');
+    const ref = () => d.locator('[role=alert]').last().innerText().catch(() => '(none)');
+    await field.fill('000000'); await d.getByRole('button', { name: 'Remove', exact: true }).click(); await c.sleep(1500); s.notes.push('wrong code -> ' + await ref());
+    await field.fill(recovery[1]); s.notes.push('a recovery code typed: Remove enabled = ' + await d.getByRole('button', { name: 'Remove', exact: true }).isEnabled());
+    await c.sleep(31000);
+    await field.fill(totp(secret)); await d.getByRole('button', { name: 'Remove', exact: true }).click(); await c.sleep(2500);
+    s.notes.push('right code -> ' + (await d.innerText()).split('Authenticator app\n').pop().slice(0, 300).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-43-authenticator-removed.png');
+    s.notes.push('db: ' + c.psql(`select mfa_enabled, mfa_method, mfa_secret is null, mfa_backup_codes is null from users where id=8`));
+    s.notes.push('audit:\n' + audit(4));
+  });
+  c.report(); c.save('w2-15-recovery-remove');
+  await ctx.storageState({ path: c.STATE('w2manager') });
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
