@@ -54,4 +54,18 @@ tabs with the server's figures above them; CMC nine; RBM ten; Submission Center 
 
 ## After the restart
 
-Filled in once the app is running on the pushed code (the average readiness needs the server restarted).
+The app was restarted on the changed server code and Projects was opened again.
+- **On the page** (`projects-average-readiness-1440.png`, the Lumen lead): "4 active projects · 0% average
+  readiness · 0 filings due within 60 days". Each of the four cards reads "Dossier readiness 0%", so 0% is the
+  measured mean, not an absent figure.
+- **From the API, on PostgreSQL as the `app_service` role under RLS:** `GET /api/c2c/projects?limit=3` as Rhea
+  Reviewer answered a page of 3 with `hasMore: true` and
+  `counts: { total: 8, averageReadiness: 0, readinessMeasured: 8, readinessState: "measured" }`. So the average
+  covers the five projects that are not on the page.
+- No request failed and the console was clean.
+
+## A mistake during the work
+
+The first push of these fixes was refused by the pre-push warning ratchet: `TypeCard` had gone one branch over the
+complexity limit and a template literal kept an escaped apostrophe. Both were mine, and I had not linted the changed
+files before committing. Fixed in `19dabf8cf8`; every changed file is back at trunk's warning count.
