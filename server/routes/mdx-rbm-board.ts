@@ -42,6 +42,7 @@ import {
 } from '../services/rbm/risk-report';
 import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
 import { governingPlanId as governingPlanIdOf } from '../services/rbm/rbm-actuator';
+import { QTL_DIRECTIONS, type QtlDirection } from '../services/rbm/rbm-engine';
 import { actorLabel, resolveActorNames } from '../services/tenant/actor-names';
 
 const log = createScopedLogger('mdx-rbm-board');
@@ -541,6 +542,11 @@ export default function createRbmBoardRoutes(): Router {
           unit: null,
           secondary: num(q.secondaryLimit),
           threshold: num(q.threshold),
+          // Which way the limit bites, and a range's lower bound and lower early-warning limit. The status below is
+          // the engine's for that direction (qtlStatus); the screen draws the limits and never bands the value.
+          direction: QTL_DIRECTIONS.includes(q.direction as QtlDirection) ? q.direction : 'upper',
+          thresholdLower: num(q.thresholdLower),
+          secondaryLower: num(q.secondaryLimitLower),
           current: num(q.currentValue),
           status: q.status,
           breachActionTaken: q.breachActionTaken,

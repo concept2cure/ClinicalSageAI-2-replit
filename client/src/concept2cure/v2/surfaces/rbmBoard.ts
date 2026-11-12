@@ -14,7 +14,8 @@
  *   - items.riskCat / .control  → absent          (board exposes refCode instead)
  *   - kris: no threshold method, analysis level or per-site drilldown
  *   - qtls.unit                 → always null; the breach response is the flat
- *     breachActionTaken narrative, not a structured breach record
+ *     breachActionTaken narrative, not a structured breach record. The limit's direction and a range's lower
+ *     bounds are carried (direction, thresholdLower, secondaryLower)
  *   - signals: resolution notes only, no structured investigation record
  *   - patients.metrics          → the scorer's per-dimension signed z breakdown;
  *     empty until the cohort is scored (see RbmBoardPatient.metrics)
@@ -126,6 +127,12 @@ export interface RbmBoardQtl {
   unit: null;
   secondary: number | null;
   threshold: number | null;
+  /** Which way the limit bites: `upper` (breach at or above), `lower` (at or below) or `two_sided` (a range).
+   *  Absent on a board served before the direction was sent: upper, the only kind the screen then knew. */
+  direction?: string;
+  /** A range's lower bound and its lower early-warning limit; null for the one-sided kinds. */
+  thresholdLower?: number | null;
+  secondaryLower?: number | null;
   current: number | null;
   status: string;
   breachActionTaken: string | null;
