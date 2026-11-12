@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { attribute, decide, gateCommands, gateFiles, namedPaths, rewrittenByGates, selectGates } from '../check-pushed-lint-gates.mjs';
+import { attribute, decide, gateCommands, gateFiles, hookCommands, namedPaths, rewrittenByGates, selectGates } from '../check-pushed-lint-gates.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const step = (name, run) => ({ name, run });
@@ -51,7 +51,8 @@ test('on the real ci.yml it runs the gates that went red on trunk unseen, and no
     assert.ok(ids.includes(id), `${id} is not run at push time`);
   }
   for (const id of ['test:proof-tier', 'ci:typecheck:no-regression', 'ci:eslint-ratchet', 'test:ci-scripts']) assert.ok(!ids.includes(id), `${id} should be CI's`);
-  for (const id of ids) assert.ok(!hook.includes(id), `${id} is in the hook already`);
+  const ran = hookCommands(hook);
+  for (const id of ids) assert.ok(!ran.has(id), `${id} is in the hook already`);
 });
 
 test('the paths a gate names are read with or without a line, and relative to client/src', () => {
@@ -112,4 +113,12 @@ test("a report a gate rewrites is put back; any other change is named, never rev
     restore: ['docs/reports/orphan-endpoints-latest.json'],
     other: ['client/src/edited-meanwhile.tsx'],
   });
+});
+
+test('a gate the hook only mentions in a comment, or whose name prefixes one it runs, is still run here', () => {
+  const hook = '# audit:repo-health:no-regression compares against the baseline\nnpm run --silent ci:tenant-isolation:no-regression\n';
+  assert.deepEqual([...hookCommands(hook)], ['ci:tenant-isolation:no-regression']);
+  const gates = selectGates(workflow(step('repo', 'npm run audit:repo-health:no-regression'), step('ti', 'npm run ci:tenant-isolation'),
+    step('ti-nr', 'npm run ci:tenant-isolation:no-regression')), hook);
+  assert.deepEqual(gates.map((g) => g.name), ['repo', 'ti']);
 });

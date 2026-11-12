@@ -81,16 +81,29 @@ export function gateCommands(run) {
   return out;
 }
 
+/**
+ * What the hook itself runs: each `npm run <script>` and `node scripts/ci/<file>` on a line that is not a comment,
+ * by exact name. A name the hook only mentions in a comment, or one that is a prefix of a name it runs, is not run.
+ */
+export function hookCommands(hookText) {
+  const code = String(hookText).split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  return new Set([
+    ...[...code.matchAll(/npm run (?:--silent |-s )?([\w:.@/-]+)/g)].map((m) => m[1]),
+    ...[...code.matchAll(/node (scripts\/ci\/[\w./-]+\.m?js)/g)].map((m) => m[1]),
+  ]);
+}
+
 /** The Lint-job steps this gate runs: [{ name, commands, env }]. */
 export function selectGates(workflow, hookText) {
   const steps = workflow?.jobs?.lint?.steps;
   if (!Array.isArray(steps)) return null;
+  const inHook = hookCommands(hookText);
   const gates = [];
   for (const step of steps) {
     if (typeof step?.run !== 'string') continue;
     const commands = gateCommands(step.run);
     if (!commands) continue;
-    if (commands.some((c) => SELFTEST.test(c.id) || SLOW.has(c.id) || hookText.includes(c.id))) continue;
+    if (commands.some((c) => SELFTEST.test(c.id) || SLOW.has(c.id) || inHook.has(c.id))) continue;
     gates.push({ name: step.name ?? commands.map((c) => c.line).join(' && '), commands, env: step.env ?? {} });
   }
   return gates;
