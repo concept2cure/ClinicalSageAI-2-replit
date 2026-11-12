@@ -1,0 +1,27 @@
+== terraform/stack (exit 0)
+Success! The configuration is valid.
+Success! 84 passed, 0 failed.
+== terraform/modules/alb (exit 0)
+Success! The configuration is valid.
+Success! 5 passed, 0 failed.
+== terraform/modules/cloudfront (exit 0)
+Success! The configuration is valid.
+Success! 15 passed, 0 failed.
+== terraform/modules/github-deploy-roles (exit 0)
+Success! The configuration is valid.
+Success! 10 passed, 0 failed.
+== terraform/modules/compliance-evidence (exit 0)
+Success! The configuration is valid.
+Success! 5 passed, 0 failed.
+== terraform/modules/vpc-secure (exit 0)
+Success! The configuration is valid.
+Success! 3 passed, 0 failed.
+
+# Both roots and bootstrap, from their committed lock files; then terraform fmt -check -recursive (no differences)
+== terraform/environments/production: init -backend=false -lockfile=readonly, validate
+Success! The configuration is valid.
+== terraform/environments/staging: init -backend=false -lockfile=readonly, validate
+Success! The configuration is valid.
+== terraform/bootstrap: init -backend=false -lockfile=readonly, validate
+Success! The configuration is valid.
+exit 0

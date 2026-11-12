@@ -19,7 +19,9 @@ const h = vi.hoisted(() => ({
   launch: vi.fn(async () => ({ jobId: 41, status: 'queued' })),
   evidence: vi.fn(),
   resume: vi.fn(),
+  bound: vi.fn(),
 }));
+vi.mock('../../services/authoring/csr-import-into-document', () => ({ csrBuildOfDocument: h.bound }));
 vi.mock('../../services/csr/csr-job-runner.js', async (original) => ({
   ...(await original<typeof import('../../services/csr/csr-job-runner.js')>()), resumeCSRBuildInBackground: h.resume,
 }));
@@ -265,6 +267,27 @@ describe('GET /api/csr/jobs?programId&runId — the builds bound to one retained
     expect(res.body.jobs).toEqual([expect.objectContaining({ jobId: 4, status: 'drafting' }),
       expect.objectContaining({ jobId: 1, studyId: 'NCT05330182', status: 'complete' })]);
     expect(typeof res.body.jobs[0].updatedAt).toBe('string');
+  });
+
+  // 2026-11-12, the Lumen walk: the build section opened on the newest build, and a document takes its imported
+  // sections from one build. Asked with the document, the list also says which build that is.
+  it('names the build a document holds imported sections from, only when a document is named', async () => {
+    const DOC = '11111111-2222-4333-8444-000000000099';
+    h.bound.mockReset();
+    h.bound.mockResolvedValueOnce(1);
+    const res = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}&documentId=${DOC}`);
+    expect(res.status).toBe(200);
+    expect(res.body.documentBuild).toBe(1);
+    expect(res.body.jobs.map((j: { jobId: number }) => j.jobId)).toEqual([4, 1]);
+    expect(h.bound).toHaveBeenCalledWith(expect.anything(), 7, PROGRAM, DOC);
+    h.bound.mockResolvedValueOnce(null);
+    expect((await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}&documentId=${DOC}`)).body.documentBuild).toBeNull();
+    h.bound.mockClear();
+    const plain = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}`);
+    expect(plain.body).not.toHaveProperty('documentBuild');
+    const malformed = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}&documentId=not-a-document`);
+    expect([malformed.status, malformed.body.code]).toEqual([400, 'CSR_DOCUMENT_INVALID']);
+    expect(h.bound).not.toHaveBeenCalled();
   });
 
   // F10 of the 2026-11-02 demo walk: a failed build showed only "CSR build N · failed · NN%". The list now carries

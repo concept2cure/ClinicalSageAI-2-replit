@@ -23,6 +23,17 @@ export function onQualityWritten(listener: () => void): () => void {
   return () => { writeListeners.delete(listener); };
 }
 
+/** The line a drawer shows when its write threw. A refusal's sentence is the server's own, and this module's for a
+ *  reply it could not read. A TypeError is the browser's throw when the request did not complete ("Failed to fetch",
+ *  "Load failed"): not user copy, and not proof that nothing was recorded, since a connection can drop after the
+ *  server took the write. So it says to check, as the periodic review's signature does. */
+export function writeRefusal(err: unknown): string {
+  if (err instanceof TypeError) {
+    return 'Not confirmed — the server could not be reached. Check your connection, then reload to see whether it was recorded before trying again.';
+  }
+  return `Not recorded — ${err instanceof Error ? err.message : String(err)}`;
+}
+
 /** Send a governed write and return the record `take` finds in the reply.
  *  `apiRequest` throws every refusal but a 401, which it returns; that is a
  *  session refusal here. */

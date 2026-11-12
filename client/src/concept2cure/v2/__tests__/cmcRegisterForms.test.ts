@@ -37,6 +37,8 @@ import {
   stabilityResultBody,
   stabilityCloseoutBody,
   stabilityCloseoutForm,
+  stabilityShelfLifeForm,
+  stabilityShelfLifeBody,
   readStabilityResults,
   processValidationForm,
   processValidationBody,
@@ -281,6 +283,39 @@ describe('stability studies — stability_studies', () => {
     for (const k of ['productName', 'batchNumber', 'dosageForm', 'scope', 'climaticZone', 'condition', 'duration', 'testParameters', 'timePoints', 'startDate', 'status']) {
       expect(keys).toContain(k);
     }
+  });
+
+  /* 2026-11-12 (CMC walked in the running app): no form could record the drug product's shelf-life claim on a
+     running study, so §3.2.P.8 stayed at 0% ("the drug product's shelf-life claim"). The only control was the
+     close-out, a Part 11 signature that ends the study. The register's create and edit routes both take
+     `shelfLife`; the forms did not offer it. */
+  describe('the proposed shelf life', () => {
+    const base = {
+      productName: 'BX-204 injection', batchNumber: 'BX204-DP-2407', scope: 'DP', dosageForm: 'Solution for injection',
+      climaticZone: 'II', condition: 'LT|25°C ± 2°C / 60% ± 5% RH', duration: '24', startDate: '2026-01-15',
+      timePoints: '0, 3, 6', testParameters: 'Assay', status: 'ACTIVE',
+    };
+
+    it('is offered at registration, and is not required: a study is registered before its data support a claim', () => {
+      const field = stabilityForm().fields.find((f) => f.key === 'shelfLife');
+      expect(field).toMatchObject({ label: 'Proposed shelf life', type: 'text' });
+      expect(requiredKeys(stabilityForm())).not.toContain('shelfLife');
+    });
+
+    it('is sent with the registration when given, and left out when blank', () => {
+      expect(stabilityBody({ ...base, shelfLife: ' 24 months at or below 25 °C ' }).shelfLife).toBe('24 months at or below 25 °C');
+      expect(stabilityBody({ ...base, shelfLife: '  ' })).not.toHaveProperty('shelfLife');
+      expect(stabilityBody(base)).not.toHaveProperty('shelfLife');
+    });
+
+    it('can be set on a running study by an ordinary edit, with what is recorded now as the default', () => {
+      const form = stabilityShelfLifeForm({ shelfLife: '18 months', scope: 'DP' });
+      const field = form.fields.find((f) => f.key === 'shelfLife');
+      expect(field).toMatchObject({ required: true, default: '18 months' });
+      expect(form.sub).toMatch(/3\.2\.P\.8/);
+      expect(stabilityShelfLifeForm({ shelfLife: null, scope: 'DS' }).sub).toMatch(/3\.2\.S\.7/);
+      expect(stabilityShelfLifeBody({ shelfLife: ' 24 months ' })).toEqual({ shelfLife: '24 months' });
+    });
   });
 
   it('derives the study type from the chosen ICH condition code', () => {
@@ -1169,5 +1204,49 @@ describe('a register that signs two states round-trips either one', () => {
     const statuses = ['DRAFT', 'ACTIVE', 'PAUSED'];
     expect(statusDefaultFor(statuses, 'completed', 'COMPLETED')).toBe('COMPLETED');
     expect(statusOptionsFor(statuses, ' Completed ', 'COMPLETED')).toEqual(['COMPLETED', 'ACTIVE', 'PAUSED']);
+  });
+});
+
+/* Walked 2026-11-12: the Sample type select offered "raw-material", "in-process"… and nothing said which of them is
+   drug substance evidence. The composer files a result by its sample type (cmc-write-through.ts); each option now
+   says where, from the same shared rule. */
+describe('the QC sample type says where a result is filed', () => {
+  const sampleType = () => qcTestForm().fields.find((f) => f.key === 'sampleType');
+  const labelOf = (value: string) =>
+    (sampleType()?.options as Array<{ value: string; label: string }> | undefined)?.find((o) => o.value === value)?.label;
+
+  it('keeps the register’s values, so what is stored is unchanged', () => {
+    const values = (sampleType()?.options as Array<{ value: string }>).map((o) => o.value);
+    expect(values).toEqual(['raw-material', 'in-process', 'finished-product', 'stability', 'reference-standard', 'cleaning-verification']);
+  });
+
+  it('names the section each sample type files into', () => {
+    expect(labelOf('finished-product')).toBe('Finished product (drug product, §3.2.P.5.4)');
+    expect(labelOf('raw-material')).toBe('Raw material (drug substance, §3.2.S.4.4)');
+    expect(labelOf('in-process')).toBe('In-process (drug substance, §3.2.S.4.4)');
+    expect(labelOf('stability')).toBe('Stability (drug substance, §3.2.S.4.4)');
+    expect(labelOf('reference-standard')).toBe('Reference standard (not a batch analysis)');
+    expect(labelOf('cleaning-verification')).toBe('Cleaning verification (not a batch analysis)');
+  });
+});
+
+/* Walked 2026-11-12: the ICH Q2 check asks each method's record for specificity, linearity, accuracy and precision
+   data, and the method form had no place to record them. */
+describe('the method form records each characteristic’s result', () => {
+  const base = { methodCode: 'AM-011', title: 'RP-HPLC assay', purpose: 'Assay', analyte: 'BX-733', matrix: 'Drug product', technique: 'HPLC', status: 'validation' };
+
+  it('offers the four characteristics the check reads, prefilled from the record', () => {
+    const fields = methodForm({ ichQ2Parameters: { characteristics: [], evidence: { accuracy: 'Recovery 99.6%' } } }).fields;
+    expect(fields.filter((f) => f.key.startsWith('q2_')).map((f) => f.key)).toEqual(['q2_specificity', 'q2_linearity', 'q2_accuracy', 'q2_precision']);
+    expect(fields.find((f) => f.key === 'q2_accuracy')?.default).toBe('Recovery 99.6%');
+  });
+
+  it('sends only what was written, inside the Q2 record', () => {
+    const body = methodBody({ ...base, q2_specificity: ' No interference ', q2_precision: 'RSD 0.4%', q2_linearity: '  ' });
+    expect(body.ichQ2Parameters.evidence).toEqual({ specificity: 'No interference', precision: 'RSD 0.4%' });
+  });
+
+  it('control: with nothing written, the record carries no evidence key', () => {
+    expect(methodBody(base).ichQ2Parameters).not.toHaveProperty('evidence');
   });
 });

@@ -56,6 +56,20 @@ cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLA
 # the ALB's certificate against these names, so acm_certificate_arn must cover them too.
 domain_aliases             = ["staging.example.com"] # REPLACE_ME
 
+# After apply, create the GitHub environment "staging" (its jobs are the only
+# ones the deploy role trusts) and set its secrets from the outputs (the roles
+# are created by terraform/modules/github-deploy-roles; no stored keys):
+#   AWS_DEPLOY_ROLE_ARN          = terraform output -raw github_deploy_role_arn
+#   AWS_BUILD_ROLE_ARN           = terraform output -raw github_build_role_arn
+#   CLOUDFRONT_DISTRIBUTION_ID   = terraform output -raw cloudfront_distribution_id
+# and its variable (not a secret) the frontend is published to; its name
+# carries the account id, so deploy-aws.yml refuses to run without it:
+#   FRONTEND_BUCKET              = terraform output -raw frontend_bucket
+# Optional, in the same environment: the secret READYZ_TOKEN, so a failed
+# deploy's smoke test prints which dependency was not ready. Its value is in
+# Secrets Manager; this prints where and how to read it:
+#   READYZ_TOKEN                 = terraform output readyz_detail
+
 # Login OTP is the mandatory second factor: without working SMTP no one can sign
 # in. Port 465 (implicit TLS) is the only one accepted. The sender's domain must
 # be verified with the provider. After apply, prove delivery to a real inbox:

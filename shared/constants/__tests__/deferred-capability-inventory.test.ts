@@ -6,8 +6,8 @@ import { isLaunchSurface } from '../launch-scope';
 describe('deferred surface convergence claims', () => {
   it('keeps each retained capability fenced and gives an implemented canonical launch destination', () => {
     // 11 since ana-memory folded into the conversation, 10 since ectd-publishing
-    // folded into eCTD Compile (D2, 2026-10-29).
-    expect(DEFERRED_CAPABILITY_INVENTORY).toHaveLength(10);
+    // folded into eCTD Compile (D2, 2026-10-29), 9 since training returned as Help & training (P-127, 2026-11-12).
+    expect(DEFERRED_CAPABILITY_INVENTORY).toHaveLength(9);
     for (const entry of DEFERRED_CAPABILITY_INVENTORY) {
       const surface = getSurface(entry.surfaceId);
       expect(surface, entry.surfaceId).toBeTruthy();

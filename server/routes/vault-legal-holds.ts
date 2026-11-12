@@ -107,10 +107,19 @@ function presentHold(row: HoldRow) {
   };
 }
 
+/**
+ * Whether this session may place or lift a legal hold: the roles above, or a platform administrator. The one rule.
+ * The routes here refuse by it, and the Vault read (routes/c2c/project-vault.ts) reports it, so a document's record
+ * offers "Place legal hold" to exactly the people these routes admit (P-125 point 8).
+ */
+export function mayManageLegalHolds(req: Request): boolean {
+  const roles = [String(req.user?.role ?? ''), ...(req.user?.roles ?? []).map(String)].map((r) => r.toLowerCase());
+  return Boolean(req.user) && (isPlatformAdmin(req) || HOLD_AUTHORITY_ROLES.some((r) => roles.includes(r)));
+}
+
 /** The organisation and actor of a session that may manage holds, else the refusal already sent. */
 function holdAuthority(req: Request, res: Response): { orgId: number; actorId: number } | null {
-  const roles = [String(req.user?.role ?? ''), ...(req.user?.roles ?? []).map(String)].map((r) => r.toLowerCase());
-  const permitted = Boolean(req.user) && (isPlatformAdmin(req) || HOLD_AUTHORITY_ROLES.some((r) => roles.includes(r)));
+  const permitted = mayManageLegalHolds(req);
   if (!permitted) {
     res.status(403).json({
       error: 'HOLD_AUTHORITY_REQUIRED',

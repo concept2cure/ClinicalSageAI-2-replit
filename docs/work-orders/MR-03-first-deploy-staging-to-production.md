@@ -122,13 +122,16 @@ The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 faile
    - `terraform plan -out tfplan`, then `apply`, then a second `plan` that must say "No changes";
    - point DNS at `cloudfront_domain`;
    - set the GitHub `staging` environment's `AWS_DEPLOY_ROLE_ARN`, `AWS_BUILD_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID`,
-     and the variable `FRONTEND_BUCKET`, from `terraform output`;
+     and the variable `FRONTEND_BUCKET`, from `terraform output` (the table in `terraform/README.md` §4 says which
+     output feeds which);
+   - optional: the environment's `READYZ_TOKEN` secret, read as `terraform output readyz_detail` says, so a failed
+     deploy names the dependency that was not ready;
    - dispatch `provision-database.yml` with its confirmation phrase;
    - tag a green SHA `rc-<x.y.z>`.
 7. **Production:** the same, with required reviewers on the GitHub `production` environment. Then tag the same SHA
    `v<x.y.z>`, which promotes staging's digest and builds nothing.
 8. **After the first boot:**
-   - one `POST /api/setup/initialize` with the `first_run_setup` output's token;
+   - one `POST /api/setup/initialize` with the token `terraform output first_run_setup` points at;
    - `npm run pilot:verify-otp -- <real inbox>`;
    - sign in through the CloudFront alias;
    - file the apply logs, both no-change plans and the run URLs under `docs/evidence/D1/<date>-first-apply/`.
@@ -138,15 +141,48 @@ The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 faile
   is `{ ready }` alone; the detail goes to a `READYZ_TOKEN` holder (`x-readyz-token`) or a loopback peer.
 - **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
 
-Not yet wired: `READYZ_TOKEN` in the task definition and a GitHub secret for the smoke test. Until then a failed production
-smoke test logs `{ "ready": false }` alone, and the detail is read inside the task (ECS exec, loopback) or in CloudWatch.
+**Landed 2026-11-11 (session `…01QoxbLbx`), evidence `docs/evidence/D1/2026-11-11-aws-readiness/`.** Code and offline
+proof only; nothing was applied.
+- **`READYZ_TOKEN` is wired (the rest of OPS-22), `29acce365`.** The stack generates it (`random_password.readyz_token`), keeps it in
+  Secrets Manager and gives it to the API task alone. The deploy's smoke test presents it from the GitHub environment's
+  `READYZ_TOKEN` secret, so a failed deploy prints which dependency was not ready. The secret is optional: without it
+  the verdict is checked the same and no detail is printed. The token decides nothing else.
+- **Both roots export what the checklist below reads, `8fcfad502`.** The staging root exported neither deploy role nor the
+  distribution id, so step 6 could not be done from `terraform output` on the environment that is applied first.
+  Neither root exported `first_run_setup` (step 8) or `engine_version_actual` (Stage 5 step 13). Both now export the
+  same outputs; `tests/ci/terraform-root-outputs.contract.test.ts` holds them to each other and to every
+  `terraform output <name>` this file, the README and the tfvars examples name.
+- **Stage 7 step 8, the topology (OPS-20), `107530707`.** `terraform/README.md` states it: Postgres coordinates, there is no Redis,
+  and live co-editing is off. The stack sets no `ENABLE_COLLAB_CRDT`, and the deploy preflight refuses a task definition
+  that turns it on, as a value or from a secret.
+- **Stage 7 step 4, the readiness half (SEC-08), `26e81b20d`.** In production `/readyz` reads `session_activity` as the session
+  service does, with the cached round trips, and reports `sessions: down` (503) when it cannot. Shown on a real
+  PostgreSQL as the runtime role with RLS enforcing: the table present, renamed away, and unreadable. **Not changed:**
+  a request is still judged from the task's memory while the store is unreachable. Refusing every request then would
+  turn a database blip into a sign-out for everyone, which is a product decision, not a readiness one.
+- **Stage 6 step 3, the ALB half (OPS-17), `7310d3083`.** `terraform/modules/alb/tests/alb_timeouts.tftest.hcl` pins
+  `idle_timeout = 60` (fails at 59), and `tests/ci/edge-timeouts.contract.test.ts` holds CloudFront = ALB <
+  keep-alive < headers timeout, and refuses a task definition that overrides either server value.
 
-**Still open in this order, engineering, no founder input:**
-- Stage 6 (OPS-17: long submission work behind the 60 s edge; SSE heartbeats).
-- Stage 7 steps 2–4 (shared rate-limit counters in Postgres, and no silent memory fallback for sessions) and step 8 (the
-  topology declaration).
+**Landed 2026-11-12 (same session), evidence `docs/evidence/D1/2026-11-12-edge-streams/`.** Code only; nothing applied.
+- **Stage 6 steps 7 and 8, `333802662`.** One SSE helper, `server/utils/sse-stream.ts` (`openSseStream`): the headers,
+  and a `: heartbeat` every 15 s that stops on the response's finish or close. All ten producers open their streams
+  with it, and their private copies are deleted. `ci:sse-heartbeat` (with a self-test, in `ci.yml`'s lint job and
+  `.husky/pre-push`) refuses any other server file that names `text/event-stream`.
+- **Stage 6 step 9, `fac4a391c`.** The connector's tool runtime sends `notifications/progress` every 15 s to a call
+  carrying a progress token. A tool that writes nothing governed is answered at 50 s with an error result, never a
+  partial one. A governed tool has no deadline. The agency-response draft's model call takes the call's signal.
+
+**Still open in this order, engineering:**
+- Stage 6 steps 2 and 4–6 (OPS-17: long submission work behind the 60 s edge). Step 2, the measurement on the
+  production image, comes first and decides whether steps 4–6 are needed. Then the staging acceptance, after Stage 5.
+- Stage 7 steps 2–3 (shared rate-limit counters in Postgres). **This now waits for the founder:** the step creates
+  `public.rate_limit_counters`, and since RULE 6 (P-80) a new table needs an `approvedAdditions` entry in
+  `docs/design/one-design-plan.json` under a founder decision. NEW-2 (confirm B6 for rate limits) is the same decision.
+  Until then the sign-in and document limits are per task: a client gets each task's allowance.
 - Stage 7 step 7 waits for NEW-3.
 - Stage 8 (OPS-12: a second NAT and interface endpoints) is a founder budget decision.
+- The switch of the WAF's common rule set to block, two weeks after the first apply.
 
 ## State at head
 

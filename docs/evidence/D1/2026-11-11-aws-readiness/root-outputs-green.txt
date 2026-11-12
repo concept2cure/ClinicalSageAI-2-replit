@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports cloudfront_domain (the DNS alias points at it) 2ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports frontend_bucket (the GitHub environment's FRONTEND_BUCKET variable) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports github_deploy_role_arn (the GitHub environment's AWS_DEPLOY_ROLE_ARN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports github_build_role_arn (the GitHub environment's AWS_BUILD_ROLE_ARN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports cloudfront_distribution_id (the GitHub environment's CLOUDFRONT_DISTRIBUTION_ID secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports first_run_setup (where the first administrator's setup token is, and the one call that uses it) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports readyz_detail (where /readyz's detail token is, and the GitHub environment's READYZ_TOKEN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports engine_version_actual (the PostgreSQL version RDS runs, for the IQ record) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports api_task_boot_contract (reviewed before apply) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports only what the stack declares, each under its own name 1ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports every output its own terraform.tfvars.example tells the operator to read 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports cloudfront_domain (the DNS alias points at it) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports frontend_bucket (the GitHub environment's FRONTEND_BUCKET variable) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports github_deploy_role_arn (the GitHub environment's AWS_DEPLOY_ROLE_ARN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports github_build_role_arn (the GitHub environment's AWS_BUILD_ROLE_ARN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports cloudfront_distribution_id (the GitHub environment's CLOUDFRONT_DISTRIBUTION_ID secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports first_run_setup (where the first administrator's setup token is, and the one call that uses it) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports readyz_detail (where /readyz's detail token is, and the GitHub environment's READYZ_TOKEN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports engine_version_actual (the PostgreSQL version RDS runs, for the IQ record) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports api_task_boot_contract (reviewed before apply) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports only what the stack declares, each under its own name 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports every output its own terraform.tfvars.example tells the operator to read 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > staging and production > export the same outputs: staging is applied first, from the same instructions 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > staging and production > both examples say which output feeds each GitHub value 1ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the instructions read outputs that exist > terraform/README.md 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the instructions read outputs that exist > docs/work-orders/MR-03-first-deploy-staging-to-production.md 1ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the readers > read an output block and its value 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the readers > read the names an instruction runs, with -raw, -json and -chdir 0ms
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  00:09:53
+   Duration  479ms (transform 98ms, setup 106ms, import 12ms, tests 12ms, environment 0ms)
+

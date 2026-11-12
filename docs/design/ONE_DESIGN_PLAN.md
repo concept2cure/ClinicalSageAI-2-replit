@@ -1488,6 +1488,36 @@ founder's permission, P-100; decisions in P-124).
 4. **Admission**: the Vault app gains the `etmf` surface as a professional-tier module, and the held change is
    applied.
 
+**2026-11-11 and 2026-11-12: the Vault shows the work** (the founder, 2026-11-11: "focus entirely on getting what we
+built surfaces correctly on the UI and working for GA"; P-122, P-125). Session `…01KnUGoX3g`, under P-100. Each was
+measured or used in the running app on PostgreSQL, red first; evidence under `docs/evidence/SPINE/S6/2026-11-1*`.
+
+- **Names are read whole** (F1, `2ac13d961e`). At 1440px the Library cut 102 of 118 folder names, 6 of 10 document
+  titles and 5 of 10 field lines to an ellipsis. They wrap, and on a wide screen the Vault's page grows to 1520px.
+  After: none cut at 1280, 1440, 1920 or 390px.
+- **Required documents names each section** (F1, `5c45ed2100`). The view listed what a filing owes by number alone
+  ("1.12.14 No confirmed document"). It now says the heading's name from the filing's outline: 33 of 33 on the
+  demo's IND. Where the outline has no heading, the number alone; no name is made up.
+- **A document is read from its record** (F1, `fd60d97c87`, `b58a2c421c`). The viewer existed and was reached only
+  inside the record's closed Versions section, 328px wide. The record offers View (a PDF) or View as PDF (a Word
+  file's rendition) beside Download, and the same viewer opens in a drawer 1040px wide. Same audited route, same
+  bytes rule.
+- **"Place legal hold" is on the record** (F1, `5319818bad`; P-125 point 8, handed to this lane). For everyone the
+  hold routes admit: the routes' rule is one exported function (`mayManageLegalHolds`), and the Vault read reports
+  it. Lifting, and a project-wide hold, stay in Admin › Settings.
+- **Documents are on the Library's first screen** (F1, `9d80501d23`). The search and the six filters moved, as they
+  are, into a bar across the tree and the list. At 1440 by 900 two documents are wholly visible where none was.
+
+Left open on the Vault's screens, none started: at 1280 by 800 the Library's first document still begins below the
+window; lifting a hold from the record (the notice carries no hold id); the dark theme was not re-checked for these
+changes.
+
+**E4, where it stands.** Steps 1 and 2 were started on 2026-11-11 by two agents that a usage limit cut off. Their
+unfinished edits were not committed and are not in the tree. E4 remains this lane's and is next after the screens
+above, by the plan named above. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+`classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
+`code: null` stands.
+
 #### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
 
 Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just
@@ -1799,6 +1829,15 @@ screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-u
   are in COORDINATION.
 - **For the founder:** whether the independent checks are required before a review approval (the reviewer's screen
   calls them optional; once run they block); a document edited during review cannot be signed or re-requested.
+- **Screen repairs made from the walk, each used in the running app** (`feea54cae6`, `e523113df9`): a person can
+  record the drug product's proposed shelf life, at registration or on a running study, without closing the study
+  out; a refused close-out says the edit was saved; a signed batch rejection (or release) shows on its row; a
+  placement says what it wrote and keeps saying it; the Vault's version line names the sealed version its file was
+  rendered from. The real-PostgreSQL suites around the Vault, CMC evidence and signing were run on a disposable,
+  deploy-shaped database: 13 files, 188 of 188.
+- **Next, found in the same walk:** a signer whose password or authenticator code is not accepted is told "HTTP 401"
+  or "Sign in again". The sentences exist on the server (`governed-signature-ceremony.ts` `REAUTH_MESSAGE`) and nine
+  routes that verify a signer do not send them. The repair is to send them, not to write them again.
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
@@ -2593,7 +2632,7 @@ database with trunk's own `.devcontainer` scripts, then clicked through as Ana A
 - Stage 7 steps 2–4 and 8.
 - Switch the common rule set to block two weeks after the first apply.
 
-#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-10)
+#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-12)
 
 The founder: "We don't have apps anymore. We just have the core product… The quality is a major part of the product. I
 just don't want separate apps or cards." Quality is one work area: a header, AnA's starters, its registers as tabs,
@@ -2635,12 +2674,22 @@ under `docs/evidence/DESIGN/D7/`.
 | — F1: a record linked to a change past proposal says why; the audit row keeps how it relates | `979554ff6` | "Link a record": Why it is linked |
 | — F1: a record's 404 names the record in the one refusal panel (`readSubject`); Quality's two local 404 overrides converge onto it | `94c4c6699` | Version history, notification target, editing copy, CAPA action items |
 | — D7: the capped CAPA figures read as one line | `c9c0b5409` | The CAPA register's figures |
+| Under P-122 (2026-11-11 and 2026-11-12), the merged Quality walked in the running app, each repair red first: | | |
+| — D7: a record's facts are never covered by its actions (the actions are the line under the facts); the tabs wrap instead of clipping | `c83219951` | Every register, at 1440, 1280, 1024 and 390 |
+| — D7: a confirmed write re-reads the figure line and the register beside it | `dd14af400` | Record a complaint: "open complaints" follows with no reload |
+| — R1: a record linked to a change can be removed from it, with its reason; why a record was linked is shown | `94450dd2c` | A change's row: Remove |
+| — D7 (P-122 rule 2): the change procedure and the coverage method are open again, the procedure's steps numbered; three unruled classes carry a rule | `9d1f8ea22` | Change control; the SOP tab's training section |
+| — D7: who is due to train, coverage and the review schedule follow a confirmed write; a controlled document walked end to end | `dd8f5488d` | "Training overdue, due or lapsing" after an assignment or an acknowledgement |
+| — F1: a failed Quality projection logs its cause; a project's sources read measured on a project of Quality records. The per-source admission repair was made twice the same hour: the data room lane's (`f51844891`) stands and this lane's is withdrawn | `df1a57ef1`, withdrawn at the merge | The server log on a 503; `docs/evidence/F1/2026-11-12-source-scope-admissions/` |
+| — D7: a write the server did not confirm says so, and says to check before trying again | `c446043c2` | Any Quality drawer with the connection down |
 
 The sweep's C1–C18 are done, except C7. Every other `readWhat` in the product names a project-scoped read (CMC's
 registers, the data room, the project team, its records), for which "this project" is the right subject, so no other
 caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence is under
 `docs/evidence/DESIGN/D7/2026-11-10-*`, `docs/evidence/MR-12/2026-11-10-training-assessed/` and
-`docs/evidence/F1/2026-11-10-not-found-words/`.
+`docs/evidence/F1/2026-11-10-not-found-words/`. The P-122 repairs' evidence is under
+`docs/evidence/DESIGN/D7/2026-11-11-*` and `2026-11-12-*`, `docs/evidence/DESIGN/R1/2026-11-12-change-link-removal/`
+and `docs/evidence/F1/2026-11-12-source-scope-admissions/`.
 
 **Open:**
 - C7 waits on a decision: 48 px rows. The routine signature line and the route line would leave the row, and MR-12
@@ -2648,15 +2697,19 @@ caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence i
 - dialogs-3 waits on a decision: "Edit controlled text", a second editor inside the reader.
 - A change's `assessed_by` is set by any edit, even one that changes only the target date. The edit's audit row says
   exactly what changed and by whom; the column's meaning is what is off.
+- In this lane's files, found walking: the suppliers register is wider than its box at 1024; a complaint's row does
+  not name its MDR report (the server returns the report's id, not its number).
 - Outside D7, found walking:
-  - D0's table at a phone's width: a register row's next step and More sit past the right edge until the table is
-    scrolled sideways (w35, x≈700–1000 at 390). Pinning the actions cell would cover the Title column; the phone
-    table is D0's to change;
   - any other `ErrorState` whose read is of a record still says "this project" on a 404 until its caller passes
     `readSubject` (found by `readWhat=` naming a record);
   - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
     and its eyebrow; the Vault's test asserts it;
-  - the editor's project-sources read answered 409 and 503 in the walk environment.
+  - the editor's project-sources read is still 6.6 to 7 s for a project of 183 Quality records, and answers 503
+    `SOURCE_READ_ACCESS_CHANGED` when a Quality record is written while it runs. What remains is measured in
+    `docs/evidence/F1/2026-11-12-source-scope-admissions/`; the Quality evidence reader's share is this lane's next
+    change, and the retry is handed to the coordinating session in `.design/claude-convergence/COORDINATION.md`;
+  - the editor's save toast on a controlled document speaks of a filing the document is never bound to (handed on in
+    the same place).
 
 
 #### R1 and F1 — client administration, and the open screen work (2026-11-10 to 2026-11-12)

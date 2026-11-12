@@ -1,0 +1,81 @@
+/* Help & training (P-127; surfaces/Training.tsx). Read as Claude's Help Center reads: one column of text, quiet type,
+   rows not cards, no coach marks. D0's tokens only. */
+
+.c2c-v2 .hc { max-width: 760px; }
+.c2c-v2 .hc-head { margin: 0 0 28px; }
+.c2c-v2 .hc-sub { margin: 4px 0 16px; font-size: var(--fs-body); color: var(--text-300); }
+.c2c-v2 .hc-search { position: relative; display: flex; align-items: center; }
+.c2c-v2 .hc-search-ico { position: absolute; left: 12px; color: var(--text-400); display: inline-flex; pointer-events: none; }
+.c2c-v2 .hc-search-ico svg { width: 16px; height: 16px; }
+.c2c-v2 .hc-search .c2c-input { width: 100%; height: 40px; padding-left: 36px; font-size: var(--fs-body); }
+.c2c-v2 .hc-asks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.c2c-v2 .hc-sec { margin: 0 0 32px; }
+.c2c-v2 .hc-h { margin: 0 0 10px; font-size: var(--fs-section); font-weight: 600; color: var(--text-100); }
+.c2c-v2 .hc-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
+.c2c-v2 .hc-list > li { border-bottom: 1px solid var(--border); }
+.c2c-v2 .hc-row { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 12px 4px; background: none; border: 0;
+  text-align: left; cursor: pointer; color: inherit; font: inherit; border-radius: 0; }
+.c2c-v2 .hc-row:hover { background: var(--bg-050); }
+.c2c-v2 .hc-row:focus-visible { outline: 2px solid var(--accent-200); outline-offset: -2px; }
+.c2c-v2 .hc-row-static { cursor: default; }
+.c2c-v2 .hc-row-static:hover { background: none; }
+.c2c-v2 .hc-row-t { font-size: var(--fs-body); font-weight: 500; color: var(--text-100); }
+.c2c-v2 .hc-row-s { font-size: var(--fs-small); color: var(--text-300); line-height: 1.45; }
+
+.c2c-v2 .hc-coll { margin: 0 0 20px; }
+.c2c-v2 .hc-coll-t { margin: 0; font-size: var(--fs-body); font-weight: 600; color: var(--text-100); }
+.c2c-v2 .hc-aud { font-weight: 400; color: var(--text-400); }
+.c2c-v2 .hc-coll-s { margin: 2px 0 6px; font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .hc-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.c2c-v2 .hc-link { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; font: inherit;
+  font-size: var(--fs-body); color: var(--accent-200); text-decoration: none; }
+.c2c-v2 .hc-link:hover { text-decoration: underline; }
+.c2c-v2 .hc-link:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: 2px; }
+
+.c2c-v2 .hc-none { margin: 0 0 4px; font-size: var(--fs-body); color: var(--text-100); }
+.c2c-v2 .hc-none-s { margin: 0; font-size: var(--fs-small); color: var(--text-300); }
+
+.c2c-v2 .hc-article { max-width: 680px; }
+.c2c-v2 .hc-back { display: inline-flex; align-items: center; gap: 4px; margin: 0 0 16px; padding: 0; background: none; border: 0;
+  cursor: pointer; font: inherit; font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .hc-back svg { width: 14px; height: 14px; }
+.c2c-v2 .hc-back:hover { color: var(--text-100); }
+.c2c-v2 .hc-eyebrow { font-size: var(--fs-caption); color: var(--text-400); margin: 0 0 4px; }
+.c2c-v2 .hc-article-t { margin: 0 0 6px; font-family: var(--font-serif, inherit); font-size: 26px; line-height: 1.25; font-weight: 500; color: var(--text-100); }
+.c2c-v2 .hc-article-s { margin: 0 0 16px; font-size: var(--fs-body); color: var(--text-300); }
+.c2c-v2 .hc-showme { margin: 0 0 16px; }
+.c2c-v2 .hc-body { font-size: var(--fs-body); line-height: 1.6; color: var(--text-200); }
+.c2c-v2 .hc-related { margin: 28px 0 0; padding-top: 16px; border-top: 1px solid var(--border); }
+.c2c-v2 .hc-still { margin: 24px 0 0; font-size: var(--fs-small); color: var(--text-300); }
+
+.c2c-v2 .hc-lessons { list-style: none; margin: 8px 0 16px; padding: 0; border-top: 1px solid var(--border); }
+.c2c-v2 .hc-lessons > li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.c2c-v2 .hc-lesson-n { flex: 0 0 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 50%; font-size: var(--fs-caption); color: var(--text-300); }
+.c2c-v2 .hc-lesson-b { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.c2c-v2 .hc-lesson-t { font-weight: 500; }
+.c2c-v2 .hc-lesson-b .hc-showme { margin: 6px 0 0; align-self: flex-start; }
+
+/* Support requests (surfaces/help/SupportRequests.tsx): a thread read top to bottom, a plain form. */
+.c2c-v2 .hc-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.c2c-v2 .hc-sec-head .hc-h { margin: 0; }
+.c2c-v2 .hc-form { display: flex; flex-direction: column; gap: 14px; margin: 16px 0 0; }
+.c2c-v2 .hc-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .hc-field .c2c-input { width: 100%; font-size: var(--fs-body); color: var(--text-100); }
+.c2c-v2 .hc-field textarea.c2c-input { resize: vertical; line-height: 1.5; padding: 8px 10px; }
+.c2c-v2 .hc-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.c2c-v2 .hc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.c2c-v2 .hc-thread { list-style: none; margin: 16px 0; padding: 0; border-top: 1px solid var(--border); }
+.c2c-v2 .hc-msg { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.c2c-v2 .hc-msg p { margin: 4px 0 0; font-size: var(--fs-body); line-height: 1.6; color: var(--text-200); white-space: pre-wrap; overflow-wrap: anywhere; }
+.c2c-v2 .hc-msg-h { font-size: var(--fs-caption); color: var(--text-400); }
+.c2c-v2 .hc-msg.support .hc-msg-h { color: var(--accent-200); }
+.c2c-v2 .hc-rate { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 20px 0 0; font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .hc-rate [role="group"] { display: flex; gap: 4px; }
+
+@media (max-width: 640px) {
+  .c2c-v2 .hc-article-t { font-size: 22px; }
+  .c2c-v2 .hc-asks > .btn { flex: 1 1 auto; justify-content: center; }
+  .c2c-v2 .hc-field-row { grid-template-columns: 1fr; }
+}
