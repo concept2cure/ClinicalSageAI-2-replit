@@ -2416,8 +2416,17 @@ export default function createProjectVaultRoutes(): Router {
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
       // verdict fails the read, as the stage does.
       const refusals = await Promise.all(family.map((v) => vaultVersionNotTransmittable(pool, orgId, v.id, v.contentHash ?? '')));
+      // Where each version was rendered from (LX-10): the Authoring document and
+      // the sealed version its filing named, read from the verified filing
+      // receipt. Null for a native upload; an unverified or unread receipt is
+      // said to be so, never shown as a source.
+      const { readAuthoringVaultFilingReceipt, renderedFromOf } = await import('../../services/authoring/authoring-vault-filing-receipt.js');
+      const renderedFrom = await Promise.all(family.map(async (v) => (v.contentHash
+        ? renderedFromOf(await readAuthoringVaultFilingReceipt(pool, { organizationId: orgId, programId: id, vaultDocumentId: v.id, artifactSha256: v.contentHash }))
+        : null)));
       const versions = family.map((v, i) => ({
         ...v,
+        renderedFrom: renderedFrom[i],
         lifecycle: lifecycles.get(v.id) ?? null,
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],
