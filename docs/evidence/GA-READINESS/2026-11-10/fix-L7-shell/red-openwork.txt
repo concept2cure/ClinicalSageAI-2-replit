@@ -1,0 +1,522 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > one click opens the version the route names, in the Vault of its project 199ms
+   → expected "vi.fn()" to be called with arguments: [ Array(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "vault?documentId=20000000-0000-4000-8000-000000000002&program=10000000-0000-4000-8000-000000000001",
++   "review",
+  ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > a board that cannot be read is said, and nothing is opened 5028ms
+   → Unable to find an element with the text: /could not be opened/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-group"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group-head"[39m
+      [36m>[39m
+        [0mAssigned to you[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tt-item"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"tt-dot"[39m
+          [33mdata-quiet[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-item-body"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-title"[39m
+          [36m>[39m
+            [0mApprove: Clinical overview[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-sub"[39m
+          [36m>[39m
+            [0mBX-301 · Vault[0m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-go"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-group"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group-head"[39m
+      [36m>[39m
+        [0mAssigned to you[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tt-item"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"tt-dot"[39m
+          [33mdata-quiet[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-item-body"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-title"[39m
+          [36m>[39m
+            [0mApprove: Clinical overview[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-sub"[39m
+          [36m>[39m
+            [0mBX-301 · Vault[0m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-go"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > a route the board does not list opens the Review board 22ms
+ × client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > an approval at your sign-off opens its document (GA-UI-04) > opens the document in the editor, in its project 5021ms
+   → expected "vi.fn()" to be called with arguments: [ 'document-authoring' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "document-authoring",
++   "review",
+  ]
+
+
+Number of calls: 1
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tt-group-head"[39m
+        [36m>[39m
+          [0mAssigned to you[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tt-empty"[39m
+        [36m>[39m
+          [0mNothing assigned to you right now. Tasks land here as soon as someone assigns you one.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tt-group-head"[39m
+        [36m>[39m
+          [0mApprovals — you sign[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"tt-dot tt-dot-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"tt-item-title"[39m
+            [36m>[39m
+              [0mClinical Overview 2.5[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"tt-item-sub"[39m
+            [36m>[39m
+              [0mAPPROVER sign-off · BX-301 · awaiting your sign-off[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-go"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > one click opens the version the route names, in the Vault of its project
+AssertionError: expected "vi.fn()" to be called with arguments: [ Array(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "vault?documentId=20000000-0000-4000-8000-000000000002&program=10000000-0000-4000-8000-000000000001",
++   "review",
+  ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx:83:16
+     81|     fireEvent.click(screen.getByRole('button', { name: /Approve: Clini…
+     82|     await waitFor(() => expect(go).toHaveBeenCalledTimes(1));
+     83|     expect(go).toHaveBeenCalledWith(`vault?documentId=${VERSION}&progr…
+       |                ^
+     84|     expect(readShellProject()?.id).toBe(PROGRAM);
+     85|     expect(takeVaultTarget(PROGRAM)).toEqual({ kind: 'here', documentI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > a review route task opens its version (GA-UI-04) > a board that cannot be read is said, and nothing is opened
+TestingLibraryElementError: Unable to find an element with the text: /could not be opened/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-group"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group-head"[39m
+      [36m>[39m
+        [0mAssigned to you[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tt-item"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"tt-dot"[39m
+          [33mdata-quiet[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-item-body"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-title"[39m
+          [36m>[39m
+            [0mApprove: Clinical overview[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-sub"[39m
+          [36m>[39m
+            [0mBX-301 · Vault[0m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-go"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"tt-group"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group-head"[39m
+      [36m>[39m
+        [0mAssigned to you[0m
+      [36m</div>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"tt-item"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"tt-dot"[39m
+          [33mdata-quiet[39m=[32m""[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-item-body"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-title"[39m
+          [36m>[39m
+            [0mApprove: Clinical overview[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-sub"[39m
+          [36m>[39m
+            [0mBX-301 · Vault[0m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"tt-go"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12 5 7 7-7 7"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx:94:32
+     92|     render(<OpenWorkGroups workLoading={false} assigned={[work()]} que…
+     93|     fireEvent.click(screen.getByRole('button', { name: /Approve: Clini…
+     94|     const alert = await screen.findByText(/could not be opened/);
+       |                                ^
+     95|     expect(alert.getAttribute('role')).toBe('alert');
+     96|     expect(go).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx > an approval at your sign-off opens its document (GA-UI-04) > opens the document in the editor, in its project
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'document-authoring' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "document-authoring",
++   "review",
+  ]
+
+
+Number of calls: 1
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tt-group-head"[39m
+        [36m>[39m
+          [0mAssigned to you[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tt-empty"[39m
+        [36m>[39m
+          [0mNothing assigned to you right now. Tasks land here as soon as someone assigns you one.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"tt-group"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"tt-group-head"[39m
+        [36m>[39m
+          [0mApprovals — you sign[0m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"tt-item"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"tt-dot tt-dot-err"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-item-body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"tt-item-title"[39m
+            [36m>[39m
+              [0mClinical Overview 2.5[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"tt-item-sub"[39m
+            [36m>[39m
+              [0mAPPROVER sign-off · BX-301 · awaiting your sign-off[0m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"tt-go"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 5 7 7-7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/v2/__tests__/openWorkOpensTheVersion.test.tsx:114:36
+    112|       go={go} openTask={vi.fn()} />);
+    113|     fireEvent.click(screen.getByRole('button', { name: /Clinical Overv…
+    114|     await waitFor(() => expect(go).toHaveBeenCalledWith('document-auth…
+       |                                    ^
+    115|     expect(readShellProject()?.id).toBe(PROGRAM);
+    116|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  12:38:35
+   Duration  11.60s (transform 283ms, setup 156ms, import 404ms, tests 10.28s, environment 592ms)
+

@@ -1,0 +1,37 @@
+import hashlib, subprocess, sys
+R='/home/user/ClinicalSageAI-2-replit/'
+T='client/src/concept2cure/v2/__tests__/'
+M=[
+ ('client/src/concept2cure/v2/OpenWork.tsx',"if (t.moduleType !== 'Vault') return go('review');","return go('review');",T+'openWorkOpensTheVersion.test.tsx'),
+ ('client/src/concept2cure/v2/OpenWork.tsx',"openRouteVersion(t.taskId, go).catch((e) => setOpenError(failMessage(e)));","openRouteVersion(t.taskId, go).catch(() => undefined);",T+'openWorkOpensTheVersion.test.tsx'),
+ ('client/src/concept2cure/v2/OpenWork.tsx',"onOpen={() => { setOpenError(''); openApprovalDocument(a, go).catch((e) => setOpenError(failMessage(e))); }}","onOpen={() => go('review')}",T+'openWorkOpensTheVersion.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Orchestration.tsx',"const chosen = openId == null","const chosen = true",T+'orchestrationFollowsOpenProject.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Orchestration.tsx',"return { prog: null, unmatched: openId != null ? openTitle : null };","return { prog: null, unmatched: null };",T+'orchestrationFollowsOpenProject.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Orchestration.tsx',"if (res.error) return { prog: null, unmatched: null, unread: true };","if (res.error) return { prog: null, unmatched: null };",T+'orchestrationFollowsOpenProject.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Orchestration.tsx',"if (res.error) return { prog: null, unmatched: null, unread: true };","if (res.error || !res.data) return { prog: null, unmatched: null, unread: true };",T+'orchestrationFollowsOpenProject.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Orchestration.tsx',"? `This project is not in the organisation's project list for orchestration, so no ${what}","? `This project has no orchestration record yet, so no ${what}",T+'orchestrationFollowsOpenProject.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Review.tsx',"const editorQueueOnly = vaultInReview > 0 || namedBelow;","const editorQueueOnly = vaultInReview > 0;",T+'reviewBoardNamedReviews.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Review.tsx',"const namedBelow = Boolean(namedState.error) ||","const namedBelow =",T+'reviewBoardNamedReviews.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Review.tsx',"            : editorQueueOnly ? EDITOR_QUEUE_EMPTY : 'Nothing is in review.',\n        };\n      const lower","            : 'Nothing is in review.',\n        };\n      const lower",T+'reviewBoardNamedReviews.test.tsx'),
+ ('client/src/concept2cure/v2/surfaces/Review.tsx',"            : editorQueueOnly ? EDITOR_QUEUE_EMPTY : 'Nothing is in review.',\n        };\n      if (!queue.some","            : 'Nothing is in review.',\n        };\n      if (!queue.some",T+'reviewBoardNamedReviews.test.tsx'),
+ ('client/src/concept2cure/v2/styles/app-v2.css',".c2c-v2 .tt-badge{min-width:16px;",".c2c-v2 .tt-badge{position:absolute;top:-5px;right:-7px;min-width:16px;",T+'shellChromeStyles.test.ts'),
+ ('client/src/concept2cure/v2/styles/app-v2.css',"padding-bottom:0;overflow-x:auto;overflow-y:hidden;","padding-bottom:0;",T+'shellChromeStyles.test.ts'),
+ ('client/src/concept2cure/v2/styles/app-v2.css',"var(--error) 8%, transparent)), var(--bg-000);","var(--error) 8%, transparent));",T+'shellChromeStyles.test.ts'),
+]
+out=[]
+for f,a,b,t in M:
+    p=R+f; src=open(p,'rb').read(); h=hashlib.sha256(src).hexdigest()
+    s=src.decode()
+    assert s.count(a)==1,(f,a)
+    open(p,'w').write(s.replace(a,b))
+    try:
+        r=subprocess.run(['npx','vitest','run',t,'--maxWorkers=1'],cwd=R,capture_output=True,text=True,timeout=600)
+        txt=r.stdout+r.stderr
+        line=[l for l in txt.splitlines() if 'Tests ' in l]
+        killed = r.returncode!=0
+    finally:
+        open(p,'wb').write(src)
+    ok = hashlib.sha256(open(p,'rb').read()).hexdigest()==h
+    out.append(f"{'KILLED' if killed else 'SURVIVED'} | restored sha256 {'ok' if ok else 'MISMATCH'} | {f} | {a[:60]!r} -> {b[:40]!r} | {line[-1].strip() if line else '?'}")
+    print(out[-1], flush=True)
+open(R+'docs/evidence/GA-READINESS/2026-11-10/fix-L7-shell/mutations.txt','w').write('\n'.join(out)+'\n')
