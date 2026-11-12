@@ -1,0 +1,72 @@
+Every test file that imports a module this lane changed, run 2026-11-12 00:28 UTC on the merged tree.
+vitest --maxWorkers=1:  Test Files  64 passed (64)  /        Tests  1583 passed (1583)
+One unhandled error (cmcRegisterEngines.tsx:88, from anaDrivesWave5.test.tsx) is at HEAD too: preexisting-wave5-unhandled-at-HEAD.txt.
+node --test: # tests 71 # pass 71 # fail 0 
+
+vitest files:
+client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx
+client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx
+client/src/concept2cure/v2/__tests__/cmcAssessmentHonesty.test.ts
+client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx
+client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx
+client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx
+client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx
+client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx
+client/src/concept2cure/v2/__tests__/cmcModule3BuildBoundary.test.tsx
+client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx
+client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx
+client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx
+client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx
+client/src/concept2cure/v2/__tests__/cmcRegisterScope.test.ts
+client/src/concept2cure/v2/__tests__/cmcSignedRecords.test.tsx
+client/src/concept2cure/v2/__tests__/cmcStabilityAndQcTruth.test.tsx
+client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx
+client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx
+client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx
+client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts
+client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx
+client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts
+client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx
+client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx
+server/__tests__/services/submission-orchestrator.test.ts
+server/services/__tests__/cmc-qc-batch-analyses.test.ts
+server/services/__tests__/cmcWriteThroughMappers.test.ts
+server/services/__tests__/cmcWriteThroughOutcome.test.ts
+server/services/__tests__/cmcWriteThroughStability.test.ts
+server/services/__tests__/m2-qos-completeness-from-section-state.test.ts
+server/services/__tests__/m2-qos-shares-module3-atoms-and-methods.test.ts
+server/services/__tests__/m2-summary-builders.test.ts
+server/services/__tests__/module3-convergence-build-status.test.ts
+server/services/__tests__/module3-input-words.test.ts
+server/services/__tests__/module3-section-honesty.test.ts
+server/services/__tests__/module3Composer.m7.test.ts
+server/services/__tests__/module3Composer.qc-verdict.test.ts
+server/services/__tests__/module3Composer.shelf-life-provenance.test.ts
+server/services/__tests__/module3Composer.specification-material-scope.test.ts
+server/services/__tests__/module3Composer.specification-per-attribute.test.ts
+server/services/__tests__/module3Composer.stability-filed.test.ts
+server/services/__tests__/module3Composer.stability-honesty.test.ts
+server/services/__tests__/module3Composer.stability-trending.test.ts
+server/services/__tests__/module3Composer.structural-naming.test.ts
+server/services/__tests__/module3Composer.test.ts
+server/services/__tests__/sign-payload-snapshot.test.ts
+server/services/cmc/__tests__/batch-release-evidence.test.ts
+server/services/cmc/__tests__/batch-release-fingerprint.test.ts
+server/services/cmc/__tests__/capability-shape-reaches-the-section.test.ts
+server/services/cmc/__tests__/composition-scope.test.ts
+server/services/cmc/__tests__/demo-small-molecule-composes.test.ts
+server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts
+server/services/cmc/__tests__/place-module3-into-submission.test.ts
+server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts
+server/services/cmc/__tests__/recorded-numeric-qualification.test.ts
+server/services/cmc/__tests__/recorded-series-qualification.test.ts
+server/services/cmc/__tests__/stability-signal.test.ts
+server/services/ectd/__tests__/module3-leaf-typeset.test.ts
+server/services/ectd/__tests__/orchestrator-real-package.test.ts
+tests/integration/orchestrator-e2e-ind.test.ts
+tests/module3-e2e-journey.test.ts
+tests/module3-workflow-convergence.test.ts
+tests/unit/module3-narrative-extension.test.ts
+
+node files: cmc-demo-materials, cmc-demo-methods, cmc-demo-registers, demo-recovery, cmc-demo-stability-flags (scripts/demo/launch-demo/)
