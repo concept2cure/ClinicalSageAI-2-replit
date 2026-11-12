@@ -1,25 +1,23 @@
 {
   "base": "http://127.0.0.1:5000",
-  "startedAt": "2026-11-10T06:14:36.457Z",
+  "startedAt": "2026-11-12T04:41:52.674Z",
   "steps": [
-    {
-      "name": "0. the Vault is sealed, signed"
-    },
     {
       "name": "1. the seal holds the brochure",
       "documents": [
         "3.2.P.8.1[Demo · Lumen] LMN-301 intranasal powder drug product stability summary · v1.0 Not sent for review · SHA-256 50ef6b216253 Open",
-        "1.14.4.1[Demo · Lumen] LMN-301 Investigator's Brochure, edition 2 · v1.0 Not sent for review · SHA-256 bfe8f4113c36 Open",
+        "1.14.4.1[Demo · Lumen] LMN-301 Investigator's Brochure, edition 2 · v1.0 Not sent for review · SHA-256 bfe8f4113c36 Superseded by version 2.0 on 2026-11-10. The seal still holds the version above. Open",
         "[Demo · Lumen] LMN-301 program overview · v1.0 Not sent for review · SHA-256 ab821df92f8c Open",
         "4.2.3.6[Demo · Lumen] LMN-301 nasal local tolerance study in rabbits (GLP), report summary · v1.0 Not sent for review · SHA-256 22a7c3ce50be Open",
         "5.3.3.1[Demo · Lumen] LMN-301-COV01 Phase 1 interim safety summary, Parts A and B · v1.0 Not sent for review · SHA-256 a4779a84f15b Open"
       ],
-      "supersededLines": 0
+      "supersededLines": 1
     },
     {
-      "name": "2. a new version of the sealed document is checked in",
+      "name": "2. the sealed version already has its successor (an earlier run); a second is refused",
       "sealedVersion": "1.0",
-      "newVersion": "2.0"
+      "newVersion": null,
+      "refused": "VERSION_NOT_CURRENT"
     },
     {
       "name": "3. the seal says its version was superseded; what it sealed is unchanged",
