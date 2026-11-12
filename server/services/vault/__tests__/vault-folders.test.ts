@@ -78,4 +78,20 @@ describe('a folder change\'s reason', () => {
     // The person's reason, never an agent's: her provenance is spread first and cannot overwrite it.
     expect(entry.details).toMatchObject({ actorKind: 'agent:ana', programId: 'p', name: 'Pivotal study', reason: 'Keeping the pivotal study apart.' });
   });
+
+  it('says in a sentence which folder, and from what to what, so the ledger does not read "vault_folder:uf:9"', () => {
+    const base = { programId: 'p', organizationId: 42, userId: 7, reason: 'Keeping the pivotal study apart.' };
+    const said = (action: Parameters<typeof folderAuditEntry>[1], details: Record<string, unknown>) =>
+      folderAuditEntry(base, action, 'uf:9', details).details.description;
+    expect(said('vault.folder.create', { name: 'Pivotal study', parentFolderId: 'bn:5.3', parentLabel: 'Clinical study reports' }))
+      .toBe('Folder made: Pivotal study, in Clinical study reports');
+    expect(said('vault.folder.create', { name: 'Pivotal study', parentFolderId: null, parentLabel: null }))
+      .toBe('Folder made: Pivotal study, at the top of the cabinet');
+    expect(said('vault.folder.rename', { from: { name: 'Pivotal study' }, to: { name: 'Study 301' } }))
+      .toBe('Folder renamed: Pivotal study -> Study 301');
+    expect(said('vault.folder.move', { name: 'Study 301', from: { parentFolderId: null, parentLabel: null }, to: { parentFolderId: 'bn:5.3', parentLabel: 'Clinical study reports' } }))
+      .toBe('Folder moved: Study 301, from the top of the cabinet to Clinical study reports');
+    expect(said('vault.folder.remove', { name: 'Study 301', parentFolderId: 'bn:5.3', parentLabel: 'Clinical study reports' }))
+      .toBe('Folder removed: Study 301, from Clinical study reports');
+  });
 });

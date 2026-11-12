@@ -77,5 +77,7 @@ describe('IdentityConsole — real SCIM/SSO admin wiring', () => {
     render(<IdentityConsole {...props()} />);
     expect(await screen.findByText('Platform administrator required')).toBeTruthy();
     expect(screen.queryByText('Okta prod')).toBeNull();
+    // In words a person uses, not the role identifiers (role walk, 2026-11-12).
+    expect(document.body.textContent).not.toMatch(/super_admin|platform_admin/);
   });
 });
