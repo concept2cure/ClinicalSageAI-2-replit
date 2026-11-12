@@ -80,6 +80,19 @@ describe('records declared not applicable (P-124 item 5)', () => {
     expect(r.summary.totalMissing).toBe(0);
   });
 
+  /* 2026-11-12 (eTMF E4 step 5): a study whose every record in scope is declared not applicable read `ready: true` with
+     nothing filed, because no gap was left. The retired store's verdict refused that case (an empty required set is the
+     absence of an assessment, not readiness); its guard is carried here before that verdict goes. */
+  it('a study whose every record in scope is declared not applicable has no verdict: nothing was checked', () => {
+    const r = assessTmfCompleteness({ providedArtifacts: [], notApplicable: essential });
+    expect(r.summary).toMatchObject({ totalRequired: 0, totalMissing: 0, totalNotApplicable: essential.length });
+    expect(r.ready).toBeNull();
+    const all = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.map((a) => a.code));
+    expect(assessTmfCompleteness({ providedArtifacts: [], scope: 'all', notApplicable: all }).ready).toBeNull();
+    // One record left to check is a verdict again.
+    expect(assessTmfCompleteness({ providedArtifacts: [essential[0]], notApplicable: essential.slice(1) }).ready).toBe(true);
+  });
+
   it('a code both filed and declared is counted as declared, never twice', () => {
     const r = assessTmfCompleteness({ providedArtifacts: ['monitoring_plan'], notApplicable: ['monitoring_plan'] });
     expect(r.zones.flatMap((z) => z.present)).not.toContain('monitoring_plan');

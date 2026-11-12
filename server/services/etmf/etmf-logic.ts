@@ -1,20 +1,26 @@
 /**
- * eTMF deterministic logic (Capability C2C-08)
+ * The trial master file classifier (Capability C2C-08)
  *
- * Pure, DB-free, LLM-free: the DIA TMF Reference Model zone names, an artifact
- * auto-classifier (the deterministic baseline an LLM can refine), and the
- * completeness gap-check that feeds inspection readiness. Grounded in the
- * DIA TMF Reference Model and ICH E6(R3) Appendix C (essential records).
+ * Pure, DB-free, LLM-free: the DIA TMF Reference Model zone names and an
+ * artifact classifier, which says which reference-model record a name is
+ * (catalog names and codes first, keyword rules after) and never guesses a zone.
+ * AnA's classify_tmf_artifact and the Vault's filing service
+ * (vault/vault-filing.service.ts) read it.
  *
  * The zones and artifacts are the one catalog in
  * shared/constants/domain/tmf-reference-model.ts. This module kept its own zone
  * list until 2026-10-30 (slice E1 of docs/design/ETMF_CONVERGENCE_2026-10-30.md),
  * with zone 4 spelled differently from the catalog it classified for.
  *
+ * 2026-11-12 (eTMF convergence E4 step 5): the completeness verdict over the
+ * retired store's typed statuses (evaluateCompleteness) is gone with that store.
+ * A study's readiness is tmf-completeness.ts's assessTmfCompleteness over its
+ * filings, which carries the verdict's one guard: no record left to check is no
+ * verdict, never readiness.
+ *
  * @module server/services/etmf/etmf-logic
  */
 
-import type { ArtifactStatus } from '../../../shared/schema/etmf';
 import { TMF_REFERENCE_MODEL } from '../../../shared/constants/domain/tmf-reference-model.js';
 
 /** DIA TMF Reference Model zones (v3), from the shared catalog. */
@@ -295,78 +301,4 @@ export function classifyArtifact(artifactName: string): Classification {
   if (!first) return UNCLASSIFIED;
   const matched = inZone(first.rule.zone, null, first.rule.section ?? zoneName(first.rule.zone));
   return keywords.every((k) => k.qualifier) ? { ...matched, qualifierOnly: true } : matched;
-}
-
-/** An artifact "counts as present" when it is received, in review, or final. */
-function isPresent(status: ArtifactStatus): boolean {
-  return status === 'received' || status === 'in_review' || status === 'final';
-}
-
-export interface CompletenessArtifact {
-  zone: number;
-  artifactName: string;
-  expected: boolean;
-  completenessRequired: boolean;
-  status: ArtifactStatus;
-}
-
-export interface CompletenessResult {
-  /**
-   * Percentage of required artifacts that are final — NULL when nothing is
-   * required, because there is then no ratio and no assessment. It was 100.
-   */
-  completenessPct: number | null;
-  totalRequired: number;
-  present: number;
-  gaps: Array<{ zone: number; zoneName: string; artifactName: string; status: ArtifactStatus }>;
-  byZone: Record<number, { required: number; present: number }>;
-  /**
-   * `not_assessed` is the state of a TMF whose expected artifact set is empty:
-   * nothing has been indexed, so nothing has been checked. It is NOT readiness.
-   */
-  verdict: 'not_assessed' | 'inspection_ready' | 'minor_gaps' | 'at_risk';
-}
-
-/**
- * Completeness gap-check. The denominator is the expected + completeness-required
- * artifacts; the numerator is those present (received/in_review/final). Missing,
- * still-expected, or in_review-but-not-final required artifacts are listed as
- * gaps. Pure — feeds inspection readiness (C2C-13).
- */
-export function evaluateCompleteness(artifacts: CompletenessArtifact[]): CompletenessResult {
-  const required = artifacts.filter((a) => a.expected && a.completenessRequired && a.status !== 'not_applicable');
-  const byZone: Record<number, { required: number; present: number }> = {};
-  const gaps: CompletenessResult['gaps'] = [];
-  let present = 0;
-  for (const a of required) {
-    byZone[a.zone] ??= { required: 0, present: 0 };
-    byZone[a.zone].required += 1;
-    // For inspection readiness, "present" means final; received/in_review are partial gaps.
-    if (a.status === 'final') {
-      present += 1;
-      byZone[a.zone].present += 1;
-    } else {
-      gaps.push({ zone: a.zone, zoneName: zoneName(a.zone), artifactName: a.artifactName, status: a.status });
-    }
-  }
-  const totalRequired = required.length;
-
-  /* An empty required set returned 100% and — since `present === totalRequired`
-     is 0 === 0 — the verdict `inspection_ready`. A trial whose TMF index holds
-     no expected artifacts was therefore reported to the sponsor, and by AnA in
-     conversation, as "TMF 100% complete — inspection ready". Nothing had been
-     indexed, so nothing had been checked: that is the absence of an assessment,
-     not the result of one. ICH E6(R3) Appendix C readiness is a claim a sponsor acts on
-     in front of an inspector; it is never the default. */
-  if (totalRequired === 0) {
-    return { completenessPct: null, totalRequired: 0, present: 0, gaps, byZone, verdict: 'not_assessed' };
-  }
-
-  const completenessPct = Math.round((present / totalRequired) * 100);
-  // inspection_ready requires EVERY required artifact present (zero gaps): a single
-  // missing required document is inspection-blocking and must never be masked by
-  // rounding completenessPct up to >= 98 (e.g. 199/200 final rounds to 100%).
-  const verdict: CompletenessResult['verdict'] =
-    present === totalRequired ? 'inspection_ready' : completenessPct >= 85 ? 'minor_gaps' : 'at_risk';
-  return { completenessPct, totalRequired, present, gaps, byZone, verdict };
 }

@@ -56,13 +56,9 @@
     "names": [
      "classify_tmf_artifact",
      "create_inspection",
-     "create_tmf",
      "get_tmf_view",
      "log_inspection_finding",
-     "review_inspection_readiness",
-     "review_tmf_completeness",
-     "seed_tmf",
-     "update_tmf_artifact_status"
+     "review_inspection_readiness"
     ]
    },
    {

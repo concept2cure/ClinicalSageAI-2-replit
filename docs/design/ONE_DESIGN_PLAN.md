@@ -1523,18 +1523,49 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
   status is its document's"). The stage is the one the Library reads for the same document, e.g. "Review:
   Approved.". Readiness is unchanged.
 
+- **With no project open, nothing is offered that needs a project** (F1, `c2670e8ef2`, `e7695ef607`). The header
+  offered Trial master file, three disabled write buttons and three starters about "this filing", above the one
+  question the page asks: which sponsor. Each now returns with the project. The empty state's sentence said "the
+  governed artifacts of every project you can open"; no view spans sponsors, and it now says what the page does
+  while it asks and once a sponsor is chosen. Evidence `docs/evidence/SPINE/S6/2026-11-12-vault-no-project-header/`.
+
 Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
 administration's restoration order); on a phone the first document is below the first screen (the shared page
-header takes four lines).
+header takes four lines); **a filing's Library lists its outline twice**, as the filing binder (the files placed
+against the outline) and as the authored filing document's own sections, with the same headings and different counts:
+seen on the 510(k) (eSTAR A to G) and on both INDs (eCTD M1 to M5). Which the tree shows, or how one carries the other's state, is a design decision in S6's binder
+(`server/routes/c2c/project-vault.ts`, `documentFolder` and `filingCabinet`).
 
 **E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
 deployed store as the person who runs it, one project or every project they can open. Each figure is the store's
 own assessment of a study. It counted the retired store's tables organization-wide, and failed on a deployed
 database. The type id is kept; its label is "Trial master file filings and readiness", and its scopes are project
 and account (L-3). It was run in the app on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step1-report-pack/`.
-Steps 2 (AnA's reads) and 3 (AnA's retired write tools) are next, by the plan named above. Step 2's partial patch
-from 2026-11-11 is kept outside the tree and is unverified. "Not applicable" (P-124 item 5) is on the deployed
-store, so step 3's retirement of `update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+**Step 2 is done** (F1, `76185b6434`). AnA's `get_tmf_view`, `review_tmf_completeness` and the trial master file part
+of `search_all_documents` read the deployed store, held to the projects the person can open. On a deployed database
+the search had named the trial master file store unavailable on every call. Evidence
+`docs/evidence/D2-ETMF/2026-11-12-e4-step2-ana-reads/`. **Step 3 is done** (F1, `1c08a054a9`). `create_tmf`,
+`seed_tmf`, `update_tmf_artifact_status` and `review_tmf_completeness` retire, each onto what now answers it.
+`classify_tmf_artifact` files through the deployed store with the person's confirmation and reason (L-1(a)). No tool is
+added. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step3-ana-writes/`. **Step 4 is done** (F1, `1bcc069d3f`). The
+second store's eight routes (`server/routes/etmf.ts`) and its metrics are deleted. `/api/etmf` mounts the one router,
+and two baselines shrank by hand. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step4-routes-metrics/`. **Step 5 is
+done, and so is E4** (F1, `2ccfe707cb`). The second store's service and schema model are deleted, `etmf-logic.ts` is
+the classifier only, and the seed skeleton is gone. `migrations/20260610_etmf.sql` creates nothing: it is amended in
+place with a dated header (RULE 1) and keeps its deploy-path baseline entry (R6). install-fresh on a blank database
+completes with neither table. `ci:orm-reachability` and `ci:unbacked-tables` were each seen to refuse the case they
+exist for. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step5-service-schema/`. Before it (F1, `e37936ad31`), the
+retired verdict's one guard was carried onto the deployed store. A study whose every required record is declared not
+applicable had read "ready" with nothing filed, in AnA, on the inspection package's cover and in the report pack. It
+now has no readiness verdict. "Not applicable" (P-124 item 5) is on the deployed store, so step 3's retirement of
+`update_tmf_artifact_status` has the declaration to point to. **The URS and OQ are drafted for Validation for GA**
+(F1, `ed03906b8f`; `docs/evidence/D2-ETMF/2026-11-12-urs-oq-draft/`). Validation holds `docs/validation/**` and
+`tests/validation/**`, and this lane's ask of 2026-11-10 is unanswered. The drafts mirror URS-007 and OQ-008: twenty
+requirements, each traced to its source and to the suites that prove it today, and thirty-seven steps. The proposed
+numbers are URS-009 and OQ-009. Validation numbers, files and runs them; then admission. One question is for the
+founder (URS draft §3): a read-only identity cannot read a trial master file today, because every route requires
+the regulatory-author role. The `etmf` surface's row named an AnA tool that does not exist; it now names its two
+(F1, `fc1f474db4`). The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 

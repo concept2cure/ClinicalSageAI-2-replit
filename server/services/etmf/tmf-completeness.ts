@@ -66,7 +66,9 @@ export interface TmfCompletenessResult {
    * true only when every required artifact is present. false when one is
    * unfiled, filed with no document, or filed against a vault document that no
    * longer resolves. null when every remaining gap is an off-platform reference
-   * this service cannot check: readiness is then undetermined, not "no".
+   * this service cannot check: readiness is then undetermined, not "no". Also
+   * null when no record is left to check (`summary.totalRequired` is 0: every one
+   * in scope is declared not applicable): nothing was checked, so no verdict.
    */
   ready: boolean | null;
   /**
@@ -144,7 +146,11 @@ export function assessTmfCompleteness(input: TmfCompletenessInput): TmfCompleten
 
   const totalRequired = zones.reduce((n, z) => n + z.required.length, 0);
   const gaps = zones.flatMap((z) => z.missing);
-  const ready = gaps.length === 0 ? true : evidence && gaps.every((c) => evidence[c] === 'unverifiable') ? null : false;
+  /* 2026-11-12: with every record in scope declared not applicable, no gap was left and this read `true` with nothing
+     filed. An empty required set is the absence of an assessment, not readiness (the retired store's verdict held the
+     same rule, and it is carried here before that verdict goes in eTMF E4 step 5). */
+  const ready = totalRequired === 0 ? null
+    : gaps.length === 0 ? true : evidence && gaps.every((c) => evidence[c] === 'unverifiable') ? null : false;
 
   return {
     ready,
@@ -161,38 +167,6 @@ export function assessTmfCompleteness(input: TmfCompletenessInput): TmfCompleten
     },
     ...(evidence ? { documentEvidence: { ...evidence } } : {}),
   };
-}
-
-export interface TmfSeedArtifact {
-  zone: number;
-  code: string;
-  artifactName: string;
-  /** Essential documents drive completeness; optional ones are tracked only. */
-  completenessRequired: boolean;
-}
-
-/**
- * The expected-document skeleton a NEW study TMF is seeded with: every
- * reference-model artifact as an 'expected' placeholder, with
- * completeness_required = essential (ICH E6(R3) Appendix C essential records
- * drive the inspection-readiness denominator; optional artifacts are
- * tracked but never dilute it). Pure — the seeding transaction in
- * etmf-service.ts consumes this list.
- */
-export function seedArtifacts(scope: 'essential' | 'all' = 'all'): TmfSeedArtifact[] {
-  const out: TmfSeedArtifact[] = [];
-  for (const zone of TMF_REFERENCE_MODEL) {
-    for (const a of zone.artifacts) {
-      if (scope === 'essential' && !a.essential) continue;
-      out.push({
-        zone: zone.number,
-        code: a.code,
-        artifactName: a.name,
-        completenessRequired: a.essential,
-      });
-    }
-  }
-  return out;
 }
 
 /** The reference model (zones + artifacts) for a checklist UI. */

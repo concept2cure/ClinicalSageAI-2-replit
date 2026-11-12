@@ -17,7 +17,7 @@ import { classifyArtifact } from '../../etmf/etmf-logic';
 const OPENAI_MAX_TOOL_DESCRIPTION_CHARS = 1024;
 
 describe('classify_tmf_artifact', () => {
-  it('the classifier it describes leaves an unmatched name without a zone', () => {
+  it('the classifier it describes names no record for an unmatched name', () => {
     expect(classifyArtifact('holiday-photos-notes').confidence).toBe('unclassified');
     expect(classifyArtifact('holiday-photos-notes').zone).toBeNull();
   });
@@ -26,13 +26,17 @@ describe('classify_tmf_artifact', () => {
     expect(CLASSIFY_TMF_ARTIFACT.description).not.toMatch(/it is AUTO-CLASSIFIED/);
   });
 
-  it('says an unmatched name is unclassified and not filed, and to ask the user for the zone', () => {
+  /* 2026-11-12 (eTMF convergence E4 step 3, L-1): the tool files a record of the reference model for a study, through
+     the deployed store. There is no zone to give: a name that is no record is refused, and AnA asks which record. */
+  it('says an unmatched name is unclassified and not filed, and to ask the user which record it is', () => {
     const d = CLASSIFY_TMF_ARTIFACT.description;
-    expect(d).toMatch(/matches no zone keyword is unclassified and is not filed/);
-    expect(d).toMatch(/ask the user which zone \(1-11\)/);
-    const zone = (CLASSIFY_TMF_ARTIFACT.input_schema.properties as Record<string, { description?: string }>).zone;
-    expect(zone.description).not.toMatch(/omit to auto-classify\.$/);
-    expect(zone.description).toMatch(/unmatched name is refused/);
+    expect(d).toMatch(/is unclassified and is not filed/);
+    expect(d).toMatch(/ask the user which record it is/);
+    const props = CLASSIFY_TMF_ARTIFACT.input_schema.properties as Record<string, { description?: string }>;
+    expect(props.artifact_name.description).toMatch(/unmatched name is refused/);
+    expect(props).not.toHaveProperty('zone');
+    expect(props).not.toHaveProperty('status');
+    expect(CLASSIFY_TMF_ARTIFACT.input_schema.required).toEqual(['study_id', 'artifact_name']);
   });
 
   it('fits under the provider description trim', () => {

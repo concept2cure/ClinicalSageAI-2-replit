@@ -1,0 +1,16 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count when no project is open and nothing was read 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count over a FAILED read 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states the count once the read succeeds 38ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > an authored build with no files reads as one authored document and no uploads 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > a folder count says what it counts 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header names what its count is made of > names governed artifacts only when there are some, and claims no upload count it could not read 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 403 says access was refused, not that the store did not respond 196ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 5xx says the store did not respond, and offers a retry 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > names document types for a reader, not by wire token 33ms
+ × client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > with no project open, offers nothing that needs a project: no header action and no starter 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > with a project open, the header and the starters are there 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header reads as a line, and its picker is named > keeps each part with its separator, so a dot never stands alone 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — the header reads as a line, and its picker is named > names the upload type picker on screen 29ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: vault-upload-button: expected <button type="button" …(4)>…(1)</button> to be null
+      Tests  1 failed | 12 passed (13)

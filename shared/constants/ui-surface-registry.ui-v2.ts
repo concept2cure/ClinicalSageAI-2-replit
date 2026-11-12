@@ -77,7 +77,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     icon: 'network',
     uiKit: 'home',
     apiPrefixes: ['/api/etmf'],
-    anaToolFamilies: ['generate_inspection_package'],
+    // AnA's two trial master file tools (eTMF E4, 2026-11-12). It named `generate_inspection_package`, which no tool is.
+    anaToolFamilies: ['get_tmf_view', 'classify_tmf_artifact'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
