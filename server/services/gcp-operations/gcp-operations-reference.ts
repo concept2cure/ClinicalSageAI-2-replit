@@ -276,22 +276,26 @@ export function essentialDocument(d: Omit<EssentialDocument, 'tmfZoneName'>): Es
  *      server/services/__tests__/vault-taxonomy-etmf.test.ts).
  *   2. Otherwise the group this library already gave it, where that group is one zone of the model: Trial
  *      Management → 1, Central & Site Management → 5, Ethics → 4, IP & Trial Information → 6, Safety → 7.
- *   3. Three exceptions:
+ *   3. Four exceptions:
  *      - Monitoring visit reports are in zone 5, not the library's zone 1: the TMF classifier files a monitoring
  *        visit report in Site Management (etmf-logic.ts), and the product says one thing.
  *      - Source documents were "Site (ISF)", which is not a zone. Zone 5: the TMF Reference Model lists Source
  *        Data as a site-level Site Management record (05.04.11).
  *      - The clinical study report was "Statistics / Data", which is two zones. Zone 2: the CDISC TMF terminology
  *        places it in the Central Trial Documents zone.
- *      The last two were read on 2026-11-10 through search summaries of tmfrefmodel.com and the CDISC TMF
- *      terminology, not from the model's spreadsheet; QA should confirm them against it.
+ *      - The device trial's IDE document (gcp-operations-knowledge.ts) was "IP & Trial Information". Zone 3: the
+ *        IDE application and its approval are regulatory records. It also names malfunction reports and device
+ *        accountability, so it is tied to no one catalog artifact.
+ *      The source documents and the study report were read on 2026-11-10 through search summaries of
+ *      tmfrefmodel.com and the CDISC TMF terminology, not from the model's spreadsheet; QA should confirm those
+ *      two and the device document against it.
  *
  * Rule 2 keeps what this library said; it does not verify it against the model. A review on 2026-11-11 doubted
  * four of those placements, from memory of the model and without its spreadsheet: protocol deviations (zone 1
  * here; a Site Management record, zone 5), the approved consent form and subject information (zone 4 here; the
  * catalog's own consent form, `sample_icf`, is in zone 2), signed consent forms (zone 4 here; site-level, zone 5),
  * and the close-out monitoring report half of ED-CLOSEOUT (zone 1 here, right for the audit certificate; zone 5).
- * None is changed from memory. QA confirms the four with the two above.
+ * None is changed from memory. QA confirms the four with the three above.
  */
 export const ESSENTIAL_DOCUMENTS: EssentialDocument[] = ([
   // ── Before the trial begins ──

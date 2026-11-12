@@ -49,6 +49,8 @@ export interface BatchApiRow {
   batch_number?: string | null;
   product_name?: string | null;
   status?: string | null;
+  /** The signed disposition: released, conditional or rejected. A rejection leaves `status` as it was. */
+  release_status?: string | null;
   yield_data?: unknown;
   deviations?: unknown;
 }
@@ -116,6 +118,37 @@ export function batchDisposition(status: string | null | undefined): string {
 }
 
 /**
+ * What the row shows: the signed decision first, then the working status.
+ * Until 2026-11-12 the row read `status` alone. A rejection leaves `status`
+ * in-progress and a release sets it to completed, so a batch dispositioned
+ * under signature kept reading "Pending" with a live release control.
+ */
+function shownDisposition(row: Pick<BatchApiRow, 'status' | 'release_status'>): string {
+  const decided = batchDisposition(row.release_status);
+  return decided !== 'pending' ? decided : batchDisposition(row.status);
+}
+
+/**
+ * The batch as the signed disposition left it, read where the route puts it
+ * (`data.batchRecord`; `data` itself on an older answer). Null when the answer
+ * carries no batch, so the caller says so and never shows a row it made up.
+ */
+export function batchFromReleaseAnswer(json: unknown): CmcBatch | null {
+  const data = (json as { data?: unknown } | null)?.data;
+  if (!data || typeof data !== 'object') return null;
+  const nested = (data as { batchRecord?: unknown }).batchRecord;
+  const row = nested && typeof nested === 'object' ? nested : data;
+  const looksLikeBatch = 'batch_number' in (row as object) || 'id' in (row as object);
+  return looksLikeBatch ? batchRowFromApi(row as BatchApiRow) : null;
+}
+
+/** The decision in the words a person signed, for the toast that follows it. */
+export function dispositionWord(st: string): string {
+  if (st === 'conditional') return 'released conditionally';
+  return st;
+}
+
+/**
  * The server's own id for a batch, or undefined when it gave none.
  *
  * A blank string is "none" too: it addresses no row, and letting it through
@@ -138,7 +171,7 @@ export function batchRowFromApi(row: BatchApiRow): CmcBatch {
     stage: row.product_name ?? '',
     yield: yieldPercent(row.yield_data),
     dev: deviationCount(row.deviations),
-    st: batchDisposition(row.status),
+    st: shownDisposition(row),
   };
 }
 

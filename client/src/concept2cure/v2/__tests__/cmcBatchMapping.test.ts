@@ -5,6 +5,8 @@ import {
   batchCreateBody,
   batchReleaseBody,
   batchDisposition,
+  batchFromReleaseAnswer,
+  dispositionWord,
   type BatchApiRow,
 } from '../surfaces/cmcBatch';
 
@@ -114,5 +116,38 @@ describe('cmcBatch mapping', () => {
   it('batchRowsFromApi tolerates a non-array payload', () => {
     expect(batchRowsFromApi(null)).toEqual([]);
     expect(batchRowsFromApi([{ id: 1, batch_number: 'x' }])).toHaveLength(1);
+  });
+});
+
+/* 2026-11-12 (CMC walked in the running app): a batch rejected under signature kept reading "Pending" with a
+   live "Release". The register writes the decision to `release_status`; a rejection leaves `status` as it was
+   (in-progress), and the row was read from `status` alone. The signed answer also arrives as `data.batchRecord`,
+   not `data`, so the row adopted nothing and showed "undefined". */
+describe('the signed disposition', () => {
+  const row = { id: 'b-1', batch_number: 'B3-0042', product_name: 'Drug substance', yield_data: { percent: 61 }, deviations: { open: 1 } };
+
+  it.each([
+    ['rejected', 'in-progress', 'rejected'],
+    ['released', 'completed', 'released'],
+    ['conditional', 'in-progress', 'conditional'],
+    ['pending', 'in-progress', 'pending'],
+    [null, 'in-progress', 'pending'],
+    [undefined, 'released', 'released'],
+  ])('release_status %s over status %s reads %s', (releaseStatus, status, shown) => {
+    expect(batchRowFromApi({ ...row, status, release_status: releaseStatus }).st).toBe(shown);
+  });
+
+  it('the release answer is read where the route puts it, and not at all when it carries no batch', () => {
+    const signed = { ...row, status: 'in-progress', release_status: 'rejected' };
+    expect(batchFromReleaseAnswer({ success: true, data: { batchRecord: signed, releaseStatus: 'rejected' } })).toMatchObject({ id: 'B3-0042', st: 'rejected' });
+    expect(batchFromReleaseAnswer({ success: true, data: signed })).toMatchObject({ id: 'B3-0042', st: 'rejected' });
+    expect(batchFromReleaseAnswer({ success: true, data: { releaseStatus: 'rejected' } })).toBeNull();
+    expect(batchFromReleaseAnswer(null)).toBeNull();
+  });
+
+  it('says the decision in the words a person signed', () => {
+    expect(dispositionWord('released')).toBe('released');
+    expect(dispositionWord('conditional')).toBe('released conditionally');
+    expect(dispositionWord('rejected')).toBe('rejected');
   });
 });

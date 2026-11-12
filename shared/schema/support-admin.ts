@@ -116,6 +116,9 @@ export const supportTicketMessages = pgTable(
   'support_ticket_messages',
   {
     id: serial('id').primaryKey(),
+    /** The ticket's organisation (P-127, 2026-11-12): the tenant policy's key; the same-organisation key
+     *  (ticket_id, organization_id) → support_tickets keeps it equal to the ticket's (migrations/0007_support_admin.sql). */
+    organizationId: integer('organization_id').notNull(),
     ticketId: integer('ticket_id').notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
     /** User who wrote this message */
     userId: integer('user_id').notNull().references(() => users.id),
@@ -128,6 +131,7 @@ export const supportTicketMessages = pgTable(
   },
   (table) => [
     index('idx_support_messages_ticket').on(table.ticketId),
+    index('idx_support_messages_org').on(table.organizationId),
   ]
 );
 

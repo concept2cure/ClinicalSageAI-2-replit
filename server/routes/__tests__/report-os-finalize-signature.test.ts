@@ -204,7 +204,8 @@ describe('POST /runs/:id/finalize is an electronic signature (reporting review 2
   it('refuses a password that is not accepted with 401, before any transaction', async () => {
     eligible();
     lockedAs('completed');
-    h.reauth.mockResolvedValue({ ok: false, error: 'REAUTH_PASSWORD_INVALID' });
+    // verifyReauth returns the signer's sentence with the code (2026-11-12, moved there from the ceremony).
+    h.reauth.mockResolvedValue({ ok: false, error: 'REAUTH_PASSWORD_INVALID', message: 'The password was not accepted. Nothing was signed.' });
     const res = await finalize();
     expect(res.status).toBe(401);
     expect(res.body).toMatchObject({ error: { code: 'REAUTH_PASSWORD_INVALID' } });

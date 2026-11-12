@@ -191,9 +191,13 @@ export function buildRiskReview(input: RiskReviewInput): RiskReview {
 const STATUS_MARK: Record<SectionStatus, string> = { ok: '🟢', attention: '🟠', critical: '🔴' };
 
 /** Render the risk review as an inspection-ready markdown document. */
+/** The framework as a reader names it. The record stores a code; the report's title printed it in capitals
+ *  ("ICH_E6R3"), and the report is now a file a person downloads. An unknown code is shown as recorded. */
+const FRAMEWORK_WORDS: Record<string, string> = { ich_e6r3: 'ICH E6(R3)' };
+
 export function renderRiskReviewMarkdown(r: RiskReview): string {
   const lines: string[] = [];
-  lines.push(`# Risk Review — ${r.framework.toUpperCase()}`);
+  lines.push(`# Risk Review — ${FRAMEWORK_WORDS[r.framework] ?? r.framework}`);
   lines.push('');
   lines.push(`**Program:** ${r.programId}  `);
   lines.push(`**As of:** ${r.asOf}  `);

@@ -1,0 +1,92 @@
+{
+ "01-device-510k": {
+  "light": [
+   {
+    "cls": "status-pill.empty",
+    "texts": 38,
+    "lowest": 1.91,
+    "need": 4.5,
+    "example": "empty",
+    "colour": "#b0aea5",
+    "on": "#f0eee6",
+    "size": 10
+   },
+   {
+    "cls": "estar-num",
+    "texts": 36,
+    "lowest": 3.9,
+    "need": 4.5,
+    "example": "E5",
+    "colour": "#71706a",
+    "on": "#f5dfdd",
+    "size": 11
+   }
+  ],
+  "dark": [
+   {
+    "cls": "status-pill.empty",
+    "texts": 38,
+    "lowest": 2.41,
+    "need": 4.5,
+    "example": "empty",
+    "colour": "#6b6963",
+    "on": "#30302e",
+    "size": 10
+   },
+   {
+    "cls": "estar-num",
+    "texts": 36,
+    "lowest": 4.29,
+    "need": 4.5,
+    "example": "§",
+    "colour": "#94928a",
+    "on": "#4a2424",
+    "size": 11
+   }
+  ]
+ },
+ "02-device-pma": {
+  "light": [],
+  "dark": []
+ },
+ "03-device-cer": {
+  "light": [],
+  "dark": []
+ },
+ "04-device-diagnostics": {
+  "light": [],
+  "dark": []
+ },
+ "05-device-clinical-studies": {
+  "light": [],
+  "dark": []
+ },
+ "06-device-software": {
+  "light": [],
+  "dark": []
+ },
+ "07-device-engineering": {
+  "light": [],
+  "dark": []
+ },
+ "08-device-udi": {
+  "light": [],
+  "dark": []
+ },
+ "09-device-postmarket": {
+  "light": [],
+  "dark": []
+ },
+ "10-device-presub": {
+  "light": [],
+  "dark": []
+ },
+ "11-human-factors": {
+  "light": [],
+  "dark": []
+ },
+ "12-labeling": {
+  "light": [],
+  "dark": []
+ }
+}

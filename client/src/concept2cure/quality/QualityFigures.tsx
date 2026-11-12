@@ -24,7 +24,7 @@ import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { useReviewDue } from './hooks';
 import { useChangeSummary } from './changeHooks';
-import { useQualityWrites } from './registerContext';
+import { useOnQualityWrite } from './registerContext';
 import { REVIEW_WINDOW_DAYS } from './PeriodicReview';
 import type { ChangeSummary } from './changeData';
 import type { ReviewDueRow } from './data';
@@ -155,15 +155,7 @@ export function QualityFigures({ organisationWide }: {
   const triage = useFetchJson<unknown>(QUALITY_FIGURE_READS.triage);
   /* The line is the server's numbers, so a confirmed Quality write re-reads them: after a complaint was recorded it
      still said "0 open complaints" beside a register saying "Open: 1" (walked 2026-11-11, w39). */
-  const writes = useQualityWrites();
-  const readAt = React.useRef(writes);
-  React.useEffect(() => {
-    if (writes === readAt.current) return;
-    readAt.current = writes;
-    readiness.refresh(); review.refresh?.(); changes.refresh?.(); triage.refresh();
-    // The reads' refreshers are stable for a URL; the write count is what this follows.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [writes]);
+  useOnQualityWrite(() => { readiness.refresh(); review.refresh?.(); changes.refresh?.(); triage.refresh(); });
 
   /* A read with no usable body is a failure, never an empty figure. */
   const readinessFailed = !readiness.loading && (readiness.error != null || (readiness.data != null && readinessOf(readiness.data) === null));

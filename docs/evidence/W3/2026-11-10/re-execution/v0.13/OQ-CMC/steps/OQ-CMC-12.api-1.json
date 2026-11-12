@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A6270d978-aff3-43f0-ad87-1e6726350bf8%2F3.1",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": []
+    }
+  }
+}

@@ -49,6 +49,23 @@ describe('list_project_documents with catalog:true', () => {
     expect(out).toMatchObject({ ok: true, scope: { catalog: true, projects: 2 }, total: 2 });
   });
 
+  /* list_project_documents is one of the tools a sub-agent is offered, and no input of such a tool may be named for
+     a path, a directory or a folder (sub-agent-toolset.test.ts). The narrowing was named `folder` (2026-11-10), which
+     kept that rule red on trunk. It is `filed_in`, and reaches the catalog as the catalog's own `folder`. */
+  it('narrows to a proposed Vault folder through filed_in, and takes no input named folder', async () => {
+    await listDataCatalogForAna({ catalog: true, filed_in: 'module-5' }, scope);
+    expect(h.searchDataRoom.mock.calls[0][1]).toMatchObject({ folder: 'module-5' });
+    h.searchDataRoom.mockClear();
+    await listDataCatalogForAna({ catalog: true, folder: 'module-4' }, scope);
+    expect(h.searchDataRoom.mock.calls[0][1].folder ?? null).toBeNull();
+  });
+
+  it('refuses a filed_in that is not a Vault folder, as the catalog does', async () => {
+    const out = JSON.parse(await listDataCatalogForAna({ catalog: true, filed_in: '../etc' }, scope));
+    expect(out).toMatchObject({ ok: false, code: 'INVALID_CATALOG_QUERY' });
+    expect(h.searchDataRoom).not.toHaveBeenCalled();
+  });
+
   it('reports the engine\'s grade and basis, which captures this project uses, and which it can file', async () => {
     const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
     expect(out.items[0]).toMatchObject({ sourceId: 1, grade: { grade: 'C', score: 71, basis: ['currency 15/15: Current: no later capture replaced it.'] },
@@ -62,11 +79,13 @@ describe('list_project_documents with catalog:true', () => {
   it('lists the Vault\'s documents of the same projects with the engine\'s grade, as the screen does', async () => {
     h.listVaultForCatalog.mockResolvedValue({ total: 1, facets: { project: [], kind: [], ctd: [], folder: [] }, documents: [{
       documentId: 'd1', title: 'Protocol v3', projectName: 'Other project', projectId: OTHER, evidenceKind: 'protocol', ctdSection: '5.3.5.1',
-      folder: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'confirmed', version: '3.0', grade }] });
+      folder: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'confirmed', version: '3.0', grade,
+      dataset: { format: 'xpt', tableCount: 1, tables: [{ name: 'ADVS', standard: 'ADaM', domain: 'BDS', columns: 34, rows: 32139 }] } }] });
     const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
     expect(h.listVaultForCatalog.mock.calls[0]).toMatchObject([7, { programIds: [OPEN, OTHER] }]);
     expect(out).toMatchObject({ vaultTotal: 1, vaultDocuments: [{ documentId: 'd1', folder: 'Module 5 · Clinical', project: 'Other project', grade: { grade: 'C', score: 71 } }] });
     expect(out.message).toMatch(/2 captured file\(s\) and 1 Vault document\(s\)/);
+    expect(out.vaultDocuments[0].dataset.tables[0]).toMatchObject({ name: 'ADVS', standard: 'ADaM', rows: 32139 });
     // A failed Vault read is said; the captures are still answered.
     h.listVaultForCatalog.mockRejectedValue(new Error('down'));
     const failed = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));

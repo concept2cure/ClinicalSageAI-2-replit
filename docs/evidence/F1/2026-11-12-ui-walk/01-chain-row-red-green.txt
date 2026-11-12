@@ -1,0 +1,18 @@
+chain-row.test.ts on trunk's verifier: the three PostgreSQL-text cases are reported broken.
+
+ ✓ server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > a Date (node-postgres) is linked
+ ✓ server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > the ISO string is linked
+ × server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > PostgreSQL text (drizzle execute) is linked
+ × server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > PostgreSQL text with microseconds is linked
+ × server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > PostgreSQL text in another zone is linked
+ ✓ server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > another instant, as a Date is still broken
+ ✓ server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > another instant, as PostgreSQL text is still broken
+ ✓ server/services/audit/__tests__/chain-row.test.ts > verifySequencedRow reads the instant the writer hashed, however the driver hands it over > text that is no timestamp is still broken
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { link: 'broken', seal: 'no-key' } to deeply equal { link: 'linked', seal: 'no-key' }
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+
+With the repair:
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

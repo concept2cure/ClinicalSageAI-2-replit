@@ -40,15 +40,87 @@ import {
   sanitizeAuthoringHtml,
 } from '../../components/ana/renderSafeMarkdown';
 import { FIGURE_NOT_UPLOADED_NOTE, NOT_A_FIGURE_REF, releaseImageSrc, resolveImageSrc } from './imageNode';
+import {
+  CITATION_LOCATOR_ATTR, CITATION_MISSING_TEXT, CITATION_SOURCE_ATTR, citationLookupFor, citationMarkerText,
+  citationSourceName, makeCitationRegistry,
+} from '@shared/authoring/citations';
+import { admittedCitationSources, admittedPrecedingSources } from './citationAdmission';
+import type { ProjectSourceRecord } from './projectSourceCatalog';
+
+/**
+ * What one section's read-only render needs to print its citations as the
+ * editor and both exports do: the number each source admitted to the section
+ * carries in the document's reference list, and its name for the hover.
+ * 'checking' while the source catalogue or the admissions are still being
+ * read (or could not be), as the editor shows it.
+ */
+export type ReadCitations = { numbers: ReadonlyMap<string, number>; names: ReadonlyMap<string, string> } | 'checking';
+
+/**
+ * Number a document's citations for its read-only views, by the editor's and
+ * the exports' one rule (citationNode.ts citationNumbers): one registry for
+ * the document, in reading order, and a source counts in a section only when
+ * it is admitted to that section; an unadmitted or unresolved source takes no
+ * number. Walked 2026-11-12: outside the Section view a citation read as its
+ * source's raw file name.
+ */
+export function documentReadCitations(
+  sections: Array<{ id: string; content?: string | null }>,
+  catalogue: ProjectSourceRecord[],
+  admissions: Parameters<typeof admittedCitationSources>[1],
+): Map<string, ReadCitations> {
+  /* The canvas's own reading-order walk (every section, none active), so the numbers are the canvas's. */
+  const { sources, ids } = admittedPrecedingSources(sections, null, catalogue, admissions);
+  const registry = makeCitationRegistry(citationLookupFor(sources));
+  const numbers = new Map<string, number>();
+  for (const id of ids) {
+    const cited = registry.cite(id);
+    if (cited.found) numbers.set(id, cited.number);
+  }
+  return new Map(sections.map((sec) => {
+    const own = admittedCitationSources(catalogue, admissions, sec.id);
+    const mine = new Map(own.flatMap((source) => (numbers.has(String(source.id)) ? [[String(source.id), numbers.get(String(source.id)) as number] as const] : [])));
+    return [sec.id, { numbers: mine, names: new Map(own.map((source) => [String(source.id), citationSourceName(source)])) }] as const;
+  }));
+}
+
+/** Each stored citation as the marker the editor shows ("[2]", "[2, p. 4]"), or the stated refusal; never the cached file name. */
+function withCitationMarkers(html: string, citations: ReadCitations | undefined): string {
+  if (!citations || !html.includes(CITATION_SOURCE_ATTR)) return html;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  tpl.content.querySelectorAll<HTMLElement>(`[${CITATION_SOURCE_ATTR}]`).forEach((el) => {
+    const id = (el.getAttribute(CITATION_SOURCE_ATTR) ?? '').trim();
+    const marker = document.createElement('span');
+    marker.className = 'rse-cite';
+    marker.setAttribute(CITATION_SOURCE_ATTR, id);
+    const number = citations === 'checking' ? undefined : citations.numbers.get(id);
+    if (citations === 'checking') {
+      marker.dataset.missing = '1';
+      marker.textContent = '[Citation being checked]';
+    } else if (number != null) {
+      marker.textContent = citationMarkerText(number, el.getAttribute(CITATION_LOCATOR_ATTR));
+      marker.title = `${citations.names.get(id) ?? ''} — numbered by its position in this document’s reference list.`.replace(/^ — /, '');
+    } else {
+      marker.dataset.missing = '1';
+      marker.textContent = CITATION_MISSING_TEXT;
+    }
+    el.replaceWith(marker);
+  });
+  return tpl.innerHTML;
+}
 
 export function AuthoredHtml({
   html,
   className,
+  citations,
 }: {
   html: string;
   className?: string;
+  /** The section's citation numbering (documentReadCitations). Without it a citation shows its stored text, as before. */
+  citations?: ReadCitations;
 }) {
-  const clean = useMemo(() => sanitizeAuthoringHtml(html), [html]);
+  const clean = useMemo(() => withCitationMarkers(sanitizeAuthoringHtml(html), citations), [html, citations]);
   const [display, setDisplay] = useState(clean);
 
   useEffect(() => {

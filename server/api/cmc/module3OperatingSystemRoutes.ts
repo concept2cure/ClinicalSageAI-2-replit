@@ -408,6 +408,8 @@ router.get('/readiness/:projectId', async (req, res) => {
         totalSections: state.totalSections,
         approvedSections: state.approvedSections,
         staleSections: state.staleSections,
+        // Of those, the approved ones: they owe a re-approval. A stale draft owes a compile.
+        staleApprovedSections: state.staleApprovedSections,
         openCriticalContradictions: state.openCriticalContradictions,
         sectionsWithoutProvenance: state.sectionsWithoutProvenance,
         // Approved sections whose own compiled record says they are not
@@ -652,7 +654,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
     if (!reauthResult.ok) {
       res.setHeader('WWW-Authenticate', 'ReAuth required');
-      return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+      return res.status(401).json({ success: false, error: reauthResult.error, message: reauthResult.message });
     }
 
     const pool = getPool();

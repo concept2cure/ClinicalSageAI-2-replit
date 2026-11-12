@@ -30,20 +30,20 @@
         }
       ],
       "formulationDevelopment": "F1 (capsule) and F2 (uncoated tablet) were replaced by F3 to improve content uniformity and mask taste; the excipient ratio was fixed by a two-factor design",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 37,
+    "durationMs": 43,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 2,
+        "id": 4,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "formulationName": "BX-702 5 mg film-coated tablet, formulation F3",
         "version": null,
         "dosageForm": null,
@@ -76,8 +76,8 @@
         "formulationDevelopment": "F1 (capsule) and F2 (uncoated tablet) were replaced by F3 to improve content uniformity and mask taste; the excipient ratio was fixed by a two-factor design",
         "supersedes": null,
         "status": "current",
-        "createdAt": "2026-11-10T13:06:41.557Z",
-        "updatedAt": "2026-11-10T13:06:41.557Z"
+        "createdAt": "2026-11-12T00:34:44.594Z",
+        "updatedAt": "2026-11-12T00:34:44.594Z"
       },
       "module3Linked": true
     }

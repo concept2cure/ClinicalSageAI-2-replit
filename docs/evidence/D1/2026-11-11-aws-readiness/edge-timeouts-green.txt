@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the edge timeouts on this tree > CloudFront = ALB < keepAliveTimeout < headersTimeout, and the task overrides neither server value 3ms
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the rule refuses each way the order breaks > an ALB that idles longer than the server keeps connections alive 1ms
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the rule refuses each way the order breaks > an ALB and a CloudFront that disagree 0ms
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the rule refuses each way the order breaks > a server keep-alive at the ALB idle timeout 1ms
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the rule refuses each way the order breaks > a headersTimeout under the keep-alive 0ms
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the rule refuses each way the order breaks > a task definition that overrides the server value 0ms
+ ✓ tests/ci/edge-timeouts.contract.test.ts > the rule refuses each way the order breaks > a source it can no longer read is an error, not a pass 1ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  00:09:56
+   Duration  383ms (transform 107ms, setup 115ms, import 19ms, tests 11ms, environment 0ms)
+

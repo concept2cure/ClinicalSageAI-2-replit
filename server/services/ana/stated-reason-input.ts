@@ -156,7 +156,6 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'create_regulatory_commitment',
   'create_research_agreement',
   'create_rim_product',
-  'create_tmf',
   'establish_governed_fact',
   'fulfill_regulatory_commitment',
   'generate_schedule_of_events',
@@ -181,7 +180,6 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'save_document_as_template',
   'save_document_to_vault',
   'screen_subaward',
-  'seed_tmf',
   'set_coverage_qualifying_determination',
   'set_funding_profile',
   'set_grant_milestone_status',
@@ -199,7 +197,6 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'update_invention_disclosure',
   'update_protocol_section',
   'update_research_agreement',
-  'update_tmf_artifact_status',
   'update_vault_document',
 ]);
 

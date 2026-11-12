@@ -291,12 +291,12 @@
 }
 .mdx-shell .pg-list-blocker .ico { color: var(--warning); flex-shrink: 0; }
 .mdx-shell .pg-list-blocker .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mdx-shell .pg-list-blocker.none { color: var(--text-500); }
+.mdx-shell .pg-list-blocker.none { color: var(--text-400); }
 .mdx-shell .pg-list-blocker.none .ico { color: var(--text-500); }
 
 .mdx-shell .pg-list-owner { color: var(--text-300); font-size: 11px; font-weight: 500; }
 .mdx-shell .pg-list-due   { color: var(--text-300); font-size: 11px; display: flex; flex-direction: column; gap: 2px; text-align: right; }
-.mdx-shell .pg-list-due .act { color: var(--text-500); font-size: 10px; }
+.mdx-shell .pg-list-due .act { color: var(--text-400); font-size: 10px; }
 
 /* Pathway chip (used in list rows) */
 .mdx-shell .path-chip {
@@ -414,7 +414,7 @@
 .mdx-shell .tbl thead th {
   background: var(--bg-100); padding: 8px 12px;
   font-weight: 500; color: var(--text-300); text-align: left;
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: var(--fs-caption);
   border-bottom: 1px solid var(--border); white-space: nowrap;
 }
 .mdx-shell .tbl tbody td {
@@ -455,7 +455,10 @@
 .mdx-shell .status-pill.draft     { background: var(--bg-200); color: var(--text-200); }
 .mdx-shell .status-pill.review    { background: var(--warning-muted); color: var(--warning); }
 .mdx-shell .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
-.mdx-shell .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
+/* D8 slice 2c (P-128): "n/a" and "empty" are states a person reads, not disabled controls, so they are not drawn in
+   the disabled ink (--text-500: 1.91:1 on this ground in light, 2.41:1 in dark). The muted ink clears AA on it. The
+   empty pill's dashed border still says it is empty. */
+.mdx-shell .status-pill.na        { background: var(--bg-100); color: var(--text-300); }
 .mdx-shell .status-pill.final     { background: var(--success-muted); color: var(--success); }
 /* Neutral on purpose. An uploaded file is neither an achievement (success) nor
    a warning — it is a record with no authoring lifecycle, and the pill should
@@ -464,7 +467,7 @@
 /* Neutral, not accent — locked pills repeat per row, and accent orange is
    reserved for one focal point per screen. */
 .mdx-shell .status-pill.locked    { background: var(--bg-200); color: var(--text-200); border-color: var(--border-strong); }
-.mdx-shell .status-pill.empty     { background: var(--bg-100); color: var(--text-500); border-color: var(--border); border-style: dashed; }
+.mdx-shell .status-pill.empty     { background: var(--bg-100); color: var(--text-300); border-color: var(--border); border-style: dashed; }
 .mdx-shell .status-pill.included  { background: var(--success-muted); color: var(--success); }
 .mdx-shell .status-pill.excluded  { background: var(--bg-100); color: var(--text-400); }
 .mdx-shell .status-pill.serious   { background: var(--error-muted); color: var(--error); }
@@ -527,8 +530,10 @@
 .mdx-shell .estar-row:hover { background: var(--bg-100); }
 .mdx-shell .estar-row.blocker { background: var(--error-muted); }
 .mdx-shell .estar-row.blocker:hover { background: var(--error-muted); }
+/* D8 slice 2c (P-128): the section number is read against a blocker row's tint as well as the panel's ground, and
+   --text-400 was 3.90:1 there (4.29:1 in dark). */
 .mdx-shell .estar-num {
-  font-variant-numeric: tabular-nums; color: var(--text-400);
+  font-variant-numeric: tabular-nums; color: var(--text-300);
   font-family: var(--font-mono); font-size: 11px;
 }
 .mdx-shell .estar-label { color: var(--text-100); }
@@ -1141,7 +1146,7 @@
 .mdx-shell .ed-prov-row { display: flex; gap: 10px; }
 .mdx-shell .ed-prov-lbl {
   font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--text-500);
+  text-transform: uppercase; color: var(--text-400);
   width: 70px; flex-shrink: 0;
   padding-top: 1px;
 }
@@ -1443,51 +1448,85 @@
    ═════════════════════════════════════════════════════════════════ */
 
 /* ── Shared page chrome ─────────────────────────────────────── */
+/* D8 slice 2 (P-128): the header is laid out as the canonical page header is (`.c2c-v2 .ph`, app-v2.css). It
+   was one row that never wrapped, so at 390 px the title stood in a narrow column beside its actions and the last
+   action was cut off at the screen's edge. The text block now keeps the canonical floor and the actions wrap
+   under it; at phone width each takes a full line. Nothing in the header is removed (P-122). */
 .mdx-shell .page-header {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 24px; padding: 28px 32px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px 24px; flex-wrap: wrap; padding: 28px 32px 20px;
   border-bottom: 1px solid var(--border);
 }
+.mdx-shell .page-header > :first-child { flex: 1 1 0%; min-width: min(420px, 100%); }
 .mdx-shell .page-eyebrow {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  font-size: var(--fs-caption); font-weight: 500;
+  color: var(--text-300);
   margin-bottom: 4px;
 }
 .mdx-shell .page-title {
   font-family: var(--font-serif);
   font-size: 28px; font-weight: 500;
   color: var(--text-100); letter-spacing: -0.01em;
-  margin: 0 0 6px;
+  margin: 0 0 6px; overflow-wrap: anywhere;
 }
 .mdx-shell .page-sub { font-size: 13px; color: var(--text-300); max-width: 640px; line-height: 1.5; }
 .mdx-shell .page-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+/* At phone width the header's actions take a full line under its text, the title takes the canonical phone size,
+   and a row of actions wraps. The host's context line is such a row (the way back to the project, the project's
+   name and the scope note): at 390 px it stood as three narrow columns. Wider than a phone it is one row, as it
+   was. */
+@media (max-width: 640px) {
+  .mdx-shell .page-header > :not(:first-child) { flex: 1 1 100%; }
+  .mdx-shell .page-title { font-size: 22px; }
+  .mdx-shell .page-actions { flex-wrap: wrap; gap: 8px 10px; }
+}
 
 /* ── Metrics row (reused across surfaces) ─────────────────────── */
+/* D8 slice 3 (P-128): a screen's figures are one quiet line, as the canonical register's are (`.c2c-v2 .reg-kpis`,
+   app-v2.css), not a row of tiles (ONE_DESIGN_PLAN §2 retires stat tiles as chrome). Every figure a tile showed is
+   still shown (P-122): its label, its figure and unit beside it, its note under them. The order on screen is the
+   markup's, so what a person sees is what a screen reader reads. */
 .mdx-shell .metrics-row {
-  display: grid; gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 40px;
   padding: 20px 32px 4px;
 }
 .mdx-shell .metric-card {
-  padding: 16px 18px; border: 1px solid var(--border);
-  border-radius: var(--radius-md); background: var(--bg-000);
-  transition: border-color var(--dur) var(--ease);
+  /* The label, then the figure beside it; the note under both. The label's column is the label's width, so the
+     figure sits right after its label; the note spans both columns, and the figure's column takes what the note
+     adds. The figure's column never goes below the figure's own width, and the label may wrap, so the figure keeps
+     its place (accessibility review, 2026-11-12). On a phone the figure is a wrapping line instead: below. */
+  display: grid; grid-template-columns: minmax(0, max-content) minmax(min-content, 1fr); grid-template-areas: "label val" "meta meta";
+  justify-items: start; align-content: start; align-items: baseline; column-gap: 8px; row-gap: 2px;
+  max-width: 280px; min-width: 0;
+  padding: 0; border: 0; border-radius: 0; background: none;
 }
-.mdx-shell .metric-card:hover { border-color: var(--border-strong); }
-.mdx-shell .metric-card[data-tone="err"]  { background: var(--error-muted); border-color: color-mix(in oklab, var(--error) 20%, transparent); }
-.mdx-shell .metric-card[data-tone="warn"] { background: var(--warning-muted); border-color: color-mix(in oklab, var(--warning) 20%, transparent); }
-.mdx-shell .metric-card[data-tone="ok"]   { background: var(--success-muted); border-color: color-mix(in oklab, var(--success) 20%, transparent); }
+/* D8 slice 1 (P-128): a tile is not filled by its tone (ONE_DESIGN_PLAN §2: status colour only for meaning). The
+   figure says the tone, as .reg-kpi-v does in the canonical register; "ok" needs no colour. */
+.mdx-shell .metric-card[data-tone="err"] .metric-val { color: var(--error); }
+.mdx-shell .metric-card[data-tone="warn"] .metric-val { color: var(--warning); }
 .mdx-shell .metric-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-200); margin-bottom: 8px;
+  grid-area: label; min-width: 0;
+  font-size: var(--fs-small); font-weight: 400;
+  color: var(--text-300); margin: 0; overflow-wrap: anywhere;
 }
 .mdx-shell .metric-val {
-  font-family: var(--font-serif);
-  font-size: 28px; font-weight: 500; color: var(--text-100);
-  font-variant-numeric: tabular-nums; line-height: 1;
+  grid-area: val; min-width: 0;
+  font-size: var(--fs-section); font-weight: 600; color: var(--text-100);
+  font-variant-numeric: tabular-nums; line-height: 1.4;
 }
-.mdx-shell .metric-val .unit { font-size: 13px; color: var(--text-200); margin-left: 4px; font-family: var(--font-sans); font-weight: 400; }
-.mdx-shell .metric-meta { font-size: 11px; color: var(--text-200); margin-top: 8px; line-height: 1.4; }
+.mdx-shell .metric-val .unit { font-size: var(--fs-small); color: var(--text-200); margin-left: 2px; font-weight: 400; }
+.mdx-shell .metric-meta { grid-area: meta; font-size: var(--fs-caption); color: var(--text-300); margin: 0; line-height: 1.4; }
+/* On a phone the figures stack, and a one-line note 14 px above the next label read as part of it (design review,
+   2026-11-12): the space between figures is wider than the space inside one. And each figure is a wrapping line:
+   when the label and the figure do not fit side by side (enlarged text), the figure moves under the label and
+   either may wrap, so nothing runs out of the figure's space (WCAG 1.4.4, 1.4.10). Measured at 320 px with doubled
+   text: the grid let one label overlap its figure; this does not. */
+@media (max-width: 640px) {
+  .mdx-shell .metrics-row { row-gap: 20px; }
+  .mdx-shell .metric-card { display: flex; flex-wrap: wrap; }
+  .mdx-shell .metric-val { overflow-wrap: anywhere; }
+  .mdx-shell .metric-meta { flex-basis: 100%; }
+}
 
 /* ── Section (reused) ─────────────────────────────────────────── */
 .mdx-shell .section { padding: 24px 32px 4px; }
@@ -1532,8 +1571,8 @@
 }
 .mdx-shell .ctable-head {
   background: var(--bg-050); color: var(--text-300);
-  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; border-bottom: 1px solid var(--border);
+  font-size: var(--fs-caption); font-weight: 500;
+  border-bottom: 1px solid var(--border);
 }
 .mdx-shell .ctable-row {
   border-bottom: 1px solid var(--border);
@@ -3888,14 +3927,9 @@
   font-weight: 600;
   z-index: 1;
 }
+/* D8 slice 3: the compact row was a row of smaller tiles. It is the same line of figures, set a little closer. */
 .mdx-shell .metrics-compact {
-  gap: 8px;
-}
-.mdx-shell .metrics-compact .metric-card {
-  padding: 12px 14px;
-}
-.mdx-shell .metrics-compact .metric-val {
-  font-size: 22px;
+  gap: 10px 32px;
 }
 .mdx-shell .eng-blockers-feed {
   display: flex;
@@ -4500,6 +4534,22 @@
 .mdx-shell .empty-state{ padding:40px 24px; text-align:center; background:var(--bg-050); border:1px dashed var(--border); border-radius:var(--radius-lg); color:var(--text-200); }
 .mdx-shell .empty-state-t{ font-size:14px; font-weight:600; color:var(--text-100); margin-bottom:6px; }
 .mdx-shell .empty-state-s{ font-size:12px; margin-bottom:14px; }
+
+/* D8 slice 2b (P-128): a pathway page does not scroll sideways on a phone. At 390 px the 510(k), PMA and
+   Diagnostics pages scrolled to about 710 px: the tab row, the stage strip, the two-column body, the four health
+   cards and the filing panel's row of controls each ran past the edge, and carried their controls with them. The
+   strips scroll inside themselves, as the project's steps do; the columns stack; the cards go two to a row; a
+   section header and its controls wrap. Wider than a phone each is as it was. The tab row is in pathway-tabs.css. */
+@media (max-width: 640px) {
+  .mdx-shell .stage-strip { overflow-x: auto; scrollbar-width: none; }
+  .mdx-shell .phases { overflow-x: auto; scrollbar-width: none; }
+  .mdx-shell .col2 { grid-template-columns: minmax(0, 1fr); }
+  .mdx-shell .health { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mdx-shell .section-hdr { flex-wrap: wrap; gap: 8px 16px; }
+  .mdx-shell .section-hdr > * { min-width: 0; max-width: 100%; }
+  .mdx-shell .section-hdr > div { flex-wrap: wrap; }
+  .mdx-shell .section-hdr select { max-width: 100%; }
+}
 
 /* The shared risk register keeps its matrix and hazard drawer readable on a phone. */
 @media (max-width: 640px) {

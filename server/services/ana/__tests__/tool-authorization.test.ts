@@ -81,7 +81,7 @@ describe('what the register says about specific tools', () => {
     ['set_protocol_budget_params', 'confirm'],
     // The five P0-12 gated first.
     ['save_document_to_vault', 'confirm'],
-    ['seed_tmf', 'confirm'],
+    ['update_vault_document', 'confirm'],
     // Reads, and AnA's own state.
     ['list_vault_documents', 'read'],
     ['global_ri_exclusivity', 'read'],
@@ -103,8 +103,6 @@ describe('a conditional tool is judged on what it was asked to do', () => {
     ['qms_change_transition', { to: ' Closed ' }, 'refuse'],
     ['create_clinical_study', { title: 'P1' }, 'confirm'],
     ['create_clinical_study', { title: 'P1', irb_approved: true }, 'refuse'],
-    ['update_tmf_artifact_status', { status: 'received' }, 'confirm'],
-    ['update_tmf_artifact_status', { status: 'final' }, 'refuse'],
     ['set_registration_status', { market_status: 'submitted' }, 'confirm'],
     ['set_registration_status', { market_status: 'approved' }, 'refuse'],
     ['log_cs_transaction', { quantity: 2 }, 'confirm'],

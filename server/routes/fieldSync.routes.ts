@@ -8,6 +8,7 @@ import type { FieldUpdateOutcome } from '../services/SmartFieldLinking.types';
 import { db } from '../db';
 import { fda510kProjects } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
+import { openSseStream } from '../utils/sse-stream';
 
 const router = express.Router();
 
@@ -321,13 +322,10 @@ router.get('/subscribe/:projectId', async (req, res) => {
     return res.status(403).json({ success: false, error: 'Forbidden' });
   }
 
-  // Set SSE headers
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
-    'Vary': 'Origin'
+  // SSE headers, and a heartbeat between field updates, which can be minutes
+  // apart: the edge closes a connection silent for 60 s (server/utils/sse-stream.ts).
+  openSseStream(req, res, {
+    headers: { ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}), Vary: 'Origin' },
   });
   
   // Send initial connection message

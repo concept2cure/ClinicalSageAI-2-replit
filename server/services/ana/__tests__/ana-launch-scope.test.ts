@@ -92,9 +92,9 @@ describe('existing project analysis commands after portfolio convergence', () =>
 describe('governedToolsetFor, the one toolset every chat door composes', () => {
   // write_kit_section and create_clinical_study were hidden examples until the
   // device surfaces joined the launch catalog (62a8d5e7f); they are kept now.
-  // prepare_meeting_package (agency-meetings) and create_tmf (etmf), still outside
-  // the catalog, take their places.
-  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'prepare_meeting_package', 'create_tmf', 'build_sae_line_listing'];
+  // prepare_meeting_package (agency-meetings) and get_tmf_view (etmf), still outside
+  // the catalog, take their places (create_tmf did until it retired, 2026-11-12, eTMF E4 step 3).
+  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'prepare_meeting_package', 'get_tmf_view', 'build_sae_line_listing'];
   const KEPT = [
     'run_rbm_assessment', // existing RBM central service, founder P-76
     'search_literature', // knowledge

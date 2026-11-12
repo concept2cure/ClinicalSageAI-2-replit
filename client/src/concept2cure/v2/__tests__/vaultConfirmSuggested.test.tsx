@@ -63,6 +63,14 @@ describe('Confirm N suggested (VR-11b)', () => {
     await waitFor(() => expect(document.body.textContent).toContain('2 awaiting confirmation'));
   });
 
+  it('the control reads "Confirm…" beside the sentence that names its folder; its name keeps the whole phrase', async () => {
+    render(<Vault {...props()} />);
+    const bar = await screen.findByTestId('vault-confirm-suggested');
+    expect(bar.textContent).toContain('2 suggested in Module 3 · Quality, awaiting confirmation.');
+    const control = within(bar).getByRole('button', { name: 'Confirm 2 suggested in Module 3 · Quality' });
+    expect(control.textContent).toBe('Confirm…');
+  });
+
   it('holds the action back until a reason is given, sends one reason for the set, and answers per document', async () => {
     onBatch = () => ok({
       success: true,

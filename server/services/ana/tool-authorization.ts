@@ -108,10 +108,6 @@ export const CONDITIONAL_RULES: Readonly<Record<string, Rule>> = {
     i.run_premortem !== false && typeof i.package_id === 'number' && typeof i.assessment_id === 'number'
       ? CONFIRM
       : { class: 'read' },
-  classify_tmf_artifact: i =>
-    isIn(i.status, ['final'])
-      ? refuse('Filing a TMF artifact as final is its QC finalization, which a person performs in the eTMF. Add it at an earlier status.')
-      : CONFIRM,
   commit_intelligence_flow: i => (i.dry_run === true ? { class: 'read' } : CONFIRM),
   convert_docx_to_pdf: i => {
     // The PDF lands at output_pdf_path, or beside the input. Scratch space is
@@ -179,10 +175,6 @@ export const CONDITIONAL_RULES: Readonly<Record<string, Rule>> = {
     given(i.election_date) ||
     typeof i.decision_rationale === 'string'
       ? refuse('Election, filing, licensing, release and abandonment are the tech-transfer office’s Bayh-Dole decisions, and the decision rationale is the office’s own statement of why. A person records them. Update the disclosure’s other fields without a decision status, election_date or decision_rationale.')
-      : CONFIRM,
-  update_tmf_artifact_status: i =>
-    isIn(i.status, ['final'])
-      ? refuse('Setting a TMF artifact to final is its QC finalization, which a person performs in the eTMF.')
       : CONFIRM,
 };
 

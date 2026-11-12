@@ -29,20 +29,20 @@
           "acceptanceCriteria": "Not more than 0.5%"
         }
       ],
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 41,
+    "durationMs": 35,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "9de86cf6-03d3-4230-bf1a-f31913ae1fe4",
+        "id": "fb35f146-dc80-4623-958c-c7eb92a6754c",
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "processName": "BX-702 drug substance synthesis",
         "processType": "drug_substance",
         "processDescription": null,
@@ -79,8 +79,8 @@
         "validationStatus": "not-started",
         "validatedBy": null,
         "validationDate": null,
-        "createdAt": "2026-11-10T13:06:41.845Z",
-        "updatedAt": "2026-11-10T13:06:41.845Z"
+        "createdAt": "2026-11-12T00:34:44.882Z",
+        "updatedAt": "2026-11-12T00:34:44.882Z"
       },
       "module3Linked": true
     }

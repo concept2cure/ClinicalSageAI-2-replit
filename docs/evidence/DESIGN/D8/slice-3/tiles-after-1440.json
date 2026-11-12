@@ -1,0 +1,331 @@
+{
+ "05-device-clinical-studies": [
+  {
+   "top": 237,
+   "bottom": 301,
+   "height": 64,
+   "nextStartsAt": 301,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Studies 0 0 enrolling or in follow-up",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Enrollment 0% 0 of 0 planned",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "IRB approved 0 of 0 studies",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "BIMO ready 0 Inspection-ready study files",
+     "height": 40
+    }
+   ]
+  },
+  {
+   "top": 929,
+   "bottom": 997,
+   "height": 68,
+   "nextStartsAt": 1013,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Overall risk — 0 critical-to-quality risks",
+     "height": 44
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Open risk items 0 0 critical · 0 high",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "KRIs 0 red 0 amber · 0 tracked",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "QTL breaches 0 0 approaching · 0 limits",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Open signals 0 0 high · 0 total",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Sites on enhanced 0 of 0 monitored sites",
+     "height": 40
+    }
+   ]
+  }
+ ],
+ "06-device-software": [
+  {
+   "top": 237,
+   "bottom": 352,
+   "height": 115,
+   "nextStartsAt": 352,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Documentation level Not determined FDA 2023 software guidance",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Completeness Not determined No software lifecycle items are recorded for this project, so ",
+     "height": 91
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Approved — Required set not determined",
+     "height": 40
+    }
+   ]
+  }
+ ],
+ "07-device-engineering": [
+  {
+   "top": 237,
+   "bottom": 301,
+   "height": 64,
+   "nextStartsAt": 301,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Documents in flight 0 0 ready · 0 in review · 0 draft",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Open risks 0 No risks recorded yet",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Open change requests 0 Open or in review",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Mandatory sections approved 0% Across this project's documents · avg doc —",
+     "height": 40
+    }
+   ]
+  }
+ ],
+ "08-device-udi": [
+  {
+   "top": 237,
+   "bottom": 301,
+   "height": 64,
+   "nextStartsAt": 301,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Documents in flight 0 0 labels · 0 submissions",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Blocked documents 0 —",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Awaiting signature 0 Pending Part 11 e-signature",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Avg completion — Across all label and submission artifacts",
+     "height": 40
+    }
+   ]
+  }
+ ],
+ "09-device-postmarket": [
+  {
+   "top": 305,
+   "bottom": 370,
+   "height": 64,
+   "nextStartsAt": 370,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "MDRs due ≤72h 0 FDA 5-day · 30-day · EU 15-day",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "CAPAs open 0 0 past target date",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "PMS plan entries 0 No PMS plan execution recorded",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Open signals 0 0 critical · awaiting MDR roll-up",
+     "height": 40
+    }
+   ]
+  }
+ ],
+ "10-device-presub": [
+  {
+   "top": 256,
+   "bottom": 321,
+   "height": 64,
+   "nextStartsAt": 321,
+   "tiles": [
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Q-Subs in flight 0 0 awaiting · 0 feedback",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Commitments rolled — No commitments recorded yet",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Pending rollin — No commitments recorded yet",
+     "height": 40
+    },
+    {
+     "children": [
+      "metric-label",
+      "metric-val",
+      "metric-meta"
+     ],
+     "text": "Avg days in feedback 0d No active feedback",
+     "height": 40
+    }
+   ]
+  }
+ ]
+}

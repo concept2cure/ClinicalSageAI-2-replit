@@ -96,7 +96,22 @@ function recordedFact(v: boolean | null | undefined): boolean | null {
   return v ?? null;
 }
 
+/**
+ * The Submission Center submission an IRB submission is linked to (D1) is this
+ * organization's, or the link is refused. The foreign key alone accepts any
+ * organization's id, and an approval then threads a provenance link to it.
+ * The refusal does not say whether the id exists elsewhere.
+ */
+async function requireOwnSubmission(client: Queryable, orgId: number, submissionId: number): Promise<void> {
+  const { rows } = await client.query(
+    `SELECT id FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [submissionId, orgId],
+  );
+  if (rows.length === 0) throw new IrbError('BAD_INPUT', `Submission Center submission ${submissionId} was not found for this organization. Nothing was changed.`);
+}
+
 export async function createSubmissionTx(client: Queryable, orgId: number, userId: number, input: IrbSubmissionInput): Promise<{ id: number }> {
+  if (input.submissionId != null) await requireOwnSubmission(client, orgId, input.submissionId);
   const { rows } = await client.query(
     `INSERT INTO irb_submissions
        (organization_id, study_id, submission_id, protocol_number, title, risk_level,
@@ -126,9 +141,16 @@ export const IRB_CONTEXT_FIELDS = [
   ['isIndStudy', 'is_ind_study'],
   ['usesPhi', 'uses_phi'],
   ['usesRecruitmentMaterial', 'uses_recruitment_material'],
+  /* 45 CFR 46.111(b). The same three answers, and until 2026-11-12 it could be
+     answered only when the submission was created: an unanswered one left the
+     safeguards check "not assessed" with nothing a person could do about it. */
+  ['involvesVulnerablePopulations', 'involves_vulnerable_populations'],
 ] as const;
 
 export type IrbContextField = (typeof IRB_CONTEXT_FIELDS)[number][0];
+
+/** What `setSubmissionContextTx` takes: any of the facts, and the safeguards text. */
+export type IrbContextInput = Partial<Record<IrbContextField, boolean | null>> & { vulnerablePopulationProtections?: string | null };
 
 /**
  * Record (or un-record) the facts the package manifest gates on.
@@ -146,13 +168,13 @@ export async function setSubmissionContextTx(
   client: Queryable,
   orgId: number,
   id: number,
-  input: Partial<Record<IrbContextField, boolean | null>>,
-): Promise<{ id: number; recorded: Partial<Record<IrbContextField, boolean | null>> }> {
+  input: IrbContextInput,
+): Promise<{ id: number; recorded: IrbContextInput }> {
   await getSubmission(client, orgId, id);
 
   const sets: string[] = [];
   const params: unknown[] = [id, orgId];
-  const recorded: Partial<Record<IrbContextField, boolean | null>> = {};
+  const recorded: IrbContextInput = {};
   for (const [key, column] of IRB_CONTEXT_FIELDS) {
     if (!(key in input)) continue;
     const value = input[key] ?? null;
@@ -160,7 +182,17 @@ export async function setSubmissionContextTx(
     sets.push(`${column} = $${params.length}`);
     recorded[key] = value;
   }
-  if (sets.length === 0) throw new IrbError('BAD_INPUT', 'Record at least one of involvesChildren, isIndStudy, usesPhi or usesRecruitmentMaterial.');
+  /* The safeguards documented for vulnerable populations (46.111(b)): text, not
+     a yes or no. Absent leaves it; null or blank takes it back. */
+  if ('vulnerablePopulationProtections' in input) {
+    const text = (input.vulnerablePopulationProtections ?? '').trim() || null;
+    params.push(text);
+    sets.push('vulnerable_population_protections = $' + params.length);
+    recorded.vulnerablePopulationProtections = text;
+  }
+  if (sets.length === 0) {
+    throw new IrbError('BAD_INPUT', 'Record at least one of involvesChildren, isIndStudy, usesPhi, usesRecruitmentMaterial, involvesVulnerablePopulations or vulnerablePopulationProtections.');
+  }
 
   await client.query(
     `UPDATE irb_submissions SET ${sets.join(', ')}, updated_at = now()
@@ -168,6 +200,28 @@ export async function setSubmissionContextTx(
     params,
   );
   return { id, recorded };
+}
+
+/**
+ * Link an IRB submission to its Submission Center submission (D1), once.
+ *
+ * Only creation could set the link, so a submission recorded without one (from
+ * AnA's command, or before the package existed) could never have a package. A
+ * link that exists is not moved here: an approval may already have threaded
+ * its provenance to the linked submission.
+ */
+export async function linkSubmissionTx(client: Queryable, orgId: number, id: number, submissionId: number): Promise<{ id: number; submissionId: number }> {
+  const s = await getSubmission(client, orgId, id);
+  if (s.submission_id != null) {
+    throw new IrbError('INVALID_STATE', `This IRB submission is already linked to Submission Center submission ${Number(s.submission_id)}. A link is not moved. Nothing was changed.`);
+  }
+  await requireOwnSubmission(client, orgId, submissionId);
+  await client.query(
+    `UPDATE irb_submissions SET submission_id = $3, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND submission_id IS NULL`,
+    [id, orgId, submissionId],
+  );
+  return { id, submissionId };
 }
 
 async function getSubmission(client: Queryable, orgId: number, id: number): Promise<any> {
@@ -238,10 +292,13 @@ export async function recordReviewTx(
       });
       provenanceLinkId = link.id;
     }
-  } else if (input.outcome === 'modifications_required') {
+  } else {
+    /* Every determination is the submission's status. `deferred` and
+       `disapproved` used to leave it where it was, so a submission the board had
+       disapproved still read "under review" (2026-11-12). */
     await client.query(
-      `UPDATE irb_submissions SET status = 'modifications_required', review_type = $3, updated_at = now() WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [submissionId, orgId, input.reviewType],
+      `UPDATE irb_submissions SET status = $4, review_type = $3, updated_at = now() WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [submissionId, orgId, input.reviewType, input.outcome],
     );
   }
   return { reviewId, expirationDate, provenanceLinkId };
@@ -305,7 +362,9 @@ export async function addReportableEventTx(client: Queryable, orgId: number, use
 
 export async function listSubmissions(orgId: number, submissionId?: number): Promise<any[]> {
   const params: unknown[] = [orgId];
-  let sql = `SELECT id, study_id, submission_id, protocol_number, title, review_type, risk_level, is_single_irb, status, approval_date, expiration_date
+  let sql = `SELECT id, study_id, submission_id, protocol_number, title, review_type, risk_level, is_single_irb, status, approval_date, expiration_date,
+                    involves_vulnerable_populations, vulnerable_population_protections, consent_waiver_requested,
+                    involves_children, is_ind_study, uses_phi, uses_recruitment_material
                FROM irb_submissions WHERE organization_id = $1 AND deleted_at IS NULL`;
   if (submissionId != null) { params.push(submissionId); sql += ` AND submission_id = $2`; }
   sql += ` ORDER BY created_at DESC`;
@@ -313,7 +372,18 @@ export async function listSubmissions(orgId: number, submissionId?: number): Pro
   return rows;
 }
 
-export async function getCompletenessInput(client: Queryable, orgId: number, id: number): Promise<{
+/**
+ * Reads through the pool, as getPackageManifest and getLifecycleStatus do.
+ *
+ * It took a connection from its caller until 2026-11-12, and both callers
+ * handed it one from `pool.connect()` with no BEGIN. The pool sets the tenant
+ * on a checked-out connection only at BEGIN (server/db/poolInstrumentation.ts),
+ * so the read ran with no tenant, row security hid the row, and the answer was
+ * "IRB submission not found" for a submission that existed.
+ */
+const scopedPool: Queryable = { query: (sql, params) => pool.query(sql, params as unknown[]) };
+
+export async function getCompletenessInput(orgId: number, id: number): Promise<{
   riskLevel: IrbRiskLevel;
   reviewType: IrbReviewType | null;
   /** NULL = not recorded; the gate reports its check as not assessed. */
@@ -325,12 +395,12 @@ export async function getCompletenessInput(client: Queryable, orgId: number, id:
   siteCount: number;
   approvalDate: string | null;
 }> {
-  const s = await getSubmission(client, orgId, id);
-  const { rows: cc } = await client.query(
+  const s = await getSubmission(scopedPool, orgId, id);
+  const { rows: cc } = await scopedPool.query(
     `SELECT COUNT(*)::int AS n FROM irb_consent_documents WHERE irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status IN ('draft','approved')`,
     [id, orgId],
   );
-  const { rows: sc } = await client.query(
+  const { rows: sc } = await scopedPool.query(
     `SELECT COUNT(*)::int AS n FROM irb_sites WHERE irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId],
   );
@@ -344,6 +414,44 @@ export async function getCompletenessInput(client: Queryable, orgId: number, id:
     approvedConsentCount: Number(cc[0].n),
     siteCount: Number(sc[0].n),
     approvalDate: s.approval_date,
+  };
+}
+
+/**
+ * What is on file for one IRB submission: the board's determinations, the
+ * sites, the consent documents, the amendments and the reportable events.
+ *
+ * Every one of these could be written and none could be read back: a person
+ * who added a site had no way to see it. Read-only, through the pool; dates
+ * as the calendar dates they were recorded as.
+ */
+export interface IrbSubmissionRecordView {
+  irbSubmissionId: number;
+  reviews: Array<{ id: number; reviewType: string; outcome: string; conditions: string | null; determinationDate: string | null }>;
+  sites: Array<{ id: number; siteName: string; principalInvestigator: string | null; localContext: string | null; status: string }>;
+  consentDocuments: Array<{ id: number; documentName: string; version: string; status: string; approvedDate: string | null }>;
+  amendments: Array<{ id: number; description: string; substantive: boolean; status: string }>;
+  reportableEvents: Array<{ id: number; eventType: string; description: string; reportedDate: string | null; status: string }>;
+}
+
+const OWN_ROWS = 'irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL';
+
+export async function getSubmissionRecord(orgId: number, id: number): Promise<IrbSubmissionRecordView> {
+  await getSubmission(scopedPool, orgId, id);
+  const [reviews, sites, consents, amendments, events] = await Promise.all([
+    scopedPool.query('SELECT id, review_type, outcome, conditions, determination_date::text AS determination_date FROM irb_reviews WHERE ' + OWN_ROWS + ' ORDER BY id', [id, orgId]),
+    scopedPool.query('SELECT id, site_name, principal_investigator, local_context, status FROM irb_sites WHERE ' + OWN_ROWS + ' ORDER BY id', [id, orgId]),
+    scopedPool.query('SELECT id, document_name, version, status, approved_date::text AS approved_date FROM irb_consent_documents WHERE ' + OWN_ROWS + ' ORDER BY id', [id, orgId]),
+    scopedPool.query('SELECT id, description, substantive, status FROM irb_amendments WHERE ' + OWN_ROWS + ' ORDER BY id', [id, orgId]),
+    scopedPool.query('SELECT id, event_type, description, reported_date::text AS reported_date, status FROM irb_reportable_events WHERE ' + OWN_ROWS + ' ORDER BY id', [id, orgId]),
+  ]);
+  return {
+    irbSubmissionId: id,
+    reviews: reviews.rows.map((r) => ({ id: Number(r.id), reviewType: String(r.review_type), outcome: String(r.outcome), conditions: r.conditions ?? null, determinationDate: r.determination_date ?? null })),
+    sites: sites.rows.map((r) => ({ id: Number(r.id), siteName: String(r.site_name), principalInvestigator: r.principal_investigator ?? null, localContext: r.local_context ?? null, status: String(r.status) })),
+    consentDocuments: consents.rows.map((r) => ({ id: Number(r.id), documentName: String(r.document_name), version: String(r.version), status: String(r.status), approvedDate: r.approved_date ?? null })),
+    amendments: amendments.rows.map((r) => ({ id: Number(r.id), description: String(r.description), substantive: r.substantive === true, status: String(r.status) })),
+    reportableEvents: events.rows.map((r) => ({ id: Number(r.id), eventType: String(r.event_type), description: String(r.description), reportedDate: r.reported_date ?? null, status: String(r.status) })),
   };
 }
 

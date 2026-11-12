@@ -465,6 +465,10 @@ describe('with no project open and several sponsors, the Vault asks which sponso
     expect(screen.queryByTestId('vault-project-list')).toBeNull();
     expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
     expect(urls().some((u) => u.startsWith(ORG))).toBe(false);
+    /* 2026-11-12: the hint above said "Open one below. The governed artifacts of every project you can open are listed
+       after them": no project was below, and no view spans sponsors. */
+    expect(screen.getByText(/Choose a sponsor below, then one of its projects\./)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/every project you can open/);
   });
 
   it('once chosen, lists that sponsor\'s projects only and reads its artifacts by one of its projects', async () => {
@@ -476,6 +480,7 @@ describe('with no project open and several sponsors, the Vault asks which sponso
     expect(within(list).getByText('LMN-201')).toBeTruthy();
     expect(within(list).getByText('LMN-301')).toBeTruthy();
     expect(within(list).queryByText('ACM-7')).toBeNull();
+    expect(screen.getByText(/Open one below\. The governed artifacts of the projects listed follow them\./)).toBeTruthy();
     await orgPanel();
     await waitFor(() => expect(urls()).toContain(`${ORG}?sameClientAs=p-lumen-1`));
     expect(urls()).not.toContain(ORG);

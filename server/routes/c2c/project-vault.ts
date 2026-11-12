@@ -80,6 +80,7 @@ import {
   removeProgramFolder, renameProgramFolder,
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
+import { placeAuthoredSectionsInBinder } from '../../services/vault/vault-binder-outline.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
 import {
   estarDeviceAnswers, estarFilingType, estarOutlineRequirements,
@@ -119,6 +120,7 @@ import {
 } from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
+import { mayManageLegalHolds } from '../vault-legal-holds';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import {
   ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
@@ -160,6 +162,9 @@ interface VaultDoc {
   artifact?: ArtifactLeafFacts;
   /** Exact governed section key, or null for a whole-document fallback leaf. */
   filingSectionKey?: string | null;
+  /** An authored section placed in the binder (P-123 item 8): the filing document it is a section of, and its type. */
+  filingDocumentId?: string;
+  filingFamily?: string;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
@@ -354,6 +359,9 @@ interface VaultDisplayShape {
    *  (MR-08 Stage 5): reference and date, never the reason. Absent, with an
    *  `unavailable` entry, when the holds could not be read. */
   legalHolds?: import('../../services/vault/vault-hold-notice.js').VaultHoldNotice[];
+  /** Whether this reader may place a legal hold (P-125 point 8): the hold routes' own rule
+   *  (`mayManageLegalHolds`), so a record offers "Place legal hold" to the people those routes admit. */
+  mayPlaceLegalHold?: boolean;
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -2061,6 +2069,9 @@ export default function createProjectVaultRoutes(): Router {
         /* First in the tree, as a Veeva binder is: the Vault opens on the filing's binder, not on an
            authored document's draft outline (S6, 2026-11-10). */
         tree.unshift(filingCabinet(view, uploads, folders));
+        /* One outline per filing (P-123 item 8, 2026-11-12): the authored filing document's sections go into the
+           binder's headings, and its folder keeps only what the binder has no heading for. */
+        placeAuthoredSectionsInBinder(tree, docsRes.rows as DocRow[]);
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         uploadsStoreMissing = true;
@@ -2199,6 +2210,7 @@ export default function createProjectVaultRoutes(): Router {
         unfiledCount,
         ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
         ...(legalHolds ? { legalHolds } : {}),
+        mayPlaceLegalHold: mayManageLegalHolds(req),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
@@ -2411,8 +2423,17 @@ export default function createProjectVaultRoutes(): Router {
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
       // verdict fails the read, as the stage does.
       const refusals = await Promise.all(family.map((v) => vaultVersionNotTransmittable(pool, orgId, v.id, v.contentHash ?? '')));
+      // Where each version was rendered from (LX-10): the Authoring document and
+      // the sealed version its filing named, read from the verified filing
+      // receipt. Null for a native upload; an unverified or unread receipt is
+      // said to be so, never shown as a source.
+      const { readAuthoringVaultFilingReceipt, renderedFromOf } = await import('../../services/authoring/authoring-vault-filing-receipt.js');
+      const renderedFrom = await Promise.all(family.map(async (v) => (v.contentHash
+        ? renderedFromOf(await readAuthoringVaultFilingReceipt(pool, { organizationId: orgId, programId: id, vaultDocumentId: v.id, artifactSha256: v.contentHash }))
+        : null)));
       const versions = family.map((v, i) => ({
         ...v,
+        renderedFrom: renderedFrom[i],
         lifecycle: lifecycles.get(v.id) ?? null,
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],

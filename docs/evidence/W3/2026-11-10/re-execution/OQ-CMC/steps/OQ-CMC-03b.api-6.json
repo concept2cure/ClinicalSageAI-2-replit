@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "batchNumber": "B2-20261110130629",
+      "batchNumber": "B2-20261112003432",
       "productName": "Drug substance",
       "status": "in-progress",
       "yieldData": {
@@ -14,7 +14,7 @@
       "deviations": {
         "open": 0
       },
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
@@ -25,10 +25,10 @@
     "body": {
       "success": true,
       "data": {
-        "id": "9ec7460d-a972-4cfe-b0f6-d55a78a40e66",
+        "id": "285e5faa-1d21-428e-8613-8de7da5de719",
         "organization_id": 2,
-        "project_id": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
-        "batch_number": "B2-20261110130629",
+        "project_id": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "batch_number": "B2-20261112003432",
         "batch_type": null,
         "material_type": null,
         "scale": null,
@@ -49,8 +49,8 @@
         "linked_stability_study_id": null,
         "specification_compliance": null,
         "oos_events": null,
-        "created_at": "2026-11-10T13:06:37.279Z",
-        "updated_at": "2026-11-10T13:06:37.279Z",
+        "created_at": "2026-11-12T00:34:40.322Z",
+        "updated_at": "2026-11-12T00:34:40.322Z",
         "product_name": "Drug substance",
         "manufacturing_site": null,
         "status": "in-progress",
@@ -66,7 +66,7 @@
         "tenant_id": "2"
       },
       "message": "Batch record created successfully",
-      "timestamp": "2026-11-10T13:06:37.289Z",
+      "timestamp": "2026-11-12T00:34:40.332Z",
       "module3Linked": true
     }
   }

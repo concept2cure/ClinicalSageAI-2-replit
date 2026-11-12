@@ -53,6 +53,7 @@ let mine: Tenant;
 let theirs: Tenant;
 let lead: Actor; // organization admin: owns every project of `mine`
 let member: Actor; // organization member: shared on project A only
+let reader: Actor; // organization viewer: shared (use) on project A only
 let outsider: Actor; // admin of the other organization
 let progA: string;
 let progB: string;
@@ -174,6 +175,15 @@ beforeAll(async () => {
   );
   expect(shared.rows).toHaveLength(1);
   member = { ...mine, userId: memberId, role: 'member' };
+  // A read-only person: the organization's viewer, shared to use project A (P-124 item 7).
+  const readerId = await user('reader');
+  await owner.query("INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'viewer')", [mine.orgId, readerId]);
+  await owner.query(
+    `INSERT INTO project_members (project_id, organization_id, user_id, role, status, invited_by_id)
+     SELECT id, organization_id, $3, 'use', 'active', $4 FROM projects WHERE organization_id = $1 AND regulatory_program_id = $2`,
+    [mine.orgId, progA, readerId, leadId],
+  );
+  reader = { ...mine, userId: readerId, role: 'viewer' };
   await assertVaultFixtureRuntime({ ...mine, programId: progA });
 
   studyA = await study(mine, progA, 'A');
@@ -433,10 +443,10 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     const documentOf = Object.fromEntries(res.body.map((f: { artifactCode: string; document: unknown }) => [f.artifactCode, f.document]));
     expect(documentOf).toEqual({
       // The first version has a live successor: named, and not the current version.
-      protocol: { id: first, title: 'Clinical study report', version: '1.0', current: false },
-      investigators_brochure: { id: second, title: 'Clinical study report', version: '2.0', current: true },
+      protocol: { id: first, title: 'Clinical study report', version: '1.0', current: false, lifecycleStage: null },
+      investigators_brochure: { id: second, title: 'Clinical study report', version: '2.0', current: true, lifecycleStage: null },
       // No title: the file name, which is the document's own.
-      monitoring_plan: { id: untitled, title: 'monitoring-plan-signed.pdf', version: '1.0', current: true },
+      monitoring_plan: { id: untitled, title: 'monitoring-plan-signed.pdf', version: '1.0', current: true, lifecycleStage: null },
       // Deleted since, off-platform, no reference, another project's, another organization's: no document, no guess.
       regulatory_submission: null,
       sample_icf: null,
@@ -457,9 +467,58 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     const filed = await (await as(lead)).post(`${trial(studyD)}/artifacts`).send({ artifactCode: 'sap', documentRef: `vault://${v1}`, reason: REASON });
     expect(filed.status, JSON.stringify(filed.body)).toBe(201);
     const before = await (await as(lead)).get(`${trial(studyD)}/artifacts`);
-    expect(before.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: true }]);
+    expect(before.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: true, lifecycleStage: null }]);
     await vaultDocument(mine, progC, lead.userId, { code, title: 'Statistical analysis plan', version: '2.0', supersedes: v1 });
     const after = await (await as(lead)).get(`${trial(studyD)}/artifacts`);
-    expect(after.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: false }]);
+    expect(after.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: v1, title: 'Statistical analysis plan', version: '1.0', current: false, lifecycleStage: null }]);
+  });
+
+  it('says the document\'s review stage, as the Library reads it: a record\'s state is its document\'s (P-124 item 5)', async () => {
+    const studyE = await study(mine, progC, 'E');
+    const doc = await vaultDocument(mine, progC, lead.userId, { code: `${PROBE}-IB`, title: 'Investigator brochure', version: '3.0' });
+    const filed = await (await as(lead)).post(`${trial(studyE)}/artifacts`).send({ artifactCode: 'investigators_brochure', documentRef: `vault://${doc}`, reason: REASON });
+    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
+    await owner.query(
+      `INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs, created_by)
+       VALUES ($1, $2, $3, 'Investigator brochure', 'IB', 'approved', true, $4, $5::jsonb, $6)`,
+      [`${PROBE}-cd-${doc}`, mine.orgId, progC, 'b'.repeat(64), JSON.stringify({ vault_documents: { nativeId: doc } }), lead.userId]);
+    const res = await (await as(lead)).get(`${trial(studyE)}/artifacts`);
+    expect(res.body.map((f: { document: unknown }) => f.document)).toEqual([{ id: doc, title: 'Investigator brochure', version: '3.0', current: true, lifecycleStage: 'approved' }]);
+  });
+});
+
+/* P-124 item 7 (2026-11-12): a person who may read the project's Vault reads its study's trial master file. The Vault's
+   own reads admit a viewer ("a viewer enumerating and downloading their own organization's dossier is the viewer role
+   working as intended", routes/c2c/project-vault.ts), and ICH E6(R3) and the EMA's TMF guideline expect monitors,
+   auditors and inspectors to read it. Every eTMF route required the regulatory-author role, reads included. */
+describe('a person who may read the project\'s Vault reads its trial master file, and writes nothing', () => {
+  it('reads the reference model, the study\'s filings, its readiness and its inspection package', async () => {
+    const filed = await (await as(lead)).post(`${trial(studyA)}/artifacts`).send({ artifactCode: 'tmf_plan', documentRef: `vault://${docA}`, reason: REASON });
+    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
+    expect((await (await as(reader)).get('/api/etmf/reference-model')).status).toBe(200);
+    const listed = await (await as(reader)).get(`${trial(studyA)}/artifacts`);
+    expect(listed.status, JSON.stringify(listed.body)).toBe(200);
+    expect(listed.body.map((f: { artifactCode: string }) => f.artifactCode)).toContain('tmf_plan');
+    const assessed = await (await as(reader)).get(`${trial(studyA)}/completeness`);
+    expect(assessed.status).toBe(200);
+    expect(assessed.body.study).toMatchObject({ studyId: studyA.studyId });
+    const pack = await (await as(reader)).get(`${trial(studyA)}/inspection-package`);
+    expect(pack.status).toBe(200);
+    expect(pack.headers['content-type']).toMatch(/application\/zip/);
+    // The package is a recorded download: its row names the reader who took it.
+    const took = await owner.query(`SELECT action, user_id FROM audit_logs WHERE tenant_id = $1 AND table_name = 'tmf_inspection_package'
+      AND record_id = $2 ORDER BY chain_seq DESC LIMIT 1`, [mine.orgId, String(studyA.id)]);
+    expect(took.rows).toEqual([{ action: 'EXPORT_GENERATED', user_id: reader.userId }]);
+  });
+
+  it('is refused every write, and a study of a project it cannot open is not found', async () => {
+    const before = await filingRows(mine.orgId, studyA.studyId);
+    const filing = await (await as(reader)).post(`${trial(studyA)}/artifacts`).send({ artifactCode: 'sample_crf', documentRef: `vault://${docA}`, reason: REASON });
+    expect(filing.status).toBe(403);
+    const declared = await (await as(reader)).post(`${trial(studyA)}/artifacts`).send({ artifactCode: 'sample_crf', notApplicable: true, reason: REASON });
+    expect(declared.status).toBe(403);
+    expect((await (await as(reader)).delete(`/api/etmf/artifacts/${before[0].id}`).send({ reason: REASON })).status).toBe(403);
+    expect(await filingRows(mine.orgId, studyA.studyId)).toEqual(before);
+    expect((await (await as(reader)).get(`${trial(studyB)}/artifacts`)).status).toBe(404);
   });
 });

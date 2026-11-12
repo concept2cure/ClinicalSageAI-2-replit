@@ -53,7 +53,6 @@ import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from './signature-persistence';
 import { checkSigningAuthority, type SigningAuthorityRefusal } from './signing-authority-gate';
 import { resolveSignerOrgRole } from './resolve-signer-role';
-import { AUTHENTICATOR_REQUIRED_MESSAGE } from './reverify-signer';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
 
@@ -106,23 +105,6 @@ export interface GovernedSignatureInput {
     meaning: CeremonySignMeaning,
   ) => Promise<{ act?: Record<string, unknown>; body: Record<string, unknown> }>;
 }
-
-/** What the signer is told for each re-authentication refusal (verifyReauth's codes). */
-const REAUTH_MESSAGE: Record<string, string> = {
-  REAUTH_REQUIRED: 'Re-enter your password to sign. Nothing was signed.',
-  REAUTH_PASSWORD_REQUIRED: 'Enter your password to sign. Nothing was signed.',
-  REAUTH_PASSWORD_INVALID: 'The password was not accepted. Nothing was signed.',
-  REAUTH_TOTP_REQUIRED: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.',
-  REAUTH_TOTP_INVALID: 'The authenticator code was not accepted. Nothing was signed.',
-  REAUTH_MFA_STATE_UNKNOWN: 'Your second factor could not be checked, so the signature was refused. Try again. Nothing was signed.',
-  // In production, a signer with no authenticator (ADR-0014 P1-2b): the ceremony's own words.
-  REAUTH_AUTHENTICATOR_REQUIRED: AUTHENTICATOR_REQUIRED_MESSAGE,
-  // The account's own refusals (VSR-001 F-27, F-28). Without them a locked
-  // signer was told to re-enter a password that would not be compared.
-  REAUTH_ACCOUNT_LOCKED: 'The account is locked after repeated failed attempts. Try again later. Nothing was signed.',
-  REAUTH_ACCOUNT_STATE_UNKNOWN: 'Your account could not be checked, so the signature was refused. Try again. Nothing was signed.',
-  REAUTH_ACCOUNT_INACTIVE: 'This account is not active. Contact your administrator. Nothing was signed.',
-};
 
 function asReauth(raw: unknown): { password?: string; totp?: string } | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
@@ -241,10 +223,9 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
   const verified = input.transactionPool
     ? await verifyReauth(userId, reauth, signerReverificationDeps(input.transactionPool))
     : await verifyReauth(userId, reauth);
-  if (!verified.ok) {
-    const code = verified.error ?? 'REAUTH_REQUIRED';
-    throw new GovernedSignatureRefusal(401, code, REAUTH_MESSAGE[code] ?? REAUTH_MESSAGE.REAUTH_REQUIRED);
-  }
+  // The sentence comes with the code from verifyReauth, which every route that
+  // verifies a signer shares (moved there from here, 2026-11-12).
+  if (!verified.ok) throw new GovernedSignatureRefusal(401, verified.error, verified.message);
 
   const client = await (input.transactionPool ?? pool).connect();
   try {

@@ -288,6 +288,12 @@ function strictRagPinProblems(items: Row[], entry: RegistryPqClaim): string[] {
     ? ['strict RAG output differs from the immutable registry pin'] : [];
 }
 
+/** P-118: a run made for a named use measured only what that use needs, so that use is all it can be carried as. */
+function namedUseProblems(rec: Row): string[] {
+  if (rec.use === undefined) return [];
+  return nonempty(rec.use) && sameIds(rec.intendedUses, [rec.use]) ? [] : ['a record made for a named use must carry exactly that use as its intended use'];
+}
+
 function recordHeaderProblems(rec: Row, entry: RegistryPqClaim): string[] {
   const problems: string[] = [];
   if (rec.modelId !== entry.id) problems.push(`record is for "${String(rec.modelId)}"`);
@@ -296,6 +302,7 @@ function recordHeaderProblems(rec: Row, entry: RegistryPqClaim): string[] {
   if (entry.pq.intendedUses !== undefined && (!entry.pq.intendedUses.length ||
       new Set(entry.pq.intendedUses).size !== entry.pq.intendedUses.length ||
       !sameIds(rec.intendedUses, [...entry.pq.intendedUses]))) problems.push('record intended uses are missing, duplicated or differ from the registry');
+  problems.push(...namedUseProblems(rec));
   if (entry.pq.status === 'failed') {
     if (rec.verdict !== 'FAIL') problems.push(`claims failed; the record says ${String(rec.verdict)}`);
     return problems;
@@ -338,11 +345,20 @@ function canonicalProblems(rec: Row, entry: RegistryPqClaim, rules: Rules, evide
     const runnable = (task: Row) => nonempty(task.input);
     const gen = bank.tasks.filter(t => t.taskType === 'generation' && runnable(t));
     const ext = bank.tasks.filter(t => t.taskType === 'extraction' && runnable(t) && object(t.expectedFields) && Object.keys(t.expectedFields).length);
+    // P-118: a record made for a named use is checked on the components that use needs, as its verdict is. A use
+    // the protocol does not declare needs nothing here and is refused by the recomputed verdict below.
+    const use = nonempty(rec.use) ? rec.use : undefined;
+    const needs = (name: string) => protocol.components[name]?.required === true
+      && (use === undefined || (protocol.scope?.uses?.[use]?.components ?? []).includes(name));
     problems.push(...taskProblems(rec.generation, gen, 'generation', entry, rules));
-    if (protocol.components.extraction?.required) problems.push(...taskProblems(rec.extraction, ext, 'extraction', entry, rules));
-    if (protocol.components.rag?.required) problems.push(...ragCanonicalProblems(rec.rag, gold, manifest, evidence, entry));
+    if (needs('extraction')) problems.push(...taskProblems(rec.extraction, ext, 'extraction', entry, rules));
+    if (needs('rag')) problems.push(...ragCanonicalProblems(rec.rag, gold, manifest, evidence, entry));
+    // The run that produces a CSR drafting record, and the retained requests and receipts this check would read,
+    // are not written. Until they are, a pass that rests on that component cannot be verified, whatever it holds.
+    if (needs('csrDrafting')) problems.push('the CSR drafting record has no canonical evidence check yet, so no PASS that rests on it can be verified');
     if (!problems.length) {
-      const recomputed = rules.computeVerdict(protocol, rec.generation as never, (rec.extraction ?? []) as never, rec.rag as never);
+      const recomputed = rules.computeVerdict(protocol, rec.generation as never, (rec.extraction ?? []) as never, rec.rag as never,
+        { use, csrDrafting: rec.csrDrafting as never });
       if (recomputed.verdict !== 'PASS') problems.push(`recomputed complete-component verdict is ${recomputed.verdict}: ${recomputed.reasons.join('; ')}`);
     }
   } catch { problems.push('canonical qualification evidence is unavailable or malformed; no PASS can be verified'); }

@@ -1,0 +1,40 @@
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > judges a path as Express routes it, whatever its letter case 9ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI and RIM, and passes the eSTAR routes launch screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > keeps the retired dossier APIs unclaimed and refused under production enforcement 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 8ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStylesheetClosure.test.ts > the CMC chunk loads the stylesheets its agency-question view draws with > requires the complete class token rather than an extended identifier 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStylesheetClosure.test.ts > the CMC chunk loads the stylesheets its agency-question view draws with > every class cmcAgencyQuestions.tsx names is defined by a stylesheet CMC or the shell loads 85ms
+
+ Test Files  5 passed (5)
+      Tests  77 passed (77)
+   Start at  04:00:19
+   Duration  7.94s (transform 1.84s, setup 324ms, import 3.70s, tests 2.15s, environment 932ms)
+

@@ -1,0 +1,15 @@
+# The Library's first screen, measured in the running app (local server on PostgreSQL, the demo's IND project C2C-101,
+# 10 documents in the open folder). Chromium through Playwright. 'Wholly on the first screen': the row's top and bottom
+# are inside the window without scrolling.
+
+## Before
+1440x900: first document at 853px; 0 of 10 documents wholly on the first screen; 6 filters on 3 row(s); horizontal scroll false; console errors []
+1280x800: first document at 1124px; 0 of 10 documents wholly on the first screen; 6 filters on 5 row(s); horizontal scroll false; console errors []
+1920x1080: first document at 711px; 5 of 10 documents wholly on the first screen; 6 filters on 2 row(s); horizontal scroll false; console errors []
+390x844: first document at 1131px; 0 of 10 documents wholly on the first screen; 6 filters on 4 row(s); horizontal scroll false; console errors []
+
+## After
+1440x900: first document at 708px; 2 of 10 documents wholly on the first screen; 6 filters on 1 row(s); horizontal scroll false; console errors []
+1280x800: first document at 904px; 0 of 10 documents wholly on the first screen; 6 filters on 2 row(s); horizontal scroll false; console errors []
+1920x1080: first document at 659px; 6 of 10 documents wholly on the first screen; 6 filters on 1 row(s); horizontal scroll false; console errors []
+390x844: first document at 1013px; 0 of 10 documents wholly on the first screen; 6 filters on 2 row(s); horizontal scroll false; console errors []

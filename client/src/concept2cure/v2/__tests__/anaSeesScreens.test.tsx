@@ -379,7 +379,7 @@ describe('audit: audit-trail never publishes an actor name or a reason free-text
       actorRef: 'user:4242',
     };
     apiRequest.mockImplementation(async (_m: string, url: string) => {
-      if (url === '/api/audit-trail/ledger') return ok({ data: [ENTRY] });
+      if (url === '/api/audit-trail/ledger?limit=1000') return ok({ data: [ENTRY] });
       return ok({ data: [] });
     });
     const seen = { current: null as SurfaceContext | null };
@@ -412,7 +412,7 @@ describe('audit: the ledger row names the account that acted (F-42)', () => {
       ip: '', reason: null, meaning: null, actorRef,
     });
     apiRequest.mockImplementation(async (_m: string, url: string) => {
-      if (url === '/api/audit-trail/ledger') return ok({ data: [entry('AE-1', 'user:11'), entry('AE-2', 'user:12')] });
+      if (url === '/api/audit-trail/ledger?limit=1000') return ok({ data: [entry('AE-1', 'user:11'), entry('AE-2', 'user:12')] });
       return ok({ data: [] });
     });
     render(<AuditTrail {...svProps('audit-trail')} />);

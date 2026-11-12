@@ -1,0 +1,343 @@
+{
+ "device-510k": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 710,
+  "wide": [
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 287,
+    "right": 418,
+    "width": 131,
+    "top": 145
+   },
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 418,
+    "right": 609,
+    "width": 191,
+    "top": 145
+   },
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 609,
+    "right": 710,
+    "width": 101,
+    "top": 145
+   },
+   {
+    "depth": 3,
+    "cls": "stage-node.idle",
+    "parent": "stage-strip",
+    "parentDisplay": "grid",
+    "parentCols": "53.9688px 53.4062px 66.0156px 79.3594px 74.8906px 63.0781px 48.2031px",
+    "left": 318,
+    "right": 393,
+    "width": 75,
+    "top": 363
+   },
+   {
+    "depth": 3,
+    "cls": "stage-node.idle",
+    "parent": "stage-strip",
+    "parentDisplay": "grid",
+    "parentCols": "53.9688px 53.4062px 66.0156px 79.3594px 74.8906px 63.0781px 48.2031px",
+    "left": 393,
+    "right": 456,
+    "width": 63,
+    "top": 363
+   },
+   {
+    "depth": 3,
+    "cls": "stage-node.idle",
+    "parent": "stage-strip",
+    "parentDisplay": "grid",
+    "parentCols": "53.9688px 53.4062px 66.0156px 79.3594px 74.8906px 63.0781px 48.2031px",
+    "left": 456,
+    "right": 504,
+    "width": 48,
+    "top": 363
+   },
+   {
+    "depth": 3,
+    "cls": "DIV",
+    "parent": "col2",
+    "parentDisplay": "grid",
+    "parentCols": "403.812px 235.641px",
+    "left": 48,
+    "right": 452,
+    "width": 404,
+    "top": 793
+   },
+   {
+    "depth": 3,
+    "cls": "DIV",
+    "parent": "col2",
+    "parentDisplay": "grid",
+    "parentCols": "403.812px 235.641px",
+    "left": 472,
+    "right": 707,
+    "width": 236,
+    "top": 793
+   },
+   {
+    "depth": 3,
+    "cls": "health-card",
+    "parent": "health",
+    "parentDisplay": "grid",
+    "parentCols": "99.6875px 99.6875px 99.6875px 99.6875px",
+    "left": 383,
+    "right": 483,
+    "width": 100,
+    "top": 7709
+   },
+   {
+    "depth": 3,
+    "cls": "DIV",
+    "parent": "section-hdr",
+    "parentDisplay": "flex",
+    "left": 125,
+    "right": 574,
+    "width": 449,
+    "top": 8189
+   }
+  ]
+ },
+ "device-pma": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 712,
+  "wide": [
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 264,
+    "right": 395,
+    "width": 131,
+    "top": 145
+   },
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 395,
+    "right": 586,
+    "width": 191,
+    "top": 145
+   },
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 586,
+    "right": 687,
+    "width": 101,
+    "top": 145
+   },
+   {
+    "depth": 3,
+    "cls": "phase.idle",
+    "parent": "phases",
+    "parentDisplay": "grid",
+    "parentCols": "67.375px 62.5625px 54.875px 82.9219px 45.5938px 54.1094px 58.9688px 55",
+    "left": 357,
+    "right": 402,
+    "width": 46,
+    "top": 371
+   },
+   {
+    "depth": 3,
+    "cls": "phase.idle",
+    "parent": "phases",
+    "parentDisplay": "grid",
+    "parentCols": "67.375px 62.5625px 54.875px 82.9219px 45.5938px 54.1094px 58.9688px 55",
+    "left": 408,
+    "right": 462,
+    "width": 54,
+    "top": 371
+   },
+   {
+    "depth": 3,
+    "cls": "phase.idle",
+    "parent": "phases",
+    "parentDisplay": "grid",
+    "parentCols": "67.375px 62.5625px 54.875px 82.9219px 45.5938px 54.1094px 58.9688px 55",
+    "left": 468,
+    "right": 527,
+    "width": 59,
+    "top": 371
+   },
+   {
+    "depth": 3,
+    "cls": "phase.idle",
+    "parent": "phases",
+    "parentDisplay": "grid",
+    "parentCols": "67.375px 62.5625px 54.875px 82.9219px 45.5938px 54.1094px 58.9688px 55",
+    "left": 533,
+    "right": 589,
+    "width": 56,
+    "top": 371
+   },
+   {
+    "depth": 3,
+    "cls": "phase.idle",
+    "parent": "phases",
+    "parentDisplay": "grid",
+    "parentCols": "67.375px 62.5625px 54.875px 82.9219px 45.5938px 54.1094px 58.9688px 55",
+    "left": 595,
+    "right": 652,
+    "width": 56,
+    "top": 371
+   },
+   {
+    "depth": 3,
+    "cls": "phase.idle",
+    "parent": "phases",
+    "parentDisplay": "grid",
+    "parentCols": "67.375px 62.5625px 54.875px 82.9219px 45.5938px 54.1094px 58.9688px 55",
+    "left": 658,
+    "right": 712,
+    "width": 55,
+    "top": 371
+   },
+   {
+    "depth": 3,
+    "cls": "health-card",
+    "parent": "health",
+    "parentDisplay": "grid",
+    "parentCols": "76.75px 70.25px 88.0938px 86.4688px",
+    "left": 319,
+    "right": 406,
+    "width": 86,
+    "top": 567
+   },
+   {
+    "depth": 3,
+    "cls": "health-card",
+    "parent": "health",
+    "parentDisplay": "grid",
+    "parentCols": "99.6875px 99.6875px 99.6875px 99.6875px",
+    "left": 383,
+    "right": 483,
+    "width": 100,
+    "top": 3857
+   },
+   {
+    "depth": 3,
+    "cls": "DIV",
+    "parent": "section-hdr",
+    "parentDisplay": "flex",
+    "left": 125,
+    "right": 574,
+    "width": 449,
+    "top": 4337
+   }
+  ]
+ },
+ "device-cer": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 390,
+  "wide": []
+ },
+ "device-diagnostics": {
+  "pageClientWidth": 390,
+  "pageScrollWidth": 720,
+  "wide": [
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 296,
+    "right": 428,
+    "width": 131,
+    "top": 145
+   },
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 428,
+    "right": 619,
+    "width": 191,
+    "top": 145
+   },
+   {
+    "depth": 2,
+    "cls": "pwt-btn.",
+    "parent": "pwt-bar",
+    "parentDisplay": "flex",
+    "left": 619,
+    "right": 720,
+    "width": 101,
+    "top": 145
+   },
+   {
+    "depth": 3,
+    "cls": "stage-node.idle",
+    "parent": "stage-strip",
+    "parentDisplay": "grid",
+    "parentCols": "60.125px 81.8281px 62.8281px 60.7031px 74.2656px 64.6719px 61.5px",
+    "left": 330,
+    "right": 405,
+    "width": 74,
+    "top": 342
+   },
+   {
+    "depth": 3,
+    "cls": "stage-node.idle",
+    "parent": "stage-strip",
+    "parentDisplay": "grid",
+    "parentCols": "60.125px 81.8281px 62.8281px 60.7031px 74.2656px 64.6719px 61.5px",
+    "left": 405,
+    "right": 469,
+    "width": 65,
+    "top": 342
+   },
+   {
+    "depth": 3,
+    "cls": "stage-node.idle",
+    "parent": "stage-strip",
+    "parentDisplay": "grid",
+    "parentCols": "60.125px 81.8281px 62.8281px 60.7031px 74.2656px 64.6719px 61.5px",
+    "left": 469,
+    "right": 531,
+    "width": 62,
+    "top": 342
+   },
+   {
+    "depth": 3,
+    "cls": "health-card",
+    "parent": "health",
+    "parentDisplay": "grid",
+    "parentCols": "99.6875px 99.6875px 99.6875px 99.6875px",
+    "left": 383,
+    "right": 483,
+    "width": 100,
+    "top": 6187
+   },
+   {
+    "depth": 3,
+    "cls": "DIV",
+    "parent": "section-hdr",
+    "parentDisplay": "flex",
+    "left": 125,
+    "right": 574,
+    "width": 449,
+    "top": 6667
+   }
+  ]
+ }
+}

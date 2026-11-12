@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > asks to be answered at once 174ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > polls every 2 s, shows how long it has run, and renders the answer when the job completes 66ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a refusal the job holds is shown as the refusal, in the server words, with its audit outcome 37ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a failed job is "could not be confirmed", in the job words 30ms
+ ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a poll that cannot be read is "could not be confirmed", never "not assembled" 25ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:53:14
+   Duration  2.17s (transform 1.01s, setup 157ms, import 1.19s, tests 334ms, environment 375ms)
+

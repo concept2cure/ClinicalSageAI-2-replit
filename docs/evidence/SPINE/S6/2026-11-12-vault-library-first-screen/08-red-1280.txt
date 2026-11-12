@@ -1,0 +1,17 @@
+# The two pins against the Library as it stood at 3bd1570070 (surfaces reverted, tests and stylesheet as changed)
+$ npx vitest run vaultConfirmSuggested.test.tsx vaultFindBar.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > the header counts what awaits confirmation, as the server counted it 179ms
+ × client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > the control reads "Confirm…" beside the sentence that names its folder; its name keeps the whole phrase 257ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > holds the action back until a reason is given, sends one reason for the set, and answers per document 293ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > a refused request says nothing was confirmed, with the reason 160ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > which documents are offered > only uploads suggested into a folder; unfiled, confirmed and folderless suggestions are not 1ms
+ × client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > holds the search, saved views, the two scopes and every filter, outside the list’s column 363ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > spans the grid, and its filters share the row (the stylesheet; jsdom applies none) 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Confirm 2 suggested in Module 3 · Qua…' to be 'Confirm…' // Object.is equality
+Expected: "Confirm…"
+Received: "Confirm 2 suggested in Module 3 · Quality"
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+      Tests  2 failed | 5 passed (7)

@@ -212,5 +212,144 @@ head of its moment.
 - Already handed over earlier, and still open:
   - the founder-path walk's seal gates;
   - S6's reason for change;
-  - the sub-agent path check;
+  - ~~the sub-agent path check~~ (fixed 2026-11-12, below);
   - `auditLogger.js`, which runs on no live request.
+
+## Two unit reds at head, fixed 2026-11-12
+
+Both were red at `2cdfe99657` and again at trunk `82dfba5042` (re-run 2026-11-12 03:56 UTC), on every session's push.
+
+### `tests/rls-scoped-route-mounts.contract.test.ts`: the mount was there; the test could not see it
+
+- **What it said:** "`app.use('/api/cerv2-sections', ...)` not found in `server/bootstrap/register-document-routes.ts`".
+- **What is true:** the mount is on line 327, behind `requireTenantContext`, as the contract requires.
+- **Cause:** the test stripped comments with its own regex, `/\/\*[\s\S]*?\*\//g`, which does not know about
+  strings. Line 139 logs `'… /api/ectd/v4/*, /api/ectd/controlled-vocab'`. That `/*` opened a "comment". Until
+  2026-11-10 nothing after it closed one, so nothing was removed. `5ac92bfaac` then added a real block comment at
+  lines 455–458, and its `*/` closed the false one: lines 140–453 were stripped, the mount among them.
+- **What already exists (RULE 3):** `scripts/ci/lib/strip-comments.mjs`, the quote-, template- and regex-aware
+  stripper written for exactly this (its header records the same failure on 2026-09-23), already imported by
+  `server/api/cmc/__tests__/register-edit-is-audited.contract.test.ts`.
+- **Fix, tests only:** the test imports that stripper and its own regex is deleted. The same regex stood in four
+  more source-reading tests, which passed while reading less than they claimed; they are converged in the same
+  change: `tests/rls-scoped-route-mounts-tranche2.contract.test.ts`, `tests/rls-auth-boundary-invariant.contract.test.ts`,
+  `tests/rls-users-preauth-scope.contract.test.ts` and `tests/routes/route-ownership.test.ts`.
+- **Measured** over the ten files those tests read: the regex hid **178** lines of code in
+  `register-document-routes.ts` (140–453) and **188** in `server/bootstrap/register-inline-routes.ts` (838–1131),
+  which the tranche-2 and route-ownership tests read. The other eight files lost nothing.
+- **Run:** the five files, 1 failed and 34 passed before; 35 of 35 after. No assertion was changed.
+- **The gate still fails on what it exists to catch** (the product file was restored after each):
+  - `requireTenantContext` removed from the mount: "`/api/cerv2-sections` must include requireTenantContext in its
+    mount chain";
+  - the mount commented out: "`app.use('/api/cerv2-sections', ...)` not found".
+
+### `server/services/ana/__tests__/sub-agent-toolset.test.ts`: a sub-agent's tool took an input named `folder`
+
+- **What it said:** "expected `[ 'list_project_documents.folder' ]` to deeply equal `[]`", in "no input of any child
+  tool or check names a path, a directory or a folder".
+- **Cause:** `069516d07e` (S4, 2026-11-10) gave `list_project_documents` a `folder` narrowing for the data catalog.
+  That tool is one of the seventeen a sub-agent is offered (`RESEARCH_TOOLS`), and the rule is by name so that it
+  stays cheap and cannot be argued with. The narrowing is a Vault folder of the catalog, not a file path: nothing
+  unsafe was reachable. The session that added it has left (COORDINATION.md), so nobody held the red.
+- **Fix:** the input is `filed_in`. It reaches the catalog as the catalog's own `folder` parameter and is checked by
+  the catalog's own parser, as before (`server/services/ana/document-catalog-data-room.ts`, `CATALOG_NARROWINGS`).
+  The rule and its test are unchanged. What the tool returns (`organizedBy.folder`, `proposedFolder`) is unchanged.
+- **Red first:** two new cases in `document-catalog-data-room.test.ts` failed before the rename (`filed_in` was
+  ignored; a `filed_in` that is not a Vault folder was not refused), with the trunk red. After: 12 files, 135 of 135,
+  across the catalog tool's six suites, the sub-agent toolset and the five source-reading tests above.
+- **Checked for anything that pins the input's name:** the tool register and the launch inventory name the tool, not
+  its inputs; no prompt, skill or design document tells AnA to pass `folder`.
+
+## Run at `21c6837180`, 2026-11-12 05:09 UTC (taken by MR-02 Stage 3, `01J935DZ…`)
+
+The trunk-CI lane moved to screens on 2026-11-11, and CI's own verdicts arrive about 47 hours late. So the CI
+throughput lane re-ran `ci.yml`'s jobs here, with the same commands, environment and fresh databases as above. It
+used `npm ci` at that commit, PostgreSQL 16 with pgvector, the Noto fonts, and python-docx/lxml. The job record is
+`run-2026-11-12/steps.txt`; the Test verdict's own summary is `run-2026-11-12/shards.json`.
+
+| Job (ci.yml) | Command | Result (see "Not a clean run at one commit" below) |
+|---|---|---|
+| Integration Tests: real-database suite | install-fresh, deploy-migrate, `npm run test:db` as `app_service`, `RLS_ENFORCE=on` | 5 of 3,243 failed in 3 files (997 s) |
+| Integration Tests: `RUN_INTEGRATION_TESTS` files | the job's `grep` list, three files | 17 passed, 27 skipped by their own guard |
+| Test (shard 1/4) … (4/4) | `npm test -- --shard=N/4 --maxWorkers=3 --fileParallelism`, each on a fresh GCC database | 4, 1, 3 and 5 failed; 1,463, 1,420, 1,671 and 1,490 s |
+| Test (the merge) | `merge-test-shards.mjs --shards 4` | 6,323 files collected, 6,323 ran, none missing, none twice; 82,895 tests, 13 failed; Jest passed in every shard |
+
+Each shard took 24 to 28 minutes, on this 4-core container, three files at a time. That is what
+`docs/evidence/MR-02/2026-10-30-ci-verdict/` predicted for CI's runners.
+
+**Not a clean run at one commit (corrected 2026-11-12 by this lane's own adversarial review).** The run used the main
+checkout, and this lane committed its fixes in that same checkout while the shards ran. It also made short-lived
+edits there to show a test failing, and drafted GA-ADV-01 there. So:
+- the real-database suite (05:09–05:26) and shard 1 (from 05:26:32) ran at `21c6837180`;
+- shard 2 (from 05:50:58) also had `4f80673c6c` to `4f275c1793`;
+- shards 3 and 4 (from 06:14:41 and 06:42:36) also had `bb05e5c0f7` and `269e57f168`, then `2381e2b632`.
+Shard logs show edited sources in their code frames. A result for a file this lane edited during the run is
+therefore not evidence for `21c6837180`. The replay this called for, in a detached worktree pinned to `ef0472c7b8`, follows under "Run pinned
+at `ef0472c7b8`".
+
+**The 18 reds, and what became of each.** Every fix below was shown red at HEAD, then green. Eight of the ten fix
+commits also record a run in which the test was made to fail, by a change for that run only, on the case it exists to
+catch. The two that do not:
+- `4f275c1793`: the S5 one-home guard, red at head and green after; no separate run;
+- `2381e2b632`: a time budget raised; the pinned replay above is its first run three files at a time.
+
+| Red | Cause | Outcome |
+|---|---|---|
+| `tests/db/qms-project-records` (1) | `979554ff60`: a link past proposal states its reason; the test's link had none and was refused before the lock | fixed, `4f80673c6c` |
+| `tests/db/commitment-fulfilment-evidence` (1) | `e107d2c149`: a commitment under a project the reader cannot open answers 404; the test expected the earlier 200 | fixed, `4c7557b4ee` |
+| `tests/db/tenant-purge-blocking-keys` (3) | P-58 against P-104 (`fd04214563`) | the founder's; unchanged |
+| `submissionRequiredDeliverables` | the header door "Gateway transmittals" (`eadab4b845`) matched `/transmit/` | fixed, `3f1797813d` |
+| `authoringReturnedReviewOnOpen` | Review tasks back on the editor bar (`4197ede3a3`): two buttons by that name | fixed, `67d42404bc` |
+| `s5-three-valued-helpers-have-one-home` | a second `listed()` in `filing-applicability.ts` (`5ed006764b`) | fixed, `4f275c1793` |
+| `d0PhoneWidth` "no other stylesheet keeps a second copy" | CMC's own register scroll at every width (`687d0af9df`; D5 asked for it below 1120 px) beside D0's ≤640 px rule | handed to R1 (`01DiJJAk…`) |
+| `cmdkPlaces` (palette focus rule) | `845a63b2bf` grew D0's composer list; the test pinned the whole list | fixed, `269e57f168` |
+| `workbenchRemedies` "insert-empty" | a real race: the sections re-read after AnA's turn rebuilds the editor bridge during `propose`'s hash | handed to the Codex editor continuation |
+| `globalBiotechTemplateEditor` (all filings) | 244 documents, 3,195 sections: 158 s alone, over 180 s three files at a time | fixed, `2381e2b632` |
+| `vault-document-filter` (one predicate) | `data-room-vault.ts:168-169` builds its own (`d016d56eee`) | handed to the data room lane; unanswered after 8 h, fixed by this lane (`c955b27628`) |
+| `adminConsoleSettings` (2) | the Identity console door is a platform administrator's (`7dfb49b645`) | fixed, `846a0aebea` |
+| `foundationsRetiredRatchet` (`cm-meta` 84 → 85) | `40cc8265b7`, `CmcModule.tsx`, a held file | handed to `01T2woo…` |
+| `homeOpenItems` (approval row) | an approval opens its document (`4c6d882afd`) | fixed, `e35e967605` |
+| `module3OperatingSystemRoutes` (incomplete record) | the refusal names inputs in words (`307d82d2af`); red since 2026-11-10 | fixed, `934bf5f927` |
+
+Of the 15 reds that are not the founder's:
+- **9** were a deliberate change that landed with its own tests updated, while a second test elsewhere still encoded
+  the old behaviour. The new tests had mocked the database or covered only the component, and nobody ran the other
+  suite before pushing. CI would have said so about 47 hours later.
+- **4** were one-home or retired-name guards catching a new copy.
+- **1** was a time budget the suite's size had outgrown.
+- **1** was a real race.
+
+**Not run here, and why:** Production Image Boot and Codespace (no route to npm from a container, as above). The
+Lint job's 130 steps are next: its first 16 passed before the run was paused to push these fixes, since the
+pre-push typecheck and the job's own cannot share this container's memory.
+
+## Run pinned at `ef0472c7b8`, 2026-11-12 10:34 UTC (MR-02 Stage 3)
+
+The same jobs as above, in a detached git worktree at `ef0472c7b8` that nothing else edited during the run. Its
+`node_modules` was linked from the main checkout. Record: `run-2026-11-12-pinned/steps.txt` and `shards.json`.
+(A first attempt at 10:32 was two copies of the script started by mistake, racing on one database. It was stopped
+and is not counted.)
+
+| Job | Result at `ef0472c7b8` |
+|---|---|
+| Real-database suite (`app_service`, `RLS_ENFORCE=on`) | 4 of 3,254 failed, in 2 files (1,164 s) |
+| `RUN_INTEGRATION_TESTS` files | green |
+| Test shards 1–4, three files at a time | 1, 1, 4 and 1 tests failed; 2 files failed to load; 1,520, 1,410, 1,656 and 1,440 s |
+| The merge verdict | 6,358 collected, 6,358 ran, none missing, none twice; 83,454 tests, 7 failed |
+
+**None of the reds this lane fixed in the first run came back.** What is red at `ef0472c7b8`:
+
+| Red | Cause | Holder |
+|---|---|---|
+| `tests/db/tenant-purge-blocking-keys` (3) | P-58 against P-104 | the founder |
+| `tests/db/entitlement-schema-posture`, "ci:migration-drop-safety:selftest exits 0" | Only when the checkout sits under the OS temp directory: the selftest's fixtures read as "missing from the repo". 12 of 12 pass in `/home/user/…`. Not a trunk red. | none |
+| `d0PhoneWidth` | CMC's register scroll beside D0's rule (`687d0af9df`) | R1 (`01DiJJAk…`) |
+| `workbenchRemedies` "insert-empty" | the editor bridge rebuilt during `propose` | the Codex editor continuation |
+| `vault-document-filter` | `data-room-vault.ts` builds its own Vault predicate | data room (`01QoxbLdTrwY…`); fixed by this lane after 8 h unanswered (`c955b27628`) |
+| `foundationsRetiredRatchet` (`cm-meta` 84 → 85) | `40cc8265b7` | `01T2woo…` |
+| `homeStartHere` | "Get started" on Home (`75624cff54`) | S13 (`01QoxbLZhyA6…`) |
+| `launch-scope.test.ts` "the shell no longer carries training" | Help & training is a launch surface now (`1207a3c307`, P-127) | S13, new |
+| `hostilePayloadProbe` "training" | `Training.tsx:188` reads `index.data?.courses.map(…)`: throws on 7 of 8 unexpected responses | S13, new |
+| `csr-jobs-narratives.pglite` and `tests/unit/csr-jobs-routes` (do not load) | `f4a56a5058` made `csr-jobs.ts` import `csr-import-into-document`; their `csr-builder` mock lacks `flattenICHE3Sections` | CSR path (`01QoxbLZjz…`), new |
+
+`2381e2b632`'s budget held three files at a time: the all-filings editor probe passed in shard 3.

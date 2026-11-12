@@ -173,14 +173,31 @@ describe('Vault — upload controls', () => {
     expect(picker.value).toBe('OTHER');
   });
 
-  it('with no project open, Upload is disabled and says why', async () => {
-    /* Its disabled LOOK is journey-v2.css `.sp-primary:disabled` (jsdom loads
-       no stylesheets, so that half is verified by the live capture, not here). */
+  /* 2026-11-12 (UI walk): with no project open, the header offered "Trial master file" (a page that then asked for a
+     project), three disabled write buttons, and three starters about "this filing", "this Vault" and "this project",
+     above the question the page actually asks: which sponsor. Nothing there could act. The page says why itself
+     ("Choose a project's Vault"); each control returns with the project. It read, until today, "Upload is disabled
+     and says why". */
+  it('with no project open, offers nothing that needs a project: no header action and no starter', async () => {
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
-    const upload = (await screen.findByTestId('vault-upload-button')) as HTMLButtonElement;
-    expect(upload.disabled).toBe(true);
-    expect(upload.title).toMatch(/Open a project first/);
+    expect(await screen.findByText("Choose a project's Vault")).toBeTruthy();
+    for (const id of ['vault-upload-button', 'vault-upload-folder-button', 'vault-new-folder-button']) {
+      expect(screen.queryByTestId(id), id).toBeNull();
+    }
+    expect(screen.queryByRole('button', { name: /Trial master file/ })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Ask AnA' })).toBeNull();
+    expect(screen.queryByText('What is missing for this filing?')).toBeNull();
+  });
+
+  it('with a project open, the header and the starters are there', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
+    vaultWith(() => ok({ success: true, data: { program: 'BX-301', spine: 'IND · 21 CFR 312', standard: 'pharma', documentCount: 0,
+      documentCounts: { authored: 0, artifacts: 0, uploads: 0 }, tree: [] } }));
+    render(<Vault {...props()} />);
+    expect(await screen.findByTestId('vault-upload-button')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Ask AnA' })).toBeTruthy();
+    expect(screen.getByText('What is missing for this filing?')).toBeTruthy();
   });
 });
 

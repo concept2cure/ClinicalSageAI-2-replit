@@ -3828,11 +3828,22 @@ export const C2C_MIGRATION_FILES = [
   // removed_at, removed_by, removal_reason and a CHECK that a removal carries its reason. After
   // the table's creator (20260615), 20260926b and 20261008d. Each statement runs only when its
   // object is absent; no DROP; no new table, so the sweeps below have nothing new to policy.
+  // Amended in place 2026-11-12 (P-124 item 5): not_applicable_reason and the CHECK that a
+  // declaration names no document and carries a reason, each only when absent.
   'migrations/20261110_tmf_filings_study_ref.sql',
   // P-122 defects, item 2 (2026-11-10): projects.risk_level loses its DEFAULT 'medium', a risk nobody assessed that
   // the hierarchy roll-up reported as one. Conditional on the column still having a default; changes no row; no table.
   // Its only creator is push, and shared/schema.ts drops the default in the same change (RULE 1).
   'migrations/20261110_projects_risk_level_not_defaulted.sql',
+  // Support requests (P-127, S13, 2026-11-12): the four support tables, until now applied by install-fresh only.
+  // Public with organization_id INTEGER NOT NULL, so the sweep below gives each its tenant policy;
+  // support_ticket_messages gains that column from its ticket and a same-organisation key, amended in place in the
+  // creating file (RULE 1). Every statement is guarded; no DROP.
+  'migrations/0007_support_admin.sql',
+  // The Vault catalog record carries a dataset's profile (S2, the data catalog, 2026-11-12): two nullable columns on
+  // vault.document_catalog (dataset_profile, dataset_profiled_at), so a dataset filed in the Vault is graded for CDISC
+  // conformance as a captured one is. ADD COLUMN IF NOT EXISTS only; no table, constraint, trigger or DROP.
+  'migrations/20261112_vault_catalog_dataset_profile.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -1,0 +1,40 @@
+
+ FAIL  client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > re-reads the review schedule and training coverage when a Quality write is confirmed
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx:361:28
+    359|     expect(H.reviewRefresh).not.toHaveBeenCalled();
+    360|     act(() => qualityWritten());
+    361|     expect(H.trainRefresh).toHaveBeenCalledTimes(1);
+       |                            ^
+    362|     expect(H.reviewRefresh).toHaveBeenCalledTimes(1);
+    363|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > re-reads the list when a Quality write is confirmed
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "/api/mdx/qms/training/expiring?within=60",
+- ]
++ []
+
+ ❯ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx:45:25
+     43|     expect(H.refreshed).toEqual([]);
+     44|     act(() => qualityWritten());
+     45|     expect(H.refreshed).toEqual([PATH]);
+       |                         ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 32 passed (34)
+   Start at  03:17:37
+   Duration  5.66s (transform 1.34s, setup 269ms, import 2.05s, tests 1.87s, environment 1.10s)
+

@@ -11,6 +11,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
+import type { WarGameReport } from '@shared/types/intelligence-questions';
 
 import { InterviewCompletePanel } from '../InterviewCompletePanel';
 import { WarGameReportPanel } from '../WarGameReportPanel';
@@ -49,6 +50,41 @@ describe('WarGameReportPanel', () => {
     expect(panel()).toMatch(/Nothing was assessed/);
     expect(panel()).toContain('Not assessed');
     expect(panel()).not.toMatch(/Audit-ready/);
+  });
+
+  /* "Nothing found" is a clearance claim, so it needs the report's own record
+     that checks ran (v2/assessmentState.ts). An empty findings list alone is
+     the same in a war game that ran and found nothing, one that could run no
+     check, and one whose report does not say. Only the first may reassure. */
+  it('says nothing was found only when the report records that checks ran', () => {
+    const NOTHING_FOUND = /No finding from the/;
+
+    render(<WarGameReportPanel report={warGameReportFixture({ findings: [], rulesAssessed: 18 })} />);
+    expect(panel()).toMatch(/No finding from the 18 checks assessed/);
+    cleanup();
+
+    render(<WarGameReportPanel report={warGameReportFixture({ findings: [], rulesAssessed: 0, notAssessed: [] })} />);
+    expect(panel()).toContain('No findings, because no check could run.');
+    expect(panel()).not.toMatch(NOTHING_FOUND);
+    cleanup();
+
+    /* A report that does not record how many checks ran is not one where none
+       ran, and not one that came back clean. */
+    const unrecorded = warGameReportFixture({ findings: [], notAssessed: [] }) as Partial<WarGameReport>;
+    delete unrecorded.rulesAssessed;
+    delete unrecorded.rulesTotal;
+    render(<WarGameReportPanel report={unrecorded as WarGameReport} />);
+    expect(panel()).toMatch(/does not record how many checks/);
+    expect(panel()).not.toMatch(NOTHING_FOUND);
+    expect(panel()).not.toMatch(/no check could run|Nothing was assessed/);
+    expect(panel()).not.toMatch(/Significant gaps/);
+    cleanup();
+
+    /* Findings that cannot be read are never drawn as none. */
+    const unreadable = { ...warGameReportFixture(), findings: undefined } as unknown as WarGameReport;
+    render(<WarGameReportPanel report={unreadable} />);
+    expect(panel()).toMatch(/findings could not be read/);
+    expect(panel()).not.toMatch(NOTHING_FOUND);
   });
 });
 

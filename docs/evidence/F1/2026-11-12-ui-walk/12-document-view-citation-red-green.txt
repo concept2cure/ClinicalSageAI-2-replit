@@ -1,0 +1,28 @@
+# A citation outside the editor reads as its number. 2026-11-12.
+# Red first, on the committed AuthoredHtml.tsx:
+$ npx vitest run client/src/concept2cure/v2/editor/__tests__/authoredHtmlCitations.test.tsx
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtmlCitations.test.tsx > documentReadCitations > numbers sources in reading order across the document, once each, as the canvas does 6ms
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtmlCitations.test.tsx > AuthoredHtml with the document’s numbering > prints the marker and the pinpoint, never the cached file name 1ms
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtmlCitations.test.tsx > AuthoredHtml with the document’s numbering > a source not admitted to the section is stated, and takes no number 1ms
+ × client/src/concept2cure/v2/editor/__tests__/authoredHtmlCitations.test.tsx > AuthoredHtml with the document’s numbering > while the sources are being read it says so 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtmlCitations.test.tsx > AuthoredHtml with the document’s numbering > control: without a numbering the stored text is shown as before 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: documentReadCitations is not a function
+TypeError: documentReadCitations is not a function
+TypeError: documentReadCitations is not a function
+AssertionError: expected 'Absorption is rapid PK-002.txt and co…' to be 'Absorption is rapid [Citation being c…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+
+# With the change, plus the renderer's existing suites:
+ Test Files  5 passed (5)
+      Tests  60 passed (60)
+
+# Around it: every editor suite and every suite that uses the workbench, the renderer or citation admission (122 files):
+ Test Files  122 passed (122)
+      Tests  1781 passed (1781)
+
+# In the running app, the walked document's Document view, §2.7.1.2:
+#  before (2026-11-12 walk): 'Oral bioavailability of C2C-101 was 62%C2C-101-biopharmaceutics-BP-001.txt in the fasted state.'
+#  after:  'Oral bioavailability of C2C-101 was 62%[1, Study BP-001 summary] in the fasted state.'
+#          hover: 'C2C-101-biopharmaceutics-BP-001.txt — numbered by its position in this document’s reference list.'

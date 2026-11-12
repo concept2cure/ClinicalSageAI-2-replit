@@ -194,6 +194,9 @@ async function iacucExpiry(query: typeof pool.query, orgId: number) {
  */
 export async function computeDomainReport(reportTypeId: string, orgId: number, options?: DomainReportOptions): Promise<DomainReportResult | null> {
   if (reportTypeId === 'compliance.audit_assurance_pack') return computeQualityEvidenceReport(orgId, options);
+  // The trial master file is read as the acting person, per project (trial-master-file-pack.ts): none of the
+  // organization-wide register preamble below applies. It counted the retired store's tables until 2026-11-12.
+  if (reportTypeId === 'etmf.completeness_pack') return (await import('./trial-master-file-pack')).computeTrialMasterFilePack(orgId, options);
   // These registers have no client-workspace association. A workspace claim
   // cannot be interpreted as a filter over the organisation's entire register.
   const projectId = reportTypeId === 'grants.portfolio_register' && options?.scopeType === 'project' ? Number(options.scopeId) : undefined;
@@ -306,12 +309,6 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
       const o = await countBy('lifecycle_obligations', 'status', orgId);
       const overdue = (await query(`SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE`, [orgId])).rows[0].n;
       return result('lifecycle_obligations', o.total, { obligations: o.total, byStatus: o.byCol, overdue });
-    }
-    case 'etmf.completeness_pack': {
-      const files = (await query(`SELECT count(*)::int n FROM tmf_files WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].n;
-      const a = await countBy('tmf_artifacts', 'status', orgId);
-      const finalPct = a.total > 0 ? Math.round(((a.byCol['final'] ?? 0) / a.total) * 100) : 0;
-      return result('etmf', files, { tmfFiles: files, artifacts: a.total, byStatus: a.byCol, finalPct });
     }
     case 'research_compliance.training_status': {
       const ppl = (await query(`SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL`, [orgId])).rows[0].n;

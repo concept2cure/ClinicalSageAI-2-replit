@@ -8,7 +8,7 @@
  *
  * @module client/src/concept2cure/quality/registerContext
  */
-import { useMemo, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { onQualityWritten, qualityWriteCount } from './qmsWrites';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
@@ -114,4 +114,18 @@ export function useAnswerOf<T>(path: string, data: T | null | undefined): T | nu
  *  may have changed (the header's figure line; a register beside the one written to). */
 export function useQualityWrites(): number {
   return useSyncExternalStore(onQualityWritten, qualityWriteCount, () => 0);
+}
+
+/** Runs `reread` after each Quality write the server confirms, and not on mount: what a screen shows of the server's
+ *  own figures and lists (the figure line, who is due to train, coverage, the review schedule) follows the write. */
+export function useOnQualityWrite(reread: () => void): void {
+  const writes = useQualityWrites();
+  const readAt = useRef(writes);
+  useEffect(() => {
+    if (writes === readAt.current) return;
+    readAt.current = writes;
+    reread();
+    // A read's refresher is stable for its URL; the write count is what this follows.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [writes]);
 }

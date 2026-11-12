@@ -382,12 +382,27 @@
   .vd-flabel{ flex:1; min-width:0; line-height:1.4; overflow-wrap:anywhere; }
   .vd-flabel b{ font-weight:600; }
   .vd-fcount{ flex:none; margin-top:1px; font-size:var(--fs-caption); color:var(--text-300); font-variant-numeric:tabular-nums; }
+  /* A document being read from its record (Vault.tsx, `VaultVersionViewer`): the D0 drawer, wide enough for a
+     page, with the frame taking its height. Inside the record panel the same viewer was 328px wide. */
+  .de.vd-read{ width:min(1040px, 100vw); }
+  .vd-read > .vd-d-idx, .vd-read > .vd-dr-err{ margin:12px 16px 0; }
+  .vd-read .pf-viewer{ flex:1 1 auto; min-height:0; }
+  .vd-read .pf-viewer-frame{ flex:1 1 auto; min-height:0; }
+  .vd-read .pf-viewer-t{ white-space:normal; overflow:visible; }
   /* The tree as a drawer below 1024px. */
   .vd-tree-drawer .de-body{ padding:12px; }
 
   /* The list: one toolbar row (search, saved views, the two scopes), the facets
      under it, where the list is, then the rows. */
   .vd-list{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  /* Finding a document sits across the whole Library, over the structure, the list and the record (Vault.tsx
+     `vd-findbar`, the first child of `.vd-grid`), so the six filters share one row where the room allows: each as
+     narrow as 104px, sharing the row evenly. Docked, the record starts under it. */
+  .vd-findbar{ grid-column:1 / -1; display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .vd-grid:not(.wa-split) > .vd-findbar{ margin:0 0 16px; }
+  .vd-findbar > .vd-facets[aria-label="Filter documents"]{ display:grid; grid-template-columns:repeat(auto-fit, minmax(104px, 1fr)); align-items:end; }
+  .vd-findbar > .vd-facets[aria-label="Filter documents"] .vd-facet .c2c-input{ width:100%; max-width:none; }
+  .vd-findbar > .vd-facets[aria-label="Filter documents"] > .vd-find-note{ grid-column:1 / -1; }
   .vd-find{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
   .vd-find-q{ position:relative; display:flex; align-items:center; flex:1 1 320px; min-width:0; }
   .vd-find-q .c2c-input{ padding-left:34px; }
@@ -546,6 +561,8 @@
   /* Confirm N suggested (VR-11b): above a folder's list, one reason for the set. */
   .vd-confirm{ display:flex; flex-direction:column; gap:6px; margin:0; }
   .vd-confirm-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  /* What awaits confirmation, and its "Confirm…" on the same line (VaultConfirmSuggested.tsx). */
+  .vd-confirm > .vd-confirm-acts > .vd-dr-meta{ flex:1 1 180px; min-width:0; }
   .vd-confirm-form{ display:flex; flex-direction:column; gap:6px; max-width:560px; }
   /* The form is a column, so the reason field's row basis (flex:1 1 200px, for a field beside its button) would
      read as a 200px height: the field takes its rows. */

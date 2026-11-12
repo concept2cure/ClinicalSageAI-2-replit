@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "url": "http://localhost:5200/api/cmc/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -11,19 +11,19 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 34,
+    "durationMs": 25,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
-        "project_id": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "id": "3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
+        "project_id": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
         "title": "OQ edit probe comparability",
         "product": "Scale",
         "type": "process",
         "status": "draft",
-        "createdAt": "2026-11-10T13:26:12.135Z",
-        "updatedAt": "2026-11-10T13:26:12.989Z",
+        "createdAt": "2026-11-12T00:55:41.802Z",
+        "updatedAt": "2026-11-12T00:55:42.626Z",
         "methods": [],
         "outcome": "Comparable on every attribute against the pre-change criteria.",
         "owner": null

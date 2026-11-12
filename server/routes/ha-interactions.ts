@@ -272,14 +272,13 @@ router.get('/interactions/:id/readiness', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   if (!(await admitMeeting(req, res, id, false))) return;
-  const client = await pool.connect();
   try {
-    const input = await getInteractionReadinessInput(client, orgId, id);
+    // On the request's own client, as this route's other reads: a connection from
+    // connect() carries no tenant before BEGIN, so this read found no meeting (2026-11-12).
+    const input = await getInteractionReadinessInput(requestPgClient(req) as never, orgId, id);
     res.json(evaluateMeetingReadiness(input as any));
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 

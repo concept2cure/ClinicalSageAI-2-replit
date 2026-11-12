@@ -20,6 +20,10 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, it, expect } from 'vitest';
 
+// The shared, string-aware comment stripper the CI gates use.
+// @ts-expect-error — a .mjs module with no type declaration.
+import { stripComments } from '../../scripts/ci/lib/strip-comments.mjs';
+
 // We intentionally analyze `register-inline-routes.ts` as source text rather
 // than importing it at runtime. Runtime import would transitively pull in the
 // whole route graph (which uses `@shared/*` path aliases not resolved by the
@@ -42,9 +46,14 @@ const EXPECTED_SLOTS = [
 function stripCommentsAndStrings(source: string): string {
   // Strip block comments, line comments, and string literals so our matchers
   // don't false-positive on docstring examples or error messages.
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/[^\n]*/g, '')
+  //
+  // Comments go first, with the stripper that knows a string from a comment
+  // (2026-11-12). The regex that stood here, /\/\*[\s\S]*?\*\//g, ran before
+  // the strings were emptied, so a string holding `/*` opened a "comment" to
+  // the next real `*` `/`: it hid 188 lines of code in
+  // server/bootstrap/register-inline-routes.ts (838–1131) from every matcher
+  // below.
+  return (stripComments(source) as string)
     .replace(/'(?:[^'\\\n]|\\.)*'/g, "''")
     .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
     .replace(/`(?:[^`\\]|\\.)*`/g, '``');

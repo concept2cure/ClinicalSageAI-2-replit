@@ -17,6 +17,7 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import type { ActionState } from '@shared/schema/capa-mdr';
 import { formatDate } from './data';
 import { pill, type PillTone } from './qmsRegisterKit';
+import { writeRefusal } from './qmsWrites';
 import {
   ACTION_STATE_LABEL, CAPA_ACTION_TYPE_LABEL, actionMoves, transitionCapaAction,
   type CapaActionRow, type CapaRow,
@@ -60,7 +61,7 @@ export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (co
       read.refresh();
       onChanged(done);
     } catch (err) {
-      setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
+      setRefusal(writeRefusal(err));
     } finally {
       writing.current = false;
     }

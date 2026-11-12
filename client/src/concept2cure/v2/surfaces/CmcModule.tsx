@@ -21,6 +21,8 @@ import {
 } from './cmcSpec';
 import {
   batchRowsFromApi,
+  batchFromReleaseAnswer,
+  dispositionWord,
   batchCreateBody,
   batchReleaseBody,
   batchUpdateBody,
@@ -49,6 +51,7 @@ import {
   CmDrugProducts,
 } from './cmcRegisters';
 import { CmChangeRegister } from './cmcChangeRegister';
+import { CmSpecReference } from './cmcSpecReference';
 /* Each of these two tabs carries its own ask list. They are imported, not
    restated here, so the page's starter row offers the same words the tab
    has always offered and there is one copy of each prompt (RULE 3). */
@@ -60,6 +63,8 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutForm,
+  stabilityShelfLifeForm,
+  stabilityShelfLifeBody,
   qualifyBody,
   stabilityCloseoutBody,
   readStabilityResults,
@@ -73,6 +78,8 @@ import {
   cmcProjectUuid,
   cmcWriteError,
   cmcWriteFailed,
+  cmcRefusal,
+  cmcThrownRefusal,
   cmcWriteThrew,
   cmcAssessmentThrew,
 } from './cmcShared';
@@ -202,6 +209,8 @@ interface CmcSection {
       compiled record by the same rule the approve route and the export gate
       refuse on (server/services/cmc/compiled-record.ts). */
   completeness?: number | null; missingInputs?: string[];
+  /** A source record changed after the compile (the board's read of cmc_module3_sections.stale): the approve route refuses it until recompiled. */
+  stale?: boolean; staleReason?: string | null;
 }
 
 /* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ──
@@ -393,6 +402,38 @@ const CMC_SUGGEST: Record<string, string[]> = {
 function sectionIncomplete(s: CmcSection): boolean {
   return s.completeness !== 100 || (s.missingInputs ?? []).length > 0;
 }
+/** Why a stale section cannot be signed as it stands: the reason the compile recorded, in the approve route's terms. */
+function staleReason(s: CmcSection): string {
+  return `§${s.key} is out of date: ${s.staleReason || 'a source record changed after it was compiled'}. Recompile it on the Module 3 build board, then approve it.`;
+}
+
+const openBuildBoard = () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build');
+
+/**
+ * The approvals table's action for one section. A stale section is withheld
+ * like an incomplete one, with the build board offered (walked 2026-11-12: it
+ * read "Draft" with a live "Approve section", which the approve route refused
+ * as out of date). An approved section that went stale says it owes a new
+ * approval.
+ */
+function SectionApprovalAction({ section: s, incomplete, onApprove }: { section: CmcSection; incomplete: boolean; onApprove: () => void }) {
+  if (s.st === 'approved' && !s.stale) return <span className="cm-meta">{I.check} approved</span>;
+  if (!s.stale && !incomplete) return <button className="nda-open" onClick={onApprove}>{I.lock} Approve section</button>;
+  const why = s.stale ? staleReason(s) : incompleteReason(s);
+  return (
+    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {s.st === 'approved'
+        ? <span title={why}>Approved before its sources changed: recompile, then approve again.</span>
+        : <button className="nda-open" disabled title={why}>{I.lock} Approve section</button>}
+      <button
+        className="cm-linkish"
+        title={s.stale ? 'Recompile this section on the Module 3 build board' : 'Record the missing inputs and recompile on the Module 3 build board'}
+        onClick={openBuildBoard}
+      >{s.stale ? 'Recompile on the build board' : 'Open the build board'}</button>
+    </span>
+  );
+}
+
 /** Why the control is withheld, in the signer's terms — the same shape the approve route's 409 uses. */
 function incompleteReason(s: CmcSection): string {
   const missing = s.missingInputs ?? [];
@@ -831,10 +872,14 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      that motivated this work (21/21 approved, three at 0% complete) the card
      was green while the gate refused. The percentage stays as what it is:
      approvals. */
+  /* Read again after an approval lands (walked 2026-11-12: the card said
+     "export blocked: 1 not approved" until a reload). */
+  const [readinessEpoch, setReadinessEpoch] = useState(0);
+  const readinessPath = ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null;
   const readiness = useLiveData<{
     totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
     sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
-  }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  }>(readinessPath, [readinessPath, readinessEpoch]);
   /* The refusal's own words, or null when the read failed to answer and the
      chip's own sentence stands (D0, `readRefusalWords`). */
   const readinessRefusal = readiness.error || (!readiness.loading && !readiness.data)
@@ -906,20 +951,24 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         return;
       }
       if (!res.ok) {
-        fireToast('Couldn’t approve section ' + target.key + ' — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error');
+        /* A refused signature carries its own sentence ("The authenticator code was not accepted.
+           Nothing was signed."); the route used to send the code alone and this read "HTTP 401..". */
+        fireToast(cmcRefusal('Couldn’t approve section ' + target.key + ' — ', specErr(json, res.status)), 'error');
         return;
       }
       setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
+      setReadinessEpoch((e) => e + 1);
       const ver = (json as { versionNumber?: number })?.versionNumber;
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
       fireToast(
         'Section ' + target.key + ' approved and signed' +
           (ver ? ' · v' + ver : '') +
-          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.',
+          /* No full stop after the shortened hash's ellipsis ("…e25e3d60402d….", walked 2026-11-12). */
+          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '.'),
       );
       setSign(null);
     } catch (e) {
-      fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t approve section ' + target.key + ' — ', e), 'error');
     }
   };
 
@@ -1147,20 +1196,10 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                           chips in lower case and read as one of them. Sentence case,
                           same word, same reason on hover. */}
                       {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>Incomplete</span>}
+                      {s.stale && <span className="rd-chip tone-warn" style={{ marginLeft: 6 }} title={staleReason(s)}>Stale</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {s.st === 'approved'
-                        ? <span className="cm-meta">{I.check} approved</span>
-                        : incomplete
-                          ? <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                              <button className="nda-open" disabled title={incompleteReason(s)}>{I.lock} Approve section</button>
-                              <button
-                                className="cm-linkish"
-                                title="Record the missing inputs and recompile on the Module 3 build board"
-                                onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
-                              >Open the build board</button>
-                            </span>
-                          : <button className="nda-open" onClick={() => setReview(s)}>{I.lock} Approve section</button>}
+                      <SectionApprovalAction section={s} incomplete={incomplete} onApprove={() => setReview(s)} />
                     </td>
                   </tr>);
                 })}</tbody></table>
@@ -1396,7 +1435,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       }
       setEdit(null);
     } catch (e) {
-      fireToast('Couldn’t save the specification — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t save the specification — ', e), 'error');
     }
   };
   // doSign — REAL governed approval. POSTs to the ONLY approval path
@@ -1415,12 +1454,12 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       });
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.', 'error'); return; }
+      if (res.status === 401) { fireToast(joinSentence('The specification was not approved — ', specErr(json, 401)), 'error'); return; }
       if (!res.ok) { fireToast(joinSentence('Couldn’t approve the specification — ', specErr(json, res.status), 'Nothing was persisted.'), 'error'); return; }
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
       setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
-      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '.'));
       setSign(null);
     } catch (e) {
       fireToast(joinSentence('Couldn’t approve the specification — ', e instanceof Error ? e.message : String(e)), 'error');
@@ -1491,6 +1530,9 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
           onClose={() => setHistoryFor(null)}
         />
       )}
+      {/* What ICH Q6A or Q6B expects a specification to carry (P-122, inventory B5): a reference under the table,
+          from the engine the Global RI catalog has always served. It gives no verdict on the rows above. */}
+      <CmSpecReference />
       {/* specification (the limit) -> method (how it is measured) -> QC test
           (the measurement actually performed against it) -> reference standard
           (what the measurement is reported against). */}
@@ -1803,6 +1845,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      shown is the half of §11.10(e) an inspector reads for a changed record. */
   const [historyFor, setHistoryFor] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
+  const [proposing, setProposing] = useState<StabilityStudyApiRow | null>(null);
   /* ICH Q1E estimates, keyed by study. Held per study rather than globally
      because the estimate belongs to the batch and condition it was fitted from —
      a shelf life is not a property of the programme. */
@@ -2029,6 +2072,33 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
   };
 
   /**
+   * The shelf life a running study proposes, by the ordinary audited edit the
+   * register takes. Until 2026-11-12 the only way to record one was the
+   * close-out below, which ends the study and needs signing authority, so an
+   * author could not complete §3.2.P.8 for a study that is still running.
+   */
+  const proposeShelfLife = async (v: Record<string, string>) => {
+    if (!proposing) return;
+    const study = proposing;
+    try {
+      const res = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
+        ...stabilityShelfLifeBody(v),
+        ...(projectId ? { projectId } : {}),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
+      if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
+      const row = adopt(json);
+      if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
+      setProposing(null);
+      fireToast(`Proposed shelf life saved: ${row.shelfLife}. ${row.scope === 'DS' ? '§3.2.S.7' : '§3.2.P.8'} prints it at the next compile.`);
+    } catch (e) {
+      fireToast(cmcWriteThrew('shelf life', e), 'error');
+    }
+  };
+
+  /**
    * The close-out, in the two acts the server governs it as: the shelf life and
    * its basis recorded by an ordinary (audited) edit, then the terminal status
    * under a 21 CFR Part 11 signature.
@@ -2053,16 +2123,24 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       const recordedJson = await recorded.json().catch(() => null);
       if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
 
-      const signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
-      const signedJson = await signed.json().catch(() => null);
-      if (!signed.ok) {
-        /* The shelf life IS recorded; only the signature failed. Say both. */
-        const why = cmcWriteFailed('close-out', signedJson, signed.status);
-        fireToast(`${why} The shelf life is recorded; the study is still running until the close-out is signed.`, 'error');
+      /* The close-out is refused either way apiRequest reports it: thrown
+         (403, 409, 422…) or returned (401, a password or code not accepted).
+         Both are one branch, checked before anything is said: the shelf life
+         IS saved and the study is still running, and the row shows what was
+         saved. An author whose role may not sign was told only "Nothing was
+         signed" before 2026-11-12. */
+      const signed: unknown = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v))
+        .catch((e: unknown) => e);
+      if (!(signed instanceof Response) || !signed.ok) {
+        const why = signed instanceof Response
+          ? cmcWriteFailed('close-out', await signed.json().catch(() => null), signed.status)
+          : cmcWriteThrew('close-out', signed);
         const partial = adopt(recordedJson);
         if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
+        fireToast(`The shelf life is saved and the study is still running. ${why}`, 'error');
         return;
       }
+      const signedJson = await signed.json().catch(() => null);
       reportCmcLinkage(signedJson, 'CMC record');
       const row = adopt(signedJson);
       if (!row) { fireToast('Signed, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -2160,11 +2238,12 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                           ) : (
                             <button className="cm-linkish" onClick={() => setExpanded(isOpen ? null : r.id)}>
                               {results.length} recorded{failing ? <span className="sp-tone-warn"> · {failing} OOS</span> : null}
-                              {unassessed ? <span className="cm-meta"> · {unassessed} not assessed</span> : null}
+                              {/* Plain words in the control: `cm-meta` is retired (D0), and this line is part of the button's label. */}
+                              {unassessed ? ` · ${unassessed} not assessed` : null}
                             </button>
                           )}
                         </td>
-                        <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
+                        <StabilityShelfLifeCell study={r} onPropose={setProposing} />
                         {/* The store holds "COMPLETED", "ON-HOLD" and the rest in caps; the
                             chip showed them that way, which is a stored token on screen
                             (§WA.4.2 rule 10) and the uppercase §2 retires. One map, the
@@ -2543,6 +2622,13 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
           onSubmit={recordResult}
         />
       )}
+      {proposing && (
+        <C2CForm
+          config={stabilityShelfLifeForm({ shelfLife: proposing.shelfLife, scope: proposing.scope })}
+          onCancel={() => setProposing(null)}
+          onSubmit={proposeShelfLife}
+        />
+      )}
       {closing && (
         <C2CForm
           config={stabilityCloseoutForm({ shelfLife: closing.shelfLife })}
@@ -2617,7 +2703,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       setForm(false);
       fireToast('Batch ' + adopted.id + ' logged · ' + adopted.st);
     } catch (e) {
-      fireToast('Couldn’t log the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t log the batch — ', e), 'error');
     }
   };
   // edit — PUT /:id (P-122: the route had no caller). The route records the
@@ -2638,7 +2724,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       setEditing(null);
       fireToast('Batch ' + adopted.id + ' saved, with your reason on its audit trail.');
     } catch (e) {
-      fireToast('Couldn’t save the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t save the batch — ', e), 'error');
     }
   };
   // doRelease — REAL governed release. POSTs to the ONLY release path
@@ -2654,15 +2740,18 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.', 'error'); return; }
+      if (res.status === 401) { fireToast(joinSentence('The disposition was not signed — ', specErr(json, 401)), 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
-      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
-      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...(adopted ?? { ...x, st: 'released' }), _new: true } : x));
-      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
-      fireToast('Batch ' + target.id + ' ' + (adopted?.st ?? 'released') + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      /* The row the server signed, read where the route puts it. The answer was read as `data` when the batch
+         is `data.batchRecord`, so the row showed "undefined" and, with nothing adopted, was called released. */
+      const adopted = batchFromReleaseAnswer(json);
       setReleasing(null);
+      if (!adopted) { fireToast('The disposition was signed, but the answer did not carry the batch. Reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...adopted, _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Batch ' + target.id + ' ' + dispositionWord(adopted.st) + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '.'));
     } catch (e) {
-      fireToast('Couldn’t release the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(cmcThrownRefusal('Couldn’t release the batch — ', e), 'error');
     }
   };
   return (
@@ -2705,7 +2794,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td style={{ textAlign: 'right' }}>
                   <span className="pj-sec-acts" style={{ justifyContent: 'flex-end' }}>
                     <button type="button" className="btn ghost small" onClick={() => setEditing(r)} disabled={batchEditBlocked(r) != null} title={batchEditBlocked(r) ?? 'Correct this batch record, with a reason for the change'}>Edit</button>
-                    {r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Release</button>}
+                    {r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Disposition</button>}
                   </span>
                 </td>
               </tr>))}</tbody></table>
@@ -2731,7 +2820,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: String(editing.dev) },
         { key: 'reason', label: 'Reason for change', type: 'textarea', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. Recorded with the change.`, placeholder: 'What was corrected and why…' },
       ] }} onCancel={() => setEditing(null)} onSubmit={edit} />}
-      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Disposition of batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign the disposition', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
         { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -2751,6 +2840,34 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
  * reads that series, and a button that is live over no data is an action that
  * can only fail.
  */
+/**
+ * The Shelf life cell is its own control: the proposed shelf life is an
+ * ordinary edit any author makes on a running study. Closing the study out,
+ * which fixes it under a signature, is the row's "Close out".
+ */
+function StabilityShelfLifeCell({ study, onPropose }: { study: StabilityStudyApiRow; onPropose: (s: StabilityStudyApiRow) => void }) {
+  const closedOut = String(study.status ?? '').toUpperCase() === 'COMPLETED';
+  const verb = study.shelfLife ? 'Change' : 'Set';
+  return (
+    <td>
+      {study.shelfLife || <span className="cm-meta">not set</span>}
+      {!closedOut && (
+        <>
+          {' '}
+          <button
+            className="cm-linkish"
+            aria-label={`${verb} shelf life`}
+            title="Record the shelf life this study proposes. The study stays open."
+            onClick={() => onPropose(study)}
+          >
+            {verb}
+          </button>
+        </>
+      )}
+    </td>
+  );
+}
+
 function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
   study: StabilityStudyApiRow;
   hasResults: boolean;
@@ -2786,7 +2903,14 @@ function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
       >
         {I.barChart} {busy.trending === study.id ? 'Assessing…' : 'Trend'}
       </button>
-      <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => on.closeOut(study)}>{I.checkCircle} Shelf life</button>
+      <button
+        className="nda-open"
+        style={{ marginLeft: 6 }}
+        title="Close the study out with the shelf life its data support, under your signature"
+        onClick={() => on.closeOut(study)}
+      >
+        {I.checkCircle} Close out
+      </button>
       <button
         className="nda-open"
         style={{ marginLeft: 6 }}

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+    "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -14,13 +14,13 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 38,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
-        "project_id": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "id": "87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
+        "project_id": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
         "tenant_id": 2,
         "material_type": "drug_substance",
         "material_name": "BX-701",
@@ -36,12 +36,12 @@
           "ich": "ICH Q6A"
         },
         "approval_status": "draft",
-        "created_at": "2026-11-10T13:06:31.094Z",
-        "updated_at": "2026-11-10T13:22:01.257Z"
+        "created_at": "2026-11-12T00:34:34.234Z",
+        "updated_at": "2026-11-12T00:50:01.286Z"
       },
       "message": "Specification updated. Its approval was withdrawn: approve it again before it is filed.",
       "approvalWithdrawn": true,
-      "timestamp": "2026-11-10T13:22:01.267Z",
+      "timestamp": "2026-11-12T00:50:01.301Z",
       "module3Linked": true
     }
   }

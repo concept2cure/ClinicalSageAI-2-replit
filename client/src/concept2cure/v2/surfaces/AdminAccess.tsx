@@ -450,13 +450,16 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
               the AnA panel and no invite form, no invite and no POST happened.
               POST /api/tenant-users exists, is org-admin gated and enforces the
               seat-licensing gate. */}
-          <button
-            className="btn primary small"
-            onClick={() => setInviting(true)}
-            data-testid="admin-invite-member"
-          >
-            {I.plus} Invite member
-          </button>
+          {/* Not offered to an account the read refused: only an administrator can invite. */}
+          {forbidden ? null : (
+            <button
+              className="btn primary small"
+              onClick={() => setInviting(true)}
+              data-testid="admin-invite-member"
+            >
+              {I.plus} Invite member
+            </button>
+          )}
         </div>
       </div>
 

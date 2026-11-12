@@ -1,0 +1,117 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/submissions-assemble-async-job.test.ts
+{
+  "timestamp": "2026-11-12T17:51:20.498Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T17:51:20.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts
+{
+  "timestamp": "2026-11-12T17:51:20.499Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-assemble-async-job.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-assemble-async-job.test.ts
+{
+  "timestamp": "2026-11-12T17:51:22.317Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > answers 202 while the assembly runs, and the job holds the full answer once it ends 10009ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a refused assembly is stored as the 422 refusal, with the record of it 10006ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > an assembly that throws is stored as failed with a sentence and a reference, not its error text 10003ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > another organization's session reads 404 for the job, as does a malformed id 10004ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a refusal decided before any work is still answered at once, with no job 10ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a sequence with no tracking project is assembled synchronously 5ms
+ ✓ server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble without the preference > answers synchronously, as before, and records no job 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > answers 202 while the assembly runs, and the job holds the full answer once it ends
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/routes/__tests__/submissions-assemble-async-job.test.ts:95:3
+     93|
+     94| describe('POST /sequences/:seqId/assemble with Prefer: respond-async',…
+     95|   it('answers 202 while the assembly runs, and the job holds the full …
+       |   ^
+     96|     const held = heldAssembly();
+     97|     const accepted = await start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > a refused assembly is stored as the 422 refusal, with the record of it
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/routes/__tests__/submissions-assemble-async-job.test.ts:116:3
+    114|   });
+    115|
+    116|   it('a refused assembly is stored as the 422 refusal, with the record…
+       |   ^
+    117|     const held = heldAssembly();
+    118|     const accepted = await start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > an assembly that throws is stored as failed with a sentence and a reference, not its error text
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/routes/__tests__/submissions-assemble-async-job.test.ts:126:3
+    124|   });
+    125|
+    126|   it('an assembly that throws is stored as failed with a sentence and …
+       |   ^
+    127|     const held = heldAssembly();
+    128|     const accepted = await start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/submissions-assemble-async-job.test.ts > POST /sequences/:seqId/assemble with Prefer: respond-async > another organization's session reads 404 for the job, as does a malformed id
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/routes/__tests__/submissions-assemble-async-job.test.ts:137:3
+    135|   });
+    136|
+    137|   it("another organization's session reads 404 for the job, as does a …
+       |   ^
+    138|     const held = heldAssembly();
+    139|     const accepted = await start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  17:51:18
+   Duration  47.83s (transform 5.19s, setup 112ms, import 7.42s, tests 40.05s, environment 0ms)
+

@@ -224,6 +224,18 @@ export interface RichSectionEditorHandle {
   insertReference: (text: string) => boolean;
 }
 
+/**
+ * Why attribution painting stopped, true for the section on screen. On a
+ * read-only section nobody is editing: the painting stops because the text
+ * shown is not the text the origins were recorded against (a citation shows
+ * as "[1]"). Walked 2026-11-12: a frozen section said "paused while you edit".
+ */
+export function attributionPausedNote(readOnly: boolean): string {
+  return readOnly
+    ? 'Attribution highlighting is off here: the section as shown differs from the text its origins were recorded against.'
+    : 'Attribution highlighting is paused while you edit — it describes the text as last saved.';
+}
+
 export interface RichSectionEditorProps {
   /** The stored section content — HTML or textarea-era plain text. */
   value: string;
@@ -2922,8 +2934,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                       role="status"
                       style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-400)' }}
                     >
-                      Attribution highlighting is paused while you edit — it describes the
-                      text as last saved.
+                      {attributionPausedNote(readOnly)}
                     </p>
                   )}
                   {highlightState.status === 'painted' && highlightState.dropped > 0 && (

@@ -53,11 +53,18 @@ function gradeForAna(g: { grade: string; score: number; cap: string | null; basi
   };
 }
 
-/** The narrowings the model may ask for; each is checked by the catalog's own parser. */
+/**
+ * The narrowings the model may ask for, each beside the catalog parameter it becomes; the catalog's own parser checks
+ * every one. `filed_in` is the catalog's Vault-folder narrowing. It is not named `folder`: this tool is one a
+ * sub-agent is offered, and no input of such a tool is named for a path, a directory or a folder
+ * (__tests__/sub-agent-toolset.test.ts).
+ */
+const CATALOG_NARROWINGS = { query: 'q', kind: 'kind', ctd: 'ctd', filed_in: 'folder', project: 'project', study: 'study' } as const;
+
 function catalogQuery(input: Record<string, unknown>): Record<string, unknown> {
   const raw: Record<string, unknown> = { limit: String(Math.min(CATALOG_LIMIT, Math.max(1, Math.floor(Number(input.limit) || 25)))) };
-  for (const key of ['query', 'kind', 'ctd', 'folder', 'project', 'study'] as const) {
-    if (typeof input[key] === 'string' || typeof input[key] === 'number') raw[key === 'query' ? 'q' : key] = String(input[key]);
+  for (const [key, parameter] of Object.entries(CATALOG_NARROWINGS)) {
+    if (typeof input[key] === 'string' || typeof input[key] === 'number') raw[parameter] = String(input[key]);
   }
   return raw;
 }
@@ -148,6 +155,8 @@ Promise<{ vaultTotal?: number; vaultDocuments?: Array<Record<string, unknown>>; 
       vaultDocuments: page.documents.map((d) => ({
         documentId: d.documentId, title: d.title, project: d.projectName, projectId: d.projectId, kind: d.evidenceKind,
         ctdSection: d.ctdSection, folder: d.folderLabel ?? d.folder, placementStatus: d.placementStatus, version: d.version,
+        // What a profiled dataset holds (standard, class, columns, rows), from its bytes; absent for any other document.
+        ...(d.dataset ? { dataset: d.dataset } : {}),
         grade: gradeForAna(d.grade),
       })),
     };

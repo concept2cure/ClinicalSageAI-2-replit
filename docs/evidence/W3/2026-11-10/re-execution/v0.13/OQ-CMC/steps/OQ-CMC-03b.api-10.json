@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/reference-standards",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scope": "both",
+      "standardCode": "RS-20261110130629",
+      "standardName": "BX-702 primary reference standard",
+      "certificateOfAnalysis": "CoA RS-001: assay 99.8% (mass balance); identity by NMR, MS and IR conforms",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 2,
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "scope": "both",
+        "standardCode": "RS-20261110130629",
+        "standardName": "BX-702 primary reference standard",
+        "standardType": "primary",
+        "materialSource": null,
+        "lotNumber": null,
+        "assignedValue": null,
+        "characterization": null,
+        "certificateOfAnalysis": "CoA RS-001: assay 99.8% (mass balance); identity by NMR, MS and IR conforms",
+        "qualificationProtocol": null,
+        "storageConditions": null,
+        "expiryDate": null,
+        "retestDate": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-10T13:06:38.426Z",
+        "updatedAt": "2026-11-10T13:06:38.426Z"
+      },
+      "module3Linked": true
+    }
+  }
+}
