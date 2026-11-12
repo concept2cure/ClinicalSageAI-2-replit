@@ -1,0 +1,34 @@
+// Walk 2, flow 1d: "Audit activity": the audit trail as the administrator reads it; what it says about today's acts.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  await c.step('Admin console -> Open the audit trail', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await page.getByRole('button', { name: 'Open the audit trail' }).click(); await c.sleep(3500);
+    s.notes.push('url ' + page.url());
+    s.notes.push((await c.mainText(page, 4500)));
+    await c.shot(page, 'w2-70-audit-trail-1440.png');
+    s.notes.push('controls: ' + JSON.stringify(await page.locator('main button:visible, main input:visible, main select:visible').evaluateAll(els => els.map(e => `${e.tagName.toLowerCase()}:${(e.getAttribute('aria-label') || e.textContent || e.getAttribute('placeholder') || '').trim().replace(/\s+/g, ' ').slice(0, 50)}`).slice(0, 40))));
+  });
+  await c.step('audit trail: the session policy change, opened', async (s) => {
+    const led = await c.api(page, 'GET', '/api/audit-trail/ledger?limit=200');
+    const rows = led.body?.data || [];
+    s.notes.push('ledger rows: ' + rows.length + ' | organisations named: ' + JSON.stringify([...new Set(rows.map((r) => r.organizationId ?? r.tenantId ?? 'n/a'))]) + ' | any row about another organisation\'s people: ' + rows.some((r) => /jm\.smith|avery|northgate|Concept2Cure Therapeutics/i.test(JSON.stringify(r))));
+    const pick = (re) => rows.find((r) => re.test(JSON.stringify(r)));
+    for (const [label, re] of [['session policy', /sessionTimeoutMinutes/], ['feature off', /module_toggle|Module Subscription/], ['API key created', /api_key_created|API key created/i], ['API key revoked', /api_key_revoked|API key revoked/i], ['PDF/A', /requirePdfA/], ['client type', /primaryIndustry/], ['seats', /seats_purchased|Seats Purchased/i]]) {
+      const r = pick(re); s.notes.push(`${label}: ` + (r ? JSON.stringify({ event: r.event, actor: r.actor, target: r.target, kind: r.kind, reason: r.reason, detail: r.detail ?? r.details ?? r.summary, keys: Object.keys(r) }).slice(0, 520) : 'NOT IN THE LEDGER'));
+    }
+    const row = page.locator('main').getByText(/Tenant Settings Changed|settings changed|Settings changed/i).first();
+    if (await row.count()) { await row.scrollIntoViewIfNeeded(); await row.click(); await c.sleep(1500); const d = page.locator('[role=dialog], aside[aria-label], .drawer').first(); s.notes.push('row opened: ' + (await d.innerText().catch(() => '(nothing opened)')).replace(/\n+/g, ' | ').slice(0, 1200)); await c.shot(page, 'w2-70-audit-trail-settings-row.png'); }
+    else s.notes.push('no row on screen reads as a settings change; first 12 events on screen: ' + JSON.stringify(rows.slice(0, 12).map((r) => r.event)));
+  });
+  await c.step('audit trail: signed export', async (s) => {
+    const r = await c.api(page, 'GET', '/api/audit/export/signed?format=json');
+    s.notes.push('GET /api/audit/export/signed?format=json -> ' + r.status + ' ' + (typeof r.body === 'string' ? r.body.slice(0, 300) : JSON.stringify({ keys: Object.keys(r.body || {}), count: r.body?.entries?.length ?? r.body?.data?.length ?? r.body?.count, signature: Boolean(r.body?.signature || r.body?.manifest), meta: JSON.stringify(r.body?.manifest || r.body?.meta || {}).slice(0, 300) })));
+    const m = (await c.pageFor(browser, 'w2member', 'walk2.member2@example.test')).page;
+    const rm = await c.api(m, 'GET', '/api/audit/export/signed?format=json'); s.notes.push('member: ' + rm.status + ' ' + JSON.stringify(rm.body).slice(0, 160));
+  });
+  c.report(); c.save('w2-29-audit-trail');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

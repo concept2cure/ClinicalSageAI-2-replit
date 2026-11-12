@@ -340,6 +340,10 @@
      background of its own. For the writing roles the whole page is the drop
      zone (FileDropZone), and dragging a file over it draws one focus ring. */
   .vd-wrap{ flex:1 1 auto; min-width:0; }
+  /* The Vault is three panes of a person's own work (structure, list, record), not a page of prose. On a wide screen
+     it takes the room: at the reading width every folder name and document title was cut to an ellipsis (P-122: the
+     work wins). */
+  .page-inner.vd-wrap{ max-width:1520px; }
   .vd-drop{ flex:1 1 auto; min-width:0; align-self:flex-start; min-height:100%; border-radius:var(--radius-lg); }
   .vd-drop[data-dragging]{ outline:2px solid var(--border-focus); outline-offset:-2px; }
   /* A part of the header's line wraps as a unit, so its dot never stands alone.
@@ -357,7 +361,7 @@
      `.wa-split` (D5-0) sets the record's 360px column at 1280px and wider;
      below that the record is a drawer and the grid is the browse panes alone. */
   .vd-view, .vd-grid{ min-width:0; }
-  .vd-browse{ display:grid; grid-template-columns:220px minmax(0,1fr); gap:24px; align-items:start; min-width:0; }
+  .vd-browse{ display:grid; grid-template-columns:clamp(220px, 34%, 340px) minmax(0,1fr); gap:24px; align-items:start; min-width:0; }
   .vd-browse[data-tree="drawer"]{ grid-template-columns:minmax(0,1fr); }
 
   /* The structure tree: the project's line as its caption and root, then the folders. */
@@ -365,18 +369,19 @@
   .vd-tree-root{ display:flex; align-items:center; gap:6px; width:100%; padding:2px 8px 8px; border:0; background:none; text-align:left; font-size:var(--fs-small); line-height:1.45; color:var(--text-300); cursor:pointer; overflow-wrap:anywhere; transition:color var(--dur) var(--ease); }
   .vd-tree-root:hover{ color:var(--text-100); }
   .vd-tree-root svg{ width:14px; height:14px; flex-shrink:0; }
-  .vd-folder{ width:100%; display:flex; align-items:center; gap:6px; padding:6px 8px; border:none; background:none; border-radius:var(--radius-lg); cursor:pointer; text-align:left; color:var(--text-200); font-size:var(--fs-small); transition:background-color var(--dur) var(--ease); }
+  .vd-folder{ width:100%; display:flex; align-items:flex-start; gap:6px; padding:6px 8px; border:none; background:none; border-radius:var(--radius-lg); cursor:pointer; text-align:left; color:var(--text-200); font-size:var(--fs-small); transition:background-color var(--dur) var(--ease); }
   .vd-folder:hover{ background:var(--bg-100); }
   /* The open folder takes a soft fill, as the rail's active item does: not orange. */
   .vd-folder[data-on]{ background:var(--bg-100); color:var(--text-100); font-weight:500; }
-  .vd-caret{ display:inline-flex; width:12px; transition:transform var(--dur) var(--ease); color:var(--text-300); }
+  .vd-caret{ display:inline-flex; flex:none; width:12px; margin-top:3px; transition:transform var(--dur) var(--ease); color:var(--text-300); }
   .vd-caret[data-open]{ transform:rotate(90deg); }
   .vd-caret svg{ width:12px; height:12px; }
-  .vd-fico{ display:inline-flex; color:var(--text-300); }
+  .vd-fico{ display:inline-flex; flex:none; margin-top:2px; color:var(--text-300); }
   .vd-fico svg{ width:14px; height:14px; }
-  .vd-flabel{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* A folder's name is read whole: "1.3.4 Financial certification and disclosure" wraps; it is never cut. */
+  .vd-flabel{ flex:1; min-width:0; line-height:1.4; overflow-wrap:anywhere; }
   .vd-flabel b{ font-weight:600; }
-  .vd-fcount{ font-size:var(--fs-caption); color:var(--text-300); font-variant-numeric:tabular-nums; }
+  .vd-fcount{ flex:none; margin-top:1px; font-size:var(--fs-caption); color:var(--text-300); font-variant-numeric:tabular-nums; }
   /* The tree as a drawer below 1024px. */
   .vd-tree-drawer .de-body{ padding:12px; }
 
@@ -410,11 +415,14 @@
   .vd-list .vd-row{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"name status" "meta meta"; gap:2px 12px; align-items:center; width:100%; padding:10px 8px; border:0; border-bottom:1px solid var(--border-subtle); border-radius:0; background:none; font-size:var(--fs-small); text-align:left; cursor:pointer; transition:background-color var(--dur) var(--ease); }
   .vd-list .vd-row:hover{ background:var(--bg-050); }
   .vd-list .vd-row[data-on]{ background:var(--bg-100); }
-  .vd-list .vd-row .vd-col-name{ grid-area:name; display:flex; align-items:center; gap:8px; min-width:0; }
+  .vd-list .vd-row .vd-col-name{ grid-area:name; display:flex; align-items:flex-start; gap:8px; min-width:0; }
   .vd-list .vd-row .vd-col-status{ grid-area:status; justify-self:end; }
-  .vd-list .vd-row .vd-row-s{ grid-area:meta; min-width:0; padding-left:24px; font-size:var(--fs-small); color:var(--text-300); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .vd-list .vd-row-t{ display:block; min-width:0; font-size:var(--fs-body); font-weight:500; color:var(--text-100); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .vd-list .vd-row-ic{ flex:none; display:inline-flex; color:var(--text-300); }
+  /* A document's title and its line of fields (type, versions, review stage, owner, date) are read whole: they wrap. */
+  .vd-list .vd-row .vd-row-s{ grid-area:meta; min-width:0; padding-left:24px; font-size:var(--fs-small); line-height:1.45; color:var(--text-300); overflow-wrap:anywhere; }
+  .vd-list .vd-row-t{ display:block; min-width:0; font-size:var(--fs-body); line-height:1.35; font-weight:500; color:var(--text-100); }
+  /* Ranked above coverage-v2.css's one-line title (`.vd-col-name .vd-row-t`), which other lists keep. */
+  .vd-list .vd-row .vd-col-name .vd-row-t{ overflow:visible; text-overflow:clip; white-space:normal; overflow-wrap:anywhere; }
+  .vd-list .vd-row-ic{ flex:none; display:inline-flex; margin-top:2px; color:var(--text-300); }
   .vd-list .vd-row-ic svg{ width:16px; height:16px; }
   /* A CTD section code is read: mono, 12px, quiet. */
   .vd-list .vd-num{ margin-right:6px; font-family:var(--font-mono,ui-monospace,monospace); font-size:var(--fs-caption); color:var(--text-300); }
@@ -523,6 +531,8 @@
   /* Coverage: a module's line, then its missing sections with Upload and File here. */
   .vd-cov-mod{ padding-top:12px; }
   .vd-cov-mod .vd-dr-name{ max-width:none; }
+  /* A required section's name is read whole beside its number (VaultCoverage.tsx): it wraps and is never cut. */
+  .vd-cov-rows .vd-dr-row:not(.vd-cov-mod) .vd-dr-name{ flex:0 1 auto; max-width:45%; overflow:visible; white-space:normal; }
   .vd-cov-pick{ width:auto; max-width:240px; }
   /* File into Vault (VR-11): a checkbox per source not yet filed, the action, and a line per source answered. */
   .vd-dr-pick{ flex-shrink:0; width:16px; height:16px; margin:0; accent-color:var(--text-100); }

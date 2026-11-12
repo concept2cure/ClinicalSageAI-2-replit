@@ -1,6 +1,6 @@
 # P-122 inventory: what the UI hid, removed or never reached (2026-11-10)
 
-Four read-only investigations behind founder decision P-122 (`docs/LAUNCH_DEFINITION_OF_DONE.md`). Each compares
+Five read-only investigations behind founder decision P-122 (four on 2026-11-10, the fifth on 2026-11-11) (`docs/LAUNCH_DEFINITION_OF_DONE.md`). Each compares
 the UI before the "fold" campaign (from 2026-10-26) and the November reshaping with HEAD on 2026-11-10. Each lists:
 - every capability removed or hidden, with commit and path;
 - whether its server route still exists and is admitted in production;
@@ -13,6 +13,7 @@ the UI before the "fold" campaign (from 2026-10-26) and the November reshaping w
 | `cmc.md` | CMC / Module 3, and the stability, QC and manufacturing routers beside it |
 | `vault-authoring-submission.md` | Vault, Authoring, Submission Center, Submission Readiness, Communication, the audit trail |
 | `qms-reporting-device.md` | Quality, Reporting, device and IVD, Biostatistics, RBM, AnA |
+| `administration.md` | Administration, client security settings, Licensing, Onboarding and the account (the fifth, 2026-11-11; decisions in P-125; order in `administration-restoration-order.json`) |
 
 **What they found, in short:**
 - Most folds moved capability; few deleted it. What was lost was reach: the work is below a composer, behind closed

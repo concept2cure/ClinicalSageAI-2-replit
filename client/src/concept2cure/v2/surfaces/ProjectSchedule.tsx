@@ -3,7 +3,10 @@
  * and never shown, reached here. Nothing is computed in the browser; every figure is the engine's.
  *
  *   - Section owners, deadlines and milestones: GET /api/project-sections/summary and /timeline
- *     (server/routes/project-sections.ts), by the project's id, admitted by the sharing policy.
+ *     (server/routes/project-sections.ts), by the project's id, admitted by the sharing policy. A person who may change
+ *     the project records a milestone (POST /api/project-sections/milestones) and moves an open one's date or marks it
+ *     done (PATCH …/milestones/:id), each admitted as a write on the project, through the form drawer (C2CForm); the
+ *     list is read again after a change (P-122, 2026-11-10).
  *   - The milestone tasks: the project's task list in its submission milestone order, GET
  *     /api/concept2cure/projects/:id/tasks and /tasks/summary (server/routes/c2c/tasks.ts). With none, the filing
  *     type's milestone catalogue (GET /api/concept2cure/submission-milestones/:type) says what would be added, and the
@@ -18,15 +21,22 @@
  * retry; an empty store says what is empty. None of them is drawn as 0.
  */
 import React from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { normalizeCtdCode } from '@shared/regulatory/section-code';
+import { apiRequest, assertApiResponseOk } from '@/lib/queryClient';
+import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
+import { I } from '../icons';
+import { C2CToast, useToast } from '../toast';
 import { enumWords } from './projectWords';
 
 interface SectionsSummary {
   overall: { total: number; completed: number; assigned: number; overdue: number };
   teamWorkload: Array<{ user_id: number; user_name: string | null; assigned_sections: string | number; active_sections: string | number }>;
 }
-interface TimelineEvent { date: string; type: 'section_deadline' | 'milestone'; title: string; status: string; metadata: { assignedTo?: string | null } }
+interface TimelineEvent {
+  date: string; type: 'section_deadline' | 'milestone'; title: string; status: string;
+  metadata: { assignedTo?: string | null; milestoneId?: number; linkedSections?: string[] | null };
+}
 interface Timeline { events: TimelineEvent[] }
 interface ProjectTask { id: number; name: string; status: string; moduleType: string | null; dueDate: string | null; metadata?: { milestoneOrder?: number } | null }
 interface TaskSummary { total: number; completed: number; overdue: number }
@@ -48,8 +58,37 @@ const day = (iso: string | null | undefined) => {
   const d = iso ? new Date(iso) : null;
   return d && Number.isFinite(d.getTime()) ? d.toLocaleDateString(undefined, DATE) : null;
 };
+/* The timeline's dates are calendar days: a section deadline and a milestone are recorded as a day (YYYY-MM-DD) and
+   stored at its midnight UTC, so they are said in UTC. Read in local time, a browser west of UTC showed the day before
+   the one recorded. */
+const calendarDay = (iso: string | null | undefined) => {
+  const d = iso ? new Date(iso) : null;
+  return d && Number.isFinite(d.getTime()) ? d.toLocaleDateString(undefined, { ...DATE, timeZone: 'UTC' }) : null;
+};
+const isoDay = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : '';
+};
 const n = (v: string | number) => Number(v) || 0;
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
+/** Section numbers as a person writes them ("1.2, 2.5 3.2.s.4") as the project's section codes (m1.2, m2.5,
+ *  m3.2.S.4, the form project_sections and the milestone store keep), or the first that is not a CTD section number. */
+export function linkedSectionCodes(text: string): { codes: string[] } | { bad: string } {
+  const codes: string[] = [];
+  for (const token of text.split(/[\s,;]+/).filter(Boolean)) {
+    const code = normalizeCtdCode(token);
+    if (!code) return { bad: token };
+    if (!codes.includes(`m${code}`)) codes.push(`m${code}`);
+  }
+  return { codes };
+}
+const sectionNumbers = (codes: readonly string[]) => codes.map((c) => c.replace(/^m/i, '')).join(', ');
+const linkedWords = (text: string) => {
+  if (!text.trim()) return '';
+  const parsed = linkedSectionCodes(text);
+  return 'bad' in parsed ? `"${parsed.bad}" is not a CTD section number.` : `Reads as ${sectionNumbers(parsed.codes)}.`;
+};
 
 /** The submission milestone catalogue's key for a filing type (c2c/tasks.ts SUBMISSION_MILESTONES), or null. */
 export function milestoneCatalogueKey(filingType: string | null | undefined): string | null {
@@ -57,11 +96,13 @@ export function milestoneCatalogueKey(filingType: string | null | undefined): st
   return ['IND', 'NDA', 'BLA', '510K', 'PMA', 'CER', 'DE_NOVO'].includes(key) ? key : null;
 }
 
-/** A read's three honest states, then its body. */
+/** A read's three honest states, then its body. A read again after a change keeps what it last read on screen until
+ *  the new answer lands, so the list does not empty under the person, and the button that opened a drawer is still
+ *  there to take the focus back when it closes. */
 function Read<T>({ state, what, onRetry, children }: {
   state: DataState<T>; what: string; onRetry: () => void; children: (data: T) => React.ReactNode;
 }) {
-  if (state.loading) return <p role="status" aria-busy="true" className="pj-card-note">Reading {what}…</p>;
+  if (state.loading && !state.data) return <p role="status" aria-busy="true" className="pj-card-note">Reading {what}…</p>;
   if (state.error || !state.data) {
     return (
       <div role="alert">
@@ -78,11 +119,118 @@ function useRetry(): [number, () => void] {
   return [epoch, React.useCallback(() => setEpoch((v) => v + 1), [])];
 }
 
+type MilestoneDraft = { kind: 'record' } | { kind: 'update'; event: TimelineEvent };
+type MilestoneWrite =
+  | { refused: string }
+  | { method: 'POST' | 'PATCH'; url: string; body: Record<string, unknown> | null; done: string };
+
+/** What a filled drawer sends: a record (POST) or an update (PATCH, only what changed), or why nothing is sent. */
+function milestoneWrite(projectId: number, event: TimelineEvent | null, v: Record<string, string>): MilestoneWrite {
+  if (!event) {
+    const parsed = linkedSectionCodes(v.linked ?? '');
+    if ('bad' in parsed) {
+      return { refused: `Nothing was recorded. "${parsed.bad}" is not a CTD section number; write section numbers such as 2.5 or 3.2.S.4.` };
+    }
+    const name = v.name.trim();
+    return { method: 'POST', url: '/api/project-sections/milestones', done: `Milestone "${name}" recorded.`,
+      body: { project_id: projectId, name, target_date: v.target_date, linked_sections: parsed.codes } };
+  }
+  const body: Record<string, unknown> = {};
+  if (v.target_date !== isoDay(event.date)) body.target_date = v.target_date;
+  if (v.state === 'done') body.status = 'completed';
+  const done = v.state === 'done' ? `Milestone "${event.title}" marked done.` : `Milestone "${event.title}" moved to ${calendarDay(v.target_date)}.`;
+  return { method: 'PATCH', url: `/api/project-sections/milestones/${event.metadata.milestoneId}`, done,
+    body: Object.keys(body).length ? body : null };
+}
+
+function milestoneForm(event: TimelineEvent | null, linked: string, failed: string | null): C2CFormConfig {
+  if (event) {
+    return {
+      title: 'Update the milestone', sub: event.title, submitLabel: 'Save', notice: failed ?? undefined,
+      fields: [
+        { key: 'target_date', label: 'Due date', type: 'date', required: true, default: isoDay(event.date) },
+        { key: 'state', label: 'Status', type: 'seg', options: [{ value: 'open', label: 'Open' }, { value: 'done', label: 'Done' }],
+          desc: 'Done records today as the day it was completed. A done milestone is not reopened here.' },
+      ],
+    };
+  }
+  return {
+    title: 'Record a milestone', sub: 'A dated milestone on this project’s schedule, listed with the section deadlines.',
+    submitLabel: 'Record milestone', notice: failed ?? undefined,
+    fields: [
+      { key: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Pre-IND briefing package sent' },
+      { key: 'target_date', label: 'Due date', type: 'date', required: true },
+      { key: 'linked', label: 'Linked CTD sections', type: 'text', placeholder: 'e.g. 1.2, 2.5',
+        desc: 'Optional. The section numbers this milestone depends on, separated by commas.', descStatus: linkedWords(linked) },
+    ],
+  };
+}
+
+/** Record a milestone, or move an open one's date or mark it done, in the form drawer. The server admits each write
+ *  as a write on the project; a refusal keeps the drawer open and says that nothing was changed. */
+function MilestoneForm({ projectId, draft, onClose, onSaved }: {
+  projectId: number; draft: MilestoneDraft; onClose: () => void; onSaved: (done: string) => void;
+}) {
+  const [linked, setLinked] = React.useState('');
+  const [failed, setFailed] = React.useState<string | null>(null);
+  const saving = React.useRef(false);
+  const event = draft.kind === 'update' ? draft.event : null;
+  const submit = async (v: Record<string, string>) => {
+    if (saving.current) return;
+    const write = milestoneWrite(projectId, event, v);
+    if ('refused' in write) {
+      setFailed(write.refused);
+      return;
+    }
+    if (!write.body) {
+      onClose();
+      return;
+    }
+    saving.current = true;
+    setFailed(null);
+    try {
+      const res = await apiRequest(write.method, write.url, write.body);
+      if (!res.ok) await assertApiResponseOk(res);
+      onSaved(write.done);
+    } catch (e) {
+      const why = e instanceof Error && e.message ? e.message.replace(/\.?$/, '.') : 'The request failed.';
+      setFailed(`${event ? 'Nothing was changed.' : 'Nothing was recorded.'} ${why}`);
+    } finally {
+      saving.current = false;
+    }
+  };
+  return (
+    <C2CForm config={milestoneForm(event, linked, failed)} onCancel={onClose} onSubmit={(v) => void submit(v)}
+      onFieldChange={(key, value) => { if (key === 'linked') setLinked(value); }} />
+  );
+}
+
+/** One dated section or milestone. An open milestone offers "Update" to a person who may change the project. */
+function TimelineRow({ event: e, onUpdate }: { event: TimelineEvent; onUpdate: (() => void) | null }) {
+  const milestone = e.type === 'milestone';
+  const linked = milestone && e.metadata?.linkedSections?.length ? ` · Sections ${sectionNumbers(e.metadata.linkedSections)}` : '';
+  const open = milestone && e.status !== 'completed' && Number.isSafeInteger(e.metadata?.milestoneId);
+  return (
+    <div role="listitem" className="pj-act">
+      <span className="pj-act-w">{e.title}</span>
+      <span className="pj-act-t">
+        {milestone ? 'Milestone' : `Section deadline · ${e.metadata?.assignedTo ?? 'No owner'}`} · {enumWords(e.status) ?? 'Status not recorded'}{linked}
+      </span>
+      {/* Before the date, so every row's date stays at the row's end. */}
+      {open && onUpdate && <button type="button" className="btn ghost small" aria-label={`Update ${e.title}`} onClick={onUpdate}>Update</button>}
+      <span className="pj-act-n pj-sched-date">{calendarDay(e.date) ?? 'No date'}</span>
+    </div>
+  );
+}
+
 /** Section owners and deadlines, and the dated sections and milestones in date order. */
-function SectionSchedule({ projectId }: { projectId: number }) {
+function SectionSchedule({ projectId, canChange }: { projectId: number; canChange: boolean }) {
   const [epoch, retry] = useRetry();
+  const [draft, setDraft] = React.useState<MilestoneDraft | null>(null);
+  const [toast, notify] = useToast();
   const summary = useLiveData<SectionsSummary>(`/api/project-sections/summary?project_id=${projectId}`, [projectId, epoch], isSummary);
   const timeline = useLiveData<Timeline>(`/api/project-sections/timeline?project_id=${projectId}`, [projectId, epoch], isTimeline);
+  const saved = (done: string) => { setDraft(null); notify(done); retry(); };
   return (
     <div className="pj-tracking-module" data-testid="pj-schedule-sections">
       <h3>Section owners and deadlines</h3>
@@ -107,20 +255,25 @@ function SectionSchedule({ projectId }: { projectId: number }) {
         )}
       </Read>
       <Read state={timeline} what="the project's deadlines and milestones" onRetry={retry}>
-        {(t) => t.events.length === 0 ? <p className="pj-card-note">No section deadline or milestone is recorded.</p> : (
-          <div className="pj-acts" role="list" aria-label="Deadlines and milestones">
-            {t.events.map((e, i) => (
-              <div role="listitem" key={`${e.type}:${e.title}:${i}`} className="pj-act">
-                <span className="pj-act-w">{e.title}</span>
-                <span className="pj-act-t">
-                  {e.type === 'milestone' ? 'Milestone' : `Section deadline · ${e.metadata?.assignedTo ?? 'No owner'}`} · {enumWords(e.status) ?? 'Status not recorded'}
-                </span>
-                <span className="pj-act-n">{day(e.date) ?? 'No date'}</span>
+        {(t) => (
+          <>
+            {t.events.length === 0 ? <p className="pj-card-note">No section deadline or milestone is recorded.</p> : (
+              <div className="pj-acts" role="list" aria-label="Deadlines and milestones">
+                {t.events.map((e, i) => (
+                  <TimelineRow key={`${e.type}:${e.title}:${i}`} event={e} onUpdate={canChange ? () => setDraft({ kind: 'update', event: e }) : null} />
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+            {canChange && (
+              <div className="pj-sched-act">
+                <button type="button" className="btn ghost small" onClick={() => setDraft({ kind: 'record' })}>{I.plus} Record a milestone</button>
+              </div>
+            )}
+          </>
         )}
       </Read>
+      {draft && <MilestoneForm projectId={projectId} draft={draft} onClose={() => setDraft(null)} onSaved={saved} />}
+      <C2CToast msg={toast} />
     </div>
   );
 }
@@ -250,7 +403,7 @@ export function ProjectSchedule({ projectId, unverified, filingType, targetDate,
         unverified ? <p className="pj-card-note">{unverified}</p> : <p role="status" aria-busy="true" className="pj-card-note">Reading this project’s record…</p>
       ) : (
         <>
-          <SectionSchedule projectId={projectId} />
+          <SectionSchedule projectId={projectId} canChange={canChange} />
           <MilestoneTasks projectId={projectId} filingType={filingType} targetDate={targetDate} canChange={canChange} />
           <HierarchyRollup projectId={projectId} />
         </>
