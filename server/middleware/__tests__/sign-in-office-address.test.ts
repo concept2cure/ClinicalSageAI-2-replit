@@ -25,6 +25,31 @@ import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+/*
+ * In production the auth bucket is counted across API tasks in
+ * public.rate_limit_counters (P-129). The table, in memory: one row per
+ * (bucket, window), the route's upsert, prune and decrement. A limiter that
+ * could not reach it would answer 503, which is not a 429, so without it the
+ * first case below passed having counted nothing.
+ */
+const counters = vi.hoisted(() => new Map<string, number>());
+vi.mock('../../db/runtime', () => ({
+  getPool: () => ({
+    query: async (sql: string, params: unknown[] = []) => {
+      const key = `${params[0]}|${params[1]}`;
+      if (/INSERT INTO rate_limit_counters/.test(sql)) {
+        counters.set(key, (counters.get(key) ?? 0) + 1);
+        return { rows: [{ hits: counters.get(key) }] };
+      }
+      if (/UPDATE rate_limit_counters/.test(sql)) {
+        counters.set(key, Math.max((counters.get(key) ?? 0) - 1, 0));
+        return { rows: [] };
+      }
+      return { rows: [] };
+    },
+  }),
+}));
+
 type Limiters = {
   createRedisRateLimiter: typeof import('../redisRateLimiter').createRedisRateLimiter;
   rateLimiters: typeof import('../enterprise-security').rateLimiters;

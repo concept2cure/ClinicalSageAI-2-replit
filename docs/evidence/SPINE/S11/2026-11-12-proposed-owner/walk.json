@@ -1,0 +1,55 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-12T04:49:04.663Z",
+  "steps": [
+    {
+      "name": "the job role and its holder, through the product's routes",
+      "roleId": 1,
+      "userId": "1"
+    },
+    {
+      "name": "1440: 1. the holder is listed first",
+      "task": "Define product profile",
+      "role": "ra_lead",
+      "options": [
+        "Select…",
+        "Founder · walk.owner@example.com (Regulatory affairs lead)",
+        "Founder · colleague@example.com"
+      ],
+      "words": "Plan Assign: Define product profile Creates a task for one person, with a due date. It appears in their tasks and in this project’s tasks. Person* The work breakdown gives this task to the Regulatory affairs lead. Listed first: the person who holds that job role. Select… Founder · walk.owner@example.com (Regulatory affairs lead) Founder · colleague@example.com Due date* The schedule's date for this task, back-scheduled from the target submission date. Note Cancel Assign"
+    },
+    {
+      "name": "1440: 2. a job role no one holds",
+      "task": "Submit IND",
+      "options": [
+        "Select…",
+        "Founder · walk.owner@example.com",
+        "Founder · colleague@example.com"
+      ],
+      "words": "Plan Assign: Submit IND Creates a task for one person, with a due date. It appears in their tasks and in this project’s tasks. Person* The work breakdown gives this task to the Regulatory operations lead. No one in your organisation holds that job role yet. Select… Founder · walk.owner@example.com Founder · colleague@example.com Due date* The schedule's date for this task, back-scheduled from the target submission date. Note Cancel Assign"
+    },
+    {
+      "name": "390: 1. the holder is listed first",
+      "task": "Define product profile",
+      "role": "ra_lead",
+      "options": [
+        "Select…",
+        "Founder · walk.owner@example.com (Regulatory affairs lead)",
+        "Founder · colleague@example.com"
+      ],
+      "words": "Plan Assign: Define product profile Creates a task for one person, with a due date. It appears in their tasks and in this project’s tasks. Person* The work breakdown gives this task to the Regulatory affairs lead. Listed first: the person who holds that job role. Select… Founder · walk.owner@example.com (Regulatory affairs lead) Founder · colleague@example.com Due date* The schedule's date for this task, back-scheduled from the target submission date. Note Cancel Assign"
+    },
+    {
+      "name": "390: 2. a job role no one holds",
+      "task": "Submit IND",
+      "options": [
+        "Select…",
+        "Founder · walk.owner@example.com",
+        "Founder · colleague@example.com"
+      ],
+      "words": "Plan Assign: Submit IND Creates a task for one person, with a due date. It appears in their tasks and in this project’s tasks. Person* The work breakdown gives this task to the Regulatory operations lead. No one in your organisation holds that job role yet. Select… Founder · walk.owner@example.com Founder · colleague@example.com Due date* The schedule's date for this task, back-scheduled from the target submission date. Note Cancel Assign"
+    }
+  ],
+  "apiErrors": [],
+  "finishedAt": "2026-11-12T04:51:27.140Z"
+}

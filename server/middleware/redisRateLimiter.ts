@@ -216,6 +216,121 @@ function checkMemoryRateLimit(key: string, maxRequests: number, windowMs: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SHARED ACROSS TASKS: POSTGRES (P-129, MR-03 Stage 7 steps 2–3)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Production runs the API as more than one task with no Redis (decision B6;
+// P-129 holds it for rate limits). Counted in each task's memory, the sign-in
+// and document limits gave a client each task's allowance: twice the limit on
+// production's two tasks (MR-03 SEC-08, OPS-20). In production the categories
+// that fail closed are counted in public.rate_limit_counters instead
+// (migrations/20261112b_rate_limit_counters.sql): one atomic upsert per hit,
+// in a fixed window, under the system scope (organization 0, as
+// session_activity). A store that cannot be reached throws, so those
+// categories answer 503, never a silent per-task count. The other categories
+// stay per-task ceilings in memory. Outside production one process serves, and
+// memory is that process's whole count.
+
+/** Whether this process counts the fail-closed categories in Postgres. */
+export function usesSharedRateLimitStore(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.NODE_ENV === 'production';
+}
+
+let lastSharedPrune = 0;
+const SHARED_PRUNE_EVERY_MS = 60_000;
+
+/** One hit in `key`'s current fixed window, counted across every task; the window's hits after it. */
+export async function incrementSharedCounter(key: string, windowMs: number, now = Date.now()): Promise<{ hits: number; resetAt: number }> {
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const [{ getPool }, { runWithSystemTenantScope }] = await Promise.all([
+    import('../db/runtime.js'),
+    import('../db/tenantStore.js'),
+  ]);
+  return runWithSystemTenantScope('auth:rate-limit:shared', async () => {
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO rate_limit_counters (organization_id, bucket_key, window_start, hits)
+       VALUES (0, $1, to_timestamp($2::double precision / 1000), 1)
+       ON CONFLICT (organization_id, bucket_key, window_start)
+         DO UPDATE SET hits = rate_limit_counters.hits + 1
+       RETURNING hits`,
+      [key, windowStart],
+    );
+    if (now - lastSharedPrune >= SHARED_PRUNE_EVERY_MS) {
+      lastSharedPrune = now;
+      // Every window is shorter than a day (server/config/platform-limits.ts); a row this old counts nothing.
+      await pool.query(
+        `DELETE FROM rate_limit_counters WHERE organization_id = 0 AND window_start < NOW() - INTERVAL '1 day'`,
+      ).catch(() => undefined);
+    }
+    return { hits: Number(rows[0]?.hits ?? 1), resetAt: windowStart + windowMs };
+  });
+}
+
+/** Take one hit back from `key`'s current window (a request the limiter does not count, such as a success). */
+export async function decrementSharedCounter(key: string, windowMs: number, now = Date.now()): Promise<void> {
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const [{ getPool }, { runWithSystemTenantScope }] = await Promise.all([
+    import('../db/runtime.js'),
+    import('../db/tenantStore.js'),
+  ]);
+  await runWithSystemTenantScope('auth:rate-limit:shared', () => getPool().query(
+    `UPDATE rate_limit_counters SET hits = GREATEST(hits - 1, 0)
+      WHERE organization_id = 0 AND bucket_key = $1 AND window_start = to_timestamp($2::double precision / 1000)`,
+    [key, windowStart],
+  ));
+}
+
+/** Forget `key` in every window. */
+export async function resetSharedCounter(key: string): Promise<void> {
+  const [{ getPool }, { runWithSystemTenantScope }] = await Promise.all([
+    import('../db/runtime.js'),
+    import('../db/tenantStore.js'),
+  ]);
+  await runWithSystemTenantScope('auth:rate-limit:shared', () => getPool().query(
+    'DELETE FROM rate_limit_counters WHERE organization_id = 0 AND bucket_key = $1',
+    [key],
+  ));
+}
+
+/** The shared count as this limiter's verdict. A refused hit stays counted: the window is fixed, so it extends nothing. */
+async function checkSharedRateLimit(key: string, maxRequests: number, windowMs: number): Promise<RateLimitResult> {
+  const now = Date.now();
+  const { hits, resetAt } = await incrementSharedCounter(key, windowMs, now);
+  if (hits > maxRequests) {
+    return { allowed: false, remaining: 0, resetAt, retryAfter: Math.max(1, Math.ceil((resetAt - now) / 1000)) };
+  }
+  return { allowed: true, remaining: maxRequests - hits, resetAt };
+}
+
+/**
+ * An express-rate-limit store on the same table, for the per-account sign-in
+ * limits (server/middleware/sign-in-limits.ts). Not `localKeys`: every task
+ * counts the same key.
+ */
+export class SharedRateLimitStore {
+  windowMs = 60_000;
+  prefix: string;
+  localKeys = false;
+  constructor(prefix: string) {
+    this.prefix = prefix;
+  }
+  init(options: { windowMs: number }): void {
+    this.windowMs = options.windowMs;
+  }
+  async increment(key: string): Promise<{ totalHits: number; resetTime: Date }> {
+    const { hits, resetAt } = await incrementSharedCounter(`${this.prefix}${key}`, this.windowMs);
+    return { totalHits: hits, resetTime: new Date(resetAt) };
+  }
+  async decrement(key: string): Promise<void> {
+    await decrementSharedCounter(`${this.prefix}${key}`, this.windowMs);
+  }
+  async resetKey(key: string): Promise<void> {
+    await resetSharedCounter(`${this.prefix}${key}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // REDIS RATE LIMITING (SLIDING WINDOW)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -537,10 +652,13 @@ async function checkSubject(
   keyPrefix: string,
   subject: RateLimitSubject,
   windowMs: number,
+  shared: boolean,
 ): Promise<{ result: RateLimitResult; limit: number }> {
-  const result = await checkRedisRateLimit(keyPrefix + subject.key, subject.limit, windowMs);
+  // Redis, when one is configured, is already shared; without it, a shared category counts in Postgres.
+  const check = shared && !redisAvailable ? checkSharedRateLimit : checkRedisRateLimit;
+  const result = await check(keyPrefix + subject.key, subject.limit, windowMs);
   if (!result.allowed || !subject.ipGuard) return { result, limit: subject.limit };
-  const guard = await checkRedisRateLimit(keyPrefix + subject.ipGuard.key, subject.ipGuard.limit, windowMs);
+  const guard = await check(keyPrefix + subject.ipGuard.key, subject.ipGuard.limit, windowMs);
   return guard.allowed ? { result, limit: subject.limit } : { result: guard, limit: subject.ipGuard.limit };
 }
 
@@ -613,7 +731,8 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
     const subject = resolveSubject(req, category, rule, perOrganization);
 
     try {
-      const { result, limit } = await checkSubject(keyPrefix, subject, rule.windowMs);
+      const shared = FAIL_CLOSED_CATEGORIES.has(category) && usesSharedRateLimitStore();
+      const { result, limit } = await checkSubject(keyPrefix, subject, rule.windowMs, shared);
 
       // Set rate limit headers — the ceiling that applied to THIS subject
       res.setHeader('X-RateLimit-Limit', limit);
