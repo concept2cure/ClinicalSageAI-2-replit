@@ -289,7 +289,7 @@ function ProjectTaskSheet({ pyr, task, tasks, slot, standing, ind, setStatus, on
     <AssignAction deliverable={{ id: task.id, title: task.name, group: task.phase }} programId={programId} projectId={projectId}
       assigned={owners?.has(task.id) ?? false} onAssigned={onAssigned}
       due={slot ? { value: slot.due, desc: "The schedule's date for this task, back-scheduled from the target submission date." } : undefined}
-      buildBody={(form) => buildPyramidTaskBody({ programId, projectId: projectId as number, task, ...form })} />
+      buildBody={(form) => buildPyramidTaskBody({ programId, projectId: projectId as number, task, ...form })} taskRole={task.role} />
   );
   return (
     <PyTaskSheet pyr={pyr} task={task} tasks={tasks} onClose={() => onOpenTask(null)} onTask={onOpenTask}
