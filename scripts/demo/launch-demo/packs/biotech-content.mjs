@@ -473,3 +473,16 @@ export const CHANGE = {
   impactAssessment: 'No change to eligibility, dosing or the primary endpoint. Additional 4 mL blood draw at Week 2 within the total blood volume limit. Laboratory manual and eCRF require revision; no impact on the validated state of the EDC system beyond a configured form.',
   implementationPlan: 'Protocol Amendment 1 v1.1 → IRB submission → laboratory manual v1.1 → eCRF change (configuration only) → site training → effective on IRB approval at each site.',
 };
+
+/** The protocol's synopsis paragraph that starts with `label` ("Objective.", "Primary endpoint."), without the label. */
+const synopsis = (label) => VAULT_DOCS.find((d) => d.key === 'protocol').pdf.sections
+  .find((x) => x.heading === '1. Synopsis').paragraphs.find((p) => p.startsWith(`${label} `)).slice(label.length + 1);
+
+/** C2C-101's objective of record (GA-DEMO-15): the protocol's own words, with the protocol as the source. */
+export const C2C101_OBJECTIVE = {
+  label: MOLECULE,
+  objective: synopsis('Objective.'),
+  successCriteria: `Primary endpoint: ${synopsis('Primary endpoint.').replace(/\.$/, '')}.`,
+  sources: [{ kind: 'protocol', title: `Protocol ${STUDY} v1.0 (fictional), in the project's Vault`, locator: 'Section 1, Synopsis' }],
+  reason: "Demo seed: the objective the study protocol states.",
+};

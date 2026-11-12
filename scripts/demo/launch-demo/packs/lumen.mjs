@@ -22,7 +22,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
-import { asArray, ensureApplicantIdentity, makeTally } from './biotech-shared.mjs';
+import { asArray, ensureApplicantIdentity, ensureObjective, makeTally } from './biotech-shared.mjs';
 import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_CODE, CSR_SOURCE_FILE, CSR_SOURCE_TITLE, FOOTER, LMN201_CMC, LMN201_DESIGN, LMN201_IDENTITY, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import { ensureLumenQms } from './lumen-qms.mjs';
@@ -163,7 +163,7 @@ export async function seed(ctx) {
   const lmn201 = projects['LMN-201'];
   await ensureCsrSource(c, lmn201);
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
-  await ensureObjective(c, lmn201, LMN201_DESIGN);
+  await ensureObjective(c, lmn201, lmn201Objective(LMN201_DESIGN));
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
   // Study & Protocol Design: the RePreve protocol, bound to its design, with deviations and a review (lumen-protocol.mjs).
   await ensureLumenProtocol(c, lmn201);
@@ -203,29 +203,16 @@ export async function seed(ctx) {
   console.info(`  ⇒ lumen pack: created ${sum(tally.tally.created)}, found ${sum(tally.tally.found)}`);
 }
 
-/**
- * The project's objective, from the public trial listing the design already cites
- * (LMN201_DESIGN, NCT05330182), through the route the About card writes
- * (PUT /api/charters/by-project/:ref/objectives). Without it the CSR rehearsal's
- * project home said "No objective is recorded for this project yet" and the
- * presenter set it by hand (R1 rehearsal, 2026-11-06). A recorded objective is
- * left as it is: a person may have changed it.
- */
-async function ensureObjective({ api, run, tally }, project, design) {
-  await run.step(`Objective: ${design.acronym}`, async () => {
-    const path = `/api/charters/by-project/${encodeURIComponent(project.id)}/objectives`;
-    const read = must(await api('GET', path), 200, 'read the project objective');
-    if (read.data?.current) { tally.found('objective'); return 'found'; }
-    const primary = design.objectives.find((o) => o.level === 'primary') ?? design.objectives[0];
-    must(await api('PUT', path, {
-      objective: primary.text,
-      successCriteria: `Primary endpoint: ${primary.endpointName}.`,
-      sources: [{ kind: 'registry', title: 'ClinicalTrials.gov NCT05330182', url: 'https://clinicaltrials.gov/study/NCT05330182' }],
-      reason: 'Demo seed: the objective the public trial listing states.',
-    }), 200, 'record the project objective');
-    tally.created('objective');
-    return 'created';
-  });
+/** LMN-201's objective, from the public trial listing the design already cites (LMN201_DESIGN, NCT05330182). */
+function lmn201Objective(design) {
+  const primary = design.objectives.find((o) => o.level === 'primary') ?? design.objectives[0];
+  return {
+    label: design.acronym,
+    objective: primary.text,
+    successCriteria: `Primary endpoint: ${primary.endpointName}.`,
+    sources: [{ kind: 'registry', title: 'ClinicalTrials.gov NCT05330182', url: 'https://clinicaltrials.gov/study/NCT05330182' }],
+    reason: 'Demo seed: the objective the public trial listing states.',
+  };
 }
 
 /**
