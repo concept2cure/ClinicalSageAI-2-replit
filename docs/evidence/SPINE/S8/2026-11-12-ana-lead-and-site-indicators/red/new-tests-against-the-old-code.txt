@@ -1,0 +1,99 @@
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the page header is the one work-area header > has no eyebrow or "Project" caption, and says the study’s sites and subjects in its one sentence
+ ✓ client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the page header is the one work-area header > keeps the four doors to the project, Vault, tasks and biostatistics
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the page header is the one work-area header > shows the ten tabs as tabs, in one row
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > is open on arrival where there is room, bound to the study and the open tab
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > closes from the header; closed, her composer and the tab’s suggestions sit under the title, and a question opens it and sends
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > follows the open tab: the suggestions and the subtitle are the tab’s
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > on a narrow window waits behind the composer, and opens as a drawer that Escape closes
+ ✓ client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > offers no composer before a study is chosen, because there is nothing for her to read
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > renders her answer as prose, not as markdown source
+ ✓ client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > keeps the open tab’s suggestions one tap away once a conversation is under way
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > sends on Enter, keeps Shift+Enter for a new line, and never sends an empty message
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > closes from its own header
+ × client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > counts no tools and names none
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > lists the indicators read at any site, the ones with a red reading first
+   → siteIndicatorColumns is not a function
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > gives an indicator’s readings across the sites, worst band first, matched by name
+   → siteReadingsFor is not a function
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > shows every site against every indicator, each cell the reading and its band in words
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > colours a cell by the band the engine stored, and never bands a value itself
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > says an indicator with no limit has none, in neither red nor green
+ ✓ client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > draws no such table for sites scored from site intelligence, which holds no indicator readings
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > opens an indicator’s readings by site on the key risk indicators tab
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > no longer says a per-site view is not implemented, and says what still is not there
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > an attention item: the row still opens its tab, and Ask AnA names the item
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > an indicator, a breached limit, a signal, a subject, a site, a site’s oversight and the plan’s actions
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > is offered on a limit only when it is breached or approaching
+ ✓ client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > is not drawn where no conversation is attached
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the risk review report as a file > downloads the report the board carries, named for its date
+ ✓ client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the risk review report as a file > offers no download when the board carries no report text, and keeps Print and Ask AnA
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the screens say what they do in a monitor’s words > prints no function name, tool name, enum value or another vendor’s product name
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the screens say what they do in a monitor’s words > keeps the sentence that every score is the engines’, on the overview
+ × client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the screens say what they do in a monitor’s words > describes the central monitoring scan that actually runs for the study’s sites
+ × server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > carries the indicator, its value, unit, limits, direction, cut-off and the engine’s band
+   → siteIndicatorReadings is not a function
+ × server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > keeps the engine’s order, worst first, and never re-bands a reading
+   → siteIndicatorReadings is not a function
+ × server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > drops a malformed entry and keeps the others, and guesses no band
+   → siteIndicatorReadings is not a function
+ × server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > sends none for a Site Intelligence row, or a row stored before the source was recorded
+   → siteIndicatorReadings is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > carries the indicator, its value, unit, limits, direction, cut-off and the engine’s band
+TypeError: siteIndicatorReadings is not a function
+ FAIL  server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > keeps the engine’s order, worst first, and never re-bands a reading
+TypeError: siteIndicatorReadings is not a function
+ FAIL  server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > drops a malformed entry and keeps the others, and guesses no band
+TypeError: siteIndicatorReadings is not a function
+ FAIL  server/routes/__tests__/mdx-rbm-board-site-indicators.test.ts > the board passes each site’s indicator readings as the engine stored them > sends none for a Site Intelligence row, or a row stored before the source was recorded
+TypeError: siteIndicatorReadings is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the page header is the one work-area header > has no eyebrow or "Project" caption, and says the study’s sites and subjects in its one sentence
+AssertionError: expected null to be truthy
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the page header is the one work-area header > shows the ten tabs as tabs, in one row
+AssertionError: expected null to be truthy
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > is open on arrival where there is room, bound to the study and the open tab
+TestingLibraryElementError: Unable to find an element with the text: LMN-201 · Overview. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > closes from the header; closed, her composer and the tab’s suggestions sit under the title, and a question opens it and sends
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "AnA"
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > follows the open tab: the suggestions and the subtitle are the tab’s
+TestingLibraryElementError: Unable to find an element with the text: LMN-201 · Site risk. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > AnA’s conversation leads the screen > on a narrow window waits behind the composer, and opens as a drawer that Escape closes
+AssertionError: expected <aside class="rbm-ana" …(1)>…(5)</aside> to be null
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > renders her answer as prose, not as markdown source
+AssertionError: expected '## Two sites\n\n- **Site 104** is red…' not to match /##|\*\*/
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > sends on Enter, keeps Shift+Enter for a new line, and never sends an empty message
+AssertionError: expected 'Ask AnA about LMN-201...' to be 'Ask AnA about LMN-201' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > closes from its own header
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Close AnA"
+ FAIL  client/src/concept2cure/v2/__tests__/rbmAnaLead.test.tsx > the conversation panel > counts no tools and names none
+AssertionError: expected '✻AnA — RBM co-monitorbound to LMN-201…' not to match /9 RBM tools|co-monitor|get_rbm_attent…/
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > lists the indicators read at any site, the ones with a red reading first
+TypeError: siteIndicatorColumns is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > gives an indicator’s readings across the sites, worst band first, matched by name
+TypeError: siteReadingsFor is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > shows every site against every indicator, each cell the reading and its band in words
+TestingLibraryElementError: Unable to find an accessible element with the role "table" and name `/Each site’s latest reading of each indicator/`
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > colours a cell by the band the engine stored, and never bands a value itself
+TypeError: Cannot read properties of null (reading 'getAttribute')
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > says an indicator with no limit has none, in neither red nor green
+TypeError: Cannot read properties of null (reading 'textContent')
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > opens an indicator’s readings by site on the key risk indicators tab
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/By site — 3/`
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > indicators by site > no longer says a per-site view is not implemented, and says what still is not there
+AssertionError: expected 'KRIs are seeded from the TransCelerat…' not to match /…/country drilldown are not implemented
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > an attention item: the row still opens its tab, and Ask AnA names the item
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Ask AnA"
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > an indicator, a breached limit, a signal, a subject, a site, a site’s oversight and the plan’s actions
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Ask AnA"
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > each finding goes to AnA from where it is shown > is offered on a limit only when it is breached or approaching
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Ask AnA"
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the risk review report as a file > downloads the report the board carries, named for its date
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Download/`
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the screens say what they do in a monitor’s words > prints no function name, tool name, enum value or another vendor’s product name
+AssertionError: expected 'Data sourcesNo source feeds are track…' not to contain 'buildRiskReview'
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the screens say what they do in a monitor’s words > keeps the sentence that every score is the engines’, on the overview
+TestingLibraryElementError: Unable to find an element with the text: /Every score on this board is computed by the monitoring engines from the study’s recorded data/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/rbmBoardFindings.test.tsx > the screens say what they do in a monitor’s words > describes the central monitoring scan that actually runs for the study’s sites
+AssertionError: expected 'OpenNewInvestigatingResolvedAllLog si…' to match /compares each site-level indicator ac…/
+ Test Files  3 failed (3)
+      Tests  28 failed | 6 passed (34)
