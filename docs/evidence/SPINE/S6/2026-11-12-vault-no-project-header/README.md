@@ -69,7 +69,8 @@ lists across sponsors (P-107 item 3a). It now says what the page does in each st
 
 ## Not done here
 
-**A 510(k)'s Library lists the eSTAR outline twice.** Seen on the same walk (`[Demo · MDX] NeuroPanel-Dx 510(k)`):
+**A filing's Library lists its outline twice.** Seen on the same walk on the 510(k) (`[Demo · MDX] NeuroPanel-Dx
+510(k)`), and then on both INDs (C2C-101, C2C-201), whose eCTD outline appears the same way:
 
 - the filing binder ("Filing binder · 510(k) × FDA · eSTAR", sections A to G) holds the files placed against the
   outline;

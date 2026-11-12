@@ -1531,9 +1531,9 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
 
 Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
 administration's restoration order); on a phone the first document is below the first screen (the shared page
-header takes four lines); **a 510(k)'s Library lists the eSTAR outline twice**, as the filing binder (the files placed
-against the outline) and as the authored 510(k) document's own sections, with the same headings A to G and different
-counts. Which the tree shows, or how one carries the other's state, is a design decision in S6's binder
+header takes four lines); **a filing's Library lists its outline twice**, as the filing binder (the files placed
+against the outline) and as the authored filing document's own sections, with the same headings and different counts:
+seen on the 510(k) (eSTAR A to G) and on both INDs (eCTD M1 to M5). Which the tree shows, or how one carries the other's state, is a design decision in S6's binder
 (`server/routes/c2c/project-vault.ts`, `documentFolder` and `filingCabinet`).
 
 **E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
