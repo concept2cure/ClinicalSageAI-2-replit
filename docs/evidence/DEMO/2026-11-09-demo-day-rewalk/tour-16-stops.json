@@ -1,0 +1,165 @@
+[
+ {
+  "stop": "01-home",
+  "url": "/concept2cure",
+  "title": "Good evening, JM",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": [
+   "[ERROR] [auth] API request error {endpoint: /api/v1/auth/session, error: TypeError: Failed to fetch}",
+   "[ERROR] [auth] API request error {endpoint: /api/v1/auth/session, error: TypeError: Failed to fetch}"
+  ]
+ },
+ {
+  "stop": "02-projects",
+  "url": "/concept2cure/projects",
+  "title": "Projects",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "projects-listed",
+  "projects": [
+   "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+   "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)",
+   "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+   "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 7, 2027LMN-401 · Updated Nov 09Due Oct 05, 2027",
+   "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)IND · FDA · Prevention of viral respiratory infectionOn schedule · Planning by Feb 8, 2027LMN-301 · Updated Nov 09Due Jul 07, 2027",
+   "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)IND · FDA · Weight loss in adults with obesity or overweight, preserving lean massOn schedule · Planning by Dec 30, 2026LMN-801 · Updated Nov 09Due May 28, 2027",
+   "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)IND · FDA · Prevention of recurrent Clostridioides difficile infection14 tasks past due · Planning by Oct 9, 2026LMN-201 · Updated Nov 09Due Mar 09, 2027",
+   "[Demo · MDX] NeuroPanel-Dx 510(k)510(k) · FDA · Differential diagnosis of viral CNS infection (meningitis / encephalitis) from CSFOn schedule · Project Planning by Feb 16, 2027NEUR · Updated Nov 09Due Mar 09, 2027",
+   "[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)IND · FDA · Moderate-to-severe atopic dermatitis in adultsOn schedule · Planning by Dec 9, 2026C2C-201 · Updated Nov 09Due May 08, 2027",
+   "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)IND · FDA · Moderate-to-severe plaque psoriasis in adultsOn schedule · Planning by Dec 9, 2026C2C-101 · Updated Nov 09Due May 08, 2027"
+  ]
+ },
+ {
+  "stop": "03-c2c101-project",
+  "url": "/concept2cure/project-home?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "04-clinical-overview",
+  "url": "/concept2cure/document-authoring?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "Product Development Rationale",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": [],
+  "bar": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+ },
+ {
+  "stop": "05-clinical-overview-document",
+  "url": "/concept2cure/document-authoring?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-vault",
+  "url": "/concept2cure/vault?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "Vault",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "07-submission-center",
+  "url": "/concept2cure/submission-center?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "Submission Center",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-cmc",
+  "url": "/concept2cure/cmc?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "CMC / Module 3",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "09-lmn201-project",
+  "url": "/concept2cure/project-home?program=4f29bace-d23c-44e6-992c-6a63c60ed500",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-lmn201-rbm",
+  "url": "/concept2cure/rbm?program=4f29bace-d23c-44e6-992c-6a63c60ed500",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "11-lmn201-quality",
+  "url": "/concept2cure/quality?program=4f29bace-d23c-44e6-992c-6a63c60ed500",
+  "title": "Quality system",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "12-lmn201-tasks",
+  "url": "/concept2cure/tasks?program=4f29bace-d23c-44e6-992c-6a63c60ed500",
+  "title": "Tasks",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "13-neuropanel-project",
+  "url": "/concept2cure/project-home?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58",
+  "title": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "14-neuropanel-510k-summary",
+  "url": "/concept2cure/document-authoring?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58",
+  "title": "Submitter (21 CFR 807.92(a)(1))",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "15-insights",
+  "url": "/concept2cure/insights?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58",
+  "title": "Reporting & analytics",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "16-biostatistics",
+  "url": "/concept2cure/biostatistics?program=66277053-752f-4806-8112-85be3e9d1aea",
+  "title": "Biostatistics",
+  "errorText": [],
+  "sideways": false,
+  "apiFailures": [],
+  "consoleErrors": []
+ }
+]
