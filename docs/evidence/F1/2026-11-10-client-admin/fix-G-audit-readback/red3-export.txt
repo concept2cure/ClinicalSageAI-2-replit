@@ -1,0 +1,10 @@
+ × server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts > the signed export carries what a governed change changed (AUD-01) > carries the stored values: the walker's four searches now find them 36ms
+   → sessionTimeoutMinutes in the export: expected false to be true // Object.is equality
+ × server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts > the signed export carries what a governed change changed (AUD-01) > carries each change in words, the person and the thing named, and the stored reason 16ms
+   → expected undefined to be 'Organisation settings changed' // Object.is equality
+ × server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts > the signed export carries what a governed change changed (AUD-01) > still verifies, and a one-byte change to a stored value is refused 16ms
+   → expected '[\n  {\n    "source": "audit_logs",\n…' not to be '[\n  {\n    "source": "audit_logs",\n…' // Object.is equality
+ × server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts > the signed export carries what a governed change changed (AUD-01) > the CSV carries the same columns 15ms
+   → event_name: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

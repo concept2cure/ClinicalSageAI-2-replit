@@ -58,6 +58,7 @@ beforeAll(async () => {
     id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, event_type TEXT, entity_type TEXT,
     entity_id INTEGER NOT NULL DEFAULT 0, user_id INTEGER, user_name TEXT, user_role TEXT, ip_address TEXT,
     timestamp TIMESTAMPTZ NOT NULL DEFAULT now(), reason TEXT, comments TEXT, metadata JSONB,
+    old_values JSON, new_values JSON, changed_fields JSON,
     regulatory_significant BOOLEAN, gxp_relevant BOOLEAN, record_hash TEXT, previous_hash TEXT,
     sequence_number INTEGER, created_at TIMESTAMPTZ NOT NULL DEFAULT now());`);
 });
