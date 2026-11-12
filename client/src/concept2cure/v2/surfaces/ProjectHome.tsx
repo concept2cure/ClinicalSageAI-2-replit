@@ -1550,9 +1550,18 @@ function QualityDocumentList({ rows, onOpen }: { rows: BuiltDocument[]; onOpen: 
   );
 }
 
+/** Whether this person is listed every document of a project. The list is per grant: only the roles the authoring
+ *  ACL admits to every document see them all (server/services/authoring/authoring-permissions.ts
+ *  isGlobalAuthoringAdmin: ADMIN, SUPER_ADMIN, PLATFORM_ADMIN; a test holds the two equal). Not the shell's wider
+ *  isOrgAdminRole: an owner is offered Admin there and still sees documents by grant here. */
+export function seesEveryProjectDocument(roles: readonly unknown[] | null | undefined): boolean {
+  return (roles ?? []).some((role) => ['admin', 'super_admin', 'platform_admin'].includes(String(role).trim().toLowerCase()));
+}
+
 function ProjectDocumentsBody({ read, quality, onRetry, onOpen }: {
   read: ListRead; quality: QualityDocumentIds; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
 }) {
+  const viewer = useAuthUser();
   const rows = rowsOf(read);
   if (read.state === 'error' && !rows) {
     return (
@@ -1566,7 +1575,12 @@ function ProjectDocumentsBody({ read, quality, onRetry, onOpen }: {
   }
   if (!rows || quality.state === 'reading') return <div role="status" aria-busy="true" className="cdl-note">Reading this project’s documents…</div>;
   if (rows.length === 0) {
-    return <p className="cdl-empty" data-testid="pj-docs-empty">No documents in this project yet. Ask AnA in the box above to draft one.</p>;
+    /* An empty list is an empty project only for a person who is listed every document. Anyone else is listed the
+       documents shared with them, so the project may hold others (the production walk with narrow roles, 2026-11-12:
+       a Member read "No documents … draft one" on a project holding five). No signed-in person read yet: the same. */
+    return seesEveryProjectDocument(viewer?.roles)
+      ? <p className="cdl-empty" data-testid="pj-docs-empty">No documents in this project yet. Ask AnA in the box above to draft one.</p>
+      : <p className="cdl-empty" data-testid="pj-docs-empty">No documents in this project are shared with you. This list shows the documents you have access to, so the project may hold others: a document’s owner shares it from the editor’s Access.</p>;
   }
   const { filing, controlled } = splitQualityDocuments(rows, quality);
   return (
