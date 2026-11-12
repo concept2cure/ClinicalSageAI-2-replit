@@ -1,0 +1,189 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-11-12T21:52:44.882Z","pid":1151,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T21:52:44.884Z","pid":1151,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T21:52:44.884Z","pid":1151,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device
+[database] Database connection successful
+
+stderr | tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device 3480ms
+   → expected [ …(16) ] to deeply equal []
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty 129ms
+   → expected 'Optional' to be 'Required: one of D4, D5' // Object.is equality
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D6 risk management turns on the kind of 510(k), and does not block 130ms
+   → expected 'Optional' to be 'When applicable' // Object.is equality
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > performance testing is one requirement: animal testing on file, so bench testing does not block 149ms
+   → E5: expected 'Required' to be 'Required: one of E5, E6, E7' // Object.is equality
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > a section no mapper slot takes keeps its pack's flag: A2 and B3 stay required 138ms
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > follows the device: once the project answers that it is not sterile, D4 is not applicable 131ms
+   → expected 'Optional' to be 'Not applicable' // Object.is equality
+ × tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > every section: the Library's mark and blocker are the mapper's answer 122ms
+   → expected [ …(13) ] to deeply equal []
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section no mapper slot takes keeps its pack's flag: B2, C2 and C4 stay required 109ms
+ × tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section that turns on an unanswered question is not decided, never optional, and names the question 121ms
+   → expected 'Optional' to be 'Not decided' // Object.is equality
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > pma:fda fda-pma-21cfr814-20-v1.1 115ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > mdr:ema eu-mdr-2017-745-annex-ii-v1.0 91ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > ivdr:ema eu-ivdr-2017-746-annex-ii-v1.0 111ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device
+AssertionError: expected [ …(16) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "A4 Consensus standards and declarations of conformity: the Library says \"Optional\", the mapper says when-applicable",
++   "A7 Class III summary and certification (21 CFR 807.94), where applicable: the Library says \"Optional\", the mapper says when-applicable",
++   "A8 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on: the Library says \"Optional\", the mapper says not-applicable",
++   "D3 Reprocessing and reuse: the Library says \"Optional\", the mapper says when-applicable",
++   "D4 Sterilization: the Library says \"Optional\", the mapper says required",
++   "D4 Sterilization: the Library does not block, the mapper blocks",
++   "D5 Shelf life and packaging: the Library says \"Optional\", the mapper says required",
++   "D5 Shelf life and packaging: the Library does not block, the mapper blocks",
++   "D6 Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities: the Library says \"Optional\", the mapper says when-applicable",
++   "E2 Software and firmware: the Library says \"Optional\", the mapper says required",
++   "E2 Software and firmware: the Library does not block, the mapper blocks",
++   "E4 Electromagnetic compatibility, electrical, mechanical and thermal safety: the Library says \"Optional\", the mapper says when-applicable",
++   "E5 Bench performance testing: the Library blocks, the mapper does not block",
++   "E6 Animal performance testing: the Library says \"Optional\", the mapper says required",
++   "E7 Clinical performance testing: the Library says \"Optional\", the mapper says required",
++   "E8 Human factors and usability: the Library says \"Optional\", the mapper says when-applicable",
++ ]
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:234:41
+    232|     const mapper = await oneRule('510k', 'device', STERILE_SOFTWARE, d…
+    233|     expect(leaves.size).toBe(doc.pack.filter((n) => !doc.pack.some((c)…
+    234|     expect(differences(leaves, mapper)).toEqual([]);
+       |                                         ^
+    235|   });
+    236|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty
+AssertionError: expected 'Optional' to be 'Required: one of D4, D5' // Object.is equality
+
+Expected: "Required: one of D4, D5"
+Received: "Optional"
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:239:21
+    237|   it('D4 Sterilization is required of a sterile device, and blocks whi…
+    238|     const d4 = (await libraryLeaves(t, doc.id)).get('D4')!;
+    239|     expect(d4.type).toBe('Required: one of D4, D5');
+       |                     ^
+    240|     expect(d4.blocker).toBe(true);
+    241|     expect(d4.flag).toBe('Mandatory section — no content yet in D4 or …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D6 risk management turns on the kind of 510(k), and does not block
+AssertionError: expected 'Optional' to be 'When applicable' // Object.is equality
+
+Expected: "When applicable"
+Received: "Optional"
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:249:21
+    247|   it('D6 risk management turns on the kind of 510(k), and does not blo…
+    248|     const d6 = (await libraryLeaves(t, doc.id)).get('D6')!;
+    249|     expect(d6.type).toBe('When applicable');
+       |                     ^
+    250|     expect(d6.blocker).toBeUndefined();
+    251|     expect(d6.preview).toContain('required when the submission is a Sp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > performance testing is one requirement: animal testing on file, so bench testing does not block
+AssertionError: E5: expected 'Required' to be 'Required: one of E5, E6, E7' // Object.is equality
+
+Expected: "Required: one of E5, E6, E7"
+Received: "Required"
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:257:42
+    255|     const leaves = await libraryLeaves(t, doc.id);
+    256|     for (const key of ['E5', 'E6', 'E7']) {
+    257|       expect(leaves.get(key)!.type, key).toBe('Required: one of E5, E6…
+       |                                          ^
+    258|       expect(leaves.get(key)!.blocker, key).toBeUndefined();
+    259|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > follows the device: once the project answers that it is not sterile, D4 is not applicable
+AssertionError: expected 'Optional' to be 'Not applicable' // Object.is equality
+
+Expected: "Not applicable"
+Received: "Optional"
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:279:38
+    277|     try {
+    278|       const leaves = await libraryLeaves(t, doc.id);
+    279|       expect(leaves.get('D4')!.type).toBe('Not applicable');
+       |                                      ^
+    280|       expect(leaves.get('D4')!.blocker).toBeUndefined();
+    281|       // Shelf life is owed by a non-sterile device too: content there…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > every section: the Library's mark and blocker are the mapper's answer
+AssertionError: expected [ …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "A5 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on: the Library says \"Optional\", the mapper says undetermined",
++   "A5 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on: the Library does not block, the mapper blocks",
++   "A6 Consensus standards and declarations of conformity: the Library says \"Optional\", the mapper says when-applicable",
++   "D3 Sterilization, shelf life and packaging: the Library says \"Optional\", the mapper says undetermined",
++   "D3 Sterilization, shelf life and packaging: the Library does not block, the mapper blocks",
++   "D4 Software and firmware: the Library says \"Optional\", the mapper says undetermined",
++   "D4 Software and firmware: the Library does not block, the mapper blocks",
++   "D5 Cybersecurity (FD&C Act section 524B, cyber devices): the Library says \"Optional\", the mapper says undetermined",
++   "D5 Cybersecurity (FD&C Act section 524B, cyber devices): the Library does not block, the mapper blocks",
++   "D6 Electromagnetic compatibility and electrical safety: the Library says \"Optional\", the mapper says when-applicable",
++   "D9 Human factors and usability: the Library says \"Optional\", the mapper says when-applicable",
++   "E2 Package label and physician / patient labeling: the Library says \"Optional\", the mapper says required",
++   "E2 Package label and physician / patient labeling: the Library does not block, the mapper blocks",
++ ]
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:301:87
+    299|   it('every section: the Library\'s mark and blocker are the mapper\'s…
+    300|     const leaves = await libraryLeaves(t, doc.id);
+    301|     expect(differences(leaves, await oneRule('de_novo', 'device', {}, …
+       |                                                                                       ^
+    302|   });
+    303|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section that turns on an unanswered question is not decided, never optional, and names the question
+AssertionError: expected 'Optional' to be 'Not decided' // Object.is equality
+
+Expected: "Not decided"
+Received: "Optional"
+
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:315:21
+    313|   it('a section that turns on an unanswered question is not decided, n…
+    314|     const d3 = (await libraryLeaves(t, doc.id)).get('D3')!;
+    315|     expect(d3.type).toBe('Not decided');
+       |                     ^
+    316|     expect(d3.blocker).toBe(true);
+    317|     expect(d3.flag).toBe('Not decided — the project has not answered “…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+   Start at  21:52:42
+   Duration  6.82s (transform 2.92s, setup 75ms, import 162ms, tests 6.33s, environment 0ms)
+

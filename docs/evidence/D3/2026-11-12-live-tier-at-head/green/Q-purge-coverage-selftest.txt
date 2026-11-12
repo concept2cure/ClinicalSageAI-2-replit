@@ -1,0 +1,3 @@
+  ✓ FAILS closed on a list that parses to zero entries
+
+[ci:purge-coverage:selftest] 59 passed — the gate fails on what it exists to catch.
