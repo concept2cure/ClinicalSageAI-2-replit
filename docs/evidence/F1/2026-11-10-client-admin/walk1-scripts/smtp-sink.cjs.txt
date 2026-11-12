@@ -1,0 +1,39 @@
+// A local mail sink for the walk: accepts SMTP on 127.0.0.1:2531 and appends each message to mail.jsonl in this
+// folder. Nothing leaves the machine. It exists so the product's real mail path (sign-up verification) can run.
+const net = require('net'); const fs = require('fs'); const path = require('path');
+const OUT = path.join(__dirname, 'mail.jsonl');
+net.createServer((sock) => {
+  let buf = ''; let inData = false; let msg = { from: null, to: [], data: '' }; let authStage = 0;
+  const say = (l) => sock.write(l + '\r\n');
+  say('220 walk-sink ESMTP');
+  sock.on('data', (d) => {
+    buf += d.toString('utf8');
+    for (;;) {
+      if (inData) {
+        const end = buf.indexOf('\r\n.\r\n');
+        if (end < 0) return;
+        msg.data = buf.slice(0, end); buf = buf.slice(end + 5); inData = false;
+        fs.appendFileSync(OUT, JSON.stringify({ time: new Date().toISOString(), ...msg }) + '\n');
+        msg = { from: null, to: [], data: '' };
+        say('250 OK queued');
+        continue;
+      }
+      const nl = buf.indexOf('\r\n'); if (nl < 0) return;
+      const line = buf.slice(0, nl); buf = buf.slice(nl + 2);
+      const up = line.toUpperCase();
+      if (authStage === 1) { authStage = 2; say('334 UGFzc3dvcmQ6'); continue; }
+      if (authStage === 2) { authStage = 0; say('235 OK'); continue; }
+      if (up.startsWith('EHLO')) { sock.write('250-walk-sink\r\n250-AUTH PLAIN LOGIN\r\n250 8BITMIME\r\n'); }
+      else if (up.startsWith('HELO')) say('250 walk-sink');
+      else if (up.startsWith('AUTH PLAIN')) say('235 OK');
+      else if (up.startsWith('AUTH LOGIN')) { authStage = 1; say('334 VXNlcm5hbWU6'); }
+      else if (up.startsWith('MAIL FROM')) { msg.from = line.slice(10); say('250 OK'); }
+      else if (up.startsWith('RCPT TO')) { msg.to.push(line.slice(8)); say('250 OK'); }
+      else if (up === 'DATA') { inData = true; say('354 go'); }
+      else if (up === 'RSET') say('250 OK');
+      else if (up === 'QUIT') { say('221 bye'); sock.end(); }
+      else say('250 OK');
+    }
+  });
+  sock.on('error', () => {});
+}).listen(2531, '127.0.0.1', () => console.log('sink on 2531'));

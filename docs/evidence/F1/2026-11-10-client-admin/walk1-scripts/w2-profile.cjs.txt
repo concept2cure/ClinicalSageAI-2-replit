@@ -1,0 +1,56 @@
+// Flow 2: the organization's profile card (name and client type) in my own organization.
+const L = require('./lib.cjs');
+const EMAIL = 'avery.lind@northgate-bio.example.test';
+const out = [];
+const note = (k, v) => { out.push([k, v]); console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v)); };
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, EMAIL);
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1200);
+  note('which tab opens by default', await page.locator('main [aria-selected=true], main button.active, main .tab.active').evaluateAll(els => els.map(e => e.textContent.trim())));
+  await page.locator('main').getByRole('button', { name: 'Settings', exact: true }).click().catch(async () => { await page.getByText('Settings', { exact: true }).last().click(); });
+  await L.sleep(1200);
+  const card = page.locator('section, div').filter({ hasText: 'Profile & client type' }).last();
+  const nameInput = page.getByLabel('Organization name');
+  await nameInput.scrollIntoViewIfNeeded();
+  note('initial name', await nameInput.inputValue());
+  const chips = await page.locator('button').filter({ hasText: /^(Medical device|Biotech|Pharma|Diagnostics \(IVD\)|CRO|Regulatory consulting|Health system or academic)$/ }).evaluateAll(els => els.map(e => `${e.textContent.trim()}|pressed=${e.getAttribute('aria-pressed')}|checked=${e.getAttribute('aria-checked')}|class=${e.className}`));
+  note('client type chips', chips);
+  await L.shot(page, 'w1-22-profile-card-initial.png');
+  // 1. change the name, try to save with no reason
+  await nameInput.fill('Northgate Biologics GmbH'); await L.sleep(300);
+  const saveBtn = page.getByRole('button', { name: /Save to organization|No unsaved changes/ });
+  note('save button after edit', await saveBtn.evaluateAll(els => els.map(e => `${e.textContent.trim()}${e.disabled ? ' (disabled)' : ''}`)));
+  await saveBtn.first().click(); await L.sleep(800);
+  note('after Save with no reason', (await L.textOf(page, 'main')).match(/Reason for change[\s\S]{0,400}/)?.[0]);
+  note('writes', L.drain(page));
+  await L.shot(page, 'w1-23-profile-save-no-reason.png');
+  // 2. two-character reason
+  await page.getByLabel('Reason for change').fill('ab'); await saveBtn.first().click(); await L.sleep(800);
+  note('after Save with "ab"', (await L.textOf(page, 'main')).match(/Reason for change[\s\S]{0,400}/)?.[0]);
+  note('writes', L.drain(page));
+  // 3. also change client type to Pharma, real reason, save
+  await page.locator('button').filter({ hasText: /^Pharma$/ }).first().click(); await L.sleep(400);
+  await page.getByLabel('Reason for change').fill('Legal entity name and client type corrected at set-up');
+  await L.shot(page, 'w1-24-profile-before-save.png');
+  await saveBtn.first().click(); await L.sleep(2500);
+  note('writes', L.drain(page));
+  note('after save', (await L.textOf(page, 'main')).match(/Profile & client type[\s\S]{0,1100}/)?.[0]);
+  await L.shot(page, 'w1-25-profile-saved.png');
+  // 4. reload and confirm
+  await page.reload({ waitUntil: 'networkidle' }); await L.sleep(1500);
+  await page.locator('main').getByRole('button', { name: 'Settings', exact: true }).click().catch(() => {}); await L.sleep(1200);
+  note('name after reload', await page.getByLabel('Organization name').inputValue());
+  note('chips after reload', await page.locator('button').filter({ hasText: /^(Medical device|Biotech|Pharma|Diagnostics \(IVD\)|CRO|Regulatory consulting|Health system or academic)$/ }).evaluateAll(els => els.filter(e => e.getAttribute('aria-pressed') === 'true' || e.getAttribute('aria-checked') === 'true' || /active|selected|on\b/.test(e.className)).map(e => e.textContent.trim())));
+  note('sidebar org name', await page.locator('aside, nav').first().innerText().then(t => t.split('\n').slice(-3)));
+  await page.getByLabel('Organization name').scrollIntoViewIfNeeded();
+  await L.shot(page, 'w1-26-profile-after-reload.png');
+  // account menu's client type after the change
+  await page.getByRole('button', { name: /Avery Lind/ }).first().click(); await L.sleep(500);
+  note('account menu', await page.locator('[role=menu]').first().innerText().catch(() => ''));
+  note('menu client type checked', await page.locator('[role=menu] [aria-checked=true], [role=menu] [aria-current=true]').evaluateAll(els => els.map(e => e.textContent.trim())));
+  await L.shot(page, 'w1-27-account-menu-after-client-type.png');
+  await page.keyboard.press('Escape');
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

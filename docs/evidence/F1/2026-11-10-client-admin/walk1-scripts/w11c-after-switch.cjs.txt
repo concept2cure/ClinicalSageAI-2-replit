@@ -1,0 +1,62 @@
+// Flow 6c continued: in the session that was switched to Concept2Cure Therapeutics. What does the shell say?
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const AVERY = 'avery.lind@northgate-bio.example.test';
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page, context } = await L.signedIn(browser, AVERY);
+  const sess = await L.api(page, 'GET', '/api/v1/auth/session');
+  note('session says', { org: sess.body?.user?.organizationName, orgId: sess.body?.user?.organizationId, roles: sess.body?.user?.roles });
+  note('rail foot says', (await page.getByRole('button', { name: /Avery Lind/ }).first().innerText()).replace(/\n/g, ' | '));
+  note('localStorage org keys', await page.evaluate(() => ['currentOrganizationName', 'currentOrganization', 'currentOrganizationId', 'activeOrgSlug', 'currentClientWorkspaceId'].map(k => `${k}=${localStorage.getItem(k)}`)));
+  note('trialsage_user org', await page.evaluate(() => { try { const u = JSON.parse(localStorage.getItem('trialsage_user') || sessionStorage.getItem('trialsage_user') || '{}'); return { organizationId: u.organizationId, organizationName: u.organizationName, roles: u.roles }; } catch { return null; } }));
+  await page.reload({ waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('rail foot after a reload', (await page.getByRole('button', { name: /Avery Lind/ }).first().innerText()).replace(/\n/g, ' | '));
+  await page.getByRole('button', { name: /Avery Lind/ }).first().click(); await L.sleep(400);
+  note('account menu head', (await page.locator('[role=menu] .acct-head').innerText()).replace(/\n/g, ' | '));
+  note('account menu items', (await page.locator('[role=menu]').innerText()).replace(/\n/g, ' | '));
+  await L.shot(page, 'w1-92-account-menu-member-in-seeded-org.png');
+  await page.keyboard.press('Escape');
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('admin console as a Member of the seeded organization', (await L.textOf(page, 'main')).slice(-330));
+  await L.shot(page, 'w1-95-admin-console-member-of-seeded-org.png');
+  note('failed', L.drain(page).map(x => x.slice(0, 200)));
+  const A = (m, u, b) => L.api(page, m, u, b).then(r => `${r.status} ${JSON.stringify(r.body).slice(0, 200)}`);
+  note('GET /api/mdx/admin', await A('GET', '/api/mdx/admin'));
+  note('PATCH /api/tenant-users/2/4 (same role; a Member tries)', await A('PATCH', '/api/tenant-users/2/4', { role: 'member', reason: 'member of the seeded organization tries a role change' }));
+  note('GET /api/tenant-users/6 (own other organization, from this session)', await A('GET', '/api/tenant-users/6').then(s => s.slice(0, 120)));
+  // Organizations panel now
+  await page.getByRole('button', { name: 'Organizations and invitations' }).click(); await L.sleep(1200);
+  note('panel in the seeded organization', (await page.getByRole('dialog').first().innerText()).replace(/\n+/g, ' | '));
+  await L.shot(page, 'w1-96-organizations-panel-after-switch.png');
+  await page.keyboard.press('Escape');
+  // Account -> Switch organisation, back to Northgate
+  await page.getByRole('dialog').first().getByRole('button', { name: /Close/ }).click().catch(() => {});
+  await page.getByRole('button', { name: /Avery Lind/ }).first().click(); await L.sleep(400);
+  await page.getByRole('menuitem', { name: 'Account', exact: true }).click(); await L.sleep(1800);
+  const acct = page.getByRole('dialog').first();
+  note('Account panel', (await acct.innerText().catch(() => '(no dialog)')).split('\n').filter(l => l.trim()).join(' | ').slice(0, 2600));
+  await L.shot(page, 'w1-93-account-panel.png');
+  const sel = page.getByLabel('Organisation to open');
+  if (await sel.count()) {
+    await sel.scrollIntoViewIfNeeded();
+    const opts = await sel.locator('option').allInnerTexts();
+    note('switcher options', opts);
+    await sel.selectOption({ label: opts.find(t => /Northgate/.test(t)) });
+    await page.getByRole('button', { name: 'Switch organisation' }).click(); await L.sleep(600);
+    await L.shot(page, 'w1-94-account-switch-confirm.png');
+    L.drain(page);
+    await page.getByRole('button', { name: 'Confirm switch' }).click(); await L.sleep(6000);
+    note('switch back: calls', L.drain(page).map(x => x.replace(/"token":"[^"]*/g, '"token":"<redacted>').slice(0, 260)));
+    note('after switch back: url', page.url());
+    if (!/login/.test(page.url())) {
+      note('after switch back: rail foot', (await page.getByRole('button', { name: /Avery Lind/ }).first().innerText()).replace(/\n/g, ' | '));
+      const s2 = await L.api(page, 'GET', '/api/v1/auth/session');
+      note('session says', { org: s2.body?.user?.organizationName, roles: s2.body?.user?.roles });
+      await L.shot(page, 'w1-97-after-switch-back.png');
+      await context.storageState({ path: L.stateFile(AVERY) });
+    }
+  } else note('no switcher in Account', true);
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

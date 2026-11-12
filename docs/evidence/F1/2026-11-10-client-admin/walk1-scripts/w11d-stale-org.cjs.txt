@@ -1,0 +1,40 @@
+// Flow 6c: clean sign-in as Avery (Northgate, admin) -> switch to Concept2Cure Therapeutics (member) -> which
+// organization do the screens that read the browser's saved organization id act on?
+const c = require('../walk/common.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const AVERY = 'avery.lind@northgate-bio.example.test';
+(async () => {
+  const browser = await c.chromium.launch();
+  const context = await browser.newContext({ viewport: c.VIEWPORTS.desktop });
+  const page = await context.newPage();
+  const seen = [];
+  page.on('response', (r) => { const u = r.url(); if (u.includes('/api/')) seen.push(`${r.status()} ${r.request().method()} ${u.replace(c.BASE, '').slice(0, 90)}`); });
+  await c.signIn(page, AVERY);
+  await page.getByRole('button', { name: 'Organizations and invitations' }).click(); await c.sleep(1200);
+  await page.getByRole('dialog').first().getByRole('button', { name: /Switch to Concept2Cure Therapeutics/ }).click(); await c.sleep(700);
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Switch organization' }).click(); await c.sleep(6000);
+  const sess = await c.api(page, 'GET', '/api/v1/auth/session');
+  note('session organization', `${sess.body?.user?.organizationName} (${sess.body?.user?.roles})`);
+  note('rail', (await page.getByRole('button', { name: /Avery Lind/ }).first().innerText()).replace(/\n/g, ' | '));
+  seen.length = 0;
+  await page.goto(c.BASE + '/concept2cure/onboarding', { waitUntil: 'networkidle' }); await c.sleep(2000);
+  const main = await c.textOf(page, 'main');
+  note('onboarding header', main.split('\n').slice(0, 4).join(' | '));
+  note('onboarding: organization name field', await page.getByLabel('Organization name').inputValue().catch(() => '(none)'));
+  note('onboarding: notice', (main.match(/You can review[^\n]*|Only the organization[^\n]*/) || ['(no read-only notice)'])[0]);
+  note('onboarding: organization reads', [...new Set(seen.filter(x => /organizations\/|onboarding\/discovery|industry-profile|clients\?/.test(x)))]);
+  await c.shot(page, 'w1-98-onboarding-after-switch.png');
+  // Home in the switched session
+  seen.length = 0;
+  await page.goto(c.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await c.sleep(1500);
+  note('home: organization reads', [...new Set(seen.filter(x => /organizations\/|clients\?|tenants/.test(x)))]);
+  note('home setup shown?', await page.locator('[data-testid=home-setup]').count());
+  // switch back
+  await page.getByRole('button', { name: 'Organizations and invitations' }).click(); await c.sleep(1200);
+  await page.getByRole('dialog').first().getByRole('button', { name: /Switch to Northgate Biologics GmbH/ }).click(); await c.sleep(700);
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Switch organization' }).click(); await c.sleep(6000);
+  const s2 = await c.api(page, 'GET', '/api/v1/auth/session');
+  note('back in', `${s2.body?.user?.organizationName} (${s2.body?.user?.roles}) | rail: ${(await page.getByRole('button', { name: /Avery Lind/ }).first().innerText()).replace(/\n/g, ' | ')}`);
+  await context.storageState({ path: require('path').join(__dirname, `.state-${AVERY.replace(/[^a-z0-9]/gi, '_')}.json`) });
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
