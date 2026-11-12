@@ -1,0 +1,4 @@
+# F1 (P-92) broad, on the final code: every submission-gateways suite, the gateway and sent-package routes, P-92's settlement, rejection and re-open suites
+# npx vitest run server/services/submission-gateways server/routes/__tests__/mdx-submission-gateway server/routes/__tests__/mdx-sent-package server/services/submission-service/__tests__/held-send server/services/submission-service/__tests__/technical-rejection server/services/ectd/__tests__/filed-sequence-rejection
+ Test Files  59 passed (59)
+      Tests  754 passed (754)

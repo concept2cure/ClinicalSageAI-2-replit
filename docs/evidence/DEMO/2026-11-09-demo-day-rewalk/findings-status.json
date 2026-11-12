@@ -1,0 +1,1205 @@
+{
+ "walkedAt": "51c52751e",
+ "checkedAt": "a9b5af187",
+ "findings": [
+  {
+   "id": "ANA-01",
+   "area": "AnA with keys in",
+   "severity": "demo-breaker",
+   "title": "On C2C-101, any AnA turn that opens a Vault document's text is refused at its next model call",
+   "where": "Any C2C-101 conversation: /concept2cure/project-home?program=66277053-752f-4806-8112-85be3e9d1aea, then a prompt or chip; also the editor's ✻, then 'Draft with AnA'",
+   "evidence": "Established from the code; it cannot be seen live with the dummy key. Gateway message: 'This request contains confidential or restricted inputs requiring local processing (DENY_INPUT_TIER).' (gateway.ts:2486). The generic mapping is 'This request was blocked by AI gateway policy.' (gateway-error-map.ts:267). DB: all 6 C2C-101 vault.documents are classification=CONFIDENTIAL and have extracted_text. Live: all 22 turns reached the provider at ALLOW_INPUT_TIER tierMax 1; 0 DENY in server-1845.log.",
+   "onStage": "On C2C-101, ask only project-level questions (summary, plan, tasks, Vault listing, dispatch blockers, critical path). Do not ask AnA to summarize, read, quote or draft from a C2C-101 document. To show AnA reading a source document, do it on CDISCPILOT01, whos…",
+   "suspectedCode": "server/services/ana/document-catalog-tools.ts:367-379 and :440 (registerDocumentRoutingSource, tier = sensitivityTierForClassification); server/services/ai-gateway/model-call-scope.ts:155 and :184; server/services/ai-gateway/sensitive-placement-policy.ts:25-37; server/services/vault/vault-ingest.se…",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "45dbe6a69 \"S4: a document Claude may not receive is refused at the read, so AnA can say so instead of the turn dying\" (2026-11-09 20:08, after 51c52751e at 18:23 and not an ancestor of it) + 63ed463af \"S4: the read-time tier check moves beside the project boundary, inside the lint limits\". Test-fixture follow-ups: 33ba1f3ec, 60051cafa. At HEAD, read_project_document calls readDocumentBoundary (document-catalog-tools.ts:400, catalog-scope.ts:113-124) before any text is read. When the turn's serving provider is known (stream.ts passes servingModel: lastServedModel), a document whose tier that p…",
+    "stillAt": "The fix refuses earlier, not less (its own words: no change to classifications or to the tier wall). Unreviewed Vault uploads are stored CONFIDENTIAL (server/services/vault/vault-ingest.service.ts:587), and the commit says the seeded demo documents are too. CONFIDENTIAL is tier 2, and tier 2 is refused on every provider that is not self-hosted (server/services/ai-gateway/sensitive-placement-policy.ts:35). So on C2C-101 with a Claude key, AnA still cannot open any seeded Vault document's text. It now says so (catalog-scope.ts:116-123) and the turn goes on, unless a person reclassifies the document to Internal or Public. Making those documents readable is a policy or founder decision, not a c…",
+    "holder": "Unheld. No row dated 2026-11-10 to 2026-11-12 holds document-catalog-tools.ts or catalog-scope.ts. The AnA runtime epic belongs to session_01KZK3 (P-105, from 2026-11-08; COORDINATION.md:1091), which wrote both fixes and released its holds on server/services/ana/** and ai-gateway/** on 2026-11-08 (…",
+    "package": "S4 (Spine 4: AnA; its paths cover document-catalog-tools.ts, catalog-scope.ts and AnaToolExecutor.ts); F1 for a repair. Changing the CONFIDENTIAL default or the tier wall needs a founder decision."
+   }
+  },
+  {
+   "id": "ANA-02",
+   "area": "AnA with keys in",
+   "severity": "demo-breaker",
+   "title": "If the founder's account has any personal AnA preferences or private standing rules, every AnA turn is refused",
+   "where": "Every AnA turn, every project, for the signed-in account",
+   "evidence": "Code: stream.ts:1395-1400 issues issuePrivateRuleModelContext and issueLegacyPrivateModelContext on every turn. model-call-scope.ts:290-291 records each at tier 3, and gateway.ts:1656 adds inputSensitivityTiers [3]. Locally user 1 has 0 user_intelligence_profiles rows, 0 ana_relational_profiles rows and 0 private-rule rows, which is why the 22 turns ran at tier 1.",
+   "onStage": "Before the demo, send one plain turn in the Codespace ('What is this project about?' on CDISCPILOT01). If it answers, this does not apply. If it says 'requiring local processing (DENY_INPUT_TIER)', the account has private preferences or rules. Do not add pers…",
+   "suspectedCode": "server/routes/ana-ri/stream.ts:1384-1400; server/services/ana-context-router.ts:797-829 and :894-935; server/services/ai-gateway/model-call-scope.ts:277-295",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "Nothing on this path changed since 51c52751e: git log 51c52751e..HEAD is empty for ana-context-router.ts and model-call-scope.ts. stream.ts had 7 commits, none touching the owner-private lines. No commit since 2026-11-09T20:00 mentions owner-private context, private rules or preferences. The chain at HEAD: server/routes/ana-ri/stream.ts:1382-1388 builds an owner-private capsule whenever issuePrivateRuleModelContext (server/services/ana-context-router.ts:797, any active private rule) or issueLegacyPrivateModelContext (:894; any non-empty user_intelligence_profiles or ana_relational_profiles field per legacyMaterialPresent :859) returns one. runWithOwnerPrivateModelContexts records each capsu…",
+    "holder": "server/services/ai-gateway/gateway.ts is held by 01T2woo… (Client administration and screen work, Wave B lane W8-csr-build-honesty, from 2026-11-12; COORDINATION.md:122). stream.ts, ana-context-router.ts and model-call-scope.ts are unheld in the 2026-11-10 to 2026-11-12 rows. The AnA runtime epic b…",
+    "package": "S4 (its paths cover stream.ts, ana-context-router.ts, model-call-scope.ts and gateway.ts); F1 for a repair. Changing the tier of owner-private context is tier policy and likely needs a founder decision (the 2026-11-09 tier-1 conversation default and c5926d7d8 were both recorded as founder decisions)."
+   }
+  },
+  {
+   "id": "ANA-03",
+   "area": "AnA with keys in",
+   "severity": "note",
+   "title": "Several AnA actions lead into a tier refusal even on a clean account: approved-derivative drafting, team delegation, picking a Quality record as a source, nonclinical 2.4/2.6 drafting",
+   "where": "AnA conversation: 'Show team' / run_agent, the composer's source picker, the draft tools",
+   "evidence": "Code only. None of these appears on the chips or the listed prompts.",
+   "onStage": "Do not ask AnA to 'use the team' or delegate, do not attach a Quality record as a source, and do not ask for Module 2.4/2.6 nonclinical drafting.",
+   "suspectedCode": "server/services/ai-gateway/gateway.ts:1615-1619; server/services/ana/turn-plan.ts:324-370; server/routes/ana-ri/stream.ts:680-693 and :2049-2055; server/services/ana/module2-nonclinical-inputs.ts:73-90",
+   "atHead": null
+  },
+  {
+   "id": "ANA-04",
+   "area": "AnA with keys in",
+   "severity": "note",
+   "title": "A sixth sign-in to the same account signs the oldest session out mid-demo",
+   "where": "Any page. Observed on /concept2cure/conversation-thread?program=66277053-... during a turn",
+   "evidence": "19:01:43Z: 401 on GET /api/ana-ri/agent-activity, then 401 on /api/v1/auth/session, /api/tenants and /api/users/me, then the Sign in page. Server log line 200136: '[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn)'. Code: DEFAULT_MAX_CONCURRENT_SESSIONS = 5 (shared/auth/session-policy.ts:6); session-inactivity.ts:29-38 SESSION_SUPERSEDED. Org 2 settings.security is {}, so the default applies.",
+   "onStage": "During the demo, sign in once. Do not run rehearsal scripts, other tabs or devices, or let colleagues use the founder's Demo access account at the same time.",
+   "suspectedCode": "server/services/session-inactivity.ts:29-38 and :424; shared/auth/session-policy.ts:6",
+   "atHead": null
+  },
+  {
+   "id": "ANA-05",
+   "area": "AnA with keys in",
+   "severity": "visible-blemish",
+   "title": "Reopening a conversation whose turn failed shows the question with no answer, and Progress says AnA never started",
+   "where": "Recents in the sidebar, then a conversation whose AnA turn failed, e.g. /concept2cure/conversation-thread/ana-ri_1794250768607_bhpnwo9ym?program=66277053-...",
+   "evidence": "Screenshot turn2-c2c101-0.png. The original turn at 18:59:26Z ended with stream code PROVIDER_KEY_REFUSED and a recorded turnRecord, but the reopened thread shows no trace of it.",
+   "onStage": "After a failed turn, start a 'New conversation' rather than reopening the old one from Recents.",
+   "suspectedCode": "Not located in the time box. The client's thread view drops a turn that ended with type:error. Look in client/src/concept2cure/v2 for the conversation-thread surface and its Progress panel.",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "The server saves a turn's answer to the conversation only when the turn was stopped: server/routes/ana-ri/stream.ts:4445-4451 calls persistStoppedAnswer, the only call. A failed turn writes the type:error frame (stream.ts:4485-4491) and saves no assistant message, though it files a 'failed' turn record (stream.ts:4454). The run listing returns an ended run only when it has no turn record (server/routes/ana-ri/runs.ts:403-408), so runToRejoin (anaTurnTimeline.ts:323-331) never brings the failed run back. hydrateHistory builds the reopened conversation only from stored rows (useAnaChat.ts:209-218), so the question stands alone. With no assistant turn, AnaWorkPanel shows 'AnA has not started a…",
+    "holder": "Unheld. No row dated 2026-11-10 to 2026-11-12 holds server/routes/ana-ri/stream.ts, post-processing.ts, runs.ts, client/src/concept2cure/components/ana/useAnaChat.ts, anaTurnTimeline.ts or v2/AnaWorkPanel.tsx. ConversationThread.tsx was released on 2026-11-06 (:110). The AnA runtime epic owner is s…",
+    "package": "S4 (its paths cover stream.ts, post-processing.ts, useAnaChat.ts and AnaWorkPanel.tsx; AnaWorkPanel.tsx is also under D1); F1 for a repair."
+   }
+  },
+  {
+   "id": "ANA-06",
+   "area": "AnA with keys in",
+   "severity": "note",
+   "title": "The tier wall is applied unevenly: search results, editor documents, the editor's 'Draft from sources' and composer-picked Vault sources send CONFIDENTIAL text to Anthropic",
+   "where": "AnA tools search_project_documents, search_document_passages, project_knowledge_search, read_governed_document; editor ✻, then 'Draft from sources'; composer source picker",
+   "evidence": "Code: document-catalog-tools.ts:526-575 has no recordCurrentRunSource. authoring.router.ts:3851 gw.route sets no inputSensitivityTiers and runs outside any run, so the wall at gateway.ts:2472 does not run. retained-source-context.ts:60-75 vault-linked sources carry no origin, so no tier is bound.",
+   "onStage": "Do not claim that confidential documents never reach a frontier model. Say instead that governed reads of classified Vault documents are kept off frontier models. If a document must be shown being used on C2C-101, 'Draft from sources' in the editor will answe…",
+   "suspectedCode": "server/services/ana/document-catalog-tools.ts:526-575; server/routes/authoring.router.ts:3851-3867; server/services/clinical-regulatory-evidence/retained-source-context.ts:60-75",
+   "atHead": null
+  },
+  {
+   "id": "ANA-07",
+   "area": "AnA with keys in",
+   "severity": "note",
+   "title": "Project-page chips fill the composer but do not send; two of them open a new conversation page first",
+   "where": "/concept2cure/project-home?program=<id>",
+   "evidence": "For each of the 4 chips the composer held the prompt and no /api/ana-ri/stream request was made until Enter was pressed. 'Ask AnA to propose it' fills: 'Propose this study's objective of record. Read the protocol in the project's data room and the public record...'.",
+   "onStage": "After a chip, press the send arrow. Do not use 'Ask AnA to propose it' on C2C-101: it explicitly tells AnA to read the data-room protocol (ANA-01).",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/ProjectObjective.tsx:44-47 and :157; ProjectDossier.tsx:331; ProjectHome.tsx:2154-2159",
+   "atHead": null
+  },
+  {
+   "id": "ANA-08",
+   "area": "AnA with keys in",
+   "severity": "note",
+   "title": "All 28 Vault documents are still processing_status PENDING, so meaning-based Vault search has nothing indexed",
+   "where": "Vault; AnA's search_project_documents and project_knowledge_search",
+   "evidence": "Text search still works because extracted_text is stored, as is read_project_document. Locally AnA also shows 'Memory: Could not be read', which is expected without an OpenAI key.",
+   "onStage": "Phrase Vault questions with the documents' own words ('protocol', 'SAP', 'ADSL') rather than paraphrases.",
+   "suspectedCode": "server/services/vault/vault-assistant-search (semantic branch); vault processing worker",
+   "atHead": null
+  },
+  {
+   "id": "CSR-1",
+   "area": "The CSR fallback",
+   "severity": "demo-breaker",
+   "title": "Live step 5's path dead-ends: the project's Review tab offers only 'Open document', and the editor has no 'Record review decision'",
+   "where": "http://127.0.0.1:5000/concept2cure/project-home?program=ec15f653-c98e-4ef0-afaa-4776d9fcc083 → Review → 'Open document' on CDISCPILOT01 Clinical Study Report → /concept2cure/document-authoring?program=…",
+   "evidence": "Review tab buttons: 'Review documents on the review board', 'Open document: CDISCPILOT01 Clinical Study Report'. In the editor: recordDecisionVisible=false. 'Record review decision' exists only on /concept2cure/review?program=… after clicking the CSR card.",
+   "onStage": "Review tab → 'Review documents on the review board' → click the card 'CDISCPILOT01 Clinical Study Report … Awaiting your review' → 'Record review decision'. Do not click 'Open document'.",
+   "suspectedCode": "Runbook wording (README.md, Live step 5). The board is client/src/concept2cure/v2/surfaces/Review.tsx; the dialog is ReviewDecisionDialog.tsx.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "This change: the runbook's live step 5 names the path that works (Review tab, \"Review documents on the review board\", the card, \"Record review decision\"), re-walked on a9b5af187.",
+    "stillAt": "The project's Review tab still offers only \"Open document\" on a row that says \"Awaiting your review\" (ProjectHome.tsx:1163-1164), and the editor has no review decision.",
+    "holder": "ProjectHome.tsx: the project page session (01FTWcmX…, D3).",
+    "package": "D3"
+   }
+  },
+  {
+   "id": "CSR-2",
+   "area": "The CSR fallback",
+   "severity": "demo-breaker",
+   "title": "In the Codespace, the reviewer will have no CSR to review: Demo-day step 4 says 'do steps 11–13', but the review needs step 14 (Send for review)",
+   "where": "Runbook 'Demo day, 2026-11-09' step 4, then Live step 5, as the reviewer on /concept2cure/review?program=…",
+   "evidence": "docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-prepare.cjs:552-554: 'DEMO_PREPARE_UNTIL=freeze stops here'. .devcontainer/post-start.sh:240 runs it with DEMO_PREPARE_UNTIL=freeze. It works locally only because JM sent this CSR to Rhea on 2026-11-02 03:03 UTC.",
+   "onStage": "Before the demo, as the author: More document actions → 'Send for review…' → pick the reviewer (DEMO_REVIEWER_EMAIL). Then sign in as the reviewer (password DEMO_SIGNER_PASSWORD in the Codespace state app.env) and confirm the CSR shows on the board as 'Awaiti…",
+   "suspectedCode": "Runbook only (README.md, Demo day step 4).",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "This change: the runbook's demo-day step 4 says steps 11–14, so the CSR is sent for review before the reviewer looks for it.",
+    "stillAt": null,
+    "holder": "none",
+    "package": "L1"
+   }
+  },
+  {
+   "id": "CSR-3",
+   "area": "The CSR fallback",
+   "severity": "demo-breaker",
+   "title": "Vault sometimes fails to load the project: 'Couldn't load the project vault · The document store didn't respond' (500, a Quality-evidence check)",
+   "where": "http://127.0.0.1:5000/concept2cure/vault?program=ec15f653-c98e-4ef0-afaa-4776d9fcc083 (rail → Vault with the project selected)",
+   "evidence": "On screen: 'Couldn't load the project vault — The document store didn't respond, so nothing was read. Try again, or check the service is reachable.' API: GET /api/c2c/project-vault/ec15f653-c98e-4ef0-afaa-4776d9fcc083 returned 500 {\"success\":false,\"error\":\"Failed to build project vault\"}. Server log: '[c2c-project-vault-routes] project vault read error: Current Quality evidence could not be verified. No native source was supplied.' One project-home load also got GET /api/c2c/projects/…/source-c…",
+   "onStage": "Open the CDISC project's Vault once before the demo so the reconcile has already run. If the banner appears, press 'Try again'.",
+   "suspectedCode": "server/services/clinical-regulatory-evidence/record-source.ts:144 (nativeAdmissionFailure) and :100-116 (readQualityProjectEvidence inside the vault read); server/routes/c2c/project-vault.ts; client copy at client/src/concept2cure/v2/surfaces/Vault.tsx:255.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "Two commits. 8c4a9e5a8 \"F1: approving a controlled document no longer breaks every project's Vault\" (2026-11-10): listClientDocuments now checks only the target project's sources, and the Vault refreshes its project's Quality sources first; a refresh it cannot verify marks the data room unavailable instead of failing the read (project-vault.ts:715-734, :2096). df1a57ef1 \"F1: one read admits a project once, however many of its sources it lists\" logs the cause of a failed projection.",
+    "stillAt": "One path still turns into a whole-Vault 500. A SourceReadAccessError from the data-room list after a successful refresh is rethrown: listClientDocuments at project-vault.ts:2102, `if (!isMissingStore(err)) throw err;` at :2171, then 500 \"Failed to build project vault\" at :2236. The client shows that as \"The document store didn't respond\" (Vault.tsx:263-266). Three errors take this path: (1) record-source.ts:154's 503 NATIVE_SOURCE_ACCESS_UNAVAILABLE. getCurrentReadableSourceScope also admits superseded snapshots (no is_current filter, source-read-access.ts:163-169), which authorizeQualityEvidenceSnapshot checks and the refresh never exercises. (2) 503 SOURCE_READ_ACCESS_CHANGED when a Quali…",
+    "holder": "unheld. record-source.ts: the Quality lane (01GyGhjg…) released it after df1a57ef1 (COORDINATION.md:989), and the data-room lane (01QoxbLdTrwY…) shows \"(none held)\" (:112). server/routes/c2c/project-vault.ts: unheld; its only 2026-11-12 hold was one line, released with e523113df9 (:423).",
+    "package": "F1 (both fixes landed as F1). Path coverage: S1 covers server/routes/c2c/**; S2/S12 cover clinical-regulatory-evidence/**."
+   }
+  },
+  {
+   "id": "CSR-4",
+   "area": "The CSR fallback",
+   "severity": "visible-blemish",
+   "title": "The Vault's Data room contradicts itself: 'Captured 21 … 21 need review' and 'Nothing captured for this project yet.'",
+   "where": "Vault → 'Uploads · 8' tab, Data room strip",
+   "evidence": "'Data room Captured 21 › Classified 0 › Filed to vault 0 | 21 need review — the classifier would not propose a folder. | Nothing captured for this project yet.' The 21 are Quality records written into the project at 18:58 by the Vault read. Project home Records went from 'Data Room sources · 0' to '· 21'.",
+   "onStage": "Show the Vault from the Library tab (search 'CDISCPILOT01'), not the Uploads tab.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/Vault.tsx:580-598 shows 'Nothing captured' when sources is empty, even when captured > 0. The server data-room block returns captured=21 with no sources.",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "912ec3cf35 \"F1: the Vault's route suites follow its Quality refresh; its data room counts what it lists\" (2026-11-10, after 51c52751e). countDataRoomStages now leaves out captured Quality records (vault-data-room-filing.ts:114-116). Their dossier has no suggested folder, so every one was counted as \"need review\", while the list drops them because they have no original file. The client copy is unchanged: Vault.tsx:609-611 still shows \"Nothing captured\" whenever the list is empty, so a remaining gap between count and list would bring it back. One such gap: the counts are not limited to sources …",
+    "stillAt": null,
+    "holder": "vault-data-room-filing.ts: unheld. Vault.tsx: J2 (01QoxbLb…, from 2026-11-06) holds row copy only (COORDINATION.md:115). The eTMF lane (from 2026-11-10) holds only the Trial master file control (:130).",
+    "package": "F1 (as landed); S2/S6 cover server/services/vault/**; D6/S6 cover Vault*.tsx"
+   }
+  },
+  {
+   "id": "CSR-5",
+   "area": "The CSR fallback",
+   "severity": "note",
+   "title": "Live step 1 says 'seven study files at Approved', but define.xml is 'Not sent for review', and the Uploads tab shows 'Auto-filed · confirm'",
+   "where": "Vault → Library → search 'CDISCPILOT01'; Vault → Uploads",
+   "evidence": "Approved: ADSL, ADAE, ADLBC, ADLBH, ADVS, the ADaM bundle manifest, and 'CDISCPILOT01 SAP efficacy results'. 'CDISCPILOT01 DEFINE define.xml — Module 5 · clinical · Not sent for review'. Header: '8 uploaded files · 8 awaiting confirmation'. Each upload chip says 'Auto-filed · confirm'.",
+   "onStage": "Say 'the analysis datasets and the bundle manifest are approved at their exact hash'. Do not claim every file is approved. Show approval from the Library list or a file's detail ('Approved · v1.0'), not the Uploads tab.",
+   "suspectedCode": "docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs:36 (APPROVE omits DEFINE)",
+   "atHead": null
+  },
+  {
+   "id": "CSR-6",
+   "area": "The CSR fallback",
+   "severity": "visible-blemish",
+   "title": "The CSR files text shows raw code identifiers (finalizePdfA, ECTD_REQUIRE_PDFA=true)",
+   "where": "CSR editor → Build from the study's data → CSR files (after 'Assemble CSR files')",
+   "evidence": "'Leaves are PDF 1.7. PDF/A conversion is the packager’s finalizePdfA (Ghostscript) at packaging, where installed; ECTD_REQUIRE_PDFA=true refuses an unconverted leaf.' The gap list also reads 'Gap: CSR section 15 is prepared from source outputs and records, not drafted by a CSR job; this draft does not contain it.'",
+   "onStage": "Scroll past the line, or present it as the packaging note. Point to the file table and the 'Missing appendices … Blocks placement' list instead.",
+   "suspectedCode": "server/services/csr/csr-assembly.ts:140 (PDFA_STATEMENT)",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "3045b0f0c \"F1: the CSR assembly says when its files become PDF/A in words, not with a function and a setting name\" (2026-11-10). CSR_ASSEMBLY_PDFA_STATEMENT is now plain words (csr-assembly.ts:142), and the identifiers remain only in comments (:31-32, :141). Caveat: the statement is saved in csr_assembly_runs.result (csr-assembly-run.ts:268, :326), and CsrAssemblyControl.tsx:149 shows the saved value. An assembly run before the fix, such as one prepared in the Codespace, still shows the old text until it is assembled again.",
+    "stillAt": null,
+    "holder": "unheld (csr-assembly.ts and CsrAssemblyControl.tsx are not in W8's list at COORDINATION.md:122, nor in the 01QoxbLZ… CSR lane's list at :1335-1356)",
+    "package": "F1 (as landed); S3 covers server/services/csr/**"
+   }
+  },
+  {
+   "id": "CSR-7",
+   "area": "The CSR fallback",
+   "severity": "visible-blemish",
+   "title": "Timestamps: the review dialog shows the request time twice, and the freeze time is in local time in one place and UTC in another",
+   "where": "Review board → CSR → Record review decision (header); CSR panel Study data vs the reviewer's checkbox",
+   "evidence": "Dialog: 'Review requested 2026-11-02 03:03:36 UTC' and directly below it 'Nov 02, 2026, 03:03 · UTC'. Panel: 'frozen 11/2/2026, 2:57:55 AM' (browser locale, no zone). Reviewer: 'frozen 2026-11-02 02:57 UTC'.",
+   "onStage": "If asked, say the reviewer's view is in UTC and the editor's in local time.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx:82 (GovernedTimestamp); client/src/concept2cure/v2/editor/StudyDataBuild.tsx (option label uses toLocaleString)",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "The request time: ReviewDecisionDialog.tsx:83 renders `Review requested <GovernedTimestamp value={requestedAt} />` with the default stacked layout. That prints the time twice, as UTC (GovernedTimestamp.tsx:104) and again as local with the zone (:106); in a UTC Codespace both lines read the same. The freeze time: StudyDataBuild.tsx:112 prints `frozen ${new Date(createdAt).toLocaleString()}` (local), while CsrEvidenceReview.tsx:46,51 prints `frozen <UTC>`. Since 51c52751e, the dialog changed only for section names (32bd2a326) and StudyDataBuild/CsrEvidenceReview only for P-126 (c268e6f7b). No timestamp fix appears in commits since 2026-11-09T20:00.",
+    "holder": "ReviewDecisionDialog.tsx: Wave B lane W1, 01T2woo…, from 2026-11-12 (COORDINATION.md:122). StudyDataBuild.tsx: Wave B lane W8, 01T2woo… (:122). CsrEvidenceReview.tsx: released by 01QoxbLZ… with its P-126 commit (:1345). GovernedTimestamp.tsx: unheld.",
+    "package": "F1. Path coverage: S4 (ReviewDecisionDialog.tsx), D4 (Review*.tsx, editor/**), S3 (editor/StudyData*.tsx)."
+   }
+  },
+  {
+   "id": "CSR-8",
+   "area": "The CSR fallback",
+   "severity": "note",
+   "title": "The editor calls the prepared CSR an 'Unbound working copy'; the runbook says 'There is no working copy'",
+   "where": "CSR editor, left outline header",
+   "evidence": "'Saved draft sections · unbound — Unbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.' Runbook prep step 12: 'There is no working copy: this CSR is the document that is reviewed, signed and filed.'",
+   "onStage": "If a client reads it: 'unbound' means not yet placed into the filing, which happens after signature.",
+   "suspectedCode": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:4390",
+   "atHead": null
+  },
+  {
+   "id": "CSR-9",
+   "area": "The CSR fallback",
+   "severity": "note",
+   "title": "Local leftovers clutter the path: 'Template check: second CSR entry' and the old imported working copy, which the review board pre-selects",
+   "where": "Project Author list; editor outline; /concept2cure/review?program=…",
+   "evidence": "Author list: 'Safety and Efficacy of the Xanomeline Transdermal Therapeutic System (TTS)… Draft', 'Template check: second CSR entry · Module 5', 'CDISCPILOT01 Clinical Study Report'. The review board pre-selects 'Safety and Efficacy…', and AnA's suggestion reads 'Review Safety and Efficacy of the Xanomeline…'. Locally, the CSR's own review dialog lists all 119 sections as 'No saved content in this section.', with 119 gaps of the form 'has no saved text. A CSR is approved only when every section…",
+   "onStage": "In the Codespace, nothing to do. Locally, always click the CSR card explicitly.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "CSR-10",
+   "area": "The CSR fallback",
+   "severity": "note",
+   "title": "Prep step 11 leaves out the author's per-heading 'Send for review', and who may approve",
+   "where": "CSR editor → Build from the study's data → Section review",
+   "evidence": "Each drafted heading has a 'Send for review' button for the author (CsrBuildProgress.tsx:210). Approve appears for a reviewer or approver only after 'Read saved section text'. In the Codespace, Demo access signs in as DEMO_SEED_EMAIL = DEMO_AUTHOR_EMAIL, who requested the build, so that account cannot approve headings.",
+   "onStage": "As the author, press each drafted heading's 'Send for review'. Then sign in as the reviewer or approver (DEMO_SIGNER_PASSWORD) to read and approve. Only then use 'Import approved sections into this document'.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx:200-225",
+   "atHead": null
+  },
+  {
+   "id": "CSR-11",
+   "area": "The CSR fallback",
+   "severity": "note",
+   "title": "Runbook labels that differ from the screen",
+   "where": "CSR editor and New document dialog",
+   "evidence": "'Build CSR draft' is now 'Build CSR draft · CDISCPILOT01'. 'More document actions → Send for review' is 'Send for review…'. 'New document… → M5' are CTD-module buttons, and M5 does not filter the 469-template 'Start from' list. 'GLOBAL · Clinical Study Report (CSR)' is listed once, beside '5.3.5.1 · Clinical Study Reports of Controlled Studies' and 'M5 · Module 5: Clinical Study Reports — preparation worksheet'. The 'CSR builds from this study data' select defaults to the newest build. Live ste…",
+   "onStage": "Choose 'GLOBAL · Clinical Study Report (CSR)' exactly. Run 'Build narratives' on the real build before the demo.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "CSR-12",
+   "area": "The CSR fallback",
+   "severity": "note",
+   "title": "Live step 6's refusal cannot be shown before a recorded review: Freeze and E-sign are disabled",
+   "where": "CSR editor toolbar",
+   "evidence": "Freeze and E-sign are greyed, with 'Needs its scientific review first'. WORKFLOW_MODEL_QUALIFICATION_REQUIRED and WORKFLOW_HUMAN_ADOPTION_REQUIRED come only after an approval is recorded, and that approval also requires no '[…]' placeholders left.",
+   "onStage": "Show the disabled Freeze and E-sign with their reason as the governance control. Do not press E-sign: it can open a password dialog.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "BT-F1",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "demo-breaker",
+   "title": "Walkthrough §3, §7 and §8 promise signed, effective and frozen records that do not exist: the synopsis is not frozen or signed, no SOP is effective, and E-sign shows 0",
+   "where": "Project page > Documents > '[Demo · Biotech] Protocol Synopsis C2C-101-201' > Open; rail > Quality (SOP register); bottom-left JM Smith > Admin > Open the audit trail > E-sign",
+   "evidence": "Synopsis header: 'Draft · v1 · Saved 36 min ago', with no 'This document is frozen' banner. Register: '0 effective · 0 under review · 11 draft'; C2C-SOP-001, 002, 003 and 004 are each 'Draft 1.0 —'. Acknowledgement coverage reads 'No training-controlled documents yet'. Audit trail filter: 'E-sign 0', with an empty table. Seed log: 'freeze Protocol Synopsis … not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)', and the same for the review, e-signature and SOP-00…",
+   "onStage": "Do not say 'point at the red banner', 'a second person applied a Part 11 signature', 'SOP-001/002 Effective 1.0', 'SOP-003 under review', 'read-and-understood attestation', or 'filter E-sign to show the two signature events'. Say instead that freeze, signatur…",
+   "suspectedCode": "scripts/demo/launch-demo/lib.mjs:229-241 (the signer is optional), .devcontainer/post-start.sh:169-183, docs/demo/biotech-walkthrough.md §3, §7 and §8.",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "11aa49118 \"L1: the Codespace's demo seed signs its two-person steps, with the approver\" (post-start now passes OQ_SIGNER_*=DEMO_APPROVER_EMAIL to demo:seed; at 51c52751e it passed no signer); ff49ebed7 \"L1: a fresh Codespace's demo seed finishes, with its QMS approvals signed\" (designates the approver as QMS approver first; walked from an empty DB: SOP-001/002 effective); 3d22a942d \"F1: a Codespace's demo seed gets its third person, so the Vault reviews and approvals are signed\" (OQ_APPROVER_*). Now .devcontainer/post-start.sh:233-239. The security lane's walk of 2026-11-12 evening (COORDINAT…",
+    "stillAt": null,
+    "holder": "Unheld for .devcontainer/** (the Codespace setup row, 01QoxbLaF…, holds none). scripts/demo/launch-demo/lib.mjs, packs/biotech*.mjs and docs/demo/biotech-walkthrough.md are named as GA-map lane L3 in the Client administration row (01T2woo…, from 2026-11-10, COORDINATION.md:121). 011Dpx… holds no de…",
+    "package": "L1 / F1 for .devcontainer (the fixing commits' trailers); DATA for scripts/demo/**"
+   }
+  },
+  {
+   "id": "BT-F2",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "demo-breaker",
+   "title": "Walkthrough §6 dispatch script contradicts the screen: the founder would admit a defect that no longer exists",
+   "where": "Submission Center > Dispatch tab (C2C-101, sequence 0000); also the project page Filing card",
+   "evidence": "Screen: 'Not yet. Four things stand between sequence 0000 and dispatch.' The four are '8 open error-severity validation finding(s)…', '6 leaves point at documents not yet approved…', 'No completed Shadow Review…' and '…requires a 21 CFR Part 11 release signature'. The Validation tab reads 8 errors: IND_MODULE3_REQUIRED for 3.2.S and 3.2.P, and MISSING_REQUIRED_SECTION for 1.1, 1.2, 1.3, 1.12.14, 1.14.4.2 and 1.20. The leaves resolve correctly ('points at vault_documents f4412b72-…'). The walkth…",
+   "onStage": "Say 'four blockers': real content gaps (Module 3 and six required Module 1 sections), six source documents not yet approved, no shadow review, and no release signature. Do not mention the UUID defect.",
+   "suspectedCode": "server/services/ectd/dispatch-gate.ts:70; docs/demo/biotech-walkthrough.md §6.",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "docs/demo/biotech-walkthrough.md:128-135 still reads 'Dispatch blocked — 3 blockers … six error-severity structural findings' and blames 'leaves placed from the Vault by UUID'. The only commits to this file since 51c52751e (14f00b197, 0155d81c7) added the data-catalog paragraph and §6b and left §6 as it was. A 4th blocker comes from the release-approval gate (evaluateReleaseApprovalGate, server/services/ectd/dispatch-gate.ts:96-117), and the structural errors now include IND_MODULE3_REQUIRED (dispatch-readiness.ts:439-449), not the UUID defect. The GA map tracks the same item as GA-DEMO-16 (open).",
+    "holder": "docs/demo/biotech-walkthrough.md is named as GA-map lane L3 in the Client administration row (01T2woo…, from 2026-11-10, COORDINATION.md:121). No commit from that lane has landed on the file yet.",
+    "package": "F1 (the GA map assigns the scripts in docs/demo/** to F1)"
+   }
+  },
+  {
+   "id": "BT-F3",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "demo-breaker",
+   "title": "CMC 'Module 3 build' on C2C-101 is a dead end: it refuses the biologic with a 409, while Validation tells the user to place Module 3 from CMC",
+   "where": "/concept2cure/cmc?program=66277053-752f-4806-8112-85be3e9d1aea > 'Module 3 build' tab (tour stop 08 is CMC on C2C-101)",
+   "evidence": "'Module 3 is not composed here for this project. This project records its product as a biologic, and Module 3 is composed here only for a drug (a small-molecule medicinal product)…'. API: 409 GET /api/cmc/module3-os/build-state/66277053-752f-4806-8112-85be3e9d1aea. Console: 'Failed to load resource: the server responded with a status of 409 (Conflict)'. The Overview tab reads 'No Module 3 sections yet'. Meanwhile Submission Center > Validation says 'To clear this, place Module 3 from the CMC mo…",
+   "onStage": "On C2C-101 show only the CMC 'Study records' tab: substance, methods, specifications, stability and batches. Do not open 'Module 3 build' on C2C-101. Show the Module 3 compilation on '[Demo · Biotech] C2C-201 oral JAK1 inhibitor' instead, which the seed repor…",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:442; services/cmc/composition-scope.ts; server/services/module3-convergence-service.ts (build-state).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "Unchanged in the path the finding names. client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:429-449 still renders the 409 composition refusal ('Module 3 is not composed here for this project'). server/services/ectd/dispatch-readiness.ts:439-449 (IND_MODULE3_REQUIRED, not changed since 51c52751e) still tells the user to 'place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\")' with no modality exception. server/services/cmc/composition-scope.ts is not changed. Only the demo was routed around it: 0155d81c7 (C2C-201 is created under C2C-101's sponsor) and walkthrough §6b send Module 3 to C2C-201 and describe the biologic refusal. Whether CMC may compose for a biol…",
+    "holder": "CmcModule3Build.tsx is held by the Client administration and screen work session (01T2woo…), Wave B lane W4-cmc-truth-server, from 2026-11-12 (COORDINATION.md:122). dispatch-readiness.ts is unheld (RIM released it 2026-11-09, COORDINATION.md:138). Widening the boundary is the founder's decision.",
+    "package": "S5 for the dispatch-readiness.ts message; D5 / S7 for CmcModule3Build.tsx; PLAN with a Founder-Decision (P-28) to widen the boundary"
+   }
+  },
+  {
+   "id": "BT-F4",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Validation tab prints raw rule codes, a stray '·' line and table-plus-UUID text",
+   "where": "Submission Center > Validation (sequence 0000)",
+   "evidence": "Each finding's heading is a monospace code such as 'IND_MODULE3_REQUIRED', with '·' on its own line and then '3.2.S'. The body text reads 'Leaf \"Investigator's Brochure v3.0\" (m1.14.4.1) points at vault_documents f4412b72-f74c-45c5-959d-261d0e051e4d, which is not yet approved'. The snake_case ids detected were vault_documents and check_consistency.",
+   "onStage": "Skip the Validation tab, or show only the summary line ('8 errors · 6 warnings · 2 info'). The Dispatch tab says the same in plain words.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (the Validation workspace).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "The Validation workspace was not changed since 51c52751e (the file's only commit is 114773a67, the Dispatch tab's test package). client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1362 prints f.code (the raw rule code) as the row title. :1366 prints an I.dot plus the section code. :1372 joins the rule line with ' · ' (title · regions · severity · enforcement). :1343 is the dotted summary line. The table-plus-UUID text comes from pointerLabel at server/services/ectd/dispatch-readiness.ts:506-508 ('${documentTable} ${documentUuid}'), used in every UNRESOLVED_DOCUMENT, DOCUMENT_CONTENT_NOT_PINNED and DOCUMENT_NOT_APPROVED message. That file is also unchanged since 51c52751e.",
+    "holder": "Unheld. No row dated 2026-11-10 to 2026-11-12 names SubmissionSeqWorkspaces.tsx; the 2026-11-06 P-104 assignment is stale. dispatch-readiness.ts is unheld (released by RIM 2026-11-09).",
+    "package": "D7 (Submission*.tsx) and S5 (server/services/ectd/**); F1 as a repair"
+   }
+  },
+  {
+   "id": "BT-F5",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Builder says the source of every leaf is 'not yet determined', although the Vault shows each one filed and placed; history row reads 'Ai Generate'",
+   "where": "Submission Center > Builder (sequence 0000)",
+   "evidence": "'Source evidence not yet determined for 6 leaves.' Each row's Source document reads 'Vault document · not yet determined'. History lists 'Ai Generate · 2026-11-09 18:54 · JM Smith'. The Company identity table uses lowercase field names 'name' and 'address' with 'Missing', and 'Applicant of record: Missing'.",
+   "onStage": "In Builder, point only at the leaf table's section and title columns, then move on. Do not scroll into the companions or history panels.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:581 and :1019.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "44329d6a4 \"fix(ectd): a placed Module 3 section's leaf is traced to its CMC section, so the Builder can verify it\" (21 undetermined leaves read 'Source verified' after it); f793981ea \"fix(ectd): a Vault PDF filed from a sealed document has its text established from the seal its receipt names\". Both are in server/services/ectd/submission-leaf-source-evidence.ts.",
+    "stillAt": "The tour's six leaves are uploaded Vault PDFs (IB, minutes, QOS, tox, protocol, SAP) with no Authoring filing receipt. They still take the non-text branch at server/services/ectd/submission-leaf-source-evidence.ts:264-267 and return SOURCE_BINARY_CONTENT_UNVERIFIED, so their status is 'undetermined'. The Builder renders this unchanged at client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:588 (' · not yet determined') and :1020-1027 ('Source evidence not yet determined for N leaves'). f793981ea's own message says a PDF with no receipt 'stays not established, as before'.",
+    "holder": "Unheld. submission-leaf-source-evidence.ts was held by 01QoxbLcnW… for one commit and released with 44329d6a4. SubmissionSeqWorkspaces.tsx is unheld.",
+    "package": "S5 (server/services/ectd/**); the fixes used F1"
+   }
+  },
+  {
+   "id": "BT-F6",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Dispatch verdict copy: 'finding(s)' and internal jargon in brackets",
+   "where": "Submission Center > Dispatch",
+   "evidence": "'8 open error-severity validation finding(s) must be resolved before dispatch.' and '…none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).'",
+   "onStage": "Read the headline and paraphrase the blockers rather than reading them out.",
+   "suspectedCode": "server/services/ectd/dispatch-gate.ts:70.",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "server/services/ectd/dispatch-gate.ts:78 is still '${n} open error-severity validation finding(s) must be resolved before dispatch.' and :81 '…Shadow Review critical(s)…'. 7df1d292c changed only the notRequired note. The bracketed jargon is the release-signature suffix at dispatch-gate.ts:190 (' (${input.detail})'). It is fed with internal details: 'no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:N' (release-signature-status.ts:326 and :549-553; sequence-release-signature.ts:286). None of these files changed copy since 51c52751e. The Dispatch tab prints a.gate.blockers verbatim (SubmissionSeqWorkspaces.tsx:2232). blockerForDisp…",
+    "holder": "dispatch-gate.ts is named as GA-map lane L4 in the Client administration row (01T2woo…, from 2026-11-10, COORDINATION.md:121; 7df1d292c of 2026-11-12 is that lane's). assess-dispatch-readiness.ts stays RIM's (COORDINATION.md:121-122). release-signature-status.ts, sequence-release-signature.ts and S…",
+    "package": "S5 (server/services/ectd/**, Submission*.tsx); F1 as a repair"
+   }
+  },
+  {
+   "id": "BT-F7",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Audit trail shows raw targets and IDs, a confusing second-chain card, and an org-wide 200-row window dominated by sign-ins",
+   "where": "JM Smith menu > Admin > Open the audit trail (/concept2cure/audit-trail?program=…)",
+   "evidence": "Target column: 'vault_document:f4412b72-f74c-45c5-959d-261d0e051e4d', 'user:1'. ID column: red, full 'AUD-9aa96560-f486-…' UUIDs. A card reads 'Audit-event chain: no entries yet … A second chain, kept per organisation, that some services write to instead of the ledger'. Filters: 'Authoring 0', 'Admin 188'. The newest rows are 'Downloaded' (written when the Vault IB was viewed) and 'Signed in on a development server: second factor skipped'. Snake_case ids on screen: ana_turn_record, cre_evidence…",
+   "onStage": "Show the green 'Hash chain intact … 1304 chained entries' banner and 'Export signed bundle'. Do not read the rows out, and do not click E-sign or Authoring.",
+   "suspectedCode": "client/src/concept2cure/v2/RecordHistory.tsx; server audit-trail-ledger.routes.ts.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "3ab73b247 \"Audit trail: the screen reads the route's full window and says when the list is not the whole trail\" (limit=1000 at AdminSurfaces.tsx:154-155, window note at :572-578; E-sign now finds the biotech signatures); a8187cb66 \"F1: the audit-event chain verifies what its trigger hashed; the audit trail and signed export read a governed change back in words\" (target names the person or thing, plus targetRef; EVENT_TYPE_WORDS; the second chain no longer reads as falsely broken)",
+    "stillAt": "The second-chain card is unchanged: AuditEventChain.tsx:155 and :191, rendered at AdminSurfaces.tsx:570 and :907. The list is still org-wide with sign-ins included, now up to 1,000 rows. A raw fallback target remains at server/routes/audit-trail-ledger.routes.ts:251-253 ('${table_name} ${record_id}') and in deriveEventTarget :191-203 ('entity_type id'). RecordHistory.tsx is unchanged since 51c52751e. The security lane noted on 2026-11-12 that a freeze signature is labelled 'Document e-signed', the same as the e-signature (COORDINATION.md:165).",
+    "holder": "AdminSurfaces.tsx is held by the security lane (01QoxbLZVw6z…), GA-map lane L5, from 2026-11-12 05:10 UTC (COORDINATION.md:165). audit-trail-ledger.routes.ts is held by J2 (01QoxbLb…, event names only) and is also named in the Client administration row (01T2woo…, 2026-11-10). AuditEventChain.tsx is…",
+    "package": "F1 (no D package lists the audit trail files)"
+   }
+  },
+  {
+   "id": "BT-F8",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Vault Uploads tab: the Data room line says 'Filed to vault 0, 25 need review' directly above six Filed files",
+   "where": "Vault > 'Uploads · 6' tab",
+   "evidence": "'Data room Captured 26 › Classified 1 › Filed to vault 0' and '25 need review — the classifier would not propose a folder.' Below it: 'Uploaded files 6 uploaded files in this project', all marked 'Filed'. The Vault header reads '1 authored document · 6 uploaded files', while the project's Records card says 'Authoring documents · 12'.",
+   "onStage": "Go straight to the 'Uploaded files' list. Do not dwell on the Data room line.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces (Vault uploads / data-room pipeline header).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "The data-room block is unchanged since 51c52751e apart from a line offset. client/src/concept2cure/v2/surfaces/Vault.tsx:597-602 still draws the 'Captured › Classified › Filed to vault N' strip from data-room sources only. :188 (RoomNotes) prints 'N need review — the classifier would not propose a folder.' Files uploaded on the page bypass the data room; that is said only inside the closed 'How files reach the Vault' disclosure at :564-569. So the strip reads 0 filed above Uploaded files that are all Filed. No commit since 2026-11-09T20:00 addresses it.",
+    "holder": "Not named as a block. Vault.tsx is held by J2 (01QoxbLb…) for row copy only, and in part by Vault parity (01KnUG…: the header's Trial master file control). Vault parity has been landing Vault screen fixes on 2026-11-11 and 2026-11-12 (COORDINATION.md:130).",
+    "package": "D6 / S6 (Vault*.tsx); F1 as a repair"
+   }
+  },
+  {
+   "id": "BT-F9",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Opening a Vault document: the viewer is hidden behind 'Versions' and opens in a 320 px box below the fold",
+   "where": "Vault > Uploads · 6 > click 'Investigator's Brochure C2C-101 v3.0' > right panel > Versions > View",
+   "evidence": "The 'View' button only appears inside the collapsed 'Versions' section. The viewer is an iframe of 319x320 px in the right column, with a '× Close viewer' label wrapped over two lines and 'SHA-256 b23339ccea9d8b0e… — verified against the vault record before it was served'. Headless Chromium rendered the iframe grey; it has no PDF plugin, so I could not confirm whether it renders in a real browser.",
+   "onStage": "If asked to open the IB, use 'Download' and open the PDF, or just show the SHA-256 and filing details. Do not use the in-panel View.",
+   "suspectedCode": "Vault version viewer (client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx covers it).",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "fd60d97c8 \"fix(vault): a document is read from its record, in a wide reading drawer\" (View beside Download opens a 1040 px drawer; was a 328 px frame behind the closed Versions section) and 90ec856d9 \"fix(vault): a version is read in the same wide drawer as its record\" (Versions → View version opens the same drawer; was 319×320 px). Both were walked in the running app on PostgreSQL (docs/evidence/SPINE/S6/2026-11-11-vault-read-from-record/, 2026-11-12-version-read-in-drawer/).",
+    "stillAt": null,
+    "holder": "Vault parity (01KnUG…) landed both. No current hold names VaultVersionViewer.tsx or VaultVersions.tsx.",
+    "package": "S6 / D6 (Vault*.tsx); the fixes used F1"
+   }
+  },
+  {
+   "id": "BT-F10",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Project page Module completion reads '0 drafted … No editing copy of this filing yet' under a list of 8 Draft documents; the Team card has odd copy",
+   "where": "C2C-101 project page, below Documents and Quality documents; right-hand Team card",
+   "evidence": "'Dossier readiness 0% — 0 of 72 sections approved or locked. No editing copy of this filing yet. 0 in review · 0 drafted', followed by 'No editing copy of this filing yet. Updated Nov 9, 2026, 6:51 PM' repeated for each of the five modules. Team card: '3 open items assigned to someone not on this list'. The walkthrough and seed say 92 scaffolded sections; the UI says 72.",
+   "onStage": "Stop scrolling at the Documents list. If asked about readiness, say '72 required sections, none approved yet; the drafts become filing sections once placed into the filing'.",
+   "suspectedCode": "client/src/concept2cure/v2 project home (Module completion / dossier readiness block).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "server/services/c2c/dossier-read.ts is unchanged since 51c52751e. It counts only c2c_documents sections. The project's Draft documents are Authoring documents in another store and are not bound to the filing. ProjectDossier.tsx changed only by eb94263b2 (a door to the section). It still prints '{inReview} in review · {drafted} drafted' at client/src/concept2cure/v2/surfaces/ProjectDossier.tsx:195. It prints 'No editing copy of this filing yet.' at :241-242 (noCopyWords) whenever no Authoring document is bound to the filing.",
+    "holder": "D3's files (surfaces/Project*.tsx) are held by the Project page session (01FTWcmXm7At3ZXBE5VWn6oS), from 2026-11-08 (COORDINATION.md:109). dossier-read.ts is unheld.",
+    "package": "D3 (Project*.tsx); F1 for the dossier-read semantics"
+   }
+  },
+  {
+   "id": "BT-F11",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "visible-blemish",
+   "title": "Raw identifiers and ISO dates on the tour screens",
+   "where": "Quality register; Change control; CMC Study records; Protocol workspace; Compile & export; Shadow review; Vault detail",
+   "evidence": "Quality: NEXT REVIEW '2027-11-09', the 'WORKSTREAM' eyebrow, uppercase 'EFFECTIVE DOCUMENTS' labels. Change control: TARGET '2026-12-24'. CMC Study records: Phase 'phase_2', CAS '--'. Protocol workspace: dropdown '… · in_development', 'v0.2 · updated 2026-11-09', and the tab row clipped at 1440 ('Risk' is cut off). Compile & export: 'rule pack ind:fda ich-m4-v2.2'. Shadow review: '11/9/2026, 6:54:44 PM'. Vault detail: 'CTD section m1.14.4.1'.",
+   "onStage": "Do not zoom into these columns. Talk over them.",
+   "suspectedCode": "client/src/concept2cure/quality/SopRegister.tsx, quality/ChangeControl.tsx, v2/surfaces/CmcModule3Build.tsx, protocol-dev surface; none use GovernedTimestamp.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "5bef8ec75 \"F1: the protocol workspace shows a protocol's state and a record's category in words, not stored values\" (inWords in ProtocolGov.tsx: picker, schedule of assessments, risk register, budget); 307d82d2a \"CMC says what a Module 3 section still needs in words, not as the composer's field names\" (CmcModule3Build.tsx missing inputs through module3InputList)",
+    "stillAt": "Quality dates are still ISO. formatDate is String(d).slice(0,10) at client/src/concept2cure/quality/data.ts:202-205, used by the SOP register and change control (ChangeControl.tsx:352). SopRegisterRow.tsx:294 prints effectiveDate.slice(0,10). Change control's linked records show linkedRef in mono at ChangeRecordDetail.tsx:179; the sales rehearsal's E40 recorded Vault UUIDs there. CMC Module 3 build still prints the raw contradiction type at CmcModule3Build.tsx:598. Protocol development still shows ISO dates at ProtocolDevWorkspace.tsx:114 (' · updated YYYY-MM-DD') and ProtocolDevDesign.tsx:229.",
+    "holder": "client/src/concept2cure/quality/** is held by Quality and training (01GyGhjgjrNv…), from 2026-11-06, updated 2026-11-12. CmcModule3Build.tsx is held by 01T2woo… (Wave B W4, 2026-11-12). ProtocolDev* are unheld (released, COORDINATION.md:208).",
+    "package": "D7 (client/src/concept2cure/quality/**); D5 / S7 (CmcModule3Build.tsx); S3 (ProtocolDev*.tsx); F1 as a repair"
+   }
+  },
+  {
+   "id": "BT-F12",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "note",
+   "title": "Quality register and Change control are org-wide inside the C2C-101 context, and other projects' rows with 'Approve' buttons come first",
+   "where": "/concept2cure/quality?program=66277053-… (SOP register and Change control)",
+   "evidence": "The register lists 11 SOPs: C2C-SOP-001 to 004, LMN-SOP-201 to 203, and MDX-SOP-101 to 104. The change log lists 'LMN-CC-2026-021 … Under assessment … Advance Approve' and 'MDX-CC-2026-001 … Approve' above 'C2C-CC-001 … Proposed'.",
+   "onStage": "Say 'the quality system is organisation-wide, not per project'. Point at the C2C rows by number. Never press Advance or Approve.",
+   "suspectedCode": "client/src/concept2cure/quality/ChangeControl.tsx, quality/SopRegister.tsx (no program filter).",
+   "atHead": null
+  },
+  {
+   "id": "BT-F13",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "note",
+   "title": "Shadow review shows a failed run",
+   "where": "Submission Center > Shadow review",
+   "evidence": "'#1 FDA filing review Failed — —' and 'Run #1 failed because every AI provider was unavailable…'. The seed log reads 'Shadow Review … not executed — HTTP 503'.",
+   "onStage": "Do not open Shadow review unless the Codespace shows a completed run. Do not click 'Run shadow review'.",
+   "suspectedCode": "n/a (dummy key locally).",
+   "atHead": null
+  },
+  {
+   "id": "BT-F14",
+   "area": "Biotech tour (C2C-101)",
+   "severity": "note",
+   "title": "Project Conversations list and sidebar Recents show duplicate AnA conversations",
+   "where": "C2C-101 project page > Conversations; left rail > Recents",
+   "evidence": "'Draft the synopsis' and 'What blocks dispatch of sequence 0000?' each appear twice, along with 'Summarize the Investigator's Brochure' and others, all dated Nov 9.",
+   "onStage": "Before the demo, check that the Codespace's project page does not list practice conversations the founder would not want shown.",
+   "suspectedCode": "n/a",
+   "atHead": null
+  },
+  {
+   "id": "T2-F3",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "demo-breaker",
+   "title": "RBM shows no sites while its own signals, KRIs and tasks name sites 102/104/106/107",
+   "where": "http://127.0.0.1:5000/concept2cure/rbm?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > Overview header and tiles, Risk review report, Patient profiles, Site risk tab",
+   "evidence": "Header: '0 sites — 12 subjects scored'. Tile: 'Enhanced-tier sites 0 of 0 sites'. Site risk: 'Composite from site intelligence · never scored', 'No site risk scored for this study yet.', 'All 0 scored sites shown'. Risk review: 'Site risk & oversight Ok — 0 sites scored — 0 on enhanced monitoring.' The same screens say: 'High signal: … Site 104 — AE onset dates entered two to three weeks after the visit'; 'KRI red — open query aging 31 days, concentrated at site 104'; Central monitoring lists s…",
+   "onStage": "Skip the Site risk tab. Do not point at the '0 sites' header or the 'Enhanced-tier sites' tile. Never press 'Recompute site risk' or 'Scan cohort': both are writes and I did not test them. Talk about site 104 through the signal rows on Overview instead.",
+   "suspectedCode": "Demo seed RBM pack (it seeds no site intelligence or subject site). client/src/concept2cure/v2/surfaces/Rbm.tsx:363 (header), RbmSurfacesB.tsx:360 (Site risk), RbmSurfacesB.tsx:~309 (Patient profiles site cell).",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "e9fad2163 'R1: a study's sites are scored from its own site-level indicators, so Site risk and Site oversight show them (GA-S8-02)' and bcf2b595f 'DATA: the Lumen seed scores LMN-201's sites, and no longer stops on an indicator a person added'. Per the commit's own walk, the header goes from 0 to 8 sites and site 104 reads Enhanced. Rbm.tsx:365 now reads the scored count, and the seed's final board check requires the 8 sites (lumen-rbm.mjs:350-401).",
+    "stillAt": null,
+    "holder": "Unheld. The RBM row (01QoxbLbUD…, 2026-11-12) says it holds nothing, and so does R1/the Lumen seed (01QoxbLdKp…, 'Holds nothing (2026-11-12, 19:45 UTC)'). The only claim is a stale 2026-11-02 row of the coordinating session (01JbQU…) on Rbm*.tsx, which GA-PLAN-01 calls stale.",
+    "package": "S8 (site-risk-engine.ts, Rbm*.tsx) with DATA (scripts/demo/launch-demo/packs/lumen-rbm.mjs). Landed under R1 and DATA."
+   }
+  },
+  {
+   "id": "T2-F2",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "demo-breaker",
+   "title": "RACT critical-to-quality register is clipped: the scores and status columns cannot be seen",
+   "where": "http://127.0.0.1:5000/concept2cure/rbm?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > tab 'Risk assessment (RACT)' > 'Critical-to-quality register — 12 of 12'",
+   "evidence": "Only 'Category' and 'CtQ factor' are visible. The rows are tall blank boxes. Measured in the DOM: the table is 837 px wide and its container is 336 px with overflow-x: hidden, so these headers fall outside the card: L x I (x=997), Inherent (1043), Detect. (1115), Mitigation (1181), Residual (1281), Status (1359). After clicking the AnA panel's collapse icon (aria-label 'Collapse', right of 'Progress'), the container grows to 638 px: L x I, Inherent, Detect. and Mitigation appear, and Residual a…",
+   "onStage": "On RACT, show the heat map and the version line. If you show the register, first collapse the AnA panel (the square icon right of 'Progress' in the 'AnA — RBM co-monitor' header) so the scores and Mitigation show. Do not scroll to Residual or Status. Do not c…",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx:396 (register card), client/src/concept2cure/v2/styles/rbm-v2.css (.rbm-tbl width:100% inside a card with overflow hidden)",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "845a63b2b 'D7: AnA's conversation leads Risk-based monitoring, and its tabs show the readings the board already held'. What clipped the columns is gone: .rbm-card was overflow:hidden at 51c52751e (rbm-v2.css:149) and is overflow-x:auto at HEAD (rbm-v2.css:155). .rbm-ract-cols now wraps, with the register at flex 1 1 420px (rbm-v2.css:203-205). Residual and Status can now be reached by scrolling inside the card.",
+    "stillAt": "No one has measured the RACT register at 1440 since the change. The evidence only measures 390. With AnA docked on arrival, the board is about 360px narrower (app-v2.css:4087 .wa-split), so the 9-column table at RbmSurfacesA.tsx:427 may still open with Residual/Status out of view behind a sideways scroll.",
+    "holder": "Unheld. The RBM session (01QoxbLbUD…, 2026-11-12) holds nothing. The coordinating session's 2026-11-02 Rbm*.tsx row is stale.",
+    "package": "D7 (RbmSurfacesA.tsx, styles/rbm-v2.css; D0 also covers styles/**)"
+   }
+  },
+  {
+   "id": "T2-F9",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "demo-breaker",
+   "title": "Biostatistics design assessment contradicts itself on missing data and on sensitivity analysis",
+   "where": "http://127.0.0.1:5000/concept2cure/biostatistics?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > scroll below the Sample Size Rationale to 'Design assessment' and its review table",
+   "evidence": "Dimension: 'Missing Data Risk Adequate 70/100 … No missing data handling method specified for Phase III — pre-specify in SAP'. The review table on the same screen says: 'Missing data | Low | A pre-specified model- or imputation-based strategy aligned with the estimand. | No action required.' Review row: 'Sample size | High | No sensitivity analysis across assumptions…', while the Sample Size Rationale above it has a 'Scenario Analysis' table (Conservative 588 / Base 314 / Optimistic 190 / 124).…",
+   "onStage": "Show the Sample Size Rationale and the documents. Do not expand or narrate the Design assessment review table (leave 'Hide review' alone). If a statistician asks, call the review rows rule-based checks still being tuned.",
+   "suspectedCode": "server/services/biostatistics-bridge/statistical-review.ts:97-106. When an element has no gate finding, its STANDARD_OK sentence is printed as if the standard were met, e.g. 'Missing data' -> 'A pre-specified model- or imputation-based strategy…'.",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "server/services/biostatistics-bridge/statistical-review.ts:97-106 is byte-identical to 51c52751e (empty git diff). No commit since 2026-11-09T20:00 touches statistical-review.ts, study-design/ or design-adapter.ts. The 'Missing data' row prints STANDARD_OK (:103, 'A pre-specified model- or imputation-based strategy…') whenever missingDataGate finds no MIS-* finding, and that gate accepts any non-empty strategy (design-gates.ts:665-681). Meanwhile design-adapter.ts:155-163 maps an unrecognised strategy to undefined, so the engine says 'No missing data handling method specified for Phase III' (judgment-engine.ts:573-580). LMN-201's seeded strategy ('counted as not cured', lumen-content.mjs:22…",
+    "holder": "Unheld. R1 (01QoxbLdKp…) held the ana-biostats missing-data figures on 2026-11-12, landed 03291d033 and holds nothing as of 19:45 UTC. No row names statistical-review.ts, design-gates.ts or design-adapter.ts.",
+    "package": "S3 (statistical-review.ts, design-gates.ts, design-adapter.ts, judgment-engine.ts), or F1"
+   }
+  },
+  {
+   "id": "T2-F12",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "demo-breaker",
+   "title": "An opened seeded report run says the project has no governed artifacts and prints raw provider codes",
+   "where": "http://127.0.0.1:5000/concept2cure/insights?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > Run history > 'Executive Readiness Digest' > Open",
+   "evidence": "The 'Provider readiness' table lists the providers by raw code: artifact_state | partial | No governed artifacts discovered for this scope; artifact_approval | missing; submission_readiness | missing | 23 regulatory gaps detected; regional_package_manifest | partial. Blockers: 'Blocking No governed artifacts discovered for this scope'. LMN-201's project page lists 'Authoring documents · 7' and 'Vault documents · 2'. All 4 seeded runs are 'Partial · Not measured'. No API errors.",
+   "onStage": "In Reporting, show the header sentence, Standard packs and the Run history list. Do not open a run. Do not click 'Build the Nonclinical & CMC readiness', 'Find', the question chips or Catalog 'Run': each one creates a report run.",
+   "suspectedCode": "server/services/report-os/orchestrator.ts:113 and server/services/report-os/providers/db-providers.ts:98-104 (copy and scope of 'No governed artifacts discovered'); the run view renders provider ids as labels.",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "server/services/report-os/orchestrator.ts:113-114 and providers/db-providers.ts:98,104 still say 'No governed artifacts discovered for this scope'. Both are unchanged since 51c52751e and count only concept2cure_artifacts (orchestrator.ts:69-90). GA-DEMO-06 is still open: eaa0237fa says it 'needs report-os/orchestrator.ts', and no commit since names it. Raw provider codes are still printed at render/render.ts:529-530 (p.provider and p.status verbatim for non-Quality reports) and client/src/concept2cure/v2/surfaces/InsightsRunEvidence.tsx:219 ({d.provider}).",
+    "holder": "Unheld. GA-DEMO-06 lists the server provider as unheld. render.ts and InsightsRunEvidence.tsx are not in Reporting analytics' (011HLkY…) list. No 2026-11-10 to 11-12 row claims report-os.",
+    "package": "F1 (server/services/report-os/** is covered only by R1, F1, L1), with D7 for InsightsRunEvidence.tsx"
+   }
+  },
+  {
+   "id": "T2-F1",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Risk review report still prints code names: buildRiskReview, generate_rbm_report",
+   "where": "http://127.0.0.1:5000/concept2cure/rbm?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > tab 'Risk review report' > grey note at the bottom",
+   "evidence": "'This report renders the same buildRiskReview output AnA returns from generate_rbm_report — the on-screen and in-chat answers are identical by construction. It is generated live from the current data; it is not yet a versioned, filed review record.' The README says no identifier remains on the five tabs; its rbm-words.cjs regex does not look for these two names.",
+   "onStage": "Stop scrolling at 'Monitoring actions'.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx:226",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "845a63b2b 'D7: AnA's conversation leads Risk-based monitoring, and its tabs show the readings the board already held'. git log -S 'generate_rbm_report' points to this commit. The note at RbmSurfacesA.tsx:253 now reads 'This is the same risk review AnA gives when asked for the report: one engine builds both…'. No buildRiskReview or generate_rbm_report remains in Rbm*.tsx.",
+    "stillAt": null,
+    "holder": "Unheld. The RBM session (01QoxbLbUD…, 2026-11-12) holds nothing. The coordinating session's 2026-11-02 row is stale.",
+    "package": "D7"
+   }
+  },
+  {
+   "id": "T2-F7",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Biostatistics prints an unrounded float: 'breakpoint 0.15000000000000002'",
+   "where": "http://127.0.0.1:5000/concept2cure/biostatistics?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > Sample Size Rationale > 'Sensitivity Points'; also Document > Design Assumption Note (Assumptions table and Critical Parameters)",
+   "evidence": "'Attrition rate: current 0.1, breakpoint 0.15000000000000002 (50% margin)'. The Design Assumption Note table shows 'Attrition rate | 0.1 | Stated | Moderate | 0.15000000000000002'.",
+   "onStage": "On LMN-201, do not scroll to 'Sensitivity Points' and skip 'Design Assumption Note'. Or show Biostatistics on C2C-101, where it renders cleanly.",
+   "suspectedCode": "server/services/ana-biostats/judgment-engine.ts:591 `breakpointValue: Math.min(input.attritionRate * 1.5, 0.50)` (not rounded; the effect-size branch uses toFixed(4))",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "eaa0237fa 'F1: sensitivity breakpoints come from power the engine recomputes, and the document says below 80% only when it is' (GA-DEMO-05). The old line 591, Math.min(attritionRate*1.5, 0.50), is replaced by a recomputed point rounded with roundTo(…,4) (judgment-engine.ts:143, 156). The rehearsal value 0.15000000000000002 appears in its red record (docs/evidence/GA-READINESS/2026-11-10/fix-L6-figures/demo05-red.txt).",
+    "stillAt": null,
+    "holder": "Unheld. judgment-engine.ts and document-generator.ts are in no coordination row. The fix was L6's (01T2woo…) GA lane, now landed.",
+    "package": "F1 (also S3)"
+   }
+  },
+  {
+   "id": "T2-F10",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Design Assumption Note ends with an empty 'Key concerns:' list",
+   "where": "Biostatistics on LMN-201 > Document > Design Assumption Note > Recommendations",
+   "evidence": "'Recommendations / Revision recommended before proceeding. Key concerns:' and then nothing, only the provenance footer.",
+   "onStage": "Skip the Design Assumption Note.",
+   "suspectedCode": "server/services/ana-biostats/document-generator.ts:393. judgment.escalationReasons is empty when the action is 'revise'.",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "server/services/ana-biostats/document-generator.ts:429-433 still prints 'Revision recommended before proceeding. Key concerns:' and then loops judgment.escalationReasons. deriveAction returns 'revise' for a marginal verdict or high risk (judgment-engine.ts:871-876). collectEscalationReasons only adds inadequate dimensions, very_fragile or very_low confidence (judgment-engine.ts:925-943). So a 'revise' design still ends with an empty list. eaa0237fa and 03291d033 did not touch this branch.",
+    "holder": "Unheld: no coordination row names server/services/ana-biostats/document-generator.ts or judgment-engine.ts",
+    "package": "F1 (also S3)"
+   }
+  },
+  {
+   "id": "T2-F8",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Biostatistics copy: raw parameter names, a possessive headline, and three different phases",
+   "where": "http://127.0.0.1:5000/concept2cure/biostatistics?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > header; Study design card; review table; lower panels",
+   "evidence": "Header: 'Size and judge [Demo · Lumen] LMN-201 RePreve (NCT05330182) — Phase 2/3, recurrence prevention’s design on the statistical engine, and write the documents it needs.' The study card title says 'Phase 2/3', its subline 'Phase 3', and the document 'Phase: Phase III'. Review: 'Fragility index 60/100 (fragile) — sensitive to effect_size, attrition_rate.' Also: 'Two-proportion z-test (superiority) · c2c-stats 1.0.0'. Raw id inputs 'Adaptive plan id [ ] Open plan' and 'CSR id [ ] Ingest'.",
+   "onStage": "Do not read the headline aloud. Do not scroll to Adaptive monitoring or Method precedent.",
+   "suspectedCode": "server/services/biostatistics-bridge/statistical-review.ts:150 (params not passed through parameterLabel); header sentence in client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "Raw parameter names are still printed at server/services/biostatistics-bridge/statistical-review.ts:149-150 ('sensitive to ' + p.parameter, e.g. effect_size, attrition_rate), along with raw '(${j.overallRisk} risk)' and computation.method at :141-154. The file is unchanged since 51c52751e. The possessive headline is still at client/src/concept2cure/v2/surfaces/Biostatistics.tsx:976 ('Size and judge ${selectedDesign.title}’s design…'). On phases, design-adapter.ts:166-173 spells the design's phase in Roman numerals ('Phase II'/'Phase III'). The LMN-201 seed still carries three phases: developmentPhase 'phase_2' (lumen-content.mjs:105), the title 'Phase 2/3' (:184) and design phase '3' (:186,…",
+    "holder": "Unheld. statistical-review.ts, Biostatistics.tsx and lumen-content.mjs are in no 2026-11-10 to 11-12 hold. The Lumen seed owner, R1 (01QoxbLdKp…), holds nothing as of 19:45 UTC on 2026-11-12.",
+    "package": "S3 (statistical-review.ts), D5 (surfaces/Biostatistics.tsx headline), DATA (seed phases). F1 covers all three."
+   }
+  },
+  {
+   "id": "T2-F5",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "RBM's other five tabs still print raw ISO times and code names",
+   "where": "http://127.0.0.1:5000/concept2cure/rbm?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > tabs Key risk indicators, Central monitoring, Site oversight, Monitoring plan",
+   "evidence": "KRIs: 'amber 14days — red 28days — evaluated 2026-11-07T00:00:00.000Z' (8 rows), '…recomputes status server-side via kriStatus()'. Central monitoring: 'site 104 — 2026-11-09T18:58:08.605Z', '(robust modified z-score, MIN_COHORT 5)'. Site oversight: 'scheduling a visit creates a site_visit action'. Monitoring plan: 'draft — approval pending — updated 2026-11-09T18:58:06.611Z'.",
+   "onStage": "Stay on Overview, Risk review report, RACT and Patient profiles.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx:527,537; RbmSurfacesB.tsx:237,453,455,541",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "3da8bd712 'F1: the monitoring screens show when an indicator was evaluated and a signal detected as times, not stored strings' fixed the old A:527, the KRI 'evaluated' time, now RbmWhen at RbmSurfacesA.tsx:604. It also fixed the central-monitoring signal time. 845a63b2b removed kriStatus() (old A:537), MIN_COHORT (old B:237) and SPOT/site_visit (old B:453 and B:455; now 'site-visit action' at RbmSurfacesB.tsx:545,547).",
+    "stillAt": "The old B:541 is still raw. RbmSurfacesB.tsx:633 prints 'updated {plan.updated}' and :634 prints '{plan.approval.when}'. Both are ISO strings from server iso() (mdx-rbm-board.ts:182-186, 681, 689). Due dates are also printed raw: 'due {v.due}' (RbmSurfacesB.tsx:534) and 'due {a.due}' (:664). The RACT approval time is raw too (RbmSurfacesA.tsx:392, 399).",
+    "holder": "Unheld. The RBM session (01QoxbLbUD…, 2026-11-12) holds nothing. The coordinating session's 2026-11-02 row is stale.",
+    "package": "D7 (RbmSurfacesB.tsx), with F1 for server/routes/mdx-rbm-board.ts"
+   }
+  },
+  {
+   "id": "T2-F6",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "RBM Overview and Patient profiles: lowercase source codes, '(s)' plurals, raw dates, wrapping ids",
+   "where": "RBM on LMN-201 > Overview; Risk review report; Patient profiles; AnA panel",
+   "evidence": "'Data sources ctms 2d old · edc 2d old'; '1 patient(s) flagged for review'; 'Action required: 9 critical item(s)' (only 5 of the 9 are High); overdue action dated '2026-11-06' and 'due 2026-11-06'; AnA panel 'Starters for risk assessment (ract)'; Patient profiles subject ids wrap over three lines ('DEMO-/104-/0005').",
+   "onStage": "Nothing to avoid; just do not point at these.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx:121-131 (data sources), RbmSurfacesB.tsx (cohort table)",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "DataFreshness is identical to 51c52751e (diff empty). client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx:145 prints <b>{s.source}</b>, the raw source code such as 'edc', while the KRI tab uses KRI_SOURCE_LABEL. :144 still says '${s.rowsAccepted} row(s) accepted' and 'cutoff ${s.dataCutoff}' as a raw date. The Patient profiles table still renders subject ids as plain .mono cells (RbmSurfacesB.tsx:298-310). Only the column grid changed (rbm-v2.css .rbm-pt-cols auto-fit, 845a63b2b), so whether ids still wrap was not measured.",
+    "holder": "Unheld. The RBM session (01QoxbLbUD…, 2026-11-12) holds nothing. The coordinating session's 2026-11-02 row is stale.",
+    "package": "D7"
+   }
+  },
+  {
+   "id": "T2-F11",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Reporting & analytics on a biotech IND shows device-project analytics and a wall of 24 zero months",
+   "where": "http://127.0.0.1:5000/concept2cure/insights?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > Reports tab, below Standard packs",
+   "evidence": "'Device projects — 1 device project you can open, by the status each project's record holds. Active 1'; 'Submission pace — 0 submitted in the 24 months to 2026-11' with a grid '2024-12 0 2025-01 0 … 2026-11 0'; 'AnA draft acceptance — No AnA draft is recorded against a device project you can open, so there is no rate.'",
+   "onStage": "Stop at Standard packs. Do not scroll further on the Reports tab.",
+   "suspectedCode": "The Reporting canvas section under 'Reports not available…' (client/src/concept2cure/v2/surfaces/ Insights/Reporting surface)",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "client/src/concept2cure/v2/surfaces/Insights.tsx:2194 renders deviceSection whenever no report is open, whatever the open project's type, and :2482 places it under 'Reports not available for {p.code}'. insights-canvas-routes.ts:665 reads readDevicePortfolio over every accessible project. InsightsDevicePortfolio.tsx:72-80 lists all pace.months (24), zeros included. Neither file has changed since 51c52751e, and device-portfolio.ts has no commits either.",
+    "holder": "Insights.tsx is held by Reporting analytics (011HLkY…), but that row dates from 2026-11-01 and has no 11-10 to 11-12 update. 01E8btkB… edited Insights.tsx on 2026-11-12 in bdb639850. InsightsDevicePortfolio.tsx and server/routes/insights-canvas-routes.ts are unheld.",
+    "package": "D7 (Insights surfaces), F1 for the server's unscoped device read"
+   }
+  },
+  {
+   "id": "T2-F13",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Reporting Catalog prints jurisdiction codes and lowercase role and filing words",
+   "where": "Reporting & analytics (LMN-201) > Catalog tab",
+   "evidence": "'USA_OLAW · iacuc coordinator, ra lead, qa', 'USA_NIH · biosafety officer, ra lead, qa', 'USA_DEA · research ops, qa, ra lead', 'USA_FDA · ra lead, qa, submission coordinator'; 'FDA NDA / BLA Filing Readiness Assessment (eCTD) assesses a nda or bla filing'; 'EMA MAA Readiness Assessment assesses a EU filing'; '25 uncomputed · 5 prediction unavailable.'",
+   "onStage": "Skip the Catalog tab.",
+   "suspectedCode": "Report-type catalog metadata rendered verbatim (server/services/report-os, catalog view)",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "bdb639850 'Reporting names the reports that can be run on its landing, and its catalog speaks in words (P-122)'. regionWords turns 'USA_OLAW' into 'US · OLAW'. reportingRoleWords/reportingRoleLabel turn 'ra lead, qa' into 'regulatory affairs lead, quality assurance', and the filter options are capitalised. 5ed006764 'Reporting says why a regional report is not offered in words, and names the report once' changes 'a nda or bla filing' to 'an NDA or BLA filing' and 'a EU' to 'an EU'. Still open and recorded as 'found, not fixed' in docs/evidence/DESIGN/P-122/reporting/README.md: count lines suc…",
+    "stillAt": null,
+    "holder": "InsightsCatalogPanel.tsx and insightsLibraryShared.tsx are held by Reporting analytics (011HLkY…), a 2026-11-01 row with no 11-10 to 11-12 update. The fixes came from 01E8btkB… (screen walk). server/services/report-os/regional/filing-applicability.ts is unheld.",
+    "package": "D7 (InsightsCatalogPanel.tsx), with F1/R1 for filing-applicability.ts"
+   }
+  },
+  {
+   "id": "T2-F14",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "LMN-201 shows two different overdue counts: '14 tasks past due' on its card, '2 tasks are overdue' on Tasks",
+   "where": "http://127.0.0.1:5000/concept2cure/projects (LMN-201 card) vs /concept2cure/tasks?program=4f29bace-…",
+   "evidence": "Card: '14 tasks past due · Planning by Oct 9, 2026' (a date a month in the past). GET /api/v1/pyramids/by-project returns summary {total:58, overdue:14, lateToStart:2, next: Planning due 2026-10-09}, with project start 2026-09-25. Tasks banner: '5 tasks stand between you and \"Database lock readiness checklist\", and 2 tasks are overdue.' The card counts plan (work-breakdown) tasks and the banner counts board tasks, but nothing on screen says so.",
+   "onStage": "Do not read the card's plan line aloud. If overdue work comes up, use the Tasks banner.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/PyramidProject.tsx:479 (portfolioWords) plus the seed's project start date",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "portfolioWords moved in e5f35efe7 with its logic unchanged. client/src/concept2cure/v2/surfaces/PyramidPortfolio.tsx:77 still prints '${s.overdue} tasks past due' from the plan (pyramid) summary. Tasks counts board tasks whose due text includes 'overdue' (TaskBoard.tsx:1043) and prints 'N tasks are overdue' (:1235). Two sources are still described with the same word, and no commit since 2026-11-09T20:00 reconciles them.",
+    "holder": "PyramidPortfolio.tsx is unheld: the S11 session (01QoxbLdJq…) holds nothing after its 2026-11-12 second pass, which split the portfolio line out of PyramidProject.tsx. TaskBoard.tsx is held by Wave B lane W6 of Client administration (01T2woo…) from 2026-11-12. The trunk-CI lane (01J935DZ…) took Pyr…",
+    "package": "S11 (PyramidPortfolio.tsx) and D6/S9 (TaskBoard.tsx). F1 covers both."
+   }
+  },
+  {
+   "id": "T2-F15",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "visible-blemish",
+   "title": "Quality: uppercase labels, raw review dates, and every client's SOPs under the LMN-201 breadcrumb",
+   "where": "http://127.0.0.1:5000/concept2cure/quality?program=4f29bace-d23c-44e6-992c-6a63c60ed500 > SOP register",
+   "evidence": "Labels 'WORKSTREAM', 'EFFECTIVE DOCUMENTS', 'UNDER REVIEW', and register headers 'NUMBER TITLE TYPE…'. NEXT REVIEW reads '2027-11-09' on every row. Under 'LMN-201 › Quality' the register lists C2C-SOP-001..004 ([Demo · Biotech]) and MDX-SOP-101..104 ([Demo · MDX]) beside LMN-SOP-201..203. The uppercase labels are already recorded in the README as the Quality lane's D0 work.",
+   "onStage": "Present Quality as the organisation's quality system, not LMN-201's. Do not click 'New controlled document', 'Send for review' or 'Training'.",
+   "suspectedCode": "Quality system surface (client/src/concept2cure/v2/surfaces/ Quality / QMS register)",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "The uppercase labels are gone. a65f886a7 'Quality is one work area of the product, not an app…' was merged after 51c52751e and removed the KPI tiles and every text-transform:uppercase in quality/app.css (5 to 0). d6c61cd12 'Quality states its figures in one line of the server's numbers…' made QualityFigures one sentence. On scope, e39cc0d59 (C14) and then 81d5e9363 'Quality reads the organisation by default; the open project is one quiet filter (P-122)' make the header say whose records it lists ('The whole organisation's quality records.', App.tsx:390) and offer 'Show LMN-201 only' (App.tsx:…",
+    "stillAt": "Review dates are still raw. client/src/concept2cure/quality/data.ts:202-205 formatDate returns String(d).slice(0,10), i.e. YYYY-MM-DD, and it is used at SopRegisterRow.tsx:71 and PeriodicReview.tsx:131. By default, with LMN-201 open in the shell, the SOP register still lists the whole organisation's controlled documents, i.e. every client's. That is the P-122 decision in registerContext.ts:46-56,96-100, and Quality has no client-workspace filter.",
+    "holder": "Quality and training (01GyGhjgjrNv…) holds client/src/concept2cure/quality/**. Its row was updated 2026-11-12 and asks that shared files be requested there first.",
+    "package": "D7"
+   }
+  },
+  {
+   "id": "T2-F16",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "note",
+   "title": "tour-b.cjs URLs hard-code program ids from another database; pasting them gives 'Couldn't load this project'",
+   "where": "http://127.0.0.1:5000/concept2cure/project-home?program=e00d4d40-5378-41dc-b85e-e49662afe6a6 (tour-b's LMN-201 id)",
+   "evidence": "Heading 'Couldn't load this project' with 'The project record didn't respond (it may not exist for your organization, or the service is unreachable). Return to All projects and try again.' Five 404s: GET /api/c2c/projects/e00d4d40-…, /intelligence, /api/authoring/docs?programId=…, /api/ana-skills/projects/…",
+   "onStage": "Navigate by clicking (Projects > card, then the rail). Never paste or bookmark tour-b URLs.",
+   "suspectedCode": "docs/evidence/DEMO/2026-11-09-platform-tour/tour-b.cjs (constants C, L, M and BASE)",
+   "atHead": null
+  },
+  {
+   "id": "T2-F4",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "note",
+   "title": "Governed timestamps render twice ('… UTC · …(UTC)')",
+   "where": "RBM Overview 'Needs attention now', Risk review 'As of', Patient profiles 'scored'",
+   "evidence": "'Ordered by severity · as of 2026-11-09 19:15:22 UTC · Nov 09, 2026, 19:15 (UTC)'. This is GovernedTimestamp's inline layout by design: the UTC value, then local time with the time zone.",
+   "onStage": "Nothing to do.",
+   "suspectedCode": "client/src/concept2cure/_shared/components/GovernedTimestamp.tsx (layout='inline')",
+   "atHead": null
+  },
+  {
+   "id": "T2-F17",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "note",
+   "title": "The rail's Recents list is full of duplicate conversations from other rehearsal agents",
+   "where": "Left rail > Recents on every page",
+   "evidence": "'Draft the synopsis' x2, 'What blocks dispatch of sequence 0000?' x2, 'Summarize the Investigator's Brochure' x2, 'What is this project about?' x3, and so on. The notification badge rose from 44 to 54 during my walk.",
+   "onStage": "Before 1:00 pm, glance at the Codespace rail's Recents and notification count so nothing odd shows.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "T2-F18",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "note",
+   "title": "Buttons on the path that write records (avoid on stage)",
+   "where": "RBM, Quality, Tasks, Reporting, Biostatistics",
+   "evidence": "Writes or governed acts: RBM 'Load extract…', 'Approve assessment', 'Add CtQ factor', 'Scan cohort', 'Recompute site risk'. Quality 'New controlled document', 'Send for review'. Tasks 'New task', 'Start workflow'. Reporting 'Build the Nonclinical & CMC readiness', 'Find' and its chips, Catalog 'Run' (each creates a run). Biostatistics 'Open in editor' (action save_to_authoring), 'Apply sample size to design', 'Raise tasks (6)' (role-gated since a3da1f666). Read-only and safe: the Biostatistics …",
+   "onStage": "Click only the items in the safe click path.",
+   "suspectedCode": "server/routes/ana-biostats.ts:245-266 (document preview vs save_to_authoring); server/routes/biostat-bridge.ts:170,211",
+   "atHead": null
+  },
+  {
+   "id": "T2-F19",
+   "area": "LMN-201, monitoring, Quality, Tasks, Reporting, Biostatistics",
+   "severity": "note",
+   "title": "Smaller data oddities a client might ask about",
+   "where": "Tasks board; project page Work areas; Biostatistics",
+   "evidence": "Task 'Review the synthetic CSR source before table generation' (the word 'synthetic' in front of a client). 'Triggered monitoring visit at Site 107', but the profiled cohort covers sites 101-106. Study & Protocol Design opens 'No protocol in development for LMN-201'. The Interim Analysis Plan governs '1 planned interim analysis' while the review says 'No interim looks planned, or looks with alpha spending…'.",
+   "onStage": "Do not open Study & Protocol Design for LMN-201. Do not read task titles aloud beyond the critical-path banner.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "CMC-1",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "Stability flags every result as out of specification, including assay 99.8 % against 98.0–102.0 %",
+   "where": "http://127.0.0.1:5000/concept2cure/cmc?program=da734679-6598-492c-9335-813c248f17eb, then Study records, then Stability",
+   "evidence": "'3 active studies · 14 outside limits'. The red banner says '14 stability results are outside the acceptance criteria — Assay at 0 mo (99.8), Assay at 6 mo (99.4), Assay at 12 mo (99.1) and 11 more. A result outside its limit is an OOS event…'. The register shows '6 recorded · 6 OOS' beside '24 months retest', and Shelf-life evidence says '0 within acceptance criteria, 14 outside'. There are no API or console errors.",
+   "onStage": "Do not open the Stability tab on C2C-201, and never read out '6 recorded · 6 OOS'. A CMC client will see an in-limit assay called OOS next to a 24-month claim.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1786 `const oos = allResults.filter((r) => !r.withinSpecification)` (missing flag counts as OOS), together with the seed pack above.",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "aef73a9d1 'Demo stability results carry their condition and reading, so Q1E fits them' (2026-11-10: the C2C-201 pack records withinSpecification on every result, all true except total impurities 0.61 % at 6 months accelerated, and repairs a database seeded earlier on the next seed run). Then 40cc8265b 'F1: CMC tells the truth — a missing stability flag is not an OOS…' (2026-11-12: CmcModule.tsx stabilityConformance() at :1805 counts only an explicit false as OOS and shows a missing flag as 'not assessed', at :1883-1884, :2223, :2323). The old line, baseline :1786 `oos = allResults.filter((r) …",
+    "stillAt": null,
+    "holder": "CmcModule.tsx is listed whole under row 121 (Client administration 01T2woo…, readiness-map lane L1, from 2026-11-10). L1 landed 40cc8265b on 2026-11-12, and no release is recorded. The 2026-11-12 19:00 note still says 'CmcModule.tsx is held'. Seed: packs/biotech*.mjs are under row 121 (lanes L1 and…",
+    "package": "F1 (GA-DEMO-01); the seed half is DATA"
+   }
+  },
+  {
+   "id": "CMC-2",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "Estimate Q1E fails with a red 409 toast, and Trend assesses nothing",
+   "where": "Study records, then Stability, then the 'C2C-201 drug substance — long-term, 25°C/60% RH' row, then Estimate Q1E or Trend",
+   "evidence": "POST /api/cmc/stability-studies/3/shelf-life returned 409, and the console logged 'Failed to load resource: the server responded with a status of 409 (Conflict)'. The toast says 'Couldn’t estimate the shelf life — This study is placed at 2 storage conditions (LT, 25°C ± 2°C / 60% ± 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others…'. The Trend table shows 'Assay · 25°C ± 2°C / 60% ± 5% RH + LT · not assessed', and To…",
+   "onStage": "Do not press Estimate Q1E or Trend. The brief names Q1E as a deterministic engine worth showing, but on this data it only produces an error.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts:414 (storage shape); server/api/cmc/routes.ts around line 2524 (POST /stability-studies/:id/shelf-life condition split).",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "aef73a9d1 'Demo stability results carry their condition and reading, so Q1E fits them' (2026-11-10, Plan: DATA). The 409 and the empty Trend came from seeded results that carried no `condition` on a study registered as [code, condition]. recorded-stability.ts:806 (Q1E: placedAt.length > 1 and the condition is inherited) and :1036/:1050 (trend: CONDITION_NOT_SEPARABLE) refused every series. work-areas.mjs resultsAsRecorded() now writes the named condition on every seeded result and repairs earlier seeds. The register's own result form already recorded the condition at baseline (CmcModule.tsx :…",
+    "stillAt": null,
+    "holder": "cmcRegisterForms.ts: 01QoxbLcnW… ('CMC screens', Spine data room and Validation for GA), held from 2026-11-12. server/api/cmc/routes.ts and services/cmc/recorded-stability.ts: Wave B lane W4-cmc-truth-server (01T2woo…, row 122), held from 2026-11-12, nothing landed yet. Seed packs: row 121 lanes L1…",
+    "package": "DATA (the fix); any engine or form change would be F1/S7"
+   }
+  },
+  {
+   "id": "CMC-3",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "Approve on 'C2C-201 — solid form' opens a password e-signature form, not the refusal",
+   "where": "Study records, then Specifications, then the 'C2C-201 — solid form' row, then Approve",
+   "evidence": "A drawer opens instead of a refusal: '21 CFR §11.50 — e-signature · Sign to approve · C2C-201 — solid form — Drug substance · Meaning of signature* · Reason* (At least 8 characters) · Password* · Authenticator · Cancel · Sign & approve'. I cancelled at once. The brief says it 'refuses before asking the signer for their password'. That holds only for the server, which checks the method before re-authenticating (specificationRoutes.ts:555ff). The client still requires a meaning, a reason and a pa…",
+   "onStage": "Do not press Approve live. Point instead at the method library, where 'AM-204 XRPD identity and polymorph form' shows Validation, and say that the server refuses approval of a limit measured by an unvalidated method. If you do open the drawer, press Cancel. N…",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1437 (Approve calls setSign) and 1475 (signForm with a required password field).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1507: Approve calls setSign(r) and is disabled only when r.noMethod (no method name recorded). :1549 then always opens signForm, which asks for a password and an authenticator code. The server's METHOD_NOT_FIT refusal (approvalTargetRefusal, specificationRoutes.ts:483/:605, checked before re-auth) reaches the person only after they submit the signature form. specificationRoutes.ts has no read-only approvability endpoint (routes at :153, :197, :293, :555, :714). The code is unchanged in substance since baseline :1437/:1475. Since 2026-11-09 only 954e463fc touched this path, and it only words a refused signature's 401. The CMC lane chose this …",
+    "holder": "Specifications region of CmcModule.tsx: row 121 (01T2woo…, lane L1, from 2026-11-10; no release recorded). It is not in 01QoxbLcnW…'s partial hold (drawers, batch rows, Overview approvals). specificationRoutes.ts is unheld.",
+    "package": "F1 (S7 also covers it)"
+   }
+  },
+  {
+   "id": "CMC-4",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "Release on the 'ineligible' batch either does nothing or opens a password form, and choosing 'conditional' could actually release",
+   "where": "Study records, then Batch records, then the Release buttons",
+   "evidence": "DP-2601, the only batch marked No, has Release disabled with the tooltip 'Close the open deviations first'. DS-2502, which the brief quotes as the refusal ('2 recorded results are not yet reviewed (DS-2502-R1, DS-2502-R2)…'), shows Eligible Yes. Its Release opens 'Batch disposition — §11 e-signature · Release batch C2C201-DS-2502 · Disposition approved / conditional / rejected · Reason* · Password* · Authenticator · Sign & release'. No refusal appears before the password. I cancelled at once. T…",
+   "onStage": "Do not press Release on any batch. If you need the refusal story, hover DP-2601's greyed Release to show 'Close the open deviations first'. Never choose 'conditional' and never type your password.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2616 (Release disabled when !eligible) and 2633–2638 (release form with password).",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "40cc8265b 'F1: CMC tells the truth — … a contradicted pass blocks release …' (2026-11-12). batch-release-evidence.ts:177/:215-216 contradictedPassRefusal now refuses an approved OR conditional release of C2C201-DS-2502 (DS-2502-R2 recorded 'pass' at 97.4 % against 98.0–102.0 %). The refusal comes in evaluateBatchForRelease, before re-auth (batchRecordRoutes.ts:568-570). So the conditional path no longer releases that batch.",
+    "stillAt": "CmcModule.tsx:2797: the button (now 'Disposition') is disabled for any batch with open deviations, with the reason only in a title tooltip, so clicking it on C2C201-DP-2601 (1 open deviation) does nothing. This also blocks the conditional release and the rejection the server allows for open deviations (batch-release-evidence.ts:201-207). CmcModule.tsx:2822-2828: every other pending batch opens the §11 form with a password field and 'conditional' offered before any evaluation, so the refusal arrives only after signing. batch-release-evidence.ts:226 still returns 'conditional-release' over unreviewed passing results (C2C201-DP-2503); the route intends this.",
+    "holder": "CmcModule.tsx batch rows and cmcBatch.ts: 01QoxbLcnW… ('CMC screens'), from 2026-11-12, alongside the whole-file row 121 L1 listing. batch-release-evidence.ts: row 121 (01T2woo…, lane L1). batchRecordRoutes.ts: unheld.",
+    "package": "F1 (GA-DEMO-02)"
+   }
+  },
+  {
+   "id": "CMC-5",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "Eligible column says Yes for batches whose QC results are all unreviewed, contradicting its own header",
+   "where": "Study records, then Batch records, then the Batch disposition card",
+   "evidence": "The card subtitle says 'released over the batch’s recorded, reviewed QC results — open deviations closed first', yet DP-2503 and DS-2502 both show Eligible 'Yes'. QC testing shows all 5 results 'Awaiting' review. The brief says 'The Eligible column is computed from the batch's own recorded, reviewed QC results'. In the code it is computed from the deviation count alone.",
+   "onStage": "Do not claim that Eligible reflects reviewed QC results. Speak only to the open-deviation rule.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:2533 `const eligible = (r: CmcBatch) => r.dev === 0;`",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "CmcModule.tsx:2687 `const eligible = (r: CmcBatch) => r.dev === 0;` is rendered as Yes/No at :2792, under the header at :2771 'released over the batch’s recorded, reviewed QC results', so a batch with zero deviations and every result unreviewed reads 'yes'. The list read batchRecordRoutes.ts:159-185 (SELECT * FROM cmc_batch_records) sends no release eligibility. 40cc8265b lists this as 'Left: GET batch-records must send release eligibility'. The code is unchanged since baseline :2533.",
+    "holder": "CmcModule.tsx batch rows: 01QoxbLcnW… ('CMC screens'), from 2026-11-12. batchRecordRoutes.ts: unheld. batch-release-evidence.ts: row 121 (01T2woo…, lane L1).",
+    "package": "F1 (GA-DEMO-02)"
+   }
+  },
+  {
+   "id": "CMC-6",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "QC result 97.4 % against 98.0–102.0 % is shown as Pass",
+   "where": "Study records, then Specifications, then scroll to QC testing",
+   "evidence": "'DS-2502-R2 · in-process · HPLC-UV assay and related substances · 97.4 % · 98.0 - 102.0 % · Pass · Awaiting'. The header reads '5 samples — 4 pass / 0 fail'. The stored observation says 'retest requested; investigation INV-2026-014 open'. Release results are also typed 'in-process'.",
+   "onStage": "Do not scroll to QC testing. A CMC reviewer will catch an out-of-limit assay marked Pass immediately.",
+   "suspectedCode": "Seed pack C2C-201 release results; the QC log route accepts a client-sent pass/fail with no check against the limit.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "40cc8265b (2026-11-12). Release refuses the contradicted pass (batch-release-evidence.ts recordedResultVerdict/contradictedPassRefusal :177, :215). The QC register can say 'pass, contradicted by its result' (cmcRegisters.tsx:715-717, qcDisposition) and counts it as 'contradicted' in the header, but only when the server sends `conformance: 'outside'`.",
+    "stillAt": "server/api/cmc/routes.ts:744-760: GET /api/cmc/qc-testing returns raw rows with no `conformance`, and nothing in server/ sets that field. So qcPassContradicted is never true, and DS-2502-R2 still shows 'Pass' and counts among the passes. 40cc8265b leaves this open ('GET /api/cmc/qc-testing must send conformance'). routes.ts:797-803: POST still takes passFailStatus from the client body unchecked against the criterion. The seed's 'pass' on DS-2502-R2 is kept on purpose (biotech-work-content.mjs:282; ledger GA-DEMO-02: do not change it).",
+    "holder": "server/api/cmc/routes.ts: Wave B W4-cmc-truth-server (01T2woo…, row 122), from 2026-11-12, no commit yet. cmcRegisters.tsx: row 121 (01T2woo…, lane L1).",
+    "package": "F1 (GA-DEMO-02)"
+   }
+  },
+  {
+   "id": "CMC-7",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "demo-breaker",
+   "title": "Quality by design derives 0 CQAs 'from 6 specifications' and shows a red gap banner",
+   "where": "Module 3, then Quality by design",
+   "evidence": "'0 CQAs derived (ICH Q8) · 0 controlled by a method · 0 CPPs derived (ICH Q11) · from 6 specifications and 4 methods · 1 gaps'. Red banner: '1 gap in the quality design — No manufacturing processes recorded — CPP list is empty.' The CQA card says 'No CQAs could be derived yet — CQAs are inferred from recorded specifications…'. The brief says the tab 'reads well'.",
+   "onStage": "Skip the Quality by design tab.",
+   "suspectedCode": "server/services/cmc/qbd-analyzer.ts:205–219 (testParameters) and 240–262 (exact purpose match); client/src/concept2cure/v2/surfaces/cmcSpec.ts:176 specCreateBody (no testParameters).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "No commit since 51c52751e touches server/services/cmc/qbd-analyzer.ts, qbd-helpers.ts or CmcQuality.tsx. qbd-analyzer.ts:205-219 derives specification CQAs only from quality_specifications.test_parameters. Neither the spec form (cmcSpec.ts:176-191 specCreateBody: the attribute goes in materialName, the limits in acceptanceCriteria) nor the seed (work-areas.mjs:295-304) writes that column, so 6 specifications yield 0 CQAs. qbd-analyzer.ts:240-262 adds stability-indicating CQAs only on an exact method purpose of 'assay' or 'related substances'. The seeded AM-201 purpose is 'Assay and related substances' (biotech-work-content.mjs:214). The gap list comes from :328-353, and the banner from CmcQ…",
+    "holder": "Unheld (qbd-analyzer.ts, qbd-helpers.ts, CmcQuality.tsx are named in no hold). The GET /api/cmc/quality/qbd handler in routes.ts is in W4 (01T2woo…).",
+    "package": "F1 (S7 covers it as CMC spine)"
+   }
+  },
+  {
+   "id": "CMC-8",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "visible-blemish",
+   "title": "Stability register is cut off at 1440 px: Shelf life is clipped and History is unreachable",
+   "where": "Study records, then Stability, then the Stability register action column",
+   "evidence": "The table is 1211 px wide inside a 1006 px card with overflow visible, and there is no horizontal scroll. 'Shelf life' sits at x=1411–1481 and 'History' at x=1487–1548, past the 1440 viewport, so the brief's 'Result · Estimate Q1E · Trend · Shelf life · History' cannot all be reached. The Module 3 build §3.2 table (1090 px in a 1006 px card) also runs to the viewport edge.",
+   "onStage": "Avoid the Stability tab (see CMC-1). If you must show it, zoom the browser to 90%.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx stability register table (reg-tbl inside pj-card, no overflow-x).",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "687d0af9d 'A wide CMC register scrolls inside its section, not the page' (2026-11-10, D5). journey-v2.css:423 `.c2c-v2 [data-work-area=\"cmc\"] :is(.pj-sec, .pj-card-b) > .reg-tbl{display:block;overflow-x:auto;}` applies to the Stability register table (CmcModule.tsx:2211, a direct child of .pj-card-b, under data-work-area=\"cmc\" at :3578). The commit measured 0 px page overflow at 1440, so Shelf life and History are reached by scrolling inside the table. Phone follow-ups: 2099ae50b and a74b223a9. Caveat: d0PhoneWidth.test.ts is red against this rule ('second copy'). That is handed to R1 (01DiJJ…",
+    "stillAt": null,
+    "holder": "journey-v2.css: unheld. The d0PhoneWidth red is R1's to settle (COORDINATION ~:726-731).",
+    "package": "D5"
+   }
+  },
+  {
+   "id": "CMC-9",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "visible-blemish",
+   "title": "Raw code identifiers and odd copy in the section completeness lists",
+   "where": "Module 3, then Overview (Section approvals); Module 3, then Module 3 build (Missing inputs column)",
+   "evidence": "'missing: containerDescription', 'formulationCompositionComplete', 'drugProductImpurityProfileComplete', 'drugSubstanceReferenceStandardCoA' and similar. 3.2.A.3 says 'missing: Origin is recorded for 0 of them; for the remaining 0 it is not recorded… and 0 of 0 have none recorded.' The Section and Path columns repeat the same value ('3.1 | 3.1').",
+   "onStage": "Keep the camera on the summary lines (the count of 21 sections and the export readiness panel), not the per-row missing inputs.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:1110 (`missing: {missing.join(', ')}`); client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:631.",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "307d82d2a 'CMC says what a Module 3 section still needs in words, not as the composer's field names' (2026-11-10, F1). In the Section approvals list, `missing: {missing.join(', ')}` (baseline :1110) became `Missing: {module3InputList(missing)}` (CmcModule.tsx:1191, shared/cmc/module3-input-words.ts). The same change covers the withheld-approval reason, the sign dialog, provenance and the build board.",
+    "stillAt": "The rehearsal's 'odd copy' is not specified. The internal-sounding phrase still in that list is CmcModule.tsx:1189 'not established — never scored by the compiler'. 307d82d2a itself records that AnA's Module 3 command handlers, the M2 summary builder and the composer's fallback narrative still print raw keys.",
+    "holder": "CmcModule.tsx Overview approvals table: 01QoxbLcnW… ('CMC screens'), from 2026-11-12.",
+    "package": "F1"
+   }
+  },
+  {
+   "id": "CMC-10",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "visible-blemish",
+   "title": "Audit chain Actor shows '1', and spec History shows a raw ISO time and 'JM Smithuser:1'",
+   "where": "Module 3, then Approvals & audit, then Audit chain; Study records, then Specifications, then History on any row",
+   "evidence": "In the audit chain, every row shows Actor '1'. In spec History: '2026-11-09 18:55:47Z · Specification recordedrevision log · JM Smithuser:1'.",
+   "onStage": "If you show the audit chain, talk about the event and its time, not the actor. Avoid opening History drawers.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx:3119 (Actor column); client/src/concept2cure/v2/surfaces/cmcRecordHistory.tsx (label 'revision log', actor rendering).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "CmcModule.tsx:3351 `<td>{e.createdBy || 'system'}</td>` prints the numeric user id. The id is fed raw by module3OperatingSystemRoutes.ts:552-557 (created_by as \"createdBy\", no name join). Spec History: cmcRecordHistory.tsx:168 prints `entry.at.replace('T',' ')…` as a raw ISO time. cmcRecordHistory.tsx:117-121 prints the name followed directly by the mono actorRef span ('user:1', separated only by margin), which reads 'JM Smithuser:1'. No commit since baseline touches cmcRecordHistory.tsx or server/services/cmc/register-history.ts.",
+    "holder": "Approvals & audit region of CmcModule.tsx: row 121 (01T2woo…, lane L1, no release recorded); not in 01QoxbLcnW…'s partial hold. cmcRecordHistory.tsx, register-history.ts and module3OperatingSystemRoutes.ts: unheld.",
+    "package": "F1"
+   }
+  },
+  {
+   "id": "CMC-11",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "visible-blemish",
+   "title": "Raw 'phase_2', contradictory scope labels and '1 gaps'",
+   "where": "Study records, then Substance & product; Module 3, then Quality by design",
+   "evidence": "Drug substance Phase shows 'phase_2'. The method library header reads 'organization-wide — ICH Q2 — 0/4 validated · this project'. Several registers say '· all projects' inside a single project's view. QbD shows '1 gaps'.",
+   "onStage": "Low risk. Do not dwell on the substance table.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/CmcModule.tsx substance table (raw phase value); client/src/concept2cure/v2/surfaces/CmcQuality.tsx:674 area (gap count).",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "The substance table is CmDrugSubstances in cmcRegisters.tsx, not CmcModule.tsx. cmcRegisters.tsx:1111 `{ header: 'Phase', render: (r) => text(r.developmentPhase) }` prints the stored 'phase_2' (seeded at biotech-work-content.mjs:54/:198). Scope labels: REGISTER_SCOPE (cmcRegisters.tsx:130-142) lists 6 per-project registers. Every other register on the Substance & product tab defaults to 'organization' at :399 and shows '· all projects' (:279) beside '· this project', although its create files into the open project. I am inferring this is the contradiction reported. '1 gaps' is CmcQuality.tsx:678 `{result.gaps.length} gaps`, with no singular. All three are unchanged since 51c52751e (the diff…",
+    "holder": "cmcRegisters.tsx: row 121 (01T2woo…, lane L1, from 2026-11-10). CmcQuality.tsx: unheld.",
+    "package": "F1 (the wording could also go under D5)"
+   }
+  },
+  {
+   "id": "CMC-12",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "note",
+   "title": "The fresh seed differs from the brief's figures: no validated method, no approved spec, no released batch",
+   "where": "Specifications, Substance & product and Batch records",
+   "evidence": "Brief: HPLC and Dissolution validated, Karl Fischer phase-appropriate for Phase 2, 2 specifications Approved, the drug-substance batch released under signature. This database: all 4 methods are 'Validation' ('0/4 validated'), 0 of 6 specifications are approved, no batch is released, DS-2502 and DP-2503 are Eligible Yes and DP-2601 is No. These match the brief: 6 attributes, 3 studies, '6 recorded · 6 OOS', '24 months retest', '3 batches · 1 open deviation · average yield 88%', '21 sections · 18…",
+   "onStage": "Do not promise 'two approved specifications', the Karl Fischer phase-appropriate signature or 'the drug-substance batch has been released' unless you have checked them in the Codespace itself before the call.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "CMC-13",
+   "area": "CMC / Module 3 (C2C-201)",
+   "severity": "note",
+   "title": "The Change control tab shows internal 'deferred capability' copy",
+   "where": "Study records, then Change control",
+   "evidence": "'Deferred postapproval variation assessment — This assessment is available because this deployment explicitly permits deferred capabilities. It classifies the supplied change for FDA and EMA only; it is not an IND amendment or an authorization to implement.'",
+   "onStage": "Do not click Change control. It is not on the brief's path.",
+   "suspectedCode": null,
+   "atHead": null
+  },
+  {
+   "id": "MDX-1",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "demo-breaker",
+   "title": "Orchestration shows another project (BX-301) while NeuroPanel is open",
+   "where": "http://127.0.0.1:5000/concept2cure/orchestration?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58 (walkthrough §5 'Optional: /concept2cure/orchestration')",
+   "evidence": "Heading 'Orchestration · BX-301' / 'Workflow runs & readiness' / 'No workflow runs yet'; cards 'Readiness score 0% · 0 blockers' and 'Dispatch Blocked readinessEvaluations'. The breadcrumb still says NEUR. The seed's run was never created: manifest readinessReview = 400 {\"error\":\"projectId must be a positive integer\"}.",
+   "onStage": "Skip the optional orchestration step entirely.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/Orchestration.tsx:288-310 (useOrchProgram reads /api/report-os/portfolio/org attentionRanked[0]); scripts/demo/launch-demo/packs/mdx.mjs sends a uuid where /api/orchestration/execute wants an integer projectId",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "4c6d882af \"F1: the shell opens the right thing: route task to its version, Orchestration follows the open project, bell count beside the bell, notice and filing tabs\" (2026-11-12, GA-UI-27). The new pure function pickOrchProgram (Orchestration.tsx:308-323) matches the shell's open project by programId. An open project that has no match reads nothing and is named as 'unmatched'. The old code used attentionRanked[0] (51c52751e:292-312) and no longer does. Pinned by __tests__/orchestrationFollowsOpenProject.test.tsx. Caveat: the fix's own walk could not open Orchestration (launch scope refused i…",
+    "stillAt": null,
+    "holder": "01T2woo… (Client administration and screen work). It listed Orchestration.tsx under the readiness map's lane L7 in its 2026-11-10 fix-lane hold (COORDINATION.md:121) and landed the fix itself. No release is recorded in that row. No 2026-11-11/12 row names the file.",
+    "package": "F1 (Orchestration.tsx is in no D/S package; GA ledger GA-UI-27 = F1)"
+   }
+  },
+  {
+   "id": "MDX-2",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "demo-breaker",
+   "title": "Vault › Uploads: Data room strip contradicts itself and the six Filed files below it",
+   "where": "http://127.0.0.1:5000/concept2cure/vault?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58 → tab 'Uploads · 6'",
+   "evidence": "'Data room Captured 25 › Classified 0 › Filed to vault 0' / '25 need review — the classifier would not propose a folder.' / 'Nothing captured for this project yet.', directly above six rows marked 'Filed'. The DB holds 25 cre_evidence_sources rows on this program, created 19:06:09 with metadata {nativeRecord:true, sourceScope:'organization', originalFileAvailable:false}: Lumen GMP deviations and suppliers, Lumen internal audits and management reviews, the Biotech change control, the MDX SOPs an…",
+   "onStage": "Go straight past the strip: click 'Open filing cabinet' at once, or scroll to 'Uploaded files'. Do not open Evidence on this project before the demo. If a client asks, say the data-room funnel counts organization quality records, not these uploads.",
+   "suspectedCode": "server/services/vault/vault-data-room-filing.ts:96 countDataRoomStages (counts native QMS rows) vs server/routes/c2c/project-vault.ts:1971 (rows filtered on originalFileAvailable !== false); projection server/services/clinical-regulatory-evidence/record-source.ts:97 syncQualityProjectSources; UI cl…",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "912ec3cf3 \"F1: the Vault's route suites follow its Quality refresh; its data room counts what it lists\" (2026-11-10). countDataRoomStages now leaves out native_record_snapshot Quality records, which is the list's own rule (vault-data-room-filing.ts:115-117). So 'Captured 14 … 14 need review' above 'Nothing captured for this project yet.' no longer happens. The other half, 'Filed to vault 0' above six filed uploads (GA-S2-05), was re-walked on LMN-201 and ruled consistent with no code change: 3148f693e \"F1: the GA map's data room items, re-walked and recorded\" (docs/evidence/SPINE/S2/2026-11-1…",
+    "stillAt": "client/src/concept2cure/v2/surfaces/Vault.tsx:601 'Filed to vault 0' and :611 'Nothing captured for this project yet.' still render directly above the six Vault-page uploads marked 'Filed'. The sentence that reconciles them is only inside the closed <details> 'How files reach the Vault' (:564). Not re-walked on NeuroPanel-Dx at HEAD.",
+    "holder": "server/services/vault/vault-data-room-filing.ts is unheld. Vault.tsx: held by J2 (01QoxbLb…, row :115, row copy only, from 2026-11-06). Vault parity (01KnUG…, row :130) takes it and releases it with each commit. The 2026-11-12 'nothing to fix' ruling is the S2 data-room lane's (01QoxbLdTr…).",
+    "package": "S6 (Vault.tsx is in D6/S6; vault-data-room-filing.ts is in S2/S6)"
+   }
+  },
+  {
+   "id": "MDX-3",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "demo-breaker",
+   "title": "The walkthrough's signed states are absent here: 510(k) Summary not frozen or signed, SOP-101/102 not Effective",
+   "where": "Project home › Author › '[Demo · MDX] 510(k) Summary' › Open; Quality › SOP register",
+   "evidence": "The editor reads '[Demo · MDX] 510(k) Summary Draft v1', 'Saved draft sections · unbound', with active 'Freeze' and 'E-sign' buttons. There is no 'approved and frozen' banner and no oq-signer signature. The register reads '0 effective · 0 under review · 11 draft', with MDX-SOP-101 and 102 Draft. Manifest: authoring.summarySignature and qms.sop101/102.approval 'not executed — signer credential not supplied'; qms.training 'Only an effective controlled document can be acknowledged.'",
+   "onStage": "Before 1 pm, open the 510(k) Summary in the Codespace and check for the 'approved and frozen' banner and the signature, and check Quality for MDX-SOP-101/102 Effective. If either is missing, drop the 'two-person rule / signature bound to the hash' lines. Neve…",
+   "suspectedCode": "scripts/demo/launch-demo/packs/mdx.mjs (signer-gated steps); .devcontainer/post-start.sh:171-242",
+   "atHead": {
+    "status": "fixed",
+    "fixedBy": "At 51c52751e, post-start.sh:174-180 ran demo:seed with no OQ_SIGNER_*, so the freeze, the e-sign and the QMS approvals were recorded 'not executed'. Fixed by: 11aa49118 \"L1: the Codespace's demo seed signs its two-person steps, with the approver\"; ff49ebed7 \"L1: a fresh Codespace's demo seed finishes, with its QMS approvals signed\" (designates the QMS approver; on an empty DB, MDX-SOP-101/102 approved by Ava Approver); 3d22a942d \"F1: a Codespace's demo seed gets its third person, so the Vault reviews and approvals are signed\"; 7aeecfc65 \"F1: the demo seed re-runs over documents a previous run…",
+    "stillAt": null,
+    "holder": "Unheld. 011Dpx… closed GA-DEMO-10/11/12 and 'holds no file now' (COORDINATION.md:32, 2026-11-12). .devcontainer/** was released (row :208, 2026-11-10). 01T2woo…'s 2026-11-10 lane L3 list named packs/mdx*.mjs, but d92eeea15 recorded that no session held it.",
+    "package": "DATA (scripts/demo/**). .devcontainer/post-start.sh is under L1 (row D2), as its fixing commits were."
+   }
+  },
+  {
+   "id": "MDX-4",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "demo-breaker",
+   "title": "510(k) screen: Official eSTAR and eSTAR sections contradict the project's own device data",
+   "where": "Project home › Plan › Regulatory strategy › 'Choose predicates and build the SE comparison' → /concept2cure/device-510k?program=… (scroll down)",
+   "evidence": "'eSTAR sections 38 sections · 18 blockers', with every row '§A1 Cover letter empty' … '§E7 Clinical performance testing empty' and §A5 '510(k) summary…' 'empty', just after the founder has shown the 510(k) Summary. Official eSTAR reads 'Regulation Number — Not set — Device profile · regulation number' and 'Classification Name — Not set', while Project home › About shows 'Regulation 21 CFR 866.3985'. 'Company Name: Concept2Cure Therapeutics', while the documents name 'Concept2Cure Diagnostics'. …",
+   "onStage": "On the 510(k) screen, show only the stage rail, Device profile ('Class II · 510(k) · code QNX') and 'Predicate of record: K223456'. Do not scroll to eSTAR sections or Official eSTAR. Do not press 'Generate official eSTAR (PDF)', 'Export 510(k) package', 'Open…",
+   "suspectedCode": "client/src/concept2cure/mdx/surfaces/K510Surface.tsx (eSTAR sections list, official-eSTAR field panel); the device profile's regulation-number source",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "Two commits fixed parts of it. d92eeea15 \"Device demo pack: an independent reviewer, a filing with text, and no stray leaf\" (GA-DEMO-10): the seed now creates the filing's editing copy and files nine eSTAR sections (A5, B1-B3, C1, C2, E3, E5, E7) from its own text, so the sections are no longer all 'empty' beside an approved Summary. 114f943f1 \"F1: device screens say the 510(k) lookup failure in words; MDR queue leaves out filed MDRs\": the raw 'fetch failed' reason is now in words.",
+    "stillAt": "scripts/demo/launch-demo/packs/mdx.mjs:72 still seeds predicateName 'SepsiScreen Panel (demo predicate)', a sepsis predicate for a CNS pathogen panel. The Official eSTAR writes it as predicateDeviceTradeName (estar-administrative-data.ts:156). server/routes/k510-document-preview.ts:63 still sends parentSectionId:null and level:null. So useK510.ts:90/161 counts all 38 outline rows and flags the required group headings as blockers, while the project page counts 31. 9cff33fe4's message lists 'the 510(k) preview' as 'Not done': it still reads the rule pack's mandatory flag, not the eSTAR mapper's device answers. The rehearsal's exact Official eSTAR observation is not in the repo, so which of th…",
+    "holder": "K510Surface.tsx: on 01T2woo…'s 2026-11-10 fix-lane list (lane L8, COORDINATION.md:121). Its fix 114f943f1 landed 2026-11-12, with no release recorded. D8 (01E8btkB…, P-128, from 2026-11-12) owns the design of mdx/** but holds only mdx/app.css and says it 'holds no further device file' (row :98). md…",
+    "package": "Split. D8 for the screen (client/src/concept2cure/mdx/**), DATA for the seeded predicate, F1 for server/routes/k510-document-preview.ts."
+   }
+  },
+  {
+   "id": "MDX-5",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "visible-blemish",
+   "title": "510(k) screen (changed today): 'not configured' state works but looks unfinished",
+   "where": "/concept2cure/device-510k?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58 (top half)",
+   "evidence": "Banner: 'Predicate intelligence is not configured for this workspace. Live K-number candidates and the substantial-equivalence matrix appear here once it is; until then the reduced openFDA clearance lookup below is the only source.' Below it: 'Reduced openFDA fallback unavailable — openFDA device/510k.json unreachable: fetch failed'. The K-number table shows only its headers (K-NUMBER DEVICE CLEARED MATCH DIFFS STATUS) and no rows or empty message. The SE matrix subtitle ends '[Demo · MDX] Neur…",
+   "onStage": "Say it plainly: predicate intelligence is a configured service, off in this workspace. Point at the predicate of record and the stage rail. Do not click Withdraw.",
+   "suspectedCode": "client/src/concept2cure/mdx/surfaces/K510Surface.tsx:321 (dueLabel ISO), :335 ('Open §11'), :652 ('vs.' with no selection); client/src/concept2cure/mdx/hooks/useK510.ts",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "client/src/concept2cure/mdx/surfaces/K510Surface.tsx:344 appends program.dueLabel, which useMdxPrograms.ts:109/112 builds as 'Overdue · <ISO date>' or 'Filing · <ISO date>'. Line :358 still reads 'Open §11 in editor'. Line :675 renders '{subjectName} vs. {selectedList[0]?.name}', which leaves a bare 'vs.' when no predicate is selected. The only K510Surface commit since 51c52751e is 114f943f1 (the fallback reason), which did not touch these lines. useMdxPrograms.ts has no commit since then.",
+    "holder": "K510Surface.tsx: on 01T2woo…'s 2026-11-10 fix-lane list (lane L8, COORDINATION.md:121; landed 114f943f1, no release recorded). The D8 lane (01E8btkB…, P-128) names each device .tsx before it edits one and holds none now (row :98).",
+    "package": "D8 (client/src/concept2cure/mdx/**, which includes useMdxPrograms.ts)"
+   }
+  },
+  {
+   "id": "MDX-6",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "visible-blemish",
+   "title": "Submission Readiness: release signature 'Satisfied' on an unsigned sequence; raw codes and uuids",
+   "where": "/concept2cure/dispatch-readiness?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58",
+   "evidence": "'A valid release signature binds this sequence's package (21 CFR 11.70) — Satisfied. RELEASE_SIGNATURE_VALID' appears on sequence 0000, which is 'Assembling' and has never been signed. The first gate's title, 'No open error-severity finding, no leaf awaiting approval…', sits over 'Blocks dispatch: 7 leaves point at documents not yet approved'. Raw codes on screen: STRUCTURAL_GATE_CLEAR, EXTERNAL_VALIDATION_CLEAN, SHADOW_REVIEW_COMPLETED, DOCUMENT_NOT_APPROVED, 'estar.device-description', and 'p…",
+   "onStage": "Point only at the red 'Dispatch blocked · 2 blockers' line and the two blockers (documents not approved; no Shadow Review). Do not read out the release-signature card. Use the walkthrough's new wording (see walkthroughDrift), not the six UNRESOLVED_DOCUMENT e…",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces (dispatch-readiness surface); server assess-dispatch-readiness RELEASE_SIGNATURE_VALID check (looks vacuously true with no package)",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "7df1d292c \"F1: submission gates say what is true: placed reads placed, Validate names its rules, no personal address on the forms\" fixed the server half only. evaluateReleaseSignatureGate now returns notRequired ('Not required for this submission type…'; dispatch-gate.ts:204-212). The commit itself says GA-D7-11 stays open until RIM passes the note to the screen.",
+    "stillAt": "server/services/ectd/assess-dispatch-readiness.ts:240-252: dispatchGateViews carries only notAssessed, and its call site at :993-1006 gives releaseSignature none. notRequired appears only in dispatch-gate.ts. So client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx:83 still prints 'Satisfied.', with the check mark at :118. Raw codes and ids also remain. DispatchReadiness.tsx:67 and :132 print rule.id in monospace. server/services/ectd/dispatch-readiness.ts:506-508 pointerLabel puts '<documentTable> <uuid>' into the not-approved message at :559. DispatchReadiness.tsx has no commit since 51c52751e.",
+    "holder": "dispatch-gate.ts was on 01T2woo…'s 2026-11-10 lane L4 list (landed 7df1d292c). The screen half was handed to RIM (011e42…): 'assess-dispatch-readiness.ts and GA-D7-10B stay yours' (COORDINATION.md:121). But RIM released assess-dispatch-readiness.ts on 2026-11-09 (row :144), so it is unheld today. D…",
+    "package": "F1 (GA-D7-11). Files: server/services/ectd/** is in S5, DispatchReadiness.tsx is in D7/S5."
+   }
+  },
+  {
+   "id": "MDX-7",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "visible-blemish",
+   "title": "Builder: duplicate Device Description leaf, and every leaf reads 'not yet determined'",
+   "where": "/concept2cure/submission-center?program=… › Builder (sequence 0000)",
+   "evidence": "'Source evidence not yet determined for 7 leaves.' Each 'Source document' cell reads 'Vault document · not yet determined'. Row 7, 'estar.device-description', is '[Demo · MDX] Device Description and Principles of Operation', a duplicate of 3.2.P.1. It is the seed's eSTAR-id probe, which the server now accepts (manifest estarLeafProbe status 200). Companion text reads 'FDA · US · 510K'. The identity table shows lowercase 'name' and 'address' and 'Applicant of record: Missing'.",
+   "onStage": "Show the six CTD-coded leaves and skip the last row. Do not press Remove, Edit study tagging, 'Compile & export', 'Start sequence 0001' or the sequence transitions.",
+   "suspectedCode": "scripts/demo/launch-demo/packs/mdx.mjs (estarLeafProbe leaves the leaf in place); client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:581, 1019",
+   "atHead": {
+    "status": "partly-fixed",
+    "fixedBy": "d92eeea15 \"Device demo pack: an independent reviewer, a filing with text, and no stray leaf\" (GA-DEMO-12): the estarLeafProbe leaf is deleted again with a reason, along with one an earlier run left. Result: 6 leaves on the first and on a second run.",
+    "stillAt": "Every leaf is a seeded Vault PDF (mdx.mjs:120 uploads application/pdf; placed at :436-437). server/services/ectd/submission-leaf-source-evidence.ts:264-267 establishes text for a Vault file that is not text/plain only through a sealed-document filing receipt (added by f793981ea). Otherwise the verdict is SOURCE_BINARY_CONTENT_UNVERIFIED, i.e. 'undetermined'. So SubmissionSeqWorkspaces.tsx:587 (' · not yet determined' on each leaf) and :1025 ('Source evidence not yet determined for N leaves') should still show for all six. 44329d6a4 and f793981ea fixed Module 3 copies and sealed renditions only. This is read from the code, not walked.",
+    "holder": "mdx.mjs: unheld (011Dpx… released it 2026-11-12, COORDINATION.md:32). submission-leaf-source-evidence.ts: unheld (01QoxbLcnW… touched and released it 2026-11-12, COORDINATION.md:472-480). SubmissionSeqWorkspaces.tsx: no hold row; it is in RIM's D7 layout area.",
+    "package": "Split. DATA for the stray leaf (done). S5 for the undetermined verdict (server/services/ectd/**). D7 for the Builder copy (Submission*.tsx)."
+   }
+  },
+  {
+   "id": "MDX-8",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "visible-blemish",
+   "title": "Audit trail opens on 'Signed in on a development server: second factor skipped'",
+   "where": "/concept2cure/audit-trail",
+   "evidence": "The top rows are repeated 'Signed in on a development server: second factor skipped user:1'. The 'Hash chain intact … 1314 chained entries' line itself is fine. A second panel reads 'Audit-event chain: no entries yet — Nothing is recorded in this chain, so there is nothing to verify.'",
+   "onStage": "Point at 'Hash chain intact' first. If the filter chips (Vault / Submission / Review) narrow the list, use them before reading rows; this was not verified. Do not linger on the top rows.",
+   "suspectedCode": "server auth sign-in audit wording for dev second-factor skip",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "server/services/audit/auth-event-audit.ts:72 maps 'user_login|success|dev_mfa_skipped' to 'Signed in on a development server: second factor skipped'. server/routes/auth.ts:655 writes that row on every dev login. A Codespace runs with ALLOW_DEV_AUTH=1 (.devcontainer/post-create.sh:176), and Demo access, the seed and post-start all sign in through /api/auth/dev-login. The ledger lists newest first with no default filter for sign-ins, so that line leads the audit trail. auth-event-audit.ts has no commit since 51c52751e, and no commit since 2026-11-09T20:00 mentions it.",
+    "holder": "auth-event-audit.ts is unheld. The audit trail screen files (surfaces/AuditTrail*.tsx, routes/audit-trail-ledger.routes.ts) were on 01T2woo…'s 2026-11-10 client-admin list (COORDINATION.md:121). J2 (01QoxbLb…) holds audit-trail-ledger.routes.ts for event names (row :115).",
+    "package": "F1 (server/services/audit/** is in no named package)"
+   }
+  },
+  {
+   "id": "MDX-9",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "visible-blemish",
+   "title": "Raw code tokens across the device screens",
+   "where": "Project home documents list, the editor, Vault Library, Submission Center, Change control",
+   "evidence": "'510k' chips on documents (Project home and editor list). The editor shows 'FDA · K510 — home filing' and the header '[Demo · MDX] NeuroPanel-Dx 510(k) · Planning · 510k'. The Vault tree shows 'K510 [Demo · MDX] NeuroPanel-Dx 510(k) — 510(k) × FDA…'. The Submissions table shows 'Client: Ivd'. The Builder shows 'FDA · US · 510K'. The change-control links show raw uuids 'f5730264-80d8-42b7-a975-bdf13412b5d5' and '97e06293-a99d-4263-acf1-543583040257' for the risk file and the software description.",
+   "onStage": "No action needed; do not zoom in on them.",
+   "suspectedCode": "pathway token rendering in editor/DocumentWorkbench and project document list; Quality change-control link rendering",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1486-1487 prints doc.module raw ('510k') when it is not a CTD module number. client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:4357/4371 does the same in the editor bar ('… · 510k') and :5120 in the document view masthead. client/src/concept2cure/quality/ChangeRecordDetail.tsx:179 prints linkedRef in monospace, and the seed sets it to Vault document UUIDs (packs/mdx-qms.mjs:78-79). The rendering matches 51c52751e's ChangeControl.tsx:455. The seeded Vault note reads 'Filed by the MDX demo pack into ${doc.folderId}' (mdx.mjs:133). The Respond and Builder casing ('510K', 'Ivd') was not traced.",
+    "holder": "ProjectHome.tsx: the D3 holder, Project page 01FTWcmX… (row :109, from 2026-11-08). DocumentWorkbench.tsx: D4; the Codex project/editor continuation holds only its saved-refresh lines (row :105). quality/**: Quality and training, 01GyGhjgjrNv… (row :145, still active on 2026-11-12). mdx.mjs and mdx…",
+    "package": "F1. Files: ProjectHome.tsx in D3, DocumentWorkbench.tsx in D4, quality/ChangeRecordDetail.tsx in D7, the seed wording in DATA."
+   }
+  },
+  {
+   "id": "MDX-10",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "note",
+   "title": "Authoring opens on SOP-104, not the 510(k) Summary; 'close the program' step no longer applies",
+   "where": "/concept2cure/document-authoring?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58",
+   "evidence": "The editor's first document is '[Demo · MDX] SOP-104 Software Change Control Draft v2'. The list holds 4 SOPs and then the Cybersecurity, SE Discussion and 510(k) Summary. Going to /document-authoring with no program re-attaches ?program=f1f5e1e4…. The SE Discussion and Cybersecurity already list inside the project.",
+   "onStage": "Open the 510(k) Summary from Project home › Author › Open, as tour stop 14 does, not from the bare editor. Click the other two documents in the editor's left list. Do not try to close the program.",
+   "suspectedCode": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx (default document selection)",
+   "atHead": null
+  },
+  {
+   "id": "MDX-11",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "note",
+   "title": "IVD screen is unreachable from the 510(k) project and is all EU-IVDR empty states",
+   "where": "/concept2cure/device-diagnostics?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58 (URL only)",
+   "evidence": "The changed panel works: 'GSPR compliance · Annex I Not yet assessed No GSPR chapters yet Start the GSPR matrix for this device to populate the chapter breakdown.' It still offers a 'Check again' button. API: 404 GET /api/ivdr/gspr-checklist/<id>/matrix {code: IVDR_GSPR_NOT_FOUND}, logged as a console 404. Everything else reads 'No … yet' ('No analytical validations yet', 'No clinical performance studies yet'), under 'IVDR pathway', 'EUDAMED · NB review', while the Vault holds an Analytical Per…",
+   "onStage": "Do not open the IVD screen for this US 510(k) demo.",
+   "suspectedCode": "client/src/concept2cure/mdx/surfaces/IvdSurface.tsx; client/src/concept2cure/mdx/hooks/useIvd.ts",
+   "atHead": null
+  },
+  {
+   "id": "MDX-12",
+   "area": "Device tour (NeuroPanel-Dx)",
+   "severity": "note",
+   "title": "Vault opens on 'A1 Cover letter — Not started'; the cabinet the walkthrough names is behind 'Uploads · 6'",
+   "where": "/concept2cure/vault?program=f1f5e1e4-f3b5-4c3c-9193-f30db6b45a58",
+   "evidence": "Library tab, right pane: 'A1 · Cover letter Not started v1 Required · updated 43m ago Mandatory section — no content yet'. The middle list is 31 'Not started' eSTAR sections. No 'Source files · filing cabinet' control exists. The six PDFs are under Uploads · 6 › 'Open filing cabinet', and in the tree under 510(k) submissions 0/2, Clinical evaluation 0/1, Engineering (DHF + RMF) 0/2, Labeling and UDI 0/1.",
+   "onStage": "Click 'Uploads · 6', then 'Open filing cabinet', then a row.",
+   "suspectedCode": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+   "atHead": null
+  },
+  {
+   "id": "SES-1",
+   "area": "Sign-in",
+   "severity": "demo-breaker",
+   "title": "A sixth sign-in signs out the account's oldest session; the signed-out tab lands on the plain sign-in page",
+   "where": "Any screen, after the same account signs in a sixth time",
+   "evidence": "tour-b first run: stops 11 to 16 timed out on the sign-in page; 401 on /api/tenants, /api/v1/auth/session, /api/users/me while six walkers signed in as the same account",
+   "onStage": "Sign in once, after post-start has finished; press Demo access again if the sign-in page appears",
+   "suspectedCode": "shared/auth/session-policy.ts DEFAULT_MAX_CONCURRENT_SESSIONS = 5; server/services/session-inactivity.ts",
+   "atHead": {
+    "status": "open",
+    "fixedBy": null,
+    "stillAt": "Nothing is fixed. Since 51c52751e the server session files changed in one commit only, 26e81b20d (/readyz). The client session-end files are unchanged: sessionEnd.ts, authService.tsx and queryClient.ts have no commits. Concept2CureLogin.tsx gained only the Demo access picker (eaff401b5). No commit since 2026-11-09T20:00 addresses the symptom. The three parts at HEAD: (1) The limit and the silent eviction. shared/auth/session-policy.ts:6 still sets DEFAULT_MAX_CONCURRENT_SESSIONS = 5. server/services/session-inactivity.ts:392-403 (registerSession) marks the oldest sessions superseded and only writes the log line at :400. A session that has gone idle but is never used again keeps its slot for…",
+    "holder": "unheld. No row in .design/claude-convergence/COORDINATION.md holds shared/auth/session-policy.ts, server/services/session-inactivity.ts, server/services/token-revocation.ts, server/auth.ts, client/src/utils/sessionEnd.ts, client/src/services/portal/authService.tsx, client/src/lib/queryClient.ts or …",
+    "package": "F1 ('Repairs: defects in shipped behaviour', paths '**'). The GA readiness ledger item GA-DEMO-20 (docs/evidence/GA-READINESS/2026-11-10/ledger.json:4041) also names F1 and is 'open', 'unheld'. Codespace changes in .devcontainer/post-start.sh have gone in under L1 (for example eaff401b5), which also covers '**'."
+   }
+  }
+ ]
+}

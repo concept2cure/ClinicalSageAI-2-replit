@@ -1,0 +1,5 @@
+MUTATION C3M18-payload-without-what-it-names in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T19:18:34.225521Z): replaced [          ...settlementFields(f), ...rejectionFields(f), ...reopenFields(f),] with [          ...settlementFields(f), ...rejectionFields(f),]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, asks again, then re-opens; no record key or signature id on screen 507ms
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7a0fa27c9e19b4dbdd71a8483df14de17bf0960691be82657e99dba2c15b57f1 (expected 7a0fa27c9e19b4dbdd71a8483df14de17bf0960691be82657e99dba2c15b57f1)

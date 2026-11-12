@@ -1,0 +1,5 @@
+MUTATION C4M05-R7-refusal-pending-ignored in server/services/ectd/filed-sequence-rejection.ts (on the final code and tests, 2026-11-09T18:27:58.318995Z): replaced [  if (f.refusalPending) {] with [  if (false) {]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R7 FDA's kept answer refusing a send recorded as received is decided first (C3) 329ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3 (expected 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3)

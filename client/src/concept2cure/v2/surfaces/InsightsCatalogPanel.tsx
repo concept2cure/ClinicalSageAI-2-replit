@@ -21,7 +21,7 @@ import React, { useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
-import { catalogCapabilityCounts, isRowList, PanelHead, regionWords, reportingRoleLabel, reportingRoleWords, rowsOf, type LibraryReportType } from './insightsLibraryShared';
+import { availabilityWords, catalogCapabilityCounts, isRowList, PanelHead, regionWords, reportingRoleLabel, reportingRoleWords, rowsOf, scopeLabel, scopeList, type LibraryReportType } from './insightsLibraryShared';
 import { useCatalogReportingRole } from '../reportingPersona';
 
 /** Family ids to the words a client reads; anything unlisted shows its id. */
@@ -117,9 +117,9 @@ function TypeCard({
             nothing about running; one whose engine covers fewer scopes than the
             declaration says only the scopes it covers. */}
         {type.computedScopes.length
-          ? `Runs over: ${type.computedScopes.join(', ')}`
+          ? `Runs over ${scopeList(type.computedScopes)}`
           : type.scopes.length
-            ? `Declared for: ${type.scopes.join(', ')}`
+            ? `Declared for ${scopeList(type.scopes)}`
             : 'Scope not declared'}
       </div>
       {type.computedScope === 'organization' && <OrganizationCountsNote className="rl-card-meta" />}
@@ -254,8 +254,8 @@ export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, progr
         </div>
         <CatalogFilter label="Region" value={region} onChange={setRegion} options={regions} labelOf={regionWords} />
         <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} labelOf={reportingRoleLabel} />
-        <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
-        <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed', 'prediction-unavailable']} />
+        <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} labelOf={dataScopeLabel} />
+        <CatalogFilter label="Availability" value={state} onChange={setState} labelOf={availabilityWords} keepOrder options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed', 'prediction-unavailable']} />
         {planControl}
       </div>
       <ReportingPersonaError profile={profile} />
@@ -316,9 +316,13 @@ function ReportingPersonaError({ profile }: { profile: ReturnType<typeof useCata
 }
 
 /** `labelOf` words a stored value for the reader; the value itself is still what filters. Options are in the order read. */
-function CatalogFilter({ label, value, options, onChange, labelOf = readable }: { label: string; value: string; options: string[]; onChange: (v: string) => void; labelOf?: (v: string) => string }) {
+/** A Data scope option in words. `organization` marks an engine that counts the organization's records whatever
+ *  scope it runs at; it is said as the cards say it, so it is not read as the account scope. */
+const dataScopeLabel = (scope: string) => (scope === 'organization' ? ORGANIZATION_WIDE_RECORDS : scopeLabel(scope));
+
+function CatalogFilter({ label, value, options, onChange, labelOf = readable, keepOrder = false }: { label: string; value: string; options: string[]; onChange: (v: string) => void; labelOf?: (v: string) => string; /** The options are already in the order to read them in. */ keepOrder?: boolean }) {
   const id = React.useId();
-  const shown = labelOf === readable ? options.map(option => ({ option, text: readable(option) }))
+  const shown = labelOf === readable || keepOrder ? options.map(option => ({ option, text: labelOf(option) }))
     : options.map(option => ({ option, text: labelOf(option) })).sort((a, b) => a.text.localeCompare(b.text));
   return <div className="rl-filter"><label className="gov-label" htmlFor={id}>{label}</label><select id={id} className="rl-input" value={value} onChange={e => onChange(e.target.value)}><option value="">All</option>{shown.map(({ option, text }) => <option key={option} value={option}>{text}</option>)}</select></div>;
 }
@@ -347,8 +351,14 @@ function DocumentTracePicker({ type, projectId, canRun, busy, onRun, unavailable
   </section>;
 }
 
-function CatalogCounts({ counts }: { counts: ReturnType<typeof catalogCapabilityCounts> }) { return <>
-      <p className="rl-sub" role="status">{counts.defined} applicable definitions · {counts.engineBacked} engine-backed · {counts.available} available to run</p>
-      <p className="rl-sub">{counts.locked} requires a plan · {counts.contextRequired} requires context · {counts.disabled} disabled · {counts.unregistered} unregistered</p>
-      <p className="rl-sub">{counts.uncomputed} uncomputed · {counts.predictionUnavailable} prediction unavailable. An engine-backed type still requires authorized recorded inputs and its output gates.</p>
-  </>; }
+/** The catalog's counts in a reader's words (P-122; they read "54 applicable definitions · 24 engine-backed",
+ *  "0 unregistered", "25 uncomputed · 5 prediction unavailable"). Every number the three lines carried is kept. */
+function CatalogCounts({ counts }: { counts: ReturnType<typeof catalogCapabilityCounts> }) {
+  const is = (n: number) => (n === 1 ? 'is' : 'are');
+  const needs = (n: number) => (n === 1 ? 'needs' : 'need');
+  return <>
+      <p className="rl-sub" role="status">{counts.defined} {counts.defined === 1 ? 'report applies' : 'reports apply'}. {counts.engineBacked} {is(counts.engineBacked)} computed in this release, and {counts.available} can be run now.</p>
+      <p className="rl-sub">{counts.locked} {needs(counts.locked)} a higher plan, {counts.contextRequired} {needs(counts.contextRequired)} a record chosen first, {counts.disabled} {is(counts.disabled)} switched off and {counts.unregistered} {is(counts.unregistered)} not registered.</p>
+      <p className="rl-sub">{counts.uncomputed} {is(counts.uncomputed)} not computed in this release, and {counts.predictionUnavailable} {counts.predictionUnavailable === 1 ? 'prediction is' : 'predictions are'} not offered. A report that can be run still needs recorded inputs you may read, and its output is checked before it is shown.</p>
+  </>;
+}

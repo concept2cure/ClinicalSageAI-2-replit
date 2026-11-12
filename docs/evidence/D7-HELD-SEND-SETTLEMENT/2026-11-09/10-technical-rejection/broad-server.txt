@@ -1,0 +1,3 @@
+# P-92 C4: every submission-service suite, the submissions routes, the package-spine rejection, the receipt path and AnA's no-door pins, on the final server code
+ Test Files  70 passed | 2 skipped (72)
+      Tests  798 passed | 4 skipped (802)

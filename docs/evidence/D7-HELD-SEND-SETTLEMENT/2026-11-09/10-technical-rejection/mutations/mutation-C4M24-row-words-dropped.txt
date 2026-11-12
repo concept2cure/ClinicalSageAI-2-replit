@@ -1,0 +1,5 @@
+MUTATION C4M24-row-words-dropped in client/src/concept2cure/v2/gatewayLabels.ts (on the final code and tests, 2026-11-09T18:30:32.122520Z): replaced [  if (r.evidence?.kind === 'ack3') return style === 'row'] with [  if (r.evidence?.kind === ('never' as string)) return style === 'row']
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > FDA's technical rejection recorded by signature says so on its row 229ms
+      Tests  1 failed | 12 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 95a906e0055e3203a84650c38b4163cb85e8c9790869536977df92c49509c33e (expected 95a906e0055e3203a84650c38b4163cb85e8c9790869536977df92c49509c33e)

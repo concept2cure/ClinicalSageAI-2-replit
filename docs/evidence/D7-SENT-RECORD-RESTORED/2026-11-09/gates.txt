@@ -1,0 +1,14 @@
+Design gates, SQL interpolation and DB-test isolation, 2026-11-09T21:22:54Z
+ci:ana-surface-context exit=0 :: 
+ci:check-css-selector-shadowing exit=0 :: [css-shadowing] OK — 49 stylesheets, 14 known shadowed selector(s), 0 new.
+ci:check-phantom-tokens exit=0 :: [ci:phantom-tokens] OK — no new phantom tokens.
+ci:check-shell-css-collisions exit=0 :: [ci:shell-css-collisions] OK — no new cross-shell collisions.
+ci:design-system exit=0 :: [design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+ci:empty-state-honesty exit=0 :: check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+ci:internals-in-copy exit=0 :: check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+ci:one-product exit=0 :: ci:one-product: 102 surfaces, 11 rail entries, none new.
+ci:surface-text-ramp exit=0 :: [ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+ci:token-cascade exit=0 :: [token-cascade] PASS — all 46 stylesheets resolve cleanly.
+ci:undefined-css-classes exit=0 :: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+ci:sql-interpolation exit=0 :: [ci:sql-interpolation] OK — no new value interpolated into SQL text. 1050 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+check-db-test-isolation exit=0 :: [ci:db-test-isolation] OK — 250 real-database test file(s) run unmocked, and every mocked vitest config excludes them.

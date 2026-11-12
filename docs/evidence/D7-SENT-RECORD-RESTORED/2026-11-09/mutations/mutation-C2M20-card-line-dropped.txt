@@ -1,0 +1,6 @@
+MUTATION C2M20-card-line-dropped in client/src/concept2cure/v2/surfaces/EctdFiledState.tsx (on the final code and tests, 2026-11-09T21:18:08.275334Z): replaced [        {restored ? ` ${restored}` : ''}
+] with []
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence whose record was read back from the package it sent, and when 207ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 0c4e701a3f21fe9f9a71014eeffcbe7394d982515bf5046796f5c975982fe80d (expected 0c4e701a3f21fe9f9a71014eeffcbe7394d982515bf5046796f5c975982fe80d)
