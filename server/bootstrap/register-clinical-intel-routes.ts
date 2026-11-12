@@ -178,7 +178,7 @@ export async function registerClinicalIntelRoutes({
   try {
     const supportRoutes = await import('../routes/support');
     app.use('/api/support', supportRoutes.default);
-    console.log('✅ Support request routes mounted successfully');
+    console.info('✅ Support request routes mounted successfully');
   } catch (error) {
     console.error('Failed to mount support request routes:', error);
   }
