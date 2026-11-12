@@ -98,7 +98,8 @@ says of stale drafts that they need a compile. `04-gate-sentence-red-green.txt`.
   **→ the founder:** whether it is required before a review approval.
 - A citation reads as a raw file name outside the Section view; the attribution panel says "nothing is cited" on a
   cited section.
-- No screen shows the sealed version a Vault copy was rendered from (recorded since `46d849a026`).
+- No screen shows the sealed version a Vault copy was rendered from (recorded since `46d849a026`). **Repaired
+  2026-11-12, below.**
 - In the Builder every Module 3 leaf and the Vault leaf read "Source evidence not yet determined".
 - Create project, upload, new document from a template, save with a reason, Cite, send for review, the reviewer's
   task and decision, both e-signatures, file to Vault with the approval carried, and placement from the Vault worked.
@@ -121,6 +122,19 @@ Still open on the CMC screens, in files this session holds: the method form's pe
 wording when an authenticator code is missing; a hint on the QC sample type; stale sections on the Overview. In
 `CmcModule3Build.tsx` (held by the screen-work session): the remount itself, "21 ready to compile" after a compile,
 and finding types shown as stored tokens.
+
+## Screen repairs, the document path (2026-11-12)
+
+| Found | Repair | Used in the running app |
+|---|---|---|
+| No screen showed the sealed version a Vault copy was rendered from | The Vault's version line says it, read from the verified filing receipt (`authoring-vault-filing-receipt.ts` `renderedFromOf`, attached by the versions read in `routes/c2c/project-vault.ts`, worded by `VaultVersions.tsx` `renderedFromText`). A seal that did not hold is said in words, never as its stored code. A receipt that does not verify or could not be read is said to be so and is never shown as a source. A native upload says nothing | On the walked document's Vault record: "rendered from the Authoring document’s sealed version “approved” (seal 1a98777beb8f)", beside the two Authoring signatures. The full hash is the line's title (`after-d1-01`) |
+
+What already exists, for this one: the receipt reader and its derivation (`readAuthoringVaultFilingReceipt`, since
+`46d849a026` with `source.sealedVersion` / `source.sealUnverified`), which the leaf's source evidence already reads;
+the versions read, which already attaches each version's lifecycle, placements and refusals; and the version line,
+which already prints them. One projection, one field on the read, one clause on the line. No route, table or screen
+was added. `07-vault-seal-line-red-green.txt`: 10 new cases red on the committed code, then 45 of 45; the Vault's 70
+client suites, 790 of 790.
 
 ## Not done
 
