@@ -1,0 +1,31 @@
+const c=require('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/gademo/common.cjs');
+const E='/home/user/ClinicalSageAI-2-replit/docs/evidence/DESIGN/P-122/W1-filing-release/shots/';
+const Q='?program=463c488c-a283-4bbe-aca5-8ae3445f14cc';
+(async()=>{const b=await c.launch();const out={};try{
+ for (const vp of ['desktop','phone']) {
+  const {page,rec,context}=await c.open(b,'rhea',{viewport:vp});
+  await page.goto(c.BASE+'/concept2cure/review'+Q); await page.waitForLoadState('networkidle',{timeout:60000}).catch(()=>{}); await c.sleep(3500);
+  const row=page.locator('text=Investigator').first();
+  await row.click().catch(()=>{}); await c.sleep(1500);
+  const btns=page.getByRole('button',{name:'Record review decision'});
+  out[vp+'-buttons']=await btns.count();
+  // the IB row's decision: pick the button whose nearest list item mentions the brochure
+  let clicked=false;
+  for (let i=0;i<await btns.count();i++){ const t=await btns.nth(i).evaluate(el=>{let n=el;for(let k=0;k<8&&n;k++){n=n.parentElement; if(n&&/Brochure/.test(n.innerText)&&n.innerText.length<3000) return n.innerText;} return '';}); if(t){await btns.nth(i).click();clicked=true;break;} }
+  if(!clicked && await btns.count()) await btns.first().click();
+  await c.sleep(2500);
+  const dlg=page.locator('[role=dialog]').first();
+  const text=await dlg.innerText().catch(()=> '');
+  out[vp+'-dialog']=text.slice(0,3000);
+  out[vp+'-workKey']=/:work:/.test(text);
+  out[vp+'-optional']=/\(optional\)/.test(text);
+  const h=await dlg.locator('h4').allInnerTexts().catch(()=>[]); out[vp+'-headings']=h.slice(0,6);
+  await page.screenshot({path:E+`after-review-dialog-${vp==='desktop'?1440:390}.png`});
+  const step=dlg.locator('[aria-label="Independent saved-document checks"]');
+  if (await step.count()) { await step.scrollIntoViewIfNeeded(); await c.sleep(500); await page.screenshot({path:E+`after-review-dialog-checks-${vp==='desktop'?1440:390}.png`}); }
+  out[vp+'-overflowX']=await c.overflowX(page).catch(e=>String(e));
+  await page.keyboard.press('Escape');
+  out[vp+'-rec']=rec.take();
+  await context.close();
+ }
+}finally{await b.close();} console.log(JSON.stringify(out,null,1));})();

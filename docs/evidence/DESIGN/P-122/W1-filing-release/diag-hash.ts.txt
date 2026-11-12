@@ -1,0 +1,11 @@
+import pg from '/home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/index.js';
+import { deriveChainHash } from '/home/user/ClinicalSageAI-2-replit/server/services/audit/chain';
+const c = new pg.Client({ host: '127.0.0.1', user: 'postgres', database: 'gademo' });
+(async()=>{await c.connect();
+const raw = { types: { getTypeParser: (id: number, f: any) => id === 1184 ? ((v: string) => v) : (pg.types.getTypeParser as any)(id, f) } };
+for (const [label, cfg] of [['pg default (Date)', {}], ['drizzle raw string', raw]] as const) {
+  const r = await c.query({ text: `SELECT a.*, (SELECT sha256_chain FROM audit_logs p WHERE p.tenant_id=a.tenant_id AND p.sha256_chain IS NOT NULL AND p.chain_seq < a.chain_seq ORDER BY chain_seq DESC LIMIT 1) prev FROM audit_logs a WHERE chain_seq=2718 AND tenant_id=2`, ...cfg } as any);
+  const row = r.rows[0];
+  console.log(label, typeof row.occurred_at, String(row.occurred_at instanceof Date ? row.occurred_at.toISOString() : row.occurred_at), deriveChainHash(row, row.prev) === row.sha256_chain ? 'linked' : 'BROKEN');
+}
+await c.end();})();

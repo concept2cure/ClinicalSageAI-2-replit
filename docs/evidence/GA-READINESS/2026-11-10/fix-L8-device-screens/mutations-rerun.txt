@@ -1,0 +1,6 @@
+M1 the open filter is never applied | exit 1 | caught | Tests  1 failed | 1 passed (2) | restored sha256 ok
+M2 filed no longer counted as reported | exit 1 | caught | Tests  1 failed | 1 passed (2) | restored sha256 ok
+M3 K510 prints the raw reason | exit 1 | caught | Tests  1 failed | 9 passed (10) | restored sha256 ok
+M4 unreachable branch returns the raw reason | exit 1 | caught | Tests  3 failed | 7 passed (10) | restored sha256 ok
+M5 DataGate passes the network message through | exit 1 | caught | Tests  5 failed | 17 passed (22) | restored sha256 ok
+M6 Postmarket caveat restored | exit 1 | caught | Tests  1 failed | 5 passed (6) | restored sha256 ok

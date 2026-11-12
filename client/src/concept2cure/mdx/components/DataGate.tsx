@@ -162,7 +162,7 @@ function renderState(
         <ErrorState
           variant="panel"
           title={`Could not load ${label}`}
-          message={state.message}
+          message={messageInWords(state.message)}
           retry={onRetry}
           testId="data-gate-error"
         />
@@ -183,6 +183,22 @@ function renderState(
         />
       );
   }
+}
+
+/**
+ * GA-DEMO-07 (2026-11-10): a network failure arrives in its runtime's words
+ * ("Failed to fetch", "fetch failed", "Load failed", "NetworkError when
+ * attempting to fetch resource."). ErrorState's internals filter does not know
+ * them, so the 510(k) page could show one under "Could not load …". Each is
+ * said as what happened; every other message passes through to ErrorState
+ * unchanged, and is redacted there as before.
+ */
+const NETWORK_FAILURE = /^(?:TypeError:\s*)?(?:failed to fetch|fetch failed|load failed|networkerror when attempting to fetch resource\.?|network request failed)$/i;
+function messageInWords(message: string | undefined): string | undefined {
+  if (message && NETWORK_FAILURE.test(message.trim())) {
+    return 'The service could not be reached. Check the connection and try again.';
+  }
+  return message;
 }
 
 /** Sentence-case a label for use at the start of a sentence. */

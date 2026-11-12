@@ -1,0 +1,12 @@
+RED: cmc-demo-stability-flags.test.mjs with HEAD's biotech-work-content.mjs swapped in for the run (no flags), then restored
+not ok 1 - C2C-201: every stability result records whether it is within its limit
+  expected:
+  actual:
+ok 2 - C2C-101: every stability result records whether it is within its limit
+not ok 3 - C2C-201: exactly one stability result is out of specification, and it is the 6-month accelerated impurity
+  expected: 1
+  actual: 0
+ok 4 - C2C-201: DS-2502-R2 is still recorded as a pass at 97.4 % (the phase 4 fixture pins it)
+# pass 2
+# fail 2
+restored sha256 match: yes

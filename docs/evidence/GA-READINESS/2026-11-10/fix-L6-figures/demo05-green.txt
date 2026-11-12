@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > worked figure: d = 0.4 at 90% power has about a 13.6% margin, not 5% 40ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous superiority: the engine needs about the current evaluable N for 80% {} power at the breakpoint 17ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous at 80% power: the engine needs about the current evaluable N for 80% { powerTarget: 0.8 } power at the breakpoint 14ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > binary from rates: the engine needs about the current evaluable N for 80% { endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15 } power at the breakpoint 3ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > time to event: the engine needs about the current evaluable N for 80% { endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 } power at the breakpoint 2ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > worked figure: 10% dropout on N enrolled for 90% power tolerates about 33% 13ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > a 15% dropout rate prints no floating-point tail 13ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > the governed document prints the recomputed points > sample size rationale and assumption note carry rounded breakpoints and name the 80% threshold 13ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  12:17:56
+   Duration  843ms (transform 322ms, setup 117ms, import 278ms, tests 120ms, environment 0ms)
+

@@ -1,0 +1,40 @@
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/__tests__/module3Composer.structural-naming.test.ts > §3.1 and §3.3 read the drug substance name from the drug substance > §3.3 names the substance, not the product (product first)
+AssertionError: expected 'This section provides literature refe…' to contain 'for the drug substance (C2C-201) and …'
+
+Expected: "for the drug substance (C2C-201) and drug product (Film-coated tablet)"
+Received: "This section provides literature references cited throughout Module 3 for the drug substance (C2C-201 tablets) and drug product (Film-coated tablet). References include pharmacopoeial monographs, ICH guidelines, and published literature supporting the quality dossier."
+
+ ❯ server/services/__tests__/module3Composer.structural-naming.test.ts:47:18
+     45|   ])('§3.3 names the substance, not the product (%s)', (_order, source…
+     46|     const text = section(sources, '3.3');
+     47|     expect(text).toContain('for the drug substance (C2C-201) and drug …
+       |                  ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/__tests__/module3Composer.structural-naming.test.ts > §3.1 and §3.3 read the drug substance name from the drug substance > does not borrow the product name when the substance record names nothing
+AssertionError: expected 'This section provides a table of cont…' not to contain 'The drug substance is'
+
+Expected: "The drug substance is"
+Received: "This section provides a table of contents and introductory overview for Module 3 — Quality. The drug substance is C2C-201 tablets. The drug product is formulated as a Film-coated tablet. Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively."
+
+ ❯ server/services/__tests__/module3Composer.structural-naming.test.ts:52:22
+     50|   it('does not borrow the product name when the substance record names…
+     51|     const text = section([product, { ...substance, sourcePayload: { ma…
+     52|     expect(text).not.toContain('The drug substance is');
+       |                      ^
+     53|   });
+     54| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  11:52:02
+   Duration  1.38s (transform 717ms, setup 135ms, import 713ms, tests 34ms, environment 0ms)
+

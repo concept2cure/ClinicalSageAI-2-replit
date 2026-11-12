@@ -1,0 +1,5 @@
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > the request client answers a timestamptz as text, as PostgreSQL does through Drizzle 99ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > places a frozen, sealed document whose section creation is chained 464ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > a ledger that cannot be read answers 503 in words, and nothing is written 62ms
+ ✓ server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts > a frozen document is placed into its filing > a chained row that no longer derives is still refused 409 89ms
+      Tests  4 passed (4)

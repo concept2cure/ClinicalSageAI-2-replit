@@ -1,0 +1,12 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > a network failure ("Failed to fetch") is said in words, not in the runtime's
+AssertionError: expected 'Could not load eSTAR sectionsFailed t…' not to contain 'Failed to fetch'
+ FAIL  client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > a network failure ("fetch failed") is said in words, not in the runtime's
+AssertionError: expected 'Could not load eSTAR sectionsfetch fa…' not to contain 'fetch failed'
+ FAIL  client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > a network failure ("TypeError: fetch failed") is said in words, not in the runtime's
+AssertionError: expected 'Could not load eSTAR sectionsTypeErro…' not to contain 'TypeError: fetch failed'
+ FAIL  client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > a network failure ("Load failed") is said in words, not in the runtime's
+AssertionError: expected 'Could not load eSTAR sectionsLoad fai…' not to contain 'Load failed'
+ FAIL  client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx > DataGate — one announcement per state > a network failure ("NetworkError when attempting to fetch resource.") is said in words, not in the runtime's
+AssertionError: expected 'Could not load eSTAR sectionsNetworkE…' not to contain 'NetworkError when attempting to fetch…'
+      Tests  5 failed | 17 passed (22)

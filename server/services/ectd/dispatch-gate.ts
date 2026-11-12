@@ -25,6 +25,14 @@ export interface DispatchGateResult {
   /** True only when no hard blocker is present. */
   cleared: boolean;
   blockers: string[];
+  /**
+   * Set only when the gate cleared because it does not apply to this
+   * submission type (GA-D7-11, 2026-11-10). A gate that did not apply is not a
+   * gate that was checked and passed: a 510(k) sequence, unsigned and
+   * unfrozen, read "Satisfied" with a check on its release-signature gate.
+   * A surface shows this note in place of "Satisfied".
+   */
+  notRequired?: string;
 }
 
 /** Evaluate the hard dispatch gate. Cleared only when every blocker is absent. */
@@ -194,7 +202,16 @@ export function evaluateReleaseSignatureGate(
   }
 
   if (!input.required) {
-    return { cleared: true, blockers: [] };
+    // Cleared, because it does not block; but nothing was satisfied. Say so.
+    return {
+      cleared: true,
+      blockers: [],
+      notRequired:
+        'Not required for this submission type. ' +
+        (input.verdict === 'signed'
+          ? 'A release signature is not needed before dispatch; one is on record and verifies.'
+          : 'A release signature is not needed before dispatch, and none is relied on here.'),
+    };
   }
 
   switch (input.verdict) {

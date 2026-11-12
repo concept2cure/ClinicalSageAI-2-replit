@@ -1,0 +1,19 @@
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a member role change reads as who, from which role to which, by whom and why (W1-18) > names the person, not organization_users:11, and keeps the record reference beside it 62ms
+   → expected 'organization_users:11' to be 'Priya Raman' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a member role change reads as who, from which role to which, by whom and why (W1-18) > is found by searching for the person's name, which found nothing before 27ms
+   → expected false to be true // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a member role change reads as who, from which role to which, by whom and why (W1-18) > a removed member the organisation can no longer name is said to be so, never shown as a reference alone 28ms
+   → expected 'organization_users:99' to be 'A person who is no longer a member' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a settings change reads as the field, the value before and after, and the reason (AUD-01) > session policy: each changed field from its old value to its new one 22ms
+   → expected 'organization_settings:7' to be 'Organisation settings' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a settings change reads as the field, the value before and after, and the reason (AUD-01) > a row that names the field but holds no value says that the values were not recorded 25ms
+   → expected undefined to deeply equal []
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a settings change reads as the field, the value before and after, and the reason (AUD-01) > a seats change whose reason was stored only with the values shows that reason 19ms
+   → expected null to be 'Restore the seat count' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a settings change reads as the field, the value before and after, and the reason (AUD-01) > a client type change that stored only the new value says the old one was not recorded 17ms
+   → expected 'organization_industry_profile:7' to be 'Client type' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a governed act stored without a reason says so (AUD-01) > an API key revocation with no reason reads that no reason was recorded 14ms
+   → expected 'Api Key Revoked' to be 'API key revoked. No reason was record…' // Object.is equality
+ ✓ server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a governed act stored without a reason says so (AUD-01) > an act that is not a governed change is left as it was 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 1 passed (9)

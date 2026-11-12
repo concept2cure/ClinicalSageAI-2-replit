@@ -1,0 +1,44 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > recording a commitment > names this organisation's submission, or none, and never another tenant's 15ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission has one live project in its own organisation, or none that can admit a write 7ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a meeting's submission is read in its own organisation only 3ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission is readable in no program, or in a program of the reader’s scope 5ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with no scope given, lists as the screens always have: every commitment of the organisation 6ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with a reader’s program scope, lists those that name no submission, one in no program, or one in scope 9ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > never another organisation's, whatever the scope 4ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > names its submission and its meeting for admission, in its own organisation only 3ms
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > a project's own commitment is not the organisation's door's to admit 3ms
+ × server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > is listed for a reader who can open the meeting's submission, and not for one who cannot 13ms
+   → expected [ 1, 2 ] to deeply equal [ 2 ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > a commitment made at a meeting > is listed for a reader who can open the meeting's submission, and not for one who cannot
+AssertionError: expected [ 1, 2 ] to deeply equal [ 2 ]
+
+- Expected
++ Received
+
+  [
++   1,
+    2,
+  ]
+
+ ❯ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts:166:88
+    164|     expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q…
+    165|     expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q…
+    166|     expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q…
+       |                                                                                        ^
+    167|     expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q…
+    168|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  03:33:25
+   Duration  2.93s (transform 157ms, setup 76ms, import 458ms, tests 2.15s, environment 0ms)
+
