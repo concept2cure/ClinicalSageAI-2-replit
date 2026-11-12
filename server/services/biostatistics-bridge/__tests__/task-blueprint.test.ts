@@ -84,20 +84,6 @@ describe('tasksFromAssessment', () => {
     expect(title).not.toMatch(/_/);
   });
 
-  it('names every sensitive parameter as a reader says it, in the order the engine gave', () => {
-    const out = tasksFromAssessment({
-      ...base,
-      judgment: judgment({
-        fragility: { fragilityIndex: 80, category: 'fragile', narrative: 'n', sensitiveParameters: [
-          { parameter: 'effect_size', currentValue: 0.4, breakpointValue: 0.35, percentMargin: 12 },
-          { parameter: 'attrition_rate', currentValue: 0.15, breakpointValue: 0.22, percentMargin: 47 },
-        ] },
-      }),
-      input: input(),
-    });
-    expect(out.find((t) => t.key === 'fragility:sensitivity')!.title).toBe('Run sensitivity scenarios on effect size, attrition rate');
-  });
-
   it('a blocking gap becomes a design-completion task even when nothing could be judged', () => {
     const gaps: DesignGap[] = [
       { field: 'eventRate', message: 'No event rate.', severity: 'blocking', designPath: 'statisticalPlan.powerAssumptions.eventRate' },
@@ -161,5 +147,21 @@ describe('tasksFromAssessment', () => {
     const b = tasksFromAssessment(ctx);
     expect(a).toEqual(b);
     expect(dedupeBlueprints([...a, ...b])).toEqual(a);
+  });
+});
+
+describe('a fragility task names its parameters as a reader says them (T2-F8)', () => {
+  it('names every sensitive parameter as a reader says it, in the order the engine gave', () => {
+    const out = tasksFromAssessment({
+      ...base,
+      judgment: judgment({
+        fragility: { fragilityIndex: 80, category: 'fragile', narrative: 'n', sensitiveParameters: [
+          { parameter: 'effect_size', currentValue: 0.4, breakpointValue: 0.35, percentMargin: 12 },
+          { parameter: 'attrition_rate', currentValue: 0.15, breakpointValue: 0.22, percentMargin: 47 },
+        ] },
+      }),
+      input: input(),
+    });
+    expect(out.find((t) => t.key === 'fragility:sensitivity')!.title).toBe('Run sensitivity scenarios on effect size, attrition rate');
   });
 });
