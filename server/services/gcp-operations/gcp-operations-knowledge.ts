@@ -1951,13 +1951,14 @@ export function planEssentialDocuments(
 
   // Device-specific augmentation.
   if (params.usesInvestigationalDevice === true) {
-    // Zone 3: the IDE application and its approval are the catalog's regulatory submission and approval.
+    // Zone 3, a stated exception (gcp-operations-reference.ts): the IDE application and its approval are regulatory
+    // records. It is not tied to one catalog artifact, because it also names malfunction reports and device
+    // accountability, which are not regulatory submissions. QA confirms the placement.
     const deviceDoc: EssentialDocument = essentialDocument({
       id: 'ED-DEVICE-IDE',
       name: 'IDE application/approval and device-specific records (malfunction reports, device accountability)',
       stage: stageFilter === 'after' ? 'after' : 'before',
       tmfZone: 3,
-      catalogArtifact: 'regulatory_submission',
       heldBy: ['sponsor', 'investigator'],
       purpose: 'Documents IDE status and device-specific obligations.',
       citation: '21 CFR Part 812 (IDE)',

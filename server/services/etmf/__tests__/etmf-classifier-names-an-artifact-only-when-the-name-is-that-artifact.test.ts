@@ -27,6 +27,18 @@
  * before; and a keyword that says whose document it is (site, CRO, vendor,
  * protocol) is not a second opinion beside a catalog name.
  *
+ * ── What the second fix still got wrong (found 2026-11-12, its confirmation) ─
+ * It was pushed as 06d8036f89. "Sample ICF - Site 101.pdf" went to Site
+ * Management: the longer keyword "sample icf" took "icf" out of the count, and
+ * with it the IRB / IEC rule's early place, so any rule in between decided (216
+ * of 20,509 generated names). "Investigators Brochure receipt site 04.pdf" was
+ * filed with the brochure, where the code before E1 filed it with the site and
+ * the first fix refused it. "Financial Disclosure Form FDA 3455" was refused
+ * where "Form FDA 3455 Financial Disclosure" was filed. A longer keyword now
+ * keeps the place of the shorter one it takes; a word that says the document is
+ * ABOUT the record (receipt, acceptance, signature page) is a second signal;
+ * and a catalog name stands where its own keyword stands.
+ *
  * The keyword rules read the raw name with `\b`, which an underscore does not
  * break: "delegation_log_site_04.pdf" matched nothing. And three keywords could
  * never fire, because a shorter keyword in an earlier rule took the name first:
@@ -35,7 +47,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { classifyArtifact, TMF_KEYWORD_RULES, TMF_QUALIFIER_KEYWORDS } from '../etmf-logic';
+import { classifyArtifact, TMF_ABOUT_PHRASES, TMF_KEYWORD_RULES, TMF_QUALIFIER_KEYWORDS } from '../etmf-logic';
 import { TMF_REFERENCE_MODEL } from '../../../../shared/constants/domain/tmf-reference-model';
 import { classifyForFiling } from '../../vault/vault-filing.service';
 
@@ -96,10 +108,14 @@ describe('a name that only contains a catalog name is not that artifact', () => 
   });
 
   it('gives the zone at most, and no artifact code, when nothing else in the name disagrees', () => {
-    expect(said("Acceptance of Investigator's Brochure - Dr Lee.pdf")).toEqual({ zone: 2, code: null });
     expect(said('Statistical report template instructions.pdf')).toEqual({ zone: 11, code: null });
     expect(said('LMN-201 Monitoring Plan v2.pdf')).toEqual({ zone: 1, code: null });
     expect(said('Financial-disclosure-form-PI.pdf')).toEqual({ zone: 5, code: null });
+  });
+
+  it('the two refusals are constants nothing can change', () => {
+    expect(Object.isFrozen(classifyArtifact('quarterly-board-deck.pdf'))).toBe(true);
+    expect(Object.isFrozen(classifyArtifact('Data Safety Monitoring Plan.pdf'))).toBe(true);
   });
 
   it('says it points to two zones, which is not the same as pointing to none', () => {
@@ -108,6 +124,9 @@ describe('a name that only contains a catalog name is not that artifact', () => 
     expect(classifyArtifact('quarterly-board-deck.pdf')).toEqual({ zone: null, zoneName: null, section: null, confidence: 'unclassified' });
   });
 
+});
+
+describe('beside a catalog name: whose document, about the record, and where the name stands', () => {
   /* The first fix let "site", "cro", "vendor" and "protocol" veto the catalog
      name: 36 of the 41 names lost their zone with " Site 101.pdf" after them,
      38 with " - CRO.pdf", 36 with " - Protocol ABC-123.pdf". */
@@ -122,8 +141,46 @@ describe('a name that only contains a catalog name is not that artifact', () => 
     );
     expect(wrong).toEqual([]);
     expect([...TMF_QUALIFIER_KEYWORDS].sort()).toEqual(['cro', 'protocol', 'site', 'vendor']);
-    // The receipt of a brochure at a site is not the brochure: zone at most, never its code.
-    expect(said('Investigators Brochure receipt site 04.pdf')).toEqual({ zone: 2, code: null });
+  });
+
+  /* The site's receipt of the brochure is not the brochure, and it is not filed
+     with it. The fix as pushed filed it in zone 2 with no review asked. */
+  it('a word that says the document is about the record makes it two signals', () => {
+    const names = [
+      'Investigators Brochure receipt site 04.pdf',
+      "Site 101 Investigator's Brochure receipt.pdf",
+      "Acceptance of Investigator's Brochure - Dr Lee.pdf",
+      'Acknowledgement of receipt - Monitoring Plan.pdf',
+      'Protocol and amendments signature page - Site 12.pdf',
+      'Cover letter for the Statistical Analysis Plan.pdf',
+    ];
+    expect(Object.fromEntries(names.map((n) => [n, classifyArtifact(n)]))).toEqual(
+      Object.fromEntries(names.map((n) => [n, { zone: null, zoneName: null, section: null, confidence: 'unclassified', conflict: true }])),
+    );
+    expect(TMF_ABOUT_PHRASES).toContain('receipt');
+    // With no catalog name beside it, such a word says nothing either way.
+    expect(said('Receipt of drug accountability log.pdf')).toEqual({ zone: 6, code: null });
+    expect(said('Receipt.pdf')).toEqual(UNCLASSIFIED);
+  });
+
+  /* "Financial Disclosure Form FDA 3455" was refused while "Form FDA 3455
+     Financial Disclosure" was filed: the word order decided. */
+  it('a catalog name stands where its own keyword stands, against a later rule', () => {
+    const expected: Record<string, number> = {
+      'Financial Disclosure Form FDA 3455 - Dr Smith.pdf': 5,
+      'Form FDA 3455 Financial Disclosure Form.pdf': 5,
+      'Financial disclosure form (FDA 3455).pdf': 5,
+      'IRB/IEC approval - Case Report Form v2.pdf': 4,
+      'Regulatory submission - safety update.pdf': 3,
+    };
+    expect(Object.fromEntries(Object.keys(expected).map((n) => [n, said(n)]))).toEqual(
+      Object.fromEntries(Object.entries(expected).map(([n, zone]) => [n, { zone, code: null }])),
+    );
+  });
+
+  it('and yields to an earlier one, or when it has no keyword of its own', () => {
+    const names = ['Safety Management Plan - IRB copy.pdf', 'SAE reports to IRB.pdf', 'SUSAR reports to FDA.pdf', 'Statistical Analysis Plan - Safety.pdf'];
+    expect(Object.fromEntries(names.map((n) => [n, said(n)]))).toEqual(Object.fromEntries(names.map((n) => [n, UNCLASSIFIED])));
   });
 
   it('a keyword that says what the document is still unseats it, beside the same qualifier', () => {
@@ -219,8 +276,44 @@ describe('the keyword rules read the name as words', () => {
     expect(Object.fromEntries(Object.keys(expected).map((n) => [n, said(n).zone]))).toEqual(expected);
   });
 
+});
+
+describe('which keyword decides', () => {
   /* Each of these held before E1 and in E1. The first fix moved every one of
      them to the zone of the longer keyword (10, 2, 8, 6, 5, 8, 5). */
+  /* The fix as pushed: "Sample ICF - Site 101.pdf" → zone 5, "Sample ICF v2 - CRO
+     review.pdf" → 9, "Sample CRF - central lab pages.pdf" → 8. */
+  it('a longer keyword keeps the place of the shorter one it takes', () => {
+    const expected: Record<string, number> = {
+      'Sample ICF - Site 101.pdf': 2,
+      'Sample ICF v2 - CRO review.pdf': 2,
+      'Sample ICF FDA comments.pdf': 2,
+      'Sample ICF - safety language update.pdf': 2,
+      'Sample CRF - CRO draft.pdf': 2,
+      'Sample CRF - central lab pages.pdf': 2,
+      // An approval of it is the IRB's: the shorter keyword's own rule wins a tie.
+      'IRB approval of sample ICF.pdf': 4,
+    };
+    expect(Object.fromEntries(Object.keys(expected).map((n) => [n, said(n).zone]))).toEqual(expected);
+  });
+
+  it('beside one keyword of every other rule, "sample icf" and "sample crf" answer as "icf" and "crf" did, in zone 2', () => {
+    const wrong: string[] = [];
+    for (const [sample, short] of [['sample icf', 'icf'], ['sample crf', 'crf']] as const) {
+      const place = TMF_KEYWORD_RULES.findIndex((r) => r.phrases.includes(short));
+      TMF_KEYWORD_RULES.forEach((rule, index) => {
+        for (const phrase of rule.phrases) {
+          if ([sample, short].includes(phrase) || rule.phrases.includes(short) || rule.phrases.includes(sample)) continue;
+          const want = index < place ? rule.zone : 2;
+          for (const name of [`${sample} - ${phrase} v2.pdf`, `${phrase} - ${sample} v2.pdf`]) {
+            if (said(name).zone !== want) wrong.push(`"${name}": zone ${said(name).zone}, expected ${want}`);
+          }
+        }
+      });
+    }
+    expect(wrong).toEqual([]);
+  });
+
   it('between two keywords the earlier rule decides, however many words the later one has', () => {
     const expected: Record<string, number> = {
       'IRB approval - Case Report Form v2.pdf': 4,
@@ -231,6 +324,11 @@ describe('the keyword rules read the name as words', () => {
       'FDA letter re central lab.pdf': 3,
       'SAE Report - Monitoring Visit follow-up.pdf': 7,
     };
+    expect(Object.fromEntries(Object.keys(expected).map((n) => [n, said(n).zone]))).toEqual(expected);
+  });
+
+  it('an elided article does not hide a keyword', () => {
+    const expected: Record<string, number> = { "Approbation de l'IRB.pdf": 4, "Parere dell'IEC.pdf": 4, "d'IRB approval.pdf": 4 };
     expect(Object.fromEntries(Object.keys(expected).map((n) => [n, said(n).zone]))).toEqual(expected);
   });
 
@@ -321,6 +419,29 @@ describe('Vault filing says how a TMF document was recognised', () => {
     const titleOnly = classifyForFiling({ fileName: 'scan0001.pdf', title: 'Statistical Analysis Plan', view: 'service' });
     expect(titleOnly.folderId).toBe('z11');
     expect(titleOnly.rationale).toContain('Named as the TMF artifact "Statistical Analysis Plan"');
+  });
+
+  /* The fix as pushed refused 113 of 332 names that file alone, because of the
+     title: 75 of those titles held only a site, CRO, vendor or protocol. */
+  it('a title that only says whose document it is does not unseat the file name', () => {
+    const expected: Array<[string, string, string]> = [
+      ['Monitoring-Plan-v2.pdf', 'Protocol ABC-123', 'z01'],
+      ['Monitoring-Plan-v2.pdf', 'Site 101', 'z01'],
+      ['delegation_log.pdf', 'Delegation of authority log - Protocol ABC-123', 'z05'],
+      ['SAE reports.pdf', 'CRO copy', 'z07'],
+    ];
+    expect(expected.map(([fileName, title]) => classifyForFiling({ fileName, title, view: 'service' }).folderId)).toEqual(expected.map(([, , folder]) => folder));
+  });
+
+  it('a name and a title that name no record are read together, the earlier rule deciding', () => {
+    expect(classifyForFiling({ fileName: 'IRB approval.pdf', title: 'Case Report Form approval', view: 'service' }).folderId).toBe('z04');
+    expect(classifyForFiling({ fileName: 'scan-0042.pdf', title: 'SAE Report - Monitoring Visit follow-up', view: 'service' }).folderId).toBe('z07');
+  });
+
+  it('a title that says what else the document is does unseat a file name that names a record', () => {
+    const filed = classifyForFiling({ fileName: 'Monitoring-Plan-v2.pdf', title: 'IRB submission package', view: 'service' });
+    expect(filed.folderId).toBeNull();
+    expect(filed.needsReview).toBe(true);
   });
 
   it('a name and a title that point to different zones are not filed, and neither is a name that points to two', () => {
