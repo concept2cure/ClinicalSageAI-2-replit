@@ -1,0 +1,391 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-12T00:42:29.655Z","pid":31359,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:42:29.656Z","pid":31359,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:42:29.656Z","pid":31359,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-device-change-determination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-device-change-determination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > before any assessment, the register says the determination applies and none is recorded 23ms
+   → expected undefined to deeply equal { applies: 'device', …(5) }
+ × tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the US verdict is the engine's, and is kept on the change with the answers, the rules' version, who and when 10ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the audit trail has a chained row for it, with the answers and the outcome 5ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > a verdict sent by the caller is not kept: the engine decides from the answers 9ms
+   → {}: expected 404 to be 200 // Object.is equality
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the engine does not classify the change: its classification and state are as they were 2ms
+ × tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the register carries both determinations, and the content an approval signs has changed with them 9ms
+   → expected undefined to match object { applies: 'device', …(3) }
+ × tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > an unanswered question is refused, by name, and nothing is kept or audited 7ms
+   → {}: expected 404 to be 422 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > a market that is not one of the two is refused 5ms
+   → {}: expected 404 to be 422 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > assessing again states why, and the audit row keeps the determination it replaced 5ms
+   → {}: expected 404 to be 422 // Object.is equality
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > another organisation gets 404, and learns nothing 17ms
+ × tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who is not on a private project gets 403 5ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who can open the project and does not edit it gets 403 9ms
+   → {}: expected 404 to be 403 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > the private project's owner assesses it 5ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > a drug project's change is refused, and the register says it is not a device's 5ms
+   → {}: expected 404 to be 409 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation-wide change is refused: there is no device to assess 5ms
+   → {}: expected 404 to be 409 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an approved change's content is fixed: nothing is recorded on it 5ms
+   → {}: expected 404 to be 409 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation with no device project is told so on its rows 8ms
+   → expected undefined to deeply equal { applies: 'not_device', …(5) }
+ × tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > what is kept and cannot be read is said to be unreadable, never shown as a verdict or as none 8ms
+   → expected undefined to match object { us: { unreadable: true }, eu: null }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > before any assessment, the register says the determination applies and none is recorded
+AssertionError: expected undefined to deeply equal { applies: 'device', …(5) }
+
+- Expected:
+{
+  "applies": "device",
+  "assessable": true,
+  "eu": null,
+  "organisationHasDevices": true,
+  "productType": "ivd",
+  "us": null,
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:164:35
+    162|     expect(list.status, show(list)).toBe(200);
+    163|     const row = list.body.data.find((c: { id: number }) => c.id === ch…
+    164|     expect(row.regulatory_impact).toEqual({ applies: 'device', product…
+       |                                   ^
+    165|     digestBefore = row.content_digest;
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the US verdict is the engine's, and is kept on the change with the answers, the rules' version, who and when
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:170:35
+    168|   it('the US verdict is the engine\'s, and is kept on the change with …
+    169|     const res = await assess('memberA', change.device, { market: 'us',…
+    170|     expect(res.status, show(res)).toBe(200);
+       |                                   ^
+    171|     expect(res.body.meta.auditTrail).toEqual({ persisted: true, chaine…
+    172|     const us = res.body.data.regulatory_impact.us;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the audit trail has a chained row for it, with the answers and the outcome
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:185:18
+    183|   it('the audit trail has a chained row for it, with the answers and t…
+    184|     const rows = await auditRows(change.device);
+    185|     expect(rows).toHaveLength(1);
+       |                  ^
+    186|     expect(rows[0]).toMatchObject({ user_id: user.memberA, table_name:…
+    187|     expect(rows[0].sha256_chain).toMatch(/^[a-f0-9]{64}$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > a verdict sent by the caller is not kept: the engine decides from the answers
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:195:35
+    193|     const res = await assess('memberA', change.device, { market: 'eu',…
+    194|       result: { significant: false, rationale: 'Sent by the browser.',…
+    195|     expect(res.status, show(res)).toBe(200);
+       |                                   ^
+    196|     const stored = (await kept(change.device)).metadata.regulatoryImpa…
+    197|     expect(stored.eu).toMatchObject({ engine: 'eu-significant-change',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the register carries both determinations, and the content an approval signs has changed with them
+AssertionError: expected undefined to match object { applies: 'device', …(3) }
+
+- Expected:
+{
+  "applies": "device",
+  "assessable": true,
+  "eu": {
+    "result": {
+      "significant": true,
+    },
+  },
+  "us": {
+    "result": {
+      "decision": "new_510k",
+    },
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:209:35
+    207|     const list = await get('memberA', '/changes');
+    208|     const row = list.body.data.find((c: { id: number }) => c.id === ch…
+    209|     expect(row.regulatory_impact).toMatchObject({ applies: 'device', a…
+       |                                   ^
+    210|       us: { result: { decision: 'new_510k' } }, eu: { result: { signif…
+    211|     expect(row.content_digest).toMatch(/^[a-f0-9]{64}$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > an unanswered question is refused, by name, and nothing is kept or audited
+AssertionError: {}: expected 404 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:221:37
+    219|     for (const answers of [partial, {}, { ...US_NO_TRIGGER, softwareCh…
+    220|       const res = await assess('ownerA', change.priv, { market: 'us', …
+    221|       expect(res.status, show(res)).toBe(422);
+       |                                     ^
+    222|       expect(res.body.details.code).toBe('QMS_CHANGE_QUESTIONS_UNANSWE…
+    223|       expect(res.body.error).toContain('softwareChangeAffectsRisk');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > a market that is not one of the two is refused
+AssertionError: {}: expected 404 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:231:35
+    229|   it('a market that is not one of the two is refused', async () => {
+    230|     const res = await assess('ownerA', change.priv, { market: 'jp', an…
+    231|     expect(res.status, show(res)).toBe(422);
+       |                                   ^
+    232|   });
+    233|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > assessing again states why, and the audit row keeps the determination it replaced
+AssertionError: {}: expected 404 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:236:41
+    234|   it('assessing again states why, and the audit row keeps the determin…
+    235|     const silent = await assess('memberA', change.device, { market: 'u…
+    236|     expect(silent.status, show(silent)).toBe(422);
+       |                                         ^
+    237|     expect(silent.body.details.code).toBe('QMS_CHANGE_REASSESSMENT_REA…
+    238|     expect((await kept(change.device)).metadata.regulatoryImpact.us.re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who is not on a private project gets 403
+AssertionError: {}: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:263:35
+    261|   it('a colleague who is not on a private project gets 403', async () …
+    262|     const res = await assess('memberA', change.priv, { market: 'us', a…
+    263|     expect(res.status, show(res)).toBe(403);
+       |                                   ^
+    264|     expect(res.body.details.code).toBe('PROJECT_PERMISSION_DENIED');
+    265|     expect((await kept(change.priv)).metadata.regulatoryImpact).toBeUn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who can open the project and does not edit it gets 403
+AssertionError: {}: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:271:35
+    269|   it('a colleague who can open the project and does not edit it gets 4…
+    270|     const res = await assess('readerA', change.priv, { market: 'us', a…
+    271|     expect(res.status, show(res)).toBe(403);
+       |                                   ^
+    272|     const open = await assess('readerA', change.approved, { market: 'u…
+    273|     expect(open.status, show(open)).toBe(403);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > the private project's owner assesses it
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:279:35
+    277|   it('the private project\'s owner assesses it', async () => {
+    278|     const res = await assess('ownerA', change.priv, { market: 'eu', an…
+    279|     expect(res.status, show(res)).toBe(200);
+       |                                   ^
+    280|     expect(res.body.data.regulatory_impact.eu.result).toMatchObject({ …
+    281|     expect(await auditRows(change.priv)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > a drug project's change is refused, and the register says it is not a device's
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:288:35
+    286|   it('a drug project\'s change is refused, and the register says it is…
+    287|     const res = await assess('memberA', change.drug, { market: 'us', a…
+    288|     expect(res.status, show(res)).toBe(409);
+       |                                   ^
+    289|     expect(res.body.details.code).toBe('QMS_CHANGE_NOT_A_DEVICE');
+    290|     const list = await get('memberA', '/changes');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation-wide change is refused: there is no device to assess
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:297:35
+    295|   it('an organisation-wide change is refused: there is no device to as…
+    296|     const res = await assess('ownerA', change.orgWide, { market: 'eu',…
+    297|     expect(res.status, show(res)).toBe(409);
+       |                                   ^
+    298|     expect(res.body.details.code).toBe('QMS_CHANGE_NOT_A_DEVICE');
+    299|     const list = await get('ownerA', '/changes');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an approved change's content is fixed: nothing is recorded on it
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:306:35
+    304|   it('an approved change\'s content is fixed: nothing is recorded on i…
+    305|     const res = await assess('ownerA', change.approved, { market: 'us'…
+    306|     expect(res.status, show(res)).toBe(409);
+       |                                   ^
+    307|     expect(res.body.details.code).toBe('QMS_CHANGE_CONTENT_FIXED');
+    308|     expect((await kept(change.approved)).metadata.regulatoryImpact).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation with no device project is told so on its rows
+AssertionError: expected undefined to deeply equal { applies: 'not_device', …(5) }
+
+- Expected:
+{
+  "applies": "not_device",
+  "assessable": false,
+  "eu": null,
+  "organisationHasDevices": false,
+  "productType": "biologic",
+  "us": null,
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:316:49
+    314|   it('an organisation with no device project is told so on its rows', …
+    315|     const list = await get('memberB', '/changes');
+    316|     expect(list.body.data[0].regulatory_impact).toEqual({ applies: 'no…
+       |                                                 ^
+    317|   });
+    318|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > what is kept and cannot be read is said to be unreadable, never shown as a verdict or as none
+AssertionError: expected undefined to match object { us: { unreadable: true }, eu: null }
+
+- Expected:
+{
+  "eu": null,
+  "us": {
+    "unreadable": true,
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:323:35
+    321|     const list = await get('ownerA', '/changes');
+    322|     const row = list.body.data.find((c: { id: number }) => c.id === ch…
+    323|     expect(row.regulatory_impact).toMatchObject({ us: { unreadable: tr…
+       |                                   ^
+    324|   });
+    325| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 2 passed (18)
+   Start at  00:42:27
+   Duration  8.54s (transform 5.24s, setup 82ms, import 7.72s, tests 441ms, environment 0ms)
+
