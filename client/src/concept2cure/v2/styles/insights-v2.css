@@ -147,6 +147,7 @@
 .ro-disc-s{ font-size:11.5px; color:var(--text-400); }
 .ro-disc-n{ font-size:11.5px; color:var(--text-400); margin-top:4px; font-style:italic; }
 .ro-rep-actions{ display:flex; gap:9px; flex-wrap:wrap; margin-top:8px; padding-top:16px; border-top:1px solid var(--border); }
+.ro-rep-held{ align-self:center; font-size:var(--fs-caption); color:var(--text-300); }
 
 /* ── Dashboard / portfolio / compare ── */
 .ro-dash{ max-width:900px; }
@@ -216,6 +217,11 @@
 .rl-nc-item{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-300); line-height:1.45; }
 
 .rl-table{ width:100%; border-collapse:collapse; background:var(--bg-000); }
+/* A wide register scrolls inside its own region, never the page (Reporting use walk, 2026-11-09: Run history and
+   Schedules pushed a 390px page sideways by 138px and 133px). Focusable, so a keyboard can scroll it. */
+.rl-table-scroll{ max-width:100%; overflow-x:auto; margin:0 0 12px; border-radius:10px; }
+.rl-table-scroll > .ro-table{ margin:0; }
+.rl-table-scroll:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
 .rl-cap{ caption-side:top; text-align:left; font-size:11px; color:var(--text-400); padding:0 0 7px; }
 .rl-table th, .rl-table td{ text-align:left; font-size:12px; padding:9px 11px; border-bottom:1px solid var(--border); vertical-align:top; }
 .rl-table th{ font-weight:600; color:var(--text-400); font-size:var(--fs-caption); background:var(--bg-050); }

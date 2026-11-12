@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > production: a task that can read session_activity is ready, and says so 19ms
+ ✓ server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > production: a task that cannot read it is not ready, and the detail names the store and the cause 5ms
+ ✓ server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > reads the table as the session service does: organisation 0, under the system tenant scope 3ms
+ ✓ server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > is one of the cached round trips: five hits, one read 14ms
+ ✓ server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > the public body stays the verdict alone 3ms
+ ✓ server/startup/__tests__/readyz-session-store.test.ts > /readyz and the shared session store > outside production it is skipped, and the table is not read 2ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  00:19:09
+   Duration  584ms (transform 193ms, setup 102ms, import 210ms, tests 50ms, environment 0ms)
+

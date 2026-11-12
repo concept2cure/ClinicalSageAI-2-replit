@@ -444,6 +444,19 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
   }
 });
 
+/** The summary's health score: 100 if all done, penalized by overdue and blocked tasks. With no tasks there is nothing
+ *  to measure: both figures are null, never 100 (P-122, 2026-11-10: a project with no tasks read as fully healthy and
+ *  100% complete, and the project page's Plan step now reads this summary). */
+function summaryScore(total: number, completed: number, overdue: number, blocked: number) {
+  if (total === 0) return { healthScore: null, completionRate: null };
+  const completionRate = (completed / total) * 100;
+  const overdueRate = (overdue / total) * 100;
+  return {
+    healthScore: Math.max(0, Math.round(completionRate - overdueRate * 1.5 - blocked * 5)),
+    completionRate: Math.round(completionRate),
+  };
+}
+
 // GET /api/concept2cure/projects/:projectId/tasks/summary
 // Task summary with counts by status, overdue count, health score
 router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Response) => {
@@ -479,23 +492,13 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
       if ((task as any).dueDate && new Date((task as any).dueDate) < now && s !== 'done') overdue++;
     }
 
-    // Health score: 100 if all done, penalized by overdue and blocked tasks
-    const completionRate = total > 0 ? (completed / total) * 100 : 100;
-    const overdueRate = total > 0 ? (overdue / total) * 100 : 0;
-    const blockedCount = byStatus['blocked'] || 0;
-    const healthScore = Math.max(
-      0,
-      Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5)
-    );
-
     return sendSuccess(res, {
       total,
       completed,
       overdue,
       byStatus,
       byPriority,
-      healthScore,
-      completionRate: Math.round(completionRate),
+      ...summaryScore(total, completed, overdue, byStatus['blocked'] || 0),
     });
   } catch (error: any) {
     logger.error('Failed to compute task summary', { error: error.message });
@@ -563,8 +566,8 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
     }).length;
     const inProgressTasks = tasks.filter(t => (t as any).status === 'in-progress').length;
 
-    // Compute health score (0-100)
-    let healthScore = 100;
+    // Compute health score (0-100). With no tasks there is nothing to score: null, never 100 (P-122).
+    let healthScore: number | null = null;
     if (totalTasks > 0) {
       const completionRate = (completedTasks / totalTasks) * 100;
       const overdueRate = (overdueTasks / totalTasks) * 100;
@@ -643,7 +646,7 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
         inProgress: inProgressTasks,
         blocked: blockedTasks,
         overdue: overdueTasks,
-        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : null,
       },
       risks,
       nextActions: nextActions.slice(0, 5),

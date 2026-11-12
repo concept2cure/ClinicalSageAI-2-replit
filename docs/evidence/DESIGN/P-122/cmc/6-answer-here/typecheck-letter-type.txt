@@ -1,0 +1,9 @@
+Focused typecheck (changed files + every .d.ts), 2026-11-10:
+no error in AgencyResponses.tsx, cmcAgencyQuestions.tsx, cmcAnswerHere.test.tsx
+
+Before the fix (the session's focused run over every changed file):
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(666,82): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(774,59): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(868,28): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(907,50): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(927,53): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.

@@ -1,0 +1,12 @@
+{
+  "label": "key-refused",
+  "startedAt": "2026-11-10T01:32:38.471Z",
+  "jobId": 4,
+  "status": "failed",
+  "progress": 0,
+  "failure": "The AI provider refused this deployment’s API key, so nothing more was drafted. An administrator must set a valid key. The build stopped at §1. The sections already saved are kept.",
+  "waitedMs": 228,
+  "onScreen": "The AI provider refused this deployment’s API key, so nothing more was drafted. An administrator must set a valid key. The build stopped at §1. The sections already saved are kept.",
+  "screenshot": "screens/key-refused.png",
+  "finishedAt": "2026-11-10T01:32:55.531Z"
+}

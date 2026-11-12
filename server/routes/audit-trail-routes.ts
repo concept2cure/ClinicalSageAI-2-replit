@@ -19,6 +19,7 @@ import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { clientIpOf } from '../utils/client-ip';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
+import { manifestOrganizationId, recordExportVerification } from '../services/audit/audited-export.js';
 import type { AuditExportRequest, SignedAuditExport } from '../services/audit/signedAuditExport.js';
 
 const RESOURCE_TYPE_RE = /^[a-z][a-z0-9_]{0,63}$/;
@@ -737,17 +738,47 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    * POST /api/audit/export/verify
    * Verify a previously exported audit package.
    * Accepts { data, manifest, signature } and confirms integrity.
+   *
+   * The same gates as the exports beside it (GA-D6-03): the session's organisation and the audit-reader role;
+   * the package must be one sealed for that organisation; and the check is recorded on the organisation's
+   * chain before the verdict is sent. Before, any signed-in session could put any package to the seal key.
    */
   router.post('/audit/export/verify', async (req: Request, res: Response) => {
     try {
+      const orgGuard = requireAuditOrg(req, res);
+      if (!orgGuard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const { verifySignedAuditExport } = await import('../services/audit/signedAuditExport.js');
-      const { data, manifest, signature } = req.body;
+      const { data, manifest, signature } = req.body ?? {};
 
       if (!data || !manifest || !signature) {
         return res.status(400).json({ error: 'data, manifest, and signature are required' });
       }
+      if (manifestOrganizationId(manifest) !== orgGuard.orgId) {
+        return res.status(403).json({
+          error: 'AUDIT_EXPORT_TENANT_MISMATCH',
+          message: 'This file was not sealed for your organisation, so it is not checked here.',
+        });
+      }
 
       const result = verifySignedAuditExport(data, manifest, signature);
+      const recorded = await recordExportVerification(pool, {
+        tenantId: orgGuard.orgId,
+        userId: (req as any).userId ?? (req as any).user?.id,
+        manifest,
+        verdict: result,
+        ipAddress: clientIpOf(req) ?? undefined,
+        userAgent: req.get('user-agent') ?? undefined,
+      });
+      if (!recorded) {
+        return res.status(503).json({
+          success: false,
+          error: {
+            code: 'AUDIT_EXPORT_VERIFICATION_NOT_RECORDED',
+            message: 'The check was refused because it could not be recorded in the audit trail. No result is given.',
+          },
+        });
+      }
       res.json({
         success: true,
         verification: {

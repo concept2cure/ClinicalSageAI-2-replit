@@ -1,0 +1,739 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "SOP register @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 9,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Change control @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Change control log",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 10,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "CAPA",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 100,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @1440",
+      "pageScrolls": false,
+      "tables": []
+    },
+    {
+      "name": "Deviations @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Deviations",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 3,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Suppliers",
+          "heads": 8,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Internal audits",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @1440",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Management reviews",
+          "heads": 6,
+          "hasActionsHead": false,
+          "tableWidth": 1040,
+          "boxWidth": 1040,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "SOP register @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 9,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Change control @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Change control log",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 10,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "CAPA",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 100,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @1280",
+      "pageScrolls": false,
+      "tables": []
+    },
+    {
+      "name": "Deviations @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Deviations",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 3,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Suppliers",
+          "heads": 8,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Internal audits",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @1280",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Management reviews",
+          "heads": 6,
+          "hasActionsHead": false,
+          "tableWidth": 936,
+          "boxWidth": 936,
+          "scrolls": false,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "SOP register @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 719,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 9,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Change control @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Change control log",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 736,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 10,
+          "factsOutside": 10,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Links",
+              "text": "1",
+              "past": 37
+            },
+            {
+              "col": "Links",
+              "text": "0",
+              "past": 37
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CAPA @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "CAPA",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 681,
+          "boxWidth": 680,
+          "scrolls": false,
+          "rows": 100,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @1024",
+      "pageScrolls": false,
+      "tables": []
+    },
+    {
+      "name": "Deviations @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Deviations",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 736,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "past": 44
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 804,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 3,
+          "factsOutside": 3,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Detected",
+              "text": "2026-11-10",
+              "past": 20
+            },
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "past": 112
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Suppliers",
+          "heads": 8,
+          "hasActionsHead": false,
+          "tableWidth": 930,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Quality agreement",
+              "text": "—",
+              "past": 53
+            },
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "past": 238
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Internal audits",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 688,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 0,
+          "actsOutside": 0,
+          "sample": []
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @1024",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Management reviews",
+          "heads": 6,
+          "hasActionsHead": false,
+          "tableWidth": 772,
+          "boxWidth": 680,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "CAPA",
+              "text": "not all read",
+              "past": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SOP register @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Controlled documents",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 719,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 9,
+          "factsOutside": 9,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Version",
+              "text": "1.0",
+              "past": 12
+            },
+            {
+              "col": "Status",
+              "text": "Effective",
+              "past": 122
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Change control @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Change control log",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 736,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 10,
+          "factsOutside": 10,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Type",
+              "text": "Supplier",
+              "past": 18
+            },
+            {
+              "col": "Class",
+              "text": "Minor",
+              "past": 104
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CAPA @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "CAPA",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 681,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 100,
+          "factsOutside": 100,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Type",
+              "text": "Corrective",
+              "past": 23
+            },
+            {
+              "col": "Source",
+              "text": "Trend",
+              "past": 96
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Complaints and MDR @390",
+      "pageScrolls": false,
+      "tables": []
+    },
+    {
+      "name": "Deviations @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Deviations",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 736,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Status",
+              "text": "Open",
+              "past": 71
+            },
+            {
+              "col": "Detected",
+              "text": "2026-11-10",
+              "past": 179
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nonconformances @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Nonconformances",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 804,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 3,
+          "factsOutside": 3,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Source",
+              "text": "—",
+              "past": 51
+            },
+            {
+              "col": "Disposition",
+              "text": "Awaiting disposition",
+              "past": 234
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Suppliers @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Suppliers",
+          "heads": 8,
+          "hasActionsHead": false,
+          "tableWidth": 930,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Criticality",
+              "text": "Critical",
+              "past": 73
+            },
+            {
+              "col": "Approval",
+              "text": "Pending",
+              "past": 160
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Internal audits @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Internal audits",
+          "heads": 7,
+          "hasActionsHead": false,
+          "tableWidth": 688,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Planned",
+              "text": "—",
+              "past": 33
+            },
+            {
+              "col": "Status",
+              "text": "Planned",
+              "past": 153
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Management reviews @390",
+      "pageScrolls": false,
+      "tables": [
+        {
+          "name": "Management reviews",
+          "heads": 6,
+          "hasActionsHead": false,
+          "tableWidth": 772,
+          "boxWidth": 358,
+          "scrolls": true,
+          "rows": 1,
+          "factsOutside": 1,
+          "actsOutside": 0,
+          "sample": [
+            {
+              "col": "Decisions",
+              "text": "—",
+              "past": 37
+            },
+            {
+              "col": "Action items",
+              "text": "1 open · 0 closed",
+              "past": 310
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "w38-facts-and-actions",
+      "ok": true
+    }
+  ]
+}

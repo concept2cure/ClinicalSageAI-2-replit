@@ -43,6 +43,7 @@ import {
   withCaughtErrors,
   type RegisterFn,
 } from './document-tools-shared.js';
+import { gatedReason } from './stated-reason-input.js';
 import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
 import { catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 
@@ -59,8 +60,10 @@ interface PlacementPlan {
   documentId: string;
   /** True only for an explicit unfile, which skips the comprehension gate. */
   unfile: boolean;
-  /** A folder to suggest, or `null` to unfile. */
+  /** A folder to suggest, or `null` to unfile (or to make one first: `newFolder`). */
   folderId: string | null;
+  /** A folder to make first, under AnA's name, and suggest the document into (S6 step 4). */
+  newFolder?: { name: string; parentFolderId: string | null };
   ctdSection: string | null;
   evidenceKind: string | null;
   rationale: string;
@@ -91,6 +94,16 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
   }
 
   const folderId = str(input.folder_id);
+  const nf = input.new_folder && typeof input.new_folder === 'object' ? input.new_folder as Record<string, unknown> : null;
+  if (nf) {
+    if (folderId) return { error: 'place_project_document takes folder_id or new_folder, not both.' };
+    const name = str(nf.name);
+    if (!name) return { error: 'new_folder needs a name.' };
+    return {
+      documentId, unfile: false, folderId: null, ctdSection: str(input.ctd_section), evidenceKind: str(input.evidence_kind), rationale,
+      newFolder: { name, parentFolderId: str(nf.parent_folder_id) },
+    };
+  }
   if (!folderId) {
     return {
       error:
@@ -160,6 +173,42 @@ function confirmationRefusal(documentId: unknown): string {
   });
 }
 
+/**
+ * The folder a placement goes to: the one named, or one made first (new_folder) through the Vault's own governed
+ * writer, with the project's write authority and a chained audit row carrying AnA's provenance (her rationale is in
+ * it) and, as its reason for change, the person's stated reason: the one they typed or adopted at confirmation
+ * (stated-reason-input.ts reasonRequiredFor), never her rationale (vault-folders.ts).
+ */
+async function folderForPlacement(
+  parsed: PlacementPlan, input: Record<string, unknown>, programId: string,
+  { orgId, userId, agent }: { orgId: number; userId: number | undefined; agent: Record<string, unknown> },
+): Promise<{ folderId: string | null; made?: { folderId: string; name: string } } | { refusal: string }> {
+  if (!parsed.newFolder) return { folderId: parsed.folderId };
+  const reason = gatedReason(input);
+  const { createProgramFolder } = await import('../vault/vault-folders.js');
+  const created = await createProgramFolder({
+    programId, organizationId: orgId, userId: userId ?? null,
+    reason, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
+  });
+  if (!created.ok) return { refusal: JSON.stringify({ ok: false, error: created.code, message: created.message }) };
+  return { folderId: created.folder.folderId, made: { folderId: created.folder.folderId, name: created.folder.name } };
+}
+
+/**
+ * Making a folder is a governed write; its reason is the person's. Checked
+ * before any lookup or write: without one this throws ReasonNotStatedError,
+ * which the registration wrapper answers by asking for it. The reason is bound
+ * where it is written (folderForPlacement).
+ */
+function requireFolderReason(parsed: PlacementPlan, input: Record<string, unknown>): void {
+  if (parsed.newFolder) gatedReason(input);
+}
+
+/** A folder made for a placement that was then refused: said, so AnA does not claim the document is in it. */
+function madeButNotPlaced(made: { folderId: string; name: string } | undefined) {
+  return made ? { madeFolder: made, note: `The folder "${made.name}" was made; the document was not placed in it.` } : {};
+}
+
 async function handlePlaceProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -175,6 +224,7 @@ async function handlePlaceProjectDocument(
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
   }
+  requireFolderReason(parsed, input);
 
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
@@ -190,6 +240,11 @@ async function handlePlaceProjectDocument(
     if (refusal) return refusal;
   }
 
+  const agent = anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document');
+  const folder = await folderForPlacement(parsed, input, doc.programId, { orgId, userId: scope.accessibleScope.actor.userId, agent });
+  if ('refusal' in folder) return folder.refusal;
+  const { folderId, made } = folder;
+
   const { placeVaultDocument } = await import('../vault/vault-placement.service.js');
   const outcome = await placeVaultDocument({
     programId: doc.programId,
@@ -197,15 +252,15 @@ async function handlePlaceProjectDocument(
     organizationId: orgId,
     // The person on whose behalf she acts; `agent` says who decided.
     userId: scope.accessibleScope.actor.userId,
-    folderId: parsed.folderId,
+    folderId,
     ctdSection: parsed.ctdSection,
     evidenceKind: parsed.evidenceKind,
     note: parsed.rationale,
-    agent: anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document'),
+    agent,
   });
 
   if (!outcome.ok) {
-    return JSON.stringify({ ok: false, error: outcome.code, message: outcome.message });
+    return JSON.stringify({ ok: false, error: outcome.code, message: outcome.message, ...madeButNotPlaced(made) });
   }
   const { filing } = outcome;
   return JSON.stringify({
@@ -214,6 +269,7 @@ async function handlePlaceProjectDocument(
     fileName: doc.fileName,
     from: outcome.before,
     filing,
+    madeFolder: made,
     message:
       filing.placementStatus === 'unfiled'
         ? `${doc.fileName} is now in the Unfiled queue with your reason recorded, for a person to decide. ` +

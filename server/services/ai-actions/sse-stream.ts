@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import { onJobUpdate, isJobOwner } from './action-queue';
 import type { AIActionResponse } from '../../../shared/types/ai-actions';
 import { createScopedLogger } from '../../utils/logger';
+import { openSseStream } from '../../utils/sse-stream';
 
 const logger = createScopedLogger('sse-stream');
 const allowedSseOrigins = new Set(
@@ -33,7 +34,6 @@ interface SSEConnection {
 
 const activeConnections = new Map<string, SSEConnection>();
 const MAX_CONNECTIONS_PER_USER = 5;
-const SSE_KEEPALIVE_MS = 15_000;
 // Idle window — measured from last event/keepalive write, not from connect.
 // Long-running AI actions (multi-step generations, model-side queueing) can
 // take well over the previous hard 5-minute cap, so we now only close
@@ -89,14 +89,6 @@ export function handleSSEStream(req: Request, res: Response): void {
     return;
   }
 
-  // Set SSE headers
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'X-Accel-Buffering': 'no', // Disable nginx buffering
-  });
-
   const connectionId = `${userId}-${jobId}-${Date.now()}`;
   const conn: SSEConnection = {
     res,
@@ -107,18 +99,16 @@ export function handleSSEStream(req: Request, res: Response): void {
   };
   activeConnections.set(connectionId, conn);
 
+  // SSE headers and a heartbeat every 15 s, which also counts as activity
+  // for the idle watchdog below (server/utils/sse-stream.ts).
+  const sse = openSseStream(req, res, {
+    onHeartbeat: () => {
+      conn.lastActivity = Date.now();
+    },
+  });
+
   // Send initial connection confirmation
   sendSSEEvent(res, 'connected', { jobId, connectionId });
-
-  // Keepalive ping — also flushes any buffering proxy and counts as activity.
-  const keepalive = setInterval(() => {
-    try {
-      res.write(':ping\n\n');
-      conn.lastActivity = Date.now();
-    } catch {
-      cleanup();
-    }
-  }, SSE_KEEPALIVE_MS);
 
   // Idle watchdog — fires periodically; only closes the connection when the
   // last activity (event OR keepalive write) is older than the idle window.
@@ -139,7 +129,7 @@ export function handleSSEStream(req: Request, res: Response): void {
 
   // Cleanup on disconnect
   const cleanup = () => {
-    clearInterval(keepalive);
+    sse.end();
     clearInterval(idleWatchdog);
     activeConnections.delete(connectionId);
     logger.debug(`SSE connection closed`, { connectionId, jobId });

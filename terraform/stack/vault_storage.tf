@@ -30,18 +30,18 @@ locals {
   vault_key_alias = "alias/${local.short}-vault"
 }
 
-resource "aws_kms_key" "vault" {
-  description             = "Concept2Cure vault documents - ${var.environment}"
-  enable_key_rotation     = true
-  deletion_window_in_days = 30
-
-  policy = jsonencode({
+# The key policy, for the primary here and its replica in the DR region
+# (below). Only the region S3 is reached through differs between the two.
+locals {
+  vault_key_policy = { for name, region in { primary = var.region, dr = data.aws_region.dr.name } : name => jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         # Administration only: no Decrypt, Encrypt or GenerateDataKey, so no
         # IAM policy in this account can hand a person the vault's plaintext.
         # Granting that is a key-policy change, which CloudTrail records.
+        # ReplicateKey makes the DR replica (MR-04 Stage 1); it copies the key
+        # to the account's other region and grants no use of it.
         Sid       = "KeyAdministrationWithoutUse"
         Effect    = "Allow"
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
@@ -49,7 +49,7 @@ resource "aws_kms_key" "vault" {
           "kms:Create*", "kms:Describe*", "kms:Enable*", "kms:List*", "kms:Put*",
           "kms:Update*", "kms:Revoke*", "kms:Disable*", "kms:Get*", "kms:Delete*",
           "kms:TagResource", "kms:UntagResource", "kms:ScheduleKeyDeletion",
-          "kms:CancelKeyDeletion",
+          "kms:CancelKeyDeletion", "kms:ReplicateKey",
         ]
         Resource = "*"
       },
@@ -60,12 +60,33 @@ resource "aws_kms_key" "vault" {
         Principal = { AWS = module.ecs.task_role_arn }
         Action    = ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"]
         Resource  = "*"
-        Condition = { StringEquals = { "kms:ViaService" = "s3.${var.region}.amazonaws.com" } }
+        Condition = { StringEquals = { "kms:ViaService" = "s3.${region}.amazonaws.com" } }
       },
     ]
-  })
+  }) }
+}
+
+resource "aws_kms_key" "vault" {
+  description             = "Concept2Cure vault documents - ${var.environment}"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+  # Chosen at creation only; replicated below (MR-04 Stage 1).
+  multi_region = true
+  policy       = local.vault_key_policy.primary
 
   tags = merge(var.tags, { Purpose = "vault-documents" })
+}
+
+# The replica in the DR region (database_keys.tf, MR-04 Stage 1): the same
+# policy, so the account cannot decrypt there either, and the task role uses it
+# only through the DR region's S3.
+resource "aws_kms_replica_key" "vault" {
+  provider                = aws.dr
+  description             = "Concept2Cure vault documents - ${var.environment} (replica)"
+  primary_key_arn         = aws_kms_key.vault.arn
+  deletion_window_in_days = 30
+  policy                  = local.vault_key_policy.dr
+  tags                    = merge(var.tags, { Purpose = "vault-documents" })
 }
 
 resource "aws_kms_alias" "vault" {

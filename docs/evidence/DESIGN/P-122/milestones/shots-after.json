@@ -1,0 +1,127 @@
+{
+  "base": "http://localhost:5267",
+  "label": "after",
+  "steps": [
+    "schedule",
+    "form"
+  ],
+  "at": "2026-11-10T16:46:20.884Z",
+  "runs": [
+    {
+      "key": "1440-light",
+      "views": [
+        {
+          "name": "gate",
+          "file": "{\"unclaimed\":\"403 LAUNCH_SCOPE\",\"claimed\":\"200\"}"
+        },
+        {
+          "name": "form-filled",
+          "file": "after-form-filled-1440-light.png",
+          "sideways": 0,
+          "text": "Record a milestone\nA dated milestone on this project’s schedule, listed with the section deadlines.\nName*\nDue date*\nLinked CTD sections\nOptional. The section numbers this milestone depends on, separated by commas. Reads as 1.2, 2.5.\nCancel\nRecord milestone"
+        },
+        {
+          "name": "recorded",
+          "file": "after-recorded-1440-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nPre-IND briefing package sent\nMilestone · On track · Sections 1.2, 2.5\nUpdate\nJan 8, 2027\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone\nMilestone \"Pre-IND briefing package sent\" recorded."
+        },
+        {
+          "name": "move-date-form",
+          "file": "after-move-date-form-1440-light.png",
+          "sideways": 0,
+          "text": "Update the milestone\nPre-IND briefing package sent\nDue date*\nStatus\nDone records today as the day it was completed. A done milestone is not reopened here.\nOpen\nDone\nCancel\nSave"
+        },
+        {
+          "name": "date-moved",
+          "file": "after-date-moved-1440-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nPre-IND briefing package sent\nMilestone · On track · Sections 1.2, 2.5\nUpdate\nJan 22, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone\nMilestone \"Pre-IND briefing package sent\" moved to Jan 22, 2027."
+        },
+        {
+          "name": "mark-done-form",
+          "file": "after-mark-done-form-1440-light.png",
+          "sideways": 0,
+          "text": "Update the milestone\nPre-IND briefing package sent\nDue date*\nStatus\nDone records today as the day it was completed. A done milestone is not reopened here.\nOpen\nDone\nCancel\nSave"
+        },
+        {
+          "name": "done",
+          "file": "after-done-1440-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nPre-IND briefing package sent\nMilestone · Completed · Sections 1.2, 2.5\nJan 22, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone\nMilestone \"Pre-IND briefing package sent\" marked done."
+        },
+        {
+          "name": "schedule",
+          "file": "after-schedule-1440-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nPre-IND briefing package sent\nMilestone · Completed · Sections 1.2, 2.5\nJan 22, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone\nMilestone \"Pre-IND briefing package sent\" marked done."
+        },
+        {
+          "name": "form",
+          "file": "after-form-1440-light.png",
+          "sideways": 0,
+          "text": "Record a milestone\nA dated milestone on this project’s schedule, listed with the section deadlines.\nName*\nDue date*\nLinked CTD sections\nOptional. The section numbers this milestone depends on, separated by commas.\nCancel\nRecord milestone"
+        }
+      ],
+      "failed": [
+        "409 GET /api/c2c/projects/d56ad63d-8530-4cd5-b81f-dc55102a6dea/intelligence",
+        "403 GET /api/project-sections?project_id=2",
+        "409 GET /api/c2c/projects/d56ad63d-8530-4cd5-b81f-dc55102a6dea/intelligence"
+      ]
+    },
+    {
+      "key": "1440-dark",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "after-schedule-1440-dark.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nPre-IND briefing package sent\nMilestone · Completed · Sections 1.2, 2.5\nJan 22, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone"
+        },
+        {
+          "name": "form",
+          "file": "after-form-1440-dark.png",
+          "sideways": 0,
+          "text": "Record a milestone\nA dated milestone on this project’s schedule, listed with the section deadlines.\nName*\nDue date*\nLinked CTD sections\nOptional. The section numbers this milestone depends on, separated by commas.\nCancel\nRecord milestone"
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "390-light",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "after-schedule-390-light.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nPre-IND briefing package sent\nMilestone · Completed · Sections 1.2, 2.5\nJan 22, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone"
+        },
+        {
+          "name": "form",
+          "file": "after-form-390-light.png",
+          "sideways": 0,
+          "text": "Record a milestone\nA dated milestone on this project’s schedule, listed with the section deadlines.\nName*\nDue date*\nLinked CTD sections\nOptional. The section numbers this milestone depends on, separated by commas.\nCancel\nRecord milestone"
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "390-dark",
+      "views": [
+        {
+          "name": "schedule",
+          "file": "after-schedule-390-dark.png",
+          "sideways": 0,
+          "text": "Section owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track · Sections 1.2\nUpdate\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track · Sections 2.4, 2.6.6\nUpdate\nJan 19, 2027\nPre-IND briefing package sent\nMilestone · Completed · Sections 1.2, 2.5\nJan 22, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track · Sections 2.3, 3.2.S.4\nUpdate\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nRecord a milestone"
+        },
+        {
+          "name": "form",
+          "file": "after-form-390-dark.png",
+          "sideways": 0,
+          "text": "Record a milestone\nA dated milestone on this project’s schedule, listed with the section deadlines.\nName*\nDue date*\nLinked CTD sections\nOptional. The section numbers this milestone depends on, separated by commas.\nCancel\nRecord milestone"
+        }
+      ],
+      "failed": []
+    }
+  ]
+}

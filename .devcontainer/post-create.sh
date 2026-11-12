@@ -71,6 +71,39 @@ c2c_install_postgres() {
   c2c_pgvector_present || { c2c_log "BLOCKED: pgvector is not installed for PostgreSQL $C2C_PG_VERSION."; return 1; }
 }
 
+# The system packages the document exports need, which the production image (Dockerfile.optimized) installs and a
+# Codespace's base image does not. Each was found failing in front of a person on the 2026-11-10 showcase pass:
+#   - fonts-noto-core, fonts-noto-cjk: report and bundle PDFs embed Noto (server/services/report-os/pdf/writer.ts);
+#     without them every PDF export in Reporting answers 503 REPORT_PDF_FONTS_UNAVAILABLE.
+#   - libreoffice-writer (with libreoffice-common, fonts-liberation): a document's PDF is converted from its Word
+#     file (server/services/pdf-converter.ts); without it "Download, PDF" in the editor, the controlled PDF export and
+#     a QMS controlled copy answer 503 PDF_RENDERER_UNAVAILABLE.
+#   - libxml2-utils: xmllint checks a compiled eCTD backbone against its DTD (server/services/ectd/xml-validator.ts);
+#     without it Compile says "xmllint not available" on every XML file.
+# The app runs without them, so a failed install is logged and never blocks the start. Each is read when an export
+# runs, so the app is not restarted. Ghostscript, veraPDF and ocrmypdf are not installed here: PDF/A conversion is
+# not required in development (ECTD_REQUIRE_PDFA).
+C2C_REPORT_FONT="${C2C_REPORT_FONT:-/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf}"
+c2c_export_tools_missing() {
+  [[ -f "$C2C_REPORT_FONT" ]] || echo "fonts-noto-core fonts-noto-cjk"
+  command -v libreoffice >/dev/null 2>&1 || echo "libreoffice-writer libreoffice-common fonts-liberation"
+  command -v xmllint >/dev/null 2>&1 || echo "libxml2-utils"
+}
+c2c_install_export_tools() {
+  local pkgs
+  pkgs="$(c2c_export_tools_missing | tr '\n' ' ')"
+  [[ -z "${pkgs// /}" ]] && return 0
+  export DEBIAN_FRONTEND=noninteractive
+  c2c_log "Installing what the document exports need: $pkgs(a few minutes the first time)."
+  # shellcheck disable=SC2086 # a list of package names
+  if c2c_sudo apt-get update -qq && c2c_sudo apt-get install -y -qq --no-install-recommends $pkgs >/dev/null && [[ -z "$(c2c_export_tools_missing)" ]]; then
+    c2c_log "Document export tools installed."
+  else
+    c2c_log "Some document export tools could not be installed ($(c2c_export_tools_missing | tr '\n' ' ')); the exports that need them say they are unavailable. Everything else starts."
+  fi
+  return 0
+}
+
 # Start (creating if needed) the cluster, listening on localhost only. The
 # packaged pg_hba.conf (peer for the postgres OS user, scram-sha-256 on
 # 127.0.0.1) is used unchanged.
@@ -98,6 +131,19 @@ c2c_start_postgres() {
 }
 
 # Generate the credentials once. Hex passwords need no URL encoding.
+# The app's own attestation signing key, minted like its JWT secrets (docs/operations/attestation-key-rotation.md,
+# step 1). Without one, Compliance reports' "Run attestation" answered 503 in every Codespace (2026-11-10). Called
+# when the state is written and on every start, so an app.env made before this gains one; never replaced, so
+# reports it signed still verify.
+c2c_ensure_attestation_key() {
+  local app_env="$C2C_CODESPACE_STATE/app.env"
+  [[ -s "$app_env" ]] || return 0
+  grep -q '^AUDIT_ATTESTATION_KEY=' "$app_env" && return 0
+  ( umask 077
+    printf 'AUDIT_ATTESTATION_KEY=%s\nAUDIT_ATTESTATION_KEY_ID=codespace-k1\n' "$(openssl rand -base64 48 | tr -d '\n')" >>"$app_env" )
+  chmod 600 "$app_env"
+}
+
 c2c_write_state() {
   install -d -m 700 "$C2C_CODESPACE_STATE"
   local owner_env="$C2C_CODESPACE_STATE/owner.env" app_env="$C2C_CODESPACE_STATE/app.env"
@@ -138,6 +184,7 @@ EOF
     )
   fi
   chmod 600 "$owner_env" "$app_env"
+  c2c_ensure_attestation_key
 }
 
 # Run a command with ONLY the owner credential file added, in a subshell.
@@ -226,6 +273,102 @@ c2c_install_deps() {
   c2c_lock_hash >"$C2C_CODESPACE_STATE/npm-ci.lock-sha256"
 }
 
+# The Lumen demonstration account (the founder, 2026-11-06: "create an account for Lumen … a biotech with multiple
+# users"): its own organisation, three people. No real person's identity is built in (2026-10-15). The people come
+# from Codespaces secrets when set, with fictional defaults otherwise, so the account always loads:
+#   C2C_FOUNDER_EMAIL, C2C_FOUNDER_NAME   the lead; "Demo access" signs in as them
+#   C2C_LUMEN_REVIEWER_NAME               the reviewer and second signer
+#   C2C_LUMEN_APPROVER_NAME               the approver
+# The reviewer's and approver's sign-in addresses are derived from their names at the non-deliverable
+# lumen-demo.example. Everyone signs in with DEMO_SIGNER_PASSWORD (app.env).
+C2C_LUMEN_ORG_SLUG="lumen-bioscience-demo"
+C2C_LUMEN_ORG_NAME="Lumen Bioscience (demo)"
+c2c_demo_address() {
+  printf '%s@lumen-demo.example' "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/./g; s/^[.]+//; s/[.]+$//')"
+}
+c2c_lumen_roster() {
+  local lead_name="${C2C_FOUNDER_NAME:-${C2C_FOUNDER_EMAIL:-Lumen Lead}}"
+  local lead_email="${C2C_FOUNDER_EMAIL:-$(c2c_demo_address "$lead_name")}"
+  local reviewer="${C2C_LUMEN_REVIEWER_NAME:-Lumen Reviewer}" approver="${C2C_LUMEN_APPROVER_NAME:-Lumen Approver}"
+  printf '%s\n' "$lead_email|$lead_name|lead" \
+    "$(c2c_demo_address "$reviewer")|$reviewer|reviewer" \
+    "$(c2c_demo_address "$approver")|$approver|approver"
+}
+c2c_lumen_person() { c2c_lumen_roster | awk -F'|' -v r="$1" '$3 == r { print $1 }'; }
+c2c_lumen_accounts_current() {
+  [[ "$(cat "$C2C_CODESPACE_STATE/lumen-accounts.done" 2>/dev/null)" == "$(c2c_lumen_roster)" ]]
+}
+c2c_seed_lumen_accounts() {
+  local signer_pw email name role
+  signer_pw="$(sed -n 's/^DEMO_SIGNER_PASSWORD=//p' "$C2C_CODESPACE_STATE/app.env")"
+  while IFS='|' read -r email name role; do
+    ( cd "$C2C_REPO_ROOT" && c2c_with_owner_env env DATABASE_URL="$(sed -n 's/^DATABASE_OWNER_URL=//p' "$C2C_CODESPACE_STATE/owner.env")" \
+        ADMIN_EMAIL="$email" ADMIN_NAME="$name" ADMIN_PASSWORD="$signer_pw" \
+        ADMIN_ORG_SLUG="$C2C_LUMEN_ORG_SLUG" ADMIN_ORG_NAME="$C2C_LUMEN_ORG_NAME" \
+        NODE_ENV=development node scripts/seed-admin.mjs ) >>"$C2C_CODESPACE_STATE/accounts.log" 2>&1 || {
+      c2c_log "BLOCKED: could not create the Lumen $role account ($email); see $C2C_CODESPACE_STATE/accounts.log"
+      return 1
+    }
+  done < <(c2c_lumen_roster)
+  c2c_lumen_roster >"$C2C_CODESPACE_STATE/lumen-accounts.done"
+  c2c_log "Lumen account ready: $C2C_LUMEN_ORG_NAME, with $(c2c_lumen_roster | cut -d'|' -f2 | paste -sd, - | sed 's/,/, /g')."
+}
+
+# The Lumen pack, seeded into that organisation as its lead, with its reviewer and approver as the second and third
+# people (OQ_SIGNER_*, OQ_APPROVER_*), so its reviews, approvals and seals are signed. Again when scripts/demo or the
+# people change; the pack is idempotent by title. $1 is the demo version (git rev-parse HEAD:scripts/demo).
+c2c_seed_lumen_org() {
+  local version pw
+  version="$1|$(c2c_lumen_roster)"
+  [[ "$(cat "$C2C_CODESPACE_STATE/lumen-seed.done" 2>/dev/null)" == "$version" ]] && return 0
+  pw="$(sed -n 's/^DEMO_SIGNER_PASSWORD=//p' "$C2C_CODESPACE_STATE/app.env")"
+  c2c_log "Seeding the Lumen account ($C2C_LUMEN_ORG_NAME) as $(c2c_lumen_person lead); log: $C2C_CODESPACE_STATE/lumen-seed.log"
+  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests-lumen" \
+      OQ_SIGNER_EMAIL="$(c2c_lumen_person reviewer)" OQ_SIGNER_PASSWORD="$pw" \
+      OQ_APPROVER_EMAIL="$(c2c_lumen_person approver)" OQ_APPROVER_PASSWORD="$pw" \
+      npm run --silent demo:seed -- --pack lumen --base-url "http://127.0.0.1:$C2C_PORT" --email "$(c2c_lumen_person lead)" \
+      >"$C2C_CODESPACE_STATE/lumen-seed.log" 2>&1; then
+    printf '%s\n' "$version" >"$C2C_CODESPACE_STATE/lumen-seed.done"
+    c2c_log "Lumen account seeded: $(grep -o 'lumen pack: created [0-9]*, found [0-9]*' "$C2C_CODESPACE_STATE/lumen-seed.log" | tail -n 1)."
+  else
+    c2c_log "The Lumen seed did not finish; see $C2C_CODESPACE_STATE/lumen-seed.log. It re-runs on the next start."
+  fi
+}
+
+# Every person "Demo access" offers (client DemoAccounts.tsx), as email|name|organisation|role entries separated by
+# ";": the Lumen account's three people, then the development organisation's roster. Only accounts that exist.
+c2c_demo_role() {
+  case "$1" in
+    "Ana Author") echo "Author: the CDISC CSR study, the C2C-101 IND, the NeuroPanel 510(k)" ;;
+    "Rhea Reviewer") echo "Reviewer and second signer" ;;
+    "Ava Approver") echo "Approver: approves and signs" ;;
+    "Mo Monitor") echo "Clinical monitor: risk-based monitoring and site visits" ;;
+    "Quinn Quality") echo "QA lead: SOPs, deviations, CAPA, audits" ;;
+    "Sam Statistician") echo "Biostatistician: sample size, SAP, tables" ;;
+    "Cal CMC") echo "CMC lead: Module 3, specifications, stability" ;;
+    *) echo "Team member" ;;
+  esac
+}
+c2c_demo_accounts() {
+  local entries=() email name role slug
+  if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
+    while IFS='|' read -r email name role; do
+      case "$role" in
+        lead) role="Lead and author: three synthetic CSRs (LMN-201, LMN-801, LMN-301) and Lumen's projects" ;;
+        reviewer) role="Reviewer: the three CSRs wait for your evidence check; second signer" ;;
+        approver) role="Approver: approves, signs and seals" ;;
+      esac
+      entries+=("$email|$name|$C2C_LUMEN_ORG_NAME|$role")
+    done < <(c2c_lumen_roster)
+  fi
+  if [[ -f "$C2C_CODESPACE_STATE/accounts.done" ]]; then
+    while IFS='|' read -r email name slug; do
+      entries+=("$email|$name|Concept2Cure Therapeutics (demo)|$(c2c_demo_role "$name")")
+    done < <(c2c_account_roster)
+  fi
+  (IFS=';'; printf '%s' "${entries[*]}")
+}
+
 c2c_post_create_main() {
   echo "C2C Codespace setup (Node.js 22, PostgreSQL $C2C_PG_VERSION + pgvector, local database)"
   node -e "if (Number(process.versions.node.split('.')[0]) !== 22) { console.error('Node.js 22 is required'); process.exit(1) }"
@@ -240,6 +383,7 @@ c2c_post_create_main() {
   npm run codespaces:doctor:test
 
   c2c_install_postgres
+  c2c_install_export_tools
   c2c_start_postgres
   c2c_write_state
   c2c_ensure_database

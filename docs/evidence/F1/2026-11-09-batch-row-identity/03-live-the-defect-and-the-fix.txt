@@ -1,0 +1,16 @@
+The running app, before and after — POST .../release with a complete body:
+
+  /api/cmc/batch-records/NaN/release
+    HTTP 500  {'code': '22P02', 'message': 'invalid input syntax for type uuid: "NaN"',
+               'path': '/api/cmc/batch-records/NaN/release'}
+
+  /api/cmc/batch-records/1aae9573-feac-4059-9796-5211b783615f/release
+    HTTP 409  2 recorded results are not yet reviewed (DS-2502-R1, DS-2502-R2).
+              A full release needs every result reviewed b…
+
+The first is what the Batch records tab posted for every row. The second is the
+platform's own governed refusal, which is what the screen should have been
+showing all along.
+
+React, on the same tab, before the fix:
+  Encountered two children with the same key, `%s` … ~ NaN

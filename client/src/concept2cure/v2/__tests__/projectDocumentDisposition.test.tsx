@@ -31,6 +31,25 @@ beforeEach(() => { apiRequest.mockReset(); window.C2C_PROJECT = { id: PID, title
 afterEach(() => { cleanup(); delete window.C2C_PROJECT; delete window.C2C_SOURCE_PINS; });
 
 describe('reachable project document lifecycle controls', () => {
+  it('shows a Quality record as a record: no file wording, no working copy, no file removal', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === `/api/c2c/projects/${PID}/sources`) return ok({ sources: [source(), source({ id: 2, title: 'CAPA action: 2. Retrain the packaging line',
+        mimeType: null, fileSize: null, originalFileAvailable: false, origin: 'native_record_snapshot', extractionMethod: 'native-record-projection',
+        catalog: { nativeRecord: { workArea: 'quality', sourceScope: 'project', kind: 'capa_actions', id: 'a-1', lifecycle: 'open', version: null } } })] });
+      if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Program', code: 'PRG' });
+      return ok({});
+    });
+    render(<ProjectHome {...props()} onAsk={vi.fn()} />); openEvidence();
+    await screen.findByText('CAPA action: 2. Retrain the packaging line');
+    expect(screen.getByText(/^Quality record · recorded here/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Work on CAPA action: 2. Retrain the packaging line in editor' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Review removal of CAPA action: 2. Retrain the packaging line' })).toBeNull();
+    expect(screen.queryByText(/original file is unavailable/)).toBeNull();
+    // The file beside it keeps both.
+    expect(screen.getByRole('button', { name: 'Work on Protocol.pdf in editor' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Review removal of Protocol.pdf' })).toBeTruthy();
+  });
+
   it.each(['keep_data', 'remove_data'] as const)('DataRoom refresh applies %s eligibility to both local and handed-off pins', async choice => {
     let disposition: DocumentDispositionChoice | null = null;
     apiRequest.mockImplementation(async (method: string, url: string) => {

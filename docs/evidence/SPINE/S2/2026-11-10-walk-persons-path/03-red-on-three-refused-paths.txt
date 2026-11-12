@@ -1,0 +1,135 @@
+Three runs of the walk, each with ONE change to the person's edit in tests/lineage/founder-path-lineage.hops-review.ts,
+made in a scratch copy and not committed. Each is a path the product refuses by design. They show that the walk's
+green run is not vacuous: the gates it passes refuse when the person does less. 2026-11-10.
+
+########################################################################################################
+# A. The person rewrites and cites the figure's section, and KEEPS AnA's sentence in section 2.5.1.
+#    Seen: hop 4's machine-text-replaced fails (one live machine span). At hop 5 the review signature is
+#    given, then the freeze is refused 409 WORKFLOW_MODEL_QUALIFICATION_REQUIRED: no model has passed PQ.
+########################################################################################################
+== per case ==
+ ✓ hop 1 · project — a project of org A, created the way the Projects surface creates it 236ms
+ ✓ hop 2 · capture — bytes X into the project’s Data Room through the upload route 703ms
+ ✓ hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx; as drafted it cannot be signed for review 366ms
+ × hop 4 · edit-save — a person rewrites both sections in their own words, cites the Data Room source, and saves through the section save path 234ms
+   → edit-save/revision-chained FAILS and is not baselined — doc_revisions grows by each edit, chained to the section’s genesis row and hashing the saved text
+ × hop 5 · seal — the independent check is run, the reviewer decides its findings and signs, and the document is frozen and approved under Part 11 signatures 620ms
+   → {"success":false,"code":"WORKFLOW_MODEL_QUALIFICATION_REQUIRED","error":"WORKFLOW_MODEL_QUALIFICATION_REQUIRED","message":"Stored machine-generated text has no retained qualified generation covering its exact words. Human review does not establish model qualification. Replace it through the governed human editing path before release."}: expected 409 to be 200 // Object.is equality
+ × hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 56ms
+   → {"success":false,"error":{"code":"WORKFLOW_MODEL_QUALIFICATION_REQUIRED","message":"Stored machine-generated text has no retained qualified generation covering its exact words. Human review does not establish model qualification. Replace it through the governed human editing path before release."}}: expected 409 to be 201 // Object.is equality
+ × hop 6b · vault approval — the Vault copy stands approved by the Authoring approval (FD5 (c): reviewed and approved in Authoring, so the approval carries) 5ms
+   → {"ok":false,"error":"VAULT_SOURCE_NOT_FOUND","message":"This version is not in the Vault. Reload the Vault to see its current versions. Nothing was created."}: expected 422 to be 200 // Object.is equality
+ × hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 108ms
+   → {"ok":false,"httpStatus":409,"body":{"error":"WORKFLOW_MODEL_QUALIFICATION_REQUIRED","message":"Stored machine-generated text has no retained qualified generation covering its exact words. Human review does not establish model qualification. Replace it through the governed human editing path before release."}}: expected false to be true // Object.is equality
+ × hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 8ms
+   → {"error":{"code":"BAD_REQUEST","message":"Invalid sequence id."}}: expected 400 to be 200 // Object.is equality
+ × walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 13ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+ × walk forward · from the project and from the source to the transmittal 171ms
+   → walk-forward/project-to-its-records FAILS and is not baselined — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+ ✓ adopt · a conversation file becomes a project’s source only through one audited adopt 227ms
+ × retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 141ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ ✓ the database the walk ran on held every table and column the code asked for 1ms
+ × the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+   → seal/seal-binds-revision-and-lineage: no such check ran
+
+== hop 4's checks that failed (first report of each) ==
+edit-save/revision-chained FAILS and is not baselined — doc_revisions grows by each edit, chained to the section’s genesis row and hashing the saved text
+    observed 3
+    AssertionError: expected [ { …(5) }, { …(5) }, { …(5) } ] to have a length of 4 but got 3
+edit-save/machine-text-replaced FAILS and is not baselined — no machine span is live on either section, AnA’s quoted sentence is gone, and each section’s text is the after-text of the person’s chained UPDATE row
+    observed {"liveMachineSpans":1,"humanUpdates":1,"quoteKept":false}
+    AssertionError: expected [ { '?column?': 1 } ] to have a length of +0 but got 1
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 5 passed (15)
+
+########################################################################################################
+# B. The person's figure sentence carries NO citation; the citation sits in the next sentence.
+#    Seen: the independent check still reports the figure as a hard finding, so the reviewer's approval is
+#    refused. That route answers 503 REVIEW_UNAVAILABLE for it (finding F-1 in the README); the next door,
+#    file-to-vault, answers the same state 409 INDEPENDENT_CHECK_REQUIRED.
+########################################################################################################
+== per case ==
+ ✓ hop 1 · project — a project of org A, created the way the Projects surface creates it 230ms
+ ✓ hop 2 · capture — bytes X into the project’s Data Room through the upload route 655ms
+ ✓ hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx; as drafted it cannot be signed for review 372ms
+ × hop 4 · edit-save — a person rewrites both sections in their own words, cites the Data Room source, and saves through the section save path 261ms
+   → edit-save/citation-registered FAILS and is not baselined — the editor’s Cite registered the source to the figure’s section at its checksum, and the saved sentence carries it
+ × hop 5 · seal — the independent check is run, the reviewer decides its findings and signs, and the document is frozen and approved under Part 11 signatures 396ms
+   → {"success":false,"error":{"code":"REVIEW_UNAVAILABLE","message":"The review could not be verified. Reload before trying again."}}: expected 503 to be 200 // Object.is equality
+ × hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 26ms
+   → {"success":false,"error":{"code":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}}: expected 409 to be 201 // Object.is equality
+ × hop 6b · vault approval — the Vault copy stands approved by the Authoring approval (FD5 (c): reviewed and approved in Authoring, so the approval carries) 4ms
+   → {"ok":false,"error":"VAULT_SOURCE_NOT_FOUND","message":"This version is not in the Vault. Reload the Vault to see its current versions. Nothing was created."}: expected 422 to be 200 // Object.is equality
+ × hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 70ms
+   → {"ok":false,"httpStatus":409,"body":{"error":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}}: expected false to be true // Object.is equality
+ × hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 15ms
+   → {"error":{"code":"BAD_REQUEST","message":"Invalid sequence id."}}: expected 400 to be 200 // Object.is equality
+ × walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 11ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+ × walk forward · from the project and from the source to the transmittal 181ms
+   → walk-forward/project-to-its-records FAILS and is not baselined — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+ ✓ adopt · a conversation file becomes a project’s source only through one audited adopt 275ms
+ × retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 145ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ ✓ the database the walk ran on held every table and column the code asked for 1ms
+ × the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+   → seal/seal-binds-revision-and-lineage: no such check ran
+
+== hop 4's checks that failed (first report of each) ==
+edit-save/citation-registered FAILS and is not baselined — the editor’s Cite registered the source to the figure’s section at its checksum, and the saved sentence carries it
+    observed {"status":201,"citations":1}
+    AssertionError: expected '<p>Two oral formulations were studied…' to match /62% for C2C-101 <a data-cite="1…/a>\.<\
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 5 passed (15)
+
+########################################################################################################
+# C. The person KEEPS AnA's sentence and adds the citation to it.
+#    Seen: the save is refused 422 MACHINE_LINEAGE_FORMATTING_UNVERIFIED (lineage-gate.ts); nothing is saved.
+########################################################################################################
+== per case ==
+ ✓ hop 1 · project — a project of org A, created the way the Projects surface creates it 244ms
+ ✓ hop 2 · capture — bytes X into the project’s Data Room through the upload route 645ms
+ ✓ hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx; as drafted it cannot be signed for review 408ms
+ × hop 4 · edit-save — a person rewrites both sections in their own words, cites the Data Room source, and saves through the section save path 263ms
+   → edit-save/save-accepted FAILS and is not baselined — both saves are accepted
+ × hop 5 · seal — the independent check is run, the reviewer decides its findings and signs, and the document is frozen and approved under Part 11 signatures 300ms
+   → {"success":false,"error":{"code":"REVIEW_UNAVAILABLE","message":"The review could not be verified. Reload before trying again."}}: expected 503 to be 200 // Object.is equality
+ × hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 18ms
+   → {"success":false,"error":{"code":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}}: expected 409 to be 201 // Object.is equality
+ × hop 6b · vault approval — the Vault copy stands approved by the Authoring approval (FD5 (c): reviewed and approved in Authoring, so the approval carries) 4ms
+   → {"ok":false,"error":"VAULT_SOURCE_NOT_FOUND","message":"This version is not in the Vault. Reload the Vault to see its current versions. Nothing was created."}: expected 422 to be 200 // Object.is equality
+ × hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 61ms
+   → {"ok":false,"httpStatus":409,"body":{"error":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}}: expected false to be true // Object.is equality
+ × hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 6ms
+   → {"error":{"code":"BAD_REQUEST","message":"Invalid sequence id."}}: expected 400 to be 200 // Object.is equality
+ × walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 12ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+ × walk forward · from the project and from the source to the transmittal 155ms
+   → walk-forward/project-to-its-records FAILS and is not baselined — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+ ✓ adopt · a conversation file becomes a project’s source only through one audited adopt 193ms
+ × retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 128ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ ✓ the database the walk ran on held every table and column the code asked for 1ms
+ × the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+   → seal/seal-binds-revision-and-lineage: no such check ran
+
+== hop 4's checks that failed (first report of each) ==
+edit-save/save-accepted FAILS and is not baselined — both saves are accepted
+    observed [{"status":200,"code":null},{"status":422,"code":"MACHINE_LINEAGE_FORMATTING_UNVERIFIED"}]
+    AssertionError: {"success":false,"error":{"code":"MACHINE_LINEAGE_FORMATTING_UNVERIFIED","message":"The section was not saved because unsupported markup prevents verification of its retained content attribution. Use supported formatting or create a supported working copy. Nothing was changed."},"field":"content"}: expected 422 to be 200 // Object.is equality
+edit-save/citation-registered FAILS and is not baselined — the editor’s Cite registered the source to the figure’s section at its checksum, and the saved sentence carries it
+    observed {"status":201,"citations":1}
+    AssertionError: expected '<p>Oral bioavailability of C2C-101 wa…' to match /62% for C2C-101 <a data-cite="1…/a>\.<\
+edit-save/revision-chained FAILS and is not baselined — doc_revisions grows by each edit, chained to the section’s genesis row and hashing the saved text
+    observed 3
+    AssertionError: expected [ { …(5) }, { …(5) }, { …(5) } ] to have a length of 4 but got 3
+edit-save/machine-text-replaced FAILS and is not baselined — no machine span is live on either section, AnA’s quoted sentence is gone, and each section’s text is the after-text of the person’s chained UPDATE row
+    observed {"liveMachineSpans":1,"humanUpdates":1,"quoteKept":true}
+    AssertionError: expected [ { '?column?': 1 } ] to have a length of +0 but got 1
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 5 passed (15)

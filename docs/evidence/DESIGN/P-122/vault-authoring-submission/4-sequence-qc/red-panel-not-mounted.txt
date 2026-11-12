@@ -1,0 +1,10 @@
+ ✓ client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > the eCTD view checks a sequence before dispatch > shows what changed since the previous sequence of the submission, leaf by leaf 247ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > the eCTD view checks a sequence before dispatch > shows the package manifest by CTD module, each leaf with its checksum 55ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > the eCTD view checks a sequence before dispatch > downloads each as its PDF 82ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > the eCTD view checks a sequence before dispatch > a first sequence says there is nothing earlier, and asks no comparison 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > the eCTD view checks a sequence before dispatch > a comparison that cannot be read says so, never "no changes" 17ms
+ × client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > it is part of the eCTD view > Compile & export eCTD shows the sequence QC for the open project 5042ms
+   → Unable to find an element by: [data-testid="ec-sequence-qc"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)

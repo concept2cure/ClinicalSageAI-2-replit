@@ -586,6 +586,10 @@ describe('license-manager with real rows, under the per-user scope of the org th
       maxUsers: 5,
       maxProjects: 10,
       maxStorageGB: 5,
+      // Grants carried from a folded module to the one it moved into (P-61 item 4,
+      // server/services/entitlements/folded-module-successors.ts). None of this
+      // lane's modules is folded, so nothing is carried.
+      heldThroughFolds: {},
     });
   });
 
@@ -1022,11 +1026,16 @@ describe('D2 end to end — a fresh org, the real launch provisioning, the rail 
       expect(liveLaunch.length).toBeGreaterThan(0);
       for (const id of liveLaunch) expect(v.get(id), id).toMatchObject({ entitled: true, source: 'subscribed' });
 
-      // CMC is in the launch scope without a perpetual free grant. Its
-      // professional entitlement remains the deployed product contract.
-      expect(LAUNCH_APPS.filter((app) => app.modules.length === 0).map((app) => app.id)).toEqual(['cmc']);
-      expect(v.get('cmc')).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
-      expect(await grantRow(ORG_LAUNCH_SETUP, 'cmc')).toEqual([]);
+      // CMC (P-28), risk-based monitoring (P-76) and Biostatistics (P-77) are in
+      // the launch scope without a perpetual free grant (surfaces only,
+      // `modules: []`). Their professional entitlement remains the deployed
+      // product contract.
+      const surfaceOnly = ['cmc', 'rbm', 'biostatistics'];
+      expect(LAUNCH_APPS.filter((app) => app.modules.length === 0).map((app) => app.id)).toEqual(surfaceOnly);
+      for (const id of surfaceOnly) {
+        expect(v.get(id), id).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
+        expect(await grantRow(ORG_LAUNCH_SETUP, id), id).toEqual([]);
+      }
       for (const app of LAUNCH_APPS.filter((entry) => entry.modules.length > 0)) {
         expect(app.modules.some((m) => v.get(m)?.entitled === true), app.id).toBe(true);
       }

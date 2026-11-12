@@ -140,8 +140,21 @@ function compatibleProject(a: PinnedSourceIdentity, b: Pick<PinnedSourceIdentity
 function authorityState(authority: RunSourceAuthority): RunSources {
   return sourceAuthorities.get(authority) ?? refuseSourceRun();
 }
-/** Unassessed conversation/history is deliberately T3. Missing identity is a
- * held scope: it cannot acquire source grants or pass an SDK checkpoint. */
+/**
+ * The conversation's own tier: the default the v0.5 spec attaches to its data class (§24.1: "Default tiers attach to
+ * data classes"; Tier 1, Internal, is "general correspondence"). Founder decision, 2026-11-09. Everything a run reads
+ * raises it with its own tier: a Vault version its persisted classification (unknown tiers up), a selected native
+ * source and owner-private context Tier 3, and a detected personal-data class tiers the call to 3
+ * (sensitive-placement-policy.ts).
+ *
+ * Until 2026-11-09 this was Tier 3 ("unassessed conversation/history", b8cee0745c). Lane B is closed to Tier 2 and
+ * above and there is no qualified local lane, so every AnA turn and every sub-agent call to Claude was refused with
+ * DENY_INPUT_TIER, whatever the key. Found by walking a real turn in the running app.
+ * Residual, recorded: an earlier turn's reply that quoted a source travels in history at this tier.
+ */
+export const CONVERSATION_DEFAULT_TIER: DataSensitivityTier = 1;
+
+/** Missing identity is a held scope: it cannot acquire source grants or pass an SDK checkpoint. */
 export function createRunSourceAuthority(raw: SourceRunIdentity): RunSourceAuthority {
   const identity = sourceIdentity(raw), inherited = sourceRuns.getStore();
   if (inherited) {
@@ -150,7 +163,9 @@ export function createRunSourceAuthority(raw: SourceRunIdentity): RunSourceAutho
     return inherited;
   }
   const authority = Object.freeze({}) as RunSourceAuthority;
-  sourceAuthorities.set(authority, { identity, tiers: new Set([3]), grants: new Map(), revision: 0 });
+  // A run starts at the conversation's tier; each classified source it reads raises it (recordCurrentRunSource), so a
+  // CONFIDENTIAL or RESTRICTED read is still refused on a frontier provider (d8febe0207, and above).
+  sourceAuthorities.set(authority, { identity, tiers: new Set([CONVERSATION_DEFAULT_TIER]), grants: new Map(), revision: 0 });
   return authority;
 }
 export function runWithSourceAuthority<T>(authority: RunSourceAuthority, fn: () => T): T {

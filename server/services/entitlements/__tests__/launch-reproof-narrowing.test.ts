@@ -56,7 +56,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/coauthor/templates',
   '/api/concept2cure/artifacts/export-pptx',
   '/api/concept2cure/projects/all',
-  '/api/concept2cure/reviews/pending',
+  /* /api/concept2cure/reviews/pending: served since 9357715132 (P-95, 2026-11-09), below. */
   '/api/conversation-os/artifacts',
   '/api/conversation-os/conversations',
   '/api/corpus/benchmark',
@@ -68,14 +68,13 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/ectd/qualification',
   '/api/ectd/templates',
   '/api/ectd/v4',
-  '/api/mdx/qms/readiness',
+  /* /api/mdx/qms/readiness: served since P-122 (2026-11-10), below. */
   '/api/project-sections',
   '/api/project-sections/dependencies',
   '/api/project-sections/initialize',
-  '/api/project-sections/milestones',
+  /* /api/project-sections/milestones: served since P-122 (2026-11-10), below. */
   '/api/project-sections/notifications',
-  '/api/project-sections/summary',
-  '/api/project-sections/timeline',
+  /* /api/project-sections/summary and /timeline: served since P-122 (2026-11-10), below. */
   '/api/realtime-collab/health',
   '/api/regulatory/tasks/dashboard',
   '/api/regulatory/tasks/sync',
@@ -83,7 +82,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/submission-ops/automation',
   '/api/submission-ops/command-center',
   '/api/submission-ops/digests',
-  '/api/submission-ops/due-soon',
+  /* /api/submission-ops/due-soon: served since P-122 (2026-11-10), below. */
   '/api/submission-ops/hotspots',
   '/api/submission-ops/policies',
   '/api/submission-ops/sections',
@@ -106,6 +105,20 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
 
 /** What a launch screen calls or a launch app uses under the same prefixes (the route inventory's 'called' list). */
 const STILL_SERVED = [
+  /* Excluded as dead from 4aa204390. P-122 (2026-11-10) reaches it: Quality's figure line reads the server's
+     quality-system counts (quality/QualityFigures.tsx; quality-figures-launch-claim.test.ts). */
+  '/api/mdx/qms/readiness',
+  /* Upheld on 2026-10-15: no screen read them. P-122 (2026-11-10) reaches them: the project page's Plan step reads
+     the section owners, deadlines and milestones, and the Projects page's "at risk" answer reads the work due soon,
+     each listing only the projects the person can open (tests/db/p122-project-management-reads.dbtest.ts). Claimed
+     exactly, so the section list, its writes and the rest of /api/submission-ops stay refused. */
+  '/api/project-sections/summary',
+  '/api/project-sections/timeline',
+  /* Upheld on 2026-10-15: no screen wrote them. P-122 (2026-11-10): the Plan step's Schedule records a milestone,
+     moves its date and marks it done, each admitted as a write on the project (tests/db/p122-milestone-writes.dbtest.ts). */
+  '/api/project-sections/milestones',
+  '/api/project-sections/milestones/12',
+  '/api/submission-ops/due-soon',
   '/api/authoring-actions/decision-context',
   '/api/authoring-actions/decisions',
   '/api/authoring-actions/module-preflight',
@@ -118,6 +131,10 @@ const STILL_SERVED = [
   '/api/concept2cure/artifacts/export-pdf',
   '/api/concept2cure/projects',
   '/api/concept2cure/reviews/my-queue',
+  /* Upheld as unmapped on 2026-10-15: no screen read it. Since 9357715132 (P-95, 2026-11-09) the named
+     reviewer's requests are read from it by the Review screen (surfaces/ReviewRequests.tsx, mounted in
+     ReviewThreads.tsx) and by Your open work (OpenWork.tsx), and the review surface claims it exactly. */
+  '/api/concept2cure/reviews/pending',
   '/api/ectd/export',
   '/api/ectd/validate',
   /* Upheld as HIDDEN APP on 2026-10-15 (claimed by ectd-publishing alone); the

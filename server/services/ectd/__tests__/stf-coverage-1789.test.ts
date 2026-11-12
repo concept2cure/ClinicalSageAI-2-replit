@@ -94,7 +94,13 @@ function pdf(label: string): Buffer {
   return minimalPdf(label);
 }
 
-async function pack(region: 'fda' | 'ema', extra: Array<Partial<EctdLeaf> & { ctdSection: string; fileName: string }>) {
+type FilingOverride = { submissionType?: string; fda?: { applicationType?: string } };
+
+async function pack(
+  region: 'fda' | 'ema',
+  extra: Array<Partial<EctdLeaf> & { ctdSection: string; fileName: string }>,
+  filing: FilingOverride = {},
+) {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'stf1789-'));
   const src = path.join(work, 'src');
   await fs.mkdir(src, { recursive: true });
@@ -116,8 +122,8 @@ async function pack(region: 'fda' | 'ema', extra: Array<Partial<EctdLeaf> & { ct
   }
   const run = () =>
     packageEctdSubmission({
-      region, applicationId: '123456', sequence: '0000', submissionType: 'original',
-      ...(region === 'fda' ? { fda: { applicationType: 'nda' as const } } : {}),
+      region, applicationId: '123456', sequence: '0000', submissionType: filing.submissionType ?? 'original',
+      ...(region === 'fda' ? { fda: filing.fda ?? { applicationType: 'nda' as const } } : {}),
       sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
       environment: 'staging', leaves,
     });
@@ -140,6 +146,23 @@ describe('regional packager — a study file with no STF', () => {
     }
   }, 30000);
 
+  /* 2026-11-12 (rehearsal B2, lane W2-assembly-refusal, verifier V-W2-3): the
+     refusal names a document by its title; a leaf with no title is named by its
+     file name, never by an empty pair of quotes. */
+  it('FDA: an untagged leaf with no title is named by its file name, not by empty quotes', async () => {
+    const { work, run } = await pack('fda', [{ ctdSection: '5.3.5.1', fileName: 'untitled-report.pdf', title: '' }]);
+    try {
+      const err = await run().then(() => null, (e: unknown) => e);
+      expect(err).toBeInstanceOf(ValidationError);
+      expect((err as Error).message).toMatch(/1789/);
+      expect((err as Error).message).toContain('untitled-report.pdf (section 5.3.5.1, no study id)');
+      expect((err as Error).message).not.toContain('""');
+      expect((err as Error).message).not.toContain('"undefined"');
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 30000);
+
   it('FDA: a study id with no file-tag is refused too (the leaf would be in no STF)', async () => {
     const { work, run } = await pack('fda', [{ ctdSection: '4.2.3.2', fileName: 'tox.pdf', studyId: 'TOX-01' }]);
     try {
@@ -157,6 +180,49 @@ describe('regional packager — a study file with no STF', () => {
     try {
       const bundle = await run();
       expect(bundle.stf).toEqual({ studies: 1, leaves: 1, untagged: 0 });
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  /* 2026-11-12 (rehearsal B2, lane W2-assembly-refusal, verifiers V-W2-1 and
+     V-W2-2): 1789 is a drug and biologic eCTD validation. A device or
+     diagnostic filing has no Study Tagging File and is not held to it, whether
+     the filing is named by its submission type or only by fda.applicationType.
+     The package may still be refused for being a device filing; it is never
+     refused for 1789. */
+  const neverStf = (err: unknown) => {
+    const message = err instanceof Error ? err.message : '';
+    expect(message).not.toMatch(/1789|Study Tagging File/);
+    if (err instanceof ValidationError) {
+      expect(JSON.stringify(err.findings)).not.toContain('FDA-TRC-1789');
+    }
+  };
+
+  it('FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789', async () => {
+    const { work, run } = await pack(
+      'fda',
+      [{ ctdSection: '5.3.1.4', fileName: 'assay-validation.pdf', title: 'Assay validation report' }],
+      { submissionType: 'US_DE_NOVO_IVD', fda: {} },
+    );
+    try {
+      const err = await run().then(() => null, (e: unknown) => e);
+      neverStf(err);
+      expect(err).toBeInstanceOf(ValidationError);
+      expect((err as Error).message).toMatch(/De Novo for IVD is a device filing, not an eCTD sequence/);
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it('FDA: a device named only by fda.applicationType (510(k)) is not refused for 1789', async () => {
+    const { work, run } = await pack(
+      'fda',
+      [{ ctdSection: '5.3.1.4', fileName: 'bench-report.pdf', title: 'Bench performance report' }],
+      { submissionType: 'original', fda: { applicationType: '510k' } },
+    );
+    try {
+      neverStf(await run().then(() => null, (e: unknown) => e));
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }

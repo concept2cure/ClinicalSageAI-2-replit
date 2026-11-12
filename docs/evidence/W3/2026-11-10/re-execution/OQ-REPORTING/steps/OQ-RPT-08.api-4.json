@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "reason": "OQ-007: the report was read against the register it is drawn from.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 136886,
+    "rateLimitRetries": 2,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "REAUTH_TOTP_REQUIRED",
+        "message": "Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed."
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+// Flow 2b: the client type in the account menu vs the profile card.
+const L = require('./lib.cjs');
+const EMAIL = 'avery.lind@northgate-bio.example.test';
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, EMAIL);
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1000);
+  await page.locator('main').getByRole('button', { name: 'Settings', exact: true }).click(); await L.sleep(1200);
+  await page.getByLabel('Organization name').scrollIntoViewIfNeeded();
+  const chipState = () => page.locator('button.txw-pchip').evaluateAll(els => els.map(e => `${e.textContent.trim()}:${getComputedStyle(e).backgroundColor}`));
+  note('chips after reload (computed background)', await chipState());
+  await L.shot(page, 'w1-28-profile-chips-after-reload.png');
+  L.drain(page);
+  // account menu: choose Medical Device & IVD
+  await page.getByRole('button', { name: /Avery Lind/ }).first().click(); await L.sleep(400);
+  await page.getByRole('menuitemradio', { name: /Medical Device & IVD/ }).click(); await L.sleep(2000);
+  note('url after choosing Medical Device & IVD', page.url());
+  note('writes', L.drain(page));
+  await L.shot(page, 'w1-29-after-menu-client-type-device.png');
+  note('rail', await page.locator('nav, aside').first().innerText().then(t => t.replace(/\n+/g, ' | ').slice(0, 500)));
+  await page.reload({ waitUntil: 'networkidle' }); await L.sleep(1200);
+  await page.getByRole('button', { name: /Avery Lind/ }).first().click(); await L.sleep(400);
+  note('menu checked after reload', await page.locator('[role=menuitemradio][aria-checked=true]').evaluateAll(els => els.map(e => e.textContent.trim())));
+  await page.keyboard.press('Escape');
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1000);
+  await page.locator('main').getByRole('button', { name: 'Settings', exact: true }).click(); await L.sleep(1200);
+  await page.getByLabel('Organization name').scrollIntoViewIfNeeded();
+  note('profile card chips now', await chipState());
+  note('card status', (await L.textOf(page, 'main')).match(/Health system or academic\n[^\n]*/)?.[0]);
+  await L.shot(page, 'w1-30-profile-card-after-menu-switch.png');
+  // put it back
+  await page.getByRole('button', { name: /Avery Lind/ }).first().click(); await L.sleep(400);
+  await page.getByRole('menuitemradio', { name: /Biotech & Pharma/ }).click(); await L.sleep(1500);
+  note('writes (back)', L.drain(page));
+  note('localStorage keys', await page.evaluate(() => Object.keys(localStorage).filter(k => !/token/i.test(k)).map(k => `${k}=${String(localStorage.getItem(k)).slice(0, 120)}`)));
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

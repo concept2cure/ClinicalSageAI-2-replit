@@ -122,6 +122,12 @@ describe('describeReadFailure — each class in its own words', () => {
     expect(describeReadFailure('not-found', "the Q-Sub's detail", { subject: 'this Q-Sub' }).message)
       .toBe("This Q-Sub was not found in your organization, so the Q-Sub's detail was not read.");
   });
+
+  // 2026-11-10: when what was not read is the record itself, it is named once.
+  it('names the record once when it is what was not read', () => {
+    expect(describeReadFailure('not-found', 'this controlled document', { subject: 'this controlled document' }).message)
+      .toBe('This controlled document was not found in your organization, so it was not read.');
+  });
 });
 
 describe('useFetchJson — exposes the classified failure and keeps its error line', () => {

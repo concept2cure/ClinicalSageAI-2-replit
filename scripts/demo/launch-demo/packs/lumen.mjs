@@ -20,12 +20,17 @@
  * server's answer. Content and its provenance are in lumen-content.mjs.
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
-import { asArray, makeTally } from './biotech-shared.mjs';
-import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
+import { asArray, ensureApplicantIdentity, ensureObjective, makeTally } from './biotech-shared.mjs';
+import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_CODE, CSR_SOURCE_FILE, CSR_SOURCE_TITLE, FOOTER, LMN201_CMC, LMN201_DESIGN, LMN201_IDENTITY, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
+import { connectApprover, ensureLumenVault } from './lumen-vault.mjs';
+import { ensureLumenCsr } from './lumen-csr.mjs';
+import { ensureLumenProtocol } from './lumen-protocol.mjs';
+import { ensureSubmission } from './biotech-submission.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -110,16 +115,16 @@ async function ensureOverview({ api, run, tally }, project, spec) {
 
 /** The runbook's step 2: retain the synthetic CSR source in the LMN-201 Vault as an original. */
 async function ensureCsrSource({ api, run, tally }, project) {
-  const title = T('LMN-201-like Part B CSR source — SYNTHETIC, NOT CLINICAL EVIDENCE');
+  const title = CSR_SOURCE_TITLE;
   await run.step('Vault: synthetic LMN-201 CSR source (JSON)', async () => {
     const search = must(await api('GET', `/api/c2c/project-vault/${project.id}/search?q=${encodeURIComponent('CSR source')}&limit=50`), 200, 'vault search');
     const hit = (search.data?.results ?? []).find((x) => x.title === title);
     if (hit) { tally.found('vault-document'); return `found ${hit.id}`; }
     const bytes = fs.readFileSync(CSR_SOURCE_FILE);
     const form = new FormData();
-    form.append('file', new Blob([bytes], { type: 'application/json' }), 'lmn201_synthetic_csr_source_v1.json');
+    form.append('file', new Blob([bytes], { type: 'application/json' }), path.basename(CSR_SOURCE_FILE));
     form.append('programId', project.id);
-    form.append('documentCode', 'LMN-201-CSR-SOURCE-SYNTHETIC.json');
+    form.append('documentCode', CSR_SOURCE_CODE);
     form.append('documentTitle', title);
     form.append('documentType', 'OTHER');
     const res = await api('POST', '/api/vault/ingest', form);
@@ -137,9 +142,12 @@ export async function seed(ctx) {
   const tally = makeTally(run);
   // The second person (lib.mjs connectSigner: OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD). Two-person steps run only with one.
   const signer = await connectSigner({ baseUrl: ctx.baseUrl, authorEmail: ctx.identity?.email });
-  const c = { api, run, tally, signer, identity: ctx.identity };
+  // A third person (OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD): the Vault's review route refuses one person in two roles.
+  const approver = await connectApprover({ baseUrl: ctx.baseUrl, excludeEmails: [ctx.identity?.email, signer?.email].filter(Boolean) });
+  const c = { api, run, tally, signer, approver, identity: ctx.identity, baseUrl: ctx.baseUrl };
   run.note('Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.');
 
+  const cast = await castOf(c);
   const clientWorkspaceId = await ensureClient(c);
   const existing = await listAllProjects(api);
   const projects = {};
@@ -147,15 +155,18 @@ export async function seed(ctx) {
     const project = await ensureProject(c, spec, clientWorkspaceId, existing);
     projects[spec.code] = project;
     await ensureOverview(c, project, spec);
-    await ensureTasks(c, project, TASKS[spec.code] ?? [], spec.code);
+    await ensureTasks(c, project, castTasks(TASKS[spec.code] ?? [], cast), spec.code);
+    await ensureProjectTeam(c, project, spec.code);
   }
   run.record('projects', projects);
 
   const lmn201 = projects['LMN-201'];
   await ensureCsrSource(c, lmn201);
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
-  await ensureObjective(c, lmn201, LMN201_DESIGN);
+  await ensureObjective(c, lmn201, lmn201Objective(LMN201_DESIGN));
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
+  // Study & Protocol Design: the RePreve protocol, bound to its design, with deviations and a review (lumen-protocol.mjs).
+  await ensureLumenProtocol(c, lmn201);
   await ensurePlanDocuments(c, lmn201, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan'], 'LMN-201');
   // The inbox's "extract commitments" (P-81, P-84) on a fictional approval letter.
   run.record('approvalLetter', await ensureAgencyLetter(c, lmn201, APPROVAL_LETTER, 'LMN-201'));
@@ -168,37 +179,98 @@ export async function seed(ctx) {
   await ensureLumenQms(c, { lmn201 }, 'LMN-201');
   // Risk-based monitoring: RACT, KRIs and QTLs over six monthly extracts, signals, the plan and site actions (lumen-rbm.mjs).
   await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
-  await ensureLumenSequence(c, lmn201);
+  // The Vault: each project's synthetic client data room, reviewed, approved and sealed by its people (lumen-vault.mjs).
+  const vault = await ensureLumenVault({ ...ctx, ...c }, projects);
+  // The headline scenario: three synthetic CSRs written in full, LMN-201 and LMN-801 approved (lumen-csr.mjs).
+  await ensureLumenCsr({ ...ctx, ...c }, projects);
+  /* Submission Center: sequence 0000 on LMN-201's canonical submission, with its approved Vault documents placed as
+     eCTD leaves and the deterministic readiness reads, through the biotech pack's own path (biotech-submission.mjs).
+     Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
+     "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
+  await ensureApplicantIdentity(c, { id: lmn201.id, label: lmn201.code }, LMN201_IDENTITY);
+  const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
+    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title, studyId: d.stf?.studyId, stfFileTag: d.stf?.fileTag }));
+  // The study files are placed with their study id and STF file-tag, and ones an earlier run placed are tagged
+  // (biotech-submission.mjs ensureLeaves, from each document's `stf` in lumen-vault-content.mjs).
+  await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
+  await ensureLumenReportPack(c);
+  await ensureCompanyDetails(c);
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
   console.info(`  ⇒ lumen pack: created ${sum(tally.tally.created)}, found ${sum(tally.tally.found)}`);
 }
 
+/** LMN-201's objective, from the public trial listing the design already cites (LMN201_DESIGN, NCT05330182). */
+function lmn201Objective(design) {
+  const primary = design.objectives.find((o) => o.level === 'primary') ?? design.objectives[0];
+  return {
+    label: design.acronym,
+    objective: primary.text,
+    successCriteria: `Primary endpoint: ${primary.endpointName}.`,
+    sources: [{ kind: 'registry', title: 'ClinicalTrials.gov NCT05330182', url: 'https://clinicaltrials.gov/study/NCT05330182' }],
+    reason: 'Demo seed: the objective the public trial listing states.',
+  };
+}
+
 /**
- * The project's objective, from the public trial listing the design already cites
- * (LMN201_DESIGN, NCT05330182), through the route the About card writes
- * (PUT /api/charters/by-project/:ref/objectives). Without it the CSR rehearsal's
- * project home said "No objective is recorded for this project yet" and the
- * presenter set it by hand (R1 rehearsal, 2026-11-06). A recorded objective is
- * left as it is: a person may have changed it.
+ * The project's team: the reviewer and the approver are given edit access, through the Team drawer's own route
+ * (PUT /api/concept2cure/projects/:projectId/sharing/members/:userId). Without it the Team card listed the lead
+ * alone and said "16 open items assigned to someone not on this list" (showcase sweep, 2026-11-10), because the
+ * tasks above belong to people the project was never shared with. With no second or third person, nothing is shared.
  */
-async function ensureObjective({ api, run, tally }, project, design) {
-  await run.step(`Objective: ${design.acronym}`, async () => {
-    const path = `/api/charters/by-project/${encodeURIComponent(project.id)}/objectives`;
-    const read = must(await api('GET', path), 200, 'read the project objective');
-    if (read.data?.current) { tally.found('objective'); return 'found'; }
-    const primary = design.objectives.find((o) => o.level === 'primary') ?? design.objectives[0];
-    must(await api('PUT', path, {
-      objective: primary.text,
-      successCriteria: `Primary endpoint: ${primary.endpointName}.`,
-      sources: [{ kind: 'registry', title: 'ClinicalTrials.gov NCT05330182', url: 'https://clinicaltrials.gov/study/NCT05330182' }],
-      reason: 'Demo seed: the objective the public trial listing states.',
-    }), 200, 'record the project objective');
-    tally.created('objective');
-    return 'created';
+async function ensureProjectTeam({ api, run, tally, signer, approver }, project, code) {
+  await run.step(`Team: ${code} is shared with the reviewer and the approver`, async () => {
+    const people = [signer, approver].filter(Boolean)
+      .map((person) => Number(person.userId ?? person.session?.user?.id)).filter((id) => Number.isSafeInteger(id) && id > 0);
+    if (!people.length) return 'not executed: no second or third person (OQ_SIGNER_* / OQ_APPROVER_*)';
+    const team = must(await api('GET', `/api/c2c/projects/${project.id}/team`), 200, 'read the project team');
+    if (!Number.isSafeInteger(team.project_id)) throw new Error(`${code}: the team read named no project`);
+    const base = `/api/concept2cure/projects/${team.project_id}/sharing`;
+    const query = `?programId=${encodeURIComponent(project.id)}`;
+    const sharing = must(await api('GET', base + query), 200, 'read the project sharing').data;
+    const out = [];
+    for (const userId of people) {
+      if ((sharing?.members ?? []).some((member) => Number(member.userId) === userId)) { tally.found('project-member'); out.push(`#${userId} found`); continue; }
+      must(await api('PUT', `${base}/members/${userId}${query}`, { role: 'edit' }), 200, `share ${code} with user ${userId}`);
+      tally.created('project-member');
+      out.push(`#${userId} can edit`);
+    }
+    return out.join('; ');
+  });
+}
+
+/**
+ * The Lumen account's company details, through the route Administration's company settings write
+ * (PUT /api/client-branding/company-documents). Home asked this demonstration account to "Record your company
+ * details" as its first to-do (showcase walk, 2026-11-10); with them recorded, Home's setup list is complete and gone.
+ * Only in the Lumen account: in any other organisation this pack runs in (the Codespace's development organisation),
+ * the company is someone else's and nothing is written. The address and contact are the fictional ones of LMN-201's
+ * sponsor record. The letterhead is left exactly as the server holds it, and is not applied to reports or letters.
+ * Details a person has recorded are left alone.
+ */
+async function ensureCompanyDetails({ api, run, tally }) {
+  await run.step('Administration: the Lumen account\'s company details (fictional address and contact)', async () => {
+    const read = await api('GET', '/api/client-branding/company-documents?includeLegal=false');
+    if (read.status !== 200) return `not executed: the company details could not be read (HTTP ${read.status})`;
+    const profile = read.json?.data ?? read.json;
+    if (!/^Lumen Bioscience/.test(String(profile?.companyName ?? ''))) return 'not executed: this organisation is not the Lumen account';
+    if (read.json?.canManage === false) return 'not executed: this person may not manage the company details';
+    if (Number(profile.revision) > 0 && String(profile.address ?? '').trim()) { tally.found('company-details'); return 'found'; }
+    const { sponsor, sponsorAddress } = LMN201_IDENTITY;
+    must(await api('PUT', '/api/client-branding/company-documents', {
+      expectedRevision: Number(profile.revision) || 0,
+      reason: 'Demo seed: the fictional company details of the Lumen demonstration account.',
+      companyName: profile.companyName, address: sponsorAddress,
+      contact: `${sponsor.contactName}, ${sponsor.contactEmail}, ${sponsor.contactPhone}`,
+      registrationDetails: 'FICTIONAL demonstration company. Not affiliated with Lumen Bioscience, Inc.',
+      letterhead: profile.letterhead, importedFrom: profile.importedFrom ?? null,
+      applyToReports: profile.applyToReports === true, applyToSubmissionCorrespondence: profile.applyToSubmissionCorrespondence === true,
+    }), 200, 'record the company details');
+    tally.created('company-details');
+    return 'recorded';
   });
 }
 
@@ -235,26 +307,6 @@ async function ensureIbReview({ api, run, tally, signer }, program) {
   });
 }
 
-/**
- * Sequence 0000 (original) on LMN-201's canonical submission, the one intake records for the project (matched as
- * biotech-submission.mjs matches it: productName or title). Without a sequence Submission Center read "0 eCTD
- * sequences tracked yet" and the CSR's "Place into filing" asked for a sequence first (2026-11-06). Through Submission
- * Center's own route; nothing is placed, frozen or dispatched.
- */
-async function ensureLumenSequence({ api, run, tally }, program) {
-  await run.step('Submission Center: LMN-201 sequence 0000 (original)', async () => {
-    const list = asArray(must(await api('GET', '/api/submissions'), 200, 'list submissions'), 'data');
-    const keys = [program.code, program.title].filter(Boolean).map((k) => k.toLowerCase());
-    const sub = list.find((x) => keys.includes(String(x.productName ?? '').toLowerCase()) || keys.includes(String(x.title ?? '').toLowerCase()));
-    if (!sub) throw new Error('LMN-201 has no canonical submission; intake records one with the project');
-    const seqs = asArray(must(await api('GET', `/api/submissions/${sub.id}/sequences`), 200, 'list LMN-201 sequences'), 'data');
-    if (seqs.some((q) => String(q.sequenceNumber ?? q.sequence_number) === '0000')) { tally.found('sequence'); return `found on submission #${sub.id}`; }
-    const seq = must(await api('POST', `/api/submissions/${sub.id}/sequences`, { region: 'fda', sequenceNumber: '0000', type: 'original' }), 201, 'create LMN-201 sequence 0000');
-    tally.created('sequence');
-    return `#${seq.id} on submission #${sub.id} (${seq.status})`;
-  });
-}
-
 /** Reports run for LMN-201, from the governed record, so Reporting's Run history is not empty (2026-11-06). */
 const LMN201_REPORTS = ['readiness.executive_digest', 'ha.commitment_register', 'usa_fda.ind_safety_readiness', 'etmf.completeness_pack'];
 
@@ -281,3 +333,77 @@ async function ensureLumenReports({ api, run, tally, identity }, program) {
     return out.join('; ');
   });
 }
+
+/**
+ * Reporting's other two tabs for LMN-201 (showcase sweep, 2026-11-10: Schedules and Bundles were empty). A bundle of
+ * the four runs above, and two schedules, through the routes the Reporting screen calls (POST /api/report-os/bundles,
+ * POST /api/insights/subscriptions). The schedules deliver inside the platform only: no recipients, no e-mail.
+ * A plan that does not include scheduled reports is refused by the server (403), and the step says so.
+ */
+const LMN201_BUNDLE = {
+  name: '[Demo · Lumen] LMN-201 monthly governance pack',
+  description: 'DEMO. The four computed reports the LMN-201 team reads each month: executive digest, commitment register, IND safety readiness and eTMF completeness.',
+};
+const LMN201_SCHEDULES = [
+  { reportTypeId: 'readiness.executive_digest', schedule: { cadence: 'weekly', dayOfWeek: 1, hour: 8, minute: 0, timeZone: 'America/Los_Angeles' } },
+  { reportTypeId: 'etmf.completeness_pack', schedule: { cadence: 'monthly', dayOfMonth: 1, hour: 8, minute: 0, timeZone: 'America/Los_Angeles' } },
+];
+
+async function ensureLumenReportPack({ api, run, tally }) {
+  const runs = asArray(must(await api('GET', '/api/report-os/runs?limit=100'), 200, 'list report runs'), 'data')
+    .filter((r) => LMN201_REPORTS.includes(r.reportTypeId) && r.scopeType === 'project');
+  const runOf = (reportTypeId) => runs.find((r) => r.reportTypeId === reportTypeId);
+  await run.step('Reporting: the LMN-201 monthly governance pack (bundle)', async () => {
+    const bundles = asArray(must(await api('GET', '/api/report-os/bundles'), 200, 'list report bundles'), 'data');
+    if (bundles.some((b) => b.name === LMN201_BUNDLE.name)) { tally.found('report-bundle'); return 'found'; }
+    const runIds = LMN201_REPORTS.map((t) => runOf(t)?.id).filter(Number.isSafeInteger);
+    if (runIds.length === 0) { run.note('Reporting: no LMN-201 report run exists, so no bundle was made.'); return 'not executed — no runs'; }
+    must(await api('POST', '/api/report-os/bundles', { ...LMN201_BUNDLE, runIds }), 201, 'bundle the LMN-201 reports');
+    tally.created('report-bundle');
+    return `created from ${runIds.length} runs`;
+  });
+  await run.step(`Reporting: ${LMN201_SCHEDULES.length} schedules for LMN-201 (in the platform, no e-mail)`, async () => {
+    const existing = asArray(must(await api('GET', '/api/insights/subscriptions'), 200, 'list report schedules'), 'data');
+    const out = [];
+    for (const s of LMN201_SCHEDULES) {
+      const prior = runOf(s.reportTypeId);
+      if (!prior) { out.push(`${s.reportTypeId}: not executed — no run to take its scope from`); continue; }
+      const scope = { scopeType: prior.scopeType, scopeId: String(prior.scopeId) };
+      if (existing.some((e) => e.reportTypeId === s.reportTypeId && e.scopeType === scope.scopeType && String(e.scopeId) === scope.scopeId)) {
+        tally.found('report-schedule'); out.push(`${s.reportTypeId}: found`); continue;
+      }
+      const res = await api('POST', '/api/insights/subscriptions', { reportTypeId: s.reportTypeId, ...scope, channel: 'platform', format: 'in_app', schedule: s.schedule });
+      if (res.status === 403) {
+        run.note(`Reporting: the schedule for ${s.reportTypeId} was refused (403): ${String(res.text ?? '').slice(0, 200)}`);
+        out.push(`${s.reportTypeId}: not executed — refused (403)`); continue;
+      }
+      must(res, 201, `schedule ${s.reportTypeId}`);
+      tally.created('report-schedule');
+      out.push(`${s.reportTypeId}: ${s.schedule.cadence}`);
+    }
+    return out.join('; ');
+  });
+}
+
+/**
+ * The story's people (lumen-content.mjs TASKS) by role. In an organisation that holds a persona by name (the
+ * Codespace's development organisation), the task is theirs. Elsewhere, such as the Lumen organisation of the
+ * founder, Brian Finrow and Carl (2026-11-06), each persona's work goes to the member in that role: the author is the
+ * person seeding, the reviewer is the second signer, the approver is a third member. Read from the board's roster.
+ */
+const PERSONA_ROLE = {
+  'Ana Author': 'author', 'Rhea Reviewer': 'reviewer', 'Mo Monitor': 'reviewer', 'Quinn Quality': 'reviewer',
+  'Ava Approver': 'approver', 'Sam Statistician': 'approver', 'Cal CMC': 'approver',
+};
+
+async function castOf({ api, signer, identity }) {
+  const roster = asArray(must(await api('GET', '/api/task-management/assignees'), 200, 'read the task roster'), 'data');
+  const nameOf = (id) => roster.find((r) => String(r.id) === String(id))?.name ?? null;
+  const author = nameOf(identity?.userId);
+  const reviewer = signer ? nameOf(signer.userId ?? signer.session?.user?.id) : null;
+  const approver = roster.find((r) => r.name !== author && r.name !== reviewer)?.name ?? null;
+  return { names: new Set(roster.map((r) => r.name)), byRole: { author, reviewer: reviewer ?? author, approver: approver ?? reviewer ?? author } };
+}
+
+const castTasks = (tasks, cast) => tasks.map((t) => (!t.assignee || cast.names.has(t.assignee)
+  ? t : { ...t, assignee: cast.byRole[PERSONA_ROLE[t.assignee] ?? 'author'] ?? t.assignee }));

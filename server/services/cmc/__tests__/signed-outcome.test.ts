@@ -23,13 +23,14 @@
  * ceremony in `server/api/cmc/routes.ts`. It is pure, so what it decides is
  * testable without a database or a signature.
  */
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   SIGNED_REGISTERS,
   isSigned,
   resolveSignedOutcome,
   signedRegisterEditRefusal,
+  signedStateNames,
   signedStateOf,
 } from '../signed-record';
 import { ungovernedQualificationRefusal, vocabFor } from '../register-writes';
@@ -215,5 +216,93 @@ describe('a record signed as the second outcome is as signed as the first', () =
     expect(isSigned(CLOSURES, 'qualified')).toBe(true);
     expect(isSigned(CLOSURES, 'phase-appropriate')).toBe(false);
     expect(signedStateOf(CLOSURES, 'qualified')).toBe('qualified');
+  });
+});
+
+/**
+ * P-110 left one way out of a signature closed.
+ *
+ * `retireSignedRecord` is the single change an ordinary edit of a signed record
+ * is refused in favour of (`signedRegisterEditRefusal`: "Retire it with a
+ * reason, then record and sign a new one"). It compared the stored status to
+ * `register.signedValue` alone. For eight of the nine registers that is the
+ * only signed state there is. For analytical methods, P-110 added a second —
+ * `phase-appropriate` — so a method signed suitable for its phase was refused
+ * retirement with "that method is not validated", while an ordinary edit of it
+ * was refused because it IS signed. Both doors shut: the record could not be
+ * changed, and could not be retired, ever.
+ *
+ * The real `retireSignedRecord` runs here against a fake transaction client.
+ */
+const RETIRE_SQL = { rows: [] as unknown[] };
+
+const tx = vi.hoisted(() => {
+  const state = { status: 'validated' as string, audit: null as Record<string, unknown> | null, updates: 0 };
+  return { state };
+});
+
+vi.mock('../../../db.js', () => ({
+  transaction: async (work: (c: unknown) => Promise<unknown>) =>
+    work({
+      query: async (sql: string) => {
+        if (/^\s*SELECT/i.test(sql)) {
+          return { rows: [{ id: 'm-1', project_id: 'p-1', status: tx.state.status }] };
+        }
+        if (/^\s*UPDATE/i.test(sql)) tx.state.updates += 1;
+        return RETIRE_SQL;
+      },
+    }),
+}));
+
+vi.mock('../../auditService.js', () => ({
+  writeChainedAuditRow: async (_c: unknown, row: Record<string, unknown>) => {
+    tx.state.audit = row;
+  },
+}));
+
+describe('retiring a signed record reads every signed outcome', () => {
+  beforeEach(() => {
+    tx.state.audit = null;
+    tx.state.updates = 0;
+  });
+
+  const retire = async (status: string) => {
+    tx.state.status = status;
+    const { retireSignedRecord } = await import('../signed-record');
+    return retireSignedRecord({
+      register: METHODS,
+      id: 'm-1',
+      organizationId: 2,
+      userId: 1,
+      reason: 'Superseded by the validated method; retiring the phase-appropriate record.',
+    });
+  };
+
+  it('retires a method signed `validated`, as it always did', async () => {
+    expect(await retire('validated')).toEqual({ ok: true });
+    expect(tx.state.updates).toBe(1);
+  });
+
+  // The defect. Before this fix: 409 NOT_SIGNED, "that method is not validated".
+  it('retires a method signed `phase-appropriate` — P-110 made it a signature too', async () => {
+    expect(await retire('phase-appropriate')).toEqual({ ok: true });
+    expect(tx.state.updates).toBe(1);
+  });
+
+  it('records WHICH signed state was retired, not the register default', async () => {
+    await retire('phase-appropriate');
+    expect(tx.state.audit?.details).toMatchObject({ from: 'phase-appropriate', to: 'retired' });
+  });
+
+  it('still refuses an unsigned record, naming every signed state', async () => {
+    const out = await retire('validation');
+    expect(out).toMatchObject({ ok: false, status: 409, code: 'NOT_SIGNED' });
+    expect((out as { message: string }).message).toContain('validated or phase-appropriate');
+    expect(tx.state.updates).toBe(0);
+  });
+
+  it('names one state for a register that signs one', () => {
+    expect(signedStateNames(CLOSURES)).toBe(CLOSURES.signedValue);
+    expect(signedStateNames(METHODS)).toBe('validated or phase-appropriate');
   });
 });

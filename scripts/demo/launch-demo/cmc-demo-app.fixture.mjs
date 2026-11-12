@@ -14,13 +14,38 @@
  */
 import assert from 'node:assert/strict';
 
+/**
+ * The eleven registers `ensureCmcRegisters` writes (P-122). Each is a plain
+ * list-and-create register; the fake keeps what was posted, lists it back, and
+ * refuses what the real route refuses: a create in a signed state
+ * (`refusesUngovernedQualification`) and a create with no project.
+ */
+const REGISTER_PATHS = [
+  '/api/cmc/reference-standards', '/api/cmc/impurity-profiles', '/api/cmc/dissolution-profiles',
+  '/api/cmc/characterization-studies', '/api/cmc/manufacturing-processes', '/api/cmc/process-validation',
+  '/api/cmc/formulation-records', '/api/cmc/material-specs', '/api/cmc/container-closures',
+  '/api/cmc/change-control', '/api/cmc/comparability-studies',
+];
+const SIGNED_STATES = new Set(['qualified', 'validated', 'approved', 'specified', 'current', 'implemented', 'closed', 'completed']);
+
 export function fakeCmcApplication() {
   const calls = [];
-  const state = { substances: [], products: [], methods: [], specs: [], stability: [], batches: [], qcResults: [], validated: [] };
+  const state = { substances: [], products: [], methods: [], specs: [], stability: [], batches: [], qcResults: [], validated: [], registers: {} };
   const ok = (json, status = 200) => ({ status, json });
+  const register = (url) => REGISTER_PATHS.find((p) => url === p || url.startsWith(`${p}?`));
 
   const api = async (method, url, body) => {
     calls.push({ method, url, body });
+    const reg = register(url);
+    if (reg && method === 'GET') return ok({ success: true, data: state.registers[reg] ?? [] });
+    if (reg && method === 'POST' && url === reg) {
+      assert.ok(!SIGNED_STATES.has(String(body.status ?? '').toLowerCase()),
+        `${reg}: a create declared "${body.status}", a state only its signature records`);
+      assert.ok(body.projectId, `${reg}: a create with no project files no Module 3 source`);
+      const row = { id: (state.registers[reg] ?? []).length + 1, ...body };
+      (state.registers[reg] ??= []).push(row);
+      return ok({ success: true, data: row }, 201);
+    }
     if (method === 'GET' && url.startsWith('/api/cmc/drug-substances')) return ok({ success: true, data: state.substances });
     if (method === 'GET' && url.startsWith('/api/cmc/drug-products')) return ok({ success: true, data: state.products });
     if (method === 'GET' && url.startsWith('/api/cmc/analytical-methods')) return ok({ success: true, data: state.methods });
@@ -114,6 +139,9 @@ export function fakeCmcApplication() {
 
 /** The project the seeders are run against. */
 export const DEMO_PROGRAM = { id: 'c0ffee00-0000-4000-8000-000000000001' };
+
+/** Every CMC register path the fake knows a create for, the eleven and the seven. */
+export const CMC_REGISTER_PATHS = REGISTER_PATHS;
 
 /** The gate's own comparison (analytical-method-source.ts `methodStatusKey`). */
 export const methodKey = (s) => String(s ?? '').trim().toLowerCase();

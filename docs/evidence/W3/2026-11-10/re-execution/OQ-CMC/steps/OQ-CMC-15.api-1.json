@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.A.1/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "reason": "Approving against a content hash read earlier.",
+      "meaning": "approval",
+      "compiledHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 368,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "SECTION_CHANGED",
+      "detail": "§3.2.A.1 was recompiled after you read it. Read the current content, then sign. Nothing was signed."
+    }
+  }
+}

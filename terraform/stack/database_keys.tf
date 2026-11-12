@@ -12,7 +12,10 @@
 # Two keys, because their users differ:
 #   database  RDS uses it, through grants it creates when the instance is made.
 #             Changing an existing instance's storage key REPLACES the instance,
-#             so it is set before the first apply, not after.
+#             so it is set before the first apply, not after. Multi-Region
+#             (2026-11-12, MR-04 Stage 1), which also can only be chosen at
+#             creation: its replica is below, so a snapshot copied to the DR
+#             region is readable there under the same key material.
 #   secrets   Secrets Manager uses it; the ECS execution role decrypts through
 #             Secrets Manager only (modules/ecs-fargate), to start a task.
 #
@@ -36,9 +39,38 @@ locals {
 resource "aws_kms_key" "database" {
   description             = "${local.long}: RDS storage, snapshots, backups and Performance Insights"
   enable_key_rotation     = true
+  multi_region            = true
   deletion_window_in_days = 30
   policy                  = local.account_admin_key_policy
   tags                    = var.tags
+}
+
+# ── The DR region (MR-04 Stage 1, OPS-14) ───────────────────────────────────
+#
+# The founder names the region (NEW-2; the work order recommends us-west-2,
+# which keeps data in the US). Each root passes it as the provider aws.dr. The
+# replicas of the database, vault and release-signing keys are made there, each
+# beside its primary, under the same key policy. A replica shares its primary's
+# key material and rotation; it is a separate key resource with its own policy.
+data "aws_region" "dr" {
+  provider = aws.dr
+}
+
+resource "aws_kms_replica_key" "database" {
+  provider                = aws.dr
+  description             = "${local.long}: RDS snapshots and backups copied to the DR region (replica)"
+  primary_key_arn         = aws_kms_key.database.arn
+  deletion_window_in_days = 30
+  policy                  = local.account_admin_key_policy
+  tags                    = var.tags
+
+  lifecycle {
+    # A replica in the primary's own region protects nothing; refuse it at plan.
+    precondition {
+      condition     = data.aws_region.dr.name != var.region
+      error_message = "The DR region (provider aws.dr, the root's dr_region) must differ from the primary region ${var.region}."
+    }
+  }
 }
 
 resource "aws_kms_alias" "database" {

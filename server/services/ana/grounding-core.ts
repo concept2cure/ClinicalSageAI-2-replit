@@ -69,8 +69,20 @@ const QUANT_PATTERNS: RegExp[] = [
   /\b\d+(?:\.\d+)?\s*(?:months?|weeks?|days?|years?)\b/i, // durations
 ];
 
+/**
+ * A registered citation as the saved-document reader renders it for a checker:
+ * `[citation: <name>, <locator>]` (authoring-read-render.ts runText). It is the
+ * product's own source link: the saved-document check separately holds a
+ * citation that does not resolve to a source registered to its section as a
+ * hard finding (saved-document-critique.ts, citation_unavailable). Until
+ * 2026-11-10 no pattern matched the label and the splitter cut it apart, so a
+ * registered citation grounded nothing while a typed "[1]" did.
+ */
+const RENDERED_CITATION = /\[citation: [^\]\s][^\]]*\]/;
+
 // Citation / source markers that count as grounding for a nearby claim.
 const CITATION_PATTERNS: RegExp[] = [
+  RENDERED_CITATION,
   /\[\d+\]/, // [12]
   /\([A-Z][A-Za-z\-]+(?:\s+et al\.?)?,?\s*\d{4}[a-z]?\)/, // (Smith et al., 2021)
   /\bK\d{6}\b/, // 510(k) number
@@ -82,12 +94,25 @@ const CITATION_PATTERNS: RegExp[] = [
   /\b(?:CFR|ICH\s?[EQSM]\d)/i,
 ];
 
+const SENTENCE_BREAK = /(?<=[.!?:;])\s+(?=[A-Z0-9(\[])/g;
+
+/**
+ * Sentences, split where one ends and the next begins. A rendered citation is
+ * one token: its name and locator hold ": " before a capital and "p. 12",
+ * which end no sentence, so a break inside the label is not taken.
+ */
 function splitSentences(text: string): string[] {
-  return text
-    .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?:;])\s+(?=[A-Z0-9(\[])/)
-    .map(s => s.trim())
-    .filter(Boolean);
+  const flat = text.replace(/\s+/g, ' ');
+  const labels = [...flat.matchAll(new RegExp(RENDERED_CITATION, 'g'))].map(m => [m.index, m.index + m[0].length]);
+  const sentences: string[] = [];
+  let from = 0;
+  for (const m of flat.matchAll(SENTENCE_BREAK)) {
+    if (labels.some(([start, end]) => m.index > start && m.index < end)) continue;
+    sentences.push(flat.slice(from, m.index));
+    from = m.index + m[0].length;
+  }
+  sentences.push(flat.slice(from));
+  return sentences.map(s => s.trim()).filter(Boolean);
 }
 
 function numbersIn(sentence: string): string[] {

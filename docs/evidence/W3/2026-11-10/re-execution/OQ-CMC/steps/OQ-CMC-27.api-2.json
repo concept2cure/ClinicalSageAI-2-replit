@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/actions/sign",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "target": "ectd-sequence:18",
+      "reason": "Releasing sequence 0001 for transmission.",
+      "payload": {
+        "intent": "dispatch",
+        "meaning": "approval"
+      },
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 380,
+    "rateLimitRetries": 0,
+    "body": {
+      "actionId": "act_e84c620f818940068f26f861e75767be",
+      "auditId": "175b055a-4d94-43f5-9c08-222c861347fc",
+      "sha256Chain": "c428fa070b6e5184acde5c2c29a68269f7f4d33cc5305edadf5c91c2b27ba1b7",
+      "state": "executed"
+    }
+  }
+}

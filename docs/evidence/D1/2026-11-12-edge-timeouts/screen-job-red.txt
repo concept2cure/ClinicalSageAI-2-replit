@@ -1,0 +1,2278 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > asks to be answered at once 255ms
+   → expected undefined to deeply equal { Prefer: 'respond-async' }
+ × client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > polls every 2 s, shows how long it has run, and renders the result when the job completes 342ms
+   → Unable to find an accessible element with the role "button" and name `/Compiling… 2 s/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Explain this compilation":
+  <button
+    class="reg-cta"
+  />
+
+  Name "Validate":
+  <button
+    class="nda-open"
+  />
+
+  Name "Compile eCTD":
+  <button
+    class="btn primary"
+    style="height: 32px;"
+  />
+
+  Name "Try again":
+  <button
+    class="c2c-error-retry"
+    type="button"
+  />
+
+  Name "Try again":
+  <button
+    class="c2c-error-retry"
+    type="button"
+  />
+
+  Name "Try again":
+  <button
+    class="c2c-error-retry"
+    type="button"
+  />
+
+  Name "Build package run":
+  <button
+    class="nda-open"
+    disabled=""
+  />
+
+  Name "Load run":
+  <button
+    class="nda-open"
+    disabled=""
+  />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Region":
+  <select
+    class="c2c-input"
+    id="ectd-region"
+    style="height: 30px;"
+  />
+
+  Name "Submission":
+  <select
+    class="c2c-input"
+    id="ectd-subtype"
+    style="height: 30px;"
+  />
+
+  Name "eCTD version":
+  <select
+    class="c2c-input"
+    id="ectd-reference-version"
+    style="height: 30px;"
+  />
+
+  Name "Saved package runs":
+  <select
+    aria-label="Saved package runs"
+    class="c2c-input"
+  />
+
+  --------------------------------------------------
+  option:
+
+  Name "US · FDA":
+  <option
+    value="FDA"
+  />
+
+  Name "EU · EMA":
+  <option
+    value="EMA"
+  />
+
+  Name "initial":
+  <option
+    value="initial"
+  />
+
+  Name "amendment":
+  <option
+    value="amendment"
+  />
+
+  Name "eCTD v3.2.2":
+  <option
+    value="v3.2.2"
+  />
+
+  Name "eCTD v4.0 · HL7 RPS":
+  <option
+    value="v4.0"
+  />
+
+  Name "Choose a saved run":
+  <option
+    value=""
+  />
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  <table
+    class="reg-tbl"
+  />
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  <thead />
+
+  Name "":
+  <tbody />
+
+  --------------------------------------------------
+  row:
+
+  Name "Module Required complete Sections Completion Status":
+  <tr />
+
+  Name "Module 3 — Quality 1/2 5 50% partial":
+  <tr />
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Module":
+  <th />
+
+  Name "Required complete":
+  <th />
+
+  Name "Sections":
+  <th />
+
+  Name "Completion":
+  <th />
+
+  Name "Status":
+  <th
+    style="text-align: right;"
+  />
+
+  --------------------------------------------------
+  cell:
+
+  Name "Module 3 — Quality":
+  <td
+    style="font-weight: 600;"
+  />
+
+  Name "1/2":
+  <td />
+
+  Name "5":
+  <td />
+
+  Name "50%":
+  <td
+    style="min-width: 120px;"
+  />
+
+  Name "partial":
+  <td
+    style="text-align: right;"
+  />
+
+  --------------------------------------------------
+  region:
+
+  Name "Qualified against":
+  <section
+    aria-label="Qualified against"
+    class="pj-card"
+  />
+
+  Name "eCTD reference":
+  <section
+    aria-label="eCTD reference"
+    class="pj-card"
+  />
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  <div
+    aria-live="assertive"
+    class="c2c-error-state variant-panel"
+    role="alert"
+  />
+
+  Name "":
+  <div
+    aria-live="assertive"
+    class="c2c-error-state variant-panel"
+    role="alert"
+  />
+
+  Name "":
+  <div
+    aria-live="assertive"
+    class="c2c-error-state variant-panel"
+    role="alert"
+  />
+
+  Name "":
+  <div
+    class="de-toast"
+    data-tone="error"
+    role="alert"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Orchestrator run id":
+  <input
+    aria-label="Orchestrator run id"
+    class="c2c-input"
+    placeholder="orchestrator run id"
+    style="height: 30px; width: 320px;"
+    value=""
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+ × client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a failed job is said in the job's words, and nothing renders as a result 5070ms
+   → Unable to find an element with the text: The compile failed on the server and was not recorded. Reference rjob_1762900000000_0123456789abcdef.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+ × client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a poll that cannot be read is an error that says the compile may still finish, not an empty result 5069ms
+   → Unable to find an element with the text: /The compile's progress could not be read \(HTTP 500\)\. It may still finish/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a server that answers at once is rendered as before 100ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > asks to be answered at once
+AssertionError: expected undefined to deeply equal { Prefer: 'respond-async' }
+
+- Expected:
+{
+  "Prefer": "respond-async",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx:64:23
+     62|     await startCompile();
+     63|     const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && …
+     64|     expect(call?.[3]).toEqual({ Prefer: 'respond-async' });
+       |                       ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > polls every 2 s, shows how long it has run, and renders the result when the job completes
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Compiling… 2 s/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Explain this compilation":
+  <button
+    class="reg-cta"
+  />
+
+  Name "Validate":
+  <button
+    class="nda-open"
+  />
+
+  Name "Compile eCTD":
+  <button
+    class="btn primary"
+    style="height: 32px;"
+  />
+
+  Name "Try again":
+  <button
+    class="c2c-error-retry"
+    type="button"
+  />
+
+  Name "Try again":
+  <button
+    class="c2c-error-retry"
+    type="button"
+  />
+
+  Name "Try again":
+  <button
+    class="c2c-error-retry"
+    type="button"
+  />
+
+  Name "Build package run":
+  <button
+    class="nda-open"
+    disabled=""
+  />
+
+  Name "Load run":
+  <button
+    class="nda-open"
+    disabled=""
+  />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Region":
+  <select
+    class="c2c-input"
+    id="ectd-region"
+    style="height: 30px;"
+  />
+
+  Name "Submission":
+  <select
+    class="c2c-input"
+    id="ectd-subtype"
+    style="height: 30px;"
+  />
+
+  Name "eCTD version":
+  <select
+    class="c2c-input"
+    id="ectd-reference-version"
+    style="height: 30px;"
+  />
+
+  Name "Saved package runs":
+  <select
+    aria-label="Saved package runs"
+    class="c2c-input"
+  />
+
+  --------------------------------------------------
+  option:
+
+  Name "US · FDA":
+  <option
+    value="FDA"
+  />
+
+  Name "EU · EMA":
+  <option
+    value="EMA"
+  />
+
+  Name "initial":
+  <option
+    value="initial"
+  />
+
+  Name "amendment":
+  <option
+    value="amendment"
+  />
+
+  Name "eCTD v3.2.2":
+  <option
+    value="v3.2.2"
+  />
+
+  Name "eCTD v4.0 · HL7 RPS":
+  <option
+    value="v4.0"
+  />
+
+  Name "Choose a saved run":
+  <option
+    value=""
+  />
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  <table
+    class="reg-tbl"
+  />
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  <thead />
+
+  Name "":
+  <tbody />
+
+  --------------------------------------------------
+  row:
+
+  Name "Module Required complete Sections Completion Status":
+  <tr />
+
+  Name "Module 3 — Quality 1/2 5 50% partial":
+  <tr />
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Module":
+  <th />
+
+  Name "Required complete":
+  <th />
+
+  Name "Sections":
+  <th />
+
+  Name "Completion":
+  <th />
+
+  Name "Status":
+  <th
+    style="text-align: right;"
+  />
+
+  --------------------------------------------------
+  cell:
+
+  Name "Module 3 — Quality":
+  <td
+    style="font-weight: 600;"
+  />
+
+  Name "1/2":
+  <td />
+
+  Name "5":
+  <td />
+
+  Name "50%":
+  <td
+    style="min-width: 120px;"
+  />
+
+  Name "partial":
+  <td
+    style="text-align: right;"
+  />
+
+  --------------------------------------------------
+  region:
+
+  Name "Qualified against":
+  <section
+    aria-label="Qualified against"
+    class="pj-card"
+  />
+
+  Name "eCTD reference":
+  <section
+    aria-label="eCTD reference"
+    class="pj-card"
+  />
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  <div
+    aria-live="assertive"
+    class="c2c-error-state variant-panel"
+    role="alert"
+  />
+
+  Name "":
+  <div
+    aria-live="assertive"
+    class="c2c-error-state variant-panel"
+    role="alert"
+  />
+
+  Name "":
+  <div
+    aria-live="assertive"
+    class="c2c-error-state variant-panel"
+    role="alert"
+  />
+
+  Name "":
+  <div
+    class="de-toast"
+    data-tone="error"
+    role="alert"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Orchestrator run id":
+  <input
+    aria-label="Orchestrator run id"
+    class="c2c-input"
+    placeholder="orchestrator run id"
+    style="height: 30px; width: 320px;"
+    value=""
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx:71:19
+     69|     await startCompile();
+     70|     await tick(2000);
+     71|     expect(screen.getByRole('button', { name: /Compiling… 2 s/ })).toB…
+       |                   ^
+     72|     await tick(2000);
+     73|     expect(screen.getByRole('button', { name: /Compiling… 4 s/ })).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a failed job is said in the job's words, and nothing renders as a result
+TestingLibraryElementError: Unable to find an element with the text: The compile failed on the server and was not recorded. Reference rjob_1762900000000_0123456789abcdef.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx:87:25
+     85|     await tick(2000);
+     86|     vi.useRealTimers();
+     87|     expect(await screen.findByText(`The compile failed on the server a…
+       |                         ^
+     88|     expect(screen.queryByText(/Compilation complete/)).toBeNull();
+     89|     expect(screen.queryByRole('button', { name: /Download eCTD backbon…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx > EctdCompile follows a compile job > a poll that cannot be read is an error that says the compile may still finish, not an empty result
+TestingLibraryElementError: Unable to find an element with the text: /The compile's progress could not be read \(HTTP 500\)\. It may still finish/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="cm-body"
+    >
+      <div
+        class="pj-card"
+      >
+        <div
+          class="pj-card-h"
+        >
+          <span
+            class="t"
+          >
+            Compile & Export eCTD
+          </span>
+          <span
+            class="s"
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            ABC-123
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Explain this compilation
+            </button>
+          </span>
+        </div>
+        <div
+          class="pj-card-b"
+          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"
+        >
+          <label
+            for="ectd-region"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Region
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-region"
+            style="height: 30px;"
+          >
+            <option
+              value="FDA"
+            >
+              US · FDA
+            </option>
+            <option
+              value="EMA"
+            >
+              EU · EMA
+            </option>
+          </select>
+          <label
+            for="ectd-subtype"
+            style="font-size: 12px; color: var(--text-400);"
+          >
+            Submission
+          </label>
+          <select
+            class="c2c-input"
+            id="ectd-subtype"
+            style="height: 30px;"
+          >
+            <option
+              value="initial"
+            >
+              initial
+            </option>
+            <option
+              value="amendment"
+            >
+              amendment
+            </option>
+          </select>
+          <div
+            style="margin-left: auto; display: flex; gap: 8px;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+               
+              Validate
+            </button>
+            <button
+              class="btn primary"
+              style="height: 32px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                /...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileAsyncJob.test.tsx:97:25
+     95|     await tick(2000);
+     96|     vi.useRealTimers();
+     97|     expect(await screen.findByText(/The compile's progress could not b…
+       |                         ^
+     98|     expect(screen.queryByText(/Compilation complete/)).toBeNull();
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  16:59:18
+   Duration  12.40s (transform 744ms, setup 173ms, import 900ms, tests 10.84s, environment 389ms)
+

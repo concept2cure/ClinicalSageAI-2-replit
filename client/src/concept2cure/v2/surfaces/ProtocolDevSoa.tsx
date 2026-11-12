@@ -164,7 +164,7 @@ function SoaRowHead({ a, onEdit }: { a: Row; onEdit?: GridProps['onEdit'] }) {
     <th className="pd-soa-rh">
       <span className="pde-soa-label">
         <span className="pd-soa-rl">{label}</span>
-        <span className="pd-soa-rc">{str(a.cat)}</span>
+        <span className="pd-soa-rc">{PG.inWords(a.cat)}</span>
       </span>
       {onEdit && (
         <span className="pde-soa-rh">

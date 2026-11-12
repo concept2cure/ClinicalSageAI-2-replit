@@ -33,9 +33,10 @@
 
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { registerRowMinWidth } from './registerGrid';
+import { ChangeRecordDetail, ChangeRecordFacts, changeImpactRows, changeRecordRows } from './ChangeRecordDetail';
+import { AskAnaButton, INLINE_ACTIONS, RegisterBody, RegisterTable } from './SopRegisterRow';
+import { useQualityScope } from './registerContext';
 import { ChangeFlow } from './ChangeFlow';
-import { Kpi } from './Kpi';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
   STATE_LABEL,
@@ -43,18 +44,25 @@ import {
   CHANGE_TYPE_LABEL,
   CLASSIFICATION_LABEL,
   CLASSIFICATION_TONE,
+  RISK_LABEL,
+  ASSESSABLE_STATES,
   LINK_TYPE_LABEL,
-  LINK_TYPE_ICON,
-  RELATIONSHIP_LABEL,
+  takesLinks,
   deriveStageCounts,
+  summaryOfChanges,
   isImplementationOverdue,
   formatDate,
+  IMPACT_DECISION_LABEL,
+  IMPACT_MARKET_LABEL,
+  regulatoryImpactOf,
   type ChangeState,
+  type ChangeLink,
   /* The row type shares this component's name; the alias keeps both usable. */
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState, readRefusalWords, type FailedRead } from '../v2/dataConnect';
+import { C2CToast, useToast } from '../v2/toast';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import { postQmsApproval, verifyLearningReviewHash, type LearningReviewView } from './qmsApproval';
@@ -64,10 +72,11 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
+import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange, assessQmsChangeImpact, writeRefusal } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
+import { ChangeImpactForm } from './ChangeImpactForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
-import type { ChangeType, Classification, Relationship } from './changeData';
+import type { ChangeType, Classification, Relationship, RiskLevel } from './changeData';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuthoringReadSession } from '../v2/editor/authoringCurrentRead';
 
@@ -88,19 +97,20 @@ export interface ChangeControlProps {
   loading: boolean;
   /** The register read's error, when it failed. A failed read is not an empty log. */
   error?: string | null;
+  /** The log's failed read: a refusal is said as itself, with no retry (C4). */
+  failure?: FailedRead;
   /** Re-run the register read. */
   onRetry?: () => void;
   onNavigate?: (target: string) => void;
   onEditorOpenChange?: (open: boolean) => void;
 }
 
-const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
-/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
-   resolves to 0px and the row's last columns are clipped away. */
-const ROW_MIN = registerRowMinWidth(GRID);
+/** The change log's columns, in order (C8: D0's .reg-tbl, as the SOP register; the row's actions follow them). */
+const CHANGE_COLUMNS = ['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 'Links'] as const;
+/** A D0 chip of the given tone; no tone is the neutral chip. */
+const chip = (tone: string | null) => `rd-chip${tone ? ` tone-${tone}` : ''}`;
 
 
-const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 const optionsOf = <K extends string>(labels: Record<K, string>) =>
   (Object.keys(labels) as K[]).map((k) => ({ value: k, label: labels[k] }));
 /** The moves a row may take here: the server's list, less approval (the signed route). */
@@ -109,11 +119,6 @@ const unsignedMovesOf = (c: ChangeControlRow): Exclude<ChangeState, 'approved'>[
 
 /** The open project as the change form names it. */
 const projectName = (p: ShellProject | null) => (p?.code && p.title ? `${p.code} · ${p.title}` : p?.title ?? 'The open project');
-
-/** Icon element for a link type (from the shared `I` set). */
-function linkIcon(iconKey: string): React.ReactNode {
-  return (I as Record<string, React.ReactNode>)[iconKey] ?? I.link;
-}
 
 export function ChangeControl(props: ChangeControlProps) {
   const user = useAuthUser();
@@ -129,14 +134,16 @@ function ChangeControlSession({
   changes,
   loading,
   error,
+  failure,
   onRetry,
   onNavigate,
   onEditorOpenChange,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
-  const user = useAuthUser(); // display only; the server resolves the signer
+  const user = useAuthUser(); // display, and who proposed a change; the server resolves the signer and refuses the proposer
+  const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
   /* P-60: a change may be filed under the open project, which that project's
-     Engineering screen reads; the server admits it before writing. */
+     Quality section counts (ProjectHome.tsx ProjectQuality); the server admits it before writing. */
   const shell = useShellProject();
   const openProgram = shellProgramId(shell);
   /** The change being approved, while the signature dialog is open. */
@@ -150,21 +157,28 @@ function ChangeControlSession({
       .then(valid => { if (active && valid) setCheckedLearning(learningReview); }).catch(() => undefined);
     return () => { active = false; };
   }, [learningReview]);
-  const learningRefusal = !learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
+  /* The approval signs the content the dialog shows, by its digest; a row that carries none is not signed. */
+  const unreadContent = approving && !approving.contentDigest
+    ? 'This change\'s content could not be read for signing. Reload the change log, then approve.' : null;
+  const learningRefusal = unreadContent ?? (!learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
     ? 'The exact aggregate artifact could not be verified. Reload this change before signing.'
-    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null;
+    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null);
   /** The open write drawer, if any: raise, advance a row, or link to a row. */
   const [drawer, setDrawer] = React.useState<
     | { kind: 'raise' }
     | { kind: 'advance'; change: ChangeControlRow }
     | { kind: 'link'; change: ChangeControlRow }
-    | { kind: 'document'; templateKey: string }
+    | { kind: 'unlink'; change: ChangeControlRow; link: ChangeLink }
+    | { kind: 'assess'; change: ChangeControlRow }
+    | { kind: 'impact'; change: ChangeControlRow }
+    | { kind: 'document' }
     | null
   >(null);
   /** The server's refusal of the open drawer's write, shown in the drawer. */
   const [refusal, setRefusal] = React.useState<string | null>(null);
   /** The last write's outcome, shown above the log. */
-  const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /* A write's outcome is a toast (C3), not a line inside the log's table. */
+  const [toast, fire] = useToast();
   /** The real bound editing copy created from the gallery. */
   const [editingId, setEditingId] = React.useState<number | null>(null);
   React.useEffect(() => {
@@ -176,6 +190,8 @@ function ChangeControlSession({
   const allTemplates = tpl.templates ?? [];
   const changeForms = allTemplates.filter((t) => CHANGE_FORM_TEMPLATE_KEYS.includes(t.key));
   const openDrawer = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
+  /** A drawer stays open while its write is in flight, so a refusal has somewhere to show (Quality review, 2026-11-10). */
+  const closeDrawer = () => { if (!writing.current) setDrawer(null); };
   /** Run a drawer's write: close and report on success, keep the drawer and its
       values with the server's sentence on refusal. */
   const runWrite = async (write: () => Promise<string>, after?: () => void) => {
@@ -185,11 +201,11 @@ function ChangeControlSession({
     try {
       const text = await write();
       setDrawer(null);
-      setNotice({ tone: 'ok', text });
-      onRetry?.();
+      fire(text);
+      onRetry?.(); sum.refresh?.();
       after?.();
     } catch (err) {
-      setRefusal(`Not recorded — ${errText(err)}`);
+      setRefusal(writeRefusal(err));
     } finally {
       writing.current = false;
     }
@@ -198,7 +214,10 @@ function ChangeControlSession({
   /* The register read lives in QualityApp, lifted because AnA's open-change
      action resolves free-text names against the same rows this log renders,
      and a handler can only read state its own component holds. */
-  const summary = sum.summary;
+  /* A log scoped to the open project counts its own rows: the summary route has no project (C14). */
+  const scope = useQualityScope();
+  const scopedFigures = scope.programId !== null;
+  const summary = scopedFigures ? (loading && changes.length === 0 ? null : summaryOfChanges(changes)) : sum.summary;
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
@@ -211,335 +230,190 @@ function ChangeControlSession({
   const unread = failed || (changes.length === 0 && loading);
 
   if (editingId !== null) return <ControlledDocumentWorkbench documentId={editingId}
-    onBack={() => { setEditingId(null); onRetry?.(); }}
-    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} />;
+    onBack={() => { setEditingId(null); onRetry?.(); sum.refresh?.(); }}
+    onNavigate={onNavigate ?? (() => undefined)} />;
 
   return (
     <>
-      <div className="qms-head">
-        <div>
-          <div className="qms-eyebrow">Workstream</div>
-          <h1 className="qms-h1">Change control</h1>
-          <div className="qms-sub">
-            Your change-control log, aligned to ICH Q10 change management and EU GMP Annex 15. Raise a
-            change request, assess its impact and risk, route it for independent approval, implement and
-            verify effectiveness — and link every change to the deviations, CAPAs and validation documents
-            it touches.
+      {/* ── The change log (D7-B): one section. Its figures are one line, its stage filter
+          one .seg ("All" is the clear), its one create "Raise change request". The tab's
+          own title, "Ask AnA for a health check" (now the read-out starter, same asks,
+          ranked by risk) and its four tiles went on 2026-11-06; the lifecycle's box of
+          six count tiles and the separate "Change-control lifecycle" section on
+          2026-11-10. An unread summary states no count: a row of zeroes would be a claim
+          about the register, not an absence of information about it. ── */}
+      <section className="pj-sec qms-sec" aria-labelledby="qcc-log-h">
+        <div className="pj-sec-h">
+          <h2 id="qcc-log-h">Change control log</h2>
+          <div className="pj-sec-acts">
+            {/* a2f9264a5: a curator prepares reviewed learning from the open project (moved here from the retired head). */}
+            <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
+              onCreated={id => { setEditingId(id); onRetry?.(); sum.refresh?.(); }} />
+            <button type="button" className="btn primary small" onClick={() => openDrawer({ kind: 'raise' })}>
+              Raise change request
+            </button>
           </div>
         </div>
-        <div className="qms-actions">
-          <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
-            onCreated={id => { setEditingId(id); onRetry?.(); }} />
-          <button
-            className="qms-btn ghost"
-            title="Sends this request to AnA; nothing in the log changes"
-            onClick={() =>
-              onAsk(
-                'Run a change-control health check — show every change overdue for implementation, every one ' +
-                  'awaiting approval, and any linked deviation or CAPA that is still open, ranked by risk.',
-              )
-            }
-          >
-            {I.sparkles} Ask AnA for a health check
-          </button>
-          <button
-            className="qms-btn primary"
-            onClick={() => openDrawer({ kind: 'raise' })}
-          >
-            {I.plus} Raise change request
-          </button>
-        </div>
-      </div>
+        {/* An empty log is said once, by its empty state below: "none overdue" of nothing is only vacuously true
+            (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
+        {/* Nothing here while the log's own panel reports its failure: said once (review C4-1). */}
+        {!(summary && summary.total === 0) && !failed && <p className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
+          {summary === null ? (!scopedFigures && sum.error ? (readRefusalWords(sum.failure, 'the change-log summary')?.message ?? 'The change-log totals could not be read.')
+            : 'Change-log totals appear once the change register loads.') : <>
+            {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
+            {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
+            {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
+          </>}
+        </p>}
+        {/* The stage filter, with counts, once the log has been read and holds changes: an unread log
+            shows no zeroes, and an empty one has nothing to filter. */}
+        {!unread && changes.length > 0 && <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} />}
 
-      {/* The KPI row is derived entirely from `summary`, so with no summary
-          there is nothing to count. An unread summary is null rather than a
-          zero-filled shell precisely so this decision has to be made here: a
-          row of zeroes is a claim about the register ("no open changes"), not
-          an absence of information about it. */}
-      {summary === null ? (
-        <div className="qms-kpis">
-          <EmptyState
-            title="Change-log totals are unavailable"
-            hint="The counts appear once the change register loads."
-            regulation="Serves the change-control record (ICH Q10)"
-            testId="change-summary-absent"
+        {failed && (
+          <ErrorState
+            title="The change log could not be read"
+            message={error}
+            retry={() => { onRetry?.(); sum.refresh?.(); }}
+            read={failure}
+            readWhat="the change log"
+            testId="change-log-failed"
           />
-        </div>
-      ) : (
-      <div className="qms-kpis">
-        <Kpi label="Open changes" val={String(summary.open)} sub={`${summary.total} in the log`} />
-        <Kpi
-          label="Awaiting approval"
-          val={String(summary.awaitingApproval)}
-          sub={summary.awaitingApproval ? 'In impact assessment' : 'None in assessment'}
-          tone={summary.awaitingApproval ? 'warn' : 'ok'}
-        />
-        <Kpi
-          label="In implementation"
-          val={String(summary.inImplementation)}
-          sub={summary.awaitingVerification ? `${summary.awaitingVerification} awaiting verification` : 'Being executed'}
-        />
-        <Kpi
-          label="Overdue"
-          val={String(summary.overdueImplementation)}
-          sub={summary.overdueImplementation ? 'Past target date' : 'All on schedule'}
-          tone={summary.overdueImplementation ? 'err' : 'ok'}
-        />
-      </div>
-      )}
-
-      {/* ── Lifecycle flowchart ── */}
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Change-control lifecycle</h2>
-          <span className="meta">Every change, and where it sits right now</span>
-          {stage !== 'all' && (
-            <>
-              <span className="spacer" />
-              <button className="qms-link" onClick={() => onStageChange('all')}>
-                {I.close} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
-              </button>
-            </>
-          )}
-        </div>
-        {unread ? (
-          <div className="qms-empty" role="status">
-            {failed ? 'Stage counts appear once the change log can be read.' : 'Loading the change log…'}
-          </div>
-        ) : (
-          <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
         )}
+        {unread && !failed && <EmptyState title="Loading the change log…" busy />}
+        {!unread && visible.length === 0 && (
+          <EmptyState title={changes.length > 0 ? 'No changes at this stage.'
+            : scope.programId ? `No change is filed under ${scope.projectName}.` : 'No changes in the log yet.'}
+            hint={changes.length === 0 && scope.programId ? "The organisation's other changes are under Show the whole organisation." : undefined} />
+        )}
+        {visible.length > 0 && (
+          <RegisterTable columns={CHANGE_COLUMNS}>
+            {visible.map((c) => {
+              const overdue = isImplementationOverdue(c);
+              const open = openId === c.id;
+              const linkCount = c.links?.length ?? 0;
+              const toggle = () => onOpenIdChange(open ? null : c.id);
+              /* The moves that fit the change's state, inline (P-122; one next step since C8): Approve while the change
+                 is under assessment, the signed route; Advance, when the server lists a move; Edit assessment while the
+                 change can be assessed; Link a record. The first two show, with Ask AnA as an icon; More keeps the
+                 rest, with the same handlers. */
+              const advance = unsignedMovesOf(c).length > 0 ? (
+                <button key="advance" type="button" className="btn ghost small"
+                  title="Move this change to its next lifecycle state, with a reason for the move"
+                  onClick={() => openDrawer({ kind: 'advance', change: c })}>
+                  Advance
+                </button>
+              ) : null;
+              /* Approve is offered to anyone but the change's proposer, whose approval the server refuses (the two-person
+                 rule, change-approval-signature.ts), as the SOP register offers it to anyone but a document's author. */
+              const approvable = c.proposedBy == null || meId == null || c.proposedBy !== meId;
+              const approve = c.status === 'under_assessment' && approvable ? (
+                <button key="approve" type="button" className="btn ghost small"
+                  title="Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it."
+                  onClick={() => setApproving(c)}>
+                  Approve
+                </button>
+              ) : null;
+              const acts = [
+                approve,
+                advance,
+                ...(ASSESSABLE_STATES.includes(c.status) ? [
+                  <button key="assess" type="button" className="btn ghost small"
+                    title="Record the risk, impact assessment and implementation plan. They can be edited until the change is approved."
+                    onClick={() => openDrawer({ kind: 'assess', change: c })}>
+                    Edit assessment
+                  </button>,
+                ] : []),
+                /* The server takes no link on a closed, cancelled or rejected change, so none is offered (2026-11-12). */
+                ...(takesLinks(c) ? [
+                  <button key="link" type="button" className="btn ghost small"
+                    title="Link the deviation, CAPA or validation record this change touches"
+                    onClick={() => openDrawer({ kind: 'link', change: c })}>
+                    Link a record
+                  </button>,
+                ] : []),
+              ].filter((b): b is React.ReactElement => b !== null);
+              const ask = <AskAnaButton key="ask" label="Ask AnA about this change"
+                onAsk={() => onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)} />;
+              return (
+                <RegisterBody key={c.id} name={c.changeNumber} className="qcc-change" status={c.status}
+                  columns={CHANGE_COLUMNS.length} primary={<>{acts.slice(0, INLINE_ACTIONS)}</>} ask={ask}
+                  rest={acts.slice(INLINE_ACTIONS)} cells={<>
+                    <td>
+                      <button type="button" className="qms-num mono" onClick={toggle} aria-expanded={open} title="Read the change: its assessment and linked records">
+                        {c.changeNumber}
+                      </button>
+                    </td>
+                    <td className="qms-title">{c.title}</td>
+                    <td>{CHANGE_TYPE_LABEL[c.changeType] ?? c.changeType}</td>
+                    <td><span className={chip(CLASSIFICATION_TONE[c.classification])}>{CLASSIFICATION_LABEL[c.classification]}</span></td>
+                    <td><span className={chip(STATE_TONE[c.status])}>{STATE_LABEL[c.status]}</span></td>
+                    <td>
+                      {c.targetImplementationDate ? <>
+                        <time dateTime={c.targetImplementationDate.slice(0, 10)}>{formatDate(c.targetImplementationDate)}</time>
+                        {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
+                      </> : '—'}
+                    </td>
+                    <td>
+                      <button type="button" className="qcc-linkcount" onClick={toggle} aria-expanded={open}
+                        aria-label={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`} title="Read the change: its assessment and linked records">
+                        {I.link} {linkCount}
+                      </button>
+                    </td>
+                  </>}
+                  after={open && (
+                    <tr className="qcc-detail-tr">
+                      <td colSpan={CHANGE_COLUMNS.length}>
+                        <ChangeRecordDetail change={c} onAsk={onAsk} onAssessImpact={() => openDrawer({ kind: 'impact', change: c })}
+                          onUnlink={takesLinks(c) ? (link) => openDrawer({ kind: 'unlink', change: c, link }) : undefined} />
+                      </td>
+                    </tr>
+                  )}
+                />
+              );
+            })}
+          </RegisterTable>
+        )}
+        {/* How a change is raised: the procedure's five steps. Until 2026-11-10 a boxed guidance panel beside the
+            forms, with an orange "Explain the procedure" and a "Find the controlled procedure"; the explanation is the
+            tab's third starter, and the SOP register, where the procedure is read and acknowledged, is the tab beside
+            this one. It was closed by default from 2026-11-10; P-122 rule 2 (nothing a screen showed goes behind a
+            closed disclosure) opens it again, and a person can close it. */}
+        <details className="pj-more" open>
+          <summary>How a change is raised</summary>
+          <ol className="qcc-steps">
+            <li>Describe the change: current state and proposed state.</li>
+            <li>Give the reason, and classify it minor, major or critical.</li>
+            <li>Assess impact on product, process, validation and filings.</li>
+            <li>Link the deviations, CAPAs and validation records it touches.</li>
+            <li>Route for independent approval, implement, then verify.</li>
+          </ol>
+        </details>
       </section>
 
-      {/* ── Register / log ── */}
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Change control log</h2>
-          {!unread && (
-            <span className="meta">
-              {visible.length} {visible.length === 1 ? 'change' : 'changes'}
-              {stage !== 'all' ? ` · ${STATE_LABEL[stage as ChangeState] ?? stage}` : ''}
-            </span>
-          )}
-        </div>
-
-        <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
-            <div>Number</div>
-            <div>Title</div>
-            <div>Type</div>
-            <div>Class</div>
-            <div>Status</div>
-            <div>Target</div>
-            <div>Links</div>
-            <div />
+      <section className="pj-sec qms-sec" aria-labelledby="qcc-forms-h">
+        {/* One door (C10): "New controlled document", the SOP register's own setup, offering the library's change-control
+            templates to choose from. Until 2026-11-10 a button per template stood here, a gallery by another name. */}
+        <div className="pj-sec-h">
+          <h2 id="qcc-forms-h">Change-control documents and forms</h2>
+          <span className="sec-sub">
+            {changeForms.length > 0
+              ? `From the change-control templates (${changeForms.map((f) => f.label).join(', ')}), created as controlled drafts in the SOP register`
+              : 'Created as controlled drafts in the SOP register'}
+          </span>
+          <div className="pj-sec-acts">
+            <button type="button" className="btn ghost small" disabled={tpl.templates == null}
+              title="Create a controlled draft from a change-control template, in the SOP register"
+              onClick={() => openDrawer({ kind: 'document' })}>
+              New controlled document
+            </button>
           </div>
-          {notice && (
-            <div className="qms-empty" role={notice.tone === 'err' ? 'alert' : 'status'} data-tone={notice.tone}>
-              {notice.text}
-            </div>
-          )}
-          {failed && (
-            <ErrorState
-              title="The change log could not be read"
-              message={error}
-              retry={onRetry}
-              testId="change-log-failed"
-            />
-          )}
-          {unread && !failed && (
-            <div className="qms-empty" role="status">Loading the change log…</div>
-          )}
-          {!unread && visible.length === 0 && <div className="qms-empty">No changes at this stage.</div>}
-          {visible.map((c) => {
-            const overdue = isImplementationOverdue(c);
-            const open = openId === c.id;
-            const linkCount = c.links?.length ?? 0;
-            return (
-              <React.Fragment key={c.id}>
-                <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={c.status}>
-                  <button
-                    className="qms-cell qms-num mono"
-                    onClick={() => onOpenIdChange(open ? null : c.id)}
-                    aria-expanded={open}
-                    title="Show linked records"
-                  >
-                    {c.changeNumber}
-                  </button>
-                  <div className="qms-cell qms-title" title={c.title}>{c.title}</div>
-                  <div className="qms-cell">
-                    <span className="qms-tag">{CHANGE_TYPE_LABEL[c.changeType] ?? c.changeType}</span>
-                  </div>
-                  <div className="qms-cell">
-                    <span className="qcc-class" data-tone={CLASSIFICATION_TONE[c.classification]}>
-                      {CLASSIFICATION_LABEL[c.classification]}
-                    </span>
-                  </div>
-                  <div className="qms-cell">
-                    <span className="qms-pill" data-tone={STATE_TONE[c.status]}>{STATE_LABEL[c.status]}</span>
-                  </div>
-                  <div className="qms-cell">
-                    {c.targetImplementationDate ? (
-                      <span className={overdue ? 'qms-overdue' : undefined}>
-                        {formatDate(c.targetImplementationDate)}
-                        {overdue && <> {I.flag}</>}
-                      </span>
-                    ) : '—'}
-                  </div>
-                  <button
-                    className="qms-cell qcc-linkcount"
-                    onClick={() => onOpenIdChange(open ? null : c.id)}
-                    title={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`}
-                  >
-                    {I.link} {linkCount}
-                  </button>
-                  <div className="qms-cell qms-rowacts">
-                    {unsignedMovesOf(c).length > 0 && (
-                      <button
-                        className="qms-chip"
-                        title="Move this change to its next lifecycle state, with a reason for the move"
-                        onClick={() => openDrawer({ kind: 'advance', change: c })}
-                      >
-                        {I.arrowRight} Advance
-                      </button>
-                    )}
-                    {c.status === 'under_assessment' && (
-                      <button
-                        className="qms-chip"
-                        title="Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it."
-                        onClick={() => setApproving(c)}
-                      >
-                        {I.check} Approve
-                      </button>
-                    )}
-                    <button
-                      className="qms-chip ghost"
-                      title="Ask AnA about this change" aria-label="Ask AnA about this change"
-                      onClick={() =>
-                        onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)
-                      }
-                    >
-                      {I.sparkles}
-                    </button>
-                  </div>
-                </div>
-
-                {open && (
-                  <div className="qcc-detail">
-                    <div className="qcc-detail-head">
-                      <span className="qcc-detail-title">Linked records</span>
-                      <button
-                        className="qms-link"
-                        onClick={() => openDrawer({ kind: 'link', change: c })}
-                      >
-                        {I.plus} Link a record
-                      </button>
-                    </div>
-                    {linkCount === 0 ? (
-                      <div className="qcc-detail-empty">
-                        No linked records yet. Link the deviation, CAPA or validation protocol this change
-                        touches so the change control log stays traceable end to end.
-                      </div>
-                    ) : (
-                      <div className="qcc-links">
-                        {c.links!.map((l) => (
-                          <button
-                            key={l.id}
-                            className="qcc-link"
-                            onClick={() =>
-                              onAsk(`Open ${LINK_TYPE_LABEL[l.linkType]} ${l.linkedRef}${l.linkedLabel ? ` (${l.linkedLabel})` : ''} and show how it relates to change ${c.changeNumber}.`)
-                            }
-                          >
-                            <span className="qcc-link-ico" data-type={l.linkType}>{linkIcon(LINK_TYPE_ICON[l.linkType])}</span>
-                            <span className="qcc-link-body">
-                              <span className="qcc-link-ref mono">{l.linkedRef}</span>
-                              {l.linkedLabel && <span className="qcc-link-label">{l.linkedLabel}</span>}
-                            </span>
-                            <span className="qcc-link-rel">{RELATIONSHIP_LABEL[l.relationship]}</span>
-                            <span className="qcc-link-type">{LINK_TYPE_LABEL[l.linkType]}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
         </div>
+        {tpl.templates == null && (tpl.error
+          ? <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
+              retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" />
+          : <EmptyState title="Loading the Quality system library…" busy />)}
       </section>
-
-      {/* ── How to raise a change (training) + change forms ── */}
-      <div className="qms-grid2">
-        <section className="qms-sec">
-          <div className="qms-sec-head">
-            <h2>How to raise a change</h2>
-            <span className="meta">Procedure guidance</span>
-          </div>
-          <div className="qcc-train">
-            <ol className="qcc-steps">
-              <li><span className="qcc-step-n">1</span> Describe the change — current state and proposed state.</li>
-              <li><span className="qcc-step-n">2</span> Give the reason, and classify it minor, major or critical.</li>
-              <li><span className="qcc-step-n">3</span> Assess impact on product, process, validation and filings.</li>
-              <li><span className="qcc-step-n">4</span> Link the deviations, CAPAs and validation records it touches.</li>
-              <li><span className="qcc-step-n">5</span> Route for independent approval, implement, then verify.</li>
-            </ol>
-            <div className="qcc-train-acts">
-              <button
-                className="qms-btn primary"
-                onClick={() =>
-                  onAsk(
-                    'Explain how to raise a change request in this quality system. Explain each step of the ' +
-                      'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
-                      'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.',
-                  )
-                }
-              >
-                {I.users} Explain the procedure
-              </button>
-              <button
-                className="qms-btn ghost"
-                onClick={() =>
-                  onAsk(
-                    'Help me find the change-control procedure in the SOP register. I will open its controlled revision and record my own read-and-understood acknowledgement there.',
-                  )
-                }
-              >
-                {I.bookOpen} Find the controlled procedure
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="qms-sec">
-          <div className="qms-sec-head">
-            <h2>Change-control documents & forms</h2>
-            <span className="meta">Created as controlled drafts in the SOP register</span>
-          </div>
-          <div className="qcc-forms">
-            {tpl.templates == null && (
-              <div className="qms-empty" role="status">
-                {tpl.error ? 'The Quality system library could not be read.' : 'Loading the Quality system library…'}
-              </div>
-            )}
-            {changeForms.map((f) => (
-              <button
-                key={f.key}
-                className="qms-tpl-card"
-                title={`Create a new ${f.label} as a draft with its standard change-control sections`}
-                onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
-              >
-                <div className="qms-tpl-top">
-                  <span className="qms-tpl-ico">{I.fileText}</span>
-                  <span className="qms-tpl-prefix mono">{f.numberPrefix}</span>
-                </div>
-                <div className="qms-tpl-label">{f.label}</div>
-                <div className="qms-tpl-desc">{f.description}</div>
-              </button>
-            ))}
-          </div>
-        </section>
-      </div>
+      <C2CToast msg={toast} />
       {drawer?.kind === 'raise' && (
         <C2CForm
           config={{
@@ -557,11 +431,14 @@ function ChangeControlSession({
               { key: 'classification', label: 'Classification', type: 'seg', half: true, options: optionsOf(CLASSIFICATION_LABEL) },
               { key: 'description', label: 'Current state → proposed state', type: 'textarea', rows: 3 },
               { key: 'reason', label: 'Reason for the change', type: 'textarea', rows: 3, required: true },
+              { key: 'riskLevel', label: 'Risk', type: 'seg', options: [{ value: '', label: 'Not set' }, ...optionsOf(RISK_LABEL)] },
+              { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 3, desc: 'Product, process, validation and filings. It can be completed until the change is approved.' },
+              { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 3 },
               ...(openProgram ? [{ key: 'programId', label: 'Project', type: 'seg' as const, options: [{ value: '', label: 'Organisation-wide' }, { value: openProgram, label: projectName(shell) }],
-                desc: "A change filed under the open project is shown on that project's Engineering screen." }] : []),
+                desc: "A change filed under the open project is counted in that project's Quality section, and listed when Quality is opened from it." }] : []),
             ],
           }}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onSubmit={(v) => void runWrite(async () => {
             const row = await createQmsChange({
               changeNumber: v.changeNumber.trim(), title: v.title.trim(), reason: v.reason.trim(),
@@ -569,6 +446,9 @@ function ChangeControlSession({
               changeType: (v.changeType || undefined) as ChangeType | undefined,
               classification: (v.classification || undefined) as Classification | undefined,
               targetImplementationDate: v.targetImplementationDate || undefined,
+              riskLevel: (v.riskLevel || undefined) as RiskLevel | undefined,
+              impactAssessment: v.impactAssessment.trim() || undefined,
+              implementationPlan: v.implementationPlan.trim() || undefined,
               programId: v.programId || undefined,
             });
             return `${row.change_number} was raised as a proposed change.`;
@@ -595,7 +475,7 @@ function ChangeControlSession({
                   : []),
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => {
               const reason = v.reason.trim();
               if (reason.length < GOVERNED_REASON_MIN) {
@@ -613,11 +493,45 @@ function ChangeControlSession({
           />
         );
       })()}
+      {drawer?.kind === 'assess' && (() => {
+        const c = drawer.change;
+        return (
+          <C2CForm
+            config={{
+              eyebrow: 'Change control',
+              title: `Assess ${c.changeNumber}`,
+              sub: `${c.title}. The assessment can be edited while the change is proposed or under assessment. From approval on, it is what the approval signed.`,
+              governed: 'Saving writes an audit entry under your name, with your reason and each field before and after.',
+              submitLabel: 'Save assessment',
+              ...(refusal ? { notice: refusal } : {}),
+              fields: [
+                { key: 'riskLevel', label: 'Risk', type: 'seg', options: [{ value: '', label: 'Not set' }, ...optionsOf(RISK_LABEL)], default: c.riskLevel ?? '' },
+                { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 5, default: c.impactAssessment ?? '', desc: 'Product, process, validation and filings.' },
+                { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 5, default: c.implementationPlan ?? '' },
+                { key: 'targetImplementationDate', label: 'Target implementation date', type: 'date', default: c.targetImplementationDate?.slice(0, 10) ?? '' },
+                { key: 'editReason', label: 'Reason for this edit', type: 'textarea', rows: 2, required: true,
+                  desc: 'Recorded on the change\'s audit trail with each field before and after. At least 8 characters.' },
+              ],
+            }}
+            onCancel={closeDrawer}
+            onSubmit={(v) => void runWrite(async () => {
+              await updateQmsChange(c.id, {
+                riskLevel: (v.riskLevel || null) as RiskLevel | null,
+                impactAssessment: v.impactAssessment.trim() || null,
+                implementationPlan: v.implementationPlan.trim() || null,
+                targetImplementationDate: v.targetImplementationDate || null,
+              }, v.editReason.trim());
+              return `The assessment of ${c.changeNumber} was saved.`;
+            })}
+          />
+        );
+      })()}
       {drawer?.kind === 'link' && (
         <ChangeLinkForm
           changeNumber={drawer.change.changeNumber}
           refusal={refusal}
-          onCancel={() => setDrawer(null)}
+          reasonRequired={drawer.change.status !== 'proposed'}
+          onCancel={closeDrawer}
           onSubmit={(v) => {
             const c = drawer.change;
             void runWrite(async () => {
@@ -627,15 +541,64 @@ function ChangeControlSession({
           }}
         />
       )}
+      {/* P-122: the device change determination. The form sends the answers; the server runs the engine and returns
+          its verdict, which the toast repeats. A reply whose determination cannot be read is not reported as a
+          verdict: the write stands (the server answered), so the log is re-read and the change shows what is kept. */}
+      {drawer?.kind === 'impact' && (
+        <ChangeImpactForm
+          change={drawer.change}
+          refusal={refusal}
+          onCancel={closeDrawer}
+          onSubmit={(v) => {
+            const c = drawer.change;
+            void runWrite(async () => {
+              const reply = await assessQmsChangeImpact(c.id, v);
+              const determined = regulatoryImpactOf(reply.regulatory_impact)?.[v.market];
+              if (!determined || determined === 'unreadable') {
+                return `${c.changeNumber}: the assessment for the ${IMPACT_MARKET_LABEL[v.market]} was recorded. Its determination could not be read from the reply; read it on the change.`;
+              }
+              return `${c.changeNumber}: the engine's determination for the ${IMPACT_MARKET_LABEL[v.market]} is ${IMPACT_DECISION_LABEL[determined.decision]}. It is kept on the change.`;
+            });
+          }}
+        />
+      )}
+      {drawer?.kind === 'unlink' && (
+        <C2CForm
+          config={{
+            eyebrow: 'Change control',
+            title: `Remove ${drawer.link.linkedRef} from ${drawer.change.changeNumber}`,
+            sub: `${LINK_TYPE_LABEL[drawer.link.linkType]}${drawer.link.linkedLabel ? `: ${drawer.link.linkedLabel}` : ''}. It leaves this change's linked records.`,
+            governed: 'The link is kept on the record as removed, with your name, the time and this reason.',
+            submitLabel: 'Remove link',
+            ...(refusal ? { notice: refusal } : {}),
+            fields: [
+              { key: 'reason', label: 'Reason for removing it', type: 'textarea', rows: 3, required: true,
+                desc: `At least ${GOVERNED_REASON_MIN} characters, recorded verbatim.` },
+            ],
+          }}
+          onCancel={closeDrawer}
+          onSubmit={(v) => {
+            const { change: c, link } = drawer;
+            const reason = v.reason.trim();
+            if (reason.length < GOVERNED_REASON_MIN) {
+              setRefusal(`A reason of at least ${GOVERNED_REASON_MIN} characters is required. Nothing was removed.`);
+              return;
+            }
+            void runWrite(async () => {
+              await unlinkQmsChange(c.id, link.id, reason);
+              return `${link.linkedRef} was removed from ${c.changeNumber}'s linked records.`;
+            });
+          }}
+        />
+      )}
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
-          templates={allTemplates}
-          initialKey={drawer.templateKey}
-          onCancel={() => setDrawer(null)}
+          templates={changeForms}
+          onCancel={closeDrawer}
           onNavigate={onNavigate}
           onCreated={(id) => {
             setDrawer(null);
-            onRetry?.();
+            onRetry?.(); sum.refresh?.();
             setEditingId(id);
           }}
         />
@@ -650,15 +613,30 @@ function ChangeControlSession({
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           commitRefusal={learningRefusal}
-          renderMeaningDetails={learningReview && !('unavailable' in learningReview) ? (_meaning, committing) => <LearningInvariantReview
-            review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} /> : undefined}
+          /* C9: the approver reads what the signature binds, before signing (change-approval-signature.ts
+             computeQmsChangeContentDigest), and the manifest records it after. Until 2026-11-10 the dialog showed only
+             the number and title. */
+          renderMeaningDetails={(_meaning, committing) => <>
+            <div className="qcc-sign-record" data-testid="change-approval-record">
+              <p className="qcc-sign-lead">What you approve</p>
+              <ChangeRecordFacts change={approving} withImpact />
+            </div>
+            {learningReview && !('unavailable' in learningReview) && <LearningInvariantReview
+              review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} />}
+          </>}
+          signedRows={[
+            { label: 'Classification', value: CLASSIFICATION_LABEL[approving.classification] },
+            ...changeRecordRows(approving),
+            ...changeImpactRows(approving),
+            { label: 'Target implementation date', value: approving.targetImplementationDate ? formatDate(approving.targetImplementationDate) : 'Not recorded yet.' },
+          ]}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
             if (learningRefusal) throw new Error(learningRefusal);
             const review = learningReview && !('unavailable' in learningReview)
               ? { expectedArtifactSha256: learningReview.artifactSha256, invariantAccepted: true as const } : undefined;
-            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review);
-            onRetry?.();
+            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review, approving.contentDigest ?? undefined);
+            onRetry?.(); sum.refresh?.();
             return manifest;
           }}
         />
@@ -696,7 +674,7 @@ function ReviewedLearningPreparationSession({ programId, onCreated, owner }: { p
   }, [owner]);
   if (!canCurate) return null;
   return <>
-    <button className="qms-btn ghost" disabled={!programId} onClick={() => { setError(null); setOpen(true); }}>
+    <button type="button" className="btn ghost small" disabled={!programId} onClick={() => { setError(null); setOpen(true); }}>
       Prepare reviewed learning
     </button>
     {open && <C2CForm config={{ title: 'Prepare reviewed learning', sub: 'Only server-defined generic guidance and coarse cohort counts are prepared. Document review and the exact-artifact invariant signature are separate approvals.', notice: error ?? undefined,

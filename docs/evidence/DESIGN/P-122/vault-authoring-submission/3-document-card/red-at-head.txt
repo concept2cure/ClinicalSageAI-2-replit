@@ -1,0 +1,28 @@
+ × client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > keeps stored section/document titles in saved context and out of the person’s drafting request (the card’s section ask) 5016ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 5141ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 274ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 3102ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 5025ms
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > renders the record: title, type, project name and phase, provenance, first section, count, actions 280ms
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Show all" reveals every section, with an honest "Not drafted yet" for an empty one 5011ms
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — accessibility smoke > is a labelled region whose controls have names, and the dialogs it opens are modal and labelled 10ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 64ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 21ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 11ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 10ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Send for review: labelled, modal, focus trapped while open, focus restored on close 11ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > disables File to vault and Send for review with the reason as described text 11ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > leaves them enabled when the document read returns no access 5010ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > names the document type in the type line 5063ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > says an assumed module was assumed, and a chosen one plainly 5012ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > outlines every section, drafted or not, with the count drafted 5009ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — what the document is, and how far along > shows the section chosen in the outline 5006ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > re-reads on a new refreshKey and marks the sections whose text changed 5007ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — keeps up while AnA works > a quiet re-read that fails keeps the document on screen and says the refresh failed 5007ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — current partial reads > masks a same-document prior-programme record and rejects its deferred JSON body 5014ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — current partial reads > withdraws cached prose after a quiet refresh confirms current access was refused 5007ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — current partial reads > preserves admitted sections without guessing origin when partial metadata says unavailable 5008ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — current partial reads > preserves admitted sections without guessing origin when partial metadata says available 5007ms
+ × client/src/concept2cure/v2/__tests__/documentCanvasLive.test.tsx > DocumentCanvas — current partial reads > does not inherit stored origin or assumed-module claims from unavailable metadata 5007ms
+ Test Files  5 failed (5)
+      Tests  26 failed | 45 passed (71)

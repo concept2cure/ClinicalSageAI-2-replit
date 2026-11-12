@@ -1,0 +1,9 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx   (before the change; the fifth case holds already: a file the viewer cannot show is offered no view)
+ × client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a PDF is offered View beside Download, and opens in a reading drawer through the audited route 
+ × client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a Word document is offered View as PDF, which asks for its rendition and says what it is 5099ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a file that is neither is offered no view 225ms
+ × client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > bytes that are not a PDF are downloaded, no drawer opens, and the record says why 5128ms
+ × client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a refusal says what the Vault said, in the record 5106ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)

@@ -9,7 +9,12 @@ export type VaultFilingDerivation =
   | { status: 'recorded'; vaultDocumentId: string; programId: string; artifactSha256: string;
       source: { store: 'authoring_documents'; nativeId: string; version: string | null; sectionsSha256: string | null;
         /** Each filed section's revision head (LX-10); absent on a receipt recorded before 2026-11-01. */
-        sectionRevisions?: FiledSectionRevision[] };
+        sectionRevisions?: FiledSectionRevision[];
+        /** The seal the rendition was rendered from (LX-10): the frozen version and its content hash, held to
+         *  the filed text when the filing was recorded. Absent for a working draft and before 2026-11-10. */
+        sealedVersion?: { version: string; contentHash: string };
+        /** Why a sealed document's filing names no seal: the seal check's own refusal code. */
+        sealUnverified?: string };
       receipt: { id: string; exportCorrelationId: string | null; occurredAt: string; chain: 'linked'; seal: 'valid' | 'no-key' } }
   | { status: 'not-recorded' }
   | { status: 'unverified'; reason: 'context_invalid' | 'candidate_ambiguous' | 'receipt_malformed' |
@@ -68,11 +73,28 @@ function sourceSnapshot(payload: Record<string, unknown>) {
   if (digest != null && (typeof digest !== 'string' || !SHA256.test(digest))) return null;
   if (exportId != null && (typeof exportId !== 'string' || !isCanonicalId(exportId))) return null;
   const revisions = optionalRevisions(payload);
-  if (revisions === null) return null;
+  const seal = optionalSeal(payload);
+  if (revisions === null || seal === null) return null;
   return { version: version as string | null | undefined ?? null,
     sectionsSha256: digest as string | null | undefined ?? null,
     exportId: exportId as string | null | undefined ?? null,
-    ...revisions };
+    /** What the receipt records beyond the header; each key is present only when the receipt states it. */
+    recorded: { ...revisions, ...seal } };
+}
+
+type RecordedSeal = { sealedVersion?: { version: string; contentHash: string }; sealUnverified?: string };
+
+/** The seal the filing names (LX-10): `{ sealedVersion }`, or `{ sealUnverified }` when the filing recorded that
+ * the seal did not hold, `{}` when it records neither, null when what it records is not one of those. */
+function optionalSeal(payload: Record<string, unknown>): RecordedSeal | null {
+  const { sealVersion: version, sealContentHash: hash, sealUnverified: reason } = payload;
+  const text = (v: unknown): v is string => typeof v === 'string' && v.trim() !== '';
+  if (version === undefined && hash === undefined) {
+    if (reason === undefined) return {};
+    return text(reason) ? { sealUnverified: reason } : null;
+  }
+  if (reason !== undefined || !text(version) || typeof hash !== 'string' || !SHA256.test(hash)) return null;
+  return { sealedVersion: { version, contentHash: hash.toLowerCase() } };
 }
 
 /** `{ sectionRevisions }` when the receipt records them, `{}` when it predates them, null when malformed. */
@@ -109,9 +131,32 @@ async function projectReceipt(q: PoolClient, row: Record<string, unknown>, conte
   return { status: 'recorded', vaultDocumentId: context.vaultDocumentId.toLowerCase(),
     programId: context.programId.toLowerCase(), artifactSha256: context.artifactSha256.toLowerCase(),
     source: { store: 'authoring_documents', nativeId: header.sourceId.toLowerCase(),
-      version: snapshot.version, sectionsSha256: snapshot.sectionsSha256,
-      ...(snapshot.sectionRevisions ? { sectionRevisions: snapshot.sectionRevisions } : {}) },
+      version: snapshot.version, sectionsSha256: snapshot.sectionsSha256, ...snapshot.recorded },
     receipt: { id: header.id, exportCorrelationId: snapshot.exportId, occurredAt: header.occurredAt, chain: 'linked', seal: verdict.seal } };
+}
+
+/**
+ * What a Vault version's record shows of where its file was rendered from
+ * (LX-10): the Authoring document, and the seal when the filing named one.
+ * Null for a version with no filing receipt (a native upload). A receipt that
+ * does not verify, or could not be read, is said to be so and is never shown
+ * as a source.
+ */
+export type VaultRenderedFrom =
+  | { authoringDocumentId: string; sealVersion?: string; sealContentHash?: string; sealUnverified?: string }
+  | { notEstablished: 'unverified' | 'unread' }
+  | null;
+
+export function renderedFromOf(derivation: VaultFilingDerivation): VaultRenderedFrom {
+  if (derivation.status === 'not-recorded') return null;
+  if (derivation.status === 'unverified') return { notEstablished: 'unverified' };
+  if (derivation.status === 'unavailable') return { notEstablished: 'unread' };
+  const { nativeId, sealedVersion, sealUnverified } = derivation.source;
+  return {
+    authoringDocumentId: nativeId,
+    ...(sealedVersion ? { sealVersion: sealedVersion.version, sealContentHash: sealedVersion.contentHash } : {}),
+    ...(sealUnverified ? { sealUnverified } : {}),
+  };
 }
 
 /** Exactly one scoped candidate is required. Never select a source by date,

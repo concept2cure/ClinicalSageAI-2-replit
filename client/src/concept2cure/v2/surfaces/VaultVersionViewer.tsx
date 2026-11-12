@@ -22,32 +22,77 @@ import {
 } from '../editor/vaultPdfViewer';
 
 interface ViewedVersion extends ViewableFile { id: string }
-type Note = { text: string; tone: 'ok' | 'error' };
+export type Note = { text: string; tone: 'ok' | 'error' };
 
 /** Whether a version is offered for viewing: its file is named as a PDF. The bytes still decide. */
 export function viewableAsPdf(v: { fileName: string | null }): boolean {
   return claimsToBePdf('', v.fileName ?? '');
 }
 
-/** View on a version row, for a version whose file is named as a PDF; nothing for any other. */
-export function VersionViewButton({ version, title, onView, viewingId }: {
+/** Whether a version is offered as a PDF rendition (P-107): its file is named as a Word document. The server decides by its bytes. */
+export function viewableAsRendition(v: { fileName: string | null }): boolean {
+  return /\.docx$/i.test(v.fileName ?? '');
+}
+
+/** What a rendition is, said beside it: a PDF made for reading, bound to the version it came from. */
+export function renditionNote(sourceSha256: string | null): string {
+  const from = sourceSha256 ? `the version with SHA-256 ${sourceSha256.slice(0, 12)}…` : 'this version';
+  return `A PDF rendition made from ${from}, for reading here. The version in the Vault is the Word file; download it for the original.`;
+}
+
+/** View on a version row: a PDF as itself, a Word document as its PDF rendition; nothing for any other. */
+export function VersionViewButton({ version, title, onView, viewingId, className = 'sp-ask' }: {
   version: { id: string; version: string | null; fileName: string | null; contentHash: string | null };
   title: string;
-  onView?: (versionId: string, label: string, hash: string | null) => void;
+  onView?: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
   viewingId?: string | null;
+  /** The button's class where it sits among other actions (the record's own row of buttons). */
+  className?: string;
 }) {
-  if (!onView || !viewableAsPdf(version)) return null;
+  const rendition = viewableAsRendition(version);
+  if (!onView || (!viewableAsPdf(version) && !rendition)) return null;
   const label = version.version ? `${title} v${version.version}` : title;
   const opening = viewingId === version.id;
+  const of = `${version.version ? `version ${version.version} of ` : ''}${title}`;
   return (
     <button
-      className="sp-ask"
+      type="button"
+      className={className}
       disabled={opening}
-      onClick={() => onView(version.id, label, version.contentHash)}
-      aria-label={`View ${version.version ? `version ${version.version} of ` : ''}${title}`}
+      onClick={() => onView(version.id, rendition ? `${label} · PDF rendition` : label, version.contentHash, rendition ? 'rendition' : undefined)}
+      aria-label={rendition ? `View a PDF rendition of ${of}` : `View ${of}`}
+      title={rendition ? 'A PDF made from this Word version for reading here. The version itself is unchanged.' : undefined}
+      data-testid={rendition ? 'vault-view-rendition' : undefined}
     >
-      {I.eye} {opening ? 'Opening…' : 'View'}
+      {I.eye} {opening ? 'Opening…' : rendition ? 'View as PDF' : 'View'}
     </button>
+  );
+}
+
+/** What a record's file can be shown as, by its recorded type: a PDF as itself, a Word document as its PDF rendition. */
+export function recordViewKind(mimeType: string | null | undefined): 'pdf' | 'rendition' | null {
+  const mime = mimeType ?? '';
+  if (/pdf/i.test(mime)) return 'pdf';
+  if (/wordprocessingml\.document/i.test(mime)) return 'rendition';
+  return null;
+}
+
+/**
+ * View on a document's record, beside Download: the current version, without opening the Versions section. The
+ * same button as a version row's, decided by the record's type. The bytes still decide what is framed.
+ */
+export function RecordViewButton({ doc, onView, viewingId }: {
+  doc: { id: string; title: string; mimeType?: string | null; hash?: string | null };
+  onView: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
+  viewingId?: string | null;
+}) {
+  const kind = recordViewKind(doc.mimeType);
+  if (!kind) return null;
+  return (
+    <VersionViewButton
+      version={{ id: doc.id, version: null, fileName: kind === 'pdf' ? 'record.pdf' : 'record.docx', contentHash: doc.hash ?? null }}
+      title={doc.title} onView={onView} viewingId={viewingId} className="btn ghost small"
+    />
   );
 }
 
@@ -59,14 +104,22 @@ export function useVaultVersionViewer(projectId: string) {
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
-  const view = async (id: string, title: string, hash: string | null) => {
+  const view = async (id: string, title: string, hash: string | null, as?: 'rendition') => {
     if (viewing) return;
     setViewing(id);
     setNote(null);
     const doc: ViewedVersion = { id, title, hash };
     try {
-      const file = await downloadVaultFile(projectId, id, doc);
-      if (alive.current) presentOpenedFile({ file, doc, report: (text, tone) => setNote({ text, tone }), showPdf });
+      const file = await downloadVaultFile(projectId, id, doc, as);
+      if (!alive.current) return;
+      if (as === 'rendition' && file.kind === 'pdf') {
+        /* A rendition is framed with no "verified against the vault record" line: that is said of a stored version.
+           Its own line says what it was made from. */
+        showPdf(doc, file.blob, null);
+        setNote({ text: renditionNote(file.renditionOf ?? null), tone: 'ok' });
+        return;
+      }
+      presentOpenedFile({ file, doc, report: (text, tone) => setNote({ text, tone }), showPdf });
     } catch (e) {
       if (alive.current) setNote({ text: redactInternals(e instanceof Error ? e.message : '', `${title} was not opened.`), tone: 'error' });
     } finally {
@@ -77,18 +130,57 @@ export function useVaultVersionViewer(projectId: string) {
   return { viewer, closeViewer, viewing, note, view };
 }
 
+/** A host's reader, which a Versions section reads through (Vault.tsx): it opens the host's wide reading drawer, and
+ *  `note` is what the last View from that section came to when nothing was framed. */
+export interface HostReader {
+  view: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
+  viewing: string | null;
+  note: Note | null;
+}
+
+/** The reader a Versions section uses: its host's, or, standing alone, its own, framed under the list. */
+export function useSectionReader(projectId: string, host: HostReader | undefined) {
+  const own = useVaultVersionViewer(projectId);
+  if (host) return { view: host.view, viewing: host.viewing, panel: <VaultViewNote note={host.note} /> };
+  return {
+    view: (id: string, label: string, hash: string | null, as?: 'rendition') => void own.view(id, label, hash, as),
+    viewing: own.viewing,
+    panel: <VaultVersionViewer state={own} />,
+  };
+}
+
+/**
+ * Brings what a view opened, or said, into view. The viewer renders under the list it was opened from, and a seal's
+ * list of documents is longer than the page: "Open" framed the document below the fold, and the click looked as if
+ * it had done nothing (click-through, 2026-11-10). Instant, with no motion. jsdom has no scrollIntoView, hence the
+ * optional call.
+ */
+function useBroughtIntoView(shown: unknown) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (shown) ref.current?.scrollIntoView?.({ block: 'nearest' }); }, [shown]);
+  return ref;
+}
+
+/** What the last View came to, said where it was asked for and brought into view: a refusal, or a file downloaded. */
+export function VaultViewNote({ note }: { note: Note | null }) {
+  const noteRef = useBroughtIntoView(note);
+  if (!note) return null;
+  return (
+    <div ref={noteRef} className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'}>
+      {note.tone === 'error' ? I.alertTriangle : null} {note.text}
+    </div>
+  );
+}
+
 /** The open version, framed, with its served hash; and the note of the last attempt. */
 export function VaultVersionViewer({ state }: { state: ReturnType<typeof useVaultVersionViewer> }) {
   const { viewer, closeViewer, note } = state;
+  const viewerRef = useBroughtIntoView(viewer?.url);
   return (
     <>
-      {note && (
-        <div className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'}>
-          {note.tone === 'error' ? I.alertTriangle : null} {note.text}
-        </div>
-      )}
+      <VaultViewNote note={note} />
       {viewer && (
-        <div className="pf-viewer" data-testid="vault-version-viewer">
+        <div ref={viewerRef} className="pf-viewer" data-testid="vault-version-viewer">
           <div className="pf-viewer-h">
             <button type="button" className="nda-open" onClick={closeViewer}>{I.close} Close viewer</button>
             <span className="pf-viewer-t" title={viewer.doc.title}>{viewer.doc.title}</span>

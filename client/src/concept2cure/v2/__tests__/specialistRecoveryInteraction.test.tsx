@@ -17,7 +17,26 @@ vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeE
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
-import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
+import { DefensibilitySection, DesignCalculatorsSection } from '../surfaces/BiostatWorkbench';
+import { C2CToast, useToast } from '../toast';
+
+/* `BiostatWorkbench` was a registered surface until 2026-11-09, when the merge
+   `docs/SURFACE_CONSOLIDATION_2026-08.md` §5 decided ("Survivor: biostatistics.
+   Fold the workbench in as a tab") was carried out. Its two capabilities are
+   now sections of the one Biostatistics surface. This harness composes them
+   exactly as `surfaces/Biostatistics.tsx` does — same components, same toast —
+   so every case below still exercises the real thing. */
+function BiostatWorkbench(p: { onNav?: (id: string) => void }) {
+  const [toast, fireToast] = useToast();
+  return (
+    <div className="page-inner" data-work-area="biostatistics">
+      <DefensibilitySection fireToast={fireToast} />
+      <DesignCalculatorsSection fireToast={fireToast} onNav={p.onNav} />
+      <C2CToast msg={toast} />
+    </div>
+  );
+}
+
 import { PvCockpit } from '../surfaces/PvCockpit';
 import { CmChange } from '../surfaces/CmcModule';
 import { CmQuality } from '../surfaces/CmcQuality';
@@ -261,7 +280,7 @@ async function prepareBiostatistics() {
   return { ...view, action: screen.getByRole('button', { name: 'Save the example as a working document' }) };
 }
 async function prepareCalculator() {
-  const view = render(<BiostatWorkbench {...props('biostat-workbench')} />);
+  const view = render(<BiostatWorkbench {...props('biostatistics')} />);
   for (const [label, value] of [[/Prior mean effect/, '0.4'], [/^Prior SD/, '0.15'], [/^n per arm/, '120']] as const) {
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   }

@@ -1,0 +1,15 @@
+Red: proposedOwners made to count a departed holder and a near-named role (the two guesses it must not make).
+ × client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the Assign form proposes the people who hold the task's job role > names the job role and its active holders, by the standard name only 8ms
+ × client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the Assign form proposes the people who hold the task's job role > lists the holders first and says so; everyone else can still be chosen 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the Assign form proposes the people who hold the task's job role > names the job role and its active holders, by the standard name only
+- Expected
++ Received
++     "44",
++     "19",
+ FAIL  client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the Assign form proposes the people who hold the task's job role > lists the holders first and says so; everyone else can still be chosen
+- Expected
++ Received
++   "Lee Park (Regulatory affairs lead)",
+-   "Lee Park",
+      Tests  2 failed | 30 passed (32)

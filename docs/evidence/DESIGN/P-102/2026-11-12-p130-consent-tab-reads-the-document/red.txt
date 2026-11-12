@@ -1,0 +1,35 @@
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > indexes all older documents and loads a selected document outside the newest 2
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > maps a full real protocol into the PdevDoc contract 28ms
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > carries the assessment state: legacy and unasses
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > carries the regulatory rule findings, with not-a
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > the one-document reader returns byte-identical r
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > leaves the vulnerable-population rules not-asses
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > the protocol's informed consent (P-130) > the consent figure is the editor's gate on the project's c
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > the protocol's informed consent (P-130) > reads a consent form AnA drafted (recorded by type), shows
+ × server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > the protocol's informed consent (P-130) > a protocol with no project, or a project with no consent d
+ × server/routes/__tests__/authoringDeficiencyScanConsent.test.ts > a consent form AnA drafted (P-130) > has no template, records its type, and gets the same check 11ms
+ × client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > shows the editor gate's count and reasons, and where each element is drafted 45ms
+ × client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > opens the consent document in the editor 210ms
+ × client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > says a complete document can be approved in the editor, and an approved one is approved 7ms
+ × client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > names how many consent documents the project has when it has more than one 7ms
+ × client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > with no consent document, says so, prints no percentage, and says where one starts 5ms
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > an informed-consent form is approved only over its 21 CFR 50.25(a) elements > a consent form AnA drafted, recorded by type and wi
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authoring-signature-consent-gate.test.ts > an informed-consent form is approved only over its 21 CFR 50.25(a) elements > a consent form AnA drafted, recorded by type and
+ FAIL  server/routes/__tests__/authoringDeficiencyScanConsent.test.ts > a consent form AnA drafted (P-130) > has no template, records its type, and gets the same check
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > indexes all older documents and loads a selected document outside the newes
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > maps a full real protocol into the PdevDoc contract
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > carries the assessment state: legacy and unas
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > carries the regulatory rule findings, with no
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > the one-document reader returns byte-identica
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > protocol assessment and qualified detail assembly > leaves the vulnerable-population rules not-as
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > the protocol's informed consent (P-130) > the consent figure is the editor's gate on the project'
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > the protocol's informed consent (P-130) > reads a consent form AnA drafted (recorded by type), sh
+ FAIL  server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > the protocol's informed consent (P-130) > a protocol with no project, or a project with no consen
+ FAIL  client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > shows the editor gate's count and reasons, and where each element is drafted
+ FAIL  client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > opens the consent document in the editor
+ FAIL  client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > says a complete document can be approved in the editor, and an approved one is approved
+ FAIL  client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > names how many consent documents the project has when it has more than one
+ FAIL  client/src/concept2cure/v2/__tests__/protocolConsentTab.test.tsx > the consent tab > with no consent document, says so, prints no percentage, and says where one starts
+ Test Files  4 failed (4)
+      Tests  16 failed | 17 passed (33)

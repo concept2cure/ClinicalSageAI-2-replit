@@ -1,0 +1,132 @@
+{
+ "apiErrors": [],
+ "pageErrors": [],
+ "steps": [
+  {
+   "name": "closed-author-1440",
+   "height": 79,
+   "buttons": [
+    "QS-SOP-001",
+    "Review route",
+    "More actions for QS-SOP-001"
+   ],
+   "docScroll": 0,
+   "tableScroll": 0,
+   "moreVisible": true
+  },
+  {
+   "name": "open-author-1440",
+   "height": 124,
+   "buttons": [
+    "QS-SOP-001",
+    "Review route",
+    "More actions for QS-SOP-001",
+    "Open document",
+    "Training",
+    "Revise",
+    "View version history of QS-SOP-001",
+    "Ask AnA about this document"
+   ],
+   "docScroll": 0,
+   "tableScroll": 0,
+   "moreVisible": true
+  },
+  {
+   "name": "history-dialog",
+   "title": "Version history of QS-SOP-001"
+  },
+  {
+   "name": "closed-author-390",
+   "height": 79,
+   "buttons": [
+    "QS-SOP-001",
+    "Review route",
+    "More actions for QS-SOP-001"
+   ],
+   "docScroll": 0,
+   "tableScroll": 678,
+   "moreVisible": false
+  },
+  {
+   "name": "open-author-390",
+   "height": 124,
+   "buttons": [
+    "QS-SOP-001",
+    "Review route",
+    "More actions for QS-SOP-001",
+    "Open document",
+    "Training",
+    "Revise",
+    "View version history of QS-SOP-001",
+    "Ask AnA about this document"
+   ],
+   "docScroll": 0,
+   "tableScroll": 678,
+   "moreVisible": true
+  },
+  {
+   "name": "closed-approver-1440",
+   "height": 79,
+   "buttons": [
+    "QS-SOP-001",
+    "Approve",
+    "More actions for QS-SOP-001"
+   ],
+   "docScroll": 0,
+   "tableScroll": 0,
+   "moreVisible": true
+  },
+  {
+   "name": "open-approver-1440",
+   "height": 124,
+   "buttons": [
+    "QS-SOP-001",
+    "Approve",
+    "More actions for QS-SOP-001",
+    "Open document",
+    "Training",
+    "Review route",
+    "Revise",
+    "View version history of QS-SOP-001",
+    "Ask AnA about this document"
+   ],
+   "docScroll": 0,
+   "tableScroll": 0,
+   "moreVisible": true
+  },
+  {
+   "name": "closed-approver-390",
+   "height": 79,
+   "buttons": [
+    "QS-SOP-001",
+    "Approve",
+    "More actions for QS-SOP-001"
+   ],
+   "docScroll": 0,
+   "tableScroll": 678,
+   "moreVisible": false
+  },
+  {
+   "name": "open-approver-390",
+   "height": 124,
+   "buttons": [
+    "QS-SOP-001",
+    "Approve",
+    "More actions for QS-SOP-001",
+    "Open document",
+    "Training",
+    "Review route",
+    "Revise",
+    "View version history of QS-SOP-001",
+    "Ask AnA about this document"
+   ],
+   "docScroll": 0,
+   "tableScroll": 678,
+   "moreVisible": true
+  },
+  {
+   "name": "w4-rows",
+   "ok": true
+  }
+ ]
+}

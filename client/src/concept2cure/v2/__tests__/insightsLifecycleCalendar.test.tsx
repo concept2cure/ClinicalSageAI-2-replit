@@ -47,7 +47,7 @@ describe('existing Insights lifecycle run', () => {
     });
     render(<InsightsCanvas surface={getSurface('insights')!} segment="pharma" onNav={vi.fn()} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/persona', undefined, { Authorization: `Bearer ${accessToken}`, 'x-organization-id': String(currentUser.organizationId) });
     expect(await screen.findByText('Recorded private-source obligation')).toBeTruthy();
     const obligations = screen.getByRole('heading', { name: 'Recorded obligation calendar' }).closest('section')!;

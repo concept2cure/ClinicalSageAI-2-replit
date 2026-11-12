@@ -1,5 +1,6 @@
-// Existing live module catalog, reached as Subscription & features (an administrator's view since
-// 2026-10-25; docs/design/CLIENT_JOURNEY_2026-10-25.md; named so on 2026-10-26, section 9 of
+// Existing live module catalog, reached as Subscription & features (an administrator's view from
+// 2026-10-25, docs/design/CLIENT_JOURNEY_2026-10-25.md; every member's again since P-122, 2026-11-10, each seeing the
+// features they may open; named so on 2026-10-26, section 9 of
 // .design/client-journey/INFORMATION_ARCHITECTURE.md); ids and write contracts stay stable.
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
@@ -20,6 +21,9 @@ import { groupCatalogWorkflows, type CatalogFeature } from '../catalogWorkflows'
 import '../styles/workflows-v2.css';
 import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
 import { MdxCatalogSolution } from './MdxCatalogSolution';
+import { useAuthUser } from '@/services/portal/authService';
+import { isOrgAdminRole } from '../orgAdmin';
+import { useSurfaceAvailable } from '../surfaceAvailable';
 
 /* ════════════ Apps catalog ════════════
    Live-wired to /api/module-subscriptions (mounted in
@@ -389,8 +393,21 @@ export function Apps({ onNav }: SurfaceViewProps) {
   // Render from the optimistic copy once seeded, else straight from the live map
   // (avoids a one-frame blank between the fetch resolving and the seed effect).
   const groups = seededRef.current === liveGroups && cat !== null ? cat : liveGroups;
+  /* A member sees the features they may open: switched on for the organisation, not locked, and available to them
+     by their own navigation verdicts (useSurfaceAvailable, the rail's rule). The switches, the locked features and
+     their remedies are an administrator's (P-122, 2026-11-10). With no session mounted (a standalone render) the
+     page is the administrator's view it always was; the server guards every switch either way. */
+  const viewer = useAuthUser();
+  const memberView = viewer ? !isOrgAdminRole(viewer.roles) : false;
+  const available = useSurfaceAvailable();
+  const shownGroups = useMemo(
+    () => (memberView
+      ? groups.map((g) => ({ ...g, apps: g.apps.filter((a) => a.on && !a.lock && available(a.id)) })).filter((g) => g.apps.length > 0)
+      : groups),
+    [groups, memberView, available],
+  );
   const [query, setQuery] = useState('');
-  const catalogView = useMemo(() => groupCatalogWorkflows(groups, query), [groups, query]);
+  const catalogView = useMemo(() => groupCatalogWorkflows(shownGroups, query), [shownGroups, query]);
   const [admin, setAdmin] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -687,18 +704,24 @@ export function Apps({ onNav }: SurfaceViewProps) {
     <div className="page-inner workflow-page">
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Administration</div>
+          {!memberView && <div className="ph-eyebrow">Administration</div>}
           <h1 className="ph-title">{getSurfaceMeta('apps').label}</h1>
           {/* Not a place a client works from (docs/design/CLIENT_JOURNEY_2026-10-25.md):
               each feature is used inside a project, and this page says what the
               subscription includes and why a feature is unavailable. The heading
               is the registry label, so it and the breadcrumb are one name. */}
-          <p className="ph-sub">What your organization’s subscription includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.</p>
+          {memberView ? (
+            <p className="ph-sub">The features you can open. You use them inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off.</p>
+          ) : (
+            <p className="ph-sub">What your organization’s subscription includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.</p>
+          )}
         </div>
-        <button className="btn ghost" data-on={admin || undefined}
-          onClick={() => setAdmin(v => !v)} title="Toggle admin controls">
-          {I.settings || I.sliders} {admin ? 'Admin controls on' : 'Admin controls'}
-        </button>
+        {!memberView && (
+          <button className="btn ghost" data-on={admin || undefined}
+            onClick={() => setAdmin(v => !v)} title="Toggle admin controls">
+            {I.settings || I.sliders} {admin ? 'Admin controls on' : 'Admin controls'}
+          </button>
+        )}
       </div>
       <div className="workflow-search">
         <label htmlFor="workflow-search">Find a feature</label>
@@ -775,11 +798,13 @@ export function Apps({ onNav }: SurfaceViewProps) {
           retry={retryCatalog}
           retryLabel="Retry features"
         />
-      ) : groups.length === 0 ? (
+      ) : shownGroups.length === 0 ? (
         <EmptyState
           icon={I.grid}
           title="No features available"
-          hint="No features are listed for this workspace. Ask your administrator to check the workspace setup."
+          hint={memberView
+            ? 'No feature is open to you in this workspace yet. Ask your administrator which features your organisation uses.'
+            : 'No features are listed for this workspace. Ask your administrator to check the workspace setup.'}
         />
       ) : (
         <div className="workflow-guide">
@@ -803,7 +828,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
                 </dl>
                 <MdxCatalogSolution
                   onOpenProjects={() => open('projects')}
-                  expanded={admin || !!query.trim()}
+                  expanded={admin || memberView || !!query.trim()}
                   features={mdxFeatures.map(({ row: feature, groupIndex }) => {
                     const label = feature.name || getSurfaceMeta(feature.id).label || feature.id;
                     return {
@@ -816,7 +841,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
                   })}
                 />
                 {sharedFeatures.length > 0 && (
-                  <details data-workflow={area.id} open={admin || !!query.trim()}>
+                  <details data-workflow={area.id} open={admin || memberView || !!query.trim()}>
                     <summary>Features and steps ({sharedFeatures.length})</summary>
                     {renderFeatures(sharedFeatures)}
                   </details>
@@ -825,7 +850,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
             );
           })}
           {catalogView.additional.length > 0 && (
-            <details className="workflow-additional" data-workflow="additional" open={admin || !!query.trim()}>
+            <details className="workflow-additional" data-workflow="additional" open={admin || memberView || !!query.trim()}>
               <summary>Additional capabilities</summary>
               <p>Other features listed for your workspace. Each states whether it is available and how to get access.</p>
               {catalogView.additional.map(group => (

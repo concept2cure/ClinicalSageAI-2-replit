@@ -1,0 +1,6 @@
+Same probe after the fix (390 px):
+{
+ "overflow": 0,
+ "right": 390,
+ "first": []
+}

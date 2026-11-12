@@ -1,0 +1,12 @@
+project 2 letter ace_1794309996343_0e830ca2: HTTP 200; sources [{"sourceId":163,"title":"[Demo] FDA information request (fictional) - IND C2C-101.txt","state":"read"}]
+  Q1: {"topics":[{"label":"Not classified","severity":"low","sections":[]}],"suggested":{"severity":"major","ctdSection":null,"discipline":null}} :: Provide the batch analysis data for each drug substance lot used in th
+  Q2: {"topics":[{"label":"Not classified","severity":"low","sections":[]}],"suggested":{"severity":"major","ctdSection":null,"discipline":null}} :: Justify the proposed potency acceptance criterion for drug product rel
+  Q3: {"topics":[{"label":"CMC and quality","severity":"high","sections":["3.2.S","3.2.P"]}],"suggested":{"severity":"major","ctdSection":"3.2.S","discipline":"CMC"}} :: Submit the 6-month stability results for drug product lot C2C101-DP-25
+project 5 letter ace_1794310226210_f53f27de: HTTP 200; sources [{"sourceId":173,"title":"[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt","state":"read"}]
+  Q1: {"topics":[{"label":"Not classified","severity":"low","sections":[]}],"suggested":{"severity":"major","ctdSection":null,"discipline":null}} :: Provide the dissolution method and its discriminating power for the en
+  Q2: {"topics":[{"label":"CMC and quality","severity":"high","sections":["3.2.S","3.2.P"]}],"suggested":{"severity":"major","ctdSection":"3.2.S","discipline":"CMC"}} :: Submit the 12-month long-term stability data for the drug product lots
+  Q3: {"topics":[{"label":"Clinical safety","severity":"high","sections":["2.5","2.7.4"]}],"suggested":{"severity":"major","ctdSection":"2.5","discipline":"Safety"}} :: Clarify how serious adverse events reported at the clinical sites are 
+project 5 letter ace_1794310223865_3ab33bee: HTTP 200; sources [{"sourceId":172,"title":"[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt","state":"read"}]
+  deficiency: {"severity":"major","ctdSection":"3.2.S","discipline":"CMC"} CMC and quality ::           LMN-201 drug substance release and stability testing, and su
+  deficiency: {"severity":"major","ctdSection":"2.5","discipline":"Safety"} Clinical safety ::           long-term safety of LMN-201, including serious hypersensitiv
+  deficiency: {"severity":"major","ctdSection":"2.5","discipline":"Safety"} Clinical safety, Clinical efficacy :: 4710-3    Conduct a pharmacokinetic, safety and efficacy study of LMN-

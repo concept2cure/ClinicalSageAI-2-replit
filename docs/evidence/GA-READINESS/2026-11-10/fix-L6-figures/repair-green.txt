@@ -1,0 +1,16 @@
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > worked figure: d = 0.4 at 90% power has about a 13.6% margin, not 5% 36ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous superiority: the engine needs about the current evaluable N for 80% {} power at the breakpoint 13ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous at 80% power: the engine needs about the current evaluable N for 80% { powerTarget: 0.8 } power at the breakpoint 12ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > binary from rates: the engine needs about the current evaluable N for 80% { endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15 } power at the breakpoint 2ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > time to event: the engine needs about the current evaluable N for 80% { endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 } power at the breakpoint 3ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > worked figure: 10% dropout on N enrolled for 90% power tolerates about 33% 9ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > a 15% dropout rate prints no floating-point tail 26ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > the governed document prints the recomputed points > sample size rationale and assumption note carry rounded breakpoints and name the 80% threshold 12ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > the document says below 80% only when the engine says so > a 90% design prints its exact margin and never "already below" 43ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > the document says below 80% only when the engine says so > a design sized at exactly 80% power (d 0.1) is at the threshold, not below it 10ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > the document says below 80% only when the engine says so > a design sized for 70% power has no margin and says it is already below 80% 1ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > a search floor is never reported as a breakpoint > non-inferiority (margin 0.3, effect 0.1): power holds as the effect shrinks, so no effect-size breakpoint is claimed 1ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > a sensitivity that could not be recomputed says so > a refusal at 80% power reads "not assessed" and keeps the fragility penalty 10ms
+ ✓ sensitivity-breakpoints-recompute-power.test.ts > a sensitivity that could not be recomputed says so > an error that is not a refusal is not swallowed 1ms
+ Test Files  1 passed (1)
+      Tests  14 passed (14)

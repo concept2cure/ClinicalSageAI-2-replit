@@ -1,0 +1,35 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "approve-offered",
+      "count": 0
+    },
+    {
+      "name": "record-review-offered",
+      "count": 1
+    },
+    {
+      "name": "record-review-drawer",
+      "cls": "de",
+      "backdrop": "de-bd",
+      "left": 1000,
+      "width": 440,
+      "before": [
+        "Remains current:true",
+        "Revision required:false"
+      ],
+      "refusedWithoutDate": "Enter the next review date.",
+      "after": [
+        "Remains current:false",
+        "Revision required:true"
+      ],
+      "dateFieldAfterRevision": 0
+    },
+    {
+      "name": "w22b-record-review",
+      "ok": true
+    }
+  ]
+}

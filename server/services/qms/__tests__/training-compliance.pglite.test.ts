@@ -18,7 +18,7 @@ import {
   extractTableDdl,
   type JourneyDb,
 } from '../../../../tests/golden-journeys/harness';
-import { readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance } from '../training-compliance';
+import { readQmsTrainingCompliance, readQmsTrainingExpiring, readQmsTrainingView, summarizeQmsTrainingCompliance } from '../training-compliance';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../document-approval-signature';
 import { QMS_APPROVAL_FIXTURE_DDL, assignToEveryone, seedQmsApprovalFixture } from './_release-approval-fixture';
 import { QMS_TRAINING_DECLARATION } from '../../../../shared/qms/training';
@@ -120,6 +120,10 @@ async function acknowledge(doc: number, user: number, version: string, options: 
 }
 async function expiring(withinDays: number, org = 1) {
   return readQmsTrainingExpiring({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, withinDays, NOW);
+}
+/** The lapse rows only: the cases written before slice 5 added due and overdue rows to the same read. */
+async function lapsing(withinDays: number, org = 1) {
+  return (await expiring(withinDays, org)).filter(r => r.kind === 'lapsing');
 }
 async function compliance(org = 1, viewer: number | null = null) {
   return readQmsTrainingCompliance({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, NOW, viewer);
@@ -284,7 +288,7 @@ describe('compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3)', 
     await assign(1, doc, { user: 10 });
     await acknowledge(doc, 10, '1.0', { expiresInDays: 10 });
     await acknowledge(doc, 11, '1.0', { expiresInDays: 10 });
-    expect((await expiring(60)).map(r => r.userId), 'member 11 is current but not assigned').toEqual([10]);
+    expect((await lapsing(60)).map(r => r.userId), 'member 11 is current but not assigned').toEqual([10]);
   });
 });
 
@@ -300,10 +304,10 @@ describe('per-person training expiry (G10)', () => {
     await acknowledge(doc, 13, '1.0', { expiresInDays: 3 });
     await acknowledge(doc, 16, '1.0', { org: 2, expiresInDays: 3 });
 
-    expect(await expiring(60)).toEqual([expect.objectContaining({
-      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', documentVersion: '1.0', daysLeft: 10, lapsed: false,
+    expect(await lapsing(60)).toEqual([expect.objectContaining({
+      kind: 'lapsing', userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', documentVersion: '1.0', daysLeft: 10, lapsed: false,
     })]);
-    expect(await expiring(5)).toEqual([]);
+    expect(await lapsing(5)).toEqual([]);
   });
 
   it('names a member whose training on the release in force lapsed, and never one who renewed it', async () => {
@@ -316,8 +320,8 @@ describe('per-person training expiry (G10)', () => {
     await acknowledge(doc, 12, '0.9', { expiresInDays: -5 });
     await acknowledge(doc, 13, '1.0', { expiresInDays: -5 });
 
-    expect(await expiring(60)).toEqual([expect.objectContaining({
-      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', lapsed: true, daysLeft: -5,
+    expect(await lapsing(60)).toEqual([expect.objectContaining({
+      kind: 'lapsing', userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', lapsed: true, daysLeft: -5,
     })]);
     expect(await compliance()).toEqual([expect.objectContaining({ id: doc, current: 1, of: 3 })]);
   });
@@ -326,6 +330,81 @@ describe('per-person training expiry (G10)', () => {
     const doc = await document();
     await acknowledge(doc, 10, '1.0', { expiresInDays: 10, acknowledgedAt: '2026-10-01T00:00:00Z' });
     await acknowledge(doc, 10, '1.0', { expires: 'never', acknowledgedAt: '2026-10-03T00:00:00Z' });
+    expect(await lapsing(60)).toEqual([]);
+  });
+});
+
+/* G10 slice 5 (design §3.6, VEEVA_GAP §5 item 3): the per-person view also lists who has not yet acknowledged the
+   version they train on next, read from the one task resolver (training-task.ts planTrainingTasks), so this view and
+   the Tasks board never disagree. Overdue rows are always listed, due rows within the window, then the lapses. */
+describe('outstanding training in the per-person view (G10, MR-12 Stage 4 slice 5)', () => {
+  /** When every path assigned its people: before or after the version took effect (2026-10-01). */
+  async function coveredSince(at: string) {
+    await jdb.pglite.query('UPDATE qms_training_assignments SET assigned_at = $1', [at]);
+    await jdb.pglite.query('UPDATE qms_job_role_members SET added_at = $1', [at]);
+  }
+
+  it('lists a member assigned before it took effect who never acknowledged it as overdue, first; never one who did, nor twice one who lapsed', async () => {
+    const doc = await document();
+    await coveredSince('2026-09-01T00:00:00Z');
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 300 });
+    await acknowledge(doc, 11, '1.0', { expiresInDays: -5 });
+
+    const rows = await expiring(60);
+    expect(rows).toEqual([
+      expect.objectContaining({ kind: 'overdue', userId: 12, userName: 'Untrained', documentId: doc, docNumber: 'SOP-001',
+        documentVersion: '1.0', dueDate: '2026-10-01', daysLeft: -13, lateAssignment: false }),
+      expect.objectContaining({ kind: 'lapsing', userId: 11, lapsed: true }),
+    ]);
+    // Overdue is listed whatever the window.
+    expect((await expiring(1)).map(r => `${r.kind}:${r.userId}`)).toEqual(['overdue:12', 'lapsing:11']);
+  });
+
+  it('a member assigned after it took effect is due 14 days after they were assigned, listed within the window only', async () => {
+    const doc = await document();
+    await coveredSince('2026-10-10T09:00:00Z');
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 300 });
+
+    expect(await expiring(60)).toEqual([11, 12].map(userId => expect.objectContaining({
+      kind: 'due', userId, documentId: doc, dueDate: '2026-10-24', daysLeft: 10, lateAssignment: true })));
+    expect(await expiring(5)).toEqual([]);
+  });
+
+  it('a member not assigned, or no longer active, is never listed as due', async () => {
+    const doc = await document({ assign: false });
+    await assign(1, doc, { user: 13 });
+    await assign(1, doc, { user: 15 });
+    await coveredSince('2026-09-01T00:00:00Z');
     expect(await expiring(60)).toEqual([]);
   });
 });
+
+/* Quality review, 2026-11-10: the view's all-clear spoke for documents it never assessed. A document assigned to people
+   whose released text cannot be read gives no row of any kind, and only the first 200 trainable documents are read;
+   the view now says both, so the client gives no all-clear over them. */
+describe('what the per-person view assessed', () => {
+  const view = (withinDays: number) => readQmsTrainingView(
+    { query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, 1, withinDays, NOW);
+
+  it('counts an assigned document whose released text cannot be read as not assessed', async () => {
+    const doc = await document();
+    await jdb.pglite.query('DELETE FROM electronic_signatures WHERE signed_target = $1', [`qms-document:${doc}`]);
+    expect(await view(60)).toEqual({ rows: [], unassessed: 1, documentsCapped: false });
+  });
+
+  it('counts, for a reader who sees only their own rows, only the documents assigned to them', async () => {
+    const doc = await document();
+    await jdb.pglite.query('DELETE FROM electronic_signatures WHERE signed_target = $1', [`qms-document:${doc}`]);
+    const asReader = (userId: number) => readQmsTrainingView(
+      { query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, 1, 60, NOW, userId);
+    expect((await asReader(10)).unassessed).toBe(1);
+    expect((await asReader(4242)).unassessed).toBe(0);
+  });
+
+  it('counts nothing as not assessed when every assigned document was read', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 300 });
+    expect(await view(60)).toMatchObject({ unassessed: 0, documentsCapped: false });
+  });
+});
+

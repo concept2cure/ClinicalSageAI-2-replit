@@ -1,0 +1,21 @@
+The mutation: retireSignedRecord back to comparing the one word.
+
+-    const signed = signedStateOf(a.register, row.status);
++    const signed = String(row.status ?? '').toLowerCase() === a.register.signedValue.toLowerCase()
++      ? a.register.signedValue : null;
+     if (!signed) {
+
+$ npx vitest run server/services/cmc/__tests__/signed-outcome.test.ts
+
+ × retiring a signed record reads every signed outcome > retires a method signed `phase-appropriate` — P-110 made it a signature too 7ms
+   → expected { ok: false, status: 409, …(2) } to deeply equal { ok: true }
+ × retiring a signed record reads every signed outcome > records WHICH signed state was retired, not the register default 1ms
+   → expected undefined to match object { from: 'phase-appropriate', …(1) }
+
+      Tests  2 failed | 24 passed (26)
+
+Reverted. 26 passed.
+
+The refusal the first case saw is the live one a user would get:
+  409 NOT_SIGNED  "That analytical method is not validated; retire it with an ordinary edit."
+…on a method that is signed, whose ordinary edit is refused for being signed.

@@ -17,6 +17,8 @@
 // enough: ESM evaluates every static import before this module's body. So this
 // is the first import, and .env.local beats .env — see the module.
 import './config/load-env-files';
+// The product's wording for a value that was not sent ("Required"), before any route parses a request.
+import '../shared/zod-messages';
 
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before
 // anything that opens a DB connection or HTTP client.
@@ -34,6 +36,7 @@ import { startRetentionSchedule } from './jobs/retentionCron';
 import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
 import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
+import { startRouteJobSweep } from './services/compute/computeService';
 import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
 import { startTaskDueSweep } from './jobs/taskDueSweep';
 import { startCsrQueueRecovery } from './jobs/csrQueueRecovery';
@@ -279,6 +282,8 @@ async function startServer() {
     // markets + study-methodology sources (SCDM, PubMed, medRxiv). Default
     // ON — disable with ENABLE_EXTERNAL_INTELLIGENCE=false.
     startExternalIntelligenceSchedule();
+    // An eCTD compile or assemble answered 202 runs in this task; one that outlived it is marked abandoned (MR-03 Stage 6).
+    startRouteJobSweep();
     // Project manager: AnA proactively reviews every active schedule of events,
     // marking slips/at-risk milestones, opening recovery tasks, firing alerts,
     // and flagging goals. Self-guards in tests; disable with

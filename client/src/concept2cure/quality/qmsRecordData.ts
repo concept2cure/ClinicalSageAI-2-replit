@@ -17,7 +17,7 @@ import type { ActionState, CapaState } from '@shared/schema/capa-mdr';
 import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
 import { capaWrite, qmsWrite } from './qmsWrites';
 
-export type QmsRecordTab = 'capa' | 'deviations' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
+export type QmsRecordTab = 'capa' | 'complaints' | 'deviations' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
 
 /** A GMP deviation (P-57; server/routes/mdx-qms-deviations.ts, table qc_deviations). */
 export interface DeviationRow {
@@ -257,6 +257,8 @@ export const updateDeviation = (id: number, v: Record<string, string>) =>
 
 export const createNonconformance = (v: {
   ncNumber: string; description: string; deviceName?: string; lotOrSerial?: string; source?: string;
+  /** The project it is filed under (C14); absent, the organisation's. */
+  programId?: string;
 }) => qmsWrite<NonconformanceRow>('POST', 'nonconforming', compact(v));
 
 

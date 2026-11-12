@@ -14,7 +14,7 @@ cannot produce the row's evidence.
 
 | Row | Done means | Evidence | Who |
 |---|---|---|---|
-| **D1** Hosted production — *code side done 2026-09-21: `npm run db:provision` proven on an empty database, PDF/A toolchain in the image; `docs/evidence/W2/`. Owed: AWS account, IAM, DNS, secrets, the apply itself. 2026-09-23: the application side holds; the Terraform side did not. `terraform validate` had never run, and production failed it (fixed in `b6d7a7d7b`, which also adds the KMS release-signing key: SOP-SEC-001 §2a). Ten more blockers stand between it and a booting task, among them `DATABASE_URL` wired to a JSON credential, an illegal RDS database name, the preflight's required variables absent, and an ECS health check calling `wget`, which the image lacks; three of them are founder decisions (AI placement, Redis, worker). Ordered brief: `docs/evidence/W2/2026-09-23/README.md`. 2026-09-24, B9 (`docs/evidence/W2/2026-09-24-b9/`): the ALB answers CloudFront alone (origin-facing prefix list + origin secret header), and the way in through CloudFront works. Before, every `/api/*` request would have failed its origin certificate check, API 403/404 came back as `200 index.html` (so `/readyz` read green for any deployment), and `/readyz`, `/collab`, SCIM and the connector had no route. Production trusts two hops; the smoke test reads `/readyz` through the public URL and fails closed. Offline proof only (mocked-provider `terraform test`, each check shown failing first); nothing applied. Adds to the founder list: a custom domain that both certificates cover, and the origin secret. 2026-09-24, B1–B3 and B5: built twice in parallel (`docs/evidence/W2/2026-09-24-b1-b5/`, `docs/evidence/W2/2026-09-23b/`) and reconciled into one: the task definition carries every name deploy-aws.yml's preflight requires (read from the workflow by `terraform test`), composed `verify-full` URLs replace the RDS JSON secret, the database name is legal, and the health check probes `/healthz`, not `/readyz` (a readiness probe replaces tasks it cannot heal). `.github/workflows/terraform-tests.yml` runs the tests and the pipeline's own preflight against the rendered task definition on every push. The RDS CA is vendored (`docs/evidence/W2/2026-09-24-rds-ca/`); the bundle itself had been dropped by `.gitignore`'s `*.pem`, so trunk named a missing file until 2026-09-24 (`2026-09-23b/rds-ca-vendored-bundle-missing.txt`). Found and fixed the same day (`2026-09-23b/`): the production image could not load its own bundle (`vite`, a devDependency, imported at load time); minting `app_service` as the RDS master always failed, and its password went to CloudWatch in plaintext; a crash exited 0; the preflight checked one revision and deploy rolled another. 2026-09-24, B8, same day (`docs/evidence/W2/2026-09-24-b8/`): staging is now production's composition. There is one `terraform/stack` with two thin roots, so staging cannot drift from what it proves. Staging runs at smaller sizes with its own names and signing key, and passes the same boot-contract test. A test also reads the six names deploy-aws.yml targets and checks production creates them. deploy-aws.yml still deploys to production only. Still blocked: no path provisions the empty RDS database (next), deploy IAM, the apply itself. Founder: B4, B6+B7, audit trail on first boot, document-storage retention. 2026-09-24, vault storage (`docs/evidence/W2/2026-09-24-vault-storage/`): a deployment had nowhere durable to keep a filing's source documents. `STORAGE_PROVIDER=s3` threw in every production build (the SDK was loaded with `require()` in an ESM bundle), and the task definition named no store, so bytes went to the task's own disk and would be deleted with it. Now the provider loads, finds every object (it had stopped at the first 1000 keys bucket-wide) and reports a refused read as an error rather than a missing document. Production refuses to boot without a durable store, and the stack creates a private, versioned bucket per environment that only the task role can reach. The pipeline's own preflight refuses `local`, a missing bucket and a missing provider, and `/readyz` reports the store, so a task that cannot reach it is not ready. Each fix was shown failing first. How long deleted versions are kept is the retention decision above. 2026-09-24, TRIVY-01 (`docs/evidence/W2/2026-09-24-trivy/`): the deploy's blocking IaC scan failed on 16 HIGH/CRITICAL findings, so no tagged release could pass `security-gate`; each is fixed or excepted at its resource with a reason, the scan exited 0; red again on merge from `terraform/stack/vault_storage.tf` (AWS-0132 ×2), fixed by the vault-storage lane (`2fe4ec4b2`); exits 0 on trunk and CI's copy now blocks. Founder decision added: a WAF on CloudFront. 2026-09-24, SMTP (`docs/evidence/W2/2026-09-24-smtp/`): login OTP is the mandatory second factor and the stack carried no SMTP, so a deploy would boot, read ready, and admit no one; the stack now carries it (port 465 only) and the preflight refuses a task definition without it. Founder: an SMTP provider with a verified sending domain, then `pilot:verify-otp` to a real inbox* | One AWS environment from `terraform/environments/production`, image promoted by `.github/workflows/deploy-aws.yml`, `/readyz` 200 with schema and ana `ok`; redis and worker read `skipped` by decision B6 (2026-10-01, CPO: production runs without Redis and coordinates through Postgres; `docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md`). | Readiness JSON + `terraform apply` log | Claude + founder (account, DNS, IAM) |
+| **D1** Hosted production — *code side done 2026-09-21: `npm run db:provision` proven on an empty database, PDF/A toolchain in the image; `docs/evidence/W2/`. Owed: AWS account, IAM, DNS, secrets, the apply itself. 2026-09-23: the application side holds; the Terraform side did not. `terraform validate` had never run, and production failed it (fixed in `b6d7a7d7b`, which also adds the KMS release-signing key: SOP-SEC-001 §2a). Ten more blockers stand between it and a booting task, among them `DATABASE_URL` wired to a JSON credential, an illegal RDS database name, the preflight's required variables absent, and an ECS health check calling `wget`, which the image lacks; three of them are founder decisions (AI placement, Redis, worker). Ordered brief: `docs/evidence/W2/2026-09-23/README.md`. 2026-09-24, B9 (`docs/evidence/W2/2026-09-24-b9/`): the ALB answers CloudFront alone (origin-facing prefix list + origin secret header), and the way in through CloudFront works. Before, every `/api/*` request would have failed its origin certificate check, API 403/404 came back as `200 index.html` (so `/readyz` read green for any deployment), and `/readyz`, `/collab`, SCIM and the connector had no route. Production trusts two hops; the smoke test reads `/readyz` through the public URL and fails closed. Offline proof only (mocked-provider `terraform test`, each check shown failing first); nothing applied. Adds to the founder list: a custom domain that both certificates cover, and the origin secret. 2026-09-24, B1–B3 and B5: built twice in parallel (`docs/evidence/W2/2026-09-24-b1-b5/`, `docs/evidence/W2/2026-09-23b/`) and reconciled into one: the task definition carries every name deploy-aws.yml's preflight requires (read from the workflow by `terraform test`), composed `verify-full` URLs replace the RDS JSON secret, the database name is legal, and the health check probes `/healthz`, not `/readyz` (a readiness probe replaces tasks it cannot heal). `.github/workflows/terraform-tests.yml` runs the tests and the pipeline's own preflight against the rendered task definition on every push. The RDS CA is vendored (`docs/evidence/W2/2026-09-24-rds-ca/`); the bundle itself had been dropped by `.gitignore`'s `*.pem`, so trunk named a missing file until 2026-09-24 (`2026-09-23b/rds-ca-vendored-bundle-missing.txt`). Found and fixed the same day (`2026-09-23b/`): the production image could not load its own bundle (`vite`, a devDependency, imported at load time); minting `app_service` as the RDS master always failed, and its password went to CloudWatch in plaintext; a crash exited 0; the preflight checked one revision and deploy rolled another. 2026-09-24, B8, same day (`docs/evidence/W2/2026-09-24-b8/`): staging is now production's composition. There is one `terraform/stack` with two thin roots, so staging cannot drift from what it proves. Staging runs at smaller sizes with its own names and signing key, and passes the same boot-contract test. A test also reads the six names deploy-aws.yml targets and checks production creates them. deploy-aws.yml still deploys to production only. Still blocked: no path provisions the empty RDS database (next), deploy IAM, the apply itself. Founder: B4, B6+B7, audit trail on first boot, document-storage retention. 2026-09-24, vault storage (`docs/evidence/W2/2026-09-24-vault-storage/`): a deployment had nowhere durable to keep a filing's source documents. `STORAGE_PROVIDER=s3` threw in every production build (the SDK was loaded with `require()` in an ESM bundle), and the task definition named no store, so bytes went to the task's own disk and would be deleted with it. Now the provider loads, finds every object (it had stopped at the first 1000 keys bucket-wide) and reports a refused read as an error rather than a missing document. Production refuses to boot without a durable store, and the stack creates a private, versioned bucket per environment that only the task role can reach. The pipeline's own preflight refuses `local`, a missing bucket and a missing provider, and `/readyz` reports the store, so a task that cannot reach it is not ready. Each fix was shown failing first. How long deleted versions are kept is the retention decision above. 2026-09-24, TRIVY-01 (`docs/evidence/W2/2026-09-24-trivy/`): the deploy's blocking IaC scan failed on 16 HIGH/CRITICAL findings, so no tagged release could pass `security-gate`; each is fixed or excepted at its resource with a reason, the scan exited 0; red again on merge from `terraform/stack/vault_storage.tf` (AWS-0132 ×2), fixed by the vault-storage lane (`2fe4ec4b2`); exits 0 on trunk and CI's copy now blocks. Founder decision added: a WAF on CloudFront. 2026-09-24, SMTP (`docs/evidence/W2/2026-09-24-smtp/`): login OTP is the mandatory second factor and the stack carried no SMTP, so a deploy would boot, read ready, and admit no one; the stack now carries it (port 465 only) and the preflight refuses a task definition without it. Founder: an SMTP provider with a verified sending domain, then `pilot:verify-otp` to a real inbox. 2026-11-10 and 2026-11-11, re-measured at head (`docs/evidence/D1/2026-11-10-aws-readiness/`, `docs/evidence/D1/2026-11-11-aws-readiness/`): the WAF is on the distribution (P-11); `/readyz` is cached, answers the public `{ ready }` alone, and gives its detail to the deployment's `READYZ_TOKEN`, which the stack now generates and the deploy's smoke test presents, so a failed deploy says which dependency failed; a task that cannot read the shared session store is not ready; the deploy preflight refuses live co-editing while more than one task serves; the ALB's 60 s is pinned to CloudFront's and the server's keep-alive; and both roots export every output the first apply reads (the staging root exported neither deploy role, and neither root the first-run setup). Offline proof only, each shown failing first; nothing applied. Blocking a deploy: trunk CI is red (MR-02), and the founder's inputs in MR-03's checklist. Owed by decision: a table for shared rate limits (RULE 6)* | One AWS environment from `terraform/environments/production`, image promoted by `.github/workflows/deploy-aws.yml`, `/readyz` 200 with schema and ana `ok`; redis and worker read `skipped` by decision B6 (2026-10-01, CPO: production runs without Redis and coordinates through Postgres; `docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md`). | Readiness JSON + `terraform apply` log | Claude + founder (account, DNS, IAM) |
 | **D2** Launch catalog — *local green 2026-09-20, see `docs/evidence/W1/2026-09-20/`; staging owed with D1. 2026-09-23: every self-serve signup answered 500 under `RLS_ENFORCE=on` after `a264e291a` (the default client workspace written from the pre-auth scope); fixed in the writer, shown on real PostgreSQL 8/16 red → 16/16 green (`docs/evidence/W1/2026-09-23-workspace/`). 2026-09-28, deterministic AI responses (`docs/evidence/D2-DETERMINISTIC-PROD/2026-09-28/`): `AI_GATEWAY_DETERMINISTIC=true` served fixed responses in production — "Draft section 2.7.3" answered `**AnA (Demo Mode):** …` with no error — while `/readyz` read ready. Production now refuses it at boot, per request and in the deploy preflight unless `AI_GATEWAY_ACCEPT_DETERMINISTIC=true` records the risk (the CI boot job does); each shown failing first. The fixed responses no longer mark claims about unread input `[KNOWN]` or `[INFERRED]` 2026-10-01: a Vault document takes its next version from the server (check-in by naming the document: version assigned 1.0 → 2.0, code and filing kept, predecessor linked), and the database refuses a version link outside its family or a second successor (VR-08, `docs/evidence/D2-VAULT-VERSIONS/2026-09-30-checkin/`). 2026-10-01: a document is one entry at its current version; every version is listed with its hash, downloads hash-verified, and is in the document's history; search shows current versions unless asked; a changed file uploaded under an existing name is offered as the next version (VR-09, `docs/evidence/D2-VAULT-VERSIONS/2026-10-01-version-list/`). The data room's capture record is append-only in the database, and its Filed chip names the Vault version the file became (VR-16, `docs/evidence/D2/2026-10-01-data-room-capture-immutable/`). Captured sources are filed into the Vault from the data room, through the one upload-to-Vault path AnA's tool also uses, with a result for every source; changed bytes are refused (VR-11a, `docs/evidence/D2-DATA-ROOM-FILE/2026-10-01/`). Suggested filings in a folder are confirmed together with one required reason, each with its own audit row, and one changed since it was listed is refused; the header counts what awaits confirmation (VR-11b, `docs/evidence/D2-DATA-ROOM-FILE/2026-10-01-confirm/`). A capture names who made it, and its capture, supersession and filing into the Vault are in the audit chain (VR-16b, `docs/evidence/D2/2026-10-01-data-room-capture-provenance/`). Any earlier version compares with the current one: bytes, recorded details and the changed lines (critique 15, `docs/evidence/D2-VAULT-VERSIONS/2026-10-01-compare/`). The Vault searches every project of the organisation at once, each hit naming its project (critique 15, `docs/evidence/D2-VAULT-LIBRARY/2026-10-01/`). A version names the documents that support it, that it references or that it is based on, in any project of the organisation; both ends list it, removal needs a reason, and each change is chained on both documents (critique 15, the replacement for `parentDocumentId`, `docs/evidence/D2-VAULT-RELATIONSHIPS/2026-10-01/`). Each version says which submission sequences and sections carry it, with the leaf's operation (VR-14a, `docs/evidence/D2-VAULT-WHERE-USED/2026-10-01/`), and which official eSTAR exports attached it, from the export's own record of its sources (VR-14c, `docs/evidence/D2-VAULT-WHERE-USED/2026-10-01-estar-uses/`). A version is annotated on a page or a passage of its text, replied to, resolved with a note or retracted by its author, each act chained and the record guarded in the database; the review and approval dialogs say what was open (critique 15, `docs/evidence/D2-VAULT-ANNOTATIONS/2026-10-01/`). 2026-10-11, biostatistics (`docs/evidence/D2-BIOSTATISTICS/2026-10-11/`): 163 checks of the statistical engines against published reference values found 37 wrong, all on parallel copies reachable from live routes while the canonical `server/services/stats/*` passed. Fixed against the published method and pinned by four new reference suites (74 tests; 69 of them fail against the previous code): Φ and Φ⁻¹ to full double precision (z(0.975) was off by 1.2e-6 and every sizing, power and boundary is built on them), TOST 69/group, crossover 32, AUC 10/group, real Dunnett, exact noncentral-t 64, binary 93/arm, Schoenfeld 247 events (the time-to-event sizer had labelled events as subjects), Lan–DeMets O'Brien–Fleming 2.963/1.969 and conditional power 0.8903 where the service answered 3.258/2.259 and 0.185. The engine now refuses rather than substituting a silent default (a hazard ratio of 0.5 for an effect ≥ 1, an 0.85 performance goal, 0.90/0.90/0.50 diagnostic accuracy). Five launch-reachable paths carried figures a model supplied, each closed: a model-drafted CSR §11.4 reached Module 2.5/2.7 as the study's primary result inside eCTD compile; AnA's M2.5/M2.7 tools composed from model-written `csrs[]` and now read the program's CSR records; statistical defensibility was a model's 0-100 scores and is now the deterministic judgment engine; figure generation asked a model for a Kaplan–Meier HR and 95% CI; the design optimizer invented sample sizes by endpoint keyword. Four engines that were both unreachable and wrong were deleted (10,247 lines), among them a Schoenfeld with a factor of 2 that halved every event count. Owed and named there: no pre-dispatch statistical gate, no statistical qualification package, and the `biostatistics` surface scrapped by `docs/SURFACE_DECISIONS_2026-10-08.md` but not yet removed. 2026-10-14, no example data (`docs/evidence/D2-NO-SAMPLE-MODE/2026-10-14/`): sample mode and its datasets are deleted, and `ci:fixture-fallback` refuses their return, shown blocking a reintroduced fixture. 2026-10-22, invented values (`docs/evidence/D2-NO-SAMPLE-MODE/2026-10-22/`): 155 commits from a codebase-wide inventory. A fact nobody recorded stays unrecorded instead of a default confidence, actor, year or submission type. A failed read is an error, not "none". A score covers only what was measured. Tenant and actor come from the session. Each is pinned by a test shown failing first. Owner decisions owed are listed there.* | Seven apps in the launch catalog: Projects, Vault, Authoring, Submission Center (with the IND lifecycle and forms tools as its features, P-32, and Submission Readiness, the one dispatch verdict per sequence, as its screen since P-36; P-33), QMS controlled documents, Reporting & analytics (the seventh by the founder's decision of 2026-09-26, landed 2026-10-01: `docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/`) and CMC / Module 3 (the eighth, decision P-28 under the founder's delegation of 2026-10-07, landed 2026-10-12: `docs/evidence/D2-CMC-LAUNCH-APP/2026-10-12/`). Six of the seven are granted to a new organisation by default (the modules granted are unchanged by P-36). CMC / Module 3 grants no module on purpose: its surface is inside the boundary, and the professional band the product owner set on 2026-08-24 still decides who holds it — a launch app's surface list lifts the launch-scope lock, and `applyLaunchScope` never widens a verdict. What it composes is small-molecule Module 3 for a US IND; a biologic, a marketing application or a non-US clinical-trial application is refused by name and authored in the editor instead (`services/cmc/composition-scope.ts`). Every other surface behind a flag that is off in production. Zero fixture imports reachable in production; `ci:fixture-fallback` and `ci:no-mock-in-prod-routes` set to block. | Fresh-org screenshots on staging; a CI run showing the gate block on a reintroduced fixture | Claude |
 | **D3** Tenant isolation proven — *app_service role and boot as non-superuser proven locally (`docs/evidence/W2/`); all six OQ protocols pass locally with `RLS_ENFORCE=on` as `app_service`, after F-14 — Vault refused every upload under that role — was fixed (`docs/evidence/W3/2026-09-22/`). 2026-09-24: governed decisions added to the two-tenant contract (`docs/evidence/D3/2026-09-24-governed-decisions/`), run as `app_service` with RLS enforcing on a from-blank install, 23/23; the positive control found every listed decision answering 404 on fetch (two ids for one decision, fixed), and one mutation showed the database had already been refusing a cross-tenant write this effort had reported as live. Same day, Report OS (`docs/evidence/D3/2026-09-24-report-os-tenant/`), 37/37: seven of its request schemas took the tenant from the request and now take it from the session; RLS contained all but one leak, a program group holding another tenant's project, since memberships carry no RLS policy. (Corrected 2026-10-08: since `2ddbfb6a6c` memberships are policied through their group, though not through the project they name; the route's member check still guards the project.) An UPDATE crossed too (`docs/evidence/D3/2026-09-24-update-boundary/`, 39/39): with RLS enforcing, a traceability item could be re-pointed at another tenant's QMP, because RLS checks the row's organization and not a foreign key. 2026-09-24, signed approvals and Submission Center (`docs/evidence/D3/2026-09-24-signatures-and-runs/`): `electronic_signatures` and `submission_orchestrator_runs` added, 43/43 with the Report OS cases; each shown failing with only its own table's policy removed (A lists B's signatures, B's runs are edited and deleted, a forged row lands). Signatures had been excluded because §11.70 makes a fixture undeletable; they are in without disabling the trigger. The contract's forge handler turned out to test `risk_items` for any domain without its own branch, so a new domain could pass having tested nothing; shown passing with signatures' RLS off, and now a compile error (an exhaustive `Record<Domain, Forge>`). And an edit could approve (`docs/evidence/D3/2026-09-24-governed-edit/`, 46/46): any member's PATCH could mark a PCCP plan or post-market document approved and locked without its gate, or re-parent it onto another tenant's program, with RLS enforcing. 2026-09-24, the cortex query route (`docs/evidence/D3/2026-09-24-cortex-tenant-header/`): its tenant key was the client's `x-org-uuid` header and nothing else, since the router it is mounted under drops the session's uuid; RLS contained it for atoms but not for the vault, whose RLS the RAG pipeline scoped to whatever uuid its caller passed (see the RAG pipeline note). The key is the session's now, 6/6 with RLS on and off. Found on the way and handed on: `search_atoms_hybrid` fails on every install built from empty, so Authoring's AI draft and AnA chat retrieve no evidence. Six more writes RLS never refused (`docs/evidence/D3/2026-09-24-request-parents/`, 58/58): another tenant's complaint relinked, a preference row written for another user, an AnA profile planted onto a colleague, and three foreign-key pins, each shown landing with RLS on. And the writes only RLS was stopping (`docs/evidence/D3/2026-09-24-project-scope/`, 72/72): project intelligence read and written by project id alone, memory entries archived and verified by id, AnA's project update spreading the body (re-pointing a project at another tenant's workspace with RLS on), a bundle linked to another tenant's plan, a corpus ingest taking another org's report over, and `/api/users/me` reading the account for a password-only token. Each is shown leaking red and holding green with RLS off, since every policy passes all rows when enforcement is off. And the control plane (`docs/evidence/D3/2026-09-24-control-plane-access/`, 82/82): the kernel's process-wide log, every tenant's paths, tenant ids and actor ids, was readable and clearable by any role containing "admin" and by everyone outside production. It is now for platform operators, and an org's governed decisions for its own administrators. And the vault RAG pipeline (`docs/evidence/D3/2026-09-24-rag-pipeline-tenant/`): it wrote its caller's org uuid into the GUC vault RLS reads, so tenant A's session handed B's uuid read B's vault passage as `app_service` with RLS enforcing; it now refuses any uuid that is not the session's, 5/5 (unfixed 3 fail). And child tables (`docs/evidence/D3/2026-09-24-child-tables/`): 67 with no tenant column had row security off, four live paths reached other tenants' rows through them, and 66 now inherit their parent's isolation through the canonical child migration, the five grandchildren through their parent's own policy, and sixteen more outside `public` the same way, one of which was taking audit rows against any tenant's export job; a CI rule across every schema fails on any child left open. The staging run is owed with D1 2026-09-24, the Vault's write services (AnA client-files lane): a viewer could add files to the Vault or file them through AnA and authoring, and row-level security did not stop it, since the write policy scopes by program, not role. The shared services now check the scope's `organization_users` role; red then green on real PostgreSQL as `app_service` (`docs/evidence/D3/2026-09-24-vault-write-role/`). 2026-09-24, the vault's own authorization inputs (`docs/evidence/D3/2026-09-24-vault-program-ownership/`): a program's owner was resolved from GCC tables any tenant could write ahead of the canonical registry, and the delegate-grant table had no RLS, so one row written as `app_service` with RLS enforcing gave tenant A tenant B's vault to read and rewrite. No application writer reaches either table. Canonical registry first, sponsor-only grants; 6/6, and from empty 207/207 across the vault and fixture suites. 2026-09-25, the tables RLS decisions read (`docs/evidence/D3/2026-09-25-organizations-tenant-key/`): a sweep of every relation a policy or policy function reads found `public.organizations` without RLS and writable, and its uuid is the tenant key; a tenant gave another org its own uuid and read that org's vault. The key is now immutable, and the sweep is a live-database contract with self-tests, 13/13. Writes to the table's other columns stay open, handed on. 2026-09-26, `organizations` writes (`docs/evidence/D3/2026-09-26-organizations-writes/`): any tenant scope could rewrite any organization's tier, settings, Stripe ids and API key. Own-org-or-platform write policy, after moving five platform-staff override paths onto the system scope for cross-org edits (the policy alone made one answer success while writing nothing); 19/19. Found: `organization_users` has no RLS at all. 2026-09-26, memberships (`docs/evidence/D3/2026-09-26-memberships/`): `organization_users` had no RLS, so a member's scope placed its user in another tenant — whose route then admitted its token — and made its own member platform staff. Writes are now own-org-or-platform and staff roles platform-minted; signup, persona and cross-org admin writes moved into the membership's organization; 10/10. 2026-09-28/29 (`…01YZFCXR`), each red then green on a from-blank database as `app_service` with RLS enforcing: `public.users` was readable and rewritable from any tenant scope, credentials included — now scoped by membership, pre-auth and system scopes keep sign-in (`docs/evidence/D3/2026-09-28-users-rls/`); a member's scope could write itself a `super_admin` platform grant, which the console then admitted — writes are platform-only (`docs/evidence/D3/2026-09-28-platform-role-grants/`); generated drafts were readable and rewritable across tenants — scoped to their program (`docs/evidence/D3/2026-09-28-drafting-tasks/`); an invitation to another organization could not be accepted under enforcement — a member-only definer lookup, then the inviting organization's scope (`docs/evidence/D3/2026-09-28-invitation-acceptance/`); a blank database's first deploy left a child table unscoped — the child scope now runs in the isolation tail, and CI checks coverage after the first deploy (`docs/evidence/D3/2026-09-29-child-scope-first-deploy/`); `GET /api/users/:id` read any account in the pre-auth scope behind a default-org check — it now looks up by membership in the caller's organization (`docs/evidence/D3/2026-09-29-pre-auth-scope/`); and the audit trail and displays lost, or dropped, people who had left — named through `actor_name`, members and past actors only (`docs/evidence/D3/2026-09-29-actor-names/`). 2026-10-04: the pre-auth scope read and wrote every account, credentials included — it now reaches only the one account the request is bound to, so a steered handler reads nothing at the database (`docs/evidence/D3/2026-10-04-pre-auth-narrowing/`); `user_presence` (IP address, current page) was readable and writable from any scope — members read, only the person writes (`docs/evidence/D3/2026-10-04-user-presence/`); five legacy digest routes took the target user from the request, one with a path-traversal write — removed, replacements by path (`docs/evidence/D3/2026-10-04-digest-routes/`). 2026-09-29, SECURITY DEFINER functions (`docs/evidence/D3/2026-09-29-definer-functions/`): each one the runtime role can call runs past RLS; 73 swept, none reachable on a launch path with a caller-chosen tenant, and a new one now fails `tests/db` until it is reviewed with a reason. 2026-09-30 (`docs/evidence/D3/2026-09-30-definer-revoke/`): the runtime role's grant recipe now revokes EXECUTE on every unreviewed SECURITY DEFINER function (48), so an unreviewed one fails closed on every deploy; the whole `tests/db` tier 843/843 after the revoke.* | Runtime connects as the non-superuser app role (`APP_SERVICE_DB_PASSWORD` set); `RLS_ENFORCE=on`; the two-tenant isolation contract passes against staging with the production image. | Contract-test log from staging | Claude |
 | **D4** Validation package — *drafted and executed locally: VMP, six URS, RA, IQ, six OQ protocols, TM-001 generated from the runs, VSR-001 §1–§18 (`docs/validation/`, `docs/evidence/W3/`, `WA`–`WF`). Latest local run 2026-09-27, at one commit (`89ee3a81`), on an installation provisioned from empty, in the production posture *and* with production authentication, the auth boundary enforcing as in production. Every identity but the run identity was created through user administration: the run identity added each colleague; each set its own password through the activation link and enrolled its own authenticator (`docs/evidence/W3/2026-09-27/`). IQ 12/0/3; OQ 101 pass / 0 fail / 2 deviation of 103; TM-001 69 of 71 requirements pass, 0 uncovered (URS-AUTH-012 partial, no provider; URS-SRDY-006 partial, its positive half outside the release). It found F-41, which that way of creating an account exposes: a colleague's sign-in and credential events were written outside its organisation. It also found F-42: the ledger named the account that acted by display name alone, and two accounts were "JM Smith". Both are fixed, each shown failing first, and three protocol steps now follow the product's week (VSR-001 §18). The 2026-09-23 run and the sweep after it found F-18 to F-22, all fixed (VSR-001 §13). This run found F-23 (the readiness review reported an all-clear for a project it could not read; fixed, proven on real PostgreSQL as the non-superuser role) and P-11 (the records misstated 22 steps' assurance kind; fixed, and gated in CI) (VSR-001 §14). The sweep after it found F-24 to F-33 and three signing sites that took the session's word, all fixed and each shown failing first: every signature re-verifies through one ceremony, an account taken out of use can do nothing (URS-PROJ-012, OQ-PROJ-18), and the PIN, F-15 and Submission Readiness decisions are taken (VSR-001 §16). F-6 closed (VSR-001 §11). Owed: staging execution with the production image and a second account created through user administration with a real mail server (done locally 2026-09-27), a PQ-passed provider for the model step (2026-09-22: only registry-approved models may now serve drafting or review — enforced at every gateway selection point, where before nothing read the approval; 0 of 4 approved models have a PQ, shown as a blocker in `ga-readiness-report.mjs`; 2026-09-23: the PQ is executable (`npm run pq:run`) and a "passed" claim is checked against its record, but the protocol is a draft awaiting owner approval, the gold bank is below its floor and there is no product provider key; tools and routes that store model-authored content refuse an unapproved serving model, and every remaining pin to an unapproved model is listed with its reason behind a CI gate; `docs/evidence/MODEL-GOVERNANCE/`), signatures 2026-09-24, Vault honest state (AnA client-files lane), each red on the unfixed code first: a refused upload kept its file while saying nothing was saved; spreadsheets were extracted to row 300, and a blank row or column hid the rest, while the catalog called them read in full; "N documents" counted rule-pack sections and a capped page, so URS-VAULT-004 now holds; passage search was unavailable in deep investigations; the index backfill could not run with RLS enforced (`docs/evidence/D4/2026-09-24-*`).* | CSA-aligned: validation plan, URS per launch app, risk assessment, IQ, OQ with executed Playwright evidence, traceability matrix generated from tests, summary report. Signed by the founder and one qualified contractor. | Signed PDFs under `docs/evidence/validation/` | Claude drafts and executes; humans sign |
@@ -2599,3 +2599,866 @@ S12, and it is what makes the critical path to a filing date answerable.
   spine. Matching the AI-authoring vendors feature for feature: they draft prose into documents, and this module's
   advantage is that Module 3 composes from governed records with lineage, which is the direction FDA's own
   programme is moving.
+
+### P-114 — Decided under the founder's delegation: the device and diagnostics lane's open regulatory questions
+
+The founder, 2026-11-09, answering the MDX journey session's question (whether "nearly ready" may be said while a
+required set is only partly present) and its list of questions waiting on the founder: **"you are to be the SME to make
+those choices."** The MDX journey session (`01P6GW…`) decided as follows, as P-107 was decided under the delegation of
+2026-11-08. The founder may overrule any item by a later decision. The questions are in
+`.design/client-journey/MDX_JOURNEY_2026-11-01.md` ("For the founder", M3, M6(a), M7, M13, M16).
+
+- **What is decided.**
+  1. **"Nearly ready" is never said while a required item is missing.** That covers an item not started, not
+     assessed, or only partly present. Basis:
+     - FDA's technical screening of an eSTAR holds a submission whose required content is absent. A Notified Body's
+       completeness check does the same for EU technical documentation.
+     - The platform's regulatory evaluator (`server/services/regulatory/readinessEvaluator.ts`) answers
+       `nearly_ready` only when no gap is critical, and a missing required item is critical there.
+
+     In the device readiness scorecard (`server/services/market-specs/device-readiness-scorecard.ts`), any applicable
+     dimension short of ready caps the level at `in_progress`. `ready` is 100 with no gap. The score, the share shown,
+     is unchanged. The scorecard has no non-critical gap, so it does not say `nearly_ready`.
+  2. **The design and development file holds design records, not filing paperwork** (M16). Under the QMSR (21 CFR
+     820, in force 2026-02-02, incorporating ISO 13485:2016 §7.3.10), that file holds design inputs and outputs,
+     verification, validation, reviews, transfer, changes and risk records. These are filing content, not design
+     records, and Engineering's design-file list does not tag them as such:
+     - the cover letter;
+     - the FDA forms (3514, 3881, 3654, 3674);
+     - the truthful and accurate statement;
+     - the financial certification;
+     - the 510(k) summary or statement.
+
+     A zero count of open risks with no risk file recorded is said as "no risks recorded", neither red nor green.
+     P-60 stands: the panel reads the project's own sections.
+  3. **EU technical documentation is assembled per project, not per eCTD sequence** (M3). MDR and IVDR Annex II and
+     III documentation is reviewed by a Notified Body; it is not an eCTD sequence. The EU screen's "Assemble technical
+     file" reaches the existing assembler (`pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts`) for the
+     project's own governed MDR or IVDR document. A project whose only market is the EU is not offered the FDA eSTAR.
+     Any route path the reach needs is checked against `approvedAdditions` before it is built.
+  4. **De Novo gets its doors** (M7): a pathway door, and a Submit assembly door to the De Novo eSTAR the 510(k)
+     screen already produces.
+  5. **An IVD 510(k) gets its own governed outline** (M6(a)), matched section by section to the vendored IVD eSTAR,
+     analytical performance included. It is seeded by migration, `INSERT … ON CONFLICT DO NOTHING` with a row-count
+     assertion (RULE 1), and checked against the vendored template before it serves a project. This admits the
+     outline as content data. It adds no table.
+  6. **No CDRH Portal adapter** (M13; study question 3). The CDRH Portal is a web upload, and FDA publishes no
+     sponsor-side submission API for it. An adapter would drive a website on the sponsor's behalf, which is not a
+     controlled transmission. The platform produces, retains and signs the eSTAR. A person uploads it and records
+     FDA's acknowledgement (number and date) on the filing record. Agency letters enter through Respond.
+  7. **F-10 is superseded** (study question 2). P-103 retired the submission-ops package path. A device filing's
+     official artifact is the eSTAR PDF, and nothing labels an eCTD-style ZIP as an eSTAR.
+- **Order.**
+  - Item 1 lands on 2026-11-09.
+  - Items 2–5 follow under F1 and R1, after the founder's client demo of 2026-11-09, each red first.
+  - Items 6 and 7 need no code.
+- **Not decided here.**
+  - Which design package takes the device screens (study question 1) is a plan matter.
+  - The retirement of unreached device capability (question 4) is R1's.
+
+### P-115 — Decided under the founder's delegation: how a model-drafted CSR reaches a filed sequence
+
+The founder, 2026-11-10, after the CSR path was walked with a model provider present for the first time
+(`docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/README.md`) and three stops were put to them: **"I want you
+to make the most educated, best decision for me getting this product to market and providing the best product I can
+to this institutional buyer in a highly regulated market."** The walking session (`01QoxbLZ…`) decided as follows, as
+P-107 and P-114 were decided under delegation. The founder may overrule any item by a later decision.
+
+The principle behind every item: the sponsor answers for each word of a submission whoever drafted it, and an
+institutional buyer's quality unit audits two things, that the system is validated for its intended use (21 CFR
+11.10(a)) and that a named person reviewed and signed the record. So the product files model-drafted text only with
+both, and says plainly when it has neither.
+
+- **What is decided.**
+  1. **Model-drafted text is released only as qualified text that a named person has adopted. It is never released
+     otherwise, and there is no bypass.** Today `assertWorkflowImportRelease`
+     (`server/services/authoring/workflow-import-governance.ts`) refuses a CSR whose imported text a model wrote, for
+     any model, for ever, until a person rewrites it. That makes drafting worthless for a filing. The ordinary AnA
+     draft already has the right rule (`ordinaryMachineGenesisMayRelease`, `governed-machine-claims.ts`): machine text
+     is released when retained evidence shows a qualified generation wrote those exact words. The CSR import path
+     takes the same rule. Imported text is releasable when all four hold:
+     - the build retained which model and pinned version wrote the section, and that model's approved-models entry
+       has `pq.status: 'passed'` for document drafting, with its executed record;
+     - every figure in it is a claimed cell of the retained engine tables (the build's claim receipts; RULE 2);
+     - the assigned reviewer's CSR scientific review and REVIEWER e-signature adopt that exact text;
+     - the approver signs under separation of duties.
+
+     Text from a model with no passed PQ stays unreleasable until a person replaces it, as today.
+  2. **Performance qualification of the drafting model is the first launch task, ahead of any further CSR feature.**
+     Every `pq.status` in `approved-models.ts` is `pending`, so item 1 releases nothing until one passes. PQ-DRAFT-001
+     (`server/eval/pq/pq-protocol.json`) is executed on the primary drafting model (`claude-opus-5-5`) with the
+     founder's key, and its result is recorded whether it passes or fails. If it fails, the fallback rung is run. If
+     none passes by launch, the product is sold as drafting assistance whose text a person rewrites before filing,
+     and it says so. A model's status changes only through its executed record; the registry test already refuses a
+     pass with nothing to point at.
+  3. **One CSR is filed: the signed document in the one editor. The assembly is bound to it** (RULE 4). The filing
+     artifact is the assembly (the body with its bookmarks and checked links, §14, the narratives, the §16 files and
+     their study-tagging roles). It is rendered from the approved, signed Authoring CSR's exact sections, not from
+     the build job's outputs, and it records that document's sections digest. `renderedLeafNotTransmittable`
+     (`server/services/ectd/leaf-release-verdicts.ts`) then releases an assembled file only while that digest matches
+     an approval signature that stands. Its unconditional refusal stays until the binding lands (P-22;
+     `docs/evidence/D5/2026-10-30-assembled-csr-not-released/`).
+     **Until then the launch path is the one that exists:** "Place into filing" of the approved, signed CSR at
+     5.3.5.1 with its study id and study-tagging role, and each appendix as an approved Vault PDF.
+  4. **A CSR goes to an open IND in an amendment sequence**, with Form 1571 and the cover letter, not in sequence
+     0000. The gates already admit this (`ind-sequence-validation.ts`); the preparation and demo walks follow it. No
+     gate changes.
+  5. **Every heading holds text. "Not applicable" is a person's statement with a reason, never a default.** The
+     signed record must be complete, so no heading is skipped by a flag. ICH E3 is guidance on structure, and a
+     heading that does not apply is said not to apply. The editor offers, on a CSR heading, the "Not applicable
+     because …" act the assembly already has for §16 (`CsrAssemblyControl.tsx`, `csr-assembly-body.ts`). It writes
+     that sentence with the person's reason as their own text, audited. For §14 and §16 the import writes what the
+     engines and the assembly already hold (the table or listing, the supplied appendix, the recorded declaration),
+     labelled as engine content. Any route path the reach needs is checked against `approvedAdditions` first.
+  6. **Subject-level data never goes to a model, and the study's source keeps its classification.** This is so
+     today: the narratives are composed by the engine, and the builder sends aggregate tables screened for
+     identifiers. When source-tier propagation reaches the builder's calls, it carries the aggregate evidence as a
+     governed derivative under the organization's placement policy. It does not reclassify the CONFIDENTIAL source,
+     and it does not stop the build. The provider lane is the buyer's election in its Order Form: first-party
+     Anthropic under a zero-retention agreement, or the buyer's private cloud lane. The S4 owner chooses the
+     mechanism among the gateway's existing ones.
+  7. **"Submitted" means transmitted through the agency's gateway and acknowledged.** The product records
+     `ECTD_TRANSMIT_SKIPPED` when it has no gateway credentials and never records a filing it did not send. Before
+     the buyer's first filing, a sequence is sent through FDA ESG's test environment with the buyer's credentials.
+- **Order.**
+  1. The founder's Anthropic key works in the Codespace (the check landed 2026-11-10), and one whole-report build
+     is run with it. Its record states how many drafts the figure checks accepted and how long it took. No real
+     model request has been made on this path yet.
+  2. Item 2, the PQ run.
+  3. Item 1 on the import path, red first (S4, L1).
+  4. Item 5 (D4, L1).
+  5. The walk, as people: review, adoption, approval, Place into filing, the amendment sequence, compile, Shadow
+     Review, freeze and dispatch (items 3 and 4's launch path).
+  6. Item 3's binding (S5, L1).
+  7. Item 7's test transmission, once the founder holds ESG test credentials.
+- **Not decided here.**
+  - Which provider lane this buyer elects, and its commercial terms.
+  - Any widening beyond a US IND (P-28, P-110 stand).
+  - Whether a failed build is resumed from the screen; that is a repair (F1), not a decision.
+
+*Clarification, 2026-11-10 (the walking session, `01QoxbLZ…`, under the same delegation): item 2 needs more than a key.*
+`npx tsx server/eval/pq/run-pq.ts --preflight` was run on trunk and answers **blocked, not ready to evaluate**, with
+seven blockers. The qualification run was put first in the order above as if a working key were its only condition.
+It is not.
+
+| Blocker | What it means | Who clears it |
+|---|---|---|
+| `PROTOCOL_NOT_APPROVED` | `server/eval/pq/pq-protocol.json` is a draft with no approver. A run against unapproved acceptance criteria cannot pass | The founder, as the responsible owner. No session records that approval for them |
+| `RAG_SAMPLE_SHORTFALL` | The retrieval test bank holds 18 positive items; the protocol requires 30 | A regulatory reviewer writes 12 more |
+| `RAG_GOLD_EVIDENCE_MISSING`, `RAG_GOLD_OPEN_CHECKS` | None of the 18 items names its reviewed source, section and quotation; 5 have open checks against the official text | A regulatory reviewer, against the official texts |
+| `SOURCE_REVIEW_INCOMPLETE`, `RAG_KEYS_PROVISIONAL` | 0 of 18 required source versions are verified (version, hash, provenance) | The same reviewer |
+| `PUBLISHER_TERMS_UNVERIFIED` | Reuse terms are unverified for 4 of 4 required publishers | The founder or counsel |
+
+The drafting and extraction components are ready: 60 tasks each. Only the retrieval component is short.
+
+- **Decided.** The CSR build retrieves nothing: it drafts from the study's retained tables and the platform's ICH E3
+  record. Its qualification is therefore scoped to that use. A model is qualified for evidence-bound CSR drafting
+  on the drafting and extraction components plus a run over the CSR builder's own prompts, and that qualification
+  releases CSR text only. The retrieval component stays required for every use that retrieves (AnA's answers from
+  the knowledge base, a section drafted from selected sources), and nothing in this decision qualifies a model for
+  those. The registry already records which uses a record measured (`pq.intendedUses`) and the gateway refuses a
+  use it did not (`model-governance.ts`, `use-mismatch`); the S4 owner carries the narrower use through that
+  check. Completing the retrieval bank is not waived. It is taken off the CSR's critical path.
+- **Not decided, and not done.** The protocol is not approved here. Approving it, with this scoping written into
+  it, is the founder's act.
+- **The order above changes in one place.** Step 2 becomes: the founder approves the protocol; the CSR drafting
+  component is added to it; then the run. Steps 3 to 7 do not wait for it, except that step 5's approval stays
+  refused for model-drafted text until a model has passed.
+
+### P-116 — One reviewer is enough, and a one-person organisation may approve its own document, on the record
+
+The founder, 2026-11-10, on learning that a placed artifact needs two independent reviewers: **"Doesn't need two. What
+if a client is a single consultant."** Asked how a one-person organisation approves a regulated document, the founder
+chose: **self-approve, on record.**
+
+- **One reviewer is enough.** P-95's clarification of 2026-11-09 (Q2, ruled under delegation) raised the floor to two
+  for a placed artifact or a dossier section. That is overruled. `reviewFloor` (`server/services/artifact-approval-act.ts`)
+  answers one for every artifact. The editor's document door never asked for two.
+- **Review stays mandatory (P-95), and stays independent (P-18), wherever a second person exists.** A reviewer is still
+  neither the approving signer nor an author, and an approval with no completed review is still refused.
+- **A one-person organisation.** When the signer is the organisation's only active member, there is nobody to be
+  independent of. That person may then approve, lock or sign their own record without a reviewer.
+  - **On the record.** The audit trail records, on that act, that the signer was the organisation's sole member and
+    that no independent review took place. The act is never recorded as an independent review or approval.
+  - **A setting, by P-117 (below).** As first decided this was not a setting. The founder changed that the same day:
+    the organisation's administrator switches it on or off. Whatever the setting says, it applies only while the
+    organisation has one member. From the moment a second member exists, independent review is required again, for
+    every act from then on. Nothing earlier is reopened.
+  - **Scope, door by door.** The rule is one function (`isSoleMember`, `server/services/governance/separation-of-duties.ts`).
+    A door admits a sole member only once it also writes the record above, so no door admits one silently.
+    - Built: the conversation artifact's approval and lock (`artifact-approval-act.ts`, `artifact-signed-act.ts`), on
+      both its doors (the status route and AnA's signed act).
+    - Built 2026-11-10 (P-120): the editor's APPROVER signature, by E-sign and by the workflow sign
+      (`approverIndependenceRefused`, `server/routes/authoring.router.ts`). Freeze needed nothing: an author already
+      freezes their own document with the meaning AUTHOR.
+    - Not yet, each its own slice with its own record: QMS documents, Module 3 sections, labeling approvals, the
+      document lifecycle, and a sequence's freeze and dispatch. Until then those doors refuse a sole member as before.
+  - **Membership is counted strictly.** Every membership row counts, whatever the account's status, so disabling a
+    colleague does not make someone the sole member; removing a member is an audited act.
+- **Basis.** 21 CFR Part 11 does not require the signer to differ from the author (11.50(a)(3) lists authorship among a
+  signature's meanings); the second-person rule is this platform's adopted policy from predicate rules
+  (`separation-of-duties.ts`, module note). A sole practitioner's records are theirs to sign. What a sponsor or an
+  agency requires of such a record is the sponsor's quality agreement to state, and the audit trail shows them exactly
+  what happened.
+- **Not decided here.** Whether a GMP batch-record or quality-unit act (21 CFR 211.22, 211.192) may ever be signed by
+  a sole member: those acts are outside the launch catalog today. A QMS document's approver designation (D-Q) is
+  unchanged.
+
+### P-117 — The review rules are each organisation's own, set by its administrator in the security settings
+
+The founder, 2026-11-10, on P-116's two rules being fixed in code: **"Those rules should be set by the client super
+admin in client security user settings."**
+
+- **What the administrator sets.** Two values in the organisation's settings, under `security`:
+  - `independentReviewersRequired`: how many independent reviewers must approve a version before it can be approved.
+    A whole number from 1 to 5. Unset, it is 1 (P-116).
+  - `soleMemberSelfApproval`: whether the organisation's only member may approve, lock or sign their own record with
+    no reviewer. On or off. Unset, it is on (P-116: "self-approve, on record").
+- **What is not a setting.** Review stays mandatory (P-95): the count cannot be set below 1. A reviewer is still
+  neither an author nor the approving signer (P-18). A sole member's act is still recorded as having no independent
+  review; no setting removes that record. Self-approval still applies only while the organisation has one member.
+- **Who sets them.** The organisation's administrator or owner, in Administration's settings ("Review and approval",
+  beside "Session policy"). No other role can.
+- **How a change is made.** Through the one governed settings writer (`PATCH /api/organizations/:id/settings`,
+  `server/services/tenant/tenant-settings-writer.ts`), with a reason. The audit row carries both values before and
+  after. A value outside the bounds is refused, not stored and clamped.
+- **When a change applies.** To every approval from then on. The approval act reads the rules on the signing
+  transaction (`organizationReviewPolicy`, `server/services/governance/separation-of-duties.ts`). Approvals already
+  recorded stand. If the rules cannot be read, the approval is refused.
+- **Scope.** The same doors as P-116: the conversation artifact's approval and lock today. Each later door (the
+  editor's APPROVER e-signature and Freeze, then the others P-116 lists) reads the same two values when it is built.
+- **A consequence to know.** An administrator who is also the organisation's only member sets their own rule. That is
+  what a one-person organisation is. The settings change is itself an audited act with a reason.
+- **Evidence.** `docs/evidence/W5/2026-11-10-review-rules-settings/`.
+
+### P-118 — The founder approves the qualification protocol; the retrieval test bank is completed without a regulatory reviewer, and says so
+
+The founder, 2026-11-10, answering the three things P-115's clarification left with them (a working key, the
+protocol's approval with the CSR scoping written into it, and a regulatory reviewer for the retrieval test bank):
+**"I can try to again load a new Anthropic api key tomorrow and yes I approve"**, and on the reviewer:
+**"impossible right not to get a human reviewer so figure out alternatives."**
+
+- **What the founder approved.** `server/eval/pq/pq-protocol.json` (PQ-DRAFT-001), with P-115's scoping written into
+  it, as **version 1.0.0, approved 2026-11-10** by the founder as system owner. The file records it.
+- **What approval does.** It fixes the acceptance criteria before any model has been run against them. P-31: "a PQ
+  against acceptance criteria nobody has approved is not a PQ."
+- **What approval does not do.** It qualifies no model and changes nothing a model may do. Every `pq.status` in
+  `approved-models.ts` is still `pending`, and production still refuses to store model-authored text in a governed
+  record. On the approved protocol a run that is perfect on drafting, extraction and retrieval is still INCOMPLETE
+  (`pq-verdict-rag.test.ts`, "approval alone qualifies nothing").
+- **P-31's sixth condition, a product provider key, is not yet met.** The founder approved ahead of it. A key is a
+  condition for running the protocol, not for fixing what it measures, and criteria fixed before the first run are
+  the stronger record.
+- **How it changes from here.** A change to the approved protocol is a new version and a new approval by the
+  founder. A change after a model has passed invalidates that pass (P-31).
+
+**Written into the protocol by the walking session (`01QoxbLZ…`) under P-115's delegation. The founder may overrule
+any of it before the first run.**
+
+- **The scope** (the file's `scope` block). A qualification is for a named use, on the components that use needs:
+  - evidence-bound CSR drafting: drafting, extraction and the CSR drafting run. It releases CSR text only;
+  - every use that retrieves: drafting, extraction and retrieval.
+- **A CSR drafting component** (`csrDrafting`): the pinned model drafts every ICH E3 narrative heading of one public
+  study through the CSR builder's own request and its own checks. Its criteria:
+
+  | Criterion | Value | Where the value comes from |
+  |---|---|---|
+  | Figures in accepted text that are not a claimed cell of the retained tables | 0 | RULE 2 and P-115 item 1 |
+  | Forbidden or overclaiming phrases | 0 | the drafting component's own criterion |
+  | Share of narrative headings the pinned model verifiably drafted | all | as every other component requires of its tasks |
+  | Share of headings whose first draft passed every check | at least 85% | **no earlier document.** Set here, at the drafting component's coverage floor |
+
+- **That component is required and cannot be executed yet**: the run is not written (ledger package S4). So no run
+  can pass today, for any use. This is stricter than the scope above, on purpose. The test bank holds 510(k), CER,
+  IND, Module 2 and Module 3 tasks and no CSR. Without this, a model that passed on that bank would be admitted to
+  draft a CSR it was never measured on, the failure P-31's fourth condition names.
+
+**The retrieval test bank without a regulatory reviewer.** Decided under the same delegation.
+
+What the record check asks of the bank is facts, not a credential (`verify-pq-record.ts`, `reviewedSource` and
+`reviewedGold`): each source's official URL, version, date and SHA-256, the publisher's reuse terms quoted with
+their URL, and for each test item the section and a verbatim quotation that states its answer. The corpus
+manifest's own procedure asks "what was done and by whom" (`guidance-corpus-manifest.json`, `verifyProcedure` step
+6). So the work is split by kind.
+
+1. **The CSR does not wait for any of this.** The CSR build retrieves nothing (P-115's clarification stands).
+2. **Mechanical steps: the founder, from the Codespace.** The official URL, the download, its SHA-256 and size, and
+   the title, revision and date on the cover, for the 18 required sources. The publishers' sites are refused from
+   the sessions' containers, so a session prepares the commands and the founder runs them. Each entry's
+   `verification` names who ran it and when.
+3. **Reuse terms: the founder reads each of the four publishers' posted terms.** The operative sentence is quoted
+   with its URL and the date read. Recording what a publisher posts needs no counsel. Whether those terms permit
+   this product's use is the founder's call as the owner of the business; a session does not make it. A publisher
+   whose terms are unclear has its texts left out, and the items that rely on them are replaced.
+4. **Judgement steps: replaced by a check anyone can re-run.** The five open checks and the twelve further items
+   are worked by a session from the downloaded official text. Every item carries its section and a verbatim
+   quotation that states the answer. The quotation is checked, character for character, against the file whose hash
+   is pinned, and the check's output is retained. The founder reads each item's quotation beside its answer and
+   confirms it. An item whose quotation does not state its answer plainly is dropped, not argued for.
+5. **The bank says what it is.** Its record, and every qualification record that uses it, states: *sources verified
+   by download and hash, answers verified by verbatim quotation, confirmed by the system owner; no regulatory
+   professional reviewed this bank.* Nothing calls it independently reviewed.
+6. **Two ways to a reviewer's name later; neither changes a criterion.**
+   - The buyer's own regulatory staff review the bank as part of accepting the system. A regulated company
+     qualifies a system for its own intended use, on the supplier's protocol and evidence, as a matter of course.
+   - A contract regulatory writer, for about a day.
+7. **Until the bank is complete,** every use that retrieves stays as it is today: the model assists, and its text
+   is not stored in a governed record as the model's.
+
+- **The order in P-115 changes in one place.** Step 2 is now: the CSR drafting run and a verdict that reads the use
+  (S4); then the run with the founder's key.
+- **Not decided here.**
+  - Whether the buyer is offered the review in item 6.
+  - Whether any publisher's terms are acceptable (item 3).
+  - Any value in the table above, if the founder wants another.
+- **Evidence.** `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.
+
+### P-119 — User roles by client type: a standard catalog of job roles, beside the six access levels
+
+The founder, 2026-11-10: **"Add user roles per biotech, pharma, CRO, cmc - and so on to align to the many use cases of
+the entire platform."**
+
+- **What a role is here.** A person in an organisation has two things, and they stay two things:
+  - an **access level**, which decides what the person may do. There are six, and they do not change: administrator,
+    approver, manager, reviewer, member and viewer (`shared/constants/org-roles.ts`, P-18). The signing policy, the
+    governed-write gate and the audit readers are built on them, and the validation package tests them;
+  - one or more **job roles**, which say what the person's function is: regulatory affairs lead, medical writer, CMC
+    lead, QA lead, biostatistician. A job role is the organisation's own record (`qms_job_roles`, P-49). It grants
+    nothing by itself.
+- **What is added.** A standard catalog of job roles for each client type: biotech, pharma, CRO, medical device,
+  diagnostics, academic, regulatory consultancy and medical writing. The roles are grouped by function: regulatory,
+  clinical, data and statistics, safety, nonclinical, CMC, quality, device and diagnostics, and program. Each role
+  carries one sentence on what it is accountable for, the access level it usually takes, and the work areas it uses.
+  The catalog is data (`shared/regulatory/`), as a document type is data (RULE 4).
+- **CMC.** CMC is a function group in the catalog (CMC regulatory lead, analytical development, quality control,
+  manufacturing, supply chain). It is offered to every drug and biologic client type. A CMC-only organisation, such as
+  a contract manufacturer, uses it under the client type it signed up with. Whether such an organisation becomes a
+  client type of its own is not decided here.
+- **How an organisation takes it.** Its administrator adopts the standard roles for its client type, all or some,
+  into the organisation's job roles, and may rename, add or remove any of them. Each change is a governed write with
+  a reason, through the existing writer (`server/services/qms/training-assignment.ts`). Nothing is created for an
+  organisation until its administrator adopts it.
+- **Where it shows.** In Administration, with the members. The member list's "Groups" column, which was always
+  empty, becomes the member's job roles. The administrator gives and removes a member's job roles from the member's
+  detail. The roles tab lists the organisation's job roles beside the access levels.
+- **What a job role suggests.** When the administrator invites a person or changes an access level, the job role's
+  usual access level is offered as a suggestion, with its reason. The administrator decides. No job role raises or
+  lowers anyone's access.
+- **Why not more access levels.** A permission role per function and per client type would be dozens of roles. Each
+  would need its own entry in the signing policy and its own validation. An auditor reading the access review (21
+  CFR 11.10(d)) would have to learn each one. Six levels, project sharing, the QMS approver designation and job roles
+  already express least privilege and separation of duties. A client need that no access level can express returns
+  to the founder.
+- **One vocabulary.** The program plan's task roles (`services/regulatory/pyramids/`, 24 keys such as `ra_lead` and
+  `cmc_lead`) map onto the catalog, so a task's role and a person's job role are the same thing. A test holds the
+  mapping complete.
+- **What uses it next** (each in its own package, not decided here): the program plan proposes a task's owner from
+  the people holding its job role (S11); AnA reads the person's job role in its context (S4); training is assigned by
+  job role, as today (P-49).
+- **What it does not add.** No screen, route, service, table or AnA tool (RULE 6). It completes the job-role store
+  and reaches it from Administration.
+- **Design.** `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md`.
+
+### P-120 — Decided under the founder's delegation: the open questions on a one-person organisation
+
+The founder, 2026-11-10: **"Study this online thoroughly and decide as an SME would across all open questions and
+then proceed."** Decided by session `…01QoxbLaF` from the sources below. Each is reversible by the founder.
+
+1. **A sole consultant may dispatch a sequence to FDA alone.** Nothing in the regulations asks for a second person at
+   filing.
+   - 21 CFR 312.3 defines a sponsor-investigator as an individual who both initiates and conducts an investigation.
+   - 21 CFR 312.23(a)(1)(ix) asks for one signature on Form FDA 1571: the sponsor's, or the sponsor's authorized
+     representative's.
+   - FDA's ESG NextGen registration lets an individual hold an account under an individual letter of non-repudiation,
+     and lets a consultant, CRO or US agent file for clients under one account with each client's Letter of
+     Authorization.
+   - **Conditions.** The same setting governs it (`soleMemberSelfApproval`, P-117). The dispatch is recorded as having
+     no independent review. A consultant who files for a client still files under that client's authorization: the
+     gateway account setting is unchanged. The dispatch door admits a sole member only when it is built to write that
+     record (P-116's rule for every door).
+2. **Self-approval stays on by default.** 21 CFR Part 11 does not require the approver to differ from the author:
+   11.50(a)(3) lists authorship, review and approval as meanings one person's signature may carry. The second-person
+   rule is this platform's policy. A one-person organisation cannot work with it off, the setting has no effect once a
+   second member exists, and every such act is recorded. An administrator who wants it off switches it off.
+3. **QMS controlled documents follow the same setting**, when that door is built. FDA's guidance "Quality Systems
+   Approach to Pharmaceutical CGMP Regulations" (2006) accepts one person in both production and quality functions only
+   in very limited circumstances, and recommends a periodic review by another qualified person who is not involved.
+   The platform records the act; arranging that periodic review is the organisation's duty, and its quality manual
+   says how.
+4. **GMP batch disposition is never admitted by this setting** (21 CFR 211.22, 211.192). It is outside the launch
+   catalog. If it ever enters, it needs its own founder decision.
+5. **A reviewer is still never the approver** (P-95 question 1) and never an author (P-18), in every organisation with
+   more than one member.
+6. **The reviewer count stays 1 to 5.** No source sets a number; ICH E6(R3) asks for review proportionate to risk.
+7. **Order of the remaining doors:** sequence freeze and dispatch, then QMS controlled documents, Module 3 sections,
+   labeling approvals and the document lifecycle. Each is its own slice.
+
+Sources read 2026-11-10: 21 CFR 11.50, 312.3 and 312.23 (eCFR); FDA, "Letters of Non-Repudiation Agreement" and
+"Steps for CROs, US Agents and Consultants to Create an ESG NextGen Account" (fda.gov); FDA, "Quality Systems Approach
+to Pharmaceutical CGMP Regulations" (2006); 21 CFR 211.22; ICH E6(R3). The regulation and guidance texts were read
+through search summaries and secondary quotations, not line by line: counsel or QA should confirm item 1 and item 3
+against the primary texts before the first real filing by a one-person client.
+
+### P-121 — Decided under the founder's delegation: Vault questions the Vault parity lane met on 2026-11-10
+
+The founder, 2026-11-10: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane). Each is reversible by the founder.
+
+1. **In a pharma or biotech Vault, a "Risk management plan" is the dossier's.** The name means two documents: in a
+   device file, part of the ISO 14971 risk management file; in a medicinal product's dossier, the Risk Management Plan
+   (the EU RMP at Module 1.8.2, Japan's at 1.11; FDA's Module 1 has no single heading for it, as the Module 1 record
+   states). The Vault's view decides. In a drug project the device rule no longer claims the name and the CTD
+   detector proposes it for Module 1 at its region's heading, as it already did for "RMP". A name that also says it
+   is the device's (ISO 14971, RMF, DHF, "device", FMEA) stays the device rule's. A device or IVD Vault is unchanged.
+   Built: `8e5f7cd0b`, `docs/evidence/SPINE/S6/2026-11-10-rmp-classifier/`.
+2. **The server refuses a read that would span clients; "no client" is its own choice.** P-107 item 3 says search
+   never spans sponsors. The Vault page asks first, in the browser (`47a306700`). The server now holds the same
+   line for every caller: a governed-artifacts listing or a library search with no project is one client's, or it is
+   refused with the clients named. Projects that record no client are listed apart from every named client, never
+   with one. Built: `6dac0b836`, `cc1af9221`, `docs/evidence/SPINE/S6/2026-11-10-p107-sponsor-first/`.
+3. **A 510(k)'s or De Novo's section the eSTAR mapper has no slot for keeps the rule pack's flag.** P-107 item 3 has
+   device coverage follow the mapper. Read to the letter that drops "Required" from 510(k) A2 and B3 and De Novo B2,
+   C2 and C4, which the mapper says nothing about and the FDA form shows. Asking too much is the safer error for a
+   filing, so those keep the pack's mark, and each answer says which of the two decided it. The mapper gaining slots
+   for them is the device lane's. Built: `9cff33fe4`,
+   `docs/evidence/SPINE/S6/2026-11-10-p107-device-coverage-estar/`.
+4. **Open, and not decided here: a second layer for PDF renditions of uploaded Word files.** The converter no longer
+   requests what a Word file links to (`4cc352ccf`), which is now the only protection between an upload and a request
+   from the server. Refusing every file that names outside content would also refuse ordinary web links. Whether to
+   add a second layer, and which, is a security decision for the coordinator and the rendition's owner
+   (`docs/evidence/SPINE/S6/2026-11-10-p107-renditions/README.md`).
+
+### P-122 — The UI shows the work: zero capability loss is enforced, and what was hidden comes back
+
+The founder, 2026-11-10, after a demonstration: **"The user interface represents what, 10% of the code base that we
+built? … There wasn't one screen that was satisfactory. … You fucked my project management screen up. … My CMC
+module is missing 1,000 features and functions that we had. … Rendering a shell or 10% of what we built. Nothing
+works."** And: **"Yes to all but I want you to make the most educated 'right calls' on behalf of our potential
+customers and what they will want to pay for."** Decided under that delegation by session `…01DiJJAk`. Each call is
+reversible by the founder.
+
+**What happened.** P-78 asked for two things: the product looks and works like Claude, and the whole codebase lives in
+that UI (`ONE_DESIGN_PLAN.md` §1). The sessions delivered the first by removing, hiding and folding, and did not
+deliver the second. §2's "zero capability loss" was asserted in ledgers and not enforced. The inventory is
+`docs/evidence/DESIGN/P-122/` (filed with the first restoration). For the shell, Home, Projects and the project page:
+- little was deleted, but much was hidden: below a chat box, in closed disclosures, or only in a non-default view;
+- project-management engines that exist on the server have no screen, and most are refused in production.
+
+**1. The Claude look stays; it frames the work and never replaces it.** Where §2's minimalism and a customer seeing
+their own work conflict, the work wins. A paying regulatory team opens the product to see its projects, its due work
+and what is at risk.
+
+**2. Zero capability loss is enforced, not asserted.**
+- No session removes, hides, moves below the fold, or puts behind a closed disclosure a metric, workflow, verdict,
+  action or record a screen showed, without a founder decision.
+- A "fold" of one screen into another is admitted only when a test opens the target and shows it delivers the same
+  outcome. The commit names that test.
+- `ci:one-design-plan` refuses a commit that deletes a surface file, or removes a `UI_SURFACES` id or `SURFACE_VIEWS`
+  entry, unless it carries `Founder-Decision:`.
+
+**3. Restored now, in this order** (each red first, with before-and-after screenshots at 1440 px and 390 px):
+1. **Home.** The person's projects and due tasks are visible at 1440×900 without scrolling, beneath a compact
+   greeting and the composer.
+2. **Projects.** The portfolio figures (active projects, average readiness, filings due within 60 days) and each
+   card's readiness, stage, lead and status are shown by default, in grid and list. "Which projects are at risk this
+   week?" is one click and is answered by the server's risk engines (Sentinel, submission-ops), never by the browser.
+3. **The project page.**
+   - The open step says what to do next.
+   - Records and Activity are open sections.
+   - The Review step lists the approvals and the readiness the server computes.
+4. **The top bar.** Search and Help are visible.
+5. **Project management that was built and never shown** is reached on Projects and the project page:
+   - section owners, deadlines and milestones (`/api/project-sections`);
+   - due soon, workload, blockers and approval bottlenecks (`/api/submission-ops`);
+   - cross-project deadline risk (Sentinel);
+   - the project task list tied to submission milestones;
+   - the project hierarchy and its roll-up;
+   - restoring an archived project.
+
+   Their routes are admitted to production for those screens, behind the same tenant and access checks as the rest
+   of Projects (`Plan: R1`).
+6. **CMC / Module 3** next, from its own inventory, then Vault, Submission Center, Quality and Reporting, from theirs.
+
+**4. Not decided here.** Mission Control, the CRO portfolio and the project journey stay outside the launch catalog
+until the founder admits them. Their engines may serve the screens above (Rule 3: reach, not rebuild).
+
+### P-123 — Decided under the founder's delegation: the Vault lane's open calls, made for the customer who pays
+
+The founder, 2026-11-10, to the Vault session (`…01QoxbLZMS`), on its list of open items: **"Yes to all but I want
+you to make the most educated 'right calls' on behalf of our potential customers and what they will want to pay
+for."** Decided by that session. Each is reversible by the founder. The test applied to each: a regulatory affairs
+lead pays for a Vault that tells them correctly what their filing owes and that an inspector cannot fault. They do
+not pay for a feature that is nearly right.
+
+1. **A device section's requirement is the eSTAR registry's, per device.** (P-107's "D4 and D6 disagreement".) This
+   was landed on trunk by another session (`…01KnUGoX3g`, `server/services/pathway-engines/estar/estar-outline-requirements.ts`)
+   while this session was building the same thing. This session withdrew its copy unpushed (zero duplication) and
+   kept only the decision that slice left open, item 2.
+2. **Risk management in a 510(k) follows FDA's template, not habit.** The registry required it of every 510(k). FDA's
+   eSTAR shows "Benefits, Risks, and Mitigation Measures" for a Special 510(k), a De Novo and a PMA and hides it for a
+   Traditional or Abbreviated 510(k) (the finding recorded in `migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`).
+   The product does not record which kind of 510(k) a project is, so the section reads "When applicable" (required
+   when the submission is a Special 510(k)) and is reported for a person to confirm. It is no longer scored as missing on a Traditional 510(k),
+   where demanding it told a customer their complete filing was incomplete. A De Novo still owes it. **Owed, as a
+   later slice by the device lane:** record the kind of 510(k) at intake, so this becomes a yes or a no.
+3. **The organisation-wide folder route (`/api/folders`) is retired.** It had no screen, no caller, no audit row, no
+   reason for change, and a hard delete. In a Part 11 product that is a finding waiting for an auditor, and nobody
+   could reach it to get value from it. Folders are a project's, through its Vault
+   (`server/routes/c2c/project-vault.ts`, `server/services/vault/vault-folders.ts`). `public.document_folders` stays.
+   If a customer asks for folders shared across projects, that is built on the governed writer, as its own decision.
+4. **Renditions stay Word to PDF.** Word is what regulated documents are written in and PDF is what is filed. A
+   spreadsheet or a slide deck flattened to PDF is not what anyone files, and a poor rendition next to a "verified"
+   label costs trust. Other formats download as their source, verified. Revisit on a customer's request.
+5. **Search filters stay one value each.** Several values already arrive through a saved view. A multi-select on
+   every filter is weight on a screen that should stay calm (RULE 4), and no customer has asked.
+6. **Recommended to the filing lane, not decided here:** accept what the agencies accept for a leaf (PDF 1.4 to 1.7,
+   and PDF/A-1 or PDF/A-2 where the agency lists them) and do not require PDF/A of every leaf. Requiring more than
+   the agency does refuses files a customer may lawfully file. This sentence is from the session's knowledge of FDA's
+   PDF specifications, not from a fresh reading: the filing lane confirms it against the current specification.
+7. **Not this session's to decide, and still owed by people:** legal sign-off on each agency DTD before it is
+   fetched (`assets/ectd-dtd/README.md`); licences; production secrets and hosting; the model key and the
+   qualification approval that lets AnA be walked over folders in a conversation.
+8. **One outline per filing in the Library** (added 2026-11-12 by the Vault parity lane, `…01KnUGoX3g`, which carries
+   the Vault's open items now that this session has released them; same delegation, same test). The Library listed a
+   filing's outline twice:
+   - first the filing binder, holding the files placed against each heading;
+   - below it the authored filing document's own sections, with the same headings, each with its requirement, its
+     drafting state and its door to the editor.
+
+   The two counted different things, so one heading read "0/0" in one place and "0/9" in the other. This was seen on
+   a 510(k) and on both demo INDs. Two lists of the same table of contents is the confusion a regulatory lead stops
+   trusting a Vault over. Veeva's binder answers it with one content plan, where each heading shows what is authored
+   and what is filed.
+   - **Decided:** each authored section sits in the binder heading with its code, first among the files placed there.
+     It keeps its requirement, its state, its owner and its door to the editor, and carries its filing's identity
+     itself.
+   - **Nothing is dropped:** a section the binder has no heading for stays under its document, and so does any
+     document the binder is not the outline of. That includes a market's part, a second document of the same filing,
+     and another document type.
+   - **Kept from this session's design:** the binder is first, and the Vault opens on it. Built:
+     `server/services/vault/vault-binder-outline.ts`.
+
+Evidence: `docs/evidence/SPINE/S6/2026-11-10/README.md`.
+
+### P-124 — Decided under the founder's delegation: the trial master file in the Vault
+
+The founder, 2026-11-10: **"I don't see the TMF on the vault UI anywhere. The vault UI seems to be lacking in a lot of
+ways."** And, the same day: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane), inside P-74 and P-75 (the eTMF lives inside the Vault and files against the project's study) and under
+P-122 (nothing a screen showed is removed without a decision). Each is reversible by the founder. The test applied:
+a sponsor or CRO pays for a trial master file an inspector can open and trust, where every "filed" has a document
+behind it and every change says who made it and why.
+
+1. **It is called the trial master file, and it is the study's.** The Vault's button read "Inspection readiness" and
+   opened a screen where a trial id was typed by hand and bound to nothing. The button reads "Trial master file" and
+   opens the trial master file of the open project's study. A filing belongs to a study of the project, and its
+   document is a live document of that project's Vault. Rows filed before this name no study and are never served
+   as one's. Built: `64e4bcca0a` (the server), `docs/evidence/D2-ETMF/2026-11-10/`.
+2. **Filing and removing are governed.** Each needs the person's reason and a role that may write the Vault, and
+   writes the chained audit row in the same transaction. A removal stays on the record with who, when and why. The
+   inspection package is a recorded download: nothing is sent when its record cannot be written.
+3. **Everything the retired screen showed is kept (P-122), with two changes decided here.**
+   - Kept: the choice between essential records and all records of the reference model; the figures (zones
+     complete, records filed, open gaps); each record's code and zone; upload a document and file it in one step;
+     the inspection package shown as a document; asking AnA what an inspector would raise.
+   - **Changed: upload-and-file asks for a reason.** It filed with none. A filing with no reason is not one an
+     inspector accepts.
+   - **Not kept: the report built in the browser when the package could not be downloaded.** It was an export with
+     no record of who took it. The package is a recorded download, and when it cannot be recorded the page says so
+     and offers to try again.
+   - The two tiles that read "Not yet available" (timeliness, QC) become one plain line: neither is assessed,
+     because no filing lag and no QC state is recorded for a record. A tile that states an absence is not a figure.
+   - "Open in Project management" is the page's way back to the project.
+4. **Where it lives until admission.** P-75 puts the trial master file in the Vault's own views, and P-74 admits it
+   only with one store, a URS and an OQ. Until then a launch screen may not call its API, so the section is hosted
+   by the `etmf` page that the Vault's button opens, and in a release that page stays locked as the old screen was.
+   The founder's sentence is fully answered only at admission, when the section sits in the Vault's Required
+   documents view (the change is kept ready in `docs/evidence/D2-ETMF/2026-11-10-vault-section/held/`).
+   **Done at admission, 2026-11-12 (item 6):** the section is in the Vault's Required documents view, and the `etmf`
+   page is the door that opens the Vault there.
+5. **What retires with the second, undeployed store (slice E4), and what is carried.** That store's tables are on no
+   deploy path, so no deployed database holds a row of it; its screens and tools were refused in a release.
+   - **Carried onto the deployed store before admission: "not applicable", with a reason.** A study to which an
+     essential record does not apply could otherwise never read complete. The declaration says who, when and why,
+     is audited, counts as neither filed nor missing, and the verdict says how many were declared.
+   - **A record's status is its document's.** The second store let a person type a status (received, in review,
+     final) with no document behind it. A record's state is the lifecycle stage of the Vault document it is filed
+     against, shown on the record. No status is typed separately.
+   - **Not carried: an artifact outside the reference model's catalog.** A document the catalog does not name is
+     kept in the Vault and is not a record of the trial master file.
+   - **AnA's tools:** `get_tmf_view` and `classify_tmf_artifact` keep their names and read and file through the
+     deployed store, the filing with the person's confirmation and reason. `create_tmf`, `seed_tmf`,
+     `update_tmf_artifact_status` and `review_tmf_completeness` retire, each onto what now answers it: a study's
+     trial master file exists with the study; its expected records are the reference model's; a record changes by
+     filing, removing or declaring it not applicable; completeness is part of the view. No tool is added.
+   - The report pack `etmf.completeness_pack` and the trial master file part of AnA's document search read the
+     deployed store.
+6. **Order to admission:** E4 (one store); "not applicable"; the URS and OQ; then the Vault app gains the `etmf`
+   surface as a professional-tier module and the section moves into the Vault.
+   **Admitted 2026-11-12** (added that day), in the order CMC was admitted: its URS (URS-007) landed with admission,
+   and its OQ (OQ-008) was executed after it.
+   - **Done before it:** E4 and "not applicable". The URS and the OQ are drafted for Validation for GA (`ed03906b8f`),
+     not yet numbered, filed or executed. So the eTMF is in the release, and it is **not described as validated**
+     until its OQ is executed and filed.
+   - **The release:** the Vault app's surfaces are `vault` and `etmf`. Its module stays `vault`. `etmf` is a
+     professional-tier module (P-75), not a launch module.
+   - **Who keeps it below that band:** an organisation that held trial master file filings before admission, by a
+     subscription row naming the migration. Other organisations below the band receive nothing.
+   - **Decided here: AnA's three inspection tools are not admitted with it.** The AnA inventory had filed
+     `create_inspection`, `log_inspection_finding` and `review_inspection_readiness` under `etmf`, beside the trial
+     master file's two tools. They write the inspection record, which no screen shows and whose API (`/api/inspections`)
+     production refuses. Admitting them would release an app through the conversation. They stay withheld, filed under
+     the quality surface `qmp`, until a screen shows inspections.
+   - Built: F1 `2dc105c1b7`. Evidence: `docs/evidence/D2-ETMF/2026-11-12-admission/`.
+7. **A person who may read the project's Vault reads its study's trial master file** (added 2026-11-12, when the URS
+   draft named it as a question). Every eTMF route required the regulatory-author role, reads included, which no
+   organization viewer holds. So a monitor, auditor or inspector given read access met a failed read beneath the
+   section's own view-only notice.
+   - **Who reads:** the people who read the project's Vault. The Vault's reads already admit a viewer, by design
+     (`routes/c2c/project-vault.ts`: "a viewer enumerating and downloading their own organization's dossier is the
+     viewer role working as intended").
+   - **Why:** ICH E6(R3) keeps the essential records available for monitoring, audit and inspection. The EMA's
+     guideline on the TMF (EMA/INS/GCP/856758/2018) expects direct, read-only access for monitors, auditors and
+     inspectors.
+   - **What a reader may do:** read the reference model, the study's filings and declarations, its readiness, and the
+     inspection package. The package is a recorded download, which names who took it.
+   - **What stays with the writer:** filing, removing and declaring, which keep the regulatory-author role and the
+     Vault's write role.
+   - Each read still admits the person to the study's project by the Vault's rule.
+   - Built: `server/routes/etmf.routes.ts` (`READERS`); proven on PostgreSQL in `tests/db/etmf-study-binding.dbtest.ts`.
+
+Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`,
+`docs/evidence/D2-ETMF/2026-11-12-admission/`. The steps of E4 are in the plan's §3a.
+
+### P-125 — Decided under the founder's delegation: client administration shows the work (P-122 applied to Administration, Licensing, Onboarding and the account)
+
+The founder, 2026-11-11: **"Continue and focus entirely on getting what we built surfaces correctly on the UI and
+working for GA. Stay aligned with our roadmap and rules."** Decided by session `…01T2wooCZu` (client administration)
+under the founder's standing delegation ("make the best decisions based on our highly regulated clients and their
+needs and the longevity of our product") and inside P-122. Each call is reversible by the founder. The test applied:
+a regulated customer's administrator pays for a console that shows their organisation as it is (people, access,
+security, licence, data) and that an auditor can read without finding a figure nobody recorded.
+
+**What was found.** The four P-122 inventories left this area out. The fifth is
+`docs/evidence/DESIGN/P-122/inventory/administration.md`: 66 capabilities, of which 23 are hidden, 21 were built on
+the server and never reached, 15 are shown but were never recorded (invented), 6 were removed and 1 is reached but
+refused. Little was deleted. The losses are reach and truth: the Setup fold put twelve settings cards in one column
+under a tab that does not open by default (the company card sat 9,193 px down), and the Administration screen shows
+single sign-on status, seats and groups the server never recorded.
+
+1. **The fifth inventory is the work list, in its own order.** `administration-restoration-order.json` beside it lists 30
+   restorations, highest value and smallest size first. Each reaches or shows what exists. None builds a screen, a
+   route file, a service or a table (RULE 6).
+2. **Invented is made true, never removed.** Where a screen shows something the server never recorded (seats, the
+   single sign-on status, how a member signs in, groups), the screen reads the server. Where the server records
+   nothing, the screen says "Not recorded" in that place. Groups becomes job roles (P-119).
+3. **Plan cards keep every line.** Each line says what it is: a term of the plan, or a figure that was measured.
+   Nothing is shown as usage that no meter recorded. A line is not taken off a plan card without a founder decision.
+4. **Settings is reached by name.** It opens with an index of its cards, and a door elsewhere in the product lands
+   on the card it names. No setting is reachable only by scrolling a column.
+5. **The organisation's data return is reached in production.** `GET /api/tenant-export/full` and the custody
+   record are admitted for Audit & compliance reports, for administrators and owners, with a stated reason and an
+   audit row, as the route already requires. The subscription agreement promises the customer its data at any time;
+   until now no screen could ask for it.
+6. **A control nothing enforces says so.** The sign-in policy keys an organisation can store but the sign-in path
+   does not enforce (require an authenticator app, password rules, a sign-in address list) stay on screen and read
+   "not enforced in this release". They are never shown as on. Enforcing them is finish-what-exists work, after the
+   reach items.
+7. **Single sign-on and provisioning are read by the client, and changed by Concept2Cure, for now.** A client
+   administrator sees what is configured for their organisation, by whom and when, in the Identity console that
+   exists. Changing it stays with platform staff until the security review of the write path is filed. Whether a
+   client administrator configures their own identity provider is the founder's call (open question 3 of
+   2026-11-10).
+8. **Legal holds are placed where the record is.** "Place legal hold" belongs on the record in the Vault, for
+   everyone the server already allows. The Vault lane holds that file; this is handed to it, not done beside it.
+
+**Not decided here** (the founder's): which number is the contract seat limit; whether credits and tokens are
+metered and enforced at GA; the free plan's limits; the module-enforcement default; closing an organisation and
+deleting a person's data on request.
+
+Evidence: `docs/evidence/DESIGN/P-122/inventory/administration.md` and `administration-restoration-order.json`; the walk and audit
+behind them, `docs/evidence/F1/2026-11-10-client-admin/`. Each restoration files its before and after beside the
+inventory, as the other areas do.
+
+### P-126 — Decided under the founder's delegation: a CSR heading that holds only its subsections needs no text of its own
+
+The founder, 2026-11-10: **"I want you to make the most educated, best decision for me getting this product to market
+and providing the best product I can to this institutional buyer in a highly regulated market."** And on 2026-11-12:
+**"You are the manager of this goal."** Decided by the walking session (`01QoxbLZ…`), as P-115 was. It reads P-115
+item 5 ("Every heading holds text"); it does not replace it. The founder may overrule it by a later decision.
+
+**What was found** (walking the LMN-201 report in the Lumen account, 2026-11-12,
+`docs/evidence/D2-CSR/2026-11-12-heading-not-applicable/`):
+- An ICH E3 report has 119 headings. 19 of them only organise the headings beneath them: "5 Ethics" over 5.1 to 5.3,
+  "9 Investigational Plan", "12 Safety Evaluation", "16 Appendices". Their own section in the document is empty.
+- The CSR scientific review refused any section whose saved content was empty
+  (`server/services/authoring/csr-scientific-review-core.ts`). So a report could be reviewed, signed and filed only
+  after a person typed something under each of the 19.
+- The same check read "empty" as the empty string. A section holding only markup, which is what the editor saves
+  when a person clears a section, passed as written.
+
+**What is decided.**
+1. **A heading that holds only its subsections needs no text of its own.** It is written when each of its
+   subsections is, and each of those is held to this same rule. In one saved document, that is a blank section
+   whose number is the parent of another section's number.
+2. **Every heading with no subsections holds text a reader sees**, or the person's "Not applicable to this study"
+   statement with their reason (P-115 item 5). Markup, entities and white space are not text. A figure is content.
+3. **"Not applicable" is not offered on a heading that holds only subsections.** It is not what such a heading says.
+4. **The review stays bound to the exact saved content of every section, the blank ones included.** A review of a
+   heading-only section records that it is one, and carries no mapped result. Text added under it after the review
+   voids the review, as any other edit does.
+5. **One rule, in one place** (`shared/authoring/csr-scientific-review.ts`), for the review screen that builds the
+   reviewer's map and the server that verifies it.
+
+**What does not change.** Nothing about who reviews, signs or approves; the figure-to-cell mapping; the placeholder
+rule; the qualification rule for model-drafted text (P-115 item 1); the review's format identifier. A receipt issued
+before this decision verifies as before, unless the document holds a section of empty markup, which is now refused
+(item 2).
+
+**Why.** The sponsor answers for each word of a submission. Filler typed under "9 Investigational Plan" to satisfy
+a software check is a word nobody meant, in a signed record, and a reviewer at the buyer's quality unit reads it as
+one. ICH E3 gives the structure of the report as guidance, and its organising headings carry no content of their
+own. The rule that matters to a regulator is the one item 2 keeps and tightens: no heading that should say something
+is left saying nothing.
+
+Evidence: `docs/evidence/D2-CSR/2026-11-12-heading-only-sections/`.
+
+### P-127 — Help, training and support, run the way Claude's are: through AnA, and through a help and support agent
+
+The founder, 2026-11-10: **"You now own training and help function and must do through AnA and must follow existing
+roadmap and rules and practices. Extend what we have, build technical documentation and training materials as you
+go. Assure it all is easy to access by any user at any time either through ana chat directly or through an help and
+support agent.. both must be offered."** And: **"Exactly like Anthropic does with Claude support, training, new
+client onboarding and ticket tracking. Use fable 5 for this."** The design was put to the founder as proposed (its
+number was then P-121, since taken); the founder, 2026-11-12: **"Approve"**.
+
+Recorded by the walking session (`01QoxbLZhy…`), which owns package S13. Design:
+`docs/design/HELP_AND_SUPPORT_2026-11-10.md`, with its "What already exists" section (RULE 3).
+
+1. **Two entrances, always.** AnA answers "how do I…" in any conversation, from the help corpus, naming the article.
+   "Get help" (the account menu and the top bar's Help, P-122 §3.4) opens the same conversation in **support mode**:
+   the help corpus, the guided demos and the ticket tools only, a support brief, and a hand-off to a person by ticket,
+   which the person confirms before it is sent.
+2. **The help corpus** is articles in the repository (`shared/help/`), written from the product and checked in the
+   running app, served by the existing `/api/docs` mount (a stub until now). An article that names a screen is tested
+   against the screen registry. `support_articles` is left for an organisation's own articles, not built here.
+3. **One page, Help & training:** the existing `training` surface, re-purposed and admitted to the launch catalog. Its
+   deferred disposition ("converge into Quality") is replaced. It keeps what it shows today, the learning paths and
+   certifications reads (P-122 §2). Quality keeps GxP training of record; product training is not GxP training.
+4. **Courses** (the Academy) are data beside the articles; a lesson is an article and, where one fits, a Live Drive
+   demonstration. No progress or certificate in this package: they need a store and rules, proposed separately.
+5. **Tickets** reach the existing `support_tickets` and `support_ticket_messages` (`0007_support_admin.sql`) through a
+   new request-scoped route, `/api/support`: customers open, read, reply and resolve; Concept2Cure support staff work
+   the queue with internal notes customers never read. The deleted `support-admin.ts` is not restored (shared pool,
+   customer delete). `support_ticket_messages` gains tenant isolation by amending its creating migration (RULE 1),
+   and `0007_support_admin.sql` joins `C2C_MIGRATION_FILES`.
+6. **Onboarding:** Home's "Set up your organisation" gains "Take the getting-started course"; the administrator's
+   articles are linked from the setup steps.
+7. **Fable 5.** The articles and courses are written with Fable 5 agents. For serving users, Fable 5 is not an
+   approved model (`server/services/ai-governance/approved-models.ts`), and RULE 2 admits a model only as an approved
+   entry with a pinned version, rationale and evaluation reference. Support mode uses the approved routing until
+   Fable 5 is qualified under P-118's protocol; its entry is the founder's to approve with that evidence.
+8. **What is added** (package S13, each in `approvedAdditions`): AnA tools `search_help_center`, `read_help_article`,
+   `open_support_ticket`, `list_my_support_tickets`; route file `server/routes/support.ts`; mount `/api/support`. No
+   table, no new screen, no new model.
+9. **Not in this package:** release notes in the product, a public help site, e-mail where none is configured, course
+   progress and certificates, an organisation's own articles.
+
+### P-128 — The device and diagnostics screens take the plan's design: package D8
+
+**The question.** The device lane's study asked which package takes the device screens' design
+(`.design/client-journey/MDX_JOURNEY_2026-11-01.md`, question 1), and P-114 left it as a plan matter. Until now
+`client/src/concept2cure/mdx/**` was in no design package, so those screens could be repaired but not given
+ONE_DESIGN_PLAN §2's design. A walk of the running app on 2026-11-11 found them the largest gap from that design
+(`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-11/README.md`, finding 5).
+
+**The founder's answer, 2026-11-12.** Session `…01E8btkB` put the question to the founder with three choices: a new
+device design package, the device files added to D3 and D4, or repairs only for GA. The founder chose the first,
+whose words were: **"New package D8. Add a device design package covering client/src/concept2cure/mdx/** and the
+three device files in v2. I record it as your decision P-126 and start with the shared look in one stylesheet:
+sentence case, no filled stat tiles. Nothing a screen shows is removed. Moving the per-type device screens into the
+one editor stays undecided."** Recorded by that session. Reversible by the founder.
+
+**Its number.** The choice put to the founder named this decision P-126, and its words are quoted as chosen. Two
+other decisions were recorded the same morning and landed on trunk first: P-126 (a CSR heading that holds only its
+subsections, `c268e6f7b9`) and P-127 (help, training and support, `adb7eec173`). So this decision is **P-128**.
+What the founder chose is unchanged.
+
+1. **Package D8 holds the device and diagnostics screens' design.** Its files are
+   `client/src/concept2cure/mdx/**` and the three device files in v2 the study names:
+   `client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx`, `HumanFactors.tsx` and `Labeling.tsx`. D8 follows
+   ONE_DESIGN_PLAN §3's order for a design package: spec, build, evidence at 1440 px and 390 px in light and dark,
+   review, close.
+2. **The first slice is the shared look, in one stylesheet** (`client/src/concept2cure/mdx/app.css`): sentence case
+   in place of uppercase labels, and no filled stat tiles.
+3. **Nothing a screen shows is removed (P-122).** No metric, workflow, verdict, action or record is removed, hidden,
+   moved below the fold or put behind a closed disclosure. A figure a screen shows stays a figure it shows.
+4. **Not decided: moving the per-type device screens into the one editor.** RULE 4's convergence of the 510(k), PMA,
+   CER, IVD, Labeling, Pre-Sub, Human factors and Software workbenches into the project's document start and the one
+   editor (the second half of the study's question 1) stays the founder's. So does the retirement of unreached
+   device capability (question 4).
+5. **D8 adds nothing (RULE 6),** and files another session holds stay with it until its row releases them. F1 still
+   takes the device screens' repairs and R1 their unreached capability.
+
+### P-129 — Rate limits are counted across API tasks, in Postgres: one table, `public.rate_limit_counters`
+
+**The question.** Production runs the API as more than one task, and coordinates them through Postgres, not Redis
+(B6, 2026-10-01). Sign-in sessions already follow that rule (`session_activity`). The sign-in and document rate limits
+do not: each task counts in its own memory, so a client gets each task's allowance, twice the limit on production's
+two tasks (MR-03 SEC-08, OPS-20). MR-03 Stage 7 steps 2–3 count them in Postgres, and that needs a new table, which
+RULE 6 leaves to the founder. NEW-2 asked whether B6 holds for rate limits as well as sessions.
+
+**The founder's answer, 2026-11-12.** Session `…01QoxbLbx` reported that the shared rate limits still needed the
+founder's approval for a new table. The founder answered: **"I approve and you still have much to do"**. Recorded by
+that session. Reversible by the founder.
+
+1. **One table, `public.rate_limit_counters`:**
+   - `organization_id INTEGER NOT NULL DEFAULT 0`, `bucket_key`, `window_start` and `hits`, keyed on the three;
+   - an index on `window_start`;
+   - the estate's row (organization 0), written and read under the system tenant scope only, as `session_activity` is;
+   - one migration in `C2C_MIGRATION_FILES` before the final sweep pair, `IF NOT EXISTS`-guarded, with no DROP
+     (RULE 1).
+2. **B6 holds for rate limits (NEW-2).** Postgres is the coordination store; no ElastiCache, no Redis.
+3. **What it counts:** the sign-in and document categories (`RATE_LIMIT_FAIL_CLOSED_CATEGORIES`) and the sign-in
+   limiters (`server/middleware/sign-in-limits.ts`), as MR-03 Stage 7 steps 2–3 say. The other categories stay per-task
+   ceilings, documented as such. No new `*_ACCEPT_*` override (P-43).
+4. **Nothing else is added:** no screen, no mount, no service file.
+
+### P-130 — Informed consent is the consent document; the structured consent-form store retires
+
+**The question.** P-102 (2026-11-05) decided that informed consent is one record, with its 21 CFR 50.25 checklist as the
+editor's checks for the `informed_consent` type. Slices 1 and 2 (2026-11-12) made that true in the editor. The editor's
+Check reports the elements, and an approval is refused while an element 50.25(a) requires is missing. A second store
+still stands beside it: the consent-form rows behind `/api/protocol-consent` (`consent_forms`, `consent_form_elements`).
+- Its seven routes have no caller.
+- AnA's `create_consent_form` and `update_consent_element` write into it, and AnA's clinical skill tells it to draft
+  consent forms there.
+- The protocol workspace's read-only Consent tab reads it.
+
+So a consent form AnA drafted landed where the editor cannot open, review, approve or file it. P-122 asks for a
+founder decision before a user-facing capability is removed.
+
+**The founder's answer, 2026-11-12.** Session `01SuVLo2…` asked whether to retire the store and point the Consent tab at
+the project's consent document. The founder answered: **"You decide as an sme would"**. Decided by that session under
+that delegation. Reversible by the founder.
+
+**The decision, and why.** An IRB approves a consent document: its version, its wording and its signature page (21 CFR
+50.27, 56.109; ICH E6(R3) Annex 1). It does not approve a set of element rows. A participant signs that document. The
+record a sponsor controls, revises and files is therefore the document, under Part 11. A field store beside it is a
+second copy that drifts from what was approved. So:
+
+1. **The informed-consent form is the `informed_consent` document in the one editor.** A document is of that type by
+   its built-in template (`component:informed_consent`, `registry:ICH_ICF`). AnA's `draft_authoring_document` records
+   its type as `product_code`, so a document recorded with `product_code` `informed_consent` is of that type too. Its
+   check is the editor's Check (P-102 slice 1), and its approval the editor's one signing (slice 2).
+2. **The structured store retires:**
+   - the seven `/api/protocol-consent` routes are unmounted, and their metrics counters retire with them;
+   - AnA's `create_consent_form` and `update_consent_element` retire onto `draft_authoring_document`, with
+     `documentType` `informed_consent` and the consent outline's section codes, and onto the editor;
+   - `review_consent_completeness` keeps its name and reads a consent document by id through the same gate;
+   - AnA's clinical skill says so.
+3. **Nothing regulated is lost.** No screen ever wrote or approved a form in the store: its approve route had no
+   caller. Its tables stay, with no writer. Removing schema is not a DROP (RULE 1); dropping them is a later decision.
+4. **The protocol workspace's Consent tab** reads the protocol's project's consent document through the same gate.
+   It stays read-only and opens the document in the editor.
+5. **Nothing is added:** no screen, route, table, service or AnA tool.

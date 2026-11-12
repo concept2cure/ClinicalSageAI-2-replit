@@ -1,6 +1,7 @@
 /** Real source admission and DOCX bibliography against PGlite. Historical
  * references remain readable; a pasted marker cannot invent an association. */
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import AdmZip from 'adm-zip';
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import type { Queryable } from '../../clinical-regulatory-evidence/span-lineage.service';
@@ -27,6 +28,12 @@ beforeAll(async () => {
     ALTER TABLE file_uploads ADD COLUMN user_id integer;
     CREATE TABLE authoring_audit_trail (id uuid,doc_id uuid,section_id uuid,tenant_id integer,operation_type text,metadata jsonb,created_at timestamptz);
   `);
+  /* Every render reaches the release boundary (authoring-export.ts, assertWorkflowImportRelease), which reads the
+     independent-check ledger from authoring_audit_trail and the chained audit_logs ordered by audit_logs.chain_seq
+     (workflow-import-governance.ts, independentLedger); any read error is refused as INDEPENDENT_CHECK_REQUIRED.
+     The shared fixture's audit_logs has no chain_seq, so all ten rendering cases were refused (2026-11-10). Apply
+     the production migration itself (the column, its sequence and the trigger), as authoring-image-access does. */
+  await harness.pg.exec(readFileSync(new URL('../../../../migrations/20260921_audit_logs_chain_seq.sql', import.meta.url), 'utf8'));
 });
 afterAll(async () => { await harness?.close(); });
 const executor = (): Queryable => ({ query: <R>(sql: string, params?: unknown[]) => harness.pg.query<R>(sql, params) });

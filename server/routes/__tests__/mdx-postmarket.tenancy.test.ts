@@ -25,7 +25,22 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const query = vi.fn();
-vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+/* Since P-122 the route reads through the request's executor after the caller's project access is resolved
+   (mdx-postmarket.ts); the real access check and RLS are proven in
+   tests/db/p122-quality-surveillance-reads.dbtest.ts. Here the access resolves to two projects. */
+const ACCESSIBLE = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'];
+vi.mock('../../db/requestDb', () => ({
+  requestPgClient: () => ({ query: (...a: unknown[]) => query(...a) }),
+  MissingRequestDbContextError: class extends Error {},
+}));
+vi.mock('../../middleware/orgMembership', () => ({ governedActorId: () => 5 }));
+vi.mock('../../services/c2c/current-program-access', () => ({
+  getCurrentAccessibleProgramScope: async (_q: unknown, input: { programId?: string | null }) => ({
+    scope: 'verified-accessible-programs', programIds: input.programId ? [input.programId] : ACCESSIBLE, reconciliationRequired: false,
+  }),
+  requireProgramScopeStillCurrent: async () => undefined,
+  ProgramReadAccessError: class extends Error {},
+}));
 
 import postmarketRouter from '../mdx-postmarket';
 
@@ -64,12 +79,27 @@ describe('GET /api/mdx/postmarket', () => {
     expect(capaSql).toMatch(/WHERE\s+p\.organization_id\s*=\s*\$1/i);
   });
 
-  it('passes the caller org as the only tenancy parameter for CAPAs', async () => {
+  it('passes the caller org and the projects the caller can open, and nothing else, for CAPAs', async () => {
     query.mockResolvedValue({ rows: [] });
     await request(appWith(42)).get('/api/mdx/postmarket');
 
     const capaCall = query.mock.calls.find((c) => String(c[0]).includes('capa_records'));
-    expect(capaCall?.[1]).toEqual([42]);
+    expect(capaCall?.[1]).toEqual([42, ACCESSIBLE]);
+    expect(String(capaCall?.[0])).toMatch(/p\.id::text\s*=\s*ANY\(\$2::text\[\]\)/);
+  });
+
+  it('reads one project, and says so (P-122)', async () => {
+    query.mockResolvedValue({ rows: [] });
+    const res = await request(appWith(42)).get(`/api/mdx/postmarket?program_id=${ACCESSIBLE[0]}`);
+    expect(res.status).toBe(200);
+    expect(res.body.meta).toMatchObject({ scope: 'program' });
+    for (const call of query.mock.calls) expect(call[1]).toEqual([42, [ACCESSIBLE[0]]]);
+  });
+
+  it('refuses a malformed project id before reading anything', async () => {
+    const res = await request(appWith(42)).get('/api/mdx/postmarket?program_id=not-a-project');
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
   });
 
   it('returns an empty feed rather than fabricated rows for a quiet tenant', async () => {
@@ -83,6 +113,7 @@ describe('GET /api/mdx/postmarket', () => {
        this as an explicit empty state, never as an all-clear derived
        from example content. */
     expect(res.body.data.metrics[0]).toMatchObject({ label: 'Open signals', metric: '0' });
+    expect(res.body.meta).toMatchObject({ scope: 'organization' });
   });
 
   it('degrades to an empty feed when the vigilance tables are not migrated', async () => {

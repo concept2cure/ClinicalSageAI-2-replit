@@ -28,6 +28,10 @@
  *      unless approvedAdditions lists it. PLAN commits are exempt from the
  *      trailer. Only commits after RULE 6's introduction (the ledger's
  *      "completesRequired") are asked for it.
+ *   6. P-122 (2026-11-10, "rendering a shell or 10% of what we built"): it
+ *      removes no screen — a deleted file under client/src/concept2cure/*\/surfaces/,
+ *      a UI_SURFACES id or a SURFACE_VIEWS entry — unless it carries a
+ *      `Founder-Decision: P-<n>` trailer.
  *
  * There is no bypass. RULE 0 held only once its bypass was removed; a rule
  * whose escape hatch is printed in its own refusal is a suggestion.
@@ -49,6 +53,7 @@ const MIGRATION_FILE = /^(migrations|db\/migrations)\/.+\.sql$/;
 const ROUTE_FILE = /^server\/(routes|api)\/.+\.(ts|mts|js|mjs)$/;
 const SERVICE_FILE = /^(server\/services|services)\/([^/]+)(\/)?/;
 const TEST_FILE = /(^|\/)(__tests__|__mocks__|tests?)\/|\.(test|spec)\.[cm]?[jt]sx?$|\.fixture\.[cm]?[jt]s$/;
+const SCREEN_FILE = /^client\/src\/concept2cure\/[^/]+\/surfaces\/[^/]+\.tsx$/;
 export const ANA_TOOL_INVENTORY = 'server/services/ana/ana-launch-scope.inventory.json';
 
 /* ── Pure core ─────────────────────────────────────────────────────────── */
@@ -111,6 +116,10 @@ export function evaluateCommit(ledger, commit) {
   if (commit.completesRequired && plan !== 'PLAN') {
     if (!completes.length) say('names nothing it completes (RULE 6: nothing new, finish what exists): add a "Completes: <path>" trailer naming the existing file or folder this work finishes');
     for (const p of commit.completesMissing ?? []) say(`"Completes: ${p}" names nothing that existed before this commit (RULE 6)`);
+  }
+  // P-122 (2026-11-10): nothing a screen showed is removed without a founder decision.
+  if (!decision) {
+    for (const r of commit.removals ?? []) say(`removes a ${r.kind} "${r.name}" (P-122: nothing a screen showed is removed without a founder decision): add a "Founder-Decision: P-<n>" trailer naming the decision that removes it`);
   }
   for (const a of commit.additions) {
     const approved = ledger.approvedAdditions.some((x) => x.kind === a.kind && x.name === a.name && x.package === plan);
@@ -187,6 +196,21 @@ function additionsOf(cwd, sha, files, rule6 = false) {
   return out.filter((a, i) => out.findIndex((b) => b.kind === a.kind && b.name === a.name) === i);
 }
 
+/** What a commit removes from the screens (P-122): a deleted screen file, a UI_SURFACES id, a SURFACE_VIEWS entry. */
+function removalsOf(cwd, sha, files) {
+  const parent = `${sha}^`;
+  const out = [];
+  for (const f of files) {
+    if (f.status === 'D' && SCREEN_FILE.test(f.path) && !TEST_FILE.test(f.path)) out.push({ kind: 'screen file', name: f.path });
+    else if (REGISTRY_FILE.test(f.path)) {
+      for (const id of diffSet(registryIds(show(cwd, parent, f.path)), registryIds(show(cwd, sha, f.path)))) out.push({ kind: 'surface', name: id });
+    } else if (f.path === VIEWS_FILE) {
+      for (const id of diffSet(viewKeys(show(cwd, parent, f.path)), viewKeys(show(cwd, sha, f.path)))) out.push({ kind: 'surface', name: id });
+    }
+  }
+  return out.filter((a, i) => out.findIndex((b) => b.kind === a.kind && b.name === a.name) === i);
+}
+
 /** The commits a push carries that the plan governs, with what each adds. */
 export function collectCommits({ cwd, range }) {
   const intro = git(cwd, ['log', '--format=%H', '--diff-filter=A', '--', LEDGER_PATH]).trim().split('\n').filter(Boolean).pop();
@@ -206,7 +230,7 @@ export function collectCommits({ cwd, range }) {
     });
     const completesRequired = Boolean(rule6) && sha !== rule6 && git(cwd, ['merge-base', '--is-ancestor', rule6, sha], { allowFail: true }) !== null;
     const completesMissing = completesRequired ? trailers(message).completes.filter((p) => !existsAt(cwd, `${sha}^`, p)) : [];
-    commits.push({ sha, message, files, additions: additionsOf(cwd, sha, files, completesRequired), completesRequired, completesMissing });
+    commits.push({ sha, message, files, additions: additionsOf(cwd, sha, files, completesRequired), removals: removalsOf(cwd, sha, files), completesRequired, completesMissing });
   }
   return { intro, commits };
 }

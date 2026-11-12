@@ -63,6 +63,8 @@ function wireAgreements(opts: { failing?: RegExp; accepted?: string[] } = {}) {
   query.mockImplementation(async (sql: string) => {
     const s = String(sql);
     if (opts.failing?.test(s)) throw new Error('connection terminated unexpectedly');
+    // 2026-11-10: eula-service checks the tables exist before any DDL.
+    if (/to_regclass/.test(s)) return { rows: [{ agreements: true, acceptances: true }] };
     if (/CREATE TABLE|WHERE NOT EXISTS \(SELECT 1 FROM license_agreements/.test(s)) return { rows: [] };
     if (/FROM license_agreements WHERE status = 'active'/.test(s)) return { rows: [EULA_ROW] };
     // The EULA is user-scoped, so only the user-scoped acceptance read can

@@ -20,7 +20,15 @@ export const PACK = 'lumen';
 export const T = (name) => demoTitle(PACK, name);
 export const KIT = path.join(REPO_ROOT, 'data', 'seeds', 'lumen-demo', 'seed-data');
 export const SEED = JSON.parse(fs.readFileSync(path.join(KIT, 'lumen_bioscience.seed.json'), 'utf8'));
-export const CSR_SOURCE_FILE = path.join(KIT, 'lmn201_synthetic_csr_source_v1.json');
+/**
+ * The LMN-201 CSR's study data. The kit's v1 (disposition, demographics, efficacy, adverse events) stays where it is
+ * for the suites that pin it. The showcase uses v2: the same invented study with exposure, laboratory shifts, vital
+ * signs and concomitant medications, so every results heading of the report has a table to be written over. On v1
+ * the build drafted 68 of 69 headings and ended "failed · 98%": §12.5 reads the vital-signs table (2026-11-10).
+ */
+export const CSR_SOURCE_FILE = path.join(KIT, 'lmn201_synthetic_csr_source_v2.json');
+export const CSR_SOURCE_TITLE = T('LMN-201-like Part B CSR source, with safety domains — SYNTHETIC, NOT CLINICAL EVIDENCE');
+export const CSR_SOURCE_CODE = 'LMN-201-CSR-SOURCE-SYNTHETIC-2.json';
 
 export const CLIENT = { name: 'Lumen Bioscience (demo — not affiliated)', slug: 'lumen-bioscience-demo' };
 export const FOOTER = 'DEMONSTRATION — illustrative content built from public information — not affiliated with Lumen Bioscience, Inc.';
@@ -32,6 +40,20 @@ const program = (code) => {
 };
 
 /** The projects, one per pipeline program the kit lists as a medicine in clinical or IND-enabling development. */
+/** Who files LMN-201 in the demonstration: the IND number its fictional letters already cite, and a sponsor record
+ *  that says it is a demonstration. Every value is invented (a 999… D-U-N-S, a 555-01xx telephone, a .example address),
+ *  and no real person is named: the contact is a role mailbox. The values are those 52d1c629cc first recorded, so a
+ *  database it seeded finds its sponsor by name. */
+export const LMN201_IDENTITY = {
+  applicationNumber: '194021',
+  sponsorAddress: '1 Fictional Way, Demo City, WA 00000, USA',
+  sponsor: {
+    name: 'Lumen Bioscience (fictional demo sponsor)', duns: '999999902',
+    contactName: 'Regulatory Affairs (fictional contact)', contactPhone: '+1 555 0102', contactEmail: 'regulatory@lumen-demo.example',
+    signatoryName: 'Regulatory Affairs (fictional contact)', signatoryTitle: 'Head of Regulatory Affairs (fictional)',
+  },
+};
+
 export const PROJECTS = [
   { code: 'LMN-201', name: 'LMN-201 — prevention of recurrent C. difficile infection (IND)', indication: 'Prevention of recurrent Clostridioides difficile infection', priority: 'high', targetInDays: 120 },
   { code: 'LMN-801', name: 'LMN-801 — oral hormone protein for weight loss (IND)', indication: 'Weight loss in adults with obesity or overweight, preserving lean mass', priority: 'high', targetInDays: 200 },

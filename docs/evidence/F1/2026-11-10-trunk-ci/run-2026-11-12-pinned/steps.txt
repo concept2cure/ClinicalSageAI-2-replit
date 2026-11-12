@@ -1,0 +1,16 @@
+head ef0472c7b8 2026-11-12T10:34:11Z
+gcc rc=0 4s
+smoke rc=0 0s
+provision rc=0 22s
+dbtests rc=1 1164s
+integ rc=0 3s
+gcc1 rc=0 3s
+shard1 rc=1 1520s
+gcc2 rc=0 4s
+shard2 rc=1 1410s
+gcc3 rc=0 4s
+shard3 rc=1 1656s
+gcc4 rc=0 3s
+shard4 rc=1 1440s
+merge rc=1
+DONE

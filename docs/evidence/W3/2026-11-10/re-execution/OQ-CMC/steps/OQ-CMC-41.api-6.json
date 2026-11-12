@@ -1,0 +1,111 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-008 provenance signed 20261112003432",
+      "productName": "PRV-signed",
+      "programType": "ind",
+      "productType": "drug",
+      "applicationNumber": "3334322",
+      "primaryAgency": "FDA",
+      "priority": "high",
+      "indication": "Shelf-life provenance"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 185,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "8568ced5-a274-44b4-bf32-732fcba2eaed",
+        "title": "OQ-008 provenance signed 20261112003432",
+        "ws": "Biotech",
+        "pathway": "ind",
+        "code": "OQ-008-940Q",
+        "stage": "Planning",
+        "status": "active",
+        "lead": "oq-runner@validation.local",
+        "due": "—",
+        "due_date": null,
+        "activity": "Updated Nov 12",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "description": null,
+        "indication": "Shelf-life provenance",
+        "agency": "FDA",
+        "program_type": "ind",
+        "readiness": 0,
+        "readinessState": "measured"
+      },
+      "program": {
+        "id": "8568ced5-a274-44b4-bf32-732fcba2eaed",
+        "code": "OQ-008-940Q",
+        "name": "OQ-008 provenance signed 20261112003432",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "high",
+        "description": null,
+        "product_name": "PRV-signed",
+        "indication": "Shelf-life provenance",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-11-12T00:57:32.569Z",
+        "updated_at": "2026-11-12T00:57:32.569Z",
+        "application_number": "3334322",
+        "product_type": "drug",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "registry_id": "US_IND",
+        "submission_type_id": null,
+        "riskBasedMonitoring": false,
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0,
+        "readinessState": "measured",
+        "readinessAsOf": "2026-11-12T00:57:32.718Z"
+      },
+      "meta": {
+        "created": true,
+        "organizationId": 2,
+        "actorUserId": 1,
+        "clientWorkspaceId": 2,
+        "clientWorkspaceName": "Concept2Cure Therapeutics",
+        "documentId": "doc_e3eecb8cef5b473caf1d01de31d043de",
+        "scaffoldedSections": 92,
+        "marketSupport": {
+          "tier": "build_and_sequence",
+          "label": "Build and sequence",
+          "reason": "Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.",
+          "appliesTo": [
+            "US_IND",
+            "US_IND_AMENDMENT"
+          ]
+        },
+        "submissionId": 112,
+        "submissionCreated": true,
+        "projectAnchorId": 107,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

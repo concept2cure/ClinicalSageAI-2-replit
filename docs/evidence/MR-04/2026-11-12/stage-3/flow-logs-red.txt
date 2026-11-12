@@ -1,0 +1,67 @@
+Success! The configuration is valid.
+
+tests/flow_logs.tftest.hcl... in progress
+  run "the_vpc_records_all_traffic"... fail
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 43, in run "the_vpc_records_all_traffic":
+  43:     condition     = aws_flow_log.this.vpc_id == aws_vpc.this.id && aws_flow_log.this.traffic_type == "ALL"
+
+A managed resource "aws_flow_log" "this" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 43, in run "the_vpc_records_all_traffic":
+  43:     condition     = aws_flow_log.this.vpc_id == aws_vpc.this.id && aws_flow_log.this.traffic_type == "ALL"
+
+A managed resource "aws_flow_log" "this" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 47, in run "the_vpc_records_all_traffic":
+  47:     condition     = aws_flow_log.this.log_destination_type == "cloud-watch-logs" && aws_flow_log.this.log_destination == aws_cloudwatch_log_group.flow_logs.arn
+
+A managed resource "aws_flow_log" "this" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 47, in run "the_vpc_records_all_traffic":
+  47:     condition     = aws_flow_log.this.log_destination_type == "cloud-watch-logs" && aws_flow_log.this.log_destination == aws_cloudwatch_log_group.flow_logs.arn
+
+A managed resource "aws_flow_log" "this" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 47, in run "the_vpc_records_all_traffic":
+  47:     condition     = aws_flow_log.this.log_destination_type == "cloud-watch-logs" && aws_flow_log.this.log_destination == aws_cloudwatch_log_group.flow_logs.arn
+
+A managed resource "aws_cloudwatch_log_group" "flow_logs" has not been
+declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 51, in run "the_vpc_records_all_traffic":
+  51:     condition     = aws_flow_log.this.iam_role_arn == aws_iam_role.flow_logs.arn
+
+A managed resource "aws_flow_log" "this" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/flow_logs.tftest.hcl line 51, in run "the_vpc_records_all_traffic":
+  51:     condition     = aws_flow_log.this.iam_role_arn == aws_iam_role.flow_logs.arn
+
+A managed resource "aws_iam_role" "flow_logs" has not been declared in the
+root module.
+  run "the_log_is_encrypted_and_kept_a_year"... skip
+  run "only_the_flow_logs_service_delivers"... skip
+  run "a_shorter_retention_is_refused"... skip
+tests/flow_logs.tftest.hcl... tearing down
+tests/flow_logs.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed, 3 skipped.

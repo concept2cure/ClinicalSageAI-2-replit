@@ -1,0 +1,178 @@
+E3 red, part 1 of 2. The new E3 tests on the unchanged source (HEAD bb17f97b77).
+Put back from HEAD for this run: server/routes/etmf.routes.ts server/services/etmf/tmf-artifact-persistence.ts server/services/etmf/tmf-inspection-package.ts shared/schema/tmf-artifacts.ts
+
+## server/services/etmf/__tests__/tmf-governed-filing.test.ts
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is undefined
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is null
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is ""
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "   "
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "1234567"
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "  short  "
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is 12345678
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is {"text":"an object is not a reason"}
+   → expected TmfArtifactError: Current access to this … { code: '…' } to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a removal with no reason, without looking the filing up
+   → expected TypeError: __vite_ssr_import_1__.db.delet… to match object { Object (code, status) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > takes a reason of exactly 8 characters, trimmed, and never one it composed
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > still refuses an unknown artifact code first
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > goes through the chained writer, on the transaction client, after the write and before COMMIT
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > names the study, the artifact, the document, the reason and who asked from where
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > writes no filing when its audit row cannot be written
+   → expected [Function] to throw error matching /audit chain unavailable/ but got 'Current access to this Vault document…'
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > removes no filing when its audit row cannot be written
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > names the document it replaced, read under the row's lock
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says so when the first filing had no document
+   → db.insert is not a function
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says which removal a filing cleared, and that it replaced no live document
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says so when it takes the place of a row that had no study
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > records who, why and what was filed, and deletes nothing
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > does not find a filing that is already removed, and records nothing more
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > issues no DELETE against the filings table, on any path
+   → Current access to this Vault document could not be established. The artifact was not filed.
+ Test Files  1 failed (1)
+      Tests  21 failed | 1 passed (22)
+
+## tests/db/etmf-governed-filing.dbtest.ts  (PostgreSQL 16, runtime role app_service, RLS_ENFORCE=on)
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > refuses a filing with no reason, or one under 8 characters, and writes nothing
+   → undefined: {"id":"a6a02fcd-0cf6-44db-bb96-a32ccc020590","organizationId":128,"trialId":"dbtest-etmf-governed-mwankjcb_8a50f40d-S","artifactCode":"protocol","zoneNumber":2,"documentRef":"vault://2c6a6497-daa1-48d2-98fb-677a93259399","createdBy":136,"filedAt":"2026-11-10T12:14:57.692Z","updatedAt":"2026-11-10T12:14:57.692Z","meta":{"auditTrail":{"persisted":true,"chained":true}}}: expected 201 to be 400 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > writes the filing and its audit row in one transaction, on the sequenced chain, naming the study and the document
+   → expected [ { …(7) }, { …(7) } ] to have a length of 1 but got 2
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > names the document a re-file replaced
+   → expected [ { …(7) }, { …(7) }, { …(7) } ] to have a length of 2 but got 3
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > files a batch under one stated reason, each item with its own audit row
+   → expected 200 to be 400 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > refuses a removal with no reason, and leaves the filing
+   → {}: expected 204 to be 400 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > marks the row removed with who, when and why, in the audit row's own transaction
+   → {"error":{"code":"NOT_FOUND","message":"TMF artifact not found."}}: expected 404 to be 204 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > is served by no reader once removed, and cannot be removed twice
+   → expected { error: { code: 'NOT_FOUND', …(1) } } to match object { success: false, error: 'NOT_FOUND' }
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > files the artifact again on the same row, and its audit row says which removal it cleared
+   → expected '72b1f884-444e-408d-a362-87719282965f' to be 'f7bc1c8e-ebcd-4c59-9f1b-ae26980ae204' // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > has the database refuse a removal that carries no reason
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/etmf-governed-filing.dbtest.ts > a filing that takes the place of a row with no study says so > records what the unlinked row held
+   → expected { …(3) } to match object { Object (outcome, documentRef, ...) }
+ × tests/db/etmf-governed-filing.dbtest.ts > the inspection package is a recorded download > records EXPORT_GENERATED with the SHA-256 of the bytes it sent
+   → expected undefined to be '81ebe8bcc7d417b2c5677a821a0f447ea28de…' // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > the inspection package is a recorded download > sends nothing when the download cannot be recorded
+   → expected 200 to be 503 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > the audit trail these acts wrote is one intact chain > verifies the organization's chain after filings, a removal, a re-filing and a download
+   → expected 7 to be greater than or equal to 8
+ Test Files  1 failed (1)
+      Tests  13 failed (13)
+
+E3 red, part 2 of 2. The same E3 tests on the source with E2 done and E3 not begun:
+the study binding is in place, and each failure below is E3's own.
+
+## server/services/etmf/__tests__/tmf-governed-filing.test.ts
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is undefined
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is null
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is ""
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "   "
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "1234567"
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is "  short  "
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is 12345678
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a filing whose reason is {"text":"an object is not a reason"}
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > refuses a removal with no reason, without looking the filing up
+   → promise resolved "{ …(2) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > takes a reason of exactly 8 characters, trimmed, and never one it composed
+   → Cannot read properties of undefined (reading '0')
+ ✓ server/services/etmf/__tests__/tmf-governed-filing.test.ts > a reason is required before anything is read > still refuses an unknown artifact code first
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > goes through the chained writer, on the transaction client, after the write and before COMMIT
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > names the study, the artifact, the document, the reason and who asked from where
+   → Cannot read properties of undefined (reading '0')
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > writes no filing when its audit row cannot be written
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > the audit row is written by the change's own transaction > removes no filing when its audit row cannot be written
+   → promise resolved "{ …(2) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > names the document it replaced, read under the row's lock
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says so when the first filing had no document
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says which removal a filing cleared, and that it replaced no live document
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a re-file says what it replaced > says so when it takes the place of a row that had no study
+   → Cannot read properties of undefined (reading 'id')
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > records who, why and what was filed, and deletes nothing
+   → expected { …(2) } to deeply equal { …(2) }
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > does not find a filing that is already removed, and records nothing more
+   → promise resolved "{ …(2) }" instead of rejecting
+ × server/services/etmf/__tests__/tmf-governed-filing.test.ts > a removal marks the row and keeps it > issues no DELETE against the filings table, on any path
+   → Cannot read properties of undefined (reading 'id')
+ Test Files  1 failed (1)
+      Tests  21 failed | 1 passed (22)
+
+## tests/db/etmf-governed-filing.dbtest.ts  (PostgreSQL 16, runtime role app_service, RLS_ENFORCE=on)
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > refuses a filing with no reason, or one under 8 characters, and writes nothing
+   → undefined: {"id":"d016b30f-9630-4df6-aa65-c29590d2faf5","organizationId":131,"trialId":"dbtest-etmf-governed-mwanks4t_106ebf06-S","artifactCode":"protocol","zoneNumber":2,"documentRef":"vault://bc196db4-d7f1-4bf0-adc1-4618c2e76a68","createdBy":140,"filedAt":"2026-11-10T12:15:09.142Z","updatedAt":"2026-11-10T12:15:09.142Z","studyRef":59,"removedAt":null,"removedBy":null,"removalReason":null,"meta":{"auditTrail":{"persisted":true,"chained":true}}}: expected 201 to be 400 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > writes the filing and its audit row in one transaction, on the sequenced chain, naming the study and the document
+   → expected [ { …(7) }, { …(7) } ] to have a length of 1 but got 2
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > names the document a re-file replaced
+   → expected [ { …(7) }, { …(7) }, { …(7) } ] to have a length of 2 but got 3
+ × tests/db/etmf-governed-filing.dbtest.ts > filing needs a reason, and is recorded with the change > files a batch under one stated reason, each item with its own audit row
+   → expected 200 to be 400 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > refuses a removal with no reason, and leaves the filing
+   → {}: expected 204 to be 400 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > marks the row removed with who, when and why, in the audit row's own transaction
+   → {"success":false,"error":"NOT_FOUND","message":"TMF artifact not found."}: expected 404 to be 204 // Object.is equality
+ ✓ tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > is served by no reader once removed, and cannot be removed twice
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > files the artifact again on the same row, and its audit row says which removal it cleared
+   → expected 'b46d049f-53db-4611-b1ec-f1f064522753' to be 'f21fcfd3-b335-4e1a-b0d8-b0599d353403' // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > a removal keeps the record > has the database refuse a removal that carries no reason
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/etmf-governed-filing.dbtest.ts > a filing that takes the place of a row with no study says so > records what the unlinked row held
+   → expected { …(4) } to match object { Object (outcome, documentRef, ...) }
+ × tests/db/etmf-governed-filing.dbtest.ts > the inspection package is a recorded download > records EXPORT_GENERATED with the SHA-256 of the bytes it sent
+   → expected undefined to be '939267db4d1890b4e9d5dc626ec6f9a02a99e…' // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > the inspection package is a recorded download > sends nothing when the download cannot be recorded
+   → expected 200 to be 503 // Object.is equality
+ × tests/db/etmf-governed-filing.dbtest.ts > the audit trail these acts wrote is one intact chain > verifies the organization's chain after filings, a removal, a re-filing and a download
+   → expected 7 to be greater than or equal to 8
+ Test Files  1 failed (1)
+      Tests  12 failed | 1 passed (13)
+
+## The removal CHECK is held by the database (the migration is applied in every run), so its case above fails only
+## because the cases before it did. Seen failing with the constraint absent (one transaction, rolled back; psql output):
+BEGIN
+SET
+ALTER TABLE
+ removed | removed_by | removal_reason 
+---------+------------+----------------
+ t       |            | 
+(1 row)
+
+UPDATE 1
+ROLLBACK
+ERROR:  new row for relation "tmf_artifact_filings" violates check constraint "tmf_artifact_filings_removal_recorded_chk"
+DETAIL:  Failing row contains (58f649e0-2706-452e-b0c2-0645ecbf4b5e, 110, dbtest-etmf-study-mwamt5am_59a7cc99-A, investigators_brochure, 2, vault://c5281c2c-1c90-4a8e-b13f-5e3d298d2b3e, 111, 2026-11-10 11:53:41.876935+00, 2026-11-10 11:53:41.876935+00, 5, 2026-11-10 12:16:43.253718+00, null, null).
+ removed_rows_without_a_reason 
+-------------------------------
+                             0
+(1 row)
+

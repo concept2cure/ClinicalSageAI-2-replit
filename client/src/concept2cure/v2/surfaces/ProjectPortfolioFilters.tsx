@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { PATHWAY_LABEL, REGULATORY_PATHWAYS } from '@shared/constants/mdx';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, type DossierFigureState } from '../dossierReadiness';
+import { enumWords } from './projectWords';
 
 interface PortfolioCounts {
   total: number;
   byWorkstream: Record<string, number>;
   byPathway: Record<string, number>;
   filingWithin60Days: number;
+  /** The server's mean of the measured dossier readiness over every selected project (P-122 §3.2);
+   *  server/services/c2c/project-portfolio.ts `readPortfolioReadiness`. Absent on an older response. */
+  averageReadiness?: unknown;
+  readinessMeasured?: unknown;
+  readinessState?: unknown;
 }
 
 const isCount = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0;
@@ -101,28 +108,143 @@ export function readIsPaged(meta: Record<string, unknown> | undefined): boolean 
   return meta !== undefined && meta.hasMore === true;
 }
 
-/** A count read from one page of a longer list is a floor, and reads as one. */
-export function countFloor(n: number, paged: boolean): string {
-  return paged ? `${n}+` : String(n);
-}
-
 export function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
   if (!paged || !settled) return null;
   return (
     <div role="status" className="scaf-note">
-      Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
+      Showing the first {count} projects. The status filter and search cover these only.{scopedCounts ? ' The figures above cover all projects matching the selected filters.' : ''}
     </div>
   );
 }
 
-/** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
- *  for no date or an unreadable one. */
-export function daysUntil(isoDate: string | null | undefined, today: Date = new Date()): number | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
-  if (!m) return null;
-  const due = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  return Math.round((due - now) / 86_400_000);
+/* ════ What Projects shows by default (P-122 §3.2, 2026-11-10) ════
+   D2-1 (78842ee08) put the portfolio figures under the List view's table and took
+   readiness, stage, lead and status off the cards, with Grid the default and the
+   choice forgotten: a person opening Projects saw none of it. These bring them
+   back in both views, in the quiet card's words: no tiles, plain numbers. */
+
+/** A stated text value, or null for none: blank, or the server's '—'. */
+export function stated(value: string | null | undefined): string | null {
+  const v = value?.trim();
+  return v && v !== '—' ? v : null;
+}
+
+const VIEW_KEY = 'c2c-v2-projects-view';
+export type PortfolioView = 'grid' | 'list';
+/** Grid or list, as the person last chose it in this browser; grid until then. A
+ *  per-viewer convenience: a store that cannot be read or written remembers nothing. */
+export function useRememberedView(): [PortfolioView, (view: PortfolioView) => void] {
+  const [view, setView] = useState<PortfolioView>(() => {
+    try { return window.localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid'; } catch { return 'grid'; }
+  });
+  const choose = useCallback((next: PortfolioView) => {
+    setView(next);
+    try { window.localStorage.setItem(VIEW_KEY, next); } catch { /* not remembered */ }
+  }, []);
+  return [view, choose];
+}
+
+const formatted = (n: number) => n.toLocaleString('en-US');
+
+/**
+ * The portfolio figures, above the projects in grid and list: the active projects
+ * and the filings due within 60 days, as the server counted them (GET
+ * /api/c2c/projects `meta.counts`: every project the person can open under the
+ * selected client, client type and pathway, before paging). The browser computes
+ * none of them (Rule 2): a read that carries no counts says so, and is never
+ * recounted from its rows. No average readiness: the server sends no portfolio
+ * figure for it, and a mean over the loaded page was the browser's. Each
+ * project's own readiness, which the server measures, is on its card and its row.
+ * Nothing is said while the read is in flight or failed: the page says that.
+ */
+/**
+ * The portfolio's average readiness as the server sent it. Never computed here (Rule 2): a response
+ * that carries no state has no average at all (null), and a 'measured' state without a usable figure
+ * is read as not read.
+ */
+export type AverageReadinessFigure =
+  | { state: 'measured'; pct: number; measured: number }
+  | { state: 'none' | 'not_measured' | 'unavailable' };
+export function averageReadinessFigure(counts: PortfolioCounts | null): AverageReadinessFigure | null {
+  const state = counts?.readinessState;
+  if (!counts || (state !== 'measured' && state !== 'none' && state !== 'not_measured' && state !== 'unavailable')) return null;
+  if (state !== 'measured') return { state };
+  const { averageReadiness: pct, readinessMeasured: measured } = counts;
+  if (typeof pct !== 'number' || !Number.isFinite(pct) || !isCount(measured) || measured === 0) return { state: 'unavailable' };
+  return { state: 'measured', pct: Math.round(pct), measured };
+}
+
+/** The same figure as a sentence, for the screen context AnA reads; null when the server sent none. */
+export function averageReadinessSentence(counts: PortfolioCounts | null): string | null {
+  const f = averageReadinessFigure(counts);
+  if (!f) return null;
+  if (f.state === 'measured') return `The server measured an average dossier readiness of ${f.pct}% over the ${f.measured} project(s) with a measured figure.`;
+  if (f.state === 'none') return 'No project has a measured dossier readiness yet, so there is no average.';
+  if (f.state === 'not_measured') return 'The average dossier readiness is not measured for this many projects.';
+  return 'The average dossier readiness could not be read.';
+}
+
+function AverageReadiness({ counts }: { counts: PortfolioCounts }) {
+  const f = averageReadinessFigure(counts);
+  if (!f) return null;
+  let said: React.ReactNode = 'average readiness could not be read';
+  let title = DOSSIER_READINESS_MEANS;
+  if (f.state === 'none') said = 'no readiness measured yet';
+  else if (f.state === 'not_measured') {
+    said = 'average readiness not measured for this many projects';
+    title = 'Narrow the list by client, workstream or pathway to measure it.';
+  } else if (f.state === 'measured') {
+    said = <><strong>{f.pct}%</strong> average readiness{f.measured < counts.total ? ` over ${formatted(f.measured)} measured` : ''}</>;
+    title = `${DOSSIER_READINESS_MEANS} The average is over the projects with a measured figure.`;
+  }
+  return <>{' · '}<span className="pj-summary-i" title={title}>{said}</span></>;
+}
+
+export function PortfolioFigures({ settled, counts }: { settled: boolean; counts: PortfolioCounts | null }) {
+  if (!settled) return null;
+  if (!counts) return <p className="pj-summary" role="status">The portfolio figures could not be read.</p>;
+  const soon = counts.filingWithin60Days;
+  return (
+    <p className="pj-summary">
+      <span className="pj-summary-i"><strong>{formatted(counts.total)}</strong> {counts.total === 1 ? 'active project' : 'active projects'}</span>
+      <AverageReadiness counts={counts} />
+      {' · '}
+      <span className="pj-summary-i" data-tone={soon > 0 ? 'warn' : undefined}>
+        <strong>{formatted(soon)}</strong> {soon === 1 ? 'filing' : 'filings'} due within 60 days
+      </span>
+    </p>
+  );
+}
+
+/** What a card says of a project's state, from its own row. */
+export interface CardFactsRow {
+  readiness: number | null;
+  readinessState?: DossierFigureState;
+  readinessReason?: string;
+  stage: string;
+  lead: string;
+  status: string;
+}
+
+/**
+ * A card's facts: its dossier readiness as the server measured it (named as
+ * Project home names it, with the server's reason as the tooltip), its stage, its
+ * lead and its status, in words. Nothing the record does not hold is filled in:
+ * no lead reads "No lead named". A blocked status is the card's own warning line
+ * (Projects.tsx), so it is not said twice here.
+ */
+export function CardFacts({ p }: { p: CardFactsRow }) {
+  const stage = stated(p.stage);
+  const lead = stated(p.lead);
+  const facts: React.ReactNode[] = [
+    <span key="r" title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>
+      {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}
+    </span>,
+    stage && <span key="s">{stage}</span>,
+    <span key="l">{lead ? `Lead ${lead}` : 'No lead named'}</span>,
+    p.status !== 'blocked' && <span key="t">{enumWords(p.status) ?? 'Status not recorded'}</span>,
+  ].filter(Boolean);
+  return <div className="pj-card-facts">{facts.flatMap((f, i) => (i ? [' · ', f] : [f]))}</div>;
 }
 
 /** What the search covers, in its placeholder: the loaded page, which is the

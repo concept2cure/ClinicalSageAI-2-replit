@@ -1,0 +1,32 @@
+{
+ "ind-phone": {
+  "url": "/concept2cure/submission-center?program=6c8a782e-20c6-477c-8e98-99c2d9246765",
+  "hasButton": 1,
+  "verdict": "No completed Shadow Review has run for this sequence — that is one of the reasons the gate blocks. Dispatch is not permitted until it has been adversarially reviewed. | You created this sequence, so you cannot sign its freeze or dispatch. Separation of duties requires a different colleague with signing rights to sign both steps — arrange who that is before the sequence is ready. | Whether the test package was assembled could not be confirmed — Request failed. Check the sequence's audit trail before assembling again.",
+  "horizontalOverflow": false,
+  "rec": {
+   "http": [
+    "ana 500 POST /api/submissions/sequences/2/assemble :: INTERNAL"
+   ],
+   "console": [
+    "ana Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+   ],
+   "pageErrors": []
+  }
+ },
+ "device-phone": {
+  "url": "/concept2cure/submission-center?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "hasButton": 1,
+  "verdict": "No completed Shadow Review has run for this sequence — that is one of the reasons the gate blocks. Dispatch is not permitted until it has been adversarially reviewed. | You created this sequence, so you cannot sign its freeze or dispatch. Separation of duties requires a different colleague with signing rights to sign both steps — arrange who that is before the sequence is ready. | Whether the test package was assembled could not be confirmed — Request failed. Check the sequence's audit trail before assembling again.",
+  "horizontalOverflow": false,
+  "rec": {
+   "http": [
+    "ana 500 POST /api/submissions/sequences/3/assemble :: INTERNAL"
+   ],
+   "console": [
+    "ana Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+   ],
+   "pageErrors": []
+  }
+ }
+}

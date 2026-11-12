@@ -1,0 +1,29 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T06:33:55.123Z",
+  "steps": [
+    {
+      "name": "1. the Vault asks which sponsor; nothing of any sponsor is read or shown",
+      "sponsors": [
+        "Concept2Cure Therapeutics · 7 projects Show its Vaults",
+        "Lumen Bioscience (demo — not affiliated) · 4 projects Show its Vaults"
+      ]
+    },
+    {
+      "name": "2. one sponsor: its projects' Vaults, and its artifacts read inside it",
+      "heading": "Lumen Bioscience (demo — not affiliated): its projects' Vaults",
+      "projects": [
+        "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND) Open its Vault",
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND) Open its Vault",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) Open its Vault",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) Open its Vault"
+      ],
+      "artifactReads": [
+        "/api/artifacts-center?sameClientAs=f0882d31-a241-492a-bac3-583be731b753"
+      ]
+    },
+    {
+      "name": "3. Change sponsor asks again"
+    }
+  ]
+}

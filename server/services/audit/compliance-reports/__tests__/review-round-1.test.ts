@@ -49,7 +49,8 @@ describe('item 3 — what the seal is, and who verifies it, said plainly', () =>
     expect(VERIFY_INSTRUCTION).toMatch(/platform holds/);
     expect(VERIFY_INSTRUCTION).toMatch(/signingKeyId/);
     expect(VERIFY_INSTRUCTION).toContain('POST /api/audit/export/verify');
-    expect(VERIFY_INSTRUCTION).toMatch(/signed-in member of the organisation/);
+    // The verify route admits audit readers only (GA-D6-03): the instruction names who can use it.
+    expect(VERIFY_INSTRUCTION).toMatch(/signed-in administrator or manager of the organisation/);
     expect(VERIFY_INSTRUCTION).toMatch(/CSV text exactly as saved/);
     expect(VERIFY_INSTRUCTION).toContain('.manifest.json');
     expect(VERIFY_INSTRUCTION).toMatch(/inspector verifies through the organisation/);

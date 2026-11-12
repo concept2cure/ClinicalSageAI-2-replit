@@ -76,17 +76,32 @@ function typeOf(values: Array<string | number | boolean | null>): ColumnType {
  * tabulation domains share the shape) carries STUDYID, DOMAIN and USUBJID;
  * the domain is the prefix its own variables share (AETERM, AESTDTC → AE).
  * ADaM is recognised by its required variables: ADSL by USUBJID with
- * treatment and population flags, BDS by PARAMCD with AVAL or AVALC.
+ * treatment and population flags, BDS by PARAMCD with AVAL or AVALC, OCCDS
+ * (ADAE, ADCM, ADMH) by an analysis treatment with the occurrence's term.
  */
+/** The ADaM class a table's columns show, or null. */
+function adamClass(cols: Set<string>): ProfiledTable['cdisc'] | null {
+  if (!cols.has('USUBJID')) return null;
+  const any = (re: RegExp) => [...cols].some(c => re.test(c));
+  if (cols.has('PARAMCD') && (cols.has('AVAL') || cols.has('AVALC'))) {
+    return { standard: 'ADaM', domain: 'BDS', rule: 'USUBJID + PARAMCD + AVAL/AVALC' };
+  }
+  if (any(/^TRT\d{2}[PA]$/) && any(/FL$/)) {
+    return { standard: 'ADaM', domain: 'ADSL', rule: 'USUBJID + TRTxxP/A + population flags' };
+  }
+  // ADaM occurrence data (OCCDS: ADAE, ADCM, ADMH): a subject, an analysis treatment and the event's term or coding,
+  // with no SDTM DOMAIN column (2026-11-12; the CDISC pilot's ADAE was "no standard recognized").
+  if (!cols.has('DOMAIN') && any(/^TRT(A|P|\d{2}[AP])$/) && any(/^(AE|CM|MH)(TERM|DECOD|TRT)$/)) {
+    return { standard: 'ADaM', domain: 'OCCDS', rule: 'USUBJID + analysis treatment + the occurrence term, no DOMAIN' };
+  }
+  return null;
+}
+
 export function detectCdisc(names: string[]): ProfiledTable['cdisc'] {
   const cols = new Set(names.map(n => n.trim().toUpperCase()));
   const has = (...c: string[]) => c.every(x => cols.has(x));
-  if (has('USUBJID', 'PARAMCD') && (cols.has('AVAL') || cols.has('AVALC'))) {
-    return { standard: 'ADaM', domain: 'BDS', rule: 'USUBJID + PARAMCD + AVAL/AVALC' };
-  }
-  if (has('USUBJID') && [...cols].some(c => /^TRT\d{2}[PA]$/.test(c)) && [...cols].some(c => /FL$/.test(c))) {
-    return { standard: 'ADaM', domain: 'ADSL', rule: 'USUBJID + TRTxxP/A + population flags' };
-  }
+  const adam = adamClass(cols);
+  if (adam) return adam;
   if (has('STUDYID', 'DOMAIN', 'USUBJID')) {
     const prefixes = new Map<string, number>();
     for (const c of cols) {

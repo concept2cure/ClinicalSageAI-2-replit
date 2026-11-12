@@ -1,0 +1,11 @@
+# c2c_rr5_phone_instance, project 2 (C2C-101), after the 1440-light flow through the form (first run, 16:36Z):
+# the instance runs with LAUNCH_SCOPE_ENFORCE=on and LAUNCH_SCOPE_API_UNATTRIBUTED=enforce, so the writes passed the production gate.
+# id|name|target_date|done|linked_sections|created_by
+7|Pre-IND briefing package sent|2027-01-22|t|{m1.2,m2.5}|1
+# The instance's request log for run 1 (method, path, status), as the server wrote it.
+2026-11-10T16:36:29.367Z POST /api/project-sections/milestones 200
+2026-11-10T16:36:33.879Z PATCH /api/project-sections/milestones/7 200
+2026-11-10T16:36:38.600Z PATCH /api/project-sections/milestones/7 200
+2026-11-10T16:37:33.466Z GET /api/project-sections/milestones 401
+2026-11-10T16:37:33.468Z GET /api/project-sections/milestones?project_id=2 401
+# (The two 401s at 16:37:33 are a probe of how the page authenticates, sent without the session's bearer token; not the screen's.) Row 7 was then deleted (DELETE 1) to restore the demo data before the final run.

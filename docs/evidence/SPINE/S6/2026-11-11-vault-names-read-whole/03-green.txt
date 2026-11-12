@@ -1,0 +1,18 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts
+ ✓ client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > a folder name in the binder tree wraps and is never cut 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > a document title in the list wraps, ranked above the one-line title other lists keep 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > a document’s line of fields (type, versions, review stage, owner, date) wraps 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > the Vault takes a wide screen: its page is wider than the reading width, and the tree takes part of it 1ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+
+$ npm run -s ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+$ npm run -s ci:surface-text-ramp
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+$ npm run -s ci:check-css-selector-shadowing
+[css-shadowing] OK — 49 stylesheets, 13 known shadowed selector(s), 0 new.
+$ npm run -s ci:class-vocabulary
+[ci:class-vocabulary] OK — 6089 file(s) scanned, no restated class vocabulary.
+$ npm run -s ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.

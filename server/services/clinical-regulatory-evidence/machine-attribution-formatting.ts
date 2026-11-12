@@ -424,3 +424,68 @@ export function mappedFormattingCarryForwardRanges(
   });
   return result;
 }
+
+/** Words only: character references decoded; case, sentence punctuation and white space not compared. */
+function wordsOnly(text: string): string {
+  return decodeHtmlEntities(text).toLowerCase().replace(/[.,;:!?]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** `content` with each of `cuts` (any order, may overlap) replaced by `fill`. */
+function withoutRanges(content: string, cuts: Extent[], fill: '' | ' '): string {
+  let out = '';
+  let from = 0;
+  for (const [start, end] of [...cuts].sort((a, b) => a[0] - b[0])) {
+    if (end <= from) continue;
+    out += content.slice(from, Math.max(from, start)) + fill;
+    from = end;
+  }
+  return out + content.slice(from);
+}
+
+/**
+ * Whether any sentence of `prior`, a prior machine span's text as it was
+ * stored, is still in `saverContent`: the part of the new content this save
+ * credits to no machine. Asked so that words that were KEPT are found however
+ * they were dressed, because the caller lets a prior machine span go only when
+ * its words are gone or still the machine's (lineage-gate.ts, a person
+ * replacing a machine clause in cited content). Each sentence is looked for:
+ *
+ *   - in the characters as saved, tags and attribute values included: words
+ *     moved into a title or an alt, into a citation's label, a comment;
+ *   - in the content with its tags taken out: words wrapped or split by an
+ *     inline tag or by the tags of a citation;
+ *   - in the content with its tags and every element a reader prints something
+ *     else for taken out whole: words with a citation put between them.
+ *
+ * Tags are read both as nothing and as a space; character references are
+ * decoded; case, sentence punctuation and white space are not compared. A
+ * sentence shorter than the shortest clause this module compares
+ * (readers.minClauseChars) is not looked for, as it is never matched. Returns
+ * true when `prior` leaves no sentence to look for, so a span that cannot be
+ * checked is never called gone. It reads with the canonical readers it is given.
+ */
+export function wordsKept(prior: string, saverContent: string, readers: FormattingReaders): boolean {
+  const tagsOf = (value: string): Extent[] =>
+    looksLikeHtml(value) ? readers.scanMarkup(value).tags.map((tag) => [tag.start, tag.end]) : [];
+  const priorTags = tagsOf(prior);
+  const sentences = decodeHtmlEntities(withoutRanges(prior, priorTags, ' '))
+    .split(/(?<=[.!?;:])\s+/)
+    .map(wordsOnly)
+    .filter((sentence) => sentence.length >= readers.minClauseChars);
+  if (sentences.length === 0) return true;
+  const tags = tagsOf(saverContent);
+  const printed: Extent[] = looksLikeHtml(saverContent) ? readers.notComparedRanges(saverContent) : [];
+  const haystacks = [
+    wordsOnly(saverContent),
+    wordsOnly(withoutRanges(saverContent, tags, '')),
+    wordsOnly(withoutRanges(saverContent, tags, ' ')),
+    wordsOnly(withoutRanges(saverContent, [...printed, ...tags], '')),
+    wordsOnly(withoutRanges(saverContent, [...printed, ...tags], ' ')),
+  ];
+  return sentences.some((sentence) => haystacks.some((haystack) => haystack.includes(sentence)));
+}
+
+/** `content` with every range of `spans` cut out: what a save leaves to its saver. */
+export function contentOutsideSpans(content: string, spans: ReadonlyArray<{ charStart: number; charEnd: number }>): string {
+  return withoutRanges(content, spans.map((span) => [span.charStart, span.charEnd]), ' ');
+}

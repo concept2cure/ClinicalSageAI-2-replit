@@ -14,7 +14,8 @@
  *   - items.riskCat / .control  → absent          (board exposes refCode instead)
  *   - kris: no threshold method, analysis level or per-site drilldown
  *   - qtls.unit                 → always null; the breach response is the flat
- *     breachActionTaken narrative, not a structured breach record
+ *     breachActionTaken narrative, not a structured breach record. The limit's direction and a range's lower
+ *     bounds are carried (direction, thresholdLower, secondaryLower)
  *   - signals: resolution notes only, no structured investigation record
  *   - patients.metrics          → the scorer's per-dimension signed z breakdown;
  *     empty until the cohort is scored (see RbmBoardPatient.metrics)
@@ -126,6 +127,12 @@ export interface RbmBoardQtl {
   unit: null;
   secondary: number | null;
   threshold: number | null;
+  /** Which way the limit bites: `upper` (breach at or above), `lower` (at or below) or `two_sided` (a range).
+   *  Absent on a board served before the direction was sent: upper, the only kind the screen then knew. */
+  direction?: string;
+  /** A range's lower bound and its lower early-warning limit; null for the one-sided kinds. */
+  thresholdLower?: number | null;
+  secondaryLower?: number | null;
   current: number | null;
   status: string;
   breachActionTaken: string | null;
@@ -172,6 +179,72 @@ export interface RbmBoardSite {
   tier: string;
   drivers: string[];
   at: string | null;
+  /** Where the figures came from. Absent on a board served before the source was recorded: Site Intelligence. */
+  source?: 'site_intelligence' | 'study_indicators';
+  /** For a site scored from the study's own indicators: how many are red, amber, green, or have no limit. */
+  basis?: { red: number; amber: number; green: number; unbanded: number } | null;
+  /** For such a site: each indicator as last read there, with the band the engine gave it, worst first. Absent on a
+   *  board served before the readings were sent, and empty for a Site Intelligence row. */
+  indicators?: RbmBoardSiteIndicator[];
+}
+
+/** One of the study's indicators as last read at one site. The band is the engine's; a screen never re-bands it. */
+export interface RbmBoardSiteIndicator {
+  name: string;
+  value: number;
+  unit: string | null;
+  status: string;
+  amber: number | null;
+  red: number | null;
+  dir: string;
+  at: string | null;
+  cutoff: string | null;
+  /** The indicator's readings at this site across the loads, oldest first, the latest last. Absent where the
+   *  board carries none. */
+  history?: { v: number; cutoff: string | null }[];
+}
+
+/** One site's reading of one indicator, for an indicator's "by site" list. */
+export interface RbmSiteReading extends RbmBoardSiteIndicator { site: string }
+
+const SITE_READING_RANK: Record<string, number> = { red: 0, amber: 1, not_evaluated: 2, green: 3 };
+
+/**
+ * An indicator's readings across the study's sites, worst band first, then by site number. The readings are the
+ * ones each site's risk row already carries (`sites[].indicators`); an indicator is matched by its name, as the
+ * engine binds a site reading to it. Empty when no site has read it, or when the sites were scored from Site
+ * Intelligence, which holds no indicator readings.
+ */
+export function siteReadingsFor(board: Pick<RbmBoard, 'sites'>, indicatorName: string): RbmSiteReading[] {
+  const wanted = indicatorName.trim().toLowerCase();
+  const out: RbmSiteReading[] = [];
+  for (const s of board.sites) {
+    for (const r of s.indicators ?? []) {
+      if (r.name.trim().toLowerCase() === wanted) out.push({ ...r, site: s.n });
+    }
+  }
+  return out.sort((a, b) => (SITE_READING_RANK[a.status] ?? 9) - (SITE_READING_RANK[b.status] ?? 9)
+    || a.site.localeCompare(b.site, undefined, { numeric: true }));
+}
+
+/**
+ * The indicators read at any of the study's sites, for the columns of the site-by-indicator table: those with a
+ * red reading somewhere first, then amber, then the rest, each group by name. Each carries its unit as read.
+ */
+export function siteIndicatorColumns(board: Pick<RbmBoard, 'sites'>): { name: string; unit: string | null }[] {
+  const worst = new Map<string, { name: string; unit: string | null; rank: number }>();
+  for (const s of board.sites) {
+    for (const r of s.indicators ?? []) {
+      const key = r.name.trim().toLowerCase();
+      const rank = SITE_READING_RANK[r.status] ?? 9;
+      const seen = worst.get(key);
+      if (!seen) worst.set(key, { name: r.name, unit: r.unit, rank });
+      else if (rank < seen.rank) seen.rank = rank;
+    }
+  }
+  return [...worst.values()]
+    .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name))
+    .map(({ name, unit }) => ({ name, unit }));
 }
 
 export interface RbmBoardPlan {
@@ -293,4 +366,14 @@ export function rbmBoardHasData(board: RbmBoard | null): boolean {
     board.actions.length > 0 ||
     board.attention.length > 0
   );
+}
+
+/** The assessment framework as a reader names it. The record stores a code (`ich_e6r3`, the schema default);
+ *  an unknown code is shown as recorded rather than guessed at. There is no R2 entry: no writer admits an
+ *  R2 code (`FRAMEWORK` in server/routes/mdx-rbm.ts), and the platform cites only R3 as in force
+ *  (tests/regulatory/ich-e6r3-citations.test.ts). */
+const FRAMEWORK_LABEL: Record<string, string> = { ich_e6r3: 'ICH E6(R3)' };
+export function frameworkLabel(code: string | null | undefined): string {
+  const c = (code ?? '').trim();
+  return FRAMEWORK_LABEL[c] ?? c;
 }

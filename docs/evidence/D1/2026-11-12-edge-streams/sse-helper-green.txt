@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > sends the stream headers once, flushed, with no transform and no proxy buffering 3ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > writes a comment heartbeat every 15 s, so a silent minute never reaches the 60 s edge 3ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > stops when the producer ends the stream, and writes nothing after 2ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > stops when the client goes away, and reports the stream closed 1ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > stops when the producer ends the response itself (res.end()) 1ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > sends the heartbeat through the producer's own writer, when it has one 1ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > stopHeartbeat stops the heartbeat and leaves the stream open 1ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > a send is one JSON frame: a payload cannot end the frame early 0ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > openSseStream > a write that throws ends the heartbeat instead of escaping 1ms
+ ✓ server/utils/__tests__/sse-stream.test.ts > on a real socket > a POST stream keeps its heartbeat after the request body is read 228ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  06:15:21
+   Duration  707ms (transform 104ms, setup 93ms, import 113ms, tests 246ms, environment 0ms)
+

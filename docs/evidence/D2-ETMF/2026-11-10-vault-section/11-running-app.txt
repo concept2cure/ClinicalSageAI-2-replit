@@ -1,0 +1,42 @@
+# The trial master file page, opened and used in the running app (2026-11-10)
+# Local dev server on :5000, PostgreSQL 16, the demo's biotech project C2C-101 (one study). Chromium through Playwright,
+# signed in through the real sign-in form. Each line is what the browser showed.
+
+## 1. From the Vault's header button to a filed record and the inspection package (1440x900)
+1 header button: Trial master file
+2 heading: Trial master file
+2 verdict: 0 of 26 essential records are filed. 26 are missing.
+2 zones: 11
+2 records: 26
+3 first missing record: File a document as Trial Master File Plan
+3 said: Trial Master File Plan is filed against “[Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled”, version 1.0. Your reason is recorded with the filing.
+3 verdict after: 1 of 26 essential records are filed. 25 are missing.
+4 package: tmf-inspection-sd_65bfd735cf9649258e6d6bd78349e1cb.zip
+4 said: Inspection package saved: the index of filings and the completeness record, not the documents themselves. It records essential records still missing. Its SHA-256, checked on receipt: 68599f1fd3f5a779d93f0cd0d02790175f6557c714e0dcf261203ca9dcf2e9f2.
+console errors: []
+responses >= 400: []
+
+## 2. The record names and the reason field, phone (390x844) and desktop, with the filing form open
+phone names cut: []
+phone reason field height: 53px
+phone horizontal scroll: false
+phone console errors: []
+desktop names cut: []
+desktop reason field height: 53px
+desktop horizontal scroll: false
+desktop console errors: []
+
+## 3. What the walks left in the database (read as the owner, after the walks)
+$ select chain_seq, action, left(reason, 70), sha256_chain is not null from audit_logs where action like 'TMF_%' or action ilike '%tmf%' order by chain_seq
+517 | TMF_ARTIFACT_FILED | Filed for the pre-IND inspection readiness check. | chained
+520 | TMF_ARTIFACT_REMOVED | Filed against the wrong record during the walk; the protocol is not th | chained
+527 | TMF_ARTIFACT_FILED | Filed for the pre-IND inspection readiness check. | chained
+
+$ select artifact_code, trial_id, study_ref, document_ref, removed_at is null as live from tmf_artifact_filings
+tmf_plan | sd_65bfd735cf9649258e6d6bd78349e1cb | 1 | vault://9ed8e080-cb49-495c-9ddb-2793e00639bc | live
+
+# One row for the record: filed, removed with its reason, filed again. The removal cleared on the same row.
+
+# The two inspection packages the walks downloaded are recorded downloads, in the same chain:
+518 | EXPORT_GENERATED
+528 | EXPORT_GENERATED

@@ -80,7 +80,11 @@ await record('IQ-02', 'Deployment artefacts are present in the checkout', 'Docke
 
 await record('IQ-03', 'Container image definition matches the runbook', 'node:22-slim base; non-root user; migrations and scripts/db copied; HEALTHCHECK probes /readyz; assets vendored', () => {
   const d = read('Dockerfile.optimized');
-  const want = [/FROM node:22-slim/, /USER appuser/, /COPY --from=builder \/app\/migrations/, /COPY --from=builder \/app\/scripts\/db/, /readyz/, /COPY --from=builder \/app\/assets/];
+  /* A COPY may carry flags before --from: since OPS-19 (ebda50531c, 2026-10-22) every runtime COPY is
+     `COPY --chown=appuser:appuser --from=builder …`, and this check read that as the copy missing (IQ-001 v1.x
+     change impact, 2026-11-10). */
+  const copied = (dir) => new RegExp(`COPY (?:--[a-z-]+=\\S+ )*--from=builder /app/${dir}`);
+  const want = [/FROM node:22-slim/, /USER appuser/, copied('migrations'), copied('scripts/db'), /readyz/, copied('assets')];
   const missing = want.filter((re) => !re.test(d)).map(String);
   if (missing.length) throw fail(`Dockerfile lacks: ${missing.join(', ')}`);
   const jobs = [...read('.github/workflows/deploy-aws.yml').matchAll(/^ {2}([a-z-]+):$/gm)].map((m) => m[1]);

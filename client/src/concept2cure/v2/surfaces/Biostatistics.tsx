@@ -40,6 +40,11 @@ import {
   type DesignAssessment,
 } from './biostatBridge';
 import { statusWords } from '../editor/CanvasDocumentList';
+import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
+import { BiostatKnowledgePanel } from './biostatKnowledge';
+import { BIOSTAT_WORKED_EXAMPLES } from './biostatWorkedExamples';
+import { DefensibilitySection, DesignCalculatorsSection, CALCULATOR_TITLES, resolveCalculatorByName } from './BiostatWorkbench';
+import { CALCULATORS } from './biostatCalculators';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -100,7 +105,7 @@ import { statusWords } from '../editor/CanvasDocumentList';
 /* ── Types: the server's contract (server/services/ana-biostats/types.ts) ── */
 
 /** The engine's `StatisticalInput`. This surface's controls write it directly. */
-interface EngineInput {
+export interface EngineInput {
   clientTrack: string;
   regulatoryBody?: string;
   studyType: string;
@@ -353,15 +358,8 @@ const docById = (id: string): DocDef | undefined => DOC_REGISTRY.find((d) => d.i
 
 /* ── Design presets (engine inputs — not stored data) ── */
 
-const BS_PRESETS: Record<string, Preset> = {
-  survival: { label: 'Pivotal OS (survival)', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority', objectiveType: 'efficacy', endpointType: 'time_to_event', alpha: 0.05, powerTarget: 0.90, effectSize: 0.38, eventRate: 0.55, attritionRate: 0.15, allocationRatio: 1, numberOfGroups: 2, numberOfEndpoints: 1, interimAnalyses: 2, comparatorType: 'placebo', estimandStrategy: 'treatment_policy', missingDataMethod: 'MMRM', indication: 'Oncology', phase: 'Phase III' } },
-  binary: { label: 'ORR (binary)', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority', objectiveType: 'efficacy', endpointType: 'binary', alpha: 0.05, powerTarget: 0.90, effectSize: 0.15, controlRate: 0.30, treatmentRate: 0.45, attritionRate: 0.15, allocationRatio: 1, numberOfGroups: 2, numberOfEndpoints: 1, comparatorType: 'placebo', phase: 'Phase III' } },
-  ni: { label: 'Non-inferiority', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'EMA', studyType: 'non_inferiority', objectiveType: 'efficacy', endpointType: 'continuous', alpha: 0.025, powerTarget: 0.90, effectSize: 0.0, nonInferiorityMargin: -0.4, variance: 1, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 2, comparatorType: 'active', phase: 'Phase III' } },
-  ivd: { label: 'Diagnostic accuracy', input: { clientTrack: 'diagnostics_ivd', regulatoryBody: 'FDA', studyType: 'diagnostic_accuracy', objectiveType: 'diagnostic_accuracy', endpointType: 'sensitivity_specificity', alpha: 0.05, powerTarget: 0.90, effectSize: 0.9, sensitivity: 0.90, specificity: 0.92, prevalence: 0.30, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 1, numberOfEndpoints: 2 } },
-  // Two designs the engine has always sized and no control could ask for.
-  roc: { label: 'ROC / AUC', input: { clientTrack: 'diagnostics_ivd', regulatoryBody: 'FDA', studyType: 'diagnostic_accuracy', objectiveType: 'diagnostic_accuracy', endpointType: 'auc_roc', alpha: 0.05, powerTarget: 0.80, effectSize: 0, aucTarget: 0.85, aucNull: 0.50, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 2 } },
-  crossover: { label: '2×2 crossover', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority', objectiveType: 'efficacy', endpointType: 'continuous', alpha: 0.05, powerTarget: 0.80, effectSize: 0.5, variance: 1, crossoverPeriods: 2, withinSubjectCorrelation: 0.5, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 2 } },
-};
+/* The worked examples live in biostatWorkedExamples.ts, where a test sizes each one on the real engine. */
+const BS_PRESETS: Record<string, Preset> = BIOSTAT_WORKED_EXAMPLES;
 
 function vf(v: string): number | undefined { return v === undefined || v === null || v === '' ? undefined : parseFloat(v); }
 
@@ -550,6 +548,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const [designReload, setDesignReload] = useState(0);
   const designs = useBridgeDesigns(designReload);
   const [selectedStudyId, setSelectedStudyId] = useState<string | null>(() => consumeNavParams('biostatistics')?.studyId ?? null);
+  /* The design engine open in the calculators section. Held here, not in the
+     section, because the action that opens one by name is this surface's: the
+     bus keeps one registration per screen (useSurfaceActionHandlers below). */
+  const [calculatorId, setCalculatorId] = useState<string>(CALCULATORS[0].id);
   const bridge = useDesignAssessment(selectedStudyId);
   const loadedDesign = bridge.assessment;
   /* With a project open, its own study design is what the engine opens on —
@@ -879,12 +881,18 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         engineSummary: engine.interpretation?.summary ?? null,
         ...govFacts,
         ...designFacts,
+        /* Folded in with the design calculators on 2026-11-09: the retired
+           `biostat-workbench` published these so AnA could name an engine and
+           open it. The handler came with the section; the list belongs here,
+           in the one surface's context block. */
+        availableCalculators: CALCULATOR_TITLES,
       },
       availableActions: [
         'Load one of the project\'s persisted study designs into the engine',
         'Adjust any design input or preset — the engine re-sizes the design and rewrites the document',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
+        'Open one of the design calculators by name, or run a reviewer-risk defensibility assessment',
         'Opening in the editor and saving a working document both create a working document in the project (genesis revision + Part 11 audit row); neither files it — filing is "Place into filing" in the editor. AnA proposes them in conversation, never through screen controls.',
       ],
     };
@@ -917,6 +925,18 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       if (docType === target) return { ok: true, detail: `Already drafting the ${found.label}` };
       setDocType(target);
       return { ok: true, detail: `Switched the document to ${found.label} — filing it stays a human act` };
+    },
+    /* Came with the design calculators on 2026-11-09. The section registered
+       it under this id itself; the bus keeps ONE registration, so the
+       section's effect (a child's runs first) answered a held load-design
+       "not supported" and this registration then replaced the section's.
+       Opening an engine is view state only; computing stays deliberate. */
+    'biostatistics.select-calculator': (params) => {
+      const r = resolveCalculatorByName(String(params.calculator ?? ''));
+      if (!r.ok) return { ok: false, reason: r.reason };
+      if (calculatorId === r.calc.id) return { ok: true, detail: `Already on ${r.calc.title}` };
+      setCalculatorId(r.calc.id);
+      return { ok: true, detail: `Opened ${r.calc.title}` };
     },
   });
   /* The ready signal for the hold above. A design named while the list is
@@ -958,11 +978,6 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           </p>
         </div>
         <div className="ph-acts">
-          {onNav && (
-            <button type="button" className="btn ghost" onClick={() => onNav('biostat-workbench')}>
-              {I.sigma} Design calculators
-            </button>
-          )}
           {/* The page's ONE primary: take the document into the one editor. */}
           <button
             type="button"
@@ -1042,6 +1057,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                 {isAccuracy && <label className="bs-f"><span>Sensitivity</span><input type="number" step="0.01" value={input.sensitivity || ''} onChange={(e) => set('sensitivity', vf(e.target.value))} /></label>}
                 {isAccuracy && <label className="bs-f"><span>Specificity</span><input type="number" step="0.01" value={input.specificity || ''} onChange={(e) => set('specificity', vf(e.target.value))} /></label>}
                 {isAccuracy && <label className="bs-f"><span>Prevalence</span><input type="number" step="0.05" value={input.prevalence || ''} onChange={(e) => set('prevalence', vf(e.target.value))} /></label>}
+                {/* The performance goal is the expected value less this margin. The engine sizes no accuracy design
+                    without it (since 2026-10-05 none is assumed), and until 2026-11-10 no control could give one. */}
+                {isAccuracy && !isRoc && !isNI && <label className="bs-f"><span>Margin to goal</span><input type="number" step="0.01" value={input.nonInferiorityMargin || ''} onChange={(e) => set('nonInferiorityMargin', vf(e.target.value))} /></label>}
                 {isRoc && <label className="bs-f"><span>Expected AUC</span><input type="number" step="0.01" value={input.aucTarget || ''} onChange={(e) => set('aucTarget', vf(e.target.value))} /></label>}
                 {isRoc && <label className="bs-f"><span>Null AUC</span><input type="number" step="0.05" value={input.aucNull || ''} onChange={(e) => set('aucNull', vf(e.target.value))} placeholder="0.5" /></label>}
                 {isAgreement && <label className="bs-f"><span>Target kappa</span><input type="number" step="0.05" value={input.agreementTarget || ''} onChange={(e) => set('agreementTarget', vf(e.target.value))} /></label>}
@@ -1260,6 +1278,36 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         )}
       </section>
+      {/* The reviewer-risk assessment and the 29 deterministic engines. They
+          were a second surface, `biostat-workbench`, reached by a ghost button
+          from this header until 2026-11-09; the merge the 2026-08 consolidation
+          decided ("Survivor: biostatistics. Fold the workbench in as a tab")
+          was carried out then. See BiostatWorkbench.tsx's header. */}
+      <DefensibilitySection fireToast={fireToast} />
+      <DesignCalculatorsSection
+        fireToast={fireToast}
+        onNav={onNav}
+        deviceProject={isDeviceFamily(program?.productType)}
+        activeId={calculatorId}
+        onSelect={setCalculatorId}
+      />
+
+      {/* The two capabilities that RECORD. Everything above sizes, judges and
+          writes: a figure is computed, a document is produced, nothing about
+          the running study is kept. These two keep — an interim look and the
+          Part 11-signed decision taken on it, and the method graph built from
+          this sponsor's own reports.
+
+          They are here because the registry puts them here: `biostatistics` is
+          "SAP authoring, power analysis, TLF shells, adaptive trial plans,
+          IDMC" (ui-surface-registry.ts:874), and this is the surface the rail
+          opens (registryModel.ts:176, kept there by P-107). They were mounted
+          on `biostat-workbench` on 2026-10-13, which left the one act that
+          stops a trial on unblinded data reachable only by first noticing a
+          ghost button labelled "Design calculators". */}
+      <AdaptiveMonitoringPanel />
+      <BiostatKnowledgePanel />
+
       <C2CToast msg={toast} />
     </div>
   );

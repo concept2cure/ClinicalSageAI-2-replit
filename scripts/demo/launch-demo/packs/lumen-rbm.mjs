@@ -28,15 +28,13 @@
  * description), so a second run creates nothing. A refusal fails the step with
  * the server's answer. Content and its provenance: lumen-rbm-content.mjs.
  *
- * "New KRI" (POST /api/mdx/rbm-kris) is not used: on 2026-11-06 it answered
- * 500 on every create (Postgres 42P08, "could not determine data type of
- * parameter $11", from the `CASE WHEN $11 IS NULL` in its INSERT).
+ *   Recompute site risk          POST /api/mdx/rbm-site-risk/recompute      (only where the loads left no snapshot)
  *
- * Not reachable from here, and not built: Site risk, Site oversight and the
- * central statistical outlier scan read the site-risk snapshot, which
- * /rbm-site-risk/recompute derives only from Site Intelligence
- * (site_intel.sites). No mounted route writes Site Intelligence, so those
- * views stay empty and the run says so.
+ * "New KRI" (POST /api/mdx/rbm-kris) is not used. It answered 500 on every create until 2026-11-11 (GA-S8-01, fixed
+ * in c7f797d89); the seed library and "Configure" remain the path here, so the indicators keep their library names.
+ *
+ * Site risk and Site oversight are scored from the site rows of the monthly extracts (GA-S8-02): eight sites, site
+ * 104 on the enhanced tier. "Run central monitoring" is left for a person to press.
  */
 import { connectSigner, must } from '../lib.mjs';
 import {
@@ -339,6 +337,29 @@ async function ensureActions({ api, run, tally }, program, planId, signalIds, la
 
 /* ───────────────────────── The board, as the screen reads it ───────────────────────── */
 
+/** The sites the monthly extracts carry a site-level reading for (lumen-rbm-content.mjs KRIS[].bySite). */
+const SITES_WITH_READINGS = new Set(KRIS.flatMap((k) => Object.entries(k.bySite ?? {})
+  .filter(([, values]) => values.some((v) => v != null)).map(([n]) => n))).size;
+
+/**
+ * Site risk and Site oversight. The study's sites are scored from the site rows of the extracts above
+ * (server/services/rbm/site-risk-engine.ts, GA-S8-02): a load that carries site rows rescores them, so a database
+ * seeded from zero already has its snapshot here. One seeded before that existed has the readings and no snapshot,
+ * and gets it through the screen's own "Recompute site risk" (POST /api/mdx/rbm-site-risk/recompute).
+ */
+async function ensureSiteRisk({ api, run, tally }, program, label) {
+  await run.step(`RBM: site risk scored from the site-level indicator readings on ${label}`, async () => {
+    const have = await list(api, `${M}/rbm-site-risk?program_id=${program.id}`, 'read the site-risk snapshot');
+    if (have.length >= SITES_WITH_READINGS) { tally.found('rbm-site-risk'); return `found ${have.length} sites`; }
+    const res = must(await api('POST', `${M}/rbm-site-risk/recompute`, { programId: program.id }), 200, 'recompute site risk');
+    const sites = Array.isArray(res.data) ? res.data : [];
+    if (sites.length < SITES_WITH_READINGS) throw new Error(`site risk scored ${sites.length} of ${SITES_WITH_READINGS} sites (source: ${res.meta?.source ?? 'not stated'})`);
+    tally.created('rbm-site-risk');
+    const enhanced = sites.filter((x) => x.monitoringTier === 'enhanced').map((x) => x.siteNumber);
+    return `${sites.length} sites from ${res.meta?.source === 'study_indicators' ? "the study's site-level indicators" : res.meta?.source}; enhanced: ${enhanced.join(', ') || 'none'}`;
+  });
+}
+
 async function confirmBoard({ api, run }, program, { subjectsLanded }, label) {
   return run.step(`RBM: the board and roster read back on ${label}`, async () => {
     const roster = await list(api, '/api/mdx-rbm/rbm-programs', 'read the monitoring roster');
@@ -347,14 +368,19 @@ async function confirmBoard({ api, run }, program, { subjectsLanded }, label) {
     const s = b.summary;
     const gaps = [];
     if (!b.assessment || !b.items.length) gaps.push('RACT');
-    if (s.kris.total < KRIS.length || s.kris.notEvaluated) gaps.push('KRI readings');
-    if (s.qtls.total < QTLS.length || s.qtls.notEvaluated) gaps.push('QTL values');
+    // The seed's own indicators and limits, by name. An indicator a person added through "New KRI" has no reading
+    // until they give it one, and that is their record, not a gap in the seed (it stopped a re-run on 2026-11-11).
+    const unread = (rows, key, names) => names.filter((name) => { const row = (rows ?? []).find((x) => x[key] === name); return !row || row.status === 'not_evaluated'; });
+    const kriGaps = unread(b.kris, 'name', KRIS.map((k) => k.name));
+    const qtlGaps = unread(b.qtls, 'parameter', QTLS.map((q) => q.parameter));
+    if (kriGaps.length) gaps.push(`KRI readings (${kriGaps.length} of ${KRIS.length} of the seed's indicators unread)`);
+    if (qtlGaps.length) gaps.push(`QTL values (${qtlGaps.length} of ${QTLS.length} of the seed's limits unread)`);
     if (s.signals.total < SIGNALS.length) gaps.push('signals');
     if (subjectsLanded && s.patients.scored < SUBJECTS.length) gaps.push('patient profiles');
     if (!b.plan || !b.actions.length) gaps.push('plan actions');
     if (!b.freshness.length) gaps.push('source freshness');
+    if (s.sites.total < SITES_WITH_READINGS) gaps.push(`site risk (${s.sites.total} of ${SITES_WITH_READINGS} sites)`);
     if (gaps.length) throw new Error(`the RBM board is missing: ${gaps.join(', ')}`);
-    run.note('RBM: Site risk and Site oversight stay empty, and "Run central monitoring" finds no outliers, because the site-risk snapshot is derived only from Site Intelligence (site_intel.sites) and no mounted route writes it. Site numbers appear in signals, subject ids and action descriptions instead.');
     const summary = { overallRisk: s.overallRisk, ctq: s.riskItems.total, kris: s.kris, qtls: s.qtls, signals: s.signals, patients: s.patients, sites: s.sites,
       plan: b.plan && { id: b.plan.id, status: b.plan.status }, actions: b.actions.length, attention: b.attention.length, sources: b.freshness.map((f) => `${f.source} ${f.ageDays}d`) };
     run.record('rbm', summary);
@@ -372,5 +398,6 @@ export async function ensureLumenRbm(ctx, program, label) {
   const planId = await ensurePlan(ctx, program, assessment, label);
   const signalIds = await ensureSignals(ctx, program, planId, label);
   await ensureActions(ctx, program, planId, signalIds, label);
+  await ensureSiteRisk(ctx, program, label);
   await confirmBoard(ctx, program, loaded, label);
 }

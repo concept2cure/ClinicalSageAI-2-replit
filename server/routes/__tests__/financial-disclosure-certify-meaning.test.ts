@@ -71,7 +71,7 @@ function app() {
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
-    Object.assign(req as any, { userId: 5, tenantId: 7 });
+    Object.assign(req as any, { userId: 5, tenantId: 7, userRole: 'member' });
     next();
   });
   a.use('/api/financial-disclosures', router);

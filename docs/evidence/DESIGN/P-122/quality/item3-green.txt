@@ -1,0 +1,23 @@
+# Item 3 green: the figure line, the readiness read admitted, Quality's suites and the entitlement suites
+# base fcc2de483 2026-11-10T12:18:25Z
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > says the quality system's figures in one line under its header 57ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > reads only the server routes that compute them 2ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says the quality system as one line of the server's numbers, not tiles 73ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > leaves out a figure whose server read failed, and says which, with a retry; never a zero in its place 296ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > leaves out a readiness block the server could not read 7ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says it is reading while nothing has answered, and states no number 3ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says a capped queue is a floor, not a count 7ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx > Quality's figures > says the figures are the organisation's while the registers are narrowed to a project 4ms
+ ✓ server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts > what a launch screen calls under those prefixes still is > /api/mdx/qms/readiness 0ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves the QMS readiness read under Quality, no longer excluded as dead 3ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/mdx/qms/documents/review-due, which the line also reads 1ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/mdx/qms/changes/summary, which the line also reads 0ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/capa-mdr/triage, which the line also reads 0ms
+ Test Files  55 passed (55)
+      Tests  997 passed (997)
+
+# ci:launch-scope-api (its one finding, /api/cmc-changes, is the CMC lane's, not Quality's)
+  [unmapped] /api/cmc-changes
+    called by cmc
+# ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1048 baselined interpolation(s) in 222 file(s); the baseline may only shrink.

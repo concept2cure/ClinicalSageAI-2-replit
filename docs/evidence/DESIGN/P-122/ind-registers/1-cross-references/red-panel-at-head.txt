@@ -1,0 +1,5 @@
+# client/src/concept2cure/v2/__tests__/submissionIndRegisters.test.tsx at HEAD (no SubmissionIndRegisters.tsx, IndLifecycle.tsx as HEAD).
+ FAIL  client/src/concept2cure/v2/__tests__/submissionIndRegisters.test.tsx [ client/src/concept2cure/v2/__tests__/submissionIndRegisters.test.tsx ]
+Error: Failed to resolve import "../surfaces/SubmissionIndRegisters" from "client/src/concept2cure/v2/__tests__/submissionIndRegisters.test.tsx". Does the file exist?
+ Test Files  1 failed (1)
+      Tests  no tests

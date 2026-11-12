@@ -1,0 +1,134 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "05ddc758-4095-4857-ac48-5ebcd53d9266",
+      "productName": "Q1E-beyond",
+      "batchNumber": "B-1",
+      "dosageForm": "tablet",
+      "scope": "DP",
+      "climaticZone": "II",
+      "studyType": "long_term",
+      "storageConditions": [
+        "25C/60%RH"
+      ],
+      "duration": 12,
+      "testParameters": [
+        "assay"
+      ],
+      "timePoints": [
+        "0",
+        "3",
+        "6",
+        "12"
+      ],
+      "shelfLife": "36 months at 25C/60%RH",
+      "status": "ACTIVE",
+      "startDate": "2026-01-01T00:00:00.000Z",
+      "stabilityData": [
+        {
+          "timePoint": "0",
+          "parameter": "assay",
+          "result": "99.6"
+        },
+        {
+          "timePoint": "3",
+          "parameter": "assay",
+          "result": "99.6"
+        },
+        {
+          "timePoint": "6",
+          "parameter": "assay",
+          "result": "99.6"
+        },
+        {
+          "timePoint": "9",
+          "parameter": "assay",
+          "result": "99.6"
+        },
+        {
+          "timePoint": "12",
+          "parameter": "assay",
+          "result": "99.6"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 34,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 87,
+        "organizationId": 2,
+        "projectId": "05ddc758-4095-4857-ac48-5ebcd53d9266",
+        "studyTitle": null,
+        "productName": "Q1E-beyond",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 12,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "3",
+          "6",
+          "12"
+        ],
+        "stabilityData": [
+          {
+            "timePoint": "0",
+            "parameter": "assay",
+            "result": "99.6"
+          },
+          {
+            "timePoint": "3",
+            "parameter": "assay",
+            "result": "99.6"
+          },
+          {
+            "timePoint": "6",
+            "parameter": "assay",
+            "result": "99.6"
+          },
+          {
+            "timePoint": "9",
+            "parameter": "assay",
+            "result": "99.6"
+          },
+          {
+            "timePoint": "12",
+            "parameter": "assay",
+            "result": "99.6"
+          }
+        ],
+        "notes": null,
+        "shelfLife": "36 months at 25C/60%RH",
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-12T00:55:33.854Z",
+        "updatedAt": "2026-11-12T00:55:33.854Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

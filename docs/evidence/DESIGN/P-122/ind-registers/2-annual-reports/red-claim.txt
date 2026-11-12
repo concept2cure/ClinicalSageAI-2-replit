@@ -1,0 +1,34 @@
+# npx vitest run server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts, before the annual-report claim
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-references
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-reference-register
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-references/0b6d2c8e-1111-4c4c-8c8c-123456789abc/file-loa
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/cross-references/0b6d2c8e-1111-4c4c-8c8c-123456789abc
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-references
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-reference-register
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-references/:p/file-loa
+  ✓ the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/cross-references/:p
+  × the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/7/annual-reports
+  × the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/7/annual-reports/overdue
+  × the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/7/annual-reports/overdue?asOf=2030-01-01
+  × the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/:p/annual-reports
+  × the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/:p/annual-reports/overdue
+  ✓ the annual-report tracker is served on the IND screen > one stored report by its id has no screen caller, and stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/safety-reports stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/safety-reports/overdue stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/icsr-transmissions stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7 stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/overview stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/cockpit stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/drift stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/8/cross-references stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission//cross-references stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/cross-referencesx stays unattributed
+  ✓ nothing beside the registers the screen calls is admitted > the stateless cross-reference register engine is not the stored one, and stays unattributed
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/7/annual-reports
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/7/annual-reports/overdue
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/7/annual-reports/overdue?asOf=2030-01-01
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/:p/annual-reports
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the annual-report tracker is served on the IND screen > /api/ind-lifecycle/submission/:p/annual-reports/overdue
+AssertionError: expected 'unmapped' to be 'launch' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed | 20 passed (25)

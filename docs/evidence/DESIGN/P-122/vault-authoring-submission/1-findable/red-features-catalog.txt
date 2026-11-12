@@ -1,0 +1,40 @@
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search" 192ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation 157ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette 108ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line 48ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button 167ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before 54ms
+   → expected [ 'Account', …(6) ] to include 'Subscription & features'
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it 8ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it 133ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it) 70ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is 75ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no organisation label, project chip or Task chip; the open project is a crumb button 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself 15ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: Search, Collaborate, New task, Your work and Help, and no text but Search’s 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text 11ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home 10ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does 12ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it 8ms
+ × client/src/concept2cure/v2/__tests__/appsCatalogEveryMember.test.tsx > a member: the features they may open, and nothing they cannot use > lists the features switched on for the organisation, and none that is locked 100ms
+   → expected <div class="launch-title"></div> to be null
+ × client/src/concept2cure/v2/__tests__/appsCatalogEveryMember.test.tsx > a member: the features they may open, and nothing they cannot use > offers no administrator controls and no switch 170ms
+   → expected <button class="btn ghost" …(1)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/appsCatalogEveryMember.test.tsx > an administrator: unchanged > sees every feature, the locked ones with their reason, and the admin controls 67ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a member is offered neither the Admin console, Access requests nor Platform licensing 246ms
+ × client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a member is offered Subscription & features 38ms
+   → expected [ 'Ask AnA: "features"' ] to include 'Subscription & features'
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a customer's administrator is offered the Admin console, not Platform licensing 75ms
+ ✓ client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a platform administrator is offered Platform licensing 33ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/appsCatalogEveryMember.test.tsx > a member: the features they may open, and nothing they cannot use > lists the features switched on for the organisation, and none that is locked

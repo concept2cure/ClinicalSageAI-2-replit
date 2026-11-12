@@ -679,7 +679,7 @@ export const SEGMENT_MODULES = {
       // characteristics — were reachable only from the two pharma segments.
       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), which this segment lists under Evidence & data.
       // 2026-10-30 (D2, fold F4): device analytics joined Reporting & analytics, a work area on every segment's rail (RAIL_CORE).
-      items: ['precedent-intelligence', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'device-postmarket', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -714,7 +714,7 @@ export const SEGMENT_MODULES = {
       // workbench is the surface that delivers the outcome
       // (docs/SURFACE_DECISIONS_2026-10-08.md).
       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), a device-engineering project feature.
-      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -774,7 +774,6 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
-        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
@@ -819,7 +818,6 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
-        'biostat-workbench',
         'rbm',
         'precedent-intelligence',
         'crl-library',
@@ -844,7 +842,7 @@ export const SEGMENT_MODULES = {
       // docs/SURFACE_DECISIONS_2026-10-08.md scraps as a place. That surface
       // stays listed until the change that removes it names the replacement
       // path for each of its entry points, as the working agreement requires.
-      items: ['biostatistics', 'biostat-workbench', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],

@@ -1,0 +1,39 @@
+# Each mutation alone, against the five test files; the source restored after each (sha256 checked).
+
+## M1: the .zip name binding removed
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary .zip, and refuses one named .zip that
+ × server/utils/__tests__/fileSignature.test.ts > the name bindings the browser declares from (shared/constants/upload-name-bindings.ts) > binds every byte-checked format the Data Room picker offers 
+ × server/utils/__tests__/fileSignature.test.ts > every format the Vault admits is checked by its bytes and bound to its name (MR-08 Stage 3 step 3) > has a byte check and a name binding 2ms
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > refuses a .zip declared text/html, naming the types a .zip may be declared as 1ms
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > refuses a .zip whose bytes are not a zip container, whatever zip type was declared 1ms
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > accepts a zip container under each type a browser sends one as, and checks it as a zip 2ms
+      Tests  6 failed | 103 passed (109)
+
+## M2: application/x-zip-compressed dropped from the binding
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb .zip with 422 ARCHIVE_LIMITS_EXCEEDED, as
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > accepts a zip container under each type a browser sends one as, and checks it as a zip 8ms
+      Tests  2 failed | 107 passed (109)
+
+## M3: the binding's canonical type made application/pdf
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb .zip with 422 ARCHIVE_LIMITS_EXCEEDED, as
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary .zip, and refuses one named .zip that
+ × server/utils/__tests__/fileSignature.test.ts > the name bindings the browser declares from (shared/constants/upload-name-bindings.ts) > declares, for every name, a type that name admits 10ms
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > accepts a zip container under each type a browser sends one as, and checks it as a zip 3ms
+      Tests  4 failed | 105 passed (109)
+
+## M4: the .zip row's vault flag back to false
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault stages a .zip as one file (P-112) > offers a .zip for upload, and still says why it skips what it does not take 5ms
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes resource.json to canonical governed ingestion with calle
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes define.xml to canonical governed ingestion with caller/p
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes enrollment.tsv to canonical governed ingestion with call
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes enrollment.csv to canonical governed ingestion with call
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.png to canonical governed ingestion with caller/pro
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.jpg to canonical governed ingestion with caller/pro
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.jpeg to canonical governed ingestion with caller/pr
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.gif to canonical governed ingestion with caller/pro
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes sponsor-copy-0003.zip to canonical governed ingestion wi
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes sponsor-copy-0003.zip to canonical governed ingestion wi
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > retains the real 50 MB multipart limit for newly admitted raw-t
+ × client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > shares Vault picker candidates with its receiver while keeping
+ × client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > the Vault takes a .zip as one file; the Data Room still opens 
+      Tests  14 failed | 95 passed (109)

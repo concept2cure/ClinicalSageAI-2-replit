@@ -1,6 +1,6 @@
 /** The cabinet's folders as the Vault lists them (S6, 2026-11-06). */
 import { describe, expect, it } from 'vitest';
-import { cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf } from '../vaultFolders';
+import { binderFolderFor, cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, planTasksForFolder, vaultShowsCabinet } from '../vaultFolders';
 
 const cabinet = {
   id: 'cabinet', code: '', label: 'Filing binder',
@@ -28,5 +28,60 @@ describe('vaultFolders', () => {
     expect(newFolderParentOf('cab-bn:5.3')).toBe('bn:5.3');
     expect(newFolderParentOf('cab-unfiled')).toBe('');
     expect(newFolderParentOf('sec-doc-1-5.3')).toBe('');
+  });
+});
+
+describe('the plan in the Vault (S6 step 3)', () => {
+  const tasks = [
+    { id: 'ds', name: 'Draft drug substance', ctd: ['3.2.S'] },
+    { id: 'mfg', name: 'Manufacturing', ctd: ['3.2.S.2', '3.2.P.3'] },
+    { id: 'tox', name: 'Toxicology', ctd: ['4.2.3'] },
+  ];
+  it('lists the tasks bound at or below a binder heading, with their status', () => {
+    expect(planTasksForFolder('cab-bn:3.2.S', tasks, { ds: 'done' })).toEqual([
+      { id: 'ds', name: 'Draft drug substance', status: 'done', codes: ['3.2.S'] },
+      { id: 'mfg', name: 'Manufacturing', status: 'todo', codes: ['3.2.S.2'] },
+    ]);
+    expect(planTasksForFolder('cab-bn:M4', tasks).map((t) => t.id)).toEqual(['tox']);
+    expect(planTasksForFolder('cab-uf:4', tasks)).toEqual([]);
+  });
+  it('opens a code at its own heading, or the nearest above it the binder holds', () => {
+    const tree = new Set(['cab-bn:3.2.S', 'cab-bn:M3', 'cab-bn:M5']);
+    const has = (id: string) => tree.has(id);
+    expect(binderFolderFor('3.2.S', has)).toBe('cab-bn:3.2.S');
+    expect(binderFolderFor('3.2.S.4.1', has)).toBe('cab-bn:3.2.S');
+    expect(binderFolderFor('3.2.P.1', has)).toBe('cab-bn:M3');
+    expect(binderFolderFor('4.2.3', has)).toBeNull();
+  });
+});
+
+describe('where a folder sits, and which one an action opens', () => {
+  it('names the folder a cabinet folder is in', () => {
+    expect(folderParentOf(cabinet as never, 'cab-uf:4')).toBe('bn:5.3');
+    expect(folderParentOf(cabinet as never, 'cab-bn:M5')).toBe('');
+    expect(folderParentOf(cabinet as never, 'cab-uf:99')).toBe('');
+  });
+  it('an exact id never falls back to a name match', () => {
+    const found = [{ folder: { id: 'cab-bn:5.3', label: 'Clinical study reports' } }, { folder: { id: 'cab-uf:4', label: '5.3 notes' } }];
+    expect(openFolderMatches(found, 'bn:5.3.5', '5.3').map((f) => f.folder.id)).toEqual(['cab-bn:5.3']);
+    expect(openFolderMatches(found, 'bn:4.2', '5.3')).toEqual([]);
+    expect(openFolderMatches(found, '', '5.3 notes').map((f) => f.folder.id)).toEqual(['cab-uf:4']);
+  });
+});
+
+describe('when the Vault shows its cabinet instead of the empty state', () => {
+  const person = { id: 'uf:9', label: 'Pivotal study', depth: 0, kind: 'person' as const };
+  const binder = { id: 'bn:5.3', label: '5.3 Clinical study reports', depth: 1, kind: 'binder' as const };
+  it('an empty Vault with only the binder and presets is the empty state', () => {
+    expect(vaultShowsCabinet(0, [binder], false)).toBe(false);
+  });
+  it('New folder opens its form in an empty Vault (walked 2026-11-11: the button did nothing)', () => {
+    expect(vaultShowsCabinet(0, [binder], true)).toBe(true);
+  });
+  it('a folder a person made is shown before any document is filed', () => {
+    expect(vaultShowsCabinet(0, [binder, person], false)).toBe(true);
+  });
+  it('a Vault with documents shows its cabinet', () => {
+    expect(vaultShowsCabinet(3, [], false)).toBe(true);
   });
 });

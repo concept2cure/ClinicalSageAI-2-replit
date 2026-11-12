@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/ectd-compile-validate-rule-set.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ectd-compile-validate-rule-set.test.ts
+{
+  "timestamp": "2026-11-10T12:09:53.185Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ectd-compile-validate-rule-set.test.ts > POST /:projectIdent/validate names its rule set and says the other exists > the response names the rule set it ran and the one Submission readiness runs 7ms
+ ✓ server/routes/__tests__/ectd-compile-validate-rule-set.test.ts > POST /:projectIdent/validate names its rule set and says the other exists > a person reads it as a finding: which rules ran, that another set exists, and which one gates dispatch 2ms
+ ✓ server/routes/__tests__/ectd-compile-validate-rule-set.test.ts > POST /:projectIdent/validate names its rule set and says the other exists > the identity gaps still lead, so Validate never reads cleaner than Compile 2ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  12:09:50
+   Duration  4.53s (transform 2.69s, setup 105ms, import 4.10s, tests 15ms, environment 0ms)
+

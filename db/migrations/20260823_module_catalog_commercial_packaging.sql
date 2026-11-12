@@ -1,3 +1,38 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure — the module catalogue's commercial packaging
+-- Compliance: 21 CFR Part 11 (auditability), ALCOA+ principles
+-- Purpose: Give every live catalogue module the lowest plan that includes it,
+--          and refuse to finish while a live module has none.
+--
+-- eCTD/CTD Context:
+--   - Module(s): cross-cutting (commercial packaging; not a security boundary)
+--   - Integrity Risk Addressed: a module sold at no tier, or at a tier nobody
+--     decided
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Data only, one transaction, no DDL. Idempotent on every deploy.
+--
+-- Notes:
+--   - Header added 2026-11-12 with the eTMF amendment below; the file's earlier
+--     dated notes follow it unchanged.
+-- =============================================================================
+-- AMENDED IN PLACE 2026-11-12 — the eTMF is admitted to the Vault at the professional band (P-75; CLAUDE.md Rule 1).
+-- ('etmf', 'professional') is added. db/migrations/20260810_reconcile_module_catalog.sql now keeps the eTMF row
+-- live (it had retired it on every replay), so this file's guard sees the row. Without a tier here the second
+-- replay of the set halts:
+--   ✗ failed: db/migrations/20260823_module_catalog_commercial_packaging.sql — catalog modules with no tier assigned: etmf
+-- Found by replaying the whole set twice on a fixture before the amendments were allowed to ship together, as
+-- ectd-publishing was (note below). The band is P-75's decision. db/migrations/20261112_etmf_module_professional_tier.sql
+-- clears the `deprecated` flag earlier replays left, keeps the module for an organisation below the band that
+-- already held filings, and asserts the band. Evidence: docs/evidence/D2-ETMF/2026-11-12-admission/.
+-- AMENDED IN PLACE 2026-11-09 — biostat-workbench retired into biostatistics (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts biostat-workbench; its replay deprecates the existing row. Remove its packaging
+-- row too, so the unknown-module guard below still passes on a fresh database that never holds it. Replayed
+-- databases keep the deprecated row, the tier it was given ('professional'), its subscriptions and every other
+-- module's tier unchanged (biostatistics stays 'professional', the surviving surface's tier, so a plan that
+-- included the workbench includes the one Biostatistics surface that now holds its calculators).
 -- AMENDED IN PLACE 2026-11-05 — agency-meetings retired into Communication (P-39 step 4; CLAUDE.md Rule 1).
 -- 20260810 no longer upserts agency-meetings; its replay deprecates the existing row. Remove its packaging row
 -- too, so the unknown-module guard below still passes on a fresh database that never holds it. Replayed databases
@@ -316,7 +351,7 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   -- multi_agency_export, ctd_builder, document_builder) and to mdx-entitlements
   -- (prediction, scheduled/drift reporting).
   --
-  --   biostatistics, biostat-workbench     FEATURE_TIER_MAP biostatistics:professional
+  --   biostatistics                        FEATURE_TIER_MAP biostatistics:professional
   --   pharmacovigilance, pv-cockpit        post-approval; a pre-approval company has no PV obligation
   --   rbm                                  multi-study clinical operations
   --   device-postmarket                    PMS/PMCF + "Advanced Analytics"
@@ -327,9 +362,10 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   --   shadow-review, submission-twin       predictive review simulation -- the prediction moat
   --   gateway-transmittals                 FEATURE_TIER_MAP multi_agency_export:professional
   --   qmp                                  quality-management PROGRAMS, not the compliance record
-  ('biostat-workbench', 'professional'),
   ('biostatistics', 'professional'),
   ('device-postmarket', 'professional'),
+  -- The trial master file, admitted to the Vault 2026-11-12 (P-74 item 1, P-75: professional-tier module).
+  ('etmf', 'professional'),
   ('gateway-transmittals', 'professional'),
   ('lifecycle-mgmt', 'professional'),
   ('market-access', 'professional'),

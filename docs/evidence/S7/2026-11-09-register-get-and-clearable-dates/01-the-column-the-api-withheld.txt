@@ -1,0 +1,35 @@
+=== what the register holds ===
+$ psql -c "select id, substance_name, modality, biological_origin, tse_status from drug_substances where organization_id=2;"
+  2 | C2C-201 | small_molecule |                     |
+  1 | C2C-101 | biologic       | CHO-K1 cell culture | No animal-derived raw materials in the process or the media (fictional record, EMA EMEA/410/01).
+
+=== what GET /api/cmc/drug-substances returned, BEFORE ===
+{
+ "id": 2,
+ "substanceName": "C2C-201",
+ "casNumber": null,
+ "molecularFormula": null,
+ "molecularWeight": null,
+ "inn": "fictional — no INN assigned",
+ "structuralFormula": "Fictional structure — SMILES recorded in §3.2.S.3.1.",
+ "manufacturingProcess": { "manufacturer": "...", "route": "...", "site": "..." },
+ "status": "development",
+ "developmentPhase": "phase_2",
+ "organizationId": 2,
+ "projectId": "18cb4cd2-2f8a-419f-898b-c07cc4b6715e",
+ "createdAt": "...", "updatedAt": "..."
+}
+# no modality. no biologicalOrigin. no sourceOrganism, cellLine,
+# viralSafetyEvaluation, tseStatus. The drawer seeds each from row.<field>
+# (cmcRegisterForms.ts:778-781), so all six opened blank.
+
+=== AFTER ===
+C2C-201 | modality= small_molecule | origin= None | cellLine= None | tse= None
+C2C-101 | modality= biologic | origin= CHO-K1 cell culture | cellLine= CHO-K1, master cell bank MCB-C2C101-01 (fictional) | tse= No animal-derived raw materials in the proces
+
+=== the gap, measured over all four explicit projections ===
+/analytical-methods   projected 14 of 19 columns
+/stability-studies    projected 23 of 27
+/drug-substances      projected 14 of 24   <- ten withheld, six of them §3.2.A.2
+/drug-products        projected 14 of 17
+# The contract test now requires each omission to be declared with a reason.

@@ -1,0 +1,49 @@
+// Walk 2, flow 2c: the concurrent-session limit (2) enforced; the other settings doors; then the policy restored.
+const c = require('./lib.cjs');
+const ORG = 7;
+const sec = () => c.psql(`select settings->'security' from organizations where id=${ORG}`);
+const lastSettingsAudit = () => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(new_values::text, 420) from audit_logs where tenant_id=${ORG} and action like '%settings%' order by occurred_at desc limit 1`);
+async function fresh(browser, email) { const ctx = await browser.newContext({ viewport: c.VIEWPORTS.desktop }); const page = await ctx.newPage(); await c.signIn(page, email); return { ctx, page }; }
+(async () => {
+  const browser = await c.chromium.launch();
+  await c.step('limit 2: the viewer signs in three times; the first session is closed', async (s) => {
+    const a = await fresh(browser, 'walk2.viewer@example.test');
+    const b = await fresh(browser, 'walk2.viewer@example.test');
+    s.notes.push('A still works after B signed in: ' + (await c.api(a.page, 'GET', '/api/users/me')).status);
+    const d = await fresh(browser, 'walk2.viewer@example.test');
+    const r = await c.api(a.page, 'GET', '/api/users/me');
+    s.notes.push('A after the third sign-in: ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 300));
+    s.notes.push('B after the third sign-in: ' + (await c.api(b.page, 'GET', '/api/users/me')).status + ' | C: ' + (await c.api(d.page, 'GET', '/api/users/me')).status);
+    await a.page.getByRole('link', { name: 'Projects' }).or(a.page.getByRole('button', { name: 'Projects' })).first().click().catch(() => {});
+    await c.sleep(3500);
+    s.notes.push('A, after clicking Projects: url ' + a.page.url());
+    s.notes.push('A screen: ' + (await c.textOf(a.page, 'body')).split('Română').pop().slice(0, 500).replace(/\n+/g, ' | '));
+    await c.shot(a.page, 'w2-22-superseded-session-screen.png');
+    s.notes.push('audit: ' + c.psql(`select action, occurred_at, left(new_values::text, 200) from audit_logs where tenant_id=${ORG} and user_id=7 order by occurred_at desc limit 4`));
+    await a.ctx.close(); await b.ctx.close(); await d.ctx.close();
+  });
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const probe = async (s, label, method, url, body) => { const r = await c.api(page, method, url, body); s.notes.push(`${label}: ${method} ${url} -> ${r.status} ${JSON.stringify(r.body).slice(0, 300)}\n    stored: ${sec()}\n    audit: ${lastSettingsAudit()}`); return r; };
+  await c.step('settings door 1 (the card\'s own route) with no reason and out of range', async (s) => {
+    await probe(s, 'bare body, no reason', 'PATCH', `/api/organizations/${ORG}/settings`, { security: { sessionTimeoutMinutes: 20 } });
+    await probe(s, 'governed body, idle 99999', 'PATCH', `/api/organizations/${ORG}/settings`, { settings: { security: { sessionTimeoutMinutes: 99999 } }, reason: 'F1 walk 2: bounds probe' });
+    await probe(s, 'governed body, idle "abc"', 'PATCH', `/api/organizations/${ORG}/settings`, { settings: { security: { sessionTimeoutMinutes: 'abc' } }, reason: 'F1 walk 2: bounds probe' });
+    await probe(s, 'governed body, concurrent 0', 'PATCH', `/api/organizations/${ORG}/settings`, { settings: { security: { maxConcurrentSessions: 0 } }, reason: 'F1 walk 2: bounds probe' });
+  });
+  await c.step('what the card shows after those writes', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200);
+    await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(3000);
+    const card = page.locator('section[aria-label="Session security policy"]'); await card.scrollIntoViewIfNeeded();
+    s.notes.push('card shows idle=' + await card.getByLabel('Idle sign-out in minutes').inputValue().catch(() => '(no field)') + ' concurrent=' + await card.getByLabel('Maximum concurrent sessions').inputValue().catch(() => '(no field)'));
+    s.notes.push('card text: ' + (await card.innerText()).replace(/\n+/g, ' | ').slice(0, 400));
+    await card.screenshot({ path: `${c.SHOTS}/w2-22-session-policy-after-out-of-range-writes.png` });
+  });
+  await c.step('settings door 2 (/api/tenant-config): security settings nothing enforces, no reason', async (s) => {
+    const g = await c.api(page, 'GET', `/api/tenant-config/${ORG}/settings`);
+    s.notes.push('GET: ' + g.status + ' ' + JSON.stringify(g.body).slice(0, 500));
+    await probe(s, 'mfaRequired false, an IP restriction, an 8-character password policy', 'PATCH', `/api/tenant-config/${ORG}/settings`,
+      { security: { mfaRequired: false, ipRestrictions: ['203.0.113.7'], passwordPolicy: { minLength: 8, requireSpecialChars: false } } });
+  });
+  c.report(); c.save('w2-12-concurrent-and-doors');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

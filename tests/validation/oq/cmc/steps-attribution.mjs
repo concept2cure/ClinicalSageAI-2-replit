@@ -13,7 +13,7 @@
  * must run in: OQ-CMC-37 edits records OQ-CMC-03 created.
  */
 import { step, state, stamp } from './context.mjs';
-import { dataOf, errDetail, signatureRowsFor } from './signed-acts.mjs';
+import { dataOf, errDetail, runReauth, signatureRowsFor } from './signed-acts.mjs';
 import { REGISTER_STEPS } from './steps-registers.mjs';
 
 /**
@@ -461,17 +461,18 @@ await step(
       attach('close-out.json', observed);
       return 'partly executed — the refusals were observed; no signature was made';
     }
-    const signature = { reason: CLOSE_OUT_REASON, meaning: 'approval', reauth: { password } };
+    /* A fresh code for each attempt: the server refuses a code already presented (v0.11). */
+    const signature = async () => ({ reason: CLOSE_OUT_REASON, meaning: 'approval', reauth: await runReauth() });
 
     /* The two preconditions, which fail differently: nothing to sign for, and
        nothing for the claim to rest on. */
-    const noClaim = await api('POST', base, signature);
+    const noClaim = await api('POST', base, await signature());
     expect(noClaim.status === 409, `signing with no shelf life expected 409, got ${noClaim.status}`, noClaim.json);
     expect(/records no shelf life/i.test(errDetail(noClaim)), 'the refusal does not name the missing shelf life', errDetail(noClaim).slice(0, 200));
 
     const claim = await api('PUT', `/api/cmc/stability-studies/${id}`, { shelfLife: '24 months at 25C/60%RH' });
     expect(claim.status === 200, `recording the shelf life expected 200, got ${claim.status}`, claim.json);
-    const noData = await api('POST', base, signature);
+    const noData = await api('POST', base, await signature());
     expect(noData.status === 409, `signing over no results expected 409, got ${noData.status}`, noData.json);
     expect(
       /no recorded pull-point results/i.test(errDetail(noData)),
@@ -491,7 +492,7 @@ await step(
     expect(results.status === 200, `recording the results expected 200, got ${results.status}`, results.json);
 
     /* The signature. */
-    const signed = await api('POST', base, signature);
+    const signed = await api('POST', base, await signature());
     expect(signed.status === 200, `the close-out expected 200, got ${signed.status}`, signed.json);
     const row = dataOf(signed);
     expect(String(row.status) === 'COMPLETED', `the study is not COMPLETED after the signature`, row);
@@ -505,7 +506,7 @@ await step(
     /* And afterwards: the content is closed and the act cannot be repeated. */
     const edited = await api('PUT', `/api/cmc/stability-studies/${id}`, { shelfLife: '36 months at 25C/60%RH' });
     expect(edited.status === 409, `an edit after the signature expected 409, got ${edited.status}`, edited.json);
-    const again = await api('POST', base, signature);
+    const again = await api('POST', base, await signature());
     expect(again.status === 409, `a second close-out expected 409, got ${again.status}`, again.json);
     expect(/already COMPLETED/i.test(errDetail(again)), 'the second close-out is not refused as already COMPLETED', errDetail(again).slice(0, 160));
     observed.signed = signed.status;
@@ -615,7 +616,8 @@ await step(
     const act = await api('POST', `/api/cmc/stability-studies/${signed.id}/close-out`, {
       reason: 'The 24-month long-term data support a 24-month shelf life at the labelled condition.',
       meaning: 'approval',
-      reauth: { password },
+      /* v0.12: a fresh authenticator code with the password, as OQ-CMC-33, -35 and -40 send since v0.11. */
+      reauth: await runReauth(),
     });
     expect(act.status === 200, `the close-out expected 200, got ${act.status}`, act.json);
 

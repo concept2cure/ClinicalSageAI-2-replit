@@ -23,6 +23,8 @@ interface ImportMetaEnv {
   readonly VITE_SHOW_DEMO_LOGIN?: string;
   /** Dev-login identity; the dev-login button is hidden when unset. */
   readonly VITE_DEV_LOGIN_EMAIL?: string;
+  /** Demo people for "Demo access": email|name|organisation|role entries separated by ";" (DemoAccounts.tsx). */
+  readonly VITE_DEMO_ACCOUNTS?: string;
 }
 
 interface ImportMeta {

@@ -26,6 +26,16 @@ export const PROGRAM_NAME = 'C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND
 export const PRODUCT_NAME = 'C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)';
 export const INDICATION = 'Moderate-to-severe plaque psoriasis in adults';
 export const STUDY = 'C2C-101-201';
+/** Who files C2C-101 in the demonstration. Every value is invented (a 999… IND and D-U-N-S, a 555-01xx telephone). */
+export const C2C101_IDENTITY = {
+  applicationNumber: '999101',
+  sponsorAddress: '2 Fictional Way, Demo City, CA 00000, USA',
+  sponsor: {
+    name: 'Concept2Cure Therapeutics (fictional demo sponsor)', duns: '999999901',
+    contactName: 'Ana Author', contactPhone: '+1 555 0100', contactEmail: 'ana.author@concept2cure.pro',
+    signatoryName: 'Ana Author', signatoryTitle: 'Head of Regulatory Affairs (fictional)',
+  },
+};
 
 
 /** The six vault documents: real multi-page PDFs, each filed into its CTD module and placed as an eCTD leaf. */
@@ -72,6 +82,7 @@ export const VAULT_DOCS = [
     folderId: 'module-5',
     sectionCode: 'm5.3.5.1',
     leafTitle: `Protocol ${STUDY} v1.0`,
+    studyId: STUDY, stfFileTag: 'protocol-or-amendment',
     pdf: {
       subtitle: `A Phase 2, Randomized, Double-Blind, Placebo-Controlled, Dose-Ranging Study of ${MOLECULE} in Adults with Moderate-to-Severe Plaque Psoriasis — Version 1.0`,
       sections: [
@@ -116,6 +127,7 @@ export const VAULT_DOCS = [
     folderId: 'module-5',
     sectionCode: 'm5.3.5.1',
     leafTitle: `Statistical Analysis Plan ${STUDY} v1.0`,
+    studyId: STUDY, stfFileTag: 'statistical-methods-interim-analysis-plan',
     pdf: {
       subtitle: `Statistical Analysis Plan for Protocol ${STUDY} Version 1.0 — Concept2Cure Therapeutics (fictional)`,
       sections: [
@@ -460,4 +472,17 @@ export const CHANGE = {
   reason: 'Pre-IND written response recommended additional PK time points to characterise the exposure–response relationship.',
   impactAssessment: 'No change to eligibility, dosing or the primary endpoint. Additional 4 mL blood draw at Week 2 within the total blood volume limit. Laboratory manual and eCRF require revision; no impact on the validated state of the EDC system beyond a configured form.',
   implementationPlan: 'Protocol Amendment 1 v1.1 → IRB submission → laboratory manual v1.1 → eCRF change (configuration only) → site training → effective on IRB approval at each site.',
+};
+
+/** The protocol's synopsis paragraph that starts with `label` ("Objective.", "Primary endpoint."), without the label. */
+const synopsis = (label) => VAULT_DOCS.find((d) => d.key === 'protocol').pdf.sections
+  .find((x) => x.heading === '1. Synopsis').paragraphs.find((p) => p.startsWith(`${label} `)).slice(label.length + 1);
+
+/** C2C-101's objective of record (GA-DEMO-15): the protocol's own words, with the protocol as the source. */
+export const C2C101_OBJECTIVE = {
+  label: MOLECULE,
+  objective: synopsis('Objective.'),
+  successCriteria: `Primary endpoint: ${synopsis('Primary endpoint.').replace(/\.$/, '')}.`,
+  sources: [{ kind: 'protocol', title: `Protocol ${STUDY} v1.0 (fictional), in the project's Vault`, locator: 'Section 1, Synopsis' }],
+  reason: "Demo seed: the objective the study protocol states.",
 };

@@ -1,0 +1,95 @@
+{
+  "apiErrors": [
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 404,
+      "url": "/api/mdx/qms/documents/1/versions",
+      "at": "/concept2cure/quality?program=5d669ca3-055f-48b1-9c34-364eb33ecb95&quality=organisation"
+    },
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 404,
+      "url": "/api/mdx/qms/documents/1/versions",
+      "at": "/concept2cure/quality?program=5d669ca3-055f-48b1-9c34-364eb33ecb95&quality=organisation"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "sop-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "rows": [
+        "SOP-001",
+        "SOP-002",
+        "SOP-003",
+        "SOP-004",
+        "SOP-005",
+        "SOP-006",
+        "SOP-007",
+        "SOP-008"
+      ],
+      "loading": null
+    },
+    {
+      "name": "sop-organisation-while-loading",
+      "scope": "The whole organisation's quality records.",
+      "rows": [],
+      "loading": "Loading the register…"
+    },
+    {
+      "name": "sop-organisation-read",
+      "scope": "The whole organisation's quality records.",
+      "rows": [
+        "QS-SOP-001",
+        "SOP-001",
+        "SOP-002",
+        "SOP-003",
+        "SOP-004",
+        "SOP-005",
+        "SOP-006",
+        "SOP-007",
+        "SOP-008"
+      ],
+      "loading": null
+    },
+    {
+      "name": "changes-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "rows": [],
+      "loading": "No change is filed under C11 · Walk C11 gasket programme.The organisation's other changes are under Show the whole organisation."
+    },
+    {
+      "name": "changes-organisation-while-loading",
+      "scope": "The whole organisation's quality records.",
+      "rows": [],
+      "loading": "Loading the change log…"
+    },
+    {
+      "name": "changes-organisation-read",
+      "scope": "The whole organisation's quality records.",
+      "rows": [
+        "CC-SIGN-873701",
+        "CC-C9-313681",
+        "CC-C9-268139",
+        "CC-F1-275489",
+        "CC-F1-264291",
+        "CC-QS-84082",
+        "CC-QS-40663",
+        "CC-QS-23745",
+        "CC-QS-001"
+      ],
+      "loading": null
+    },
+    {
+      "name": "history-404",
+      "text": "Not found in your organizationThis document's version history was not found in your organization, so it was not read.",
+      "tryAgain": 0
+    },
+    {
+      "name": "w30-scope-switch",
+      "ok": true
+    }
+  ]
+}

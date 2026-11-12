@@ -104,7 +104,13 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // catalogue row is deprecated, never deleted (CLAUDE.md Rule 1;
     // db/migrations/20260810_reconcile_module_catalog.sql). The Vault is free at
     // the same tier, so no organisation loses a function.
-    surfaces: ['vault'],
+    //
+    // 2026-11-12 (P-74 item 1, P-75, P-124 item 6): the trial master file is admitted as a feature of the Vault. Its
+    // surface `etmf` is the Vault's, so the Vault's Required documents view may call /api/etmf, and the eTMF's page
+    // opens the Vault there. Its module is professional-tier and is NOT in `modules`, which would grant it to every
+    // organisation (P-75); `available_modules` carries the tier (db/migrations/20261112_etmf_module_professional_tier.sql).
+    // Admitted as CMC was (P-28): with its URS, its OQ drafted and not yet executed, so it is not described as validated.
+    surfaces: ['vault', 'etmf'],
     modules: ['vault'],
   },
   {
@@ -235,13 +241,26 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     label: 'Biostatistics',
     // Founder, 2026-10-31 (P-77): "My cmc, biostatistics, tasking, projects is
     // all gone" — the screens existed and nothing reached them. They are in the
-    // catalog and reached from the project's "Start work in this project"
-    // (ProjectCoreWork.tsx) and ⌘K, not from a rail entry: RULE 4 refuses a new
-    // rail entry, and the founder's product spine (P-79, 2026-11-01) puts
-    // biostatistics inside the project's evidence. Surfaces only, as for
+    // catalog, reached from the project's "Start work in this project"
+    // (ProjectCoreWork.tsx), ⌘K, and — since 2026-11-06 — the rail.
+    //
+    // This comment said until 2026-11-09 that they are reached "not from a rail
+    // entry: RULE 4 refuses a new rail entry". That was superseded before it was
+    // corrected. The founder, 2026-11-06: "Our core modules are, project
+    // management, Vault, CMC, biostatistics, RBM, submission center, tasking,
+    // and collaboration, and reporting. … And the left rail should be a
+    // navigation point for all of those entry points. But again, everything
+    // starts with a project." P-107 item 1 confirms it and records that "RULE
+    // 4's 2026-10-31 list of Core work workspaces to converge is superseded for
+    // Biostatistics' rail entry only"; the entry is in RAIL_CORE
+    // (registryModel.ts) and in the rail baseline
+    // (scripts/ci/one-product-baseline.json, `rail:biostatistics`). The rail
+    // door is project-scoped (shared/navigation/index.ts), which is the "starts
+    // with a project" half. Surfaces only, as for
     // risk-based monitoring (P-76): professional-tier and explicit grants keep
     // deciding who holds it, and no module is granted to a new organisation.
-    surfaces: ['biostatistics', 'biostat-workbench'],
+    // One surface since 2026-11-09: `biostat-workbench` was retired into it.
+    surfaces: ['biostatistics'],
     modules: [],
   },
   {
@@ -278,15 +297,17 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   'master-licensing': 'platform-owner administration',
   'access-requests': 'how a member asks for a locked app',
   'identity-console': 'SSO / SCIM; a security reviewer expects it (D6)',
+  training: 'Help & training: the Help Center, training courses and support requests, for every member (P-127)',
 };
 
 // CPO decision, 2026-10-08: three shell entries left. AnA Command answers
 // only enterprise organisations and tells a client two of its runs are
 // recorded to the audit trail when they are not. AnA memory lists a store
 // nothing writes instead of the memory AnA loads each turn, so it tells a
-// client AnA remembers nothing; it returns reading that memory. Training has
+// client AnA remembers nothing; it returns reading that memory. Training had
 // no path, lesson or certification behind it; training of record is the QMS
-// read-and-understood record.
+// read-and-understood record. It returned as Help & training (P-127, 2026-11-12):
+// the Help Center, courses and support requests, which are not GxP training.
 
 /** Every surface id in the launch scope: the seven apps plus the shell set. */
 export const LAUNCH_SURFACE_IDS: ReadonlySet<string> = new Set([

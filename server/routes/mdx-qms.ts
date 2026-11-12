@@ -94,14 +94,14 @@ import {
 } from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
-  createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
+  createChange, listChanges, getChange, updateChange, changeEditRefusal, transitionChange, deleteChange,
   listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary, ChangeLinkRefusedError,
-  CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
-  LINK_TYPES, LINK_RELATIONSHIPS,
+  CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES, LINK_TYPES, LINK_RELATIONSHIPS,
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
-import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
+import { approveQmsChangeSigned, computeQmsChangeContentDigest, type QmsChangeRow } from '../services/qms/change-approval-signature';
+import { regulatoryImpactViews } from '../services/qms/change-regulatory-impact';
 import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
@@ -644,7 +644,7 @@ const approveBody = z.object({
   reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
 });
-const changeApproveBody = approveBody.extend({ learningReview: z.object({
+const changeApproveBody = approveBody.extend({ expectedContentDigest: z.string().regex(/^[a-f0-9]{64}$/), learningReview: z.object({
   expectedArtifactSha256: z.string().regex(/^[a-f0-9]{64}$/), invariantAccepted: z.literal(true),
 }).strict().optional() });
 const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
@@ -735,7 +735,7 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   // Its own code: the remedy is to re-file the section, not to change the document's state.
   if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
   if (err.code === 'EFFECTIVE_DATE_BACKDATED') return clientError(res, 422, err.message, { code: 'QMS_EFFECTIVE_DATE_BACKDATED' });
-  return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
+  return clientError(res, 409, err.message, { code: err.code === 'CHANGED_SINCE_READ' ? 'QMS_CHANGED_SINCE_READ' : 'QMS_INVALID_STATE' });
 }
 
 function signedQmsFailure(res: Response, error: unknown, operation: string, what: 'Document' | 'Change' = 'Document'): Response {
@@ -1187,11 +1187,11 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
        rendered "0 links" for every change and could only hand a move to AnA
        (QA walk 2026-10-08, J8). `implementation_overdue` is the database's
        verdict against CURRENT_DATE (changeControl.service). */
-    const links = await listLinksForChanges(orgId, rows.map((r) => r.id), requestPgClient(req));
+    const links = await listLinksForChanges(orgId, rows.map((r) => r.id), requestPgClient(req)), impactOf = await regulatoryImpactViews(orgId, rows, requestPgClient(req));
     const register = rows.map((r) => ({
       ...r,
-      links: links.get(Number(r.id)) ?? [],
-      next_states: nextStatesOf(r.status),
+      links: links.get(Number(r.id)) ?? [], regulatory_impact: impactOf(r), // P-122: the device change determination
+      next_states: nextStatesOf(r.status), content_digest: computeQmsChangeContentDigest(r as unknown as QmsChangeRow),
     }));
     return ok(res, register, { count: register.length });
   } catch (err) {
@@ -1262,7 +1262,7 @@ router.get('/qms/changes/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'change-get', err); }
 });
 
-// Partial update (draft edits; not a lifecycle move — use /transition for that).
+// Partial update while proposed or under assessment; 409 after (changeEditRefusal). Not a move: that is /transition.
 router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -1270,18 +1270,19 @@ router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: 
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = changePatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const editReason = governedReason.safeParse(req.body?.editReason);
+  if (!editReason.success) return clientError(res, 422, 'State why this change request is being edited (a reason of at least 8 characters). Nothing was saved.');
   try {
     const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) }, requestPgClient(req));
-    if (!row) return notFoundInTenant(res, 'Change');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. `updateChange` has
-       committed the edit and returned the row, so the edit is not undone here;
-       `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
+    const refused = row ? null : await changeEditRefusal(orgId, id, requestPgClient(req));
+    if (!row) return refused ? clientError(res, 409, refused.message, refused.details) : notFoundInTenant(res, 'Change');
+    const { edits, ...saved } = row;
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.change.update',
+      tenantId: orgId, userId: getUserId(req) ?? undefined, reason: editReason.data,
+      action: 'mdx.qms.change.update', details: { reason: editReason.data, edits },
       resourceType: 'qms_change_control', resourceId: id,
     }, requestConnectable(req));
-    return ok(res, row, { auditTrail });
+    return ok(res, saved, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-update', err); }
 });
 
@@ -1375,7 +1376,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
-      ...learningReviewOption(body),
+      ...learningReviewOption(body), expectedContentDigest: body.expectedContentDigest,
     });
     commitAttempted = true;
     await client.query('COMMIT');
@@ -1405,16 +1406,16 @@ router.delete('/qms/changes/:id', requireEditorAccess, async (req: Request, res:
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const reason = governedReason.safeParse(req.body?.reason);
+  if (!reason.success) return clientError(res, 422, 'State why the change request is removed (a reason of at least 8 characters). Nothing was changed.');
   try {
     const removed = await deleteChange(orgId, id, requestPgClient(req));
-    if (!removed) return notFoundInTenant(res, 'Change');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. `deleteChange` has
-       already stamped `deleted_at`, and it reported that it matched a row, so
-       the soft-delete stands; `meta.auditTrail` now says whether the §11.10(e)
-       record of who retired the change request exists. */
+    const kept = removed ? null : await changeEditRefusal(orgId, id, requestPgClient(req), 'delete');
+    if (!removed) return kept ? clientError(res, 409, kept.message, kept.details) : notFoundInTenant(res, 'Change');
+    /* WO-16C #133; F1 (L-2): removed only before approval; the §11.10(e) record keeps who removed it and why. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.change.delete',
+      tenantId: orgId, userId: getUserId(req) ?? undefined, reason: reason.data,
+      action: 'mdx.qms.change.delete', details: { reason: reason.data },
       resourceType: 'qms_change_control', resourceId: id,
     }, requestConnectable(req));
     return ok(res, { id, deleted: true }, { auditTrail });
@@ -1447,19 +1448,19 @@ router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, 
   try {
     const change = await getChange(orgId, id, requestPgClient(req));
     if (!change) return notFoundInTenant(res, 'Change');
+    if (change.status !== 'proposed' && !governedReason.safeParse(parsed.data.note).success) {
+      return clientError(res, 422, `This change is ${String(change.status).replace(/_/g, ' ')}, so a link states why it is added (a reason of at least 8 characters). Nothing was linked.`);
+    }
     let row;
     try { row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) }, requestPgClient(req)); } catch (err) {
       if (err instanceof ChangeLinkRefusedError) return clientError(res, 422, err.message, { code: err.code });
       throw err;
     }
-    /* WO-16C #133. Was `void auditService.logAction({…})`. `addLink` has
-       inserted the cross-reference and returned it, so the link stands;
-       `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
+    // WO-16C #133: the link stands once addLink returns; `meta.auditTrail` says whether its §11.10(e) record exists.
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.change.link',
-      resourceType: 'qms_change_control', resourceId: id,
-      details: { linkType: parsed.data.linkType, linkedRef: parsed.data.linkedRef },
+      tenantId: orgId, userId: getUserId(req) ?? undefined, reason: parsed.data.note || undefined,
+      action: 'mdx.qms.change.link', resourceType: 'qms_change_control', resourceId: id,
+      details: { linkType: parsed.data.linkType, linkedRef: parsed.data.linkedRef, relationship: row.relationship ?? null, note: parsed.data.note ?? null },
     }, requestConnectable(req));
     return created(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-add', err); }
@@ -1483,10 +1484,10 @@ router.delete('/qms/changes/:id/links/:linkId', requireEditorAccess, async (req:
        §11.10(e) record beside it is the only thing left to report —
        `meta.auditTrail`. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId,
+      tenantId: orgId, userId, reason: reason.data,
       action: 'mdx.qms.change.unlink',
       resourceType: 'qms_change_control', resourceId: id,
-      details: { linkId, reason: reason.data },
+      details: { linkId, linkType: removed.link_type, linkedRef: removed.linked_ref, reason: reason.data },
     }, requestConnectable(req));
     return ok(res, { id: linkId, removed: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-remove', err); }

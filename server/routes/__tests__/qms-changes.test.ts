@@ -23,8 +23,10 @@ vi.mock('../../services/auditService', () => ({
   writeChainedAuditRow: async (_client: unknown, entry: unknown) => logAction(entry),
 }));
 const REASON = 'Impact assessment opened by QA';
+const EDIT = 'Impact widened after the supplier audit.';
 
 import mdxQmsRouter from '../mdx-qms';
+import { computeQmsChangeContentDigest } from '../../services/qms/change-approval-signature';
 
 function appWith(org: number | null, userId = 7, role = 'member') {
   const app = express();
@@ -62,7 +64,8 @@ describe('GET /api/mdx/qms/changes', () => {
   it('lists the register, org-scoped', async () => {
     query
       .mockResolvedValueOnce({ rows: [changeRow(), changeRow({ id: 2, change_number: 'CC-2026-002' })] })
-      .mockResolvedValueOnce({ rows: [] }); // links
+      .mockResolvedValueOnce({ rows: [] }) // links
+      .mockResolvedValueOnce({ rows: [] }); // the changes' projects, and the organization's device projects
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
     expect(query.mock.calls[0][1][0]).toBe(9);          // organization_id = $1
@@ -89,7 +92,8 @@ describe('GET /api/mdx/qms/changes', () => {
           { id: 11, organization_id: 9, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-2026-041', relationship: 'triggered_by' },
           { id: 12, organization_id: 9, change_id: 1, link_type: 'validation', linked_ref: 'VP-7', relationship: 'requires' },
         ],
-      });
+      })
+      .mockResolvedValueOnce({ rows: [] });
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
     const [first, second] = res.body.data;
@@ -105,12 +109,62 @@ describe('GET /api/mdx/qms/changes', () => {
     expect(String(query.mock.calls[0][0])).toMatch(/CURRENT_DATE/);
   });
 
+  /* P-122 (2026-11-12): each row says whether the device change determination applies to it and what is recorded
+     (services/qms/change-regulatory-impact.ts), from one organization-scoped read of the changes' projects. The
+     browser does not decide which project is a device's. */
+  it('says, per change, whether the device change determination applies and what is recorded', async () => {
+    const DEVICE = '11111111-1111-4111-8111-111111111111';
+    const DRUG = '22222222-2222-4222-8222-222222222222';
+    const us = {
+      engine: 'fda-510k-change', ruleVersion: 'fda-510k-change-2017/1',
+      inputs: { affectsIndicationsForUse: false, changesControlMechanismOrOperatingPrinciple: false, changesPatientContactingMaterials: false,
+        softwareChangeAffectsRisk: false, riskAssessmentShowsNewOrModifiedRisk: false, couldSignificantlyAffectSafetyOrEffectiveness: false,
+        verificationDemonstratesEquivalence: true },
+      result: { decision: 'letter_to_file', rationale: 'No flowchart trigger is met; document the change in a Letter-to-File.', triggers: [] },
+      by: { id: 7, name: 'Invented Person' }, at: '2026-11-12T10:00:00.000Z',
+    };
+    query
+      .mockResolvedValueOnce({
+        rows: [
+          changeRow({ id: 1, program_id: DEVICE, metadata: { regulatoryImpact: { us, eu: { result: { significant: 'no' } } } } }),
+          changeRow({ id: 2, change_number: 'CC-2026-002', program_id: DEVICE, status: 'approved' }),
+          changeRow({ id: 3, change_number: 'CC-2026-003', program_id: DRUG }),
+          changeRow({ id: 4, change_number: 'CC-2026-004' }),
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: DEVICE, product_type: 'samd', live: true }, { id: DRUG, product_type: 'biologic', live: true }] });
+    const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+    expect(res.status).toBe(200);
+    const impact = res.body.data.map((c: { regulatory_impact: unknown }) => c.regulatory_impact);
+    // Recorded for the US; what is kept for the EU is not a determination, and is said to be unreadable.
+    expect(impact[0]).toEqual({ applies: 'device', productType: 'samd', organisationHasDevices: true, assessable: true, us, eu: { unreadable: true } });
+    // Approved: its content is fixed, so nothing more is recorded on it.
+    expect(impact[1]).toEqual({ applies: 'device', productType: 'samd', organisationHasDevices: true, assessable: false, us: null, eu: null });
+    expect(impact[2]).toEqual({ applies: 'not_device', productType: 'biologic', organisationHasDevices: true, assessable: false, us: null, eu: null });
+    expect(impact[3]).toEqual({ applies: 'no_project', productType: null, organisationHasDevices: true, assessable: false, us: null, eu: null });
+    expect(String(query.mock.calls[2][0])).toMatch(/regulatory_programs/);
+    expect(query.mock.calls[2][1].slice(0, 2)).toEqual([9, [DEVICE, DRUG]]);
+  });
+
   it('fails closed to an empty list when the store is missing (42P01)', async () => {
     query.mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
     expect(res.body.meta.pendingStore).toBe(true);
+  });
+});
+
+/* The approval signs the content the approver read: the register carries its digest (2026-11-10). */
+describe('GET /api/mdx/qms/changes — the digest an approval binds', () => {
+  it('returns each change with the content digest its approval signs', async () => {
+    const row = changeRow({ status: 'under_assessment', impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
+    query.mockResolvedValueOnce({ rows: [row] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].content_digest).toBe(computeQmsChangeContentDigest(row as never));
+    expect(res.body.data[0].content_digest).not.toBe(computeQmsChangeContentDigest({ ...row, implementation_plan: 'Edited.' } as never));
   });
 });
 
@@ -182,6 +236,95 @@ describe('POST /api/mdx/qms/changes/:id/transition — controlled lifecycle', ()
   });
 });
 
+/* An approved change's content is what its approval signed (change-approval-signature.ts). Until 2026-11-10 the
+   PATCH route rewrote it in any state but closed, cancelled and rejected, and a refused edit said "not found". */
+describe('PATCH /api/mdx/qms/changes/:id — content is editable until approval', () => {
+  /* F1 (Part 11 review L-2, 2026-11-10): an edit records its reason and each field before and after (21 CFR
+     11.10(e): a record's change must not obscure what it replaced). Until then the audit row named the change only. */
+  it('edits a change under assessment, guarded in the statement itself, and records the reason and each field before and after', async () => {
+    const before = changeRow({ status: 'under_assessment' });
+    const after = changeRow({ status: 'under_assessment', impact_assessment: 'Filter qualification only.', assessed_by: 7 });
+    query.mockResolvedValueOnce({ rows: [{ ...after, previous: before, current: after }] });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ impactAssessment: 'Filter qualification only.', editReason: EDIT });
+    expect(res.status).toBe(200);
+    expect(res.body.data.impact_assessment).toBe('Filter qualification only.');
+    expect(res.body.data).not.toHaveProperty('previous');
+    expect(res.body.data).not.toHaveProperty('edits');
+    expect(String(query.mock.calls[0][0])).toMatch(/c\.status = ANY\(\$3::text\[\]\)/);
+    expect(query.mock.calls[0][1].slice(0, 3)).toEqual([1, 9, ['proposed', 'under_assessment']]);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.update', reason: EDIT,
+      details: { reason: EDIT, edits: [
+        { field: 'impact_assessment', before: null, after: 'Filter qualification only.' },
+        { field: 'assessed_by', before: null, after: 7 },
+      ] } }));
+  });
+
+  it('422 without a reason for the edit, reading and writing nothing', async () => {
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ impactAssessment: 'Filter qualification only.', editReason: 'short' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('State why this change request is being edited (a reason of at least 8 characters). Nothing was saved.');
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])('409 for a change that is %s: its content is fixed', async (status) => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                          // the guarded update matches nothing
+      .mockResolvedValueOnce({ rows: [changeRow({ status })] });    // the change exists, in that state
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ implementationPlan: 'Rewritten after approval.', editReason: EDIT });
+    expect(res.status).toBe(409);
+    expect(res.body.details).toMatchObject({ code: 'QMS_CHANGE_CONTENT_FIXED', status });
+    // The refusal is said only after the tenant read finds the change (an absent one is 404, below).
+    expect(String(query.mock.calls[1][0])).toMatch(/FROM qms_change_controls WHERE id = \$1 AND organization_id = \$2/);
+    expect(res.body.error.includes('what its approval signed')).toBe(!['rejected', 'cancelled'].includes(status));
+    expect(res.body.error).toMatch(/Nothing was saved\. To amend it, raise a new change request\./);
+    expect(res.body.error).toContain(`This change is ${status.replace(/_/g, ' ')}`);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a change this organization does not have', async () => {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ title: 'Anything', editReason: EDIT });
+    expect(res.status).toBe(404);
+  });
+});
+
+/* F1 (Part 11 review L-2, 2026-11-10): DELETE soft-deleted a change in any state, an approved one included, with no
+   reason. A change is removed only before its approval, with a reason recorded; after, it is kept, and is cancelled
+   through its lifecycle. No client calls this route. */
+describe('DELETE /api/mdx/qms/changes/:id — only before approval, with a reason', () => {
+  it('removes a proposed change, guarded in the statement itself, and records why', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({ reason: 'Raised twice in error; CC-2026-002 stands.' });
+    expect(res.status).toBe(200);
+    expect(String(query.mock.calls[0][0])).toMatch(/status = ANY\(\$3::text\[\]\)/);
+    expect(query.mock.calls[0][1]).toEqual([1, 9, ['proposed', 'under_assessment']]);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.delete',
+      reason: 'Raised twice in error; CC-2026-002 stands.', details: { reason: 'Raised twice in error; CC-2026-002 stands.' } }));
+  });
+
+  it('422 without a reason, reading and writing nothing', async () => {
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({});
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('State why the change request is removed (a reason of at least 8 characters). Nothing was changed.');
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])('409 for a change that is %s: it is kept', async (status) => {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [changeRow({ status })] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({ reason: 'Tidying the register.' });
+    expect(res.status).toBe(409);
+    expect(res.body.details).toMatchObject({ code: 'QMS_CHANGE_KEPT', status });
+    expect(res.body.error).toContain(`This change is ${status.replace(/_/g, ' ')}, so it is kept on the record. Nothing was removed.`);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a change this organization does not have', async () => {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({ reason: 'Raised twice in error.' });
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
   it('links a change to a deviation', async () => {
     query
@@ -210,8 +353,72 @@ describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
       .send({ linkType: 'nonsense', linkedRef: 'X' });
     expect(res.status).toBe(422);
   });
+
+  /* Quality review, 2026-11-10: a link changes the record of a change under assessment or approved, and nothing said
+     why; its audit row kept the type and reference only. Past proposal a link states why, and the row keeps it. */
+  it('422 for a link to a change past proposal that does not say why; nothing is read further or inserted', async () => {
+    query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment' })] });
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
+      .send({ linkType: 'deviation', linkedRef: 'DEV-2026-014', note: 'short' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('This change is under assessment, so a link states why it is added (a reason of at least 8 characters). Nothing was linked.');
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('records how the linked record relates and why it was linked', async () => {
+    const WHY = 'The deviation this approved change addresses, found at the audit.';
+    query
+      .mockResolvedValueOnce({ rows: [changeRow({ status: 'approved' })] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 11, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-2026-014', relationship: 'addresses', note: WHY }] });
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
+      .send({ linkType: 'deviation', linkedRef: 'DEV-2026-014', relationship: 'addresses', note: WHY });
+    expect(res.status).toBe(201);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.link', reason: WHY,
+      details: { linkType: 'deviation', linkedRef: 'DEV-2026-014', relationship: 'addresses', note: WHY } }));
+  });
+
+  it('a link to a proposed change may say why, and needs not', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [changeRow()] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 12, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-1', relationship: 'references', note: null }] });
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links').send({ linkType: 'deviation', linkedRef: 'DEV-1' });
+    expect(res.status).toBe(201);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({
+      details: { linkType: 'deviation', linkedRef: 'DEV-1', relationship: 'references', note: null } }));
+  });
 });
 
+
+/* 2026-11-12: the link's removal had no screen (no client called it), and its audit row named the link by its id
+   alone, which says nothing once the link is off the record's list. The row now names the record and keeps the reason. */
+describe('DELETE /api/mdx/qms/changes/:id/links/:linkId — a link is removed with its reason', () => {
+  const WHY = 'Linked to the wrong deviation.';
+  it('removes the link, and records which record it was and why', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 3, link_type: 'deviation', linked_ref: 'DEV-2026-014' }] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: WHY });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ id: 3, removed: true });
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.unlink', reason: WHY,
+      details: { linkId: 3, linkType: 'deviation', linkedRef: 'DEV-2026-014', reason: WHY } }));
+  });
+
+  it('422 without a reason; nothing is read or written', async () => {
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: 'short' });
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a link that is not a standing link of an open change; no audit row', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: WHY });
+    expect(res.status).toBe(404);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+});
 
 /**
  * DP-60 (2026-10-01): every change-control write carries the editor gate the
@@ -236,7 +443,7 @@ describe('change-control writes refuse a viewer (DP-60)', () => {
   });
 
   it('a viewer still reads the register', async () => {
-    query.mockResolvedValueOnce({ rows: [changeRow()] }).mockResolvedValueOnce({ rows: [] }); // changes, links
+    query.mockResolvedValueOnce({ rows: [changeRow()] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] }); // changes, links, projects
     const res = await request(appWith(9, 7, 'viewer')).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
   });

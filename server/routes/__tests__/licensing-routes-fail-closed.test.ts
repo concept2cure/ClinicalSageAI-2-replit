@@ -57,6 +57,8 @@ function wire(w: Wiring = {}) {
   const answers: Array<[RegExp, Answer]> = [
     // eula-service
     [/^(BEGIN|COMMIT|ROLLBACK)$/, () => []],
+    // 2026-11-10: tables that exist are not re-created (F1 W1-05).
+    [/to_regclass/, () => [{ agreements: true, acceptances: true }]],
     [/CREATE TABLE|WHERE NOT EXISTS \(SELECT 1 FROM license_agreements/, () => []],
     [/FROM license_agreements WHERE (status = 'active'|id = \$1)/, () => [w.agreement ?? AGREEMENT]],
     [/INSERT INTO license_acceptances/, (p) => [
@@ -209,19 +211,23 @@ describe('GET /features never invents a tier', () => {
 
 // 2026-10-22: publishAgreement refuses an agreement with no body or url
 // (AgreementPublishTextMissingError, 400), and the route answered it 500.
+// 2026-11-10: publishing is platform staff's act and takes a reason (F1
+// ADM-01); this case is platform staff with a reason, so only the text is missing.
 describe('POST /agreements: an agreement with no text is the request\'s fault', () => {
   it('answers 400 AGREEMENT_TEXT_MISSING and publishes nothing', async () => {
     wire();
+    vi.stubEnv('PLATFORM_ADMIN_EMAILS', 'staff.synthetic@platform.test');
     const a = express();
     a.use(express.json());
     a.use((req: Request, _res: Response, next: NextFunction) => {
-      (req as unknown as { user: { id: number; organizationId: number; role: string } }).user = { id: 7, organizationId: 3, role: 'admin' };
+      (req as unknown as { user: Record<string, unknown> }).user = { id: 7, organizationId: 3, role: 'member', email: 'staff.synthetic@platform.test', provider: 'local-jwt' };
       next();
     });
     a.use('/api/licensing', licensingRouter);
     const res = await request(a)
       .post('/api/licensing/agreements')
-      .send({ agreementKey: 'eula', version: '2026.10', title: 'End-User License Agreement' });
+      .send({ agreementKey: 'eula', version: '2026.10', title: 'End-User License Agreement', reason: 'Annual legal review' });
+    vi.unstubAllEnvs();
     expect(res.status, JSON.stringify(res.body)).toBe(400);
     expect(res.body.code).toBe('AGREEMENT_TEXT_MISSING');
     const writes = query.mock.calls.filter(([sql]) => /INSERT INTO license_agreements|UPDATE license_agreements/.test(String(sql)));

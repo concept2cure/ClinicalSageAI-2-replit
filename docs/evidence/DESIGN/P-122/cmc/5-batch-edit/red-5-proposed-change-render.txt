@@ -1,0 +1,7 @@
+ × client/src/concept2cure/v2/__tests__/cmcProposedChange.test.tsx > the classified change can be recorded as a proposed change > POSTs the classifier’s inputs and the open project to /api/cmc-changes, once 703ms
+   → Unable to find an accessible element with the role "button" and name "Record this proposed change"
+ × client/src/concept2cure/v2/__tests__/cmcProposedChange.test.tsx > the classified change can be recorded as a proposed change > says what the store refused, and records nothing 251ms
+   → Unable to find an accessible element with the role "button" and name "Record this proposed change"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

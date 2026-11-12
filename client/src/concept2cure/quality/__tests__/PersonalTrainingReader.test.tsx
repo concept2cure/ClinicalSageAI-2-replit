@@ -68,6 +68,21 @@ describe('personal reading and acknowledgement in the controlled-document dialog
     expect(ceremonyOpen()).toBe(true);
   });
 
+  // C16: the reader is the product's drawer. Its acknowledgement is the footer's primary action, below the text it
+  // acknowledges however long that is, and Close is the header's.
+  it('reads in the one drawer, with the acknowledgement as its footer action', async () => {
+    H.apiRequest.mockResolvedValue(read());
+    mount();
+    await screen.findByText(/Keep the release record/);
+    const dialog = screen.getByRole('dialog', { name: 'Read and acknowledge' });
+    expect(dialog.className).toBe('de');
+    expect(dialog.parentElement!.className).toBe('de-bd');
+    expect(dialog.querySelector('.de-h-s')?.textContent).toBe('SOP-015 · Supplier controls · Revision 1.0 · Effective');
+    expect(dialog.querySelector('.de-body .qms-training-content')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Acknowledge this revision' }).closest('.de-f')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' }).className).toBe('de-x');
+  });
+
   it('allows a viewer to personally acknowledge without requesting a password or signature', async () => {
     let saved = false;
     H.apiRequest.mockImplementation(async (method: string) => {

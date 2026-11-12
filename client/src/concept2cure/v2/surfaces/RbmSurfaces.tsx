@@ -6,6 +6,7 @@
 import { AnaActionChip } from '../AnaActionChips';
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaChatAction, AnaChatMessage, RunControlStatus } from '../../components/ana/useAnaChat';
@@ -13,6 +14,7 @@ import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
 import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaOutputCards, type AnaOutput } from '../AnaOutputs';
+import { AnaMarkdown } from '../AnaMarkdown';
 import { useAgentActivity } from '../useAgentActivity';
 import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
@@ -44,9 +46,31 @@ export function RbmScore({ v }: { v: number }) {
   return <span className="rbm-score" data-band={rbmBand(v)}>{v}</span>;
 }
 
-/* ── RbmFreshness ── */
+/* ── RbmWhen, RbmFreshness ── */
+/** A recorded time reads as a time, not as the raw ISO string (demo walk, 2026-11-09); '—' and other words pass. */
+export function RbmWhen({ at }: { at: string }) {
+  return /^\d{4}-\d\d-\d\dT/.test(at) ? <GovernedTimestamp value={at} layout="inline" /> : <>{at}</>;
+}
 export function RbmFreshness({ at }: { at: string }) {
-  return <span className="rbm-fresh">{I.clock}scored {at}</span>;
+  return <span className="rbm-fresh">{I.clock}scored <RbmWhen at={at} /></span>;
+}
+
+/* ── AskAna ──
+   The board's own findings, taken to the conversation. Every sub-surface was handed `onAsk` and only the risk
+   report used it, so a monitor looking at a red indicator or a flagged site had to retype what was on screen into
+   the dock. The button sends a question that names the item; AnA answers from the same board (her grounding is
+   this surface's context, Rbm.tsx) and from the monitoring tools, never from a figure typed here. It is not drawn
+   where no conversation is attached. */
+export function AskAna({ onAsk, prompt, label = 'Ask AnA', title }: {
+  onAsk?: (t: string) => void; prompt: string; label?: string; title?: string;
+}) {
+  if (!onAsk) return null;
+  return (
+    <button type="button" className="rbm-linkbtn rbm-ask" title={title ?? 'Sends this question to AnA, beside the board'}
+      onClick={e => { e.stopPropagation(); onAsk(prompt); }}>
+      <span className="mk" aria-hidden="true">{'✻'}</span>{label}
+    </button>
+  );
 }
 
 /* ── RiskMatrix ── */
@@ -95,8 +119,62 @@ export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: num
   );
 }
 
-/* ── ThresholdGauge ── */
-export function ThresholdGauge({ current, secondary, threshold, unit }: { current: number; secondary: number; threshold: number; unit: string }) {
+/* ── ThresholdGauge ──
+   A tolerance limit and where the value stands against it. `upper` (higher is worse) is drawn as it always was.
+   The server has also kept `lower` limits (lower is worse: data completeness, consent documentation) and
+   `two_sided` ranges (a randomisation ratio, a dosing band) since 2026-09-30, and the screen could neither set nor
+   draw them. For those the bar shows the breach and early-warning zones on the side, or sides, where the limit
+   bites, and a mark at the value. The mark's tone is the engine's status: the screen does not band the value. */
+const QTL_TONE: Record<string, string> = { breached: 'err', approaching: 'warn', within: 'ok' };
+
+/** The limits in words, for the caption under the bar and for a reader who cannot see it. */
+export function toleranceWords(q: { direction?: string; threshold: number; secondary: number | null; thresholdLower?: number | null; secondaryLower?: number | null }, unit = ''): string {
+  const n = (v: number) => `${v}${unit}`;
+  if (q.direction === 'two_sided' && q.thresholdLower != null) {
+    const warn = [q.secondaryLower != null ? `below ${n(q.secondaryLower)}` : null, q.secondary != null ? `above ${n(q.secondary)}` : null].filter(Boolean).join(' or ');
+    return `range ${n(q.thresholdLower)} to ${n(q.threshold)}${warn ? ` — warn ${warn}` : ''}`;
+  }
+  if (q.direction === 'lower') return `limit ${n(q.threshold)} or below${q.secondary != null ? ` — warn at ${n(q.secondary)}` : ''}`;
+  return `warn ${n(q.secondary ?? q.threshold)} — limit ${n(q.threshold)}`;
+}
+
+interface GaugeProps {
+  current: number; secondary: number; threshold: number; unit: string;
+  /** `lower` or `two_sided`; absent or `upper` keeps the original drawing. */
+  direction?: string; thresholdLower?: number | null; secondaryLower?: number | null;
+  /** The engine's status for the value, which sets the mark's tone for a lower limit or a range. */
+  status?: string;
+}
+
+/** A lower limit or a range: the zones where the limit bites, and a mark at the value. */
+function BoundedGauge({ current, secondary, threshold, unit, direction, thresholdLower, secondaryLower, status }: GaugeProps) {
+  const lower = direction === 'two_sided' && thresholdLower != null ? thresholdLower : null;
+  const warnUpper = secondary === threshold ? null : secondary;
+  const warnLower = lower != null ? secondaryLower ?? null : null;
+  const words = toleranceWords({ direction, threshold, secondary: warnUpper, thresholdLower, secondaryLower }, unit);
+  const points = [current, threshold, warnUpper, lower, warnLower].filter((v): v is number => v != null && Number.isFinite(v));
+  const lo = Math.min(...points), hi = Math.max(...points), pad = ((hi - lo) || Math.abs(hi) || 1) * 0.12;
+  const pc = (v: number) => Math.max(0, Math.min(100, (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * 100));
+  // [from, to, kind] in percent of the bar: a range has a breach zone at each end, a lower limit at the low end.
+  const zones: [number, number, string][] = lower != null
+    ? [[0, pc(lower), 'err'], [pc(threshold), 100, 'err']]
+    : [[0, pc(threshold), 'err']];
+  if (lower != null && warnLower != null) zones.push([pc(lower), pc(warnLower), 'warn']);
+  if (warnUpper != null) zones.push(lower != null ? [pc(warnUpper), pc(threshold), 'warn'] : [pc(threshold), pc(warnUpper), 'warn']);
+  return (
+    <div className="rbm-gauge" role="img" aria-label={`Current ${current}${unit}; ${words}`}>
+      <div className="rbm-gauge-bar">
+        {zones.map(([from, to, kind], i) => <div key={i} className={`rbm-gauge-band ${kind}`} style={{ left: `${from}%`, width: `${Math.max(0, to - from)}%` }} />)}
+        <div className="rbm-gauge-mark" data-tone={QTL_TONE[status ?? ''] ?? 'neutral'} style={{ left: `${pc(current)}%` }} />
+      </div>
+      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">{words}</span></div>
+    </div>
+  );
+}
+
+export function ThresholdGauge(props: GaugeProps) {
+  if (props.direction === 'lower' || props.direction === 'two_sided') return <BoundedGauge {...props} />;
+  const { current, secondary, threshold, unit } = props;
   const max = Math.max(threshold * 1.25, current * 1.05);
   const pc = (v: number) => Math.min(100, v / max * 100);
   const tone = current >= threshold ? 'err' : current >= secondary ? 'warn' : 'ok';
@@ -320,7 +398,9 @@ function RbmAnaMsg({
           host renders. This pane used to drop the tools, rounds and drafts and
           show "Thinking…". */}
       {m.activity && <AnaActivity {...m.activity} />}
-      {m.text && <div className="rbm-ana-text">{m.text}</div>}
+      {/* Her answer is prose: headings, lists and emphasis reached this pane as `##`, `-` and `**`. AnaMarkdown is
+          the one renderer every other host uses. */}
+      {m.text && <AnaMarkdown text={m.text} className="rbm-ana-text ana-md" />}
       {m.output && <AnaOutputCards message={m.output} />}
       {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
         <div className="rbm-ana-chips">
@@ -360,29 +440,91 @@ export interface RbmAnaWork {
   pendingSteers: string[];
 }
 
-export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo }: {
+/** The one composer AnA's conversation has on this screen: at the foot of the dock while it is open, under the
+    page's title while it is closed (Rbm.tsx). Enter sends; Shift+Enter starts a new line. The run-policy note
+    travels with it, because the chat it sends to is the same one in either place. */
+export function RbmAnaComposer({ study, onSend }: { study: string; onSend: (t: string) => void }) {
+  const [draft, setDraft] = useState('');
+  const send = () => { const text = draft.trim(); if (!text) return; onSend(text); setDraft(''); };
+  return (
+    <>
+      <div className="rbm-ana-composer">
+        <textarea rows={1} value={draft} onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+          aria-label="Ask AnA about this study" placeholder={study ? `Ask AnA about ${study}` : 'Ask AnA about this study'} />
+        <button type="button" className="rbm-ana-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={send}>{I.arrowUp}</button>
+      </div>
+      {/* This chat sends no run policy: Manual does not reach it (row 74). */}
+      <RunPolicyDockNote />
+    </>
+  );
+}
+
+/** A tab's suggested questions, as the chips every work area uses (`.sp-starter`). */
+export function RbmStarters({ nav, onAsk, layout }: { nav: RbmNavItem; onAsk: (t: string) => void; layout?: 'row' }) {
+  return (
+    <div className="sp-starters rbm-ana-starters" data-layout={layout} role="group" aria-label={`Suggestions for ${nav.label.toLowerCase()}`}>
+      {nav.starters.map((s, i) => (
+        <button key={i} type="button" className="sp-starter" onClick={() => onAsk(s)}>
+          <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** The conversation before its first turn: one question, what she is looking at, and what to ask. */
+function RbmAnaHello({ nav, study, onAsk }: { nav: RbmNavItem; study: string; onAsk: (t: string) => void }) {
+  return (
+    <div className="rbm-ana-hello">
+      <p className="rbm-ana-hello-t">{study ? `What should we look at in ${study}?` : 'What should we look at?'}</p>
+      <div className="rbm-ana-ctx">
+        <span className="rbm-ana-ctx-k">On this surface</span>
+        <span className="rbm-ana-ctx-v">{nav.label}</span>
+        <p className="rbm-ana-ctx-note">AnA reads the figures on this board and runs the same monitoring tools the buttons run. A plan or report she drafts stays a draft until it is approved.</p>
+      </div>
+      <RbmStarters nav={nav} onAsk={onAsk} />
+    </div>
+  );
+}
+
+export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo, drawer }: {
   nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
   onAsk: (t: string) => void; onClose: () => void;
   work?: RbmAnaWork;
   /** The shell's navigation, so AnA's navigation and screen-action chips work. */
   onNav?: (id: string) => void;
   onStartDemo?: (demoId: string, title: string) => void;
+  /** Below the docked width the conversation is a drawer over the board: a scrim, and Escape closes it. */
+  drawer?: boolean;
 }) {
-  const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   /* The same progress panel every host mounts, under the one shared show/hide
      choice (workDock.ts); the chip in the header toggles it. */
   const dock = useProgressDock();
-  const showWork = Boolean(work) && dock.open;
+  const empty = msgs.length === 0;
+  /* The record of her work has nothing to record before the first turn: its card said "AnA has not started a turn
+     in this conversation" over a third of the panel. It and its chip appear with the first turn. */
+  const hasWork = Boolean(work) && !empty;
+  const showWork = hasWork && dock.open;
   const anaWorkQueue = useAgentActivity(showWork, work?.streaming);
-  useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
-  const ask = (text: string) => { if (!text) return; onAsk(text); setDraft(''); };
-  return (
-    <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
-      <div className="rbm-ana-hdr">
-        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} — {nav.label}</div></div></div>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          {work && (
+  // Follow the newest turn. An empty conversation stays at its top, where the question is.
+  useEffect(() => { if (endRef.current && msgs.length > 0) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
+  const drawerRef = useDialog(onClose, Boolean(drawer));
+  // Docked, it is a panel beside the board; as a drawer it is a dialog that takes focus.
+  const frame = drawer
+    ? { role: 'dialog', 'aria-modal': true, tabIndex: -1, ref: drawerRef as React.RefObject<HTMLElement> }
+    : { 'data-docked': '' };
+  const panel = (
+    <aside className="rbm-ana de" aria-label="AnA — risk-based monitoring" {...frame}>
+      <div className="de-h">
+        <div>
+          <div className="de-h-t"><span className="rbm-ana-mk" aria-hidden="true">{'✻'}</span>AnA</div>
+          {/* Where the conversation is bound: the study and the tab open beside it. */}
+          <div className="de-h-s">{[study, nav.label].filter(Boolean).join(' · ')}</div>
+        </div>
+        <span className="rbm-ana-hdr-acts">
+          {hasWork && work && (
             <AnaProgressChip
               ref={dock.chipRef}
               messages={work.messages}
@@ -392,7 +534,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
               controls={dock.panelId}
             />
           )}
-          <button className="tb-btn" onClick={onClose} title="Collapse" aria-label="Collapse">{I.panelRight}</button>
+          <button type="button" className="de-x" onClick={onClose} aria-label="Close AnA" title="Close AnA">{I.close}</button>
         </span>
       </div>
       {showWork && work && (
@@ -408,24 +550,15 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
           />
         </div>
       )}
-      <div className="rbm-ana-ctx">
-        <div className="rbm-ana-ctx-k">On this surface</div>
-        <div className="rbm-ana-ctx-v">{nav.label}</div>
-        <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run — ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
-      </div>
       <div className="rbm-ana-scroll" ref={endRef}>
-        <div className="rbm-ana-starters">
-          <div className="rbm-ana-starters-l">Starters for {nav.label.toLowerCase()}</div>
-          {nav.starters.map((s, i) => <button key={i} className="rbm-starter" onClick={() => ask(s)}>{s}</button>)}
-        </div>
+        {empty && <RbmAnaHello nav={nav} study={study} onAsk={onAsk} />}
         {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} onNav={onNav} onStartDemo={onStartDemo} />)}
       </div>
-      <div className="rbm-ana-composer">
-        <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} aria-label="Ask AnA about this study" placeholder={`Ask AnA about ${study}...`} />
-        <button className="rbm-ana-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={() => ask(draft.trim())}>{I.zap}</button>
-      </div>
-      {/* This chat sends no run policy: Manual does not reach it (row 74). */}
-      <RunPolicyDockNote />
+      {/* With a conversation under way the open tab's suggestions stay one tap away, in one quiet row. */}
+      {!empty && <RbmStarters nav={nav} onAsk={onAsk} layout="row" />}
+      <RbmAnaComposer study={study} onSend={onAsk} />
     </aside>
   );
+  if (!drawer) return panel;
+  return <div className="de-bd" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>{panel}</div>;
 }

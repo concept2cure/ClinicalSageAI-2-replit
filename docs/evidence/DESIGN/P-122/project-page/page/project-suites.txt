@@ -1,0 +1,8 @@
+      Tests  3 failed | 969 passed (972)
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 0 uses, and gone from the CSS at 0
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-meta`: no more than 84 uses, and gone from the CSS at 0
+ FAIL  client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts > existing project doors keep their reachable destination > v2/surfaces/Vault.tsx lists the projects it can open in place of a Projects door
+ Test Files  2 failed | 80 passed (82)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+The three failures are not this change's: the ratchet counts CmcModule.tsx's committed '<strong>What to do now:</strong>' (24603881c, another session) and its cm-meta uses; projectCreationDoors reads Vault.tsx (cc1af9221, another session).

@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the dossier as a door, which moves to its readiness and module completion 1437ms
+   → Unable to find an accessible element with the role "button" and name "See readiness and completion by CTD module"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 skipped (33)

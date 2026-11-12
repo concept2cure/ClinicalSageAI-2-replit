@@ -5,6 +5,15 @@
 -- Replay preflight refuses inconsistent legacy links instead of relabeling or
 -- deleting them. Only unambiguous NULL tenant keys are backfilled. The canonical
 -- child-parent and integer tenant policy installers run after this foundation.
+-- AMENDED IN PLACE 2026-11-12 (GA readiness map GA-D5-03; evidence
+-- docs/evidence/F1/2026-11-12-audit-trail-part11-reads/): a sealed report
+-- snapshot (snapshot_metadata carries `seal`, written once by the finalize in
+-- server/routes/report-os.ts writeFinalize) is no longer a row any role may
+-- UPDATE, nor DELETE directly. A change used to be detected on read; it is now
+-- refused. An unsealed row stays writable, so the finalize can seal it. A
+-- snapshot still leaves with its run or its organization by cascade (the
+-- tenant purge's path). Added, not removed: a CREATE OR REPLACE of a function
+-- this file alone defines, and triggers created only when absent.
 
 BEGIN;
 
@@ -242,6 +251,42 @@ CREATE TABLE IF NOT EXISTS report_snapshots (
 CREATE INDEX IF NOT EXISTS report_snapshots_run_idx ON report_snapshots(run_id);
 CREATE INDEX IF NOT EXISTS report_snapshots_scope_idx ON report_snapshots(scope_type, scope_id);
 CREATE INDEX IF NOT EXISTS report_snapshots_latest_idx ON report_snapshots(is_latest);
+
+-- A sealed snapshot is fixed (GA-D5-03, 2026-11-12; see the header). Sealed means
+-- the row as it stands carries a seal. pg_trigger_depth() > 1 is a DELETE issued
+-- by another trigger: the foreign-key cascade from report_runs or organizations.
+CREATE OR REPLACE FUNCTION public.report_snapshots_sealed_fixed()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF OLD.snapshot_metadata IS NULL OR NOT (OLD.snapshot_metadata::jsonb ? 'seal') THEN
+    RETURN CASE TG_OP WHEN 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+  IF TG_OP = 'DELETE' AND pg_trigger_depth() > 1 THEN
+    RETURN OLD;
+  END IF;
+  RAISE EXCEPTION
+    'IMMUTABILITY_VIOLATION: report snapshot % is sealed and cannot be %.',
+    OLD.id, CASE TG_OP WHEN 'DELETE' THEN 'deleted' ELSE 'changed' END
+    USING ERRCODE = 'raise_exception',
+          HINT = 'A sealed report is superseded by a new run, never edited.';
+END;
+$$;
+
+DO $sealed_snapshot$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgname = 'trg_report_snapshots_sealed_fixed'
+       AND tgrelid = 'public.report_snapshots'::regclass
+  ) THEN
+    CREATE TRIGGER trg_report_snapshots_sealed_fixed
+      BEFORE UPDATE OR DELETE ON public.report_snapshots
+      FOR EACH ROW EXECUTE FUNCTION public.report_snapshots_sealed_fixed();
+  END IF;
+END
+$sealed_snapshot$;
 
 CREATE TABLE IF NOT EXISTS report_run_dependencies (
   id serial PRIMARY KEY,

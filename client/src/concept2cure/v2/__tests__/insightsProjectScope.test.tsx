@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -69,5 +69,21 @@ describe('Insights — reports run over the lead project', () => {
     const runnable = [...document.querySelectorAll('button.ro-pack-card')].map((b) => b.textContent ?? '');
     expect(runnable.some((t) => /scorecard/i.test(t))).toBe(false);
     expect(runnable.length).toBeGreaterThan(0);
+  });
+});
+
+/* P-122: what was built is shown, not left behind a second tab. The landing offered one standard
+   pack while the catalog held every report that can be run; it now says how many, and opens them. */
+describe('Insights — the landing says how many reports can be run, and opens the catalog', () => {
+  it('states the catalog’s own count for the project, with the door to it', async () => {
+    await renderCanvas('pharma');
+    const line = document.querySelector('[data-testid="ro-runnable-count"]') as HTMLElement;
+    expect(line, 'the landing names the runnable reports').toBeTruthy();
+    const said = line.textContent?.match(/^(\d+) reports can be run one at a time for ABC-101\./);
+    expect(said, line.textContent ?? '').toBeTruthy();
+    fireEvent.click(within(line).getByRole('button', { name: 'Open the catalog' }));
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Catalog' }).getAttribute('aria-selected')).toBe('true'));
+    // The same number the catalog states over its own cards: one count, not two.
+    expect(screen.getByText(/available to run/).textContent).toContain(`${said![1]} available to run`);
   });
 });

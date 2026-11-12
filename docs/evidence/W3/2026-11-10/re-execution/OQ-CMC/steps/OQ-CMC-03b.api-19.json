@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/material-specs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "materialRole": "excipient",
+      "materialName": "Microcrystalline cellulose PH-102",
+      "compendialMonograph": "Ph. Eur. 0316 / USP-NF",
+      "origin": "plant",
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 36,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 19,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "materialRole": "excipient",
+        "materialName": "Microcrystalline cellulose PH-102",
+        "functionInFormulation": null,
+        "grade": null,
+        "compendialMonograph": "Ph. Eur. 0316 / USP-NF",
+        "compendialCompliance": null,
+        "supplier": null,
+        "manufacturerSite": null,
+        "origin": "plant",
+        "originDetail": null,
+        "tseCertificate": null,
+        "testParameters": null,
+        "analyticalProcedures": null,
+        "novelExcipient": false,
+        "novelExcipientJustification": null,
+        "status": "draft",
+        "createdAt": "2026-11-12T00:34:44.015Z",
+        "updatedAt": "2026-11-12T00:34:44.015Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

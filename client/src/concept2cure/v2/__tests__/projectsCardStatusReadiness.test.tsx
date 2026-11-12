@@ -24,6 +24,10 @@
  *    and no stat strip"). The figure, its name and its reason moved to the list
  *    view's "Dossier readiness" column, as text; the portfolio figures moved to
  *    the list's footing (.design/claude-convergence/D2.md §1.4 items 2, 5–7).
+ * 5. (P-122, 2026-11-10) Hidden is not quiet: the card says its readiness again,
+ *    as a line of words ("Dossier readiness 42%", with the server's reason as the
+ *    tooltip), still with no bar and no chip. The portfolio mean is gone: the
+ *    server sends no portfolio figure for it (p122ProjectsFiguresByDefault.test.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,6 +48,9 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
 const props = () =>
@@ -150,15 +157,16 @@ describe('Projects — no bar anywhere; the figure is text with its reason (F23,
   });
   const bar = (el: HTMLElement) => el.querySelector('.ph-bar-track');
 
-  /* Was "a measured 0 draws its empty bar": D2-1 takes the bar off the card
-     (plan §2, no readiness bars); the card states no readiness at all. */
-  it('no card draws a bar or states a readiness figure', async () => {
+  /* Was "a measured 0 draws its empty bar": D2-1 took the bar and the figure off
+     the card. P-122 puts the figure back as words; the bar stays off. */
+  it('no card draws a bar; each says its dossier readiness in words, with the server’s reason', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
-    for (const id of ['zero', 'half', 'none', 'down']) {
-      expect(bar(card(`Program ${id}`))).toBeNull();
-      expect(card(`Program ${id}`).textContent).not.toMatch(/readiness|\d+%|unavailable/i);
-    }
+    for (const id of ['zero', 'half', 'none', 'down']) expect(bar(card(`Program ${id}`))).toBeNull();
+    expect(card('Program zero').textContent).toContain('Dossier readiness 0%');
+    expect(card('Program half').textContent).toContain('Dossier readiness 50%');
+    expect(card('Program none').textContent).toContain('Dossier readiness Not recorded');
+    expect(card('Program down').querySelector(`[title="${READ_FAILED}"]`)?.textContent).toBe('Dossier readiness unavailable');
   });
 
   /* Was "the list view draws the same bars": the list states the figure as
@@ -185,13 +193,15 @@ describe('Projects — no bar anywhere; the figure is text with its reason (F23,
     expect(r.querySelector(`[title="${READ_FAILED}"]`)?.textContent).toBe('unavailable');
   });
 
-  it('the portfolio mean says how many programs it covers when some have no recorded measurement', async () => {
+  /* Was "the portfolio mean says how many programs it covers": the mean was the
+     browser's, over the loaded page, and the server sends no portfolio figure for
+     it, so it is not shown (P-122, Rule 2). Each program's own figure is. */
+  it('states no portfolio mean, in either view', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
-    // D2-1: the portfolio figures are the list's footing, not the grid's chrome.
-    expect(document.querySelector('.pj-summary')).toBeNull();
+    expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/average|\d+%/i);
     fireEvent.click(screen.getByRole('button', { name: 'List' }));
-    // (0 + 50) / 2, over the two measured of four.
-    await waitFor(() => expect(document.querySelector('.pj-summary')?.textContent).toContain('25% average readiness, 2 of 4 measured'));
+    await waitFor(() => expect(document.querySelector('.ctable')).toBeTruthy());
+    expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/average|\d+%/i);
   });
 });

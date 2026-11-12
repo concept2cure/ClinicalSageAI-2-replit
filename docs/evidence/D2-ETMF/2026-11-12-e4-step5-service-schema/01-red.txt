@@ -1,0 +1,16 @@
+ × server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > its service and its schema model are gone, and the schema index exports neither 7ms
+ × server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > its migration creates nothing, and its header says what was removed and why 2ms
+ × server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > no file under server/, shared/ or client/src names either table outside a comment 637ms
+ × server/services/etmf/__tests__/etmf-second-store-retired.test.ts > the second trial master file store is retired > etmf-logic.ts is the classifier only, and the seed skeleton is gone 49ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCREAT…' not to match /\bCREATE\b|\bDROP\b|\bALTER\b|\bINSE…/i
+AssertionError: expected [ …(4) ] to deeply equal []
+AssertionError: expected [ 'TMF_ABOUT_PHRASES', …(6) ] to deeply equal [ 'TMF_ABOUT_PHRASES', …(5) ]
+    "TMF_ABOUT_PHRASES",
+    "TMF_KEYWORD_RULES",
+    "TMF_QUALIFIER_KEYWORDS",
+    "TMF_ZONES",
+    "classifyArtifact",
+    "zoneName",
+      Tests  4 failed (4)

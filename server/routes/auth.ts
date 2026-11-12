@@ -37,7 +37,7 @@ import {
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { sessionPermissions, sessionRolesOf } from '../middleware/orgMembership';
-import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { recordAuthEvent, type SignupAgreementsRecord } from '../services/audit/auth-event-audit';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
 import {
@@ -188,6 +188,21 @@ const signupSchema = z.object({
   ]),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
+  // Kept on the account (users.title). The page required it and then dropped it (2026-11-10, W1-04).
+  jobTitle: z.string().trim().min(1).max(120).optional(),
+  // What the person accepted on the page's last step, and which revision of that text was shown. Recorded on the
+  // sign-up's audit event. An acceptance is recorded whole or the sign-up is refused: each of the three must be
+  // true, the revision must be named, and no other key is admitted. A request that sends none (a script, a test)
+  // creates the account with "no acceptance was sent" on its record; nothing is invented for it.
+  agreements: z
+    .object({
+      revision: z.string().trim().min(1).max(40),
+      termsOfService: z.literal(true),
+      privacyPolicy: z.literal(true),
+      regulatoryAcknowledgement: z.literal(true),
+    })
+    .strict()
+    .optional(),
   // Optional industry-context signals — used to seed the governed
   // organization_industry_profiles row (best-effort, never fails signup).
   mdxSpecialization: z
@@ -923,8 +938,12 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       mdxSpecialization,
       primaryUseCases,
       defaultMarkets,
+      jobTitle,
     } = parsed.data;
     const email = parsed.data.email.trim().toLowerCase();
+    const agreements: SignupAgreementsRecord | null = parsed.data.agreements
+      ? { revision: parsed.data.agreements.revision, accepted: ['terms_of_service', 'privacy_policy', 'regulatory_acknowledgement'] }
+      : null;
     const signupClientType = clientTypeForSignup(industryMode, mdxSpecialization);
 
     // Enforce enterprise password policy (NIST 800-63B), against what the
@@ -1056,6 +1075,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
           email,
           passwordHash,
           name: fullName,
+          ...(jobTitle ? { title: jobTitle } : {}),
           defaultOrganizationId: org.id,
           // Waits on the e-mail link (IAM-17); a development server skips it.
           status: verificationRequired ? ACCOUNT_STATUS_PENDING_VERIFICATION : ACCOUNT_STATUS_ACTIVE,
@@ -1189,6 +1209,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         reason: 'verification_sent',
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
+        agreements,
       });
       return res.status(201).json({ success: true, verification: { required: true, email }, ...created });
     }
@@ -1219,6 +1240,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       reason: 'dev_no_verification',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
+      agreements,
     });
 
     return res.status(201).json({ success: true, token, verification: { required: false }, ...created });

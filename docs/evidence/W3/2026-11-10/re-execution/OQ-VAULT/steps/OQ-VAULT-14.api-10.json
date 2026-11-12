@@ -1,0 +1,51 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/regulatory/documents/81aa9369-3646-4cb1-9810-5b2bcf0a6322/sign",
+    "anonymous": false,
+    "identity": "oq-approver@validation.local",
+    "body": {
+      "meaning": "approved",
+      "reason": "OQ-002 step 14: approved for validation",
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 360,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "signature": {
+        "actor": "3",
+        "role": "admin",
+        "signatureRef": "esig:27",
+        "signedAt": "2026-11-10T03:11:01.247Z",
+        "meaning": "approved",
+        "boundContentHash": "7a8e97a5a380b03f3a2f40aa31665ace994fbb1908526abe0bd80bbeb48afa30",
+        "bindingBasis": "vault-document-version-sha256"
+      },
+      "routeId": "543e9711-a3b4-4903-b626-f4e3ebf4e186",
+      "approvalComplete": true,
+      "stage": "approved",
+      "auditEvent": {
+        "documentId": "81aa9369-3646-4cb1-9810-5b2bcf0a6322",
+        "version": 1,
+        "from": "in_review",
+        "to": "approved",
+        "actor": "3",
+        "reason": "OQ-002 step 14: approved for validation",
+        "signatureRef": "esig:27",
+        "at": "2026-11-10T03:11:01.247Z",
+        "contentHash": "7a8e97a5a380b03f3a2f40aa31665ace994fbb1908526abe0bd80bbeb48afa30",
+        "prevEventHash": "3db82ce407bf75126b4f001fb0f9cba4d34f5ebbfc7e37e7c808ede155b8ed5e",
+        "eventHash": "d4083028285764a464a89f644e88f93a8e82cbce67c450b144f06941db959eb7"
+      },
+      "superseded": [
+        "b2c87e54-9c91-4ec6-b4f5-2b5a58d779a2"
+      ]
+    }
+  }
+}

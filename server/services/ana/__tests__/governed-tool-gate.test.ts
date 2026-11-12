@@ -177,8 +177,15 @@ describe('the command tool, and the tools that write on their own handlers', () 
       kind: 'NEEDS_APPROVAL',
       tier: 'reason',
     });
-    expect(registeredToolTier('save_document_to_vault')).toBe('reason');
-    expect(registeredToolTier('save_report_definition')).toBe('confirm');
+    expect(registeredToolTier('save_document_to_vault', {})).toBe('reason');
+    expect(registeredToolTier('save_report_definition', {})).toBe('confirm');
+    // A tool that records a reason on only some calls is held at the reason tier for exactly those:
+    // suggesting a folder is a yes; making one is a governed write with the person's reason.
+    expect(registeredToolTier('place_project_document', { document_id: 'd', folder_id: 'module-4', rationale: 'r' })).toBe('confirm');
+    expect(registeredToolTier('place_project_document', { document_id: 'd', unfile: true, rationale: 'r' })).toBe('confirm');
+    expect(registeredToolTier('place_project_document', { document_id: 'd', new_folder: { name: 'X' }, rationale: 'r' })).toBe('reason');
+    expect(registeredToolTier('place_project_document', { document_id: 'd', new_folder: 'not an object', rationale: 'r' })).toBe('reason');
+    expect(classifyToolCall({ name: 'place_project_document', input: { document_id: 'd', new_folder: { name: 'X' }, rationale: 'r' } })).toMatchObject({ kind: 'NEEDS_APPROVAL', tier: 'reason' });
   });
 
   it('a tool named like a governed command is judged as a tool, not as that command', () => {

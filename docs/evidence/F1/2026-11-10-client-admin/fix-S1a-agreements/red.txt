@@ -1,0 +1,536 @@
+# Red, before the fix (2026-11-10). Command:
+# npx vitest run <the three new or extended files> --maxWorkers=2
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.061Z",
+  "level": "warn",
+  "message": "[eula-service] Failed to ensure EULA schema",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.062Z",
+  "level": "error",
+  "message": "[licensing] agreements/active error",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.069Z",
+  "level": "warn",
+  "message": "[eula-service] Failed to ensure EULA schema",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.070Z",
+  "level": "error",
+  "message": "[licensing] agreements/outstanding error",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.074Z",
+  "level": "warn",
+  "message": "[eula-service] Failed to ensure EULA schema",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.075Z",
+  "level": "error",
+  "message": "[licensing] acceptances error",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > accept: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.080Z",
+  "level": "warn",
+  "message": "[eula-service] Failed to ensure EULA schema",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > accept: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.080Z",
+  "level": "error",
+  "message": "[licensing] accept error",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > entitlements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.087Z",
+  "level": "warn",
+  "message": "[eula-service] Failed to ensure EULA schema",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > entitlements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:48:47.087Z",
+  "level": "error",
+  "message": "[licensing] entitlements error",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a client's own administrator 403 with a plain sentence, and changes nothing 139ms
+   → {"agreement":{"id":"a-new","agreementKey":"eula","version":"2026.11","title":"End-User License Agreement","summary":null,"body":"The new terms.","url":null,"scope":"user","required":true,"status":"active","effectiveAt":"2026-06-21T00:00:00.000Z"}}: expected 201 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a federated session whose e-mail is on the allowlist (the IdP asserted it) 8ms
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses platform staff without a reason 400, and changes nothing 6ms
+   → undefined: expected 403 to be 400 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > publishes for platform staff with a reason, and audits before and after in the same transaction 5ms
+   → {"error":"Admin access required"}: expected 403 to be 201 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 7ms
+   → {"error":"Failed to load agreements"}: expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 8ms
+   → {"error":"Failed to load outstanding agreements"}: expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 4ms
+   → {"error":"Failed to load acceptance history"}: expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > accept: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 6ms
+   → {"error":"Failed to record acceptance"}: expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > entitlements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 9ms
+   → {"error":"Failed to resolve entitlements"}: expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > publish (platform staff): 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 6ms
+   → {"error":"Admin access required"}: expected 403 to be 503 // Object.is equality
+ × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > tables that exist are read without any attempt to create them (a deploy-shaped role) 5ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a client's own administrator 403 with a plain sentence, and changes nothing
+AssertionError: {"agreement":{"id":"a-new","agreementKey":"eula","version":"2026.11","title":"End-User License Agreement","summary":null,"body":"The new terms.","url":null,"scope":"user","required":true,"status":"active","effectiveAt":"2026-06-21T00:00:00.000Z"}}: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:126:50
+    124|     wire();
+    125|     const res = await request(await appAs(CLIENT_ADMIN)).post('/api/li…
+    126|     expect(res.status, JSON.stringify(res.body)).toBe(403);
+       |                                                  ^
+    127|     expect(res.body.error).toMatch(/platform staff/i);
+    128|     expect(res.body.error).toMatch(/organisation/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses platform staff without a reason 400, and changes nothing
+AssertionError: undefined: expected 403 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 403
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:146:42
+    144|         .post('/api/licensing/agreements')
+    145|         .send({ ...PUBLISH, reason });
+    146|       expect(res.status, String(reason)).toBe(400);
+       |                                          ^
+    147|       expect(res.body.error).toMatch(/reason/i);
+    148|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > publishes for platform staff with a reason, and audits before and after in the same transaction
+AssertionError: {"error":"Admin access required"}: expected 403 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 403
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:156:50
+    154|     wire();
+    155|     const res = await request(await appAs(PLATFORM_STAFF)).post('/api/…
+    156|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    157|     expect(res.body.agreement).toMatchObject({ id: 'a-new', version: '…
+    158|     expect(sealedAudit).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+AssertionError: {"error":"Failed to load agreements"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:190:52
+    188|       const agent = request(await appAs(user));
+    189|       const res = method === 'get' ? await agent.get(path) : await age…
+    190|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    191|       expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    192|       expect(res.body.error).toMatch(/not set up/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+AssertionError: {"error":"Failed to load outstanding agreements"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:190:52
+    188|       const agent = request(await appAs(user));
+    189|       const res = method === 'get' ? await agent.get(path) : await age…
+    190|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    191|       expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    192|       expect(res.body.error).toMatch(/not set up/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+AssertionError: {"error":"Failed to load acceptance history"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:190:52
+    188|       const agent = request(await appAs(user));
+    189|       const res = method === 'get' ? await agent.get(path) : await age…
+    190|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    191|       expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    192|       expect(res.body.error).toMatch(/not set up/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > accept: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+AssertionError: {"error":"Failed to record acceptance"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:190:52
+    188|       const agent = request(await appAs(user));
+    189|       const res = method === 'get' ? await agent.get(path) : await age…
+    190|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    191|       expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    192|       expect(res.body.error).toMatch(/not set up/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > entitlements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+AssertionError: {"error":"Failed to resolve entitlements"}: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:190:52
+    188|       const agent = request(await appAs(user));
+    189|       const res = method === 'get' ? await agent.get(path) : await age…
+    190|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    191|       expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    192|       expect(res.body.error).toMatch(/not set up/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > publish (platform staff): 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+AssertionError: {"error":"Admin access required"}: expected 403 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 403
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:190:52
+    188|       const agent = request(await appAs(user));
+    189|       const res = method === 'get' ? await agent.get(path) : await age…
+    190|       expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                    ^
+    191|       expect(res.body.code).toBe('AGREEMENTS_NOT_SET_UP');
+    192|       expect(res.body.error).toMatch(/not set up/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > tables that exist are read without any attempt to create them (a deploy-shaped role)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:205:80
+    203|     expect(res.status).toBe(200);
+    204|     expect(res.body.agreements).toHaveLength(1);
+    205|     expect(query.mock.calls.some(([sql]) => /CREATE TABLE/.test(String…
+       |                                                                                ^
+    206|   });
+    207| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  11:48:46
+   Duration  885ms (transform 282ms, setup 181ms, import 166ms, tests 208ms, environment 0ms)
+
+
+#### service and gate
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts
+{
+  "timestamp": "2026-11-10T11:48:31.398Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > writes one sealed audit row with the reason, the superseded version and the new one, before COMMIT 22ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > refuses a missing or too-short reason before any write 9ms
+   → promise resolved "{ …(11) }" instead of rejecting
+ × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > an audit row that cannot be written rolls the publish back: the old version stays active 8ms
+   → promise resolved "{ …(11) }" instead of rejecting
+ × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > a first version (nothing superseded) is audited with before: [] 6ms
+   → Cannot read properties of undefined (reading 'new_values')
+stdout | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+{
+  "timestamp": "2026-11-10T11:48:35.559Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T11:48:35.561Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+{
+  "timestamp": "2026-11-10T11:48:35.561Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+[database] Database connection successful
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+{
+  "timestamp": "2026-11-10T11:48:35.613Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > answers 503 when acceptance could not be read, and does not serve the route
+{
+  "timestamp": "2026-11-10T11:48:35.652Z",
+  "level": "warn",
+  "message": "[require-license-acceptance] License acceptance could not be read — request refused",
+  "context": {
+    "userId": 42,
+    "organizationId": 7,
+    "err": "connect ECONNREFUSED 10.0.0.xxx:5432"
+  }
+}
+
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > answers 503 when acceptance could not be read, and does not serve the route 39ms
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > refuses with the outstanding agreements when some are not accepted (control) 8ms
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > serves the route when every required agreement is accepted (control) 5ms
+ × server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > says plainly that agreements are not set up when their records do not exist (F1, 2026-11-10, W1-05) 5ms
+   → AgreementStoreUnavailableError is not a constructor
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > answers 401 without a user (control) 5ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/licensing-agreements-publish-and-store.test.ts [ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts ]
+ReferenceError: Cannot access 'dbMock' before initialization
+ ❯ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts:31:24
+     29|   query: (...a: unknown[]) => query(...a),
+     30| });
+     31| vi.mock('../../db.js', dbMock);
+       |                        ^
+     32| vi.mock('../../db', dbMock);
+     33| vi.mock('../../services/auditService.js', () => ({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > says plainly that agreements are not set up when their records do not exist (F1, 2026-11-10, W1-05)
+TypeError: AgreementStoreUnavailableError is not a constructor
+ ❯ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts:73:53
+     71|   it('says plainly that agreements are not set up when their records d…
+     72|     const { AgreementStoreUnavailableError } = await import('../../ser…
+     73|     eula.getOutstandingAgreements.mockRejectedValue(new AgreementStore…
+       |                                                     ^
+     74|     const res = await request(appFor(USER)).get('/gated');
+     75|     expect(res.status).toBe(503);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > writes one sealed audit row with the reason, the superseded version and the new one, before COMMIT
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts:59:25
+     57|     const published = await publish();
+     58|     const audits = await h.pg!.query<{ tenant_id: number; user_id: num…
+     59|     expect(audits.rows).toHaveLength(1);
+       |                         ^
+     60|     const row = audits.rows[0];
+     61|     expect(row).toMatchObject({ tenant_id: 0, user_id: 1, action: 'lic…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > refuses a missing or too-short reason before any write
+AssertionError: promise resolved "{ …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "agreementKey": "dpa",
++   "body": "New terms.",
++   "effectiveAt": 2026-11-10T11:48:34.370Z,
++   "id": "b40714ad-4a27-484b-9016-8231782db8fb",
++   "required": true,
++   "scope": "organization",
++   "status": "active",
++   "summary": null,
++   "title": "Data Processing Agreement",
++   "url": null,
++   "version": "2",
+  }
+
+ ❯ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts:75:55
+     73|   it('refuses a missing or too-short reason before any write', async (…
+     74|     for (const reason of [undefined, '', ' x ']) {
+     75|       await expect(publish({ reason }), String(reason)).rejects.toMatc…
+       |                                                       ^
+     76|     }
+     77|     expect(h.statements.some(s => /UPDATE license_agreements|INSERT IN…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > an audit row that cannot be written rolls the publish back: the old version stays active
+AssertionError: promise resolved "{ …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "agreementKey": "dpa",
++   "body": "New terms.",
++   "effectiveAt": 2026-11-10T11:48:34.379Z,
++   "id": "bc7abf11-bde5-4469-a65b-f4ca4f6f0a28",
++   "required": true,
++   "scope": "organization",
++   "status": "active",
++   "summary": null,
++   "title": "Data Processing Agreement",
++   "url": null,
++   "version": "2",
+  }
+
+ ❯ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts:82:27
+     80|   it('an audit row that cannot be written rolls the publish back: the …
+     81|     await h.pg!.exec('ALTER TABLE audit_logs ADD CONSTRAINT eula_publi…
+     82|     await expect(publish()).rejects.toThrow();
+       |                           ^
+     83|     const states = await h.pg!.query<{ id: string; status: string }>('…
+     84|     expect(states.rows).toEqual([{ id: OLD, status: 'active' }]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > a first version (nothing superseded) is audited with before: []
+TypeError: Cannot read properties of undefined (reading 'new_values')
+ ❯ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts:93:27
+     91|     const published = await publish({ agreementKey: 'baa', title: 'Bus…
+     92|     const audits = await h.pg!.query<{ new_values: any }>('SELECT new_…
+     93|     expect(audits.rows[0].new_values.before).toEqual([]);
+       |                           ^
+     94|     expect(audits.rows[0].new_values.after.id).toBe(published.id);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 4 passed (9)
+   Start at  11:48:29
+   Duration  6.24s (transform 877ms, setup 122ms, import 2.47s, tests 3.06s, environment 0ms)
+

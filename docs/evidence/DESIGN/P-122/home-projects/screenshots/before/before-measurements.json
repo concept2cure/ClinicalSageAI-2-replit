@@ -1,0 +1,181 @@
+{
+  "report": {
+    "home-1440-light": {
+      "composer": {
+        "top": 316,
+        "bottom": 457,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 708,
+        "bottom": 729,
+        "aboveFold": true
+      },
+      "firstProject": {
+        "top": 748,
+        "bottom": 792,
+        "aboveFold": true
+      },
+      "openItems": {
+        "top": 1032,
+        "bottom": 1053,
+        "aboveFold": false
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-1440-light": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": null,
+      "firstCard": {
+        "top": 185,
+        "bottom": 337,
+        "aboveFold": true
+      },
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027LMN-401 · Updated Nov 10Due O",
+      "figuresText": ""
+    },
+    "home-390-light": {
+      "composer": {
+        "top": 345,
+        "bottom": 486,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 858,
+        "bottom": 879,
+        "aboveFold": false
+      },
+      "firstProject": {
+        "top": 897,
+        "bottom": 1004,
+        "aboveFold": false
+      },
+      "openItems": {
+        "top": 1412,
+        "bottom": 1433,
+        "aboveFold": false
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-390-light": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": null,
+      "firstCard": {
+        "top": 332,
+        "bottom": 503,
+        "aboveFold": true
+      },
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027LMN-401 · Updated Nov 10Due O",
+      "figuresText": ""
+    },
+    "home-1440-dark": {
+      "composer": {
+        "top": 316,
+        "bottom": 457,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 708,
+        "bottom": 729,
+        "aboveFold": true
+      },
+      "firstProject": {
+        "top": 748,
+        "bottom": 792,
+        "aboveFold": true
+      },
+      "openItems": {
+        "top": 1032,
+        "bottom": 1053,
+        "aboveFold": false
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-1440-dark": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": null,
+      "firstCard": {
+        "top": 185,
+        "bottom": 337,
+        "aboveFold": true
+      },
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027LMN-401 · Updated Nov 10Due O",
+      "figuresText": ""
+    },
+    "home-390-dark": {
+      "composer": {
+        "top": 345,
+        "bottom": 486,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 858,
+        "bottom": 879,
+        "aboveFold": false
+      },
+      "firstProject": {
+        "top": 897,
+        "bottom": 1004,
+        "aboveFold": false
+      },
+      "openItems": {
+        "top": 1412,
+        "bottom": 1433,
+        "aboveFold": false
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-390-dark": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": null,
+      "firstCard": {
+        "top": 332,
+        "bottom": 503,
+        "aboveFold": true
+      },
+      "topbarSearch": null,
+      "topbarHelp": null,
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027LMN-401 · Updated Nov 10Due O",
+      "figuresText": ""
+    }
+  },
+  "errors": []
+}

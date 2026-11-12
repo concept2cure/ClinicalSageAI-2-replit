@@ -1,0 +1,25 @@
+// Flow 1c: the new administrator's first sign-in (on 5220) and what the first screen shows.
+const c = require('../walk/common.cjs');
+const EMAIL = 'avery.lind@northgate-bio.example.test';
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page, context } = await c.newPage(browser, { who: 'avery' });
+  const api = [];
+  page.on('response', (r) => { if (r.url().includes('/api/')) api.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '').slice(0, 110)}`); });
+  await c.step('first sign-in', async (s) => {
+    await c.signIn(page, EMAIL, undefined, { shotPrefix: 'w1-18-first-signin' });
+    s.notes.push('landed on ' + page.url());
+    await c.sleep(1500);
+    await c.shot(page, 'w1-19-first-run-home.png');
+    s.notes.push('body: ' + (await c.textOf(page, 'body')).slice(0, 2500));
+    s.notes.push('api calls: ' + JSON.stringify([...new Set(api)]));
+  });
+  await c.step('account menu', async (s) => {
+    const btns = await page.locator('button:visible, a:visible').evaluateAll(els => els.map(e => `${e.tagName}|${(e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 60)}`));
+    s.notes.push('controls: ' + JSON.stringify(btns));
+  });
+  await context.storageState({ path: require('path').join(__dirname, '.avery-state.json') });
+  console.log(JSON.stringify(c.log.steps.map(s => ({ n: s.name, o: s.outcome, e: s.error, http: s.http, console: s.console, notes: s.notes })), null, 1));
+  c.save('w1-firstrun');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

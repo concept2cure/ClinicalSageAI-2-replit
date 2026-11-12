@@ -32,9 +32,11 @@ import { IndFilingPlan } from '../editor/IndDocumentLibrary';
 import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from './ProjectMdxWorkflow';
 import { AssignAction, AssignmentLine, DueForYou, planDueFor, usePlanAssignments, type PlanDeliverable } from './PlanAssign';
 import { useAuthUser } from '@/services/portal/authService';
+import { canGovernedWrite } from '@shared/constants/permissions';
 import { STEP_DOORS } from '../projectDoors';
 import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
 import { FilingLifecycleReference } from './FilingLifecycleReference';
+import { PlanStrategy } from './ProjectObjective';
 import { ProducedBy, producingTask, ProjectProgramPlan, useProjectPyramid } from './PyramidProject';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
@@ -71,7 +73,7 @@ function targetWords(iso: string | null | undefined): string {
 /** Under the work breakdown's workstreams, for a device plan: its own workstreams (above) carry no work-breakdown key,
  *  so they are not counted in these, and the plan says so rather than guessing a mapping. */
 function deviceWorkstreamNote(devicePlan: unknown): string | undefined {
-  return devicePlan ? 'The device workstreams above are listed by their own items, which have no work-breakdown key, so they are not counted in these workstreams.' : undefined;
+  return devicePlan ? 'The device workstreams above are tracked by their own items, so they are not counted in these workstreams.' : undefined;
 }
 
 /**
@@ -79,7 +81,7 @@ function deviceWorkstreamNote(devicePlan: unknown): string | undefined {
  * the project's pyramid (once, for the content plan's join and the Program plan). A deliverable's line says who it is
  * assigned to and, for an IND document, the work-breakdown task that produces it.
  */
-function usePlanReads(pid: string, prog: { target_submission_date?: string | null } | null, epoch: number) {
+function usePlanReads(pid: string, prog: { target_submission_date?: string | null; canChange?: boolean } | null, epoch: number) {
   const assignments = usePlanAssignments(pid, epoch);
   const user = useAuthUser();
   const pyramid = useProjectPyramid(pid, prog?.target_submission_date ?? null);
@@ -94,7 +96,9 @@ function usePlanReads(pid: string, prog: { target_submission_date?: string | nul
   // Whose tasks they are is the session's, never guessed: no signed-in person, no list.
   const dueForYou = user?.id == null ? null
     : <DueForYou items={planDueFor(assignments.rows, pid, user.id)} unread={Boolean(assignments.error)} />;
-  return { assignments, pyramid, assignmentOf, dueForYou };
+  // A viewer, or anyone on an archived project, is shown the plan and offered no change to it.
+  const canEdit = prog?.canChange !== false && canGovernedWrite(user);
+  return { assignments, pyramid, assignmentOf, dueForYou, canEdit };
 }
 
 export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, otherFilings, marketsState, projectId,
@@ -120,7 +124,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
 }) {
   const [epoch, setEpoch] = useState(0);
   const assigned = () => { setEpoch(value => value + 1); onWorkChanged?.(); };
-  const { assignments, pyramid, assignmentOf, dueForYou } = usePlanReads(pid, prog, epoch);
+  const { assignments, pyramid, assignmentOf, dueForYou, canEdit } = usePlanReads(pid, prog, epoch);
   const assignAction = (deliverable: PlanDeliverable) => (
     <AssignAction deliverable={deliverable} programId={pid} projectId={projectId} assigned={assignments.byDeliverable.has(deliverable.id)}
       onAssigned={assigned} />
@@ -136,6 +140,9 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
     <div className="pj-stagebody" data-testid="pj-plan">
       {/* What is due for the person, first (THE_PROGRAM §8 item 2). Only for a signed-in person: whose tasks they are
           is the session's, never guessed. */}
+      {/* How the project means to reach its objective, first (THE_PROGRAM §8 item 1). The objective itself is under the
+          project's name, in view on every step. */}
+      {prog && <PlanStrategy programId={pid} canEdit={canEdit} />}
       {prog && dueForYou}
       {!prog ? (
         /* The project record is still being read: which plan applies is not known yet. */
@@ -176,7 +183,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
       )}
       {/* The filing's work breakdown with this project's progress (S11): beside what the filing needs, the work
           that produces it, phase by phase, with its critical path. */}
-      {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} workstreamNote={deviceWorkstreamNote(devicePlan)} owners={assignments.byPyramidTask}
+      {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} canEdit={canEdit} workstreamNote={deviceWorkstreamNote(devicePlan)} owners={assignments.byPyramidTask}
         ownersUnread={Boolean(assignments.error)} onAssigned={assigned}
         onNav={onNav} onAsk={onAsk} />}
       {/* Tasks and approvals, by due date, before the reference (D3-4, D3.md §4.7 Plan item 1). Read again after each

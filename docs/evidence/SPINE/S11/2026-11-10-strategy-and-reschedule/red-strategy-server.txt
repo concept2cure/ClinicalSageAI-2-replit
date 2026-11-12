@@ -1,0 +1,6 @@
+ × charter-objectives.pglite.test.ts > the objective of record carries the project's regulatory strategy > leaves a version recorded without one exactly as it was: no key, the same hash 9ms
+ × charter-objectives.pglite.test.ts > the objective of record carries the project's regulatory strategy > records a stated strategy as the next version, with its reason, and reads it back 6ms
+ × charter-objectives.pglite.test.ts > the objective of record carries the project's regulatory strategy > gives AnA the strategy with the objective 12ms
+ × charter-objectives.pglite.test.ts > the objective of record carries the project's regulatory strategy > reads the same strategy on a caller-owned executor, and refuses one too long 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 29 passed (33)

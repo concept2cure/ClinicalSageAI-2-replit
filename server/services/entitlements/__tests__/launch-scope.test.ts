@@ -202,8 +202,11 @@ describe('the folded Artifacts center and device vault', () => {
        module; an existing grant is kept, deprecated, by the catalogue. */
     const vault = LAUNCH_APPS.find((app) => app.id === 'vault')!;
     const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
-    expect(vault.surfaces).toEqual(['vault']);
+    // The trial master file is a section of the Vault since the eTMF's admission (2026-11-12, P-124 item 6); its
+    // module stays its own, in the professional band (P-75), and is not a launch module.
+    expect(vault.surfaces).toEqual(['vault', 'etmf']);
     expect(vault.modules).toEqual(['vault']);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('etmf');
     expect(projects.surfaces).not.toContain('device-vault');
     expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-vault');
     for (const id of ['artifacts-center', 'device-vault']) {
@@ -480,9 +483,10 @@ describe('Submission Readiness is a Submission Center screen — founder decisio
 describe('Biostatistics in the catalog', () => {
   it('Biostatistics is a launch app with no module grant — founder request P-77, 2026-10-31', () => {
     const biostatistics = LAUNCH_APPS.find((a) => a.id === 'biostatistics');
-    expect(biostatistics?.surfaces).toEqual(['biostatistics', 'biostat-workbench']);
+    /* One surface since the 2026-11-09 merge (SURFACE_CONSOLIDATION_2026-08 §5). */
+    expect(biostatistics?.surfaces).toEqual(['biostatistics']);
     expect(biostatistics?.modules).toEqual([]);
     expect(isLaunchSurface('biostatistics')).toBe(true);
-    expect(isLaunchSurface('biostat-workbench')).toBe(true);
+    expect(isLaunchSurface('biostat-workbench'), 'the retired id is no longer a launch surface').toBe(false);
   });
 });

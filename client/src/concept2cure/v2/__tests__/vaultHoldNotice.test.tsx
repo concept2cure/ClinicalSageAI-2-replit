@@ -58,7 +58,7 @@ describe('a document on legal hold says so', () => {
     expect(holdsCovering([PROJECT_HOLD, DOC_HOLD], DOC_B)).toEqual([PROJECT_HOLD, DOC_HOLD]);
     expect(holdsCovering([DOC_HOLD], DOC_A)).toEqual([]);
     expect(holdNoticeText([DOC_HOLD])).toBe('On legal hold: MATTER-2026-07 (this version, since 2026-10-12). '
-      + 'While a hold is in place this document cannot be withdrawn or disposed of. Holds are placed and lifted in Admin, Settings.');
+      + 'While a hold is in place this document cannot be withdrawn or disposed of. A hold is lifted in Admin, Settings.');
   });
 
   it('shows the hold on the document it covers, and nothing on one it does not', async () => {

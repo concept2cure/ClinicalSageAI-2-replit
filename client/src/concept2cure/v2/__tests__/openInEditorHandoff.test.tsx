@@ -450,9 +450,7 @@ async function simulated(onNav: () => void) {
   render(<CmcModule {...props('cmc-module', onNav)} />);
   /* The tab is "Change control": the simulator now sits above the register it
      models against, rather than being the whole tab. */
-  /* Change control is in the Study records half of the work area (D5 §A.3),
-     so the journey is the half and then the tab. */
-  fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+  /* All nine CMC tabs are one row since P-122, so Change control is one click. */
   fireEvent.click(screen.getByRole('tab', { name: 'Change control' }));
   const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
   choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');

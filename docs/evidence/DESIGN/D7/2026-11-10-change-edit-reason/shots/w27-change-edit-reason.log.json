@@ -1,0 +1,62 @@
+{
+  "apiErrors": [
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 409,
+      "url": "/api/mdx/qms/changes/23",
+      "at": "/concept2cure/quality"
+    },
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 422,
+      "url": "/api/mdx/qms/changes/28",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "changes",
+      "count": 9,
+      "editable": "CC-C9-268139:under_assessment",
+      "approved": "CC-SIGN-873701:approved"
+    },
+    {
+      "name": "no-reason",
+      "stillOpen": 1,
+      "invalid": "true"
+    },
+    {
+      "name": "saved",
+      "toast": "The assessment of CC-C9-268139 was saved.",
+      "plan": "Walk F1: qualify the second source (8012)."
+    },
+    {
+      "name": "delete-approved",
+      "status": 409,
+      "code": "QMS_CHANGE_KEPT",
+      "error": "This change is approved, so it is kept on the record. Nothing was removed. A change is removed only before its approval; after that, cancel it through its lifecycle, with a reason."
+    },
+    {
+      "name": "delete-proposed",
+      "created": 201,
+      "noReason": "422 State why the change request is removed (a reason of at least 8 characters). Nothing was changed.",
+      "removed": 200,
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    },
+    {
+      "name": "ids",
+      "edited": 12,
+      "removed": 28
+    },
+    {
+      "name": "w27-change-edit-reason",
+      "ok": true
+    }
+  ]
+}

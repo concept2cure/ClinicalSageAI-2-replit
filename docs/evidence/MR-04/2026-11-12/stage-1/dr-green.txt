@@ -1,0 +1,12 @@
+Success! The configuration is valid.
+
+tests/dr.tftest.hcl... in progress
+  run "the_three_keys_are_multi_region_from_creation"... pass
+  run "each_key_has_a_replica_in_the_dr_region"... pass
+  run "each_replica_carries_its_primarys_policy"... pass
+  run "the_account_may_replicate_the_vault_key"... pass
+  run "a_dr_region_equal_to_the_primary_is_refused"... pass
+tests/dr.tftest.hcl... tearing down
+tests/dr.tftest.hcl... pass
+
+Success! 5 passed, 0 failed.

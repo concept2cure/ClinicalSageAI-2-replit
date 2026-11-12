@@ -1,0 +1,115 @@
+{
+ "apiErrors": [],
+ "pageErrors": [],
+ "steps": [
+  {
+   "name": "raise",
+   "status": 201,
+   "body": "{\"data\":{\"id\":1,\"organization_id\":5,\"change_number\":\"CC-QS-001\",\"title\":\"Move complaint intake to the new CRM form\",\"description\":\"Paper log to CRM form.\",\"change_type\":\"document\",\"classification\":\"minor\",\"risk_level\":null,\"status\":\"proposed\",\"reason\":\"The CRM replaces the paper intake log.\",\"impact"
+  },
+  {
+   "name": "change-1440",
+   "h1": [
+    "Quality"
+   ],
+   "h2": [
+    "Change control log",
+    "Change-control documents and forms"
+   ],
+   "figures": "1 open of 1 in the log; none awaiting approval; none in implementation; none overdue.",
+   "stages": [
+    "All *",
+    "Proposed 1",
+    "Under assessment 0",
+    "Approved 0",
+    "In implementation 0",
+    "Verification 0",
+    "Closed 0",
+    "Rejected 0",
+    "Cancelled 0"
+   ],
+   "tiles": 0,
+   "howOpen": false,
+   "docScroll": 0
+  },
+  {
+   "name": "filtered-proposed",
+   "h1": [
+    "Quality"
+   ],
+   "h2": [
+    "Change control log",
+    "Change-control documents and forms"
+   ],
+   "figures": "1 open of 1 in the log; none awaiting approval; none in implementation; none overdue.",
+   "stages": [
+    "All",
+    "Proposed 1 *",
+    "Under assessment 0",
+    "Approved 0",
+    "In implementation 0",
+    "Verification 0",
+    "Closed 0",
+    "Rejected 0",
+    "Cancelled 0"
+   ],
+   "tiles": 0,
+   "howOpen": false,
+   "docScroll": 0
+  },
+  {
+   "name": "how-opened",
+   "h1": [
+    "Quality"
+   ],
+   "h2": [
+    "Change control log",
+    "Change-control documents and forms"
+   ],
+   "figures": "1 open of 1 in the log; none awaiting approval; none in implementation; none overdue.",
+   "stages": [
+    "All",
+    "Proposed 1 *",
+    "Under assessment 0",
+    "Approved 0",
+    "In implementation 0",
+    "Verification 0",
+    "Closed 0",
+    "Rejected 0",
+    "Cancelled 0"
+   ],
+   "tiles": 0,
+   "howOpen": true,
+   "docScroll": 0
+  },
+  {
+   "name": "change-390",
+   "h1": [
+    "Quality"
+   ],
+   "h2": [
+    "Change control log",
+    "Change-control documents and forms"
+   ],
+   "figures": "1 open of 1 in the log; none awaiting approval; none in implementation; none overdue.",
+   "stages": [
+    "All *",
+    "Proposed 1",
+    "Under assessment 0",
+    "Approved 0",
+    "In implementation 0",
+    "Verification 0",
+    "Closed 0",
+    "Rejected 0",
+    "Cancelled 0"
+   ],
+   "tiles": 0,
+   "howOpen": false,
+   "docScroll": 0
+  },
+  {
+   "name": "w5-change",
+   "ok": true
+  }
+ ]
+}

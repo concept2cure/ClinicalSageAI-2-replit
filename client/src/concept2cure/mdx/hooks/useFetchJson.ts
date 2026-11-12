@@ -258,7 +258,9 @@ export function describeReadFailure(
   const notRead = `so ${what} was not read.`;
   switch (kind) {
     case 'not-found':
-      return { title: 'Not found in your organization', message: `${sentence(subject)} was not found in your organization, ${notRead}`, retryable: false };
+      // When what was not read is the record itself, it is named once (2026-11-10).
+      return { title: 'Not found in your organization', retryable: false,
+        message: `${sentence(subject)} was not found in your organization, ${subject === what ? 'so it was not read.' : notRead}` };
     case 'unchecked':
       return {
         title: 'The ownership check was unavailable',

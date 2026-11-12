@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.24 |
+| Version | 0.25 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -12,6 +12,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.25 | 2026-11-10 | W3 (`…01QoxbLc`) | Reporting & analytics assessed (URS-008 v0.1, fifteen requirements; the section at the end of this document). The app had no URS until the re-execution for GA (VSR-001 §21), so it had no assessment. High where a failure would be silent: a figure a report states that no engine computed, a seal that does not verify, another organisation's run, a signature without its signer. Scripted for those; the library's reads ad-hoc; the two surfaces unscripted. Executed as OQ-007 on 2026-11-10. |
 | 0.24 | 2026-10-26 | D2 A2.10 | Added URS-PROJ-007a for filing reference in the existing Projects wizard and Plan; retained the Journey and historical catalog assessment. The merged assessment retains medium risk and scripted assurance: confusing reference clocks with deadlines, reference listing with an offer, or a different filing's guide with the recorded filing can misdirect recoverable filing work. No governed offer, deadline, signature or readiness function is added; revised OQ-PROJ-12 v0.10 is unexecuted. |
 | 0.23 | 2026-10-26 | D2 A2.7 | Added revised dossier URS-SUBC-009a assessment; retained historical 009. Transcribed 31 previously missing rows from the already recorded URS-004/OQ-004 and URS-007/OQ-008 risk/activity selections so TM-001 can regenerate without integrity gaps. No execution or CMC admission claimed. |
 | 0.1 | 2026-09-21 | W3a | One row per URS requirement; assurance chosen per CSA. |
@@ -186,3 +187,26 @@ Regenerating TM-001 exposed existing missing assessment rows. The following rows
 | URS-CMC-028 | A stability study reaches its terminal state only under a signature with a reason and re-authentication, and the signature names the signer and the date. The signature is refused when the study records no shelf life, when it records no pull-point results — a planned schedule is not data — and when the recorded series cannot be read. A study cannot be created already closed out, an ordinary edit cannot reach the close-out or write its signature columns, a closed-out study is closed to content edits and may be retired but not reopened, and the act cannot be signed twice. | high | scripted | Transcribed from URS-007 and OQ-008: OQ-CMC-40. No execution or admission is claimed. |
 | URS-CMC-029 | The composed §3.2.P.8 states the provenance of the shelf life it prints: a period accepted on a signed study close-out, or one recorded on a study that has not been closed out under signature. The signature and the claim must be on the same study and the same side, so a signed study with no claim lends its signature to nothing and a signed drug-substance close-out does not make the product's claim read as accepted. The sentence states the provenance only; whether the period is supported by the data is the ICH Q1E verdict. | high | scripted | Transcribed from URS-007 and OQ-008: OQ-CMC-41. No execution or admission is claimed. |
 | URS-CMC-030 | Agency questions about Module 3 are the agency letter's record. CMC reads a programme's questions from the letters they came in and shows each as that record states it: its response state, its owner, and overdue only when its letter is past its due date with responses not approved as they stand, so an approved answer is never shown overdue. A letter is counted as overdue for Module 3 only when a Module 3 question on it is overdue, or when it is a Module 3 letter with no question to answer recorded; a letter overdue only on its other questions is said as that. Letters the person may not see are neither listed nor counted, and their number is said; questions with no CTD section are counted as not placed, never dropped, and never added to a count of letters. CMC records, answers, approves and closes nothing about an agency question: each opens on its letter, where that happens, and where its owner is set with a reason to a member who may open the letter. The earlier CMC question file refuses every INSERT, UPDATE, DELETE and TRUNCATE, in the route and in the database, for the owner role as for the runtime role, and is shown only as the history its rows hold. | high | scripted | Transcribed from URS-007 and OQ-008: OQ-CMC-42. No execution or admission is claimed. |
+
+## Reporting & analytics assessment (2026-11-10)
+
+URS-008 v0.1, verified by OQ-007. The process risk follows §1: high where a failure would be silent.
+
+| URS id | Intended use | Risk (patient / data integrity) | Assurance activity | Rationale |
+|---|---|---|---|---|
+| URS-RPT-001 | Gate the reporting and compliance-report endpoints | high | scripted | anonymous negative on the run history, the canvas bootstrap and the compliance catalog |
+| URS-RPT-002 | Serve the paths the two surfaces call and refuse the rest | medium — an out-of-scope reporting route reachable in production is a route no screen was validated against | scripted | five served paths and three refused, with launch scope and unattributed-path refusal enforced |
+| URS-RPT-003 | A run, its report, its seal and its export belong to the session's organisation | high — a report about another tenant's records is a disclosure nothing on the page shows | scripted | another organisation's run and project, by id |
+| URS-RPT-004 | A report's figures come from an engine, never from the request or a model | high — a report claiming an analysis nothing performed is a silent failure, and a regulator-facing one once sealed | scripted | supplied figures are not stored; a type no engine computes and a prediction are refused |
+| URS-RPT-005 | A run is created by a writing member and recorded with its audit row | high | scripted | viewer negative; the run's creation on the ledger |
+| URS-RPT-006 | Finalizing is an electronic signature with reason, meaning, re-authentication, authority and independence | high — §11.50/§11.200: a report declared final without a verified signer | scripted (credentialed, with negatives) | each refusal, then the signer's signature with password and authenticator code |
+| URS-RPT-007 | A finalized run is sealed once | high — §11.70: a seal that could be replaced binds nothing | scripted (credentialed) | the seal, the signature row, the second finalize refused |
+| URS-RPT-008 | A seal can be verified afterwards | high — a seal that reads intact when the stored report changed is a silent failure | scripted | the verdict and its four checks on a finalized run; an unfinalized run reads not-verifiable. The mismatch verdict is covered by the unit suite, not by this OQ |
+| URS-RPT-009 | An export is recorded with the hash of the bytes sent | high — §11.10(b): a copy that cannot be shown to be the record | scripted | the header against the SHA-256 of the body; the export on the ledger |
+| URS-RPT-010 | The library reads the organisation's runs, bundles and schedules | low | ad-hoc | three GETs |
+| URS-RPT-011 | A compliance report is run by an audit reader only | high — the reports list every member, sign-in and signature of the organisation | scripted | the catalog for a member; the member's run refused |
+| URS-RPT-012 | A compliance report is sealed and recorded, and a saved one verifies until changed | high — an unsealed or altered report handed to an inspector | scripted | the manifest's hash, the header, verification, and a one-character change. The no-key refusal is production's and is owed on a production build |
+| URS-RPT-013 | The integrity report says what it verified and what it could not | high — "intact" reported over a check that never ran is the failure §1 names | scripted | each verdict row and the overall statement |
+| URS-RPT-014 | A report above the plan is refused; an unread plan refuses every report | medium — commercial, visible and recoverable | scripted | the catalog's tier and flags; the refusal needs an organisation on a lower plan |
+| URS-RPT-015 | Render the two surfaces | medium | unscripted | screenshots of the reporting views, the run history and the compliance catalog |
+

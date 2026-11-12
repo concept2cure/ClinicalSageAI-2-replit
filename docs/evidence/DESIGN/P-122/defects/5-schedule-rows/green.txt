@@ -1,0 +1,8 @@
+390-light schedule-c2c101 squeezed: [] sideways: 0
+390-light schedule-lmn201 squeezed: [] sideways: 0
+390-dark schedule-c2c101 squeezed: [] sideways: 0
+390-dark schedule-lmn201 squeezed: [] sideways: 0
+1440-light schedule-c2c101 squeezed: [] sideways: 0
+1440-light schedule-lmn201 squeezed: [] sideways: 0
+1440-dark schedule-c2c101 squeezed: [] sideways: 0
+1440-dark schedule-lmn201 squeezed: [] sideways: 0

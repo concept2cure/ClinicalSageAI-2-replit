@@ -279,6 +279,26 @@ const chainRows = (action: string, recordId: string) =>
     [ORG_B, recordId, action]
   );
 const finalizedRows = () => chainRows('report_os.run_finalized', String(runId));
+/**
+ * The table owner rewrites the run's sealed snapshot past its guard (GA-D5-03, 2026-11-12: trg_report_snapshots_sealed_fixed
+ * refuses every other session; the runtime role's refusal is report-snapshot-sealed-fixed.dbtest.ts), runs `check`,
+ * and puts the snapshot back. What the cases using it prove is the second line of defence: the read still catches a
+ * rewrite only an owner could make.
+ */
+async function withOwnerRewrite(edit: (meta: Record<string, any>) => void, check: () => Promise<void>): Promise<void> {
+  const { id, meta } = await storedSnapshot();
+  const write = async (value: string) => {
+    const c = await owner.connect();
+    await c.query('BEGIN; ALTER TABLE report_snapshots DISABLE TRIGGER trg_report_snapshots_sealed_fixed');
+    await c.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [id, value])
+      .finally(() => c.query('ALTER TABLE report_snapshots ENABLE TRIGGER trg_report_snapshots_sealed_fixed; COMMIT').finally(() => c.release()));
+  };
+  const edited = JSON.parse(meta);
+  edit(edited);
+  await write(JSON.stringify(edited));
+  await check().finally(() => write(meta));
+}
+
 /** The run's latest snapshot as stored, put back after a case rewrites it. */
 const storedSnapshot = async () =>
   (await rowsOf('SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest', [runId]))[0] as { id: number; meta: string };
@@ -464,11 +484,7 @@ describe('the seal on the record', () => {
   });
 
   it('a stored document changed after sealing reads as a mismatch, not intact', async () => {
-    const restore = await storedSnapshot();
-    const meta = JSON.parse(restore.meta);
-    meta.sealedDocument.sections[0].title = 'Edited after sealing';
-    await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
-    try {
+    await withOwnerRewrite((meta) => { meta.sealedDocument.sections[0].title = 'Edited after sealing'; }, async () => {
       const res = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
       expect(res.status).toBe(200);
       expect(res.body.data.verification.verdict).toBe('mismatch');
@@ -476,9 +492,7 @@ describe('the seal on the record', () => {
       const shown = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
       expect(shown.status).toBe(409);
       expect(shown.body.error.code).toBe('SEALED_DOCUMENT_MISMATCH');
-    } finally {
-      await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, restore.meta]);
-    }
+    });
   });
 });
 
@@ -491,15 +505,8 @@ async function sealAndRendered() {
 
 describe('the seal on the record: what a rewrite of the mutable rows cannot hide', () => {
   it('a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place', async () => {
-    const restore = await storedSnapshot();
-    const meta = JSON.parse(restore.meta);
-    delete meta.sealedDocument;
-    await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
-    try {
-      expect(await sealAndRendered()).toEqual({ verdict: 'mismatch', rendered: [409, 'SEALED_DOCUMENT_MISMATCH'] });
-    } finally {
-      await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, restore.meta]);
-    }
+    await withOwnerRewrite((meta) => { delete meta.sealedDocument; }, async () =>
+      expect(await sealAndRendered()).toEqual({ verdict: 'mismatch', rendered: [409, 'SEALED_DOCUMENT_MISMATCH'] }));
   });
 
   it("a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed", async () => {
@@ -536,7 +543,9 @@ describe('the export of the sealed record', () => {
     ).rows[0]?.details as Record<string, unknown>;
     expect(recorded).toMatchObject({ status: 'final', sealVerdict: 'intact', sha256: createHash('sha256').update(res.body as Buffer).digest('hex') });
     expect(text).toContain(`Export ${recorded.exportId}`);
-    expect(text).toMatch(/Final\. Signed by .+ as approval/);
+    // 21 CFR 11.50: the meaning in words and the time as the canonical manifestation formats it
+    // (run-pdf.ts signatureLine, 0e5706a308, 2026-11-09); it read "as approval, <ISO> (UTC)".
+    expect(text).toMatch(/Final\. Signed by .+, meaning Approval, \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC\./);
     expect(text).toContain(`Reason: ${SIGNED.reason}`);
     expect(text).toContain('Seal verification at export: intact.');
     expect(text).not.toMatch(/NOT FINAL/);

@@ -6,7 +6,8 @@
  * role with RLS on, through the real ingest and the real Vault routes:
  *
  *   - GET /api/c2c/project-vault/search finds matching documents in every
- *     project the organisation holds, each named with its project;
+ *     project of one sponsor, each named with its project; with projects of
+ *     more than one sponsor it first asks which (P-107 item 3, 2026-11-08);
  *   - another organisation's documents are never among them;
  *   - an earlier version is listed only when asked, as in a project search;
  *   - an empty query answers no results and says why;
@@ -34,9 +35,13 @@ let theirs: Tenant;
 let progA: string;
 let progB: string;
 let progT: string;
+let progC: string;
 let a1: string;
 let a2: string;
 let b1: string;
+let c1: string;
+let clientA: number;
+let clientB: number;
 
 async function appFor(t: Tenant): Promise<express.Express> {
   const createVaultIngestRoutes = (await import('../../server/routes/vault-ingest')).default;
@@ -104,6 +109,16 @@ beforeAll(async () => {
   a2 = await ingest(mine, progA, `Stability report, revised. The ${WORD} impurity stays under 0.05%.`, { supersedesDocumentId: a1, documentTitle: 'Alpha stability report' });
   b1 = await ingest(mine, progB, `Beta method validation for ${WORD}.`, { documentCode: `${CODE}-B`, documentTitle: 'Beta method validation' });
   await ingest(theirs, progT, `Their own ${WORD} study.`, { documentCode: `${CODE}-T`, documentTitle: 'Their study' });
+  // One sponsor's two projects: gamma is moved under alpha's client workspace.
+  progC = await program(mine, 'gamma');
+  await owner.query(
+    `UPDATE projects SET client_workspace_id = (SELECT client_workspace_id FROM projects WHERE organization_id = $1 AND regulatory_program_id = $2)
+      WHERE organization_id = $1 AND regulatory_program_id = $3`, [mine.orgId, progA, progC]);
+  c1 = await ingest(mine, progC, `Gamma batch analysis for ${WORD}.`, { documentCode: `${CODE}-C`, documentTitle: 'Gamma batch analysis' });
+  const clientOf = async (programId: string) =>
+    Number((await owner.query('SELECT client_workspace_id FROM projects WHERE regulatory_program_id = $1', [programId])).rows[0].client_workspace_id);
+  clientA = await clientOf(progA);
+  clientB = await clientOf(progB);
 }, 90_000);
 
 afterAll(async () => {
@@ -112,53 +127,80 @@ afterAll(async () => {
   finally { await owner?.end(); }
 });
 
-describe('library search across every project (critique 15)', () => {
-  it("finds matches in every project the organisation holds, each named with its project, and never another organisation's", async () => {
-    const res = await library(mine, `q=${WORD}`);
+describe("library search across a sponsor's projects (critique 15; one sponsor at a time, P-107)", () => {
+  /* P-107 item 3 (2026-11-08): "No cross-sponsor library view for a CRO. With no project open, the Vault first asks
+     which sponsor; every view is inside one sponsor. Search never spans sponsors." The fixture gives every program its
+     own client workspace (seedVaultFixtureParent); gamma is moved under alpha's, as a sponsor's projects share one. */
+  it('with projects of more than one sponsor and none named, searches nothing and says which to choose from', async () => {
+    for (const qs of [`q=${WORD}`, 'q=', `q=${WORD}&programId=${progA}&programId=${progB}`]) {
+      const res = await library(mine, qs);
+      expect(res.status, `${qs} ${JSON.stringify(res.body).slice(0, 200)}`).toBe(409);
+      expect(res.body).toMatchObject({ success: false, error: 'CLIENT_REQUIRED' });
+      expect(res.body.data).toBeUndefined();
+      expect(res.body.meta.clients).toEqual([
+        { id: clientA, name: `${PROBE}alpha-parent` },
+        { id: clientB, name: `${PROBE}beta-parent` },
+      ]);
+    }
+  });
+
+  it("with a sponsor named, finds matches in each of its projects, each named with its project, and never another sponsor's or organisation's", async () => {
+    const res = await library(mine, `q=${WORD}&client=${clientA}`);
     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
     const d = res.body.data;
     expect(d.total).toBe(2);
     const hits = d.results.map((h: { id: string; program: { id: string; name: string } }) => [h.id, h.program.id, h.program.name]);
     expect(hits).toEqual(expect.arrayContaining([
       [a2, progA, `${PROBE}alpha`],
-      [b1, progB, `${PROBE}beta`],
+      [c1, progC, `${PROBE}gamma`],
     ]));
-    expect(d.results.every((h: { program: { id: string } }) => h.program.id !== progT)).toBe(true);
-    expect(d.results.find((h: { id: string }) => h.id === b1).snippet).toMatch(new RegExp(WORD, 'i'));
+    expect(d.client).toEqual({ id: clientA, name: `${PROBE}alpha-parent` });
+    expect(d.results.every((h: { client: unknown }) => JSON.stringify(h.client) === JSON.stringify(d.client))).toBe(true);
+    expect(JSON.stringify(res.body)).not.toContain('Beta method validation');
+    expect(d.results.find((h: { id: string }) => h.id === c1).snippet).toMatch(new RegExp(WORD, 'i'));
+    const beta = await library(mine, `q=${WORD}&client=${clientB}`);
+    expect(beta.body.data.results.map((h: { id: string }) => h.id)).toEqual([b1]);
+  });
+
+  it('one project named is inside its own sponsor, so nothing is asked', async () => {
+    const res = await library(mine, `q=${WORD}&programId=${progB}`);
+    expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
+    expect(res.body.data.results.map((h: { id: string }) => h.id)).toEqual([b1]);
+  });
+
+  it("a sponsor that is not the caller's is not found; a malformed one, or one given with a project, is refused", async () => {
+    const theirClient = Number((await owner.query('SELECT client_workspace_id FROM projects WHERE regulatory_program_id = $1', [progT])).rows[0].client_workspace_id);
+    for (const client of [String(theirClient), '2147483000', 'none']) {
+      const res = await library(mine, `q=${WORD}&client=${client}`);
+      expect([res.status, res.body.error], client).toEqual([404, 'CLIENT_NOT_FOUND']);
+      expect(JSON.stringify(res.body)).not.toContain('Their study');
+    }
+    expect((await library(mine, `q=${WORD}&client=abc`)).status).toBe(400);
+    expect((await library(mine, `q=${WORD}&client=${clientA}&sameClientAs=${progA}`)).status).toBe(400);
   });
 
   it('lists an earlier version only when asked', async () => {
-    const res = await library(mine, `q=${WORD}&includeSuperseded=true`);
+    const res = await library(mine, `q=${WORD}&client=${clientA}&includeSuperseded=true`);
     expect(res.body.data.total).toBe(3);
-    expect(res.body.data.results.map((h: { id: string }) => h.id)).toEqual(expect.arrayContaining([a1, a2, b1]));
+    expect(res.body.data.results.map((h: { id: string }) => h.id)).toEqual(expect.arrayContaining([a1, a2, c1]));
     expect(res.body.data.results.find((h: { id: string }) => h.id === a1).current).toBe(false);
   });
 
   it('an empty query answers no results and says why', async () => {
-    const res = await library(mine, 'q=');
+    const res = await library(mine, `q=&client=${clientA}`);
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ total: 0, results: [], reason: 'EMPTY_QUERY' });
   });
 
-  /* F1, S6 V2 (2026-11-05): a CRO works for several sponsors in one organisation, each a client workspace. Asked
-     from inside a project, "All my projects" is that project's sponsor's projects, so sponsors never mix in one list;
-     each hit names its sponsor. The fixture gives every program its own client workspace (seedVaultFixtureParent). */
+  /* F1, S6 V2 (2026-11-05): asked from inside a project, the library is that project's sponsor's projects. */
   it("from inside a project, lists only its sponsor's projects, and names the sponsor", async () => {
     const res = await library(mine, `q=${WORD}&sameClientAs=${progA}`);
     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
     const d = res.body.data;
-    expect(d.total).toBe(1);
-    expect(d.results.map((h: { id: string }) => h.id)).toEqual([a2]);
-    expect(d.client).toEqual({ id: expect.any(Number), name: `${PROBE}alpha-parent` });
+    expect(d.total).toBe(2);
+    expect(d.results.map((h: { id: string }) => h.id).sort()).toEqual([a2, c1].sort());
+    expect(d.client).toEqual({ id: clientA, name: `${PROBE}alpha-parent` });
     expect(d.results[0].client).toEqual(d.client);
-  });
-
-  it('across every project, each hit names its own sponsor', async () => {
-    const res = await library(mine, `q=${WORD}`);
-    const byId = new Map(res.body.data.results.map((h: { id: string; client: unknown }) => [h.id, h.client]));
-    expect(byId.get(a2)).toEqual({ id: expect.any(Number), name: `${PROBE}alpha-parent` });
-    expect(byId.get(b1)).toEqual({ id: expect.any(Number), name: `${PROBE}beta-parent` });
-    expect(res.body.data.client).toBeUndefined();
   });
 
   it("refuses a project that is not the caller's to scope by, and never widens to it", async () => {

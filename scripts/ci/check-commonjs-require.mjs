@@ -159,8 +159,18 @@ function executableText(src) {
 }
 
 function sourceFiles() {
+  /* A SINGLE star, not '**'. Git's pathspec globs let `*` cross '/', so
+     'server/*.ts' is already the whole recursive tree — while 'server/**'
+     requires at least one directory level and so matched NOTHING directly
+     under server/, shared/, workers/ or services/. That blind spot was 56
+     files, and `shared/canonical-json.ts` was one of them: its dynamic
+     `require('crypto')` is the exact defect this gate exists for, it broke the
+     only CMC path that reaches a §11.50 signature, and the gate could not see
+     the file. `server/openai-service.ts` was another (a `require('fs')`
+     shadowing the module's own static `import fs`). Counted: the '**' form
+     listed 8257 files, this one 8313. */
   const out = execSync(
-    "git ls-files 'server/**/*.ts' 'shared/**/*.ts' 'workers/**/*.ts' 'services/**/*.ts'",
+    "git ls-files 'server/*.ts' 'shared/*.ts' 'workers/*.ts' 'services/*.ts'",
     { cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }
   );
   return out

@@ -96,41 +96,38 @@ describe('CMC publishes what the screen is showing', () => {
     expect(seen!.facts?.tabLabel).toBe('Overview');
     expect(seen!.summary).toMatch(/Overview tab of the CMC Module 3 operating system/);
 
-    /* Stability is in the Study records half (D5 §A.3), so the journey is the
-       half and then the tab — and the half is DERIVED from the open tab, so
-       choosing it lands on that half's first view. */
-    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
-    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Substance & product'));
+    /* All nine tabs are one row since P-122 (2026-11-10), so Stability is one
+       click from Overview — no half to choose first. */
     fireEvent.click(screen.getByRole('tab', { name: 'Stability' }));
     await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Stability'));
     expect(seen!.summary).toMatch(/Stability tab/);
-    /* And the sentence the retired "What to do now" band printed is published
-       for this tab, so the page's first starter can answer it (D5 §A.5). */
+    /* And the tab's "what to do now" sentence is published for this tab, so the
+       page's first starter answers it (D5 §A.5); since P-122 it is also printed. */
     expect(seen!.facts?.whatToDoHere).toMatch(/Register each study/);
   });
 
 });
 
-/* The two halves of the CMC work area (D5 §A.3). Their own block: these drive
-   the frame rather than the context channel above, and keeping them there put
-   that describe past the 100-line cap. */
-describe('CMC opens on one of its two halves', () => {
-  it('comes back to the tab you left in the other half', async () => {
-    /* One piece of state, the tab; the half is read off it. So switching away
-       and back does not reset the view (D5 §A.6 item 2). */
+/* The frame of the CMC work area. Its own block: these drive the frame rather
+   than the context channel above, and keeping them there put that describe
+   past the 100-line cap. Since P-122 (2026-11-10) the two groups the founder
+   named (D5 §A.3) are one row, so no group is ever closed. */
+describe('CMC opens with both groups in one row', () => {
+  it('moves between a study record and the Module 3 build in one click each way', async () => {
+    /* One piece of state, the tab. D5-1's half toggle remembered the last tab
+       of each half because one half was hidden; with nothing hidden there is
+       nothing to remember, and every tab is a click from every other. */
     wire({ success: true, data: null });
     renderCmc();
     await waitFor(() => expect(seen).not.toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Batch records' }));
     await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Batch records'));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Module 3' }));
-    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Overview'));
-    /* Study records reopens on Batch records, not on the half's first tab. */
-    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Module 3 build' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Module 3 build'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Batch records' }));
     await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Batch records'));
+    expect(screen.queryByRole('button', { name: 'Study records' })).toBeNull();
   });
 
   it('gives AnA a vocabulary for driving the screen', async () => {

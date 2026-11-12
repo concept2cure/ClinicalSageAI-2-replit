@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx > a logged batch can be edited, with a reason > PUTs the edited fields and the reason to the batch’s own id, and shows the server’s row 528ms
+   → Unable to find an accessible element with the role "button" and name `/Edit/`
+ × client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx > a logged batch can be edited, with a reason > offers no edit on a batch with a signed disposition, and says why 128ms
+   → Unable to find an accessible element with the role "button" and name `/Edit/`
+ × client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx > a logged batch can be edited, with a reason > changes nothing on screen when the edit is refused, and says what was refused 140ms
+   → Unable to find an accessible element with the role "button" and name `/Edit/`
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

@@ -369,3 +369,80 @@ export function pointsFromRecordedProfile(rows: unknown): DissolutionPoint[] {
       };
     });
 }
+
+/** A recorded dissolution profile, as the register stores it. */
+export interface RecordedDissolutionProfile {
+  id: number;
+  productName?: string | null;
+  batchNumber?: string | null;
+  apparatus?: string | null;
+  medium?: string | null;
+  rotationSpeed?: string | null;
+  unitsTested?: number | null;
+  results?: unknown;
+}
+
+/** What comparing two recorded profiles answered: the f2 or the refusal, with the two profiles' identity. */
+export type RecordedF2Outcome =
+  | { status: 'needs_parameters'; message: string }
+  | { status: 'not_found'; message: string }
+  | {
+      status: 'not_comparable' | 'computed';
+      reference: { id: number; batch: string | null; apparatus: string | null; medium: string | null };
+      test: { id: number; batch: string | null; apparatus: string | null; medium: string | null };
+      methodsMatch: boolean;
+      result: F2Result;
+    };
+
+/**
+ * Compare two profiles of the dissolution register, by id.
+ *
+ * One implementation for the two places a recorded comparison is asked: AnA's
+ * `compare_recorded_dissolution` and the Dissolution register's Compare action
+ * (POST /api/cmc/dissolution-profiles/compare, P-122). The rows are read by the
+ * caller, scoped to its organisation, and passed in, so this module stays free
+ * of the database; a set missing either id is answered as not found, never
+ * compared against nothing.
+ */
+export function compareRecordedDissolutionProfiles(
+  refId: number,
+  testId: number,
+  rows: readonly RecordedDissolutionProfile[],
+): RecordedF2Outcome {
+  if (!Number.isInteger(refId) || refId <= 0 || !Number.isInteger(testId) || testId <= 0) {
+    return { status: 'needs_parameters', message: 'Two numeric dissolution profile ids are required.' };
+  }
+  if (refId === testId) {
+    return { status: 'needs_parameters', message: 'A profile cannot be compared against itself; f2 would be 100 by construction.' };
+  }
+  const reference = rows.find((r) => r.id === refId);
+  const test = rows.find((r) => r.id === testId);
+  if (!reference || !test) {
+    return {
+      status: 'not_found',
+      message: `Not this organization's dissolution profiles: ${[!reference ? refId : null, !test ? testId : null].filter(Boolean).join(', ')}. No comparison is made.`,
+    };
+  }
+  const input = (row: RecordedDissolutionProfile, role: 'reference' | 'test'): DissolutionProfileInput => ({
+    role,
+    productName: row.productName ?? undefined,
+    batchNumber: row.batchNumber ?? undefined,
+    method: { apparatus: row.apparatus, medium: row.medium, rotationSpeed: row.rotationSpeed },
+    points: pointsFromRecordedProfile(row.results),
+  });
+  const result = compareDissolutionProfiles(input(reference, 'reference'), input(test, 'test'), {
+    referenceUnits: reference.unitsTested,
+    testUnits: test.unitsTested,
+  });
+  const identity = (row: RecordedDissolutionProfile) => ({
+    id: row.id, batch: row.batchNumber ?? null, apparatus: row.apparatus ?? null, medium: row.medium ?? null,
+  });
+  return {
+    status: result.outcome === 'refused' ? 'not_comparable' : 'computed',
+    reference: identity(reference),
+    test: identity(test),
+    methodsMatch:
+      reference.apparatus === test.apparatus && reference.medium === test.medium && reference.rotationSpeed === test.rotationSpeed,
+    result,
+  };
+}

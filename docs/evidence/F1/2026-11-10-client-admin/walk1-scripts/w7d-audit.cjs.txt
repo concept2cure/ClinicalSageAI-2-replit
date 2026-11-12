@@ -1,0 +1,22 @@
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  // exactly what the drawer's "Audit activity" does
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  await page.locator('.ctable-row', { hasText: 'Priya Raman' }).first().click(); await L.sleep(400);
+  await page.locator('aside.adm-drawer').getByRole('button', { name: /Audit activity/ }).click(); await L.sleep(4000);
+  note('after Audit activity: search box', await page.getByPlaceholder('Search entries...').inputValue());
+  note('after Audit activity: rows', await page.locator('button.ct-row').evaluateAll(els => els.map(e => e.innerText.replace(/\n+/g, ' | ').slice(0, 200))));
+  await L.shot(page, 'w1-78-audit-activity-member.png');
+  // a row's detail
+  await page.getByPlaceholder('Search entries...').fill('Continuity cover'); await L.sleep(1000);
+  const before = await L.textOf(page, 'main');
+  await page.locator('button.ct-row').first().click(); await L.sleep(1000);
+  const after = await L.textOf(page, 'body');
+  note('row detail (new text after the click)', after.split('\n').filter(l => !before.includes(l)).join(' | ').slice(0, 1500));
+  await L.shot(page, 'w1-82-audit-entry-role-changed.png', { fullPage: true });
+  note('dialogs', await page.locator('[role=dialog]').allInnerTexts());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

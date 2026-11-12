@@ -1,0 +1,20 @@
+cmcWriteThroughMappers.test.ts on trunk's composer: 7 new cases fail.
+
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > a rejected batch > is never the representative batch, whichever order the records arrive in
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > a rejected batch > is not described as released, and its signer is not named as a releaser
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > a rejected batch > alone, leaves the section naming no representative batch
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > a rejected batch > beside a released batch, the released one is the representative and carries its own release
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > a rejected batch > a batch with no decision yet is not given a disposition
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.1 names the drug substance from the substance record > whichever record comes first
+ × server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.1 names the drug substance from the substance record > with no substance record, does not call the product the substance
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed | 147 passed (154)
+
+With the repair:
+ Test Files  1 passed (1)
+      Tests  154 passed (154)
+
+The 65 suites that use the composer, the compile or the placement:
+ Test Files  65 passed (65)
+      Tests  1618 passed (1618)

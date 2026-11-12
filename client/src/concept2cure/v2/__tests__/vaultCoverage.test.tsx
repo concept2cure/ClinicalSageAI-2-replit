@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -108,5 +108,48 @@ describe('Vault coverage', () => {
     expect(block.textContent).toContain('has its own outline');
     fireEvent.click(screen.getByRole('button', { name: 'Show the outline in the Library' }));
     await waitFor(() => expect(screen.getByRole('tab', { name: /Library/ }).getAttribute('aria-selected')).toBe('true'));
+  });
+});
+
+describe('Vault coverage, in a person’s words', () => {
+  /* The founder, 2026-11-10: "The vault UI seems to be lacking in a lot of ways." The Required documents view listed
+     what a filing owes by number alone ("1.12.14  No confirmed document"). The filing's outline, which the Library
+     shows as the binder, names every heading; the view now says that name beside the number. */
+  it('names each missing section from the filing’s outline, and says only the number where the outline has no name', async () => {
+    const tree = [{
+      id: 'cabinet', code: '', label: 'Filing binder · IND × FDA', children: [
+        { id: 'module-2', code: '', label: 'Module 2 · Summaries', children: [
+          { id: 'sec-2.5', code: '2.5', label: 'Clinical overview', children: [] },
+        ] },
+      ],
+    }];
+    mockVaultApi(apiRequest, () => ok(vaultPayload({ tree, coverage: available(PACK) })));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Required documents' }));
+    const named = await screen.findByTestId('vault-coverage-missing-2.5');
+    expect(within(named).getByTestId('vault-coverage-name-2.5').textContent).toBe('Clinical overview');
+    expect(named.textContent).toContain('No confirmed document');
+    // 3.2.S is required and the outline sent no heading for it: the number and the gap, and no invented name.
+    const unnamed = screen.getByTestId('vault-coverage-missing-3.2.S');
+    expect(within(unnamed).queryByTestId('vault-coverage-name-3.2.S')).toBeNull();
+    expect(unnamed.textContent).toContain('3.2.S');
+    expect(unnamed.textContent).toContain('No confirmed document');
+  });
+
+  it('names a missing section for a reader who may not file, too', async () => {
+    const tree = [{ id: 'cabinet', code: '', label: 'Filing binder', children: [{ id: 'sec-2.5', code: '2.5', label: 'Clinical overview', children: [] }] }];
+    mockVaultApi(apiRequest, () => ok(vaultPayload({ tree, access: { canWrite: false }, coverage: available(PACK) })));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Required documents' }));
+    const named = await screen.findByTestId('vault-coverage-missing-2.5');
+    expect(within(named).getByTestId('vault-coverage-name-2.5').textContent).toBe('Clinical overview');
+  });
+
+  it('writes the agency as people do, whatever case the rule pack records', async () => {
+    mockVaultApi(apiRequest, () => ok(vaultPayload({ coverage: available({ ...PACK, agency: 'fda' }) })));
+    render(<Vault {...props()} />);
+    const block = await screen.findByTestId('vault-coverage');
+    await waitFor(() => expect(block.textContent).toContain('IND rule pack for FDA, version 2.1'));
+    expect(block.textContent).not.toContain('for fda');
   });
 });

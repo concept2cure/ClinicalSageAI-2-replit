@@ -1,0 +1,360 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "CAPA-1440",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Source",
+        "Risk",
+        "State",
+        "Target close",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Advance",
+        "More actions for CAPA-2026-0001"
+      ],
+      "actionsInView": true,
+      "chips": [
+        "rd-chip:Supplier",
+        "rd-chip:Open"
+      ],
+      "old": 0,
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "CAPA-1440-more",
+      "group": "Add actionAsk AnA"
+    },
+    {
+      "name": "Deviations-1440",
+      "table": true,
+      "heads": [
+        "Deviation",
+        "What happened",
+        "Class",
+        "Status",
+        "Detected",
+        "Target close",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Investigate",
+        "More actions for DEV-C11-76213"
+      ],
+      "actionsInView": true,
+      "chips": [
+        "rd-chip tone-warn:Major",
+        "rd-chip:Open"
+      ],
+      "old": 0,
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "Deviations-1440-more",
+      "group": "Cancel deviationRaise CAPAAsk AnA"
+    },
+    {
+      "name": "Nonconformances-1440",
+      "table": true,
+      "heads": [
+        "Number",
+        "What was found",
+        "Product · lot",
+        "Source",
+        "Disposition",
+        "Detected",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 58,
+      "next": [
+        "Disposition",
+        "More actions for NC-C11-76213"
+      ],
+      "actionsInView": true,
+      "chips": [
+        "rd-chip:Awaiting disposition"
+      ],
+      "old": 0,
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "Suppliers-1440",
+      "table": true,
+      "heads": [
+        "Supplier",
+        "Supplies",
+        "Criticality",
+        "Approval",
+        "Next audit",
+        "Re-approval",
+        "Quality agreement",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Update",
+        "More actions for Walk C11 Gaskets 76213"
+      ],
+      "actionsInView": true,
+      "chips": [
+        "rd-chip:Critical",
+        "rd-chip:Pending"
+      ],
+      "old": 0,
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "Suppliers-1440-more",
+      "group": "ApprovalRaise CAPAAsk AnA"
+    },
+    {
+      "name": "Internal audits-1440",
+      "table": true,
+      "heads": [
+        "Number",
+        "Scope",
+        "Standard",
+        "Planned",
+        "Status",
+        "Findings",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Update",
+        "More actions for IA-C11-76213"
+      ],
+      "actionsInView": true,
+      "chips": [
+        "rd-chip:Planned"
+      ],
+      "old": 0,
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "Management reviews-1440",
+      "table": true,
+      "heads": [
+        "Period",
+        "Held",
+        "Reviewed",
+        "Decisions",
+        "Action items",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Add action",
+        "More actions for H2-76213"
+      ],
+      "actionsInView": true,
+      "chips": [],
+      "old": 0,
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "CAPA-390",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Source",
+        "Risk",
+        "State",
+        "Target close",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 58,
+      "next": [
+        "Advance",
+        "More actions for CAPA-2026-0001"
+      ],
+      "actionsInView": false,
+      "chips": [
+        "rd-chip:Supplier",
+        "rd-chip:Open"
+      ],
+      "old": 0,
+      "tableScroll": 536,
+      "docScroll": 0
+    },
+    {
+      "name": "CAPA-390-more",
+      "group": "Add actionAsk AnA"
+    },
+    {
+      "name": "Deviations-390",
+      "table": true,
+      "heads": [
+        "Deviation",
+        "What happened",
+        "Class",
+        "Status",
+        "Detected",
+        "Target close",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 58,
+      "next": [
+        "Investigate",
+        "More actions for DEV-C11-76213"
+      ],
+      "actionsInView": false,
+      "chips": [
+        "rd-chip tone-warn:Major",
+        "rd-chip:Open"
+      ],
+      "old": 0,
+      "tableScroll": 517,
+      "docScroll": 0
+    },
+    {
+      "name": "Deviations-390-more",
+      "group": "Cancel deviationRaise CAPAAsk AnA"
+    },
+    {
+      "name": "Nonconformances-390",
+      "table": true,
+      "heads": [
+        "Number",
+        "What was found",
+        "Product · lot",
+        "Source",
+        "Disposition",
+        "Detected",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 77,
+      "next": [
+        "Disposition",
+        "More actions for NC-C11-76213"
+      ],
+      "actionsInView": false,
+      "chips": [
+        "rd-chip:Awaiting disposition"
+      ],
+      "old": 0,
+      "tableScroll": 586,
+      "docScroll": 0
+    },
+    {
+      "name": "Suppliers-390",
+      "table": true,
+      "heads": [
+        "Supplier",
+        "Supplies",
+        "Criticality",
+        "Approval",
+        "Next audit",
+        "Re-approval",
+        "Quality agreement",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Update",
+        "More actions for Walk C11 Gaskets 76213"
+      ],
+      "actionsInView": false,
+      "chips": [
+        "rd-chip:Critical",
+        "rd-chip:Pending"
+      ],
+      "old": 0,
+      "tableScroll": 687,
+      "docScroll": 0
+    },
+    {
+      "name": "Suppliers-390-more",
+      "group": "ApprovalRaise CAPAAsk AnA"
+    },
+    {
+      "name": "Internal audits-390",
+      "table": true,
+      "heads": [
+        "Number",
+        "Scope",
+        "Standard",
+        "Planned",
+        "Status",
+        "Findings",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 77,
+      "next": [
+        "Update",
+        "More actions for IA-C11-76213"
+      ],
+      "actionsInView": false,
+      "chips": [
+        "rd-chip:Planned"
+      ],
+      "old": 0,
+      "tableScroll": 446,
+      "docScroll": 0
+    },
+    {
+      "name": "Management reviews-390",
+      "table": true,
+      "heads": [
+        "Period",
+        "Held",
+        "Reviewed",
+        "Decisions",
+        "Action items",
+        "CAPA",
+        "Actions"
+      ],
+      "rows": 1,
+      "rowHeight": 49,
+      "next": [
+        "Add action",
+        "More actions for H2-76213"
+      ],
+      "actionsInView": false,
+      "chips": [],
+      "old": 0,
+      "tableScroll": 517,
+      "docScroll": 0
+    },
+    {
+      "name": "w18-records",
+      "ok": true
+    }
+  ]
+}

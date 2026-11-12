@@ -1,0 +1,85 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/formulation-records",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "formulationName": "BX-702 5 mg film-coated tablet, formulation F3",
+      "status": "current",
+      "components": [
+        {
+          "component": "BX-702",
+          "function": "Active",
+          "quantity": "5 mg"
+        },
+        {
+          "component": "Microcrystalline cellulose PH-102",
+          "function": "Diluent",
+          "quantity": "80 mg"
+        },
+        {
+          "component": "Gelatin",
+          "function": "Binder",
+          "quantity": "3 mg"
+        },
+        {
+          "component": "Film coat",
+          "function": "Coating",
+          "quantity": "3 mg"
+        }
+      ],
+      "formulationDevelopment": "F1 (capsule) and F2 (uncoated tablet) were replaced by F3 to improve content uniformity and mask taste; the excipient ratio was fixed by a two-factor design",
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 43,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 4,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "formulationName": "BX-702 5 mg film-coated tablet, formulation F3",
+        "version": null,
+        "dosageForm": null,
+        "strength": null,
+        "batchSize": null,
+        "components": [
+          {
+            "function": "Active",
+            "quantity": "5 mg",
+            "component": "BX-702"
+          },
+          {
+            "function": "Diluent",
+            "quantity": "80 mg",
+            "component": "Microcrystalline cellulose PH-102"
+          },
+          {
+            "function": "Binder",
+            "quantity": "3 mg",
+            "component": "Gelatin"
+          },
+          {
+            "function": "Coating",
+            "quantity": "3 mg",
+            "component": "Film coat"
+          }
+        ],
+        "theoreticalYield": null,
+        "overageJustification": null,
+        "formulationDevelopment": "F1 (capsule) and F2 (uncoated tablet) were replaced by F3 to improve content uniformity and mask taste; the excipient ratio was fixed by a two-factor design",
+        "supersedes": null,
+        "status": "current",
+        "createdAt": "2026-11-12T00:34:44.594Z",
+        "updatedAt": "2026-11-12T00:34:44.594Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

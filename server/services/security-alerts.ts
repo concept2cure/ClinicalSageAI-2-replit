@@ -30,7 +30,10 @@ export interface SecurityAlert {
  * background.
  */
 export function reportSecurityAlert(alert: SecurityAlert): void {
-  console.warn(`[SECURITY] ${alert.message}`, alert.detail ?? '');
+  // `[alert:<kind>]` marks a reported alert, and the stack's alarm matches
+  // it (terraform/stack/monitoring.tf, security-alert). Other `[SECURITY]`
+  // lines, a blocked CORS origin among them, do not page.
+  console.warn(`[SECURITY] [alert:${alert.kind}] ${alert.message}`, alert.detail ?? '');
 
   if (!WEBHOOK_URL) return;
 

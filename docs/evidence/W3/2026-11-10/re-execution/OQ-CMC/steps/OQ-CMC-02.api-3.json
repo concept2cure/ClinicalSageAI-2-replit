@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+    "anonymous": false,
+    "identity": "oq-viewer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 22,
+          "methodCode": "AM-20261112003432",
+          "title": "RP-HPLC Assay",
+          "technique": "HPLC",
+          "purpose": "assay",
+          "analyte": "BX-701",
+          "matrix": "drug substance",
+          "validationDate": null,
+          "ichQ2Parameters": {
+            "specificity": "No interference from placebo, impurities or degradants at the BX-701 retention time",
+            "accuracy": "98.0-102.0% recovery at 80, 100 and 120%",
+            "precision": "Repeatability RSD <= 1.0% (n=6); intermediate precision RSD <= 2.0%",
+            "linearity": "r >= 0.999 over 50-150% of nominal",
+            "range": "50-150% of nominal"
+          },
+          "projectId": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+          "status": "development",
+          "organizationId": 2,
+          "createdAt": "2026-11-12T00:34:33.946Z",
+          "updatedAt": "2026-11-12T00:34:33.946Z"
+        }
+      ]
+    }
+  }
+}

@@ -22,7 +22,19 @@
  * @module server/services/cmc/batch-release-evidence
  */
 
-import { stableHash } from '../../../shared/canonical-json';
+import { createHash } from 'node:crypto';
+/* `stableStringify` only. `shared/canonical-json`'s own `sha256Hex` reaches
+   `node:crypto` through a dynamic `require` — deliberately, so that a module
+   five client files import does not pull crypto into the browser bundle — and
+   `require` does not exist in this server's ESM runtime. Calling it here made
+   every batch release answer 500 `ReferenceError: require is not defined`,
+   measured against `npm run dev` on 2026-11-09, on the one path that reaches a
+   signature. `services/ana/skills/library/index.ts` hashes by hand for the same
+   reason and says so. */
+import { stableStringify } from '../../../shared/canonical-json';
+/* The one criterion parser and numeric reader (recorded-stability.ts), the same
+   pair §3.2.S.7, the Q1E engine and §3.2.S.4.4 use. */
+import { parseAcceptanceCriterion, parseNumeric } from './recorded-stability';
 
 export type ReleaseDecision = 'approved' | 'rejected' | 'conditional';
 export type ReleaseStatus = 'released' | 'conditional-release' | 'rejected';
@@ -35,7 +47,10 @@ export interface RecordedReleaseTest {
   criterion: unknown;
   passFail: string;
   reviewed: boolean;
+  /** Recorded as a pass AND not contradicted by its own recorded criterion. */
   passed: boolean;
+  /** Recorded as a pass while the recorded value is outside the recorded criterion. */
+  contradicted: boolean;
   sampleType: string;
   analystId: number | null;
   reviewerId: number | null;
@@ -43,6 +58,37 @@ export interface RecordedReleaseTest {
   releaseDate: string | null;
   certificateOfAnalysis: string | null;
   recordRevision: string | null;
+}
+
+export type RecordedResultVerdict = 'within' | 'outside' | 'not-comparable';
+
+/** An object's named field, or the value itself when it is not an object. */
+function field(value: unknown, key: string): unknown {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)[key]
+    : value;
+}
+
+/**
+ * Whether a recorded result meets its recorded acceptance criterion, computed
+ * from the two numbers and nothing else (GA-DEMO-02, 2026-11-10).
+ *
+ * `result` is the stored `test_results` (`{ value, unit, observation }`) or a
+ * bare value; each criterion candidate is the stored `specifications`
+ * (`{ acceptanceCriteria }`) or a bare criterion, tried in order. A value that
+ * is not a number, or a criterion the parser cannot read, is 'not-comparable':
+ * said as itself, never as within. The composer's §3.2.S.4.4 / §3.2.P.5.4
+ * verdict uses this same comparison.
+ */
+export function recordedResultVerdict(result: unknown, criterionCandidates: unknown[]): RecordedResultVerdict {
+  const value = parseNumeric(field(result, 'value'));
+  if (value === null) return 'not-comparable';
+  const criterion = parseAcceptanceCriterion(criterionCandidates.map((c) => field(c, 'acceptanceCriteria')));
+  if (!criterion) return 'not-comparable';
+  const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
+  const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
+  const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
+  return belowLower || aboveUpper || aboveRange ? 'outside' : 'within';
 }
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
@@ -81,6 +127,11 @@ export async function readRecordedReleaseTests(
   const { rows } = await q.query(statement, [orgId, batchNumber, projectId]);
   return rows.map((r) => {
     const passFail = String(r.pass_fail_status ?? '').trim().toLowerCase();
+    const declaredPass = passFail === 'pass' || passFail === 'passed';
+    /* A declared pass over a value its own criterion fails is the
+       contradiction it is, not a pass: until 2026-11-10 the recorded word was
+       trusted, and a batch was eligible for a signed release over it. */
+    const contradicted = declaredPass && recordedResultVerdict(r.test_results, [r.specifications]) === 'outside';
     return {
       qcId: Number(r.id),
       sampleId: String(r.sample_id ?? ''),
@@ -89,7 +140,8 @@ export async function readRecordedReleaseTests(
       criterion: r.specifications ?? null,
       passFail,
       reviewed: r.reviewed_by != null,
-      passed: passFail === 'pass' || passFail === 'passed',
+      passed: declaredPass && !contradicted,
+      contradicted,
       sampleType: String(r.sample_type ?? ''),
       analystId: r.analyst == null ? null : Number(r.analyst),
       reviewerId: r.reviewed_by == null ? null : Number(r.reviewed_by),
@@ -118,6 +170,22 @@ export function openDeviationCount(deviations: unknown): number {
   return Number.isFinite(open) && open > 0 ? open : 0;
 }
 
+/**
+ * Why a release is refused over recorded passes their own results contradict
+ * (GA-DEMO-02), or null when none is. Rejection never reaches this.
+ */
+function contradictedPassRefusal(tests: RecordedReleaseTest[], batchNumber: string): string | null {
+  const contradicted = tests.filter((t) => t.contradicted);
+  if (contradicted.length === 0) return null;
+  const one = contradicted.length === 1;
+  return (
+    `${contradicted.map((t) => t.sampleId || `QC ${t.qcId}`).join(', ')} ` +
+    `${one ? 'is' : 'are'} recorded as a pass, but the recorded result ` +
+    `${one ? 'is' : 'results are'} outside its recorded acceptance criterion. ` +
+    `Batch ${batchNumber} cannot be released while its record contradicts itself; investigate the result, or reject the batch.`
+  );
+}
+
 /** The disposition the recorded results support, or why they do not support it. */
 export function evaluateRecordedRelease(
   decision: ReleaseDecision,
@@ -144,6 +212,8 @@ export function evaluateRecordedRelease(
         'reviewed results: record them in QC testing first.',
     };
   }
+  const contradiction = contradictedPassRefusal(tests, batchNumber);
+  if (contradiction) return { refusal: contradiction };
   const failing = tests.filter((t) => !t.passed);
   if (failing.length > 0) {
     return {
@@ -171,5 +241,5 @@ export function evidenceFingerprint(tests: RecordedReleaseTest[]): string {
   // A passing/reviewed flag does not identify the result, its acceptance
   // criterion, attribution or reviewer. This is a transient comparison across
   // reauthentication, not a rewrite of any previously signed digest.
-  return stableHash(tests);
+  return createHash('sha256').update(stableStringify(tests), 'utf8').digest('hex');
 }

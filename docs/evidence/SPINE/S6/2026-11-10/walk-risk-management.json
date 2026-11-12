@@ -1,0 +1,33 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T11:44:37.471Z",
+  "steps": [
+    {
+      "name": "1. the Library read",
+      "A1": {
+        "type": "Required",
+        "blocker": true
+      },
+      "D4": {
+        "type": "Not applicable",
+        "blocker": false
+      },
+      "D6": {
+        "type": "When applicable",
+        "blocker": false
+      },
+      "E2": {
+        "type": "Required",
+        "blocker": true
+      },
+      "E3": {
+        "type": "Required",
+        "blocker": true
+      }
+    },
+    {
+      "name": "2. opened in the Vault",
+      "row": "D6Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities Not started When applicable · 4d ago"
+    }
+  ]
+}

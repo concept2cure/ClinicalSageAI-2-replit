@@ -1,0 +1,35 @@
+== npm run ci:launch-scope
+[ci:launch-scope] 9 apps · 45 surfaces · 12 modules · 34 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+
+== npm run ci:launch-scope-api
+ci:launch-scope-api: 683 API paths named by launch and shell screens; none refused. {"launch":625,"infrastructure":9,"never-gated":49}
+
+== npm run ci:one-product
+ci:one-product: 101 surfaces, 11 rail entries, none new.
+
+== npm run ci:ana-surface-context
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (69 surface file(s) hold a call).
+
+== npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+== npm run ci:unreferenced-modules
+Unreferenced modules: 72 (baseline 72)
+
+OK: no new unreachable modules.
+
+== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 473 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 473 migrations, 45 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 21 dynamic DROP(s) in 21 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+== npm run ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 100 baselined file(s) on no deploy path, none new.
+
+== npm run db:sync-manifest:check
+Manifest is in sync.
+

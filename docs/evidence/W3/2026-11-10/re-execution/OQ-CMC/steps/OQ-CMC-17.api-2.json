@@ -1,0 +1,93 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/batch-records/63245ec5-3c3a-4661-81fa-51ffaeae2fb1/release",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "decision": "rejected",
+      "reason": "Yield 61% against an 85% minimum; the batch is rejected.",
+      "meaning": "responsibility",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 390,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "batchRecord": {
+          "id": "63245ec5-3c3a-4661-81fa-51ffaeae2fb1",
+          "organization_id": 2,
+          "project_id": "689b2e11-9727-43af-9aae-1369322b42cc",
+          "batch_number": "R2-20261112003432",
+          "batch_type": null,
+          "material_type": null,
+          "scale": null,
+          "site": null,
+          "manufacturing_date": null,
+          "expiry_date": null,
+          "batch_size": null,
+          "batch_size_unit": null,
+          "yield": null,
+          "yield_unit": null,
+          "purpose": null,
+          "process_version": null,
+          "deviations": {
+            "open": 1
+          },
+          "disposition": null,
+          "linked_analyses": null,
+          "linked_stability_study_id": null,
+          "specification_compliance": null,
+          "oos_events": null,
+          "created_at": "2026-11-12T00:35:32.217Z",
+          "updated_at": "2026-11-12T00:36:00.700Z",
+          "product_name": "Drug substance",
+          "manufacturing_site": null,
+          "status": "in-progress",
+          "process_parameters": null,
+          "in_process_controls": null,
+          "yield_data": {
+            "percent": 61
+          },
+          "release_testing": {
+            "comments": null,
+            "decision": "rejected",
+            "releasedAt": "2026-11-12T00:36:00.703Z",
+            "releasedBy": "OQ Signer",
+            "testResults": [],
+            "releaseStatus": "rejected",
+            "allTestsPassed": false
+          },
+          "release_status": "rejected",
+          "released_by": "OQ Signer",
+          "released_at": "2026-11-12T00:36:00.700Z",
+          "tenant_id": "2"
+        },
+        "releaseEvaluation": {
+          "decision": "rejected",
+          "releasedBy": "OQ Signer",
+          "comments": null,
+          "testResults": [],
+          "allTestsPassed": false,
+          "releaseStatus": "rejected",
+          "releasedAt": "2026-11-12T00:36:00.703Z"
+        }
+      },
+      "governance": {
+        "actionId": "act_30915e0f08df4ce6bf9a492e13c6d477",
+        "sha256Chain": "d7702e584a66702843e3250a1e8e7c22fa5b75cbca9190bd85a31b442a3195c7"
+      },
+      "message": "Batch release decision recorded successfully",
+      "timestamp": "2026-11-12T00:36:00.716Z",
+      "module3Linked": true
+    }
+  }
+}

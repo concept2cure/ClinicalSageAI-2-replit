@@ -1,0 +1,16 @@
+# Green: the filing classifier after the change
+ Test Files  1 passed (1)
+      Tests  41 passed (41)
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > an SOP in a pharma dossier vault is honestly not placeable 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > is proposed for Module 1 at its region's heading, the same answer the name RMP already gets 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > is never told it is a device risk file, or a quality-system record 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > in a device or IVD Vault the same name is still part of the risk management file 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > a device risk file's own names are not claimed for the dossier 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a kind with no folder in this Vault says only what is true of it > says quality-system records live in the Quality module for a quality-system record only 0ms
+
+## The 14 suites that use the classifier (the Vault ingest, the Data Room capture, placement, coverage)
+ Test Files  14 passed (14)
+      Tests  301 passed (301)
+
+## The running server (local, a US IND biotech project): POST /api/vault/ingest of 'Risk management plan.txt'
+{"success": true, "filing": {"view": "biotech", "folderId": "module-1", "evidenceKind": "clinical", "ctdSection": null, "placementStatus": "suggested", "confidence": "high", "rationale": "The name names Module 1 but no section; confirm where in the module it belongs.", "folderLabel": "Module 1 · Administrative", "needsReview": false}}

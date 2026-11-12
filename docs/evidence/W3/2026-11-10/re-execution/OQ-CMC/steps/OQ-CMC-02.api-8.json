@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/drug-substances?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 28,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 63,
+          "substanceName": "BX-701",
+          "casNumber": "1234-56-7",
+          "molecularFormula": "C17H19N3O2",
+          "molecularWeight": "297.36",
+          "inn": "bexanistat",
+          "structuralFormula": null,
+          "manufacturingProcess": {
+            "manufacturer": "Acme Fine Chemicals",
+            "route": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+            "site": "Basel"
+          },
+          "modality": "small_molecule",
+          "biologicalOrigin": null,
+          "sourceOrganism": null,
+          "cellLine": null,
+          "viralSafetyEvaluation": null,
+          "tseStatus": null,
+          "status": "development",
+          "developmentPhase": "phase1",
+          "organizationId": 2,
+          "projectId": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+          "createdAt": "2026-11-12T00:34:33.349Z",
+          "updatedAt": "2026-11-12T00:34:33.349Z"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows the counts and the rule pack they come from, and no percentage 148ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > tells AnA the same counts the page shows 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > says when the list is the ICH baseline and not the program's own 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > files an existing document at a missing section through the filing call 296ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows why when there is no figure, and never "0 of" 118ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > a device filing's coverage opens its outline in the Library 289ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage, in a person’s words > names each missing section from the filing’s outline, and says only the number where the outline has no name 54
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage, in a person’s words > names a missing section for a reader who may not file, too 54ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage, in a person’s words > writes the agency as people do, whatever case the rule pack records 56ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/vault   (every Vault client suite)
+ Test Files  69 passed (69)
+      Tests  784 passed (784)

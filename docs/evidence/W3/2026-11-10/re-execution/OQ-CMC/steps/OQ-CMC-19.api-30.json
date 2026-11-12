@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "submissionId": 105,
+      "sequenceId": 18,
+      "reason": "Placing the approved Module 3 into sequence 0001 for filing.",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 45,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "NOT_FOUND: The sequence does not belong to the stated submission."
+    }
+  }
+}

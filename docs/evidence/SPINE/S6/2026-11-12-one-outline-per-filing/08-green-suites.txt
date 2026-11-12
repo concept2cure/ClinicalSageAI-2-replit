@@ -1,0 +1,6 @@
+ × server/services/vault/__tests__/vault-document-filter.test.ts > one vocabulary, one predicate > no other server module that reads vault.documents builds its own metadata predicate 196ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 232 passed (233)
+      Tests  1 failed | 3560 passed (3561)
+
+[exited with code 0]

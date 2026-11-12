@@ -1,0 +1,126 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "sop-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 0,
+      "empty": "No controlled document was authored in C11 · Walk C11 gasket programme.The organisation's other controlled documents are under Show the whole organisation.",
+      "figures": null,
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "Change control-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 0,
+      "empty": "No change is filed under C11 · Walk C11 gasket programme.The organisation's other changes are under Show the whole organisation.",
+      "figures": null,
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "CAPA-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 100,
+      "empty": null,
+      "figures": "The 100 most recently updated CAPAs: Open CAPAs: 100 (0 closed) · Past target close: 0 · High or critical risk, open: 0 · Closed, not effective: 0",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "Nonconformances-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 1,
+      "empty": null,
+      "figures": "Recorded: 1 · Awaiting disposition: 1 · Dispositioned: 0",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "Deviations-project",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 1,
+      "empty": null,
+      "figures": "Organisation-wide · Open: 1 (0 closed) · Critical, open: 0 · Past target close: 0",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "nc-form-project",
+      "checked": [
+        "C11"
+      ]
+    },
+    {
+      "name": "nc-after-record",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 2,
+      "empty": null,
+      "figures": "Recorded: 2 · Awaiting disposition: 2 · Dispositioned: 0",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "nc-organisation",
+      "scope": "The whole organisation's quality records.",
+      "toggle": [
+        "Show C11 · Walk C11 gasket programme only"
+      ],
+      "rows": 3,
+      "empty": null,
+      "figures": "Recorded: 3 · Awaiting disposition: 3 · Dispositioned: 0",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95&quality=organisation"
+    },
+    {
+      "name": "sop-organisation",
+      "scope": "The whole organisation's quality records.",
+      "toggle": [
+        "Show C11 · Walk C11 gasket programme only"
+      ],
+      "rows": 1,
+      "empty": null,
+      "figures": "1 controlled document: 1 in review; none overdue for review.",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95&quality=organisation"
+    },
+    {
+      "name": "sop-organisation-reloaded",
+      "scope": "The whole organisation's quality records.",
+      "toggle": [
+        "Show C11 · Walk C11 gasket programme only"
+      ],
+      "rows": 1,
+      "empty": null,
+      "figures": "1 controlled document: 1 in review; none overdue for review.",
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95&quality=organisation"
+    },
+    {
+      "name": "sop-project-again",
+      "scope": "C11 · Walk C11 gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.",
+      "toggle": [
+        "Show the whole organisation"
+      ],
+      "rows": 0,
+      "empty": "No controlled document was authored in C11 · Walk C11 gasket programme.The organisation's other controlled documents are under Show the whole organisation.",
+      "figures": null,
+      "url": "?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "w21-project-scope",
+      "ok": true
+    }
+  ]
+}

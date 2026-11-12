@@ -1,0 +1,393 @@
+# Green: every test file that imports a changed module
+# npx vitest run server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts server/routes/__tests__/licensing-agreements-publish-and-store.test.ts server/routes/__tests__/licensing-routes-fail-closed.test.ts server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts server/services/licensing/__tests__/entitlements.test.ts server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts server/services/licensing/__tests__/eula-accepts-only-active-and-publishes-only-text.pglite.test.ts server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts  --maxWorkers=2
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a client's own administrator 403 with a plain sentence, and changes nothing
+{
+  "timestamp": "2026-11-10T11:55:36.785Z",
+  "level": "warn",
+  "message": "[licensing] agreement publish refused: not platform staff",
+  "context": {
+    "userId": 7
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a federated session whose e-mail is on the allowlist (the IdP asserted it)
+{
+  "timestamp": "2026-11-10T11:55:36.800Z",
+  "level": "warn",
+  "message": "[licensing] agreement publish refused: not platform staff",
+  "context": {
+    "userId": 1
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:55:36.841Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:55:36.849Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:55:36.856Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > accept: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:55:36.870Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > entitlements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:55:36.876Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > publish (platform staff): 503 AGREEMENTS_NOT_SET_UP with a sentence saying why
+{
+  "timestamp": "2026-11-10T11:55:36.881Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a client's own administrator 403 with a plain sentence, and changes nothing 258ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a federated session whose e-mail is on the allowlist (the IdP asserted it) 10ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses platform staff without a reason 400, and changes nothing 25ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > publishes for platform staff with a reason, and audits before and after in the same transaction 6ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 8ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 7ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 7ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > accept: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 13ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > entitlements: 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 7ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > publish (platform staff): 503 AGREEMENTS_NOT_SET_UP with a sentence saying why 4ms
+ ✓ server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > tables that exist are read without any attempt to create them (a deploy-shaped role) 5ms
+stderr | server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts
+{
+  "timestamp": "2026-11-10T11:55:39.042Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > writes one sealed audit row with the reason, the superseded version and the new one, before COMMIT 34ms
+ ✓ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > refuses a missing or too-short reason before any write 4ms
+ ✓ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > an audit row that cannot be written rolls the publish back: the old version stays active 14ms
+ ✓ server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > a first version (nothing superseded) is audited with before: [] 10ms
+stderr | server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts
+{
+  "timestamp": "2026-11-10T11:55:43.080Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > append-only acceptance with canonical enlisted audit > a lost COMMIT response reports uncertainty while retaining the actual atomic acceptance and audit
+{
+  "timestamp": "2026-11-10T11:55:47.029Z",
+  "level": "warn",
+  "message": "[eula-service] Legal acceptance commit unconfirmed; acceptance history must be reviewed",
+  "context": {
+    "organizationId": 9,
+    "code": "LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED"
+  }
+}
+
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > append-only acceptance with canonical enlisted audit > writes the acceptance, actor, provenance and sealed tenant audit inside one transaction 40ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > append-only acceptance with canonical enlisted audit > an unavailable audit store rolls back the legal acceptance; recovery then writes both 34ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > append-only acceptance with canonical enlisted audit > a failed acceptance insert cannot leave an audit event claiming acceptance 7ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > append-only acceptance with canonical enlisted audit > a nonexistent agreement leaves no acceptance or audit 5ms
+stderr | server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > actual acceptance HTTP consumer > does not claim acceptance in HTTP when the enlisted audit fails
+{
+  "timestamp": "2026-11-10T11:55:47.092Z",
+  "level": "error",
+  "message": "[licensing] accept error",
+  "context": {
+    "err": "new row for relation \"audit_logs\" violates check constraint \"eula_audit_unavailable\""
+  }
+}
+
+stderr | server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > actual acceptance HTTP consumer > returns an explicit non-retry claim for an unconfirmed commit and exposes acceptance-history recovery
+{
+  "timestamp": "2026-11-10T11:55:47.112Z",
+  "level": "warn",
+  "message": "[eula-service] Legal acceptance commit unconfirmed; acceptance history must be reviewed",
+  "context": {
+    "organizationId": 9,
+    "code": "LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED"
+  }
+}
+
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > append-only acceptance with canonical enlisted audit > a lost COMMIT response reports uncertainty while retaining the actual atomic acceptance and audit 20ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > actual acceptance HTTP consumer > binds acceptance and audit to the authenticated actor/org, ignoring supplied foreign identity 37ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > actual acceptance HTTP consumer > does not claim acceptance in HTTP when the enlisted audit fails 21ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > actual acceptance HTTP consumer > refuses an unauthenticated acceptance before any persistence 5ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > actual acceptance HTTP consumer > returns an explicit non-retry claim for an unconfirmed commit and exposes acceptance-history recovery 19ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > existing user/organization agreement scope semantics > one colleague cannot satisfy another user's individual agreement 18ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > existing user/organization agreement scope semantics > an organization acceptance applies to that organization and cannot follow its actor into another tenant 24ms
+ ✓ server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts > existing user/organization agreement scope semantics > an individual acceptance follows only its actor across their organizations 39ms
+stderr | server/services/licensing/__tests__/eula-accepts-only-active-and-publishes-only-text.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/licensing/__tests__/eula-accepts-only-active-and-publishes-only-text.pglite.test.ts
+{
+  "timestamp": "2026-11-10T11:55:48.369Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/licensing/__tests__/eula-accepts-only-active-and-publishes-only-text.pglite.test.ts > recordAcceptance > refuses a superseded or draft agreement and records nothing 17ms
+ ✓ server/services/licensing/__tests__/eula-accepts-only-active-and-publishes-only-text.pglite.test.ts > recordAcceptance > still records acceptance of the active agreement 22ms
+ ✓ server/services/licensing/__tests__/eula-accepts-only-active-and-publishes-only-text.pglite.test.ts > publishAgreement > refuses an agreement with neither body nor url, and leaves the active one active 3ms
+stderr | server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /agreements/outstanding
+{
+  "timestamp": "2026-11-10T11:55:53.538Z",
+  "level": "error",
+  "message": "[licensing] agreements/outstanding error",
+  "context": {
+    "err": "connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /agreements/active
+{
+  "timestamp": "2026-11-10T11:55:53.549Z",
+  "level": "error",
+  "message": "[licensing] agreements/active error",
+  "context": {
+    "err": "connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /acceptances
+{
+  "timestamp": "2026-11-10T11:55:53.554Z",
+  "level": "error",
+  "message": "[licensing] acceptances error",
+  "context": {
+    "err": "connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /entitlements does not report the license accepted when acceptances could not be read
+{
+  "timestamp": "2026-11-10T11:55:53.558Z",
+  "level": "error",
+  "message": "[licensing] entitlements error",
+  "context": {
+    "err": "connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-routes-fail-closed.test.ts > unconfirmed legal acceptance commits > returns recovery guidance, evicts the connection and never claims rollback or accepted:true
+{
+  "timestamp": "2026-11-10T11:55:53.588Z",
+  "level": "warn",
+  "message": "[eula-service] Legal acceptance commit unconfirmed; acceptance history must be reviewed",
+  "context": {
+    "organizationId": 3,
+    "code": "LICENSE_ACCEPTANCE_COMMIT_UNCONFIRMED"
+  }
+}
+
+stderr | server/routes/__tests__/licensing-routes-fail-closed.test.ts > GET /features never invents a tier > 500 when the license cannot be read
+{
+  "timestamp": "2026-11-10T11:55:53.596Z",
+  "level": "error",
+  "message": "[licensing] features error",
+  "context": {
+    "err": "connection terminated unexpectedly"
+  }
+}
+
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /agreements/outstanding 22ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /agreements/active 4ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /acceptances 4ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > GET /entitlements does not report the license accepted when acceptances could not be read 5ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > agreement reads: a failed read is a 500, never an empty list > a readable store still answers 200 with the outstanding agreement 7ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > POST /agreements/:id/accept: no consent to an agreement with no text > 422 AGREEMENT_TEXT_MISSING, and nothing recorded or audited 7ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > POST /agreements/:id/accept: no consent to an agreement with no text > 201 for an agreement whose text is held 11ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > unconfirmed legal acceptance commits > returns recovery guidance, evicts the connection and never claims rollback or accepted:true 5ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > GET /features never invents a tier > 500 when the license cannot be read 7ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > GET /features never invents a tier > 404 when the organization has no row 5ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > GET /features never invents a tier > the organization's own tier when it is read 3ms
+ ✓ server/routes/__tests__/licensing-routes-fail-closed.test.ts > POST /agreements: an agreement with no text is the request's fault > answers 400 AGREEMENT_TEXT_MISSING and publishes nothing 17ms
+ ✓ server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts > license acceptance is reported only when it was read > a request with no user is "not assessed", not "accepted" 3ms
+ ✓ server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts > license acceptance is reported only when it was read > an unreadable agreement store fails the summary instead of reporting the license accepted 5ms
+ ✓ server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts > license acceptance is reported only when it was read > a readable store with an unaccepted required agreement: not accepted, listed, critical 2ms
+ ✓ server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts > license acceptance is reported only when it was read > a readable store with everything accepted: accepted 1ms
+ ✓ server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts > usage limits are reported only when recorded > a limit the organization row does not record is null, with no warning invented about it 1ms
+ ✓ server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts > usage limits are reported only when recorded > a failed quota read fails the summary 1ms
+stderr | server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > a schema bootstrap the runtime role is refused is a failed read, not an empty one
+{
+  "timestamp": "2026-11-10T11:55:54.234Z",
+  "level": "warn",
+  "message": "[eula-service] Agreement tables do not exist and could not be created",
+  "context": {
+    "err": "permission denied for schema public"
+  }
+}
+
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > getActiveAgreements rejects when license_agreements cannot be read (it answered []) 19ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > getOutstandingAgreements rejects when the acceptances cannot be read (it answered "nothing outstanding") 2ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > hasAcceptedAll rejects instead of answering true 2ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > a schema bootstrap the runtime role is refused is a failed read, not an empty one 4ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > tables that exist are used without any DDL (2026-11-10: the runtime role is refused even IF NOT EXISTS) 2ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > getAcceptanceHistory rejects: an unreadable ledger is not an empty one 1ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > a readable store still answers: an unaccepted required agreement is outstanding 1ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > an acceptance is bound to the agreement text > refuses an agreement with neither body nor url, and writes nothing 2ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > an acceptance is bound to the agreement text > whitespace is not text 6ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > an acceptance is bound to the agreement text > the acceptance hash changes when the agreement text changes 3ms
+ ✓ server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > an acceptance is bound to the agreement text > accepts an agreement whose text lives at a url, and the hash covers that url 1ms
+stdout | server/services/licensing/__tests__/entitlements.test.ts
+{
+  "timestamp": "2026-11-10T11:55:55.861Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T11:55:55.862Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/licensing/__tests__/entitlements.test.ts
+{
+  "timestamp": "2026-11-10T11:55:55.862Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/licensing/__tests__/entitlements.test.ts
+[database] Database connection successful
+
+stderr | server/services/licensing/__tests__/entitlements.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/licensing/__tests__/entitlements.test.ts
+{
+  "timestamp": "2026-11-10T11:55:55.917Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > tier model > orders tiers free < standard < professional < enterprise 2ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > tier model > treats unknown tiers as the floor 1ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > tier model > returns the next tier up, null at the ceiling 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > buildFeatureCatalog > marks standard-tier features unavailable on free 1ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > buildFeatureCatalog > unlocks everything at enterprise 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > buildFeatureCatalog > keeps free features available on free 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > computeRecommendations > flags outstanding agreements as critical and first 1ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > computeRecommendations > emits a critical quota warning when over the limit 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > computeRecommendations > emits a warning when approaching the limit (>=80%) 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > computeRecommendations > recommends the next tier and counts what it unlocks 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > computeRecommendations > does not recommend an upgrade at the ceiling 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > EULA pure helpers > returns required, unaccepted agreements only 1ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > EULA pure helpers > returns empty when all required are accepted 0ms
+ ✓ server/services/licensing/__tests__/entitlements.test.ts > EULA pure helpers > produces a stable, deterministic acceptance hash 1ms
+stdout | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+{
+  "timestamp": "2026-11-10T11:55:57.448Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T11:55:57.450Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+{
+  "timestamp": "2026-11-10T11:55:57.451Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+[database] Database connection successful
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts
+{
+  "timestamp": "2026-11-10T11:55:57.505Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > answers 503 when acceptance could not be read, and does not serve the route
+{
+  "timestamp": "2026-11-10T11:55:57.525Z",
+  "level": "warn",
+  "message": "[require-license-acceptance] License acceptance could not be read — request refused",
+  "context": {
+    "userId": 42,
+    "organizationId": 7,
+    "err": "connect ECONNREFUSED 10.0.0.xxx:5432"
+  }
+}
+
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > answers 503 when acceptance could not be read, and does not serve the route 26ms
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > refuses with the outstanding agreements when some are not accepted (control) 6ms
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > serves the route when every required agreement is accepted (control) 3ms
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > says plainly that agreements are not set up when their records do not exist (F1, 2026-11-10, W1-05) 4ms
+ ✓ server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > answers 401 without a user (control) 4ms
+
+ Test Files  9 passed (9)
+      Tests  78 passed (78)
+   Start at  11:55:35
+   Duration  22.09s (transform 1.85s, setup 379ms, import 7.36s, tests 12.06s, environment 1ms)
+

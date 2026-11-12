@@ -149,6 +149,8 @@ import {
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { authedUserId } from '../utils/authedActor';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access';
+import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
 
 const router = Router();
 
@@ -1244,13 +1246,46 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
 // BLOCKERS
 // ============================================================
 
+/* The projects the person can open, by the project sharing policy Projects lists by (P-122, 2026-11-10). Production
+   serves /blockers and /due-soon for the Projects page's "at risk" answer, so each lists only these projects' rows. */
+async function readableProjects(req: Request, orgId: number): Promise<number[]> {
+  const organizationId = Number(orgId); // the session's organization, a string on some sign-in paths
+  const userId = authedUserId(req);
+  const actor = await readCurrentProgramActor(pool, { organizationId, userId: userId ?? undefined });
+  return getAccessibleReportProjectIds(organizationId, actor, pool);
+}
+
+/** Whether the blocker exists and its project is one the person can open. Throws when that cannot be read. */
+async function blockerIsReadable(req: Request, orgId: number, blockerId: string): Promise<boolean> {
+  const [held] = await db
+    .select({ projectId: c2cBlockers.projectId })
+    .from(c2cBlockers)
+    .where(and(eq(c2cBlockers.blockerId, blockerId), eq(c2cBlockers.orgId, orgId)));
+  return held ? (await readableProjects(req, orgId)).includes(held.projectId) : false;
+}
+
+/** A project access check that cannot run is an error with a code, never the organization's whole list. */
+function projectAccessFailure(res: Response, error: unknown): Response {
+  if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
+  logger.error('Project access could not be read', { err: error instanceof Error ? error.message : String(error) });
+  return res.status(503).json({ error: 'Current project access could not be verified. Nothing was read or changed.', code: 'PROJECT_ACCESS_UNAVAILABLE' });
+}
+
 router.get('/blockers', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, packageId, status, severity, blockerType, ownerFunction, ownershipType } =
       req.query;
 
-    const conditions = [eq(c2cBlockers.orgId, orgId)];
+    let readable: number[];
+    try {
+      readable = await readableProjects(req, orgId);
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+    if (readable.length === 0) return res.json({ data: [] });
+
+    const conditions = [eq(c2cBlockers.orgId, orgId), inArray(c2cBlockers.projectId, readable)];
     if (projectId) conditions.push(eq(c2cBlockers.projectId, Number(projectId)));
     if (status) conditions.push(eq(c2cBlockers.status, status as string));
     else conditions.push(eq(c2cBlockers.status, 'open'));
@@ -1316,6 +1351,15 @@ router.patch('/blockers/:blockerId', requireEditorAccess, async (req: Request, r
     if (status !== undefined && !BLOCKER_STATUSES.includes(status)) {
       return res.status(422).json({ error: `status must be one of: ${BLOCKER_STATUSES.join(', ')}` });
     }
+    /* A blocker on a project the person cannot open is answered as one that does not exist (P-122). */
+    let admitted: boolean;
+    try {
+      admitted = await blockerIsReadable(req, orgId, String(req.params.blockerId));
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+    if (!admitted) return res.status(404).json({ error: 'Blocker not found' });
+
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (nextAction !== undefined) updates.nextAction = nextAction;
     if (status !== undefined) {
@@ -1596,7 +1640,16 @@ router.get('/due-soon', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const projectId = req.query.projectId ? Number(req.query.projectId) : undefined;
-    const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
+    let readable: number[];
+    try {
+      readable = await readableProjects(req, orgId);
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+    if (projectId !== undefined && !readable.includes(projectId)) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
+    const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId, projectIds: readable });
 
     res.json({
       data: {

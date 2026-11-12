@@ -118,6 +118,30 @@ export async function convertDocxToPdf(
 // LibreOffice subprocess
 // ============================================================================
 
+/**
+ * The settings LibreOffice starts with, written into the profile made for each run (found 2026-11-10,
+ * docs/evidence/SPINE/S6/2026-11-10-p107-renditions/04-linked-content-probe.txt).
+ *
+ * A Word file can name content outside itself: a linked picture, for one. LibreOffice requests it while converting,
+ * whatever type the relationship declares. That was harmless while this converter ran only on files the platform
+ * built. A Vault rendition runs it on a file someone uploaded, and an upload must not be able to make this server
+ * call an address inside its own network. BlockUntrustedRefererLinks is LibreOffice's setting for this: linked
+ * content named by a document that is not in a trusted location is not loaded. The run's work directory is not one.
+ */
+export const OFFICE_PROFILE_SETTINGS =
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n' +
+  '<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="BlockUntrustedRefererLinks" oor:op="fuse"><value>true</value></prop></item>\n' +
+  '</oor:items>\n';
+
+/** The profile for one run, holding those settings. LibreOffice is not started when it cannot be written. */
+async function writeOfficeProfile(workDir: string): Promise<string> {
+  const profileDir = path.join(workDir, 'office-profile');
+  await fs.mkdir(path.join(profileDir, 'user'), { recursive: true });
+  await fs.writeFile(path.join(profileDir, 'user', 'registrymodifications.xcu'), OFFICE_PROFILE_SETTINGS, 'utf8');
+  return profileDir;
+}
+
 async function runLibreOffice(docx: Buffer, timeout: number): Promise<Buffer> {
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pdf-conv-'));
   const inputPath = path.join(workDir, `in-${randomBytes(8).toString('hex')}.docx`);
@@ -125,13 +149,14 @@ async function runLibreOffice(docx: Buffer, timeout: number): Promise<Buffer> {
 
   try {
     await fs.writeFile(inputPath, docx);
+    const profileDir = await writeOfficeProfile(workDir);
 
     // One of the process's conversion slots (OPS-13): the soffice child runs
     // only while it holds one. Its own `timeout` starts once it is running.
     await withConversionSlot('libreoffice', () => new Promise<void>((resolve, reject) => {
       const args = [
         '--headless',
-        `-env:UserInstallation=${pathToFileURL(path.join(workDir, 'office-profile')).href}`,
+        `-env:UserInstallation=${pathToFileURL(profileDir).href}`,
         '--norestore',
         '--nologo',
         '--nofirststartwizard',

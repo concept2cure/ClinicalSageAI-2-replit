@@ -1,0 +1,46 @@
+[
+ {
+  "w": 1440,
+  "stage": "Submit",
+  "url": "http://127.0.0.1:5240/concept2cure/device-510k?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "fetchFailed": false,
+  "line": "The openFDA clearance lookup could not run. The FDA's public clearance database could not be reached from this server. Try again later.",
+  "errorAlerts": [],
+  "overflowX": 0,
+  "rec": {
+   "http": [
+    "ana 409 GET /api/c2c/projects/4f047045-425a-4d88-b84b-4695e02af20c/source-changes :: The Quality record changed or is no longer available. Refresh the project catalogue before using it.",
+    "ana 503 GET /api/predicate-intelligence/candidates?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED",
+    "ana 503 GET /api/predicate-intelligence/se-matrix?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED"
+   ],
+   "console": [
+    "ana Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "pageErrors": []
+  }
+ },
+ {
+  "w": 390,
+  "stage": "Submit",
+  "url": "http://127.0.0.1:5240/concept2cure/device-510k?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "fetchFailed": false,
+  "line": "The openFDA clearance lookup could not run. The FDA's public clearance database could not be reached from this server. Try again later.",
+  "errorAlerts": [],
+  "overflowX": 0,
+  "rec": {
+   "http": [
+    "ana 409 GET /api/c2c/projects/4f047045-425a-4d88-b84b-4695e02af20c/source-changes :: The Quality record changed or is no longer available. Refresh the project catalogue before using it.",
+    "ana 503 GET /api/predicate-intelligence/candidates?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED",
+    "ana 503 GET /api/predicate-intelligence/se-matrix?program_id=4f047045-425a-4d88-b84b-4695e02af20c :: PREDICATE_INTELLIGENCE_NOT_CONFIGURED"
+   ],
+   "console": [
+    "ana Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "ana Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+   ],
+   "pageErrors": []
+  }
+ }
+]

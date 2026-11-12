@@ -1,0 +1,10 @@
+1440 GA-UI-03 bell {"x":1372.453125,"y":7.5,"width":55.546875,"height":32} glyph {"x":1378.453125,"y":15.5,"width":16,"height":16} badge {"x":1398.453125,"y":15.5,"width":23.546875,"height":16} overlap false
+1440 page overflowX 0
+1440 GA-UI-04 url after one click /concept2cure/vault?documentId=3bddeda1-0ade-47dc-af9b-27328ffbf779&program=ff36212f-9a79-4743-830a-789583fb3c51
+1440 GA-UI-05 notice style linear-gradient(color(srgb 0.713726 0.223529 0.223529 / 0.08), color(srgb 0.713726 0.223529 0.223529 / 0.08)), none | rgb(250, 249, 245) | border 1px rgb(182, 57, 57)
+1440 recorder {"http":[],"console":[],"pageErrors":[]}
+390 GA-UI-03 bell {"x":278.453125,"y":1.5,"width":55.546875,"height":44} glyph {"x":284.453125,"y":15.5,"width":16,"height":16} badge {"x":304.453125,"y":15.5,"width":23.546875,"height":16} overlap false
+390 page overflowX 0
+390 GA-UI-04 url after one click /concept2cure/vault?documentId=3bddeda1-0ade-47dc-af9b-27328ffbf779&program=ff36212f-9a79-4743-830a-789583fb3c51
+390 GA-UI-05 notice style none
+390 recorder {"http":[],"console":[],"pageErrors":[]}

@@ -1,0 +1,10 @@
+ci:launch-scope-api: 655 API paths named by launch and shell screens; none refused. {"launch":597,"infrastructure":9,"never-gated":49}
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > judges a path as Express routes it, whatever its letter case 10ms
+   → /api/mdx/qms/Readiness: expected false to be true // Object.is equality
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 2ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > /api/cmc-changes while launch scope is enforced > GET is refused 409 and reads nothing 2ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > /api/cmc-changes while launch scope is enforced > POST is refused 409 and writes nothing 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 56 passed (57)
+Note: 'judges a path as Express routes it, whatever its letter case' (/api/mdx/qms/Readiness) fails identically with HEAD's registry; it is not this change's (checked by running it against HEAD's ui-surface-registry.ts).

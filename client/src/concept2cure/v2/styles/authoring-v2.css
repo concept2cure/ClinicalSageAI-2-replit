@@ -521,7 +521,9 @@
     background: var(--bg-100);
   }
   /* What a phone-width bar does not draw is in More's "View" group
-     (`.ed-more-narrow`); the dirty state also shows on Save.
+     (`.ed-more-narrow`); the dirty state also shows on Save. The inspector's
+     doors (`.ed-wide`, P-122) are on the bar wider than that, and in More's
+     narrow groups at it.
      Only what More holds whole is hidden. §D4.K also hides presence and the
      lock (`.ed-collab`: Lock section, Unlock, "locked by …" and Take over),
      the Download menu (the controlled export and the PDF working copy are
@@ -534,6 +536,7 @@
   @media (max-width: 640px) {
     .ed-bar .ed-view,
     .ed-bar [data-testid='ed-comments-open'],
+    .ed-bar .ed-wide,
     .ed-bar .dcv-bar-p .ed-saved {
       display: none;
     }
@@ -1583,91 +1586,150 @@
     margin-top: 4px;
     min-width: 0;
   }
-  /* The chip (D4-5b, D4.md §D4.I and §D4.K "Chip"): an icon tile, the title, one line of kind and state, and Open,
-     as Claude shows an artifact under a message. */
   .dcv-card {
-    display: grid;
-    gap: 8px;
-    max-width: 560px;
-    padding: 12px 14px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     background: var(--bg-000);
-    transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    padding: 16px 18px 14px;
+    display: grid;
+    gap: 12px;
   }
   .dcv-card[hidden] {
     display: none;
   }
-  /* The chip of the document open beside the conversation: a stronger hairline and a quiet fill. It was an orange
-     inset bar. */
-  .dcv-card[data-open-beside] {
-    border-color: var(--border-strong);
-    background: var(--bg-050);
+  .dcv-head {
+    display: grid;
+    gap: 4px;
   }
-  .dcv-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-  }
-  .dcv-ic {
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
+  .dcv-kind {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    background: var(--bg-100);
-    color: var(--text-300);
+    gap: 5px;
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-400);
   }
-  .dcv-ic svg {
-    width: 18px;
-    height: 18px;
-  }
-  .dcv-head {
-    flex: 1;
-    min-width: 0;
-    display: grid;
-    gap: 2px;
+  .dcv-kind svg {
+    width: 12px;
+    height: 12px;
   }
   .dcv-title {
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--font-sans);
-    font-size: var(--fs-body, 14px);
-    font-weight: 500;
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
     color: var(--text-100);
+    margin: 0;
+    overflow-wrap: anywhere;
   }
   .dcv-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0 6px;
-    font-size: var(--fs-small, 13px);
+    gap: 6px 14px;
+    font-size: 12px;
     color: var(--text-300);
   }
-  .dcv-meta > * + *::before {
-    content: '·';
-    margin-right: 6px;
-    color: var(--text-400);
-  }
   .dcv-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     min-width: 0;
-    overflow-wrap: anywhere;
+  }
+  .dcv-project svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
   }
   .dcv-project-none {
     color: var(--warning);
   }
-  .dcv-prov,
-  .dcv-note {
+  .dcv-prov {
     font-size: var(--fs-caption, 12px);
-    color: var(--text-300);
+    color: var(--text-400);
   }
   .dcv-prov[data-source='ana']::before {
     content: '✻ ';
     color: var(--accent-200);
+  }
+  .dcv-body {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    display: grid;
+    gap: 14px;
+  }
+  .dcv-body[hidden] {
+    display: none;
+  }
+  .dcv-sec {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .dcv-sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  /* --accent-200, not --accent-100. The brand orange measures 2.96:1 on
+     --bg-000 (measured at 390px and 1440px, docs/evidence/CANVAS-POLISH/
+     2026-09-21/audit-light.json) and this is 12px text, so it failed 1.4.3
+     outright; --accent-200 is the same hue at 4.98:1 and is what
+     .ct-head-open and .ph-eyebrow already use for exactly this reason. */
+  .dcv-sec-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-200);
+  }
+  .dcv-sec-t {
+    font-family: var(--font-serif);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-100);
+  }
+  .dcv-sec-body {
+    max-height: 380px;
+    overflow: hidden;
+    position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+    mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  }
+  .dcv[data-expanded] .dcv-sec-body,
+  .dcv-body:has(.dcv-showall[aria-expanded='true']) .dcv-sec-body {
+    max-height: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .dcv-sec-empty,
+  .dcv-empty {
+    font-size: 13px;
+    color: var(--text-400);
+    font-style: italic;
+    margin: 0;
+  }
+  /* "Ask AnA to draft <code>" beside a section's empty state (2026-10-01):
+     the action, not the italic note, so it reads upright. */
+  .dcv-sec-empty .nda-open {
+    margin-left: 8px;
+    font-style: normal;
+  }
+  .dcv-showall {
+    justify-self: start;
+  }
+  .dcv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  /* The four card actions were sized by an inline `height: 30` on each
+     button, which no stylesheet and therefore no breakpoint could reach. The
+     size lives here instead, so the phone block below can raise it. */
+  .dcv-actions .btn {
+    min-height: 32px;
   }
 
   /* ── The card, expanded into the editor ── */
@@ -1699,10 +1761,6 @@
   @media (prefers-reduced-motion: reduce) {
     .dcv-expanded {
       animation: none;
-    }
-    /* The chip's hairline and fill change without easing (D4-5b). */
-    .dcv-card {
-      transition: none;
     }
   }
   /* The artifact panel's slim header (D0 §4.2.17): 48px, a hairline under it, no band. */
@@ -1741,7 +1799,70 @@
     width: 32px;
     padding: 0;
   }
-  /* The refresh line under the chip (2026-10-01). */
+  /* ── The outline and the refresh line (2026-10-01) ──
+     Every section, drafted or not, so the card says how far along the
+     document is; choosing one shows it below. */
+  .dcv-outline {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+  }
+  .dcv-outline > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .dcv-outline-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-100);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .dcv-outline-item:hover,
+  .dcv-outline-item[aria-current] {
+    background: var(--bg-050);
+  }
+  .dcv-outline-code {
+    font-family: var(--font-mono);
+    color: var(--text-300);
+    flex-shrink: 0;
+  }
+  .dcv-outline-t {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dcv-outline-state {
+    flex-shrink: 0;
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+    padding-right: 6px;
+  }
+  .dcv-outline > li[data-drafted='false'] .dcv-outline-t {
+    color: var(--text-300);
+  }
+  .dcv-outline > li[data-updated] .dcv-outline-state {
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
   .dcv-updated {
     margin-top: 6px;
     font-size: 12px;
@@ -1790,6 +1911,17 @@
     font-family: var(--font-serif);
     font-size: var(--fs-prose);
     line-height: 1.7;
+  }
+  /* The card that opened the editor stays in the thread, marked, so the
+     conversation still says which document is open beside it. */
+  .dcv-card[data-open-beside] {
+    border-color: var(--accent-muted);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .dcv-open-note {
+    align-self: center;
+    font-size: 12px;
+    color: var(--text-300);
   }
   /* A document AnA built while another is open beside the conversation, or
      at a width with no room beside it: offered here, never forced open
@@ -1886,15 +2018,13 @@
     outline-offset: 2px;
     border-radius: 4px;
   }
-  /* The conversation's Documents list uses D0's segmented control (`.cdl-scope.seg`, `.seg-b`, D4-5b); it was an
-     orange pressed pill. The library and project-files scopes keep this look until their own steps. */
-  .cdl-scope:not(.seg) {
+  .cdl-scope {
     display: inline-flex;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     overflow: hidden;
   }
-  .cdl-scope:not(.seg) > .cdl-scope-btn {
+  .cdl-scope-btn {
     border: 0;
     background: none;
     padding: 5px 10px;
@@ -1902,10 +2032,10 @@
     color: var(--text-200);
     cursor: pointer;
   }
-  .cdl-scope:not(.seg) > .cdl-scope-btn + .cdl-scope-btn {
+  .cdl-scope-btn + .cdl-scope-btn {
     border-left: 1px solid var(--border);
   }
-  .cdl-scope:not(.seg) > .cdl-scope-btn[aria-pressed='true'] {
+  .cdl-scope-btn[aria-pressed='true'] {
     background: var(--accent-000);
     color: var(--accent-200);
     font-weight: 600;
@@ -2281,18 +2411,35 @@
       font-size: 12px;
     }
 
-    /* ── The chip ── 12px is the floor (D0 §3). */
+    /* ── The card ── */
+    .dcv-card {
+      padding: 14px 14px 12px;
+    }
+    /* 12px is the floor: five strings on this card were set between 10px and
+       11.5px, which is a size to glance at a number in, not to read a
+       provenance line in at arm's length. */
+    .dcv-kind,
     .dcv-prov,
-    .dcv-bar-p {
+    .dcv-sec-num,
+    .dcv-bar-p,
+    .dcv-showall {
       font-size: 12px;
     }
-    /* 44×44 (WCAG 2.2 Target Size): the chip's Open and the bar's way to the list. */
-    .dcv-card .btn,
-    .dcv-bar .ed-back,
-    .dcv-bar .btn {
+    /* 44×44 (WCAG 2.2 Target Size). The `.btn` actions were 30px tall by an
+       inline style and the two `.nda-open` links 17px — a link-shaped control
+       is still a control. `min-height` rather than `height`, so a label that
+       wraps still gets its second line. */
+    .dcv-actions .btn,
+    .dcv-actions .nda-open,
+    .dcv-showall,
+    .dcv-bar .ed-back {
       min-height: 44px;
       min-width: 44px;
       justify-content: center;
+    }
+    .dcv-actions .btn,
+    .dcv-actions .nda-open {
+      flex: 1 1 auto;
     }
 
     /* ── The editor, expanded ── */

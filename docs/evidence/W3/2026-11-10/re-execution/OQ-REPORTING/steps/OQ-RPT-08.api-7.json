@@ -1,0 +1,273 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scopeType": "account",
+      "scopeId": "2",
+      "reportTypeId": "lifecycle.obligation_calendar"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 69,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "run": {
+          "id": 25,
+          "runUuid": "cc839692-caf0-4074-89c9-fb6831a95073",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "lifecycle.obligation_calendar",
+          "status": "partial",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "lifecycle_obligation_calendar",
+                "observedAt": "2026-11-10T03:38:15.712Z",
+                "status": "missing",
+                "blocker": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Canonical obligationUrgency and summarizeCalendar over recorded admitted rows",
+                  "snapshot": "single-statement",
+                  "asOfDate": "2026-11-10",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "accessProjectIds": [],
+              "domain": {
+                "obligations": 0,
+                "byStatus": {},
+                "overdue": 0,
+                "lifecycleCalendar": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:38:15.712Z",
+                  "obligations": [],
+                  "events": [],
+                  "obligationSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "eventSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "gaps": [
+                    {
+                      "title": "Lifecycle legal assessment unavailable",
+                      "message": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "No admitted obligation records",
+                      "message": "This is not evidence that no obligations exist or apply.",
+                      "severity": "high"
+                    }
+                  ],
+                  "limits": [
+                    "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                    "The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor's admitted projects. A selected project is context, not an organization-completeness claim.",
+                    "Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.",
+                    "Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.",
+                    "Sources above 500 admitted rows per table are refused rather than silently truncated."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "observedAt": "2026-11-10T03:38:15.712Z",
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_obligations AS (\n  SELECT o.id, o.product_id, p.product_name, o.submission_id, a.id AS project_id,\n    o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date, o.recurrence_months\n  FROM lifecycle_obligations o\n  LEFT JOIN rim_products p ON p.id=o.product_id AND p.organization_id=o.organization_id AND p.deleted_at IS NULL\n  LEFT JOIN submissions s ON s.id=o.submission_id AND s.organization_id=o.organization_id AND s.deleted_at IS NULL\n  LEFT JOIN regulatory_programs r ON r.id=s.program_id AND r.organization_id=o.organization_id AND r.deleted_at IS NULL\n  LEFT JOIN projects a ON a.regulatory_program_id=r.id AND a.organization_id=o.organization_id AND a.status IS DISTINCT FROM 'deleted'\n  WHERE o.organization_id=$1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR p.id IS NOT NULL)\n    AND (o.submission_id IS NULL OR (s.id IS NOT NULL AND r.id::text=ANY($2::text[]) AND a.id IS NOT NULL))\n), visible_events AS (\n  SELECT e.id, e.obligation_id, o.title, o.project_id, e.period_start, e.period_end, e.due_date, e.status, e.submitted_date\n  FROM lifecycle_obligation_events e JOIN visible_obligations o ON o.id=e.obligation_id\n  WHERE e.organization_id=$1 AND e.deleted_at IS NULL\n), bounded_obligations AS (SELECT * FROM visible_obligations ORDER BY due_date NULLS LAST,id LIMIT 501),\n bounded_events AS (SELECT * FROM visible_events ORDER BY due_date NULLS LAST,id LIMIT 501)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  (SELECT count(*)::int FROM bounded_obligations) AS obligation_count,\n  (SELECT count(*)::int FROM bounded_events) AS event_count,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.due_date NULLS LAST,o.id) FROM bounded_obligations o),'[]'::jsonb) AS obligations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.due_date NULLS LAST,e.id) FROM bounded_events e),'[]'::jsonb) AS events",
+                    "parameters": [
+                      2,
+                      {
+                        "redacted": true,
+                        "reason": "The current actor program allowlist may include unrelated private programs. Only contributing source records are retained."
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:38:15.712Z",
+                        "obligation_count": 0,
+                        "event_count": 0,
+                        "obligations": [],
+                        "events": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": [
+              "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+            ]
+          },
+          "blockers": [
+            "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:38:15.721Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:38:15.721Z",
+          "completedAt": "2026-11-10T03:38:15.721Z",
+          "createdAt": "2026-11-10T03:38:15.721Z",
+          "updatedAt": "2026-11-10T03:38:15.721Z"
+        },
+        "snapshot": {
+          "id": 24,
+          "runId": 25,
+          "organizationId": 2,
+          "scopeType": "account",
+          "scopeId": "2",
+          "snapshotVersion": 1,
+          "isLatest": true,
+          "previousSnapshotId": null,
+          "artifactRecordId": null,
+          "snapshotMetadata": {
+            "reportTypeId": "lifecycle.obligation_calendar",
+            "providers": [
+              {
+                "provider": "lifecycle_obligation_calendar",
+                "observedAt": "2026-11-10T03:38:15.712Z",
+                "status": "missing",
+                "blocker": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Canonical obligationUrgency and summarizeCalendar over recorded admitted rows",
+                  "snapshot": "single-statement",
+                  "asOfDate": "2026-11-10",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "accessProjectIds": [],
+              "domain": {
+                "obligations": 0,
+                "byStatus": {},
+                "overdue": 0,
+                "lifecycleCalendar": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:38:15.712Z",
+                  "obligations": [],
+                  "events": [],
+                  "obligationSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "eventSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "gaps": [
+                    {
+                      "title": "Lifecycle legal assessment unavailable",
+                      "message": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "No admitted obligation records",
+                      "message": "This is not evidence that no obligations exist or apply.",
+                      "severity": "high"
+                    }
+                  ],
+                  "limits": [
+                    "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                    "The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor's admitted projects. A selected project is context, not an organization-completeness claim.",
+                    "Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.",
+                    "Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.",
+                    "Sources above 500 admitted rows per table are refused rather than silently truncated."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "observedAt": "2026-11-10T03:38:15.712Z",
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_obligations AS (\n  SELECT o.id, o.product_id, p.product_name, o.submission_id, a.id AS project_id,\n    o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date, o.recurrence_months\n  FROM lifecycle_obligations o\n  LEFT JOIN rim_products p ON p.id=o.product_id AND p.organization_id=o.organization_id AND p.deleted_at IS NULL\n  LEFT JOIN submissions s ON s.id=o.submission_id AND s.organization_id=o.organization_id AND s.deleted_at IS NULL\n  LEFT JOIN regulatory_programs r ON r.id=s.program_id AND r.organization_id=o.organization_id AND r.deleted_at IS NULL\n  LEFT JOIN projects a ON a.regulatory_program_id=r.id AND a.organization_id=o.organization_id AND a.status IS DISTINCT FROM 'deleted'\n  WHERE o.organization_id=$1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR p.id IS NOT NULL)\n    AND (o.submission_id IS NULL OR (s.id IS NOT NULL AND r.id::text=ANY($2::text[]) AND a.id IS NOT NULL))\n), visible_events AS (\n  SELECT e.id, e.obligation_id, o.title, o.project_id, e.period_start, e.period_end, e.due_date, e.status, e.submitted_date\n  FROM lifecycle_obligation_events e JOIN visible_obligations o ON o.id=e.obligation_id\n  WHERE e.organization_id=$1 AND e.deleted_at IS NULL\n), bounded_obligations AS (SELECT * FROM visible_obligations ORDER BY due_date NULLS LAST,id LIMIT 501),\n bounded_events AS (SELECT * FROM visible_events ORDER BY due_date NULLS LAST,id LIMIT 501)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  (SELECT count(*)::int FROM bounded_obligations) AS obligation_count,\n  (SELECT count(*)::int FROM bounded_events) AS event_count,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.due_date NULLS LAST,o.id) FROM bounded_obligations o),'[]'::jsonb) AS obligations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.due_date NULLS LAST,e.id) FROM bounded_events e),'[]'::jsonb) AS events",
+                    "parameters": [
+                      2,
+                      {
+                        "redacted": true,
+                        "reason": "The current actor program allowlist may include unrelated private programs. Only contributing source records are retained."
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:38:15.712Z",
+                        "obligation_count": 0,
+                        "event_count": 0,
+                        "obligations": [],
+                        "events": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "confidence": null
+          },
+          "createdBy": 1,
+          "createdAt": "2026-11-10T03:38:15.721Z"
+        },
+        "blockers": [
+          "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+        ],
+        "confidence": null
+      }
+    }
+  }
+}

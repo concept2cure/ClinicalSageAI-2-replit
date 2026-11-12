@@ -15,7 +15,8 @@ const HERE = __dirname;
 const TAG = (process.env.DEMO_TAG || '').replace(/[^a-z0-9-]/gi, '');
 const SHOTS = path.join(HERE, 'screenshots');
 const PROJECT_TITLE = 'Xanomeline TTS Phase 2 (CDISCPILOT01)';
-const CSR_TITLE = 'CDISCPILOT01 Clinical Study Report';
+/** DEMO_CSR_TITLE names another prepared CSR (the Lumen account's LMN-201 report), for the recorders that open it. */
+const CSR_TITLE = process.env.DEMO_CSR_TITLE || 'CDISCPILOT01 Clinical Study Report';
 const PEOPLE = {
   author: { email: process.env.DEMO_AUTHOR_EMAIL || 'jm.smith@concept2cure.pro', name: 'JM Smith' },
   reviewer: { email: process.env.DEMO_REVIEWER_EMAIL || 'rhea.reviewer@concept2cure.pro', name: 'Rhea Reviewer',
@@ -187,7 +188,10 @@ async function checkCsrCatalog() {
 async function openVersions(page, file) {
   await page.goto(`${BASE}/concept2cure/vault?program=${state.data.programId}`, { waitUntil: 'networkidle' });
   await page.getByText(/^Uploads · \d+/).first().click();
-  await page.locator('main').getByText(file, { exact: true }).first().click();
+  // The visible row: since 2026-11-10 the Library's list stays in the page, hidden, while Uploads shows, so the first
+  // match was a hidden copy of the file's name and the click never landed. Every fresh Codespace's CSR study
+  // preparation stopped here ("adsl.xpt sent: locator.click: Timeout 30000ms exceeded"; found by `011Dpx…`).
+  await page.locator('main').getByText(file, { exact: true }).filter({ visible: true }).first().click();
   const versions = page.locator('aside.vd-detail details', { has: page.locator('summary', { hasText: /^Versions/ }) });
   await versions.waitFor();
   if (!(await versions.evaluate((d) => d.open))) await versions.locator('summary').click();

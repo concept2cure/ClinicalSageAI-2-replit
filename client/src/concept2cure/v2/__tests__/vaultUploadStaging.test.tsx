@@ -25,7 +25,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
-import { statusText } from '../surfaces/VaultUploadStaging';
+import { notStagedReason, statusText } from '../surfaces/VaultUploadStaging';
 import { FAKE_BODY_BYTES, ingestReceipt, stubIngestXhr, type IngestInit } from './_ingest-xhr-fake';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
@@ -294,5 +294,15 @@ describe('retry queue and current upload failures remain distinct', () => {
     expect(within(rows[0]).queryByText(/Waiting/)).toBeNull();
     release();
     await within(rows[1]).findByText(/Recorded as v1.0/);
+  });
+});
+
+// P-112 (2026-11-09): a dropped .zip is a file the Vault takes, stored as one version.
+describe('the Vault stages a .zip as one file (P-112)', () => {
+  it('offers a .zip for upload, and still says why it skips what it does not take', () => {
+    expect(notStagedReason('sponsor-copy/0003.zip', 4096)).toBeNull();
+    expect(notStagedReason('SPONSOR-COPY.ZIP', 4096)).toBeNull();
+    expect(notStagedReason('tools/setup.exe', 4096)).toBe('the Vault does not take .exe');
+    expect(notStagedReason('sponsor-copy/0003.zip', 0)).toBe('it is empty');
   });
 });
