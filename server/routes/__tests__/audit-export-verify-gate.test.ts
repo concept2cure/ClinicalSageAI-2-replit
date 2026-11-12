@@ -26,7 +26,7 @@ import { createAuditTrailRoutes } from '../audit-trail-routes';
 import { sealManifestV2, sha256Hex } from '../../services/audit/signedAuditExport';
 
 const ORG = 7;
-const clientQuery = vi.fn(async () => ({ rows: [], rowCount: 0 }));
+const clientQuery = vi.fn(async (_sql: string) => ({ rows: [], rowCount: 0 }));
 const pool = { query: vi.fn(async () => ({ rows: [], rowCount: 0 })), connect: vi.fn(async () => ({ query: clientQuery, release: vi.fn() })) };
 
 function app(role: string, organizationId = ORG) {
