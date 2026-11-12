@@ -236,6 +236,7 @@ import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
+import { registerHelpSupportHandlers } from './help-support-tools.js';
 import { registerAuthoringReadHandlers } from './authoring-read-tools.js';
 import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tools.js';
 import { registerCsrSectionEvidenceHandlers } from './csr-section-evidence-tool.js';
@@ -16299,6 +16300,8 @@ registerDocumentSpineHandlers(registerToolHandler);
 // Project-folder document catalog (list/read/catalog over vault.documents,
 // with read-coverage enforcement) — same injected-register pattern.
 registerDocumentCatalogHandlers(registerToolHandler);
+// The Help Center's two read tools (P-127), injected the same way.
+registerHelpSupportHandlers(registerToolHandler);
 // The authoring store, read-only (outline / one section windowed / search),
 // scoped to the open project — same injected-register pattern.
 registerAuthoringReadHandlers(registerToolHandler);
