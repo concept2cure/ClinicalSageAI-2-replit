@@ -63,10 +63,38 @@ EU filing…", "…assesses a nda or bla filing…" and "…assesses a JP filing
   an NDA or BLA filing. …" and "PMDA J-NDA / Shonin Approval Readiness Pack assesses a Japanese filing. …". No
   request failed.
 
-## Found, not fixed
+## Third change (2026-11-12, the reporting session `011HLkYC…`): the catalog's counts, scopes and availability in words
 
-- **The catalog's count lines use internal words:** "0 unregistered", "25 uncomputed", "5 prediction unavailable".
-- **"Runs over: project, submission, program, account"** reads as stored scope names.
-- **Not walked at 390 px or in dark.**
+The first three items of "Found, not fixed" below, closed. Nothing was removed: every number the three count lines
+carried is still there.
+
+1. **The count lines.** They read "54 applicable definitions · 24 engine-backed · 20 available to run", "0 requires
+   a plan · 1 requires context · 0 disabled · 0 unregistered" and "25 uncomputed · 5 prediction unavailable. An
+   engine-backed type still requires authorized recorded inputs and its output gates." They now read:
+   - "54 reports apply. 24 are computed in this release, and 20 can be run now."
+   - "0 need a higher plan, 1 needs a record chosen first, 0 are switched off and 0 are not registered."
+   - "25 are not computed in this release, and 5 predictions are not offered. A report that can be run still needs
+     recorded inputs you may read, and its output is checked before it is shown."
+2. **Where a report runs.** A card read "Runs over: project, submission, program, account". It reads "Runs over a
+   project, a submission, a project group or the account". The scope words are the canvas's own (`scopeWord`, moved
+   from `Insights.tsx` to `insightsLibraryShared.tsx` so the canvas and the catalog share one vocabulary).
+3. **The two filters that still listed stored values.**
+   - Data scope: "Account", "Document", "Project", "Project group", and "Organization-wide records" for the engines
+     that count the organization's records (it read "organization" beside "account").
+   - Availability: "Can be run", "Needs a higher plan", "Needs a record chosen first", "Needs the project's filing
+     recorded", "Does not apply to this filing", "Filing context could not be read", "Switched off", "Not
+     registered", "Not computed in this release", "Prediction not offered". It read "scope-required",
+     "filing-context-required" and so on.
+   Both still filter by the stored value.
+
+- **Red first** (`2026-11-12-catalog-words/red.txt`): four of five cases in `insightsCapabilityCounts.test.tsx` failed
+  on the old words; a fifth case, for the organization option, failed before its change. **Green:** all 39 Reporting
+  files, 417 tests. Four older cases that pinned the old words (`insightsRegionalCatalog`, `insightsProjectScope`)
+  now pin the new ones.
+- **Walked** (`2026-11-12-catalog-words/walk.cjs`, `probes.json`) on C2C-101 as the demo lead, at 1440×900 and
+  390×844, light and dark: the lines, cards and options read as above; page overflow 0 at both widths; no script
+  errors and no failed requests.
+
+## Found, not fixed
 - **Never reached by any screen (inventory §3):** `/api/report-os/program-groups` (cross-project roll-ups with
   snapshots) and `/api/report-os/deliveries`. Production refuses both as unmapped.

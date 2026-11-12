@@ -94,6 +94,30 @@ export function reportingRoleLabel(id: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** A report-os scope (shared/schema/report-os.ts reportScopeEnum) in a reader's words. `program` is a report
+ *  program group, a group of projects, not one project; it printed as the raw enum, "program" (decision 12). One
+ *  vocabulary for the canvas (Insights.tsx) and the catalog. */
+const SCOPE_WORD: Record<string, string> = {
+  account: 'account', program: 'project group', project: 'project', study: 'study', submission: 'submission', document: 'document',
+};
+export const scopeWord = (scope: string): string => SCOPE_WORD[scope] ?? scope.replace(/[._-]/g, ' ');
+/** The same, as an option's first word. */
+export const scopeLabel = (scope: string): string => { const w = scopeWord(scope); return w.charAt(0).toUpperCase() + w.slice(1); };
+/** Where a report runs, as a phrase: "a project, a submission, a project group or the account". */
+export function scopeList(scopes: readonly string[]): string {
+  const named = scopes.map((scope) => (scope === 'account' || scope === 'organization' ? `the ${scopeWord(scope)}` : `a ${scopeWord(scope)}`));
+  return named.length <= 1 ? named.join('') : `${named.slice(0, -1).join(', ')} or ${named[named.length - 1]}`;
+}
+
+/** A catalog availability (the filter's stored values, and `availabilityState`) in a reader's words. */
+const AVAILABILITY_WORDS: Record<string, string> = {
+  available: 'Can be run', locked: 'Needs a higher plan', 'scope-required': 'Needs a record chosen first',
+  'filing-context-required': 'Needs the project’s filing recorded', 'not-applicable': 'Does not apply to this filing',
+  'context-unavailable': 'Filing context could not be read', disabled: 'Switched off', unregistered: 'Not registered',
+  'not-computed': 'Not computed in this release', 'prediction-unavailable': 'Prediction not offered',
+};
+export const availabilityWords = (state: string): string => AVAILABILITY_WORDS[state] ?? state.replace(/[._-]/g, ' ');
+
 export function catalogCapabilityCounts(types: readonly LibraryReportType[]) {
   return {
     defined: types.length,
