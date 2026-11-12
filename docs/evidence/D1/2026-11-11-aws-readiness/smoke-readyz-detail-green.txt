@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > takes it from the environment's READYZ_TOKEN secret 1ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > sends it in x-readyz-token, from a file, never on the command line 22ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > prints the dependencies it was shown 20ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > a deployment that is not ready fails, and the log names what failed 41ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > without the secret: no header, the verdict is checked the same, and the step says the detail is not shown 13ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > without the secret: a deployment that is not ready still fails 35ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > with the secret: a 200 that is not the verdict (the SPA, an error page) still fails 62ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > a token the deployment does not accept is said, and changes no verdict 51ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  23:58:24
+   Duration  673ms (transform 154ms, setup 109ms, import 99ms, tests 249ms, environment 0ms)
+

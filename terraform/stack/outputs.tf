@@ -19,6 +19,11 @@ output "rds_endpoint" {
   sensitive = true
 }
 
+output "engine_version_actual" {
+  description = "The PostgreSQL version RDS runs (major pinned, minor chosen and patched by RDS). Recorded in the IQ evidence after each apply."
+  value       = module.rds.engine_version_actual
+}
+
 output "rds_db_name" {
   value = module.rds.db_name
 }
@@ -126,5 +131,13 @@ output "first_run_setup" {
   value = {
     setup_token_secret_arn = module.secrets.secret_arns["setup_token"]
     instructions           = "Once the API is up: read the token (aws secretsmanager get-secret-value --secret-id <setup_token_secret_arn> --query SecretString --output text) and POST /api/setup/initialize with header X-Setup-Token: <token> and JSON {email, password, organizationName}. Use the address named in platform_owner_emails. The route closes itself once any account exists."
+  }
+}
+
+output "readyz_detail" {
+  description = "How /readyz's per-dependency detail is read from outside the task (server/startup/readyz.ts)."
+  value = {
+    readyz_token_secret_arn = module.secrets.secret_arns["readyz_token"]
+    instructions            = "In production /readyz answers { ready } alone. For the detail, send the token in the x-readyz-token header (aws secretsmanager get-secret-value --secret-id <readyz_token_secret_arn> --query SecretString --output text). Set the same value as the READYZ_TOKEN secret of this environment in GitHub (staging or production), so the deploy's smoke test prints which dependency failed; without it the smoke test still passes or fails on the verdict, and prints no detail."
   }
 }

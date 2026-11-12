@@ -30,7 +30,7 @@ import type { CsrIntoDocumentOutcome, CsrIntoDocumentReceipt } from '@shared/aut
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { I } from '../icons';
-import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading, type CsrSendNotice } from './CsrBuildProgress';
 import { CsrNotApplicable } from './CsrNotApplicable';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
 
@@ -92,14 +92,19 @@ function isHeading(value: unknown): value is CsrBoardHeading {
     && (row.placeholder === undefined || typeof row.placeholder === 'boolean');
 }
 
-/** The builds bound to the run, newest first; re-read when `focus` changes and while a build is running. */
-function useRunBuilds(programId: string, runId: string, focus: number | null) {
+/** The build this document holds imported sections from, as the list names it: a build number, or none. */
+const documentBuildOf = (value: unknown): number | null | undefined =>
+  (value == null ? null : Number.isSafeInteger(value) && Number(value) > 0 ? Number(value) : undefined);
+
+/** The builds bound to the run, newest first; re-read when `focus` changes and while a build is running. Asked with
+ * the document, the list also names the build that document holds imported sections from (`documentBuild`). */
+function useRunBuilds(programId: string, runId: string, documentId: string, focus: number | null) {
   // The same mounted editor may change its project or frozen clinical-source
   // run. A previous run's data must disappear during the very FIRST render
   // of the new scope, before useEffect cleanup or the new HTTP read.
-  const scope = `${programId}::${runId}`;
-  const [state, setState] = useState<{ scope: string; builds: RunBuild[] | null; error: string | null }>({
-    scope, builds: null, error: null,
+  const scope = `${programId}::${runId}::${documentId}`;
+  const [state, setState] = useState<{ scope: string; builds: RunBuild[] | null; documentBuild: number | null; error: string | null }>({
+    scope, builds: null, documentBuild: null, error: null,
   });
   const [reload, setReload] = useState(0);
   useEffect(() => {
@@ -107,22 +112,27 @@ function useRunBuilds(programId: string, runId: string, focus: number | null) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     setState(current => current.scope === scope
       ? { ...current, error: null }
-      : { scope, builds: null, error: null });
-    void apiCall<{ jobs?: unknown[] }>('GET', `${JOBS}?programId=${encodeURIComponent(programId)}&runId=${encodeURIComponent(runId)}`).then(result => {
+      : { scope, builds: null, documentBuild: null, error: null });
+    void apiCall<{ jobs?: unknown[]; documentBuild?: unknown }>('GET',
+      `${JOBS}?programId=${encodeURIComponent(programId)}&runId=${encodeURIComponent(runId)}&documentId=${encodeURIComponent(documentId)}`).then(result => {
       if (!live) return;
       const jobs = result.body?.jobs;
-      if (result.ok && Array.isArray(jobs) && jobs.every(isBuild)) {
-        setState({ scope, builds: jobs, error: null });
+      // Which build opens decides whose headings a person reviews: a document build that is not a build number
+      // refuses the read, as a malformed build row does.
+      const documentBuild = documentBuildOf(result.body?.documentBuild);
+      if (result.ok && Array.isArray(jobs) && jobs.every(isBuild) && documentBuild !== undefined) {
+        setState({ scope, builds: jobs, documentBuild, error: null });
         if (jobs.some(job => !ENDED.has(job.status))) {
           timer = setTimeout(() => setReload(value => value + 1), jobs.some(job => job.writing) ? LIVE_POLL_MS : BUILD_POLL_MS);
         }
-      } else setState({ scope, builds: null, error: apiErrorText(result, 'The CSR builds of this run could not be listed.') });
+      } else setState({ scope, builds: null, documentBuild: null, error: apiErrorText(result, 'The CSR builds of this run could not be listed.') });
     });
     return () => { live = false; if (timer) clearTimeout(timer); };
-  }, [programId, runId, focus, reload, scope]);
+  }, [programId, runId, documentId, focus, reload, scope]);
   const current = state.scope === scope;
   return {
     builds: current ? state.builds : null,
+    documentBuild: current ? state.documentBuild : null,
     error: current ? state.error : null,
     retry: useCallback(() => setReload(value => value + 1), []),
   };
@@ -133,12 +143,13 @@ function useRunBuilds(programId: string, runId: string, focus: number | null) {
 export function CsrRunBuilds({ programId, runId, documentId, focus, onDocumentChanged }: {
   programId: string; runId: string; documentId: string; focus: number | null; onDocumentChanged?: () => void;
 }) {
-  const { builds, error, retry } = useRunBuilds(programId, runId, focus);
+  const { builds, documentBuild, error, retry } = useRunBuilds(programId, runId, documentId, focus);
   const [chosen, setChosen] = useState<number | null>(null);
   useEffect(() => { if (focus !== null) setChosen(focus); }, [focus]);
-  const selected = builds?.find(b => b.jobId === chosen) ?? builds?.[0] ?? null;
+  const selected = openBuild(builds, chosen, documentBuild);
   return <section aria-label="CSR builds from this study data" style={{ display: 'grid', gap: 6 }}>
-    <BuildPicker builds={builds} selected={selected} onChoose={setChosen} onReload={retry} />
+    <BuildPicker builds={builds} selected={selected} documentBuild={documentBuild} onChoose={setChosen} onReload={retry} />
+    {!error && <DocumentBuildLine documentBuild={documentBuild} selected={selected} builds={builds} />}
     {error && <p role="alert">{error}</p>}
     {!error && builds === null && <p role="status">Loading the CSR builds of this run…</p>}
     {!error && builds?.length === 0 && <p>No CSR build has been started from this study data.</p>}
@@ -146,13 +157,31 @@ export function CsrRunBuilds({ programId, runId, documentId, focus, onDocumentCh
   </section>;
 }
 
-function BuildPicker({ builds, selected, onChoose, onReload }: {
-  builds: RunBuild[] | null; selected: RunBuild | null; onChoose: (jobId: number) => void; onReload: () => void;
+/**
+ * The build the section opens on: the one a person chose; otherwise the one this document holds imported sections
+ * from, because a document takes its imported sections from one build (2026-11-12: the section opened on the
+ * newest, and a person reviewed headings the import then refused); otherwise the newest.
+ */
+function openBuild(builds: RunBuild[] | null, chosen: number | null, documentBuild: number | null): RunBuild | null {
+  if (!builds) return null;
+  return builds.find(b => b.jobId === chosen) ?? builds.find(b => b.jobId === documentBuild) ?? builds[0] ?? null;
+}
+
+/** Whether the open build is the one this document's imported sections come from, said before any review work. */
+function DocumentBuildLine({ documentBuild, selected, builds }: { documentBuild: number | null; selected: RunBuild | null; builds: RunBuild[] | null }) {
+  if (documentBuild === null || !selected || !builds) return null;
+  if (documentBuild === selected.jobId) return builds.length > 1 ? <p>This document’s imported sections come from this build.</p> : null;
+  return <p role="note">This document holds sections imported from CSR build {documentBuild}. A document takes its imported sections from one
+    build, so sections approved in build {selected.jobId} cannot be imported into it.</p>;
+}
+
+function BuildPicker({ builds, selected, documentBuild, onChoose, onReload }: {
+  builds: RunBuild[] | null; selected: RunBuild | null; documentBuild: number | null; onChoose: (jobId: number) => void; onReload: () => void;
 }) {
   return <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
     <strong>CSR builds from this study data</strong>
     {builds && builds.length > 1 && <select aria-label="CSR build" value={selected?.jobId ?? ''} onChange={e => onChoose(Number(e.target.value))}>
-      {builds.map(b => <option key={b.jobId} value={b.jobId}>CSR build {b.jobId} · {buildStateWord(b)}</option>)}
+      {builds.map(b => <option key={b.jobId} value={b.jobId}>CSR build {b.jobId} · {buildStateWord(b)}{b.jobId === documentBuild ? ' · this document’s sections' : ''}</option>)}
     </select>}
     <button type="button" className="btn" onClick={onReload}>{I.rotateCw} Reload builds</button>
   </div>;
@@ -431,6 +460,8 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
 }) {
   const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
   const [importing, setImporting] = useState<string[] | null>(null);
+  // Held here, not in the review: the list is emptied and read again after a decision, and the review with it.
+  const [sendNotice, setSendNotice] = useState<CsrSendNotice | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {buildStateWord(build)} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
     {build.writing && <LiveDraft writing={build.writing} />}
@@ -439,10 +470,11 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
       <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
     </p>}
     {!error && headings === null && <p role="status">Reading the build’s sections…</p>}
+    {sendNotice && <p role={sendNotice.alert ? 'alert' : 'status'}>{sendNotice.text}</p>}
     {/* If section provenance cannot be read, the next governed action must
         not appear as though it is ready. The server enforces admission too. */}
     {headings && <>
-      <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload} importLabel="Import approved sections into this document"
+      <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload} importLabel="Import approved sections into this document" onSendNotice={setSendNotice}
         onImport={sectionNumbers => setImporting(sectionNumbers)} />
       {importing && <ImportIntoDocument key={importing.join(',')} programId={programId} documentId={documentId} jobId={build.jobId}
         sectionNumbers={importing} onClose={() => setImporting(null)} onImported={onDocumentChanged} />}

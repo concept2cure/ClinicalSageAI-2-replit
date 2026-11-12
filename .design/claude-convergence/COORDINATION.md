@@ -950,15 +950,22 @@ the founder set it on 2026-11-09: a biotech clinical study report from the proje
   `surfaces/CsrEvidenceReview.tsx` (`docs/evidence/D2-CSR/2026-11-12-heading-only-sections/`). Those four files are
   released with this commit.
 
+- Every draft of a build is sent for review in one act; approval stays one heading at a time, by a second person,
+  after reading the saved text (`surfaces/CsrBuildProgress.tsx`; `docs/evidence/D2-CSR/2026-11-12-send-drafts-for-review/`).
+- The build section opens on the build the document holds imported sections from, and says so. `GET /api/csr/jobs`
+  takes an optional `documentId` and answers `documentBuild`; `csr-import-into-document.ts` exports
+  `csrBuildOfDocument` (`docs/evidence/D2-CSR/2026-11-12-document-build/`). **A test that pins the build list's
+  address must now name the document in it** (`&documentId=…`); the four that did are updated.
+
 **Not touched, and not this lane's:** `editor/StudyDataBuild.tsx`, `services/csr/csr-job-runner.ts`,
 `services/csr-builder.ts`, `services/authoring/workflow-import-governance.ts`, `surfaces/ReviewDecisionDialog.tsx`
 (Wave B lanes W1 and W8 of `01T2woo…`).
 
 **What the walk of the Lumen LMN-201 report still shows, in order** (each is the next thing this lane takes unless
 its file is held; say so here if it is yours):
-1. The report holds text under 6 of its 119 headings. The build drafted 69 and four were imported: a person sends,
-   and a second person approves, each heading one at a time before it can enter the document. The review screen
-   lists the other 91 as "No saved text".
+1. The report holds text under 6 of its 119 headings. The build drafted 69 and four were imported. Sending is now
+   one act; a second person still approves each heading after reading it, and then imports. The review screen
+   lists the other 91 as "No saved text" until then.
 2. §14 and §16 are not written into the document by the import (P-115 item 5, second half): the engine's tables,
    the supplied appendix or the recorded declaration, labelled as engine content.
 3. The assembly is rendered from the build's outputs, not from the signed document's sections (P-115 item 3).

@@ -1,0 +1,26 @@
+# terraform/modules/alb/main.tf with idle_timeout = 59 (a scratch copy; the tree is unchanged)
+tests/alb_timeouts.tftest.hcl... in progress
+  run "the_alb_idles_for_exactly_the_edge_timeout"... fail
+
+Error: Test assertion failed
+
+  on tests/alb_timeouts.tftest.hcl line 37, in run "the_alb_idles_for_exactly_the_edge_timeout":
+  37:     condition     = aws_lb.this.idle_timeout == 60
+    ├────────────────
+    │ aws_lb.this.idle_timeout is 59
+
+The ALB's idle_timeout must be 60 s: CloudFront's origin_read_timeout, and
+below the server's 65 s keep-alive (server/index.ts). Raise all three
+together or none (MR-03 Stage 6 step 10).
+tests/alb_timeouts.tftest.hcl... tearing down
+tests/alb_timeouts.tftest.hcl... fail
+tests/cloudfront_only.tftest.hcl... in progress
+  run "nothing_but_https_from_cloudfront_reaches_it"... pass
+  run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener"... pass
+  run "a_short_secret_is_refused"... pass
+  run "a_wildcard_secret_is_refused"... pass
+tests/cloudfront_only.tftest.hcl... tearing down
+tests/cloudfront_only.tftest.hcl... pass
+
+Failure! 4 passed, 1 failed.
+exit 1
