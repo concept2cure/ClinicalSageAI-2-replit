@@ -445,6 +445,11 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   `citations={documentReadCitations(sections, catalogue, admissions).get(section.id)}` (or `'checking'` while those
   reads are in flight) makes it read as the canvas does. The catalogue and admissions are the workbench's
   (`useProjectSourceCatalog`, `useDocumentCitationAdmission`). Not touched.
+- **The Builder's Module 3 leaves, 2026-11-12 (`server/services/ectd/submission-leaf-source-evidence.ts`, unheld; one
+  branch, released with the commit):** a filing copy carrying the Module 3 placement marker is traced to its CMC section
+  in the submission's project, so the Builder says "Source verified" instead of "not yet determined" for all 21.
+  Also red on trunk, not touched: `server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts` and
+  `company-branding.test.ts` (5 cases) beside the report-pack export suite below. **→ Reporting.**
 - **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
   200/403/503, got 422), with or without the change above. Not touched.
 

@@ -197,3 +197,46 @@ describe('retained sealed-copy and Vault source boundaries',()=>{
     await expect(requireSubmissionLeafSourceEvidenceStillCurrent(q,result.admission)).rejects.toMatchObject({status:503,code:'SUBMISSION_SOURCE_READ_CHANGED'});
   });
 });
+
+/* Walked 2026-11-12: in the Builder every Module 3 leaf read "Source evidence not yet determined — The retained
+   source has no verified project relationship". A placed Module 3 section is filed as a coauthor_documents copy
+   (place-module3-into-submission.ts) that records its CMC project and section key; the reader looked only for an
+   Authoring document behind a filing copy, and a CMC section has none. */
+describe('a placed Module 3 section’s filing copy', () => {
+  const md = '## 3.2.S.4 Control of Drug Substance\n\nThe drug substance is released against the specification in Table 1. '
+    + 'Acceptance criteria are justified by results from three registration batches manufactured at commercial scale.';
+  const snapshot = (id: number, cmcProjectId: string, sectionKey: string, marker = 'cmc-module3-os') =>
+    pg.query('INSERT INTO coauthor_documents(id,organization_id,content,status,metadata,title) VALUES($1,7,$2,$3,$4,$5)',
+      [id, md, 'approved', JSON.stringify({ placedFrom: marker, cmcProjectId, sectionKey }), '3.2.S.4 Control of Drug Substance']);
+  const m3leaf = (id: number) => leaf({ documentTable: 'coauthor_documents', documentId: id, documentUuid: null, documentContentSha256: hash(md), documentType: 'cmc_module3_section' });
+  beforeAll(async () => {
+    await pg.exec(`CREATE TABLE IF NOT EXISTS cmc_module3_sections(organization_id int,project_id text,section_key text,approval_state text,stale boolean NOT NULL DEFAULT false);`);
+  });
+  beforeEach(async () => {
+    await pg.exec(`TRUNCATE cmc_module3_sections; INSERT INTO cmc_module3_sections VALUES(7,'${P}','3.2.S.4','approved',false),(7,'${S}','3.2.S.5','approved',false);`);
+  });
+
+  it('is traced to the CMC project and section it records, and its pinned text resolves', async () => {
+    await snapshot(301, P, '3.2.S.4');
+    const result = await read([m3leaf(301)]);
+    expect(result.leaves[0].contentEvidence).toMatchObject({ content: 'substantive', pin: 'match', lifecycle: 'finalized' });
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'resolved', reason: null });
+  });
+
+  it('a copy naming another project is refused, never read for this one', async () => {
+    await snapshot(302, S, '3.2.S.5');
+    await expect(read([m3leaf(302)])).rejects.toMatchObject({ status: 404, code: 'SUBMISSION_SOURCE_SCOPE_MISMATCH' });
+  });
+
+  it('a copy whose section the project does not hold stays undetermined', async () => {
+    await snapshot(303, P, '3.2.P.8');
+    const result = await read([m3leaf(303)]);
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'undetermined', reason: 'The retained source has no verified project relationship.' });
+  });
+
+  it('control: a filing copy without the placement marker still needs its Authoring document', async () => {
+    await snapshot(304, P, '3.2.S.4', 'something-else');
+    const result = await read([m3leaf(304)]);
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'undetermined', reason: 'The retained source has no verified project relationship.' });
+  });
+});

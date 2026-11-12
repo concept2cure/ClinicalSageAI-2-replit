@@ -20,6 +20,7 @@ import { readLocalUploadBuffer } from '../anthropic-files';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle';
 import { companyLegalSubmissionContext } from './company-legal-context';
+import { isModule3PlacementSnapshot } from '../cmc/module3-placement-marker';
 
 type Input = {
   organizationId:number; userId:number; programId:string; projectId:number;
@@ -168,7 +169,28 @@ async function sealedCopyPresentation(state:State,args:{row:Record<string,unknow
   return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256,evidence:evidenceFor(actualBodies,row.status,'coauthor_documents',pin),editor:{...editor,sectionCode:currentSole?String(sole!.code):null},
     section:sole&&sole.id?{id:String(sole.id),code:typeof sole.code==='string'?sole.code:null}:null};
 }
+/* A placed Module 3 section is filed as a coauthor_documents copy that records its CMC project and section key
+   (place-module3-into-submission.ts). Its project relationship is that section in this project, not an Authoring
+   document, which it never had: until 2026-11-12 every Module 3 leaf in the Builder read "no verified project
+   relationship". Null when the copy is not a placement, so the Authoring path runs as before. */
+async function module3Placement(state:State,leaf:SubmissionLeaf):Promise<StoreEvidence|null> {
+  const rows=await tracked(state,`SELECT title AS source_label,content,status,metadata FROM coauthor_documents
+    WHERE id=$1 AND organization_id=$2`,[leaf.documentId,state.input.organizationId]);
+  const row=rows[0];
+  if(!row||!isModule3PlacementSnapshot(row.metadata))return null;
+  const meta=object(row.metadata);
+  if(!sameProgram(state,meta.cmcProjectId)||typeof meta.sectionKey!=='string')return unavailable('SOURCE_PARENT_UNVERIFIED');
+  const sections=await tracked(state,`SELECT section_key FROM cmc_module3_sections
+    WHERE organization_id=$1 AND project_id=$2 AND section_key=$3`,[state.input.organizationId,state.input.programId,meta.sectionKey]);
+  if(!sections[0])return unavailable('SOURCE_PARENT_UNVERIFIED');
+  const body=typeof row.content==='string'?row.content:'';
+  const storedSha256=body?sha(body):null;
+  return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256,
+    evidence:evidenceFor(textBody(body),row.status,'coauthor_documents',compareDocumentPin(leaf.documentContentSha256,storedSha256))};
+}
 async function coauthor(state:State,leaf:SubmissionLeaf):Promise<StoreEvidence> {
+  const placed=await module3Placement(state,leaf);
+  if(placed)return placed;
   const sourceId=await coauthorIdentity(state,leaf);
   if(typeof sourceId!=='string')return sourceId;
   const rows=await tracked(state,`SELECT c.title AS source_label,c.content,c.status,c.metadata->>'docId' AS source_id,c.metadata->>'sealVersion' AS seal_version,

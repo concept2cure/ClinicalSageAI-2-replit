@@ -135,6 +135,17 @@ in the stability rows. The count is now written as plain words in its button, an
 
 Nothing is left open on the CMC screens from this walk in files this session holds.
 
+**The Builder's leaf source** (B11): every Module 3 leaf read "Source evidence not yet determined — The retained
+source has no verified project relationship". A placed section is filed as a filing copy that records its CMC project
+and section key (`place-module3-into-submission.ts`, marked by `module3-placement-marker.ts`); the evidence reader
+(`server/services/ectd/submission-leaf-source-evidence.ts`) looked only for an Authoring document behind a filing
+copy. A copy carrying the placement marker is now traced to its CMC section in this project; its pinned text and
+approved status are judged as before. A copy naming another project is refused; one whose section the project does not
+hold stays undetermined. In the running app both Module 3 sequences went from 21 undetermined to 21 resolved, and the
+Builder reads "Source verified" (`after-b11-01`, `14-builder-module3-leaf-source-red-green.txt`). **Still
+undetermined:** a Vault leaf whose file is a PDF ("substantive source text is not established"); for a Vault version
+filed from a sealed Authoring document the filing receipt names the seal (LX-10), which could establish it. Not done.
+
 **A citation outside the editor** read as its source's file name in the Document view ("62%C2C-101-biopharmaceutics-
 BP-001.txt"), where the canvas and the filed document print "[1]". The stored link caches the name, and the
 read-only renderer (`editor/AuthoredHtml.tsx`) printed it. The Document view (`DocumentWorkbench.tsx`) now hands the

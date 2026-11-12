@@ -1,0 +1,24 @@
+# The Builder: a placed Module 3 section's leaf is traced to its CMC section. 2026-11-12.
+# Red first, on the committed reader:
+$ npx vitest run server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts
+ × server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > a placed Module 3 section’s filing copy > is traced to the CMC project and section it records, and its pinned text
+ × server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > a placed Module 3 section’s filing copy > a copy naming another project is refused, never read for this one 23ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 23 passed (25)
+
+# With the change:
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+
+# Around it: every suite naming the leaf evidence reader, the leaf source resolver, the placement marker or the placement (67 files):
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 64 passed (67)
+      Tests  19 failed | 1111 passed (1130)
+# The 19 failures are three report-PDF suites (report-pack-export, report-pack-pdf, company-branding), which fail the same on trunk without this change.
+
+# In the running app, GET /api/submissions/sequences/:id/leaves:
+#  before: sequence 16 (BX-733) and 18: 21 × coauthor_documents | undetermined | The retained source has no verified project relationship.
+#  after:  sequence 16 and 18: 21 × coauthor_documents | resolved
+#  unchanged: sequence 17: 1 × vault_documents | undetermined | The retained bytes were verified; substantive source text is not established.
+# The Builder for BX-733: each Module 3 leaf reads 'Source verified'; the 'not yet determined' notice is gone.
