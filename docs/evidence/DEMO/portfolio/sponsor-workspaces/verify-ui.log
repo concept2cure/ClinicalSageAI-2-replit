@@ -1,0 +1,37 @@
+# 2026-11-09T19:33Z-19:40Z independent verification in the running app (Playwright, dev login jm.smith@concept2cure.pro).
+# Scripts and screenshots: /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/0d57ee1e-feb7-587e-9df6-b4664672a1d4/scratchpad/portfolio-ws/ (p1.js, p2.js, p6.js, p7.js; *.png)
+
+## Projects > Client filter (p1.js)                                                    HOLDS
+options: All clients | Concept2Cure Diagnostics (fictional demo) | Concept2Cure Therapeutics | Halcyra Vaccines (fictional demo) |
+         Lumen Bioscience (demo — not affiliated) | Petrelline Rare Therapeutics (fictional demo) | Quillmont Immunology (fictional demo) | Varnhollow Oncology (fictional demo)
+Varnhollow -> VNH-310-201, VNH-310-301 · Petrelline -> PTR-022-102, PTR-022-301 · Quillmont -> QLM-118 IND, QLM-118-202 · Halcyra -> HLY-09 IND, HLY-09-201
+Concept2Cure Therapeutics -> no portfolio project listed
+
+## Project page > About > Client, all 8 portfolio projects (p2.js)                     HOLDS (8/8 PASS)
+a 7a266309 Varnhollow · e 8835514e Varnhollow · b 62f11671 Petrelline · f 92907d1f Petrelline · c 61dc7ed7 Quillmont · g 452c2405 Quillmont · d d67b4cc4 Halcyra · h 66b59a65 Halcyra
+(product, not pack: GET /api/c2c/projects/{e,f}/intelligence answered 409 PROJECT_WORKSPACE_MISMATCH when the page was reached from a
+ project of another workspace; the x-client-id claim followed the previous project. The page still rendered.)
+
+## Sponsor project's Records > Data Room sources (p6.js, VNH-310-301, workspace 53496)   DOES NOT HOLD
+Records: Submissions 0 · Data Room sources 21 · Authoring documents 1 · Vault documents 2 · Study designs 0 · Filing documents 1
+All 21 are organisation-wide Quality records: 5 Lumen suppliers, 2 Lumen management reviews, 4 Lumen internal audits, 4 quality record
+relationships, change control "[Demo · Biotech] Add Week 2 PK sampling to Protocol C2C-101-201 (Amendment 1)", change control
+"[Demo · MDX] NP-100 software v2.3.0 …", 4 Lumen GMP deviations. The archived workspace-2 project 138395e0 (CRV-310-301) holds the
+identical 21: the own workspace changes nothing here.
+Cause (server, read only): the first data-room page read, GET /api/c2c/projects/:id/sources with offset 0
+(data-room-search.ts prepareSourceScope -> record-source.ts syncQualityProjectSources), writes native_record_snapshot sources from
+project-evidence-queries.ts, whose supplier / audit / management-review families are organisation-scoped and whose change-control and
+deviation families admit rows with no program / no client workspace in every workspace. It is not the letter upload: any first read
+of any project's data room does it (the pack's own ensureAgencyLetter and readDataRoom steps both make that read on stage h).
+SIDE EFFECT OF THIS VERIFICATION: before 19:31 only stage h held these 21. This verifier's API reads of GET /sources on a-g
+(19:31:40-19:31:58) made the product write 21 snapshot sources into each of those 7 data rooms (createdAt 19:31:40-19:31:58).
+
+## Other projects open normally (p7.js)                                               HOLDS
+C2C-101 6065271c (Client Concept2Cure Therapeutics) · C2C-201 c339171c (Concept2Cure Therapeutics) · LMN-201 980ee422, LMN-301 d6f982cf,
+LMN-401 c3427883, LMN-801 d4d5d068 (Lumen Bioscience (demo — not affiliated)): h1 rendered, Records card rendered, no alert, no HTTP 4xx/5xx.
+
+## --pack all (verify-all-run1.log, verify-all-run2.log)                              exit 1 both
+biotech stops at "Tasks: 6 tasks on C2C-101" (duplicate titles). The duplicates come from study design sd_403db359…
+"Sweep SP C2C-101-203 design" bound to C2C-101 (updated 19:05:32), created through the UI by the test sweep's own script
+(scratchpad/sweep/stats-protocol/s30.js fills 'Sweep SP C2C-101-203 design'). No pack creates it; this change does not touch C2C-101.
+mdx and lumen green in both runs; nothing created in either run. --pack portfolio (verify-portfolio.log): exit 0, created 0, found 119.

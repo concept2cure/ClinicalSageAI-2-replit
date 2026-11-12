@@ -1,0 +1,87 @@
+3:> bash -c 'source scripts/startup.sh && main && NODE_OPTIONS="--trace-warnings" tsx --inspect=0 server/index.ts'
+66:Debugger listening on ws://127.0.0.1:45635/56ba81af-9d10-4c23-a8ee-4a3afbfc357a
+93:[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+106:{"level":30,"time":"2026-11-09T20:26:09.993Z","pid":25655,"hostname":"vm","context":{"modeAtBoot":"warn"},"msg":"[startup:auth-boundary] Default-deny auth boundary mounted on /api"}
+389:{"level":40,"time":"2026-11-09T20:26:13.485Z","pid":25655,"hostname":"vm","context":{"criticalFailures":1,"warnings":1,"failed":["redis_connectivity","ana_ai_provider"]},"msg":"[startup-invariants] STARTUP INVARIANT FAILURES"}
+394:  No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve.
+395:  Every chat turn will fail with 503 GATEWAY_UNAVAILABLE until this is fixed.
+396:  /readyz is reporting NOT READY for this reason.
+427:{"level":20,"time":"2026-11-09T20:26:13.503Z","pid":25655,"hostname":"vm","context":{},"msg":"[sentinel-scheduler] [SentinelScheduler] Scheduled org 1 every 60m"}
+493:✅ Global error handler registered
+600:[DEBUG 2026-11-09T20:26:51.378Z] GET /api/audit-trail/ledger?limit=500 {
+942:[DEBUG 2026-11-09T20:27:00.124Z] GET /api/authoring/docs?status=all&limit=500 {
+1194:[AUDIT] {"timestamp":"2026-11-09T20:27:04.291Z","requestId":"ac9ece333fcbed88e730d215b8ba4136","method":"GET","path":"/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":15,"error":"Not Found"}
+1195:{"level":40,"time":"2026-11-09T20:27:04.291Z","pid":25655,"hostname":"vm","context":{"requestId":"ae883cc9-1090-41a0-8363-0ff779e09187","method":"GET","path":"/api/authoring/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"durationMs":15,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+1205:[DEBUG 2026-11-09T20:27:04.811Z] GET /api/authoring/docs?status=all&limit=500 {
+1364:[DEBUG 2026-11-09T20:27:07.582Z] GET /api/authoring/docs?status=all&limit=500 {
+2036:[AUDIT] {"timestamp":"2026-11-09T20:27:18.612Z","requestId":"a9f22c9abc367a43eb05cab9ffffbca7","method":"POST","path":"/protocol-development/documents/1/eligibility","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":1,"error":"Too Many Requests"}
+2399:[AUDIT] {"timestamp":"2026-11-09T20:28:16.778Z","requestId":"a03207ed9b3de68bbe977cbb54da9e0c","method":"POST","path":"/protocol-development/documents/1/team","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":1,"error":"Too Many Requests"}
+3653:[AUDIT] {"timestamp":"2026-11-09T20:29:32.322Z","requestId":"2d9e19aa25fa3d7e5ca246b7182f48e9","method":"POST","path":"/protocol-risks/documents/1/risks","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":1,"error":"Too Many Requests"}
+3934:{"level":30,"time":"2026-11-09T20:30:19.254Z","pid":25655,"hostname":"vm","context":{"requestId":"59503269-f71a-4440-8312-440650d96a48","method":"GET","path":"/api/submissions/1/sequences","statusCode":200,"durationMs":33,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+4143:[AUDIT] {"timestamp":"2026-11-09T20:30:23.227Z","requestId":"52dd9540c8507f516d83da62a5256356","method":"POST","path":"/sequences/1/shadow-review","statusCode":503,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":134,"error":"Service Unavailable"}
+4144:{"level":50,"time":"2026-11-09T20:30:23.227Z","pid":25655,"hostname":"vm","context":{"requestId":"a7c8eed1-8c5d-4d6e-8333-6faed7141eef","method":"POST","path":"/api/submissions/sequences/1/shadow-review","statusCode":503,"durationMs":134,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_failed"}
+4516:[DEBUG 2026-11-09T20:30:29.681Z] PATCH /api/authoring/sections/e5024b66-f088-44bf-8189-7d74881fc566 {
+4786:[AUDIT] {"timestamp":"2026-11-09T20:30:34.099Z","requestId":"00bd10c206271acffce77add6b9941c0","method":"GET","path":"/mdx/qms/documents/1","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":1,"error":"Too Many Requests"}
+5658:[CMC Batch] Created batch record f765625b-b001-4fb3-906b-30e613ef9084: C2C201-DP-2503
+6045:[DEBUG 2026-11-09T20:31:37.503Z] POST /api/authoring/docs {
+6194:[DEBUG 2026-11-09T20:31:41.413Z] GET /api/audit-trail/ledger?limit=500 {
+7391:{"level":30,"time":"2026-11-09T20:32:04.503Z","pid":25655,"hostname":"vm","context":{"requestId":"70e6cd15-ae80-4b26-911f-49a5630d0602","method":"GET","path":"/api/submissions/sequences/2/leaves","statusCode":200,"durationMs":97,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+7473:[AUDIT] {"timestamp":"2026-11-09T20:32:06.300Z","requestId":"7990d9f473555a91bafc36c3266f255f","method":"POST","path":"/execute","statusCode":400,"userId":1,"organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":13,"error":"Bad Request"}
+7474:{"level":40,"time":"2026-11-09T20:32:06.300Z","pid":25655,"hostname":"vm","context":{"requestId":"ec820186-ac5f-427b-9c88-b20f2b9be69c","method":"POST","path":"/api/orchestration/execute","statusCode":400,"durationMs":12,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+7679:[DEBUG 2026-11-09T20:32:10.207Z] PATCH /api/authoring/sections/3c655846-fda3-46ec-aa13-339236a74519 {
+7790:[DEBUG 2026-11-09T20:32:12.189Z] PATCH /api/authoring/sections/4e9503ea-f249-40e6-8f65-7528a371c092 {
+7808:{"level":30,"time":"2026-11-09T20:32:12.227Z","pid":25655,"hostname":"vm","context":{"requestId":"1f279ae6-b5dd-465c-bfaa-312a2a567fc1","method":"PATCH","path":"/api/authoring/sections/4e9503ea-f249-40e6-8f65-7528a371c092","statusCode":200,"durationMs":38,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+9262:    'content-type': 'multipart/form-data; boundary=----formdata-undici-050358023577',
+9269:    contentType: 'multipart/form-data; boundary=----formdata-undici-050358023577',
+10100:[DEBUG 2026-11-09T20:32:56.509Z] PATCH /api/authoring/sections/5a43772a-b3eb-4bf7-bb09-8b35e60d9548 {
+11478:{"level":30,"time":"2026-11-09T20:33:19.460Z","pid":25655,"hostname":"vm","context":{"requestId":"3b5d5491-703a-4003-9c97-629baa650323","method":"POST","path":"/api/capa-mdr/capa/e82008c7-7fad-4cd2-8ff6-e027ff28de76/transition","statusCode":200,"durationMs":50,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+13029:[DEBUG 2026-11-09T20:34:05.750Z] GET /api/audit-trail/ledger?limit=500 {
+13119:[DEBUG 2026-11-09T20:34:09.086Z] GET /api/authoring/docs?status=all&limit=500 {
+13164:[AUDIT] {"timestamp":"2026-11-09T20:34:10.181Z","requestId":"b61ed4312eb836f0a3b7de144e761be3","method":"GET","path":"/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":14,"error":"Not Found"}
+13165:{"level":40,"time":"2026-11-09T20:34:10.181Z","pid":25655,"hostname":"vm","context":{"requestId":"e920ce94-2120-44e9-ada2-d77600033c09","method":"GET","path":"/api/authoring/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"durationMs":14,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+13175:[DEBUG 2026-11-09T20:34:10.707Z] GET /api/authoring/docs?status=all&limit=500 {
+13202:[DEBUG 2026-11-09T20:34:11.525Z] GET /api/authoring/docs?status=all&limit=500 {
+13809:[DEBUG 2026-11-09T20:34:30.783Z] GET /api/audit-trail/ledger?limit=500 {
+13862:{"level":30,"time":"2026-11-09T20:34:32.782Z","pid":25655,"hostname":"vm","context":{"requestId":"b4c35035-f0ee-42b7-a7a0-3cff92110cba","method":"GET","path":"/api/c2c/project-vault/3f2e1bf3-701a-43eb-869d-8a1ca77f0c95/search?q=%5BDemo%20%C2%B7%20MDX%5D%20Software%20Description%20and%20Level%20of%20Concern","statusCode":200,"durationMs":35,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+14141:[AUDIT] {"timestamp":"2026-11-09T20:34:41.123Z","requestId":"cd150df585562434c298f9eab908f577","method":"POST","path":"/execute","statusCode":400,"userId":1,"organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":18,"error":"Bad Request"}
+14142:{"level":40,"time":"2026-11-09T20:34:41.123Z","pid":25655,"hostname":"vm","context":{"requestId":"dbdb46fb-cf5c-4363-acd1-62f171828fa6","method":"POST","path":"/api/orchestration/execute","statusCode":400,"durationMs":18,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+14197:[AUDIT] {"timestamp":"2026-11-09T20:34:42.972Z","requestId":"4dcf2bfb2a7eb24911140302901f13b1","method":"GET","path":"/mdx/qms/documents","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":1,"error":"Too Many Requests"}
+14990:{"level":30,"time":"2026-11-09T20:35:39.392Z","pid":25655,"hostname":"vm","context":{"requestId":"073e47b6-1d09-48b1-aa4f-ea4d95031c79","method":"GET","path":"/api/mdx/rbm-monitoring-plans?program_id=dfa079b4-2264-477d-a42d-db322b6ba2f5","statusCode":200,"durationMs":20,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+15604:    'content-length': '503',
+15613:    contentLength: '503',
+16057:    'content-type': 'multipart/form-data; boundary=----formdata-undici-046850329271',
+16064:    contentType: 'multipart/form-data; boundary=----formdata-undici-046850329271',
+16622:{"level":30,"time":"2026-11-09T20:36:42.503Z","pid":25655,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 961119aa-c0f6-4303-aad7-bd6b92770651 by a***@concept2cure.pro"}
+18263:{"level":30,"time":"2026-11-09T20:37:09.166Z","pid":25655,"hostname":"vm","context":{"requestId":"a1c3b2cf-c46d-4814-b398-4b55033849a1","method":"PATCH","path":"/api/tasks/tasks/TASK-1794256628866-797d28a8","statusCode":200,"durationMs":21,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+18843:[AUDIT] {"timestamp":"2026-11-09T20:37:18.378Z","requestId":"7be082ad3b2c38bf1f70558fa999431d","method":"POST","path":"/docs/7b6670ce-7b9b-4837-907e-1f0869e86dad/file-to-vault","statusCode":409,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":114,"error":"Conflict"}
+18844:{"level":40,"time":"2026-11-09T20:37:18.378Z","pid":25655,"hostname":"vm","context":{"requestId":"24b8718f-3f33-4d75-9cab-c2481a213cc8","method":"POST","path":"/api/authoring/docs/7b6670ce-7b9b-4837-907e-1f0869e86dad/file-to-vault","statusCode":409,"durationMs":114,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+19482:[AUDIT] {"timestamp":"2026-11-09T20:37:29.281Z","requestId":"b01b4370b5ea66af815e5e9f1c061353","method":"POST","path":"/docs/5e7f94f9-a2c3-47ec-a7f7-28d2cc26062e/file-to-vault","statusCode":409,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":169,"error":"Conflict"}
+19483:{"level":40,"time":"2026-11-09T20:37:29.281Z","pid":25655,"hostname":"vm","context":{"requestId":"910bdb6a-1115-4313-91e9-ba4e353f692c","method":"POST","path":"/api/authoring/docs/5e7f94f9-a2c3-47ec-a7f7-28d2cc26062e/file-to-vault","statusCode":409,"durationMs":168,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+20605:[AUDIT] {"timestamp":"2026-11-09T20:38:16.595Z","requestId":"65dc1f16b7e1ede270cd6a86fdb4a0f1","method":"POST","path":"/docs/7b6670ce-7b9b-4837-907e-1f0869e86dad/file-to-vault","statusCode":409,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":163,"error":"Conflict"}
+20606:{"level":40,"time":"2026-11-09T20:38:16.595Z","pid":25655,"hostname":"vm","context":{"requestId":"f3edb01a-8292-40b4-bbda-a7a87dd49a90","method":"POST","path":"/api/authoring/docs/7b6670ce-7b9b-4837-907e-1f0869e86dad/file-to-vault","statusCode":409,"durationMs":162,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+20765:[AUDIT] {"timestamp":"2026-11-09T20:38:21.226Z","requestId":"b7fd972a62b5a06713271575a95ab4db","method":"POST","path":"/docs/5e7f94f9-a2c3-47ec-a7f7-28d2cc26062e/file-to-vault","statusCode":409,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":135,"error":"Conflict"}
+20766:{"level":40,"time":"2026-11-09T20:38:21.226Z","pid":25655,"hostname":"vm","context":{"requestId":"08dd7ff8-ddf5-4b5a-b246-ff4f3aa81709","method":"POST","path":"/api/authoring/docs/5e7f94f9-a2c3-47ec-a7f7-28d2cc26062e/file-to-vault","statusCode":409,"durationMs":135,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+20909:[DEBUG 2026-11-09T20:38:32.652Z] GET /api/audit-trail/ledger?limit=500 {
+20999:[DEBUG 2026-11-09T20:38:37.214Z] GET /api/authoring/docs?status=all&limit=500 {
+21008:[DEBUG 2026-11-09T20:38:37.503Z] GET /api/authoring/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/sections {
+21043:[AUDIT] {"timestamp":"2026-11-09T20:38:38.362Z","requestId":"b5d00c81b9600b8fa4c61691fee479e3","method":"GET","path":"/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":20,"error":"Not Found"}
+21044:{"level":40,"time":"2026-11-09T20:38:38.362Z","pid":25655,"hostname":"vm","context":{"requestId":"38317dee-adda-411e-a41d-46c1da04050b","method":"GET","path":"/api/authoring/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"durationMs":19,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+21054:[DEBUG 2026-11-09T20:38:38.885Z] GET /api/authoring/docs?status=all&limit=500 {
+21081:[DEBUG 2026-11-09T20:38:39.756Z] GET /api/authoring/docs?status=all&limit=500 {
+21687:[DEBUG 2026-11-09T20:38:59.598Z] GET /api/audit-trail/ledger?limit=500 {
+22020:[AUDIT] {"timestamp":"2026-11-09T20:39:12.341Z","requestId":"f69481331a0ba5f085f9af99653dd97a","method":"POST","path":"/execute","statusCode":400,"userId":1,"organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":15,"error":"Bad Request"}
+22021:{"level":40,"time":"2026-11-09T20:39:12.341Z","pid":25655,"hostname":"vm","context":{"requestId":"2d100a36-e41b-4ae7-9531-678cbcee84ee","method":"POST","path":"/api/orchestration/execute","statusCode":400,"durationMs":15,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+22077:[AUDIT] {"timestamp":"2026-11-09T20:39:14.257Z","requestId":"a8f39657c62ee87bff5a71cefd9fd279","method":"GET","path":"/mdx/qms/documents","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":0,"error":"Too Many Requests"}
+22670:{"level":30,"time":"2026-11-09T20:40:02.503Z","pid":25655,"hostname":"vm","context":{"requestId":"534b48db-e3f2-4f94-b84f-e777dbb753da","method":"GET","path":"/api/mdx/qms/documents/11/editor","statusCode":200,"durationMs":17,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+23044:[DEBUG 2026-11-09T20:40:18.540Z] GET /api/audit-trail/ledger?limit=500 {
+23134:[DEBUG 2026-11-09T20:40:23.279Z] GET /api/authoring/docs?status=all&limit=500 {
+23178:[AUDIT] {"timestamp":"2026-11-09T20:40:24.420Z","requestId":"8ae306bda0e7239587022acab172f253","method":"GET","path":"/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"userId":"1","organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":14,"error":"Not Found"}
+23179:{"level":40,"time":"2026-11-09T20:40:24.420Z","pid":25655,"hostname":"vm","context":{"requestId":"c34124a1-24b3-4d2f-b13a-25208c808922","method":"GET","path":"/api/authoring/docs/50e0ed2c-814b-4a6b-8eb4-1764384262c0/frozen","statusCode":404,"durationMs":13,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+23189:[DEBUG 2026-11-09T20:40:24.945Z] GET /api/authoring/docs?status=all&limit=500 {
+23216:[DEBUG 2026-11-09T20:40:25.858Z] GET /api/authoring/docs?status=all&limit=500 {
+23822:[DEBUG 2026-11-09T20:40:46.696Z] GET /api/audit-trail/ledger?limit=500 {
+24154:[AUDIT] {"timestamp":"2026-11-09T20:41:00.122Z","requestId":"06fcdbb25ed360bcfe33f923cdf2ee2c","method":"POST","path":"/execute","statusCode":400,"userId":1,"organizationId":"2","ip":"127.0.0.1","userAgent":"node","duration":15,"error":"Bad Request"}
+24155:{"level":40,"time":"2026-11-09T20:41:00.123Z","pid":25655,"hostname":"vm","context":{"requestId":"da74fe30-9bfd-401e-a28c-c64c46813445","method":"POST","path":"/api/orchestration/execute","statusCode":400,"durationMs":16,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+24210:[AUDIT] {"timestamp":"2026-11-09T20:41:01.977Z","requestId":"59d5c8782f137524f8ce8de5956edea8","method":"GET","path":"/mdx/qms/documents","statusCode":429,"ip":"127.0.0.1","userAgent":"node","duration":1,"error":"Too Many Requests"}
+24357:{"level":20,"time":"2026-11-09T20:41:32.503Z","pid":25655,"hostname":"vm","context":{"organizationId":2,"count":15},"msg":"[projects-management] 🔍 Retrieved projects for org"}
+24725:[DEBUG 2026-11-09T20:41:46.503Z] GET /api/concept2cure/projects/dfa079b4-2264-477d-a42d-db322b6ba2f5/agency-communications {

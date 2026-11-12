@@ -9,6 +9,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+import { VALID_PROGRAM_TYPES, productTypeForIntake } from '../../../../server/routes/c2c/project-intake.js';
 import {
   productTypeForFilingType,
   deviceProductTypesForFilingType,
@@ -249,6 +251,49 @@ describe('workstream bucketing', () => {
     expect(sql).toMatch(/AND lower\(p\.product_type\) IN \('drug'\) THEN 'Pharma'/);
     expect(workstreamSqlCase('p.program_type')).not.toMatch(/product_type/);
   });
+
+  // Added 2026-11-09 (S12 sweep): a DMF covers drugs and biologics alike (P-21;
+  // project-intake.ts asks for the class), so it buckets by that stated class,
+  // as a filing document class does. It was in no list, so the project list read
+  // its client type as the raw 'Dmf': no client-type filter matched the row and
+  // About read "not recorded".
+  it('buckets a DMF by its stated product class, and only once that is stated', () => {
+    expect(workstreamForFilingType('dmf', 'drug')).toBe('Pharma');
+    expect(workstreamForFilingType('dmf', 'biologic')).toBe('Biotech');
+    expect(workstreamForFilingType('DMF', 'Biologic')).toBe('Biotech');
+    expect(workstreamForFilingType('dmf')).toBeNull();
+  });
+
+  // Every filing type the create endpoint accepts, with every product class it
+  // records for that type, run through the generated CASE on a real Postgres:
+  // each lands in a grid bucket, never the ELSE's title-cased echo, and agrees
+  // with the function. The store holds mixed casing ('DMF', '510K'), so each
+  // filing type is run as written and upper-cased.
+  it('puts every accepted filing type and recorded class in MDX, Biotech or Pharma, in SQL as in the function', async () => {
+    const pairs = [...new Map([...VALID_PROGRAM_TYPES].flatMap((programType) => listProductTypes()
+      .map((stated) => productTypeForIntake(programType, stated))
+      .flatMap((d) => ('productType' in d ? [d.productType] : []))
+      .flatMap((productType) => [programType, programType.toUpperCase()]
+        .map((t): [string, [string, string]] => [`${t}|${productType}`, [t, productType]])))).values()];
+    expect(pairs).toContainEqual(['dmf', 'drug']);
+    expect(pairs).toContainEqual(['DMF', 'biologic']);
+    const db = new PGlite();
+    try {
+      const { rows } = await db.query<{ program_type: string; product_type: string; ws: string }>(
+        `SELECT p.program_type, p.product_type, ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws
+           FROM unnest($1::text[], $2::text[]) AS p(program_type, product_type)`,
+        [pairs.map(([t]) => t), pairs.map(([, c]) => c)],
+      );
+      expect(rows).toHaveLength(pairs.length);
+      const wrong = rows
+        .filter((r) => !['MDX', 'Biotech', 'Pharma'].includes(r.ws)
+          || r.ws !== workstreamForFilingType(r.program_type, r.product_type))
+        .map((r) => `${r.program_type}/${r.product_type} -> SQL ${r.ws}, function ${workstreamForFilingType(r.program_type, r.product_type)}`);
+      expect(wrong).toEqual([]);
+    } finally {
+      await db.close();
+    }
+  }, 60_000);
 
   it('generates SQL that agrees with the function, member for member', () => {
     // The two must not drift: the server projects the SQL, the wizard's review

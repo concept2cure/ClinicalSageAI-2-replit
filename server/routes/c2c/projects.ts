@@ -47,7 +47,9 @@ import { checkProgramQuota } from '../../services/license-manager.js';
 import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
-import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
+import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf, type FilingCatalogEntry } from '../../../shared/regulatory/filing-catalog.js';
+import { filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes.js';
+import { programTypeFor } from '../../../shared/constants/domain/filing-application-type.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
@@ -123,6 +125,33 @@ class FilingNotOfferedError extends Error {
 function sendFilingNotOffered(res: Response, offer: FilingOffer, submissionTypeId: string | null) {
   const own = offer.reasonByFiling?.[resolveFilingCatalogEntry(submissionTypeId)?.registryId ?? ''];
   return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: own ?? offer.reason, marketSupport: offer });
+}
+
+/**
+ * A catalog filing sent as an application type other than the one it creates,
+ * refused 422 FILING_NOT_OFFERED before anything is written; null when the
+ * types agree (S1; S12 biotech sweep, 2026-11-09).
+ *
+ * The New project picker asks the market verdict about the type each filing
+ * creates and marks the filing not offered when that type is not. This route
+ * judged only the type it was sent, so a Type II Variation sent as an MAA got
+ * a full MAA scaffold although the picker had asked about an NDA at EMA and
+ * refused it. The type is the picker's own rule (programTypeFor), called as the
+ * picker calls it. The picker passes the visible tab; no catalog filing's type
+ * depends on the tab (shared/constants/domain/__tests__/
+ * filing-application-type.test.ts), so the wizard's default lane is named.
+ * Where the verdict refuses the filing's own type in this market even with an
+ * outline, its reason is said too, and its offer returned.
+ */
+function sendFilingTypeMismatch(res: Response, entry: FilingCatalogEntry, programType: string, marketInput: MarketInput) {
+  const filingType = programTypeFor({ id: entry.id, label: entry.id, pathway: entry.pathwayKey || 'ctd' }, 'biotech');
+  if (filingType === programType) return null;
+  const ownOffer = marketOfferGivenOutline({ ...marketInput, applicationType: filingType }, true);
+  const refused = ownOffer.tier === 'not_offered';
+  const ownReason = ownOffer.reasonByFiling?.[entry.registryId] ?? ownOffer.reason;
+  const message = `${entry.displayName} creates ${filingTypeInSentence(filingType, true)} project, not ${filingTypeInSentence(programType, true)}. `
+    + (refused ? ownReason : `A project is created as the application its filing creates; choose a filing that creates ${filingTypeInSentence(programType, true)}.`);
+  return res.status(422).json({ error: 'FILING_NOT_OFFERED', message, ...(refused ? { marketSupport: ownOffer } : {}) });
 }
 
 // People are named through public.actor_name, not a join on users: since users
@@ -872,6 +901,13 @@ router.post('/', async (req: Request, res: Response) => {
   const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase(), submissionTypeId);
   if ('refusal' in classDecision) return send400(res, classDecision.refusal);
   const { productType } = classDecision;
+  // The filing chosen decides the application type: a catalog filing sent as
+  // another type is refused here, before anything is written. After the class
+  // decision, so a document class or a regional device filing sent as another
+  // type keeps its own refusal above (sendFilingTypeMismatch).
+  const selectedFiling = submissionTypeId ? resolveFilingCatalogEntry(submissionTypeId) : null;
+  const typeMismatch = selectedFiling ? sendFilingTypeMismatch(res, selectedFiling, programType, marketInput) : null;
+  if (typeMismatch) return typeMismatch;
 
   // The project's objective, when one is stated (S1; ONE_DESIGN_PLAN.md §1a):
   // checked here, before anything is written, by the charter module's own
@@ -940,7 +976,6 @@ router.post('/', async (req: Request, res: Response) => {
   });
   if (!regional.success) return send400(res, 'EU device classification must use the applicable MDR or IVDR class.');
   const { euMdrClass = null, euIvdrClass = null } = regional.data;
-  const selectedFiling = submissionTypeId ? resolveFilingCatalogEntry(submissionTypeId) : null;
   const classScope = deviceClassScopeForFiling(submissionTypeId);
   const declaredEuClass = euRegulation === 'mdr' ? euMdrClass : euIvdrClass;
   if (classScope && (classScope.regulation !== euRegulation || (declaredEuClass !== null && !classScope.classes.includes(declaredEuClass)))) {

@@ -1,0 +1,5 @@
+# 2026-11-09T19:55:47Z review round 2
+$ npx eslint --no-ignore scripts/demo/launch-demo/packs/portfolio.mjs scripts/demo/launch-demo/packs/portfolio-content.mjs scripts/demo/launch-demo/portfolio-demo.test.mjs
+exit 0 (no output above = 0 errors, 0 warnings)
+
+# note: an intermediate round-2 state warned max-lines (portfolio.mjs 505 > 500); the KNOWN_PRODUCT_BEHAVIOUR record was moved to portfolio-content.mjs (re-exported by portfolio.mjs) and the warning is gone.

@@ -1,0 +1,182 @@
+Signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: biotech ===
+  • Projects: program C2C-101 (IND) … ok — found 6065271c-d4b0-4936-aad1-02855423a738 (C2C-101)
+  • Vault: Investigator's Brochure C2C-101 v3.0 … ok — found 75d6cf26-b705-4aea-9d18-cbd03f163b91 → module-1 (2 pages, 7296 bytes)
+  • Vault: Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled … ok — found e7ae5774-0678-4423-86fc-5f7dbd3e0c57 → module-5 (2 pages, 9196 bytes)
+  • Vault: Statistical Analysis Plan C2C-101-201 v1.0 … ok — found dc4f5bfc-3c10-4e25-92ba-5c6202e17120 → module-5 (2 pages, 6891 bytes)
+  • Vault: CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 … ok — found be0f7621-7c77-429c-be6d-6ac73da3ed6d → module-2 (2 pages, 6467 bytes)
+  • Vault: Nonclinical Toxicology Summary — C2C-101 … ok — found 98c0b490-17da-4595-80ea-a6153c057363 → module-2 (2 pages, 5781 bytes)
+  • Vault: Pre-IND Meeting Minutes — C2C-101 (Type B) … ok — found 84155fd7-0758-444c-a7a5-f39d60cb05ce → module-1 (2 pages, 5599 bytes)
+  • Vault: read model lists the filed documents … ok — documentCount=21, unfiled=12, standard=biotech
+  • Authoring: Protocol Synopsis C2C-101-201 … ok — found d49749de-add0-4380-935f-a111e2d04b25; sections 6 (0 added)
+  • Authoring: comments on Protocol Synopsis C2C-101-201 … ok — 87b4bad1:resolved, 661598af:resolved
+  • Authoring: review request on Protocol Synopsis C2C-101-201 … ok — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: freeze Protocol Synopsis C2C-101-201 v1.0 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: e-signature by the second signer on Protocol Synopsis C2C-101-201 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: Module 2.5 Clinical Overview — C2C-101 … ok — found 79793c98-005d-45bc-8261-0cd0d2208ec7; sections 6 (0 added)
+  • Authoring: review request on Module 2.5 Clinical Overview — C2C-101 … ok — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — found bdd5a24e-10d7-4dd1-aba6-e65a6c069758; sections 4 (0 added)
+  • Authoring: comments on IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — a3d380b8:open
+  • Protocol development: C2C-101-201 document … ok — found #1
+  • Protocol development: section content … ok — 10 sections (0 written)
+  • Protocol development: objectives, eligibility, visits, team … ok — added objectives 0, criteria 0, visits 0, team 0
+  • Protocol development: schedule of assessments matrix … ok — 10 assessments × 9 visits, 51 cells (0 rows, 0 cells added)
+  • Protocol development: risk register … ok — 6 risks (0 added)
+  • Protocol development: milestones … ok — 5 milestones (0 added)
+  • Protocol development: amendment 1 … ok — #1 Amendment 1 — add Week 2 PK sampling and align stratification wording
+  • Protocol development: version snapshot … ok — found 1 version(s)
+  • Protocol development: GET /api/protocol-dev returns it … ok — #1: objectives 6, risks 6, milestones 5, amendments 1
+  • Biostatistics: study design "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis" … ok — updated sd_66e9ac5708d74cec82b6d350a180f947
+  • Submission Center: the program's canonical submission (IND) … ok — #1 "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #1 status assembling
+  • Submission Center: place the vault documents as eCTD leaves … ok — 7 leaves (0 placed)
+  • Submission Center: sequence moves draft → assembling … ok — already assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=7; shadowCriticals=0; blockers=4
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (7 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — 1 prior run(s), none completed (failed)
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 4; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • QMS: SOP-001 Document Control … ok — found #1 C2C-SOP-001 → draft
+  • QMS: SOP-002 Change Control … ok — found #2 C2C-SOP-002 → draft
+  • QMS: SOP-003 Deviation Management … ok — found #3 C2C-SOP-003 → draft — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • QMS: SOP-004 Training … ok — found #4 C2C-SOP-004 → draft
+  • QMS: change-control record C2C-CC-001 … ok — #1 C2C-CC-001 (proposed)
+  • QMS: deviation record … ok — not supported by the QMS API (recorded as a finding)
+  • QMS: inspect personal acknowledgement readiness on SOP-001 … ok — Only an effective controlled document can be acknowledged.
+  • CMC / Module 3: drug substance and drug product on C2C-101 … ok — 0 created of 2
+  • CMC / Module 3: analytical methods on C2C-101 … ok — 0 created of 5; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on C2C-101 … ok — 0 created of 5
+  • CMC / Module 3: stability programme on C2C-101 … ok — 0 created of 2
+  • CMC / Module 3: batch records on C2C-101 … ok — 0 created of 3
+  • Projects: program C2C-201 (IND) … ok — found c339171c-ddf4-40a8-86d0-05944f1235a9 (C2C-201-B6DI)
+  • CMC / Module 3: drug substance and drug product on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: analytical methods on C2C-201 … ok — 0 created of 4; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on C2C-201 … ok — 0 created of 6
+  • CMC / Module 3: stability programme on C2C-201 … ok — 0 created of 3
+  • CMC / Module 3: batch records on C2C-201 … ok — 0 created of 3
+  • CMC / Module 3: recorded release results on C2C-201 … ok — 0 created of 5 — second-person review is left to the register, so these compose as not reviewed
+  • CMC / Module 3: compile the dossier on C2C-201 … ok — 21 section(s) composed, 13 with recorded data
+  • Tasks: 6 tasks on C2C-101 … ok — 0 created, 6 already there (board project 1)
+  • Plan: start 5 deliverables on C2C-101 … ok — 0 started, 5 already started
+  • Communication: data-room source "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — found 163
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND C2C-101" on C2C-101 … ok — found ace_1794176483552_3a125a0f
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - IND C2C-101.txt" … ok — 3 questions, 0 commitments proposed
+  • Audit trail: ledger after the run … ok — 2 chained entries written this run (window 500); meta.chain.ok=true
+  ⇒ biotech pack: created 1, found 229
+manifest → /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/0d57ee1e-feb7-587e-9df6-b4664672a1d4/scratchpad/manifests/biotech/manifest.json
+
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — a9e43625-0eda-42d2-8c39-846c484801de (existing)
+  • Vault: read the program data room (folders offered) … ok — standard=ivd; 17 cabinet folders: cab-unfiled, cab-bn:A, cab-bn:B, cab-bn:C, cab-bn:D, cab-bn:E, cab-bn:F, cab-bn:G, cab-k510, cab-pma, cab-cer, cab-eng, cab-udi, cab-pv, cab-qms, cab-corresp, cab-shared
+  • Vault: Device Description and Principles of Operation … ok — 1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3 → k510 (existing, already filed, 6346 bytes)
+  • Vault: Software Description and Level of Concern … ok — bd693b26-37bc-455e-96cf-4a1447b85b6d → eng (existing, already filed, 4654 bytes)
+  • Vault: Analytical Performance Study Report … ok — 0a127beb-c5c8-4adb-ae65-a9426b6a9a2b → k510 (existing, already filed, 6247 bytes)
+  • Vault: Clinical Performance Study Report … ok — 0b358a83-7959-4db3-bfc3-abbff5b70c0a → cer (existing, already filed, 5659 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — acb39332-1960-45dc-9ff6-2765485f9e51 → eng (existing, already filed, 4407 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — 057e5fdd-2502-45c1-bb5b-b37047f0d9bf → udi (existing, already filed, 6254 bytes)
+  • Vault: data room after filing … ok — documentCount=7; cab-bn:A:9 cab-bn:B:3 cab-bn:C:2 cab-bn:D:6 cab-bn:E:8 cab-bn:F:1 cab-bn:G:2 cab-k510:2 cab-cer:1 cab-eng:2 cab-udi:1
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — eb043ce5-8a6e-4527-8b76-94f46add1210 (existing, 9 sections)
+  • Authoring: reviewer comment on the 510(k) Summary, resolved … ok — comment 3c517730-c181-41d7-919a-ea6385931f2f resolved
+  • Authoring: request review, submit to workflow, freeze v1.0 … ok — review and freeze not executed — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER) … ok — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • Authoring: Substantial Equivalence Discussion (draft with an open comment) … ok — 24d4e12d-46c6-46da-a0e8-39bd8c13dd20 draft, open comment 96c52673-bf2f-4ec2-a239-bfff0b4e7755
+  • Authoring: Cybersecurity and Interoperability Summary (review requested) … ok — 4f541f9d-46a4-4f8c-93e9-7d85481ef7e8 (6 sections), review not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • Authoring: does the Review board list the requested reviews? (probe) … ok — queue 0, 0 for the pack
+  • Submission Center: 510(k) submission for the program … ok — 2 (existing, 510k/ivd)
+  • Submission Center: original sequence 0000 … ok — 2 status assembling (existing)
+  • Submission Center: eSTAR section codes on the leaf route (probe) … ok — HTTP 200: the leaf route now takes the eSTAR section code; the CTD placements below stay as well
+  • Submission Center: file the six vault documents as leaves at CTD codes … ok — 7 leaves (0 placed this run)
+  • Submission Center: sequence draft → assembling … ok — already assembling
+  • Submission Center: eSTAR 510(k) pathway readiness (deterministic, read-only) … ok — ready=false; present 0; missingRequired 15
+  • Submission Readiness: validation + dispatch-readiness assessment of sequence 0000 … ok — gate.cleared=false validationErrors=0 (0 UNRESOLVED_DOCUMENT) blockers=2
+  • Submission Readiness: dispatch QC (deterministic verdict; narration needs a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); narrative unavailable: PROVIDER_UNAVAILABLE
+  • Submission Readiness: readiness review orchestration (probe) … ok — HTTP 400
+  • QMS: SOP-101 Design Controls (21 CFR 820.30) … ok — 5 MDX-SOP-101 draft v1.0 (existing)
+  • QMS: SOP-102 Corrective and Preventive Action … ok — 6 MDX-SOP-102 draft v1.0 (existing)
+  • QMS: SOP-103 Complaint Handling and MDR Reporting …     (429 on GET /api/mdx/qms/documents; waiting 21s, retry 1)
+ok — 7 MDX-SOP-103 draft v1.0 (existing)
+  • QMS: SOP-104 Software Change Control … ok — 8 MDX-SOP-104 draft v1.0 (existing)
+  • QMS: approve MDX-SOP-101 as the second signer (e-signature) … ok — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • QMS: approve MDX-SOP-102 as the second signer (e-signature) … ok — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • QMS: SOP-103 into review; SOP-104 stays draft … ok — SOP-103 draft — review not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority); SOP-104 draft
+  • QMS: inspect personal acknowledgement readiness of SOP-101 … ok — Only an effective controlled document can be acknowledged.
+  • QMS: change-control record for the NP-100 software release … ok — 2 MDX-CC-2026-001 under_assessment (existing, 3 links)
+  • Tasks: 4 tasks on NeuroPanel-Dx … ok — 0 created, 4 already there (board project 2)
+  • Audit trail: organisation ledger and chain verdict … ok — window 1000; 22 entries reference pack records (0 since run start); chain.ok=true; verify-chain ok=true
+manifest → /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/0d57ee1e-feb7-587e-9df6-b4664672a1d4/scratchpad/manifests/mdx/manifest.json
+
+=== seed: lumen ===
+  • Client workspace: Lumen Bioscience (demo — not affiliated) … ok — found 3
+  • Projects: LMN-201 … ok — 980ee422-6b16-4ff0-84f2-4b0531c791de (LMN-201)
+  • Vault: LMN-201 program overview … ok — found 26bf859c-3a0e-4285-ad46-d6762b900dbe
+  • Tasks: 16 tasks on LMN-201 … ok — 0 created, 16 already there (board project 3)
+  • Projects: LMN-801 … ok — d4d5d068-7dce-4c1f-bf91-21fa030c68aa (LMN-801)
+  • Vault: LMN-801 program overview … ok — found 2f031de6-905c-4477-b5fa-0d880c669bb5
+  • Tasks: 5 tasks on LMN-801 … ok — 0 created, 5 already there (board project 4)
+  • Projects: LMN-301 … ok — d6f982cf-7e74-4ba9-9be2-dc1ba8909108 (LMN-301)
+  • Vault: LMN-301 program overview … ok — found 89d18854-88e6-40f4-9c4f-18ebc3d707f9
+  • Tasks: 5 tasks on LMN-301 … ok — 0 created, 5 already there (board project 5)
+  • Projects: LMN-401 … ok — c3427883-a2e9-4652-9e72-8420268add33 (LMN-401)
+  • Vault: LMN-401 program overview … ok — found d267c661-83c6-4b01-86cd-d5160bc1f840
+  • Tasks: 3 tasks on LMN-401 … ok — 0 created, 3 already there (board project 6)
+  • Vault: synthetic LMN-201 CSR source (JSON) … ok — found 23c4c540-5306-4aae-8f19-23f8b8e6c122
+  • Biostatistics: study design "[Demo · Lumen] LMN-201 RePreve (NCT05330182) — Phase 2/3, recurrence prevention" … ok — updated sd_c60169b42c4b4d668fe59d1134a15bc8
+  • Objective: RePreve … ok — found
+  • CMC / Module 3: drug substance and drug product on LMN-201 … ok — 0 created of 2
+  • CMC / Module 3: analytical methods on LMN-201 … ok — 0 created of 5; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on LMN-201 … ok — 0 created of 5
+  • CMC / Module 3: stability programme on LMN-201 … ok — 0 created of 2
+  • CMC / Module 3: batch records on LMN-201 … ok — 0 created of 3
+  • Plan: start 4 deliverables on LMN-201 … ok — 0 started, 4 already started
+  • Communication: data-room source "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt" on LMN-201 … ok — found 170
+  • Communication: agency inbox entry for "FDA approval letter (fictional demo), BLA 761901" on LMN-201 … ok — found ace_1794176553545_a81efd58
+  • Communication: the inbox reads "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt" … ok — 0 questions, 4 commitments proposed (0 recorded)
+  • Communication: data-room source "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt" on LMN-201 … ok — found 171
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND 194021" on LMN-201 … ok — found ace_1794176555896_064f2f57
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt" … ok — 3 questions, 0 commitments proposed
+  • Review: LMN-201 Investigator's Brochure sent for review … ok — not executed: no second signer (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Quality: LMN-SOP-201 on LMN-201 … ok — #9 draft — approval not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Quality: LMN-SOP-202 on LMN-201 … ok — #10 draft — approval not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Quality: LMN-SOP-203 on LMN-201 … ok — #11 draft
+  • Quality: deviation LMN-DEV-2026-014 on LMN-201 … ok — #1 pending_approval
+  • Quality: deviation LMN-DEV-2026-015 on LMN-201 … ok — #2 under_investigation
+  • Quality: deviation LMN-DEV-2026-016 on LMN-201 … ok — #3 open
+  • Quality: deviation LMN-DEV-2026-017 on LMN-201 … ok — #4 pending_approval
+  • Quality: supplier LMN-SUP-001 … ok — #1 pending
+  • Quality: supplier LMN-SUP-002 … ok — #2 pending
+  • Quality: supplier LMN-SUP-003 … ok — #3 pending
+  • Quality: supplier LMN-SUP-004 … ok — #4 pending
+  • Quality: supplier LMN-SUP-005 … ok — #5 pending
+  • Quality: nonconformance LMN-NC-2026-009 on LMN-201 … ok — #1 pending
+  • Quality: nonconformance LMN-NC-2026-007 on LMN-201 … ok — #2 pending
+  • Quality: nonconformance LMN-NC-2026-008 on LMN-201 … ok — #3 pending
+  • Quality: internal audit LMN-IA-2026-03 … ok — #1 closed (1 major, 3 minor, 2 obs.)
+  • Quality: internal audit LMN-IA-2026-04 … ok — #2 in_progress (0 major, 1 minor, 1 obs.)
+  • Quality: internal audit LMN-IA-2026-05 … ok — #3 planned
+  • Quality: internal audit LMN-IA-2027-01 … ok — #4 planned
+  • Quality: CAPA "Visit-window control at investigator sites (from LMN-DEV-2026-014)" on LMN-201 … ok — CAPA-2026-0001 action_planned, 3 actions
+  • Quality: CAPA "TMF filing timeliness and Vault metadata completeness (from LMN-IA-2026-03)" on LMN-201 … ok — CAPA-2026-0002 investigation, 1 actions
+  • Quality: CAPA "Cold-chain shipper qualification for 2–8 °C lanes (from LMN-NC-2026-009)" on LMN-201 … ok — CAPA-2026-0003 open, 1 actions
+  • Quality: CAPA "Central-lab sample kit expiry tracking at sites" on LMN-201 … ok — CAPA-2026-0004 closed_effective, 1 actions
+  • Quality: change control LMN-CC-2026-021 on LMN-201 … ok — #3 under_assessment, linked to LMN-SOP-201, LMN-DEV-2026-014, CAPA-2026-0001
+  • Quality: management review Lumen 2026-Q3 … ok — #1, 2 open and 1 closed actions
+  • Quality: management review Lumen 2026-Q2 … ok — #2, 0 open and 1 closed actions
+  • Quality: training assignments on the Lumen SOPs in force … ok — No Lumen SOP is in force, so none can carry read-and-understood training (GET /api/mdx/qms/training/compliance lists documents in force only).
+  • RBM: risk assessment (RACT) on LMN-201 … ok — found #1 v1 (draft)
+  • RBM: 4 study-specific CtQ factors on LMN-201 … ok — 0 added, 4 already there
+  • RBM: RACT approval on LMN-201 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD); the RACT stays a draft, approval pending
+  • RBM: 8 key risk indicators on LMN-201 … ok — 0 configured, 8 already there
+  • RBM: 3 quality tolerance limits on LMN-201 … ok — 0 created, 3 already there
+  • RBM: 12 monthly metric extracts on LMN-201 … ok — 0 loaded (0 KRI readings, 0 QTL values, 0 site observations), 12 already loaded
+  • RBM: subject-level extract (12 subjects) on LMN-201 … ok — already loaded
+  • RBM: patient cohort scored on LMN-201 … ok — found 12 subjects scored
+  • RBM: monitoring plan on LMN-201 … ok — found #1 v1 (draft)
+  • RBM: 6 central-monitoring signals on LMN-201 … ok — 0 logged, 6 already there; 0 dispositioned
+  • RBM: 6 monitoring actions on LMN-201 … ok — 0 added, 6 already there
+  • RBM: the board and roster read back on LMN-201 … ok — risk high; 12 CtQ; KRIs 1 red / 2 amber of 8; QTLs 1 approaching of 3; 5 open signals; 1 flagged / 1 review of 12; plan draft with 8 actions; 9 attention items
+  • Submission Center: LMN-201 sequence 0000 (original) … ok — found on submission #3
+  • Reporting: 4 reports run for LMN-201 … ok — readiness.executive_digest: found #1; ha.commitment_register: found #2; usa_fda.ind_safety_readiness: found #3; etmf.completeness_pack: found #4
+  ⇒ lumen pack: created 0, found 153
+manifest → /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/0d57ee1e-feb7-587e-9df6-b4664672a1d4/scratchpad/manifests/lumen/manifest.json

@@ -306,3 +306,60 @@ describe('POST /api/c2c/projects — a filing that is a document is created as i
     expect(query).not.toHaveBeenCalled();
   });
 });
+
+// ── Added 2026-11-09 (S12 biotech sweep, package S1) ───────────────────────
+// The filing chosen decides the application type. The gate above judged only
+// the programType and agency the caller sent; submissionTypeId was recorded and
+// never compared with the type the catalog gives that filing. So a Type II
+// Variation sent as an MAA got a full MAA scaffold, though the New project
+// picker asks the verdict about the type that filing creates (an NDA at EMA)
+// and marks it not offered. The type is computed by the picker's own rule
+// (programTypeFor, shared/constants/domain/filing-application-type.ts).
+describe('POST /api/c2c/projects — the filing chosen decides the application type', () => {
+  const programInserts = () => query.mock.calls.filter((c) => String(c[0]).includes('INSERT INTO regulatory_programs'));
+
+  it.each([
+    ['its catalog id', 'eu_variation_ii'],
+    ['its legacy id', 'type_ii_var'],
+  ])('a Type II Variation (by %s) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL', async (_label, submissionTypeId) => {
+    queueDrugCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'maa', primaryAgency: 'EMA', submissionTypeId }));
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    expect(res.body.message).toMatch(/^Type II Variation \(Major\) creates an NDA project, not an MAA\. A project is created as the application its filing creates; choose a filing that creates an MAA\.$/);
+    expect(programInserts()).toHaveLength(0);
+    expect(query).not.toHaveBeenCalled();
+    expect(scaffold).not.toHaveBeenCalled();
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+  });
+
+  it('where the verdict refuses the filing\'s own type in that market, the refusal says so too, with that offer', async () => {
+    queueDrugCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'nda', primaryAgency: 'MHRA', submissionTypeId: 'us_ind' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    expect(res.body.message).toBe('Investigational New Drug Application creates an IND project, not an NDA. Not offered: the UK has no IND application type.');
+    expect(res.body.marketSupport).toMatchObject({ tier: 'not_offered', label: 'Not offered' });
+    expect(query).not.toHaveBeenCalled();
+    expect(scaffold).not.toHaveBeenCalled();
+  });
+
+  it('the type the picker gives the filing, sent with it, is still created (an EU MAA as an MAA): 201', async () => {
+    queueDrugCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'maa', primaryAgency: 'EMA', submissionTypeId: 'eu_maa' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(programInserts()).toHaveLength(1);
+    expect(sqlCalls()).toContain('COMMIT');
+  });
+
+  it('a filing whose pathway names its application (a 505(b)(2) is an NDA) is created as that application: 201', async () => {
+    queueDrugCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'nda', primaryAgency: 'FDA', submissionTypeId: 'us_505b2' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(programInserts()).toHaveLength(1);
+  });
+});
