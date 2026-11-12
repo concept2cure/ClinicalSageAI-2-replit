@@ -102,8 +102,9 @@
   display: flex; align-items: baseline; justify-content: space-between;
   margin: 0 0 12px;
 }
-.mdx-shell .section-title { font-size: 14px; font-weight: 600; color: var(--text-100); }
-.mdx-shell .section-sub { font-size: 12px; color: var(--text-400); }
+/* D8 slice 4 (P-128): a section's title is the canonical section heading (`.c2c-v2 .pj-sec-h h2`, app-v2.css): the
+   section size, weight 600, sans. Its sub-line is set once, below with `.section-head`. */
+.mdx-shell .section-title { font-size: var(--fs-section); line-height: 1.4; font-weight: 600; color: var(--text-100); }
 .mdx-shell .section-more {
   font-size: 12px; color: var(--text-300);
   display: inline-flex; align-items: center; gap: 4px;
@@ -1538,11 +1539,15 @@
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
   margin-bottom: 14px;
 }
+/* D8 slice 4 (P-128): section headings were drawn four ways (a 17 px serif, a 14 px serif, 14 px sans and the
+   pathway header's 14 px sans). They are the canonical section heading now; ONE_DESIGN_PLAN §2 keeps the serif for
+   the page title. A sub-line is the canonical one (`.pj-sec-h .sec-sub`): the small size in the muted text, where it
+   was 11 px in --text-400 and set by two rules. */
 .mdx-shell .section-head h2 {
-  font-family: var(--font-serif); font-size: 17px; font-weight: 500;
+  font-size: var(--fs-section); line-height: 1.4; font-weight: 600;
   color: var(--text-100); margin: 0;
 }
-.mdx-shell .section-sub { font-size: 11px; color: var(--text-400); }
+.mdx-shell .section-sub { font-size: var(--fs-small); color: var(--text-300); }
 .mdx-shell .section-head .seg { margin-left: auto; }
 .mdx-shell .chip-filter {
   display: inline-flex; align-items: center; gap: 4px;
@@ -4056,7 +4061,8 @@
   height: 14px;
 }
 .mdx-shell .eng-awareness-head h2 {
-  font-size: 14px;
+  font-size: var(--fs-section);
+  line-height: 1.4;
   font-weight: 600;
   margin: 0;
   color: var(--text-100);
@@ -4508,14 +4514,14 @@
 .mdx-shell .ps-commit-jump svg { width: 12px; height: 12px; }
 
 /* ── Empty states ───────────────────────────────────────────── */
+/* D8 slice 4 (P-128): the Pre-Sub detail's empty state is the canonical empty state (`.c2c-v2 .c2c-empty-state`,
+   app-v2.css): no box, the title in the body size, one sentence in the small size. It was a dashed, tinted box. */
 .mdx-shell .ps-empty {
-  padding: 22px 18px; text-align: center;
-  background: var(--bg-050);
-  border: 1px dashed var(--border-200);
-  border-radius: var(--radius-md);
+  padding: 32px 16px; text-align: center;
+  background: none; border: 0; border-radius: 0;
 }
-.mdx-shell .ps-empty-t { font-size: 12.5px; font-weight: 500; color: var(--text-100); }
-.mdx-shell .ps-empty-s { font-size: 11.5px; color: var(--text-300); margin-top: 3px; line-height: 1.5; }
+.mdx-shell .ps-empty-t { font-size: var(--fs-body); font-weight: 500; color: var(--text-200); }
+.mdx-shell .ps-empty-s { max-width: 52ch; margin: 6px auto 0; font-size: var(--fs-small); color: var(--text-300); line-height: 1.5; }
 
 /* Below the width at which a 300px list and a detail pane both stay usable,
    the two panes stack. 300 + 16 + 300 = 616px is the point where the detail
