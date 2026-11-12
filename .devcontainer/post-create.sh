@@ -354,8 +354,8 @@ c2c_demo_accounts() {
   if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
     while IFS='|' read -r email name role; do
       case "$role" in
-        lead) role="Lead and author: the LMN-201 Phase 2 CSR, Lumen's projects" ;;
-        reviewer) role="Reviewer and second signer" ;;
+        lead) role="Lead and author: three synthetic CSRs (LMN-201, LMN-801, LMN-301) and Lumen's projects" ;;
+        reviewer) role="Reviewer: the three CSRs wait for your evidence check; second signer" ;;
         approver) role="Approver: approves, signs and seals" ;;
       esac
       entries+=("$email|$name|$C2C_LUMEN_ORG_NAME|$role")
