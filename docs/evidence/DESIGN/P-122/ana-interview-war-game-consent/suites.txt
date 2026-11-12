@@ -1,0 +1,22 @@
+2026-11-12. vitest, config vitest.config.ts.
+
+Run: the 57 files under client/src/concept2cure/v2/__tests__ whose names match
+conversation|protocol|consent|pdev, the panels' component test, every test under
+server/services/protocol-development and server/services/protocol-consent,
+server/routes/__tests__/protocol-dev.routes.test.ts and
+tests/regulatory/consent-form-approval-gate.test.ts.
+
+First run:  Test Files 1 failed | 77 passed (78); Tests 1 failed | 899 passed (900).
+  The failure was protocolDevSurfaceWrites.test.tsx "reports the element the
+  assembled consent form holds". Its fixture did not carry consentGate, and the
+  tab then said the form "has no elements recorded", which was untrue. Fixed in
+  both places: the tab now says the verdict was not returned, and the fixture
+  carries the read model's shape.
+After the fix: protocolConsentTab.test.tsx and protocolDevSurfaceWrites.test.tsx,
+  Test Files 2 passed (2); Tests 38 passed (38).
+
+Not completed: a run of the whole client/src/concept2cure/v2/__tests__ folder
+was stopped after 25 minutes with no result. It is not claimed as passing.
+
+Typecheck: 0 errors. ESLint warning ratchet: no file gained a warning.
+ci:one-design-plan: OK.

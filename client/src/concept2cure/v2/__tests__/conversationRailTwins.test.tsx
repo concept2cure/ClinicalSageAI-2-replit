@@ -20,6 +20,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+import { interviewCompleteFixture, warGameReportFixture } from '../../components/ana/__tests__/war-game-and-interview-panels.fixture';
 import type { AnaChatMessage, UseAnaChatReturn } from '../../components/ana/useAnaChat';
 
 vi.mock('../dataConnect', () => ({
@@ -564,5 +565,30 @@ describe('the CRL/RTF pre-mortem is on the conversation', () => {
   it('adds no pre-mortem furniture to a turn that produced none', async () => {
     const { container } = await mount(shellChat({ messages: answer({ text: 'A plain answer.' }) }));
     expect(container.querySelector('.ana-premortem')).toBeNull();
+  });
+});
+
+/* ── The war game and the finished interview (2026-11-11, R1) ─────────────
+   useAnaChat keeps `warGameReport` and `intelligenceFlowComplete` on the
+   message, and toTurn dropped both: nothing drew them. What each panel says is
+   pinned in components/ana/__tests__/war-game-and-interview-panels.test.tsx;
+   these two cases hold that the conversation mounts them from the hook's own
+   message, and that a next action is an ask the person sends. */
+describe('the war game and the finished interview are on the conversation', () => {
+  it('mounts both panels for a turn that carries them, and nothing for one that does not', async () => {
+    await mount(shellChat({ messages: answer({ text: 'Done.', warGameReport: warGameReportFixture(), intelligenceFlowComplete: interviewCompleteFixture() } as Partial<AnaChatMessage>) }));
+    expect(screen.getByRole('region', { name: 'War game report' }).textContent).toContain('18 of 32 checks assessed');
+    expect(screen.getByRole('region', { name: 'Interview complete' }).textContent).toContain('User fee not paid');
+    cleanup();
+    await mount(shellChat({ messages: answer({ text: 'A plain answer.' }) }));
+    expect(screen.queryByRole('region', { name: 'War game report' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Interview complete' })).toBeNull();
+  });
+
+  it('a next action is sent to AnA as the person\u2019s message when they choose it', async () => {
+    const chat = shellChat({ messages: answer({ text: 'The interview is complete.', intelligenceFlowComplete: interviewCompleteFixture() } as Partial<AnaChatMessage>) });
+    await mount(chat);
+    fireEvent.click(screen.getByRole('button', { name: /Run FDA War Game/ }));
+    expect((chat.send as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0]).toBe('Run FDA War Game');
   });
 });

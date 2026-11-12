@@ -40,6 +40,8 @@ import { AnaQuestionCard } from '../AnaQuestionCard';
    it skips the model entirely and hands the payload to the engine. */
 const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
 import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
+import { InterviewCompletePanel } from '../../components/ana/InterviewCompletePanel';
+import { WarGameReportPanel } from '../../components/ana/WarGameReportPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { WhatAnaRemembers } from '../WhatAnaRemembers';
@@ -133,6 +135,11 @@ function toTurn(m: AnaChatMessage): CtTurn {
        AnA accepted, and the pre-mortem the turn assembled. */
     interjections: nonEmpty(m.interjections),
     crlPremortem: m.crlPremortem,
+    /* Emitted by the engine and kept by the hook, and drawn by nothing since
+       WarGameReport.tsx was deleted (2026-08-04); the completion never had a
+       view (2026-11-11, R1). */
+    warGameReport: m.warGameReport,
+    interviewComplete: m.intelligenceFlowComplete,
     executedActions: nonEmpty(m.executedActions),
     pendingSignoffs: nonEmpty(m.pendingSignoffs),
     /* The authoring document this turn drafted, when it drafted one — the
@@ -391,7 +398,7 @@ interface AnaTurnProps {
    the turn assembled. No `onExport` on the panel: this screen has no DOCX
    route for it, and the panel then disables the action and says where export
    lives. */
-function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
+function TurnSteersAndPremortem({ turn, onAsk, busy }: { turn: CtTurn; onAsk?: (text: string) => void; busy?: boolean }) {
   return (
     <>
       {turn.interjections && (
@@ -407,6 +414,19 @@ function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
       {turn.crlPremortem && (
         <div className="ana-premortem">
           <CrlPremortemPanel artifact={turn.crlPremortem} />
+        </div>
+      )}
+      {turn.interviewComplete && (
+        <div className="ana-premortem">
+          <InterviewCompletePanel completion={turn.interviewComplete} />
+          {/* What the finished interview offers next, as the conversation's own
+              suggestion chips: each is an ask the person chooses to send. */}
+          {onAsk && <TurnSuggestions prompts={turn.interviewComplete.suggestedActions.map((a) => a.label)} busy={busy} onAsk={onAsk} />}
+        </div>
+      )}
+      {turn.warGameReport && (
+        <div className="ana-premortem">
+          <WarGameReportPanel report={turn.warGameReport} />
         </div>
       )}
     </>
@@ -489,7 +509,7 @@ function AnaTurn({ turn, onAsk, onNav, onStartDemo, onContinue, onSummary, onAns
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
         <TurnQuestion turn={turn} onAnswer={onAnswer} busy={busy} />
-        <TurnSteersAndPremortem turn={turn} />
+        <TurnSteersAndPremortem turn={turn} onAsk={onAsk} busy={busy} />
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
             AnA's labels, the same strip as the rail and the editor. Never under
