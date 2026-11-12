@@ -2612,7 +2612,14 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
     its words from the pathway the project files: a De Novo reads "similar devices" and "classification and special
     controls", not "predicate" and "substantial equivalence". Its section link asks for the filing by its governed
     class. Walked in the running app on a new De Novo project. Found and recorded: M23 to M25.
-- **Next.** P-114's items 3 and 5: the EU technical file per project (M3), and the IVD 510(k) outline (M6(a)).
+  - **P-114 item 3 landed** (`cfa3f6d671`,
+    `docs/evidence/MDX-JOURNEY/2026-11-12-p114-3-eu-technical-file-per-project/`). The route that assembles a
+    project's own EU technical file existed with no caller. The IVD and CER screens' "Assemble technical file" now
+    calls it for an EU IVDR or EU MDR project, and such a project is not offered the FDA eSTAR. A file that is not
+    complete is said to be incomplete. A project on an FDA route is unchanged. Walked in the running app on new EU
+    IVDR and EU MDR projects: nothing written (422, said as such), then one section written and the ZIP downloaded
+    (200, registered, audit row chained). Found and recorded: M26 to M30.
+- **Next.** P-114's item 5: the IVD 510(k) outline (M6(a)).
 
 #### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 
