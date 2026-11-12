@@ -86,6 +86,10 @@ export const DEVICE_DOORS = {
   /** By the primary pathway: its regulatory strategy and its submission assembly, each in the pathway's feature. */
   pathway: {
     '510k': { strategy: 'Choose predicates and build the SE comparison', assembly: 'Assemble the eSTAR' },
+    /* P-114 item 4 (2026-11-09, decided under the founder's delegation; MDX journey M7). A De Novo claims no
+       predicate (FD&C Act 513(f)(2)); its request shows the search that found none and proposes the class and
+       special controls (21 CFR 860.220), and is filed on the eSTAR. */
+    de_novo: { strategy: 'Show no predicate exists and propose the classification', assembly: 'Assemble the De Novo eSTAR' },
     pma: { strategy: 'See which PMA modules are written', assembly: 'Export the PMA package' },
     mdr: { strategy: 'Gather literature and map the GSPRs', assembly: 'Export the CER' },
     ivdr: { strategy: 'Record classification and performance evidence', assembly: 'Assemble the technical documentation' },
