@@ -1,0 +1,438 @@
+{
+ "01-device-510k": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "RTA / AI-Hold 0 Agency / NB queries",
+    "left": 287,
+    "right": 418,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Approvals Your pending e-sign · all projects",
+    "left": 418,
+    "right": 609,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Files Full filesystem",
+    "left": 609,
+    "right": 710,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Refine query with AnA",
+    "left": 391,
+    "right": 435,
+    "top": 841,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Export SE matrix as CSV",
+    "left": 391,
+    "right": 435,
+    "top": 1003,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Run pre-flight validation",
+    "left": 646,
+    "right": 690,
+    "top": 806,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0A Administrative empty",
+    "left": 473,
+    "right": 706,
+    "top": 863,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A1 Cover letter empty",
+    "left": 473,
+    "right": 706,
+    "top": 924,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A2 Submitter, applicant and correspondent informa",
+    "left": 473,
+    "right": 706,
+    "top": 985,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A3 Pre-submission correspondence and previous com",
+    "left": 473,
+    "right": 706,
+    "top": 1100,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A4 Consensus standards and declarations of confor",
+    "left": 473,
+    "right": 706,
+    "top": 1215,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A5 510(k) summary or 510(k) statement (21 CFR 807",
+    "left": 473,
+    "right": 706,
+    "top": 1330,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A6 Truthful and accuracy statement (21 CFR 807.87",
+    "left": 473,
+    "right": 706,
+    "top": 1463,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A7 Class III summary and certification (21 CFR 80",
+    "left": 473,
+    "right": 706,
+    "top": 1578,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A8 Financial certification or disclosure (21 CFR ",
+    "left": 473,
+    "right": 706,
+    "top": 1729,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§A9 MDUFA user fee — Form FDA 3601 and payment emp",
+    "left": 473,
+    "right": 706,
+    "top": 1898,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0B Device description empty",
+    "left": 473,
+    "right": 706,
+    "top": 2013,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§B1 Device description and principles of operation",
+    "left": 473,
+    "right": 706,
+    "top": 2092,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§B2 Indications for use statement empty",
+    "left": 473,
+    "right": 706,
+    "top": 2207,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§B3 Classification, product code and regulation em",
+    "left": 473,
+    "right": 706,
+    "top": 2286,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0C Substantial equivalence empty",
+    "left": 473,
+    "right": 706,
+    "top": 2383,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§C1 Predicate and reference devices empty",
+    "left": 473,
+    "right": 706,
+    "top": 2462,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§C2 Substantial equivalence discussion and compari",
+    "left": 473,
+    "right": 706,
+    "top": 2559,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0D Design, manufacturing and labeling empty",
+    "left": 473,
+    "right": 706,
+    "top": 2692,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§D1 Design and manufacturing information empty",
+    "left": 473,
+    "right": 706,
+    "top": 2789,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§D2 Proposed labeling and instructions for use emp",
+    "left": 473,
+    "right": 706,
+    "top": 2886,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§D3 Reprocessing and reuse empty",
+    "left": 473,
+    "right": 706,
+    "top": 3001,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§D4 Sterilization empty",
+    "left": 473,
+    "right": 706,
+    "top": 3080,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§D5 Shelf life and packaging empty",
+    "left": 473,
+    "right": 706,
+    "top": 3141,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§D6 Benefits, risks and mitigation measures — risk",
+    "left": 473,
+    "right": 706,
+    "top": 3220,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0E Performance and safety testing empty",
+    "left": 473,
+    "right": 706,
+    "top": 3425,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E1 Biocompatibility empty",
+    "left": 473,
+    "right": 706,
+    "top": 3522,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E2 Software and firmware empty",
+    "left": 473,
+    "right": 706,
+    "top": 3583,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E3 Cybersecurity (FD&C Act section 524B, cyber de",
+    "left": 473,
+    "right": 706,
+    "top": 3662,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E4 Electromagnetic compatibility, electrical, mec",
+    "left": 473,
+    "right": 706,
+    "top": 3777,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E5 Bench performance testing empty",
+    "left": 473,
+    "right": 706,
+    "top": 3910,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E6 Animal performance testing empty",
+    "left": 473,
+    "right": 706,
+    "top": 4007,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E7 Clinical performance testing empty",
+    "left": 473,
+    "right": 706,
+    "top": 4104,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§E8 Human factors and usability empty",
+    "left": 473,
+    "right": 706,
+    "top": 4201,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0F Quality management empty",
+    "left": 473,
+    "right": 706,
+    "top": 4280,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§F1 Quality management system information empty",
+    "left": 473,
+    "right": 706,
+    "top": 4359,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§0G References and additional information empty",
+    "left": 473,
+    "right": 706,
+    "top": 4474,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§G1 References and bibliography empty",
+    "left": 473,
+    "right": 706,
+    "top": 4571,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "§G2 Additional information / amendment responses e",
+    "left": 473,
+    "right": 706,
+    "top": 4650,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Mark held",
+    "left": 400,
+    "right": 466,
+    "top": 7763,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Select a submission… 510(k) Premarket Notification",
+    "left": 245,
+    "right": 520,
+    "top": 8189,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Start tracking",
+    "left": 528,
+    "right": 574,
+    "top": 8189,
+    "reachableByScrolling": "page"
+   }
+  ]
+ },
+ "02-device-pma": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Day-100 0 Agency / NB queries",
+    "left": 264,
+    "right": 395,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Approvals Your pending e-sign · all projects",
+    "left": 395,
+    "right": 586,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Files Full filesystem",
+    "left": 586,
+    "right": 687,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Mark held",
+    "left": 400,
+    "right": 466,
+    "top": 3911,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Select a submission… 510(k) Premarket Notification",
+    "left": 245,
+    "right": 520,
+    "top": 4337,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Start tracking",
+    "left": 528,
+    "right": 574,
+    "top": 4337,
+    "reachableByScrolling": "page"
+   }
+  ]
+ },
+ "03-device-cer": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "04-device-diagnostics": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "NB / GSPR 0 Agency / NB queries",
+    "left": 296,
+    "right": 428,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Approvals Your pending e-sign · all projects",
+    "left": 428,
+    "right": 619,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Files Full filesystem",
+    "left": 619,
+    "right": 720,
+    "top": 145,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Mark held",
+    "left": 400,
+    "right": 466,
+    "top": 6241,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Select a submission… 510(k) Premarket Notification",
+    "left": 245,
+    "right": 520,
+    "top": 6667,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Start tracking",
+    "left": 528,
+    "right": 574,
+    "top": 6667,
+    "reachableByScrolling": "page"
+   }
+  ]
+ }
+}
