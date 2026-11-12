@@ -72,3 +72,41 @@ describe('Audit trail — the chain verdict', () => {
     expect(line.textContent).not.toMatch(/intact|returned no chain verdict/);
   });
 });
+
+/**
+ * GA-D5-05 (GA readiness map, 2026-11-10): the screen asked the ledger for its default 200 newest entries and
+ * presented that slice as the whole trail, so "E-sign" counted and listed only what fell in it, and a signature
+ * older than the newest 200 entries could not be found. The route serves up to 1,000 (`limit`).
+ */
+describe('Audit trail — the window it reads (GA-D5-05)', () => {
+  const row = (i: number, kind: string) => ({ ...ENTRY, id: `EVT-${i}`, kind, event: kind === 'esign' ? `Version approved (e-signature) ${i}` : `Vault document ingested ${i}` });
+  const serveRows = (rows: unknown[]) => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => ({
+      ok: true, status: 200,
+      json: async () => {
+        if (!String(url).startsWith('/api/audit-trail/ledger')) return { success: true, data: [] };
+        const limit = Number(new URL(String(url), 'http://x').searchParams.get('limit') ?? 200);
+        return { success: true, data: rows.slice(0, limit), meta: { chain: { store: 'audit_logs', ok: true, rowsChecked: rows.length, legacyRows: 0, sequencedRows: rows.length } } };
+      },
+    }));
+  };
+
+  it('finds an e-signature that is older than the newest 200 entries', async () => {
+    // 300 entries, newest first; the only signature is the 250th.
+    serveRows(Array.from({ length: 300 }, (_, i) => row(i + 1, i === 249 ? 'esign' : 'vault')));
+    render(<AuditTrail {...PROPS()} />);
+    expect(await screen.findByText(/300 entries — hash-chained/)).toBeTruthy();
+    expect(screen.getByText('Version approved (e-signature) 250')).toBeTruthy();
+    expect(screen.queryByTestId('audit-window-note')).toBeNull();
+  });
+
+  it('says so when the trail is longer than the window: the count is not stated as the whole trail', async () => {
+    serveRows(Array.from({ length: 1400 }, (_, i) => row(i + 1, 'vault')));
+    render(<AuditTrail {...PROPS()} />);
+    expect(await screen.findByText(/Newest 1,000 entries shown — hash-chained/)).toBeTruthy();
+    const note = screen.getByTestId('audit-window-note');
+    expect(note.textContent).toMatch(/newest 1,000 entries/);
+    expect(note.textContent).toMatch(/filters, their counts and the search read those entries only/);
+    expect(document.body.textContent).not.toMatch(/\b1,?000 entries — hash-chained/);
+  });
+});

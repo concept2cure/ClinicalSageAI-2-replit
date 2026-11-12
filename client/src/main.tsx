@@ -7,6 +7,9 @@ import './cspNonce';
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
 
+// The product's wording for a value a form left out ("Required"), as the server sets it.
+import '@shared/zod-messages';
+
 // The build stamp: which commit this bundle was built from, on the window and
 // one console line, so a running deployment is a checkable fact.
 import { announceBuild } from './buildStamp';

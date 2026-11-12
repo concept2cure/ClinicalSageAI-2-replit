@@ -72,6 +72,26 @@ describe('GET /signatures/by-target', () => {
     expect(res.body.data[0].binding_basis).toBe('transmitted-bundle-sha256');
   });
 
+  /*
+   * GA-D5-02 (GA readiness map, 2026-11-10). §11.70: a signature is bound to the record it signs. The binding is
+   * `bound_payload_digest`, and the read named its basis (`binding_basis`) without the digest itself, so a reader
+   * of the manifestation could see how a signature claimed to be bound and not to what. OQ-CMC-14 read the
+   * digest from the database for that reason ("no product read serves the bound digest").
+   */
+  it('serves the digest each signature is bound to, beside the basis that names how', async () => {
+    const digest = 'a'.repeat(64);
+    const query = vi.fn(async () => ({ rows: [{ ...governedRow, bound_payload_digest: digest }] }));
+    const res = await request(appWithPool(query)).get('/signatures/by-target?target=submission-transmittal%3A884');
+    expect(res.body.data[0]).toMatchObject({ binding_basis: 'transmitted-bundle-sha256', bound_payload_digest: digest });
+    expect(String((query.mock.calls[0] as unknown as [string])[0]), 'the read does not select the bound digest').toMatch(/es\.bound_payload_digest/);
+  });
+
+  it('the by-document read serves the same column', async () => {
+    const query = vi.fn(async () => ({ rows: [] }));
+    await request(appWithPool(query)).get('/signatures/12');
+    expect(String((query.mock.calls[0] as unknown as [string])[0])).toMatch(/bound_payload_digest/);
+  });
+
   it('scopes to the caller organization, and filters on the target', async () => {
     const query = vi.fn(async () => ({ rows: [] }));
     await request(appWithPool(query)).get('/signatures/by-target?target=ectd-sequence%3A21');
