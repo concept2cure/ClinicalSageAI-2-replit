@@ -1,0 +1,79 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T20:44:09.654Z",
+  "b": {
+    "row": "Commitments: 6 open · next due Mar 1, 2027",
+    "after": {
+      "stage": "Respond",
+      "headingTop": 48,
+      "focusedId": "pj-commitments-h",
+      "scrollTop": 0,
+      "topbarTop": 0
+    },
+    "assertions": {
+      "Respond is the open step": true,
+      "\"Commitments to the agency\" is on screen": true,
+      "it has focus": true,
+      "the shell did not move": true,
+      "no step makes the document scrollable": true
+    }
+  },
+  "c": [
+    {
+      "id": "aa9bf1c4-9b1a-4f04-87bf-f08dbe6d17a4",
+      "stored": "dmf",
+      "words": "DMF",
+      "shown": "DMF",
+      "ok": true
+    },
+    {
+      "id": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+      "stored": "csr",
+      "words": "Clinical study report",
+      "shown": "Clinical study report",
+      "ok": true
+    },
+    {
+      "id": "deb50e36-2c9e-4ae2-ac2b-13827bb4ae0d",
+      "stored": "ind_amendment",
+      "words": "IND amendment",
+      "shown": "IND amendment",
+      "ok": true
+    }
+  ],
+  "steps": [
+    {
+      "step": "Plan",
+      "scrollHeight": 900,
+      "clientHeight": 900
+    },
+    {
+      "step": "Evidence",
+      "scrollHeight": 900,
+      "clientHeight": 900
+    },
+    {
+      "step": "Author",
+      "scrollHeight": 900,
+      "clientHeight": 900
+    },
+    {
+      "step": "Review",
+      "scrollHeight": 900,
+      "clientHeight": 900
+    },
+    {
+      "step": "Submit",
+      "scrollHeight": 900,
+      "clientHeight": 900
+    },
+    {
+      "step": "Respond",
+      "scrollHeight": 900,
+      "clientHeight": 900
+    }
+  ],
+  "finishedAt": "2026-11-09T20:45:00.233Z",
+  "result": "PASS"
+}

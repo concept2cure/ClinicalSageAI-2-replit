@@ -202,15 +202,7 @@ received at least one dose of study medication.`;
 
     // Cleanup (optional)
     logger.info('\n=== Test Complete ===');
-    logger.info('\nTo test the full Drafting Service:');
-    logger.info(`curl -X POST http://localhost:5000/api/gcc/drafting/generate \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "prompt": "Summarize the adverse events from Study 101",
-    "promptType": "safety_analysis",
-    "entityFilters": {"STUDY_ID": "101", "DRUG_NAME": "Drug X"},
-    "options": {"prioritizeTables": true}
-  }'`);
+    logger.info('\nCited drafting is AnA batch_draft_sections; the GCC drafting route was retired (R1 S19, 2026-11-09).');
 
   } catch (error: any) {
     logger.error('Error:', error.message);

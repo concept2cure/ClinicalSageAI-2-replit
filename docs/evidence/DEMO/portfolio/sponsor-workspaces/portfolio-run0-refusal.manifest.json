@@ -1,0 +1,542 @@
+{
+  "pack": "portfolio",
+  "prefix": "[Demo · Portfolio]",
+  "outcome": "failed",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T19:12:48.967Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 129,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {
+        "client-workspace": 4,
+        "project": 2,
+        "vault-document": 4,
+        "authoring-document": 2,
+        "task": 6,
+        "csr-section-text": 11,
+        "authoring-comment": 4,
+        "authoring-comment-resolution": 1
+      },
+      "found": {}
+    },
+    "companies": [
+      {
+        "key": "varnhollow",
+        "name": "Varnhollow Oncology (fictional)",
+        "profile": "Clinical-stage oncology company developing VNH-310, a fictional humanized IgG1 monoclonal antibody for previously treated non-small cell lung cancer."
+      },
+      {
+        "key": "petrelline",
+        "name": "Petrelline Rare Therapeutics (fictional)",
+        "profile": "Rare-disease biologics company developing PTR-022, a fictional recombinant enzyme replacement therapy for late-onset Pompe disease."
+      },
+      {
+        "key": "quillmont",
+        "name": "Quillmont Immunology (fictional)",
+        "profile": "Immunology company developing QLM-118, a fictional oral small-molecule selective kinase inhibitor for ulcerative colitis."
+      },
+      {
+        "key": "halcyra",
+        "name": "Halcyra Vaccines (fictional)",
+        "profile": "Vaccine company developing HLY-09, a fictional adjuvanted recombinant RSV prefusion F protein vaccine for adults aged 60 and over."
+      }
+    ],
+    "clientWorkspaces": [
+      {
+        "key": "varnhollow",
+        "id": 53496,
+        "name": "Varnhollow Oncology (fictional demo)",
+        "slug": "varnhollow-oncology-portfolio-demo",
+        "created": true
+      },
+      {
+        "key": "petrelline",
+        "id": 53497,
+        "name": "Petrelline Rare Therapeutics (fictional demo)",
+        "slug": "petrelline-rare-therapeutics-portfolio-demo",
+        "created": true
+      },
+      {
+        "key": "quillmont",
+        "id": 53498,
+        "name": "Quillmont Immunology (fictional demo)",
+        "slug": "quillmont-immunology-portfolio-demo",
+        "created": true
+      },
+      {
+        "key": "halcyra",
+        "id": 53499,
+        "name": "Halcyra Vaccines (fictional demo)",
+        "slug": "halcyra-vaccines-portfolio-demo",
+        "created": true
+      }
+    ],
+    "project.a.vnh310-301": {
+      "stage": "a",
+      "stageLabel": "Planning — protocol and SAP in the Vault, CSR shell created",
+      "company": "Varnhollow Oncology (fictional)",
+      "protocolNumber": "VNH-310-301",
+      "clientWorkspace": {
+        "id": 53496,
+        "name": "Varnhollow Oncology (fictional demo)"
+      },
+      "projectId": "7a266309-5fc1-4c18-8438-8619b1b5e805",
+      "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "4406a56c-7416-4327-9ce5-6f7f47786e34",
+        "sha256": "a891d6baa41d8602b3946c3a8cb7b75dbf739f283074e0bb3c003e988e4e4b6f",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sap": {
+        "id": "1e03436e-bdb1-44f6-af11-132f526a119c",
+        "sha256": "17335034994a24bc53eff9f01dc2dea2b81803d3603e8fa766e43db0fdb18ab5",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "csrDocument": {
+        "id": "663b06c1-c3e9-4128-b571-eac7183b56e5",
+        "title": "[Demo · Portfolio] VNH-310-301 Clinical Study Report (ICH E3) — Varnhollow Oncology (fictional)",
+        "status": "draft",
+        "canEdit": true
+      }
+    },
+    "project.b.ptr022-301": {
+      "stage": "b",
+      "stageLabel": "Study conduct — enrolling; study design recorded, CSR shell waiting",
+      "company": "Petrelline Rare Therapeutics (fictional)",
+      "protocolNumber": "PTR-022-301",
+      "clientWorkspace": {
+        "id": 53497,
+        "name": "Petrelline Rare Therapeutics (fictional demo)"
+      },
+      "projectId": null,
+      "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+      "refused": {
+        "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+        "projectId": "3a0d3318-03dd-4497-9a34-761440301c81",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53497,
+        "reason": "refused — project 3a0d3318-03dd-4497-9a34-761440301c81 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again."
+      }
+    },
+    "project.c.qlm118-202": {
+      "stage": "c",
+      "stageLabel": "Database lock — clinical source in the data room, CSR not yet drafted",
+      "company": "Quillmont Immunology (fictional)",
+      "protocolNumber": "QLM-118-202",
+      "clientWorkspace": {
+        "id": 53498,
+        "name": "Quillmont Immunology (fictional demo)"
+      },
+      "projectId": null,
+      "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+      "refused": {
+        "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+        "projectId": "412badea-f1bf-406f-91e9-92314ed443df",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53498,
+        "reason": "refused — project 412badea-f1bf-406f-91e9-92314ed443df has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again."
+      }
+    },
+    "project.d.hly09-201": {
+      "stage": "d",
+      "stageLabel": "Drafting — narrative sections being written in the one editor",
+      "company": "Halcyra Vaccines (fictional)",
+      "protocolNumber": "HLY-09-201",
+      "clientWorkspace": {
+        "id": 53499,
+        "name": "Halcyra Vaccines (fictional demo)"
+      },
+      "projectId": null,
+      "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+      "refused": {
+        "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+        "projectId": "ef21f2b4-41c6-4e32-af92-c862746d4342",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53499,
+        "reason": "refused — project ef21f2b4-41c6-4e32-af92-c862746d4342 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again."
+      }
+    },
+    "project.e.vnh310-201": {
+      "stage": "e",
+      "stageLabel": "In review — all narrative written, reviewer comments open",
+      "company": "Varnhollow Oncology (fictional)",
+      "protocolNumber": "VNH-310-201",
+      "clientWorkspace": {
+        "id": 53496,
+        "name": "Varnhollow Oncology (fictional demo)"
+      },
+      "projectId": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+      "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "be03a93a-3c31-401b-a3a8-61b646c399e9",
+        "sha256": "36f4c2a909690cd2abd7c5bf186a02c9b8a491f54d2834702e472eaf4d336b6e",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "source": {
+        "id": "1f6ce6ec-86e1-465a-94f3-2b5d7aeb6e70",
+        "sha256": "772226c9d72a675a305cc8b6709de07400bf529c1c3bab5a3d3f7ffaf19c374b",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 8
+      },
+      "csrDocument": {
+        "id": "0a43e9e9-b55a-45f3-aa46-d8f62b0373b8",
+        "title": "[Demo · Portfolio] VNH-310-201 Clinical Study Report (ICH E3) — Varnhollow Oncology (fictional)",
+        "status": "draft",
+        "canEdit": true
+      },
+      "narrative": {
+        "headings": [
+          "titlePage",
+          "synopsis",
+          "introduction",
+          "objectives",
+          "plan",
+          "subjects",
+          "efficacy",
+          "safety",
+          "discussion",
+          "ethics",
+          "investigators"
+        ],
+        "written": 11,
+        "missing": [],
+        "sections": {
+          "titlePage": "1",
+          "synopsis": "2",
+          "introduction": "7",
+          "objectives": "8",
+          "plan": "9",
+          "subjects": "10",
+          "efficacy": "11",
+          "safety": "12",
+          "discussion": "13",
+          "ethics": "5",
+          "investigators": "6"
+        }
+      },
+      "comments": [
+        {
+          "id": "761a7d9c-fc9c-4c4d-8657-79ba3ca0d2de",
+          "heading": "efficacy",
+          "status": "open"
+        },
+        {
+          "id": "81eb63c2-aec0-4795-92d2-a873d5f605b3",
+          "heading": "safety",
+          "status": "open"
+        },
+        {
+          "id": "a0034553-9e8a-4a27-892e-243ff9eda887",
+          "heading": "discussion",
+          "status": "open"
+        },
+        {
+          "id": "2e4c0197-8e33-41d2-aa27-57ccda0c3e0d",
+          "heading": "synopsis",
+          "status": "resolved"
+        }
+      ]
+    },
+    "project.f.ptr022-102": {
+      "stage": "f",
+      "stageLabel": "Drafting complete — comments resolved, awaiting signature",
+      "company": "Petrelline Rare Therapeutics (fictional)",
+      "protocolNumber": "PTR-022-102",
+      "clientWorkspace": {
+        "id": 53497,
+        "name": "Petrelline Rare Therapeutics (fictional demo)"
+      },
+      "projectId": null,
+      "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+      "refused": {
+        "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+        "projectId": "cca22f86-489f-4b58-ba6b-2a5a8c5c8d79",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53497,
+        "reason": "refused — project cca22f86-489f-4b58-ba6b-2a5a8c5c8d79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again."
+      }
+    },
+    "project.g.qlm118-101": {
+      "stage": "g",
+      "stageLabel": "Ready to file — IND sequence 0000 open; filing the CSR to 5.3.5.1 waits for its scientific-review receipt",
+      "company": "Quillmont Immunology (fictional)",
+      "protocolNumber": "QLM-118-101",
+      "clientWorkspace": {
+        "id": 53498,
+        "name": "Quillmont Immunology (fictional demo)"
+      },
+      "projectId": null,
+      "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+      "refused": {
+        "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+        "projectId": "bddfa0d1-144f-40ee-a922-31a522648eec",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53498,
+        "reason": "refused — project bddfa0d1-144f-40ee-a922-31a522648eec has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again."
+      }
+    },
+    "project.h.hly09-101": {
+      "stage": "h",
+      "stageLabel": "Information-request scenario (fictional) — rehearsing an agency information request on the HLY-09-101 CSR; the CSR is not placed in IND sequence 0000",
+      "company": "Halcyra Vaccines (fictional)",
+      "protocolNumber": "HLY-09-101",
+      "clientWorkspace": {
+        "id": 53499,
+        "name": "Halcyra Vaccines (fictional demo)"
+      },
+      "projectId": null,
+      "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+      "refused": {
+        "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "projectId": "c7019221-64ae-46b6-b979-50fa0a122f79",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53499,
+        "reason": "refused — project c7019221-64ae-46b6-b979-50fa0a122f79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again."
+      }
+    },
+    "knownProductBehaviour": [
+      {
+        "where": "stage h project (Halcyra HLY-09-101), Records > Data Room sources",
+        "what": "Uploading the fictional letter to the data room triggers the product's quality-evidence capture (server/services/qms/project-evidence.ts). While the project sat in the organisation's own workspace it attached 21 quality records from other demo packs (Lumen deviations, audits, reviews, suppliers; a C2C-101 and an MDX NP-100 change control).",
+        "observedThisRun": "not read (stage h did not run)",
+        "action": "Reported to the product owner. Not hidden by the pack; observedThisRun is the data room as this run read it back."
+      }
+    ],
+    "notExecuted": [
+      {
+        "project": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+        "step": "formal review request",
+        "reason": "not executed — a formal review request needs a second organisation member as reviewer; the server refuses the author as their own reviewer (REVIEWER_IS_AUTHOR)"
+      }
+    ],
+    "refused": [
+      {
+        "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+        "projectId": "3a0d3318-03dd-4497-9a34-761440301c81",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53497,
+        "reason": "refused — project 3a0d3318-03dd-4497-9a34-761440301c81 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.",
+        "step": "project"
+      },
+      {
+        "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+        "projectId": "412badea-f1bf-406f-91e9-92314ed443df",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53498,
+        "reason": "refused — project 412badea-f1bf-406f-91e9-92314ed443df has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.",
+        "step": "project"
+      },
+      {
+        "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+        "projectId": "ef21f2b4-41c6-4e32-af92-c862746d4342",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53499,
+        "reason": "refused — project ef21f2b4-41c6-4e32-af92-c862746d4342 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.",
+        "step": "project"
+      },
+      {
+        "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+        "projectId": "cca22f86-489f-4b58-ba6b-2a5a8c5c8d79",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53497,
+        "reason": "refused — project cca22f86-489f-4b58-ba6b-2a5a8c5c8d79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.",
+        "step": "project"
+      },
+      {
+        "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+        "projectId": "bddfa0d1-144f-40ee-a922-31a522648eec",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53498,
+        "reason": "refused — project bddfa0d1-144f-40ee-a922-31a522648eec has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.",
+        "step": "project"
+      },
+      {
+        "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "projectId": "c7019221-64ae-46b6-b979-50fa0a122f79",
+        "foundWorkspaceId": 2,
+        "expectedWorkspaceId": 53499,
+        "reason": "refused — project c7019221-64ae-46b6-b979-50fa0a122f79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.",
+        "step": "project"
+      }
+    ],
+    "summary": {
+      "created": 34,
+      "found": 0,
+      "notExecuted": 3,
+      "refused": 6,
+      "workspaces": [
+        {
+          "key": "varnhollow",
+          "id": 53496,
+          "name": "Varnhollow Oncology (fictional demo)",
+          "projects": [
+            {
+              "stage": "a",
+              "id": "7a266309-5fc1-4c18-8438-8619b1b5e805",
+              "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC"
+            },
+            {
+              "stage": "e",
+              "id": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+              "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC"
+            }
+          ]
+        },
+        {
+          "key": "petrelline",
+          "id": 53497,
+          "name": "Petrelline Rare Therapeutics (fictional demo)",
+          "projects": [
+            {
+              "stage": "b",
+              "id": null,
+              "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC"
+            },
+            {
+              "stage": "f",
+              "id": null,
+              "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC"
+            }
+          ]
+        },
+        {
+          "key": "quillmont",
+          "id": 53498,
+          "name": "Quillmont Immunology (fictional demo)",
+          "projects": [
+            {
+              "stage": "c",
+              "id": null,
+              "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC"
+            },
+            {
+              "stage": "g",
+              "id": null,
+              "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC"
+            }
+          ]
+        },
+        {
+          "key": "halcyra",
+          "id": 53499,
+          "name": "Halcyra Vaccines (fictional demo)",
+          "projects": [
+            {
+              "stage": "d",
+              "id": null,
+              "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC"
+            },
+            {
+              "stage": "h",
+              "id": null,
+              "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC"
+            }
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "stage": "a",
+          "id": "7a266309-5fc1-4c18-8438-8619b1b5e805",
+          "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC",
+          "clientWorkspaceId": 53496,
+          "csrDocumentId": "663b06c1-c3e9-4128-b571-eac7183b56e5"
+        },
+        {
+          "stage": "b",
+          "id": null,
+          "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+          "clientWorkspaceId": 53497,
+          "csrDocumentId": null
+        },
+        {
+          "stage": "c",
+          "id": null,
+          "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+          "clientWorkspaceId": 53498,
+          "csrDocumentId": null
+        },
+        {
+          "stage": "d",
+          "id": null,
+          "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+          "clientWorkspaceId": 53499,
+          "csrDocumentId": null
+        },
+        {
+          "stage": "e",
+          "id": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+          "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+          "clientWorkspaceId": 53496,
+          "csrDocumentId": "0a43e9e9-b55a-45f3-aa46-d8f62b0373b8"
+        },
+        {
+          "stage": "f",
+          "id": null,
+          "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+          "clientWorkspaceId": 53497,
+          "csrDocumentId": null
+        },
+        {
+          "stage": "g",
+          "id": null,
+          "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+          "clientWorkspaceId": 53498,
+          "csrDocumentId": null
+        },
+        {
+          "stage": "h",
+          "id": null,
+          "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+          "clientWorkspaceId": 53499,
+          "csrDocumentId": null
+        }
+      ]
+    }
+  },
+  "notes": [
+    "FICTIONAL CSR portfolio: 4 invented sponsor companies, each its own client workspace (\"(fictional demo)\"), 8 CSR projects at stages a–h. SYNTHETIC demonstration data, fictional sponsor; not clinical evidence. No workspace is marked the organisation's default and no organisation setting is changed.",
+    "FAILED: 6 portfolio project(s) refused: found by title outside their sponsor's workspace and not moved (manifest: refused). The other studies were seeded."
+  ],
+  "finishedAt": "2026-11-09T19:13:08.454Z"
+}

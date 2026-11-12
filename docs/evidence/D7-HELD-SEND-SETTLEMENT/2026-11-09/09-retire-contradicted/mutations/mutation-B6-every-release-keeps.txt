@@ -1,0 +1,8 @@
+MUTATION B6-every-release-keeps in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T17:48:25.221595Z): replaced [        AND (COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
+] with [        AND (true
+]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > a release with no receipt kept is still not a bound production send, so it is retired 72ms
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > a release with a kept entry not verified is still not a bound production send, so it is retired 34ms
+      Tests  2 failed | 28 skipped (30)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 55e32cb06b0818159c445f129d94ddbe4da95a7c45e681bd0365f0a4ea6fbdbe (expected 55e32cb06b0818159c445f129d94ddbe4da95a7c45e681bd0365f0a4ea6fbdbe)

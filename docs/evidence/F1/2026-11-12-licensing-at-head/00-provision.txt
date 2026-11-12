@@ -1,0 +1,5 @@
+# Database from empty at a9b5af187: scripts/db/provision-test-db.sh (C2C_TESTDB=c2c_lic_1112)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 16 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 107 newly-provisioned table(s); 0 rebuilt to the canonical shape; 27 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  ✓ 474/474 migration files applied

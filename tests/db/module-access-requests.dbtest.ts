@@ -581,6 +581,8 @@ describe('decisions by the org admin', () => {
       organizationId: ORG_A,
       decidedByMasterAdmin: false,
     });
+    // An organisation administrator's answer is not a platform licensing decision.
+    expect(audit[0].details.masterAdminAction).toBeUndefined();
   });
 
   it('approve clears a lapsed trial date instead of re-enabling an already-expired grant', async () => {
@@ -810,6 +812,10 @@ describe('platform owner across workspaces (system-scoped mount)', () => {
       granted: true,
       organizationId: ORG_B,
       decidedByMasterAdmin: true,
+      // The owner's Decisions record selects on this token (licensing-history.ts).
+      // Without it this approval, which turned a module on, never appeared there
+      // (running app, 2026-11-12).
+      masterAdminAction: 'access_request.approved',
     });
   });
 
@@ -1066,6 +1072,8 @@ describe('queue filters, a long queue, input limits and the owner in their own w
       reason,
       organizationId: ORG_OWNER,
       decidedByMasterAdmin: false,
+      // Still the owner's decision, so still in the owner's Decisions record.
+      masterAdminAction: 'access_request.declined',
     });
   });
 

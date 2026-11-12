@@ -1,0 +1,252 @@
+# RED: run 2026-11-09T20:50:16Z before any implementation change (AnaVerbs.tsx, MarketSupportLine.tsx, submissions.ts at HEAD)
+# git diff --stat of implementation files (expect empty):
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-09T20:50:19.584Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T20:50:19.585Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-09T20:50:19.586Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection successful
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > shows the catalog description and the selected market facts as visible text 167ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > asks the catalog question about the chosen filing without changing the selection 220ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps author-only limits in the details instead of claiming a sequence or transmit 81ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > does not present parent-application build facts as facts about an unclaimed filing 92ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > reports missing build fields without discarding the existing offer or inventing facts 69ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps Ask AnA absent for callers with no question callback 51ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > finds an offered filing using wording present only in its description 87ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > uses the same description rule for refused filings and retains the refusal reason 123ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > a refused filing with a reason of its own shows that reason, not the market's general one 84ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1126ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers exact Canada device authoring while medicinal applications retain their refusal 105ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 91ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 76ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 9ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 76ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a tab shows the filings built and validated here first; the rest are one press away 173ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a chosen filing among the rest is never hidden behind the press 407ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a search lists everything it matches, built here or not, with no press 62ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence 96ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a Type A meeting package is its own class: authored here, and says so 78ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the harmonised documents are offered for authoring under ICH, asked of the server by their own market 128ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 126ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 212ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 179ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 79ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > shows the selected filing lifecycle as a clearly labelled reference 146ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > keeps the segment visible on a search result across all segments 67ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > finds a filing by the existing workflow label 107ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker reads what the platform offers once, not on every open > a second open within minutes reads nothing again, and both show the same filings 162ms
+ × client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker reads what the platform offers once, not on every open > the first open asks at most two reads, one for every type and one for the pairs the first did not name 83ms
+   → /api/submissions/market-support?applicationType=510k
+/api/submissions/market-support?applicationType=anda
+/api/submissions/market-support?applicationType=annual_report
+/api/submissions/market-support?applicationType=bla_annual_report: expected 87 to be less than or equal to 2
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-11-09T20:50:27.338Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T20:50:27.339Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-11-09T20:50:27.339Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-11-09T20:50:27.646Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline
+{
+  "timestamp": "2026-11-09T20:50:33.133Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 21ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 7ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > refuses a request with no application type 3ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline 4ms
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > answers every listed type by type, each exactly as its own single read answers it, from one pack read 10ms
+   → expected [ Array(3) ] to deeply equal [ Array(3) ]
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > states each listed type at each listed market, as the market was asked 4ms
+   → Cannot read properties of undefined (reading 'csr')
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > repeats no type and no market 3ms
+   → expected undefined to deeply equal [ 'nda', 'maa' ]
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > refuses a type the platform does not know, naming it, before any read 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > takes every type the platform knows in one read, and refuses a list longer than 100 entries before any read 5ms
+   → expected 400 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > keeps the single-type answer exactly as it was for every existing caller 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > answers every listed type by type, each exactly as its own single read answers it, from one pack read
+AssertionError: expected [ Array(3) ] to deeply equal [ Array(3) ]
+
+- Expected
++ Received
+
+  [
+-   "applicationTypes",
++   "applicationType",
+    "asOf",
+-   "byType",
++   "markets",
+  ]
+
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:95:42
+     93|     const res = await request(app).get('/api/submissions/market-suppor…
+     94|     expect(res.status).toBe(200);
+     95|     expect(Object.keys(res.body).sort()).toEqual(['applicationTypes', …
+       |                                          ^
+     96|     expect(res.body.applicationTypes).toEqual(['nda', 'maa', 'csr']);
+     97|     expect(Object.keys(res.body.byType)).toEqual(['nda', 'maa', 'csr']…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > states each listed type at each listed market, as the market was asked
+TypeError: Cannot read properties of undefined (reading 'csr')
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:110:23
+    108|     expect(res.status).toBe(200);
+    109|     for (const t of ['csr', 'mdr']) {
+    110|       expect(res.body.byType[t].map((m: { market: string }) => m.marke…
+       |                       ^
+    111|     }
+    112|     expect(res.body.byType.csr[0].offer.tier).toBe('author_only');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > repeats no type and no market
+AssertionError: expected undefined to deeply equal [ 'nda', 'maa' ]
+
+- Expected:
+[
+  "nda",
+  "maa",
+]
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:119:39
+    117|     const res = await request(app).get('/api/submissions/market-suppor…
+    118|     expect(res.status).toBe(200);
+    119|     expect(res.body.applicationTypes).toEqual(['nda', 'maa']);
+       |                                       ^
+    120|     expect(res.body.byType.nda).toHaveLength(1);
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > refuses a type the platform does not know, naming it, before any read
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:125:24
+    123|   it('refuses a type the platform does not know, naming it, before any…
+    124|     const res = await request(app).get('/api/submissions/market-suppor…
+    125|     expect(res.status).toBe(400);
+       |                        ^
+    126|     expect(res.body.error.code).toBe('VALIDATION');
+    127|     expect(res.body.error.message).toContain('not_a_type');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > takes every type the platform knows in one read, and refuses a list longer than 100 entries before any read
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:133:24
+    131|   it('takes every type the platform knows in one read, and refuses a l…
+    132|     const all = await request(app).get(`/api/submissions/market-suppor…
+    133|     expect(all.status).toBe(200);
+       |                        ^
+    134|     expect(Object.keys(all.body.byType).sort()).toEqual([...VALID_PROG…
+    135|     expect(db.query).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker reads what the platform offers once, not on every open > the first open asks at most two reads, one for every type and one for the pairs the first did not name
+AssertionError: /api/submissions/market-support?applicationType=510k
+/api/submissions/market-support?applicationType=anda
+/api/submissions/market-support?applicationType=annual_report
+/api/submissions/market-support?applicationType=bla_annual_report: expected 87 to be less than or equal to 2
+ ❯ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx:430:56
+    428|     await waitFor(() => expect(document.querySelectorAll('button.rpk-t…
+    429|     const paths = apiRequest.mock.calls.map((c) => String(c[1])).filte…
+    430|     expect(paths.length, paths.slice(0, 4).join('\n')).toBeLessThanOrE…
+       |                                                        ^
+    431|   });
+    432| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 34 passed (40)
+   Start at  20:50:17
+   Duration  15.67s (transform 7.03s, setup 140ms, import 10.37s, tests 4.64s, environment 317ms)
+

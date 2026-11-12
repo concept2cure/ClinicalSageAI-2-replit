@@ -1,0 +1,5 @@
+MUTATION C3M07-not-rejudged-under-lock in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T19:27:00.636802Z): replaced [            reopenableNow(rules, await checkedReopen(rules, q, now, ctx.organizationId), signed);] with [            void now;]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > judged again under the lock: a sequence sent again after the first read is refused, the signature void 395ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb (expected 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb)

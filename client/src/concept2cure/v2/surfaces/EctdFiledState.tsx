@@ -58,6 +58,8 @@ export interface FiledSequenceState {
    * that predates it, which read compiles only.
    */
   basis?: 'transmit' | 'compiles' | null;
+  /** P-99 C2: a record put on record after the send, read back from the package it sent, and when. */
+  restored?: { how: 'read-back'; on: string } | null;
 }
 export interface FiledStateView {
   submissionId: number | null;
@@ -126,6 +128,15 @@ export function compilesLine(sequences: FiledSequenceState[]): string | null {
   if (fromSends.length === 0) return compiles;
   const s = named(fromSends);
   return `${s.subject} ${s.is} read from what ${s.it} sent; ${compiles}`;
+}
+
+/** P-99 C2: the sequences whose record was read back from the package each sent, after the send, and when; or null. */
+export function restoredLine(sequences: FiledSequenceState[]): string | null {
+  const day = (iso: string) => (Number.isFinite(Date.parse(iso))
+    ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : 'an unrecorded day');
+  const said = sequences.filter((s) => s.filed && s.basis === 'transmit' && s.restored?.how === 'read-back')
+    .map((s) => `Sequence ${s.sequenceNumber} is read from what it sent (read back from the package it sent, on ${day(s.restored!.on)}).`);
+  return said.length ? said.join(' ') : null;
 }
 
 /**
@@ -233,10 +244,12 @@ function FiledStateBody({ view }: { view: FiledStateView }) {
     modules.set(m, [...(modules.get(m) ?? []), l]);
   }
   const compiles = compilesLine(view.sequences);
+  const restored = restoredLine(view.sequences);
   return (
     <>
       <p style={{ fontSize: 12, margin: 0, padding: '10px 10px 0' }}>
         {leadLine(view)}
+        {restored ? ` ${restored}` : ''}
         {compiles ? ` ${compiles}` : ''}
         {view.sequences.length > 0 ? ` ${sequencesLine(view.sequences)}` : ''}
       </p>

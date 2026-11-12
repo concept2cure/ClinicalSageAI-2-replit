@@ -1,0 +1,5 @@
+MUTATION C3M19-reopened-words-dropped in client/src/concept2cure/v2/gatewayLabels.ts (on the final code and tests, 2026-11-09T19:06:45.647878Z): replaced [  s.reopenedBy ? ` · re-opened on FDA's answer, by signature, ${heldSendDay(s.reopenedBy.at ?? null) ?? 'an unrecorded day'}` : '';] with [  '';]
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: signed acts said on the transmissions row (P-92 C3, C4) > a settlement re-opened on FDA's answer says so on its row 229ms
+      Tests  1 failed | 13 skipped (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 6ceedde3469d13502e1038a6a074388b7042c5616386e51c6f0b67e4df989388 (expected 6ceedde3469d13502e1038a6a074388b7042c5616386e51c6f0b67e4df989388)

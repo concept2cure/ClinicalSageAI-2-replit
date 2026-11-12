@@ -1,0 +1,9 @@
+MUTATION C4M17-door-any-region in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T18:29:50.293142Z): replaced [t.dispatchStatus === 'sent' && t.route.ok && t.route.region === 'fda' && <TechnicalRejection] with [t.dispatchStatus === 'sent' && t.route.ok && <TechnicalRejection]
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is pending (region fda) 85ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is transmitting (region fda) 19ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is acknowledged (region fda) 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is rejected (region fda) 16ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is sent (region ema) 26ms
+      Tests  1 failed | 4 passed | 11 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 3c221ce132a62982df2f7ee0033b533f3592a487eb898937c0d43cc2bcea0632 (expected 3c221ce132a62982df2f7ee0033b533f3592a487eb898937c0d43cc2bcea0632)

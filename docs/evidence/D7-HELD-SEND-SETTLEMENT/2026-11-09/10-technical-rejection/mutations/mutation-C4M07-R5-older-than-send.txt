@@ -1,0 +1,7 @@
+MUTATION C4M07-R5-older-than-send in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T18:28:17.376755Z): replaced [  if (Date.parse(String(meta.created_at)) < Date.parse(sentAt)) {
+    return { refusal: `This document was in the Vault before this send was made, so it cannot be FDA's Ack3] with [  if (false) {
+    return { refusal: `This document was in the Vault before this send was made, so it cannot be FDA's Ack3]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 the Ack3 older than the send is refused before signing 375ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 f7aae4ad66646ce24ca7040d469b19cd5d8be21d3a8089b0a988a66eeeadc383 (expected f7aae4ad66646ce24ca7040d469b19cd5d8be21d3a8089b0a988a66eeeadc383)

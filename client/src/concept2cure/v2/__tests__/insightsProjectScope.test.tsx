@@ -84,6 +84,6 @@ describe('Insights — the landing says how many reports can be run, and opens t
     fireEvent.click(within(line).getByRole('button', { name: 'Open the catalog' }));
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Catalog' }).getAttribute('aria-selected')).toBe('true'));
     // The same number the catalog states over its own cards: one count, not two.
-    expect(screen.getByText(/available to run/).textContent).toContain(`${said![1]} available to run`);
+    expect(screen.getByText(/can be run now/).textContent).toContain(`${said![1]} can be run now`);
   });
 });

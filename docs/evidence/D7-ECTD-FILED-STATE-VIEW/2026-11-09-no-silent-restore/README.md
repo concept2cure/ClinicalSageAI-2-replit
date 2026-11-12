@@ -56,14 +56,26 @@ rehearsal checks and before the type check, the assembly and the record. It read
 | `mutation-2-pending-refused-too` | the pending case fails |
 | `mutation-3-rehearsal-refused-too` | the rehearsal case fails |
 | `mutation-4-in-flight-not-refused` | the transmitting case fails |
+| `real-postgres/` | added 2026-11-09 (the correction under "Not done here"): the design's real-PostgreSQL case, its runs and its red, and the pre-deploy query run on a throwaway database |
 
 The test is `tests/routes/ectd-compile-sent-sequence.test.ts`.
 
 ## Not done here, and why
 
 - **The design's real-PostgreSQL case** (`tests/db/ectd-filed-state-view.dbtest.ts`, as `app_service` with
-  `RLS_ENFORCE=on`) was not added. This container has the `psql` client but no PostgreSQL server, so it could not be
-  seen to run, and an unrun test is not evidence. It is owed, together with C2's database cases.
+  `RLS_ENFORCE=on`): **corrected 2026-11-09.** This line said the case was not added because "this container has the
+  `psql` client but no PostgreSQL server". That was wrong: a PostgreSQL 16 server was available, as P-86's README
+  found for the same claim. The case is now added and run, in a commit of its own (`real-postgres/`):
+  - **The case:** a sent sequence with one placed leaf and no compile. Through the real compile route, it is refused
+    409 `ECTD_SEQUENCE_ON_FILE` in the server's words. `ectd_compilations` gets no row for the organisation, and the
+    filed-state view answers exactly as it did before the compile was asked (the sequence not filed).
+  - **Where:** a throwaway database provisioned as CI provisions it (`scripts/db/install-fresh.mjs`, then
+    `scripts/db/deploy-migrate.mjs`), PostgreSQL 16.15, as `app_service` with `RLS_ENFORCE=on`.
+  - **Runs:** before the case, 7 of 7 (`baseline-7-of-7.txt`); with it, 8 of 8 (`green.txt`).
+  - **Its red:** C1's code landed before this case existed, so the case could not be red first. With the refusal's
+    call removed from the route, the case is red: the route goes on to compile (`mutation-refusal-dropped.txt`,
+    driver `p99-dbmut.py`, the file restored by SHA-256).
+  - C2's database cases stay owed with C2.
 - **The client case** the design lists for `ectdCompile.test.tsx` (the toast carries the server's sentence) was not
   added. The screen already renders the server's message for a refusal. Its two compile tests ran green above.
 - **Pre-deploy, read-only, on each deployed database: sequences already restored silently before this change.** The
@@ -72,7 +84,13 @@ The test is `tests/routes/ectd-compile-sent-sequence.test.ts`.
   - It is written against the columns the code writes: `ectd_compilations` (`organization_id`, `submission_id`,
     `sequence_number`, `compilation_type`, `compiled_at`) and `audit_logs` (`tenant_id`, `action`, `record_id`,
     `occurred_at`).
-  - It was **not run here**, because there is no database in this container.
+  - It was **not run here**, because there is no database in this container. *Corrected 2026-11-09:* there was one.
+    The query has now been run once on the throwaway database above, read-only:
+    - it parses and runs against the schema a deployment builds (`pre-deploy-query-on-throwaway.txt`, 0 rows);
+    - in a transaction rolled back, it lists a sent sequence whose only compile was made after its transmit, and not
+      one compiled before it (`pre-deploy-query-finds-a-silent-restore.txt`).
+
+    Its run on each deployed database is still owed, and still precedes the deploy.
   - Each row it returns is told to the founder (design §7 item 2). A sequence whose transmit recorded its manifest is
     read from that record and was never at risk, so the list may include such rows, and each is checked.
 

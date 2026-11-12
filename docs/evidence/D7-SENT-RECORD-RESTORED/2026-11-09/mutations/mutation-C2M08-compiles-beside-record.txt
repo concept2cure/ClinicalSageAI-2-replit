@@ -1,0 +1,5 @@
+MUTATION C2M08-compiles-beside-record in server/services/ectd/prior-sequence-loader.ts (on the final code and tests, 2026-11-09T21:16:35.472841Z): replaced [    return [{ sequence_number: seq, leaf_manifest: record, basis: 'transmit', restored_on: typeof derivedAt === 'string' ? derivedAt : null }];] with [    return [{ sequence_number: seq, leaf_manifest: record, basis: 'transmit', restored_on: typeof derivedAt === 'string' ? derivedAt : null }, ...read.compiles.map((c) => ({ sequence_number: seq, leaf_manifest: c.leaf_manifest, basis: 'compiles' as const }))];]
+ × server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T6 a window send is read back: the record on its row, one chained row, and the fold reads it as sent 1314ms
+      Tests  1 failed | 14 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 13277e8ad7463859051ede62e61e5dde007c63abb9f0bcb2b00054c1defa8df8 (expected 13277e8ad7463859051ede62e61e5dde007c63abb9f0bcb2b00054c1defa8df8)

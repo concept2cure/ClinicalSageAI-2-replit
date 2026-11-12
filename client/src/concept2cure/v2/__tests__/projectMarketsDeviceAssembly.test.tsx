@@ -26,6 +26,9 @@ const PATHWAYS = [
   { programType: 'PMA', productType: 'device', door: DEVICE_DOORS.pathway.pma.assembly, surface: 'device-pma' },
   { programType: 'MDR', productType: 'device', door: DEVICE_DOORS.pathway.mdr.assembly, surface: 'device-cer' },
   { programType: 'IVDR', productType: 'ivd', door: DEVICE_DOORS.pathway.ivdr.assembly, surface: 'device-diagnostics' },
+  /* P-114 item 4 (2026-11-09, MDX journey M7): a De Novo is assembled on the eSTAR the 510(k) screen already
+     produces for a De Novo project. Written as words, so a door that loses them fails. */
+  { programType: 'de_novo', productType: 'device', door: 'Assemble the De Novo eSTAR', surface: 'device-510k' },
 ] as const;
 const PATHWAY_NAMES = Object.values(DEVICE_DOORS.pathway).flatMap((p) => [p.assembly, p.strategy]);
 const pathwayButtons = () => screen.queryAllByRole('button').filter((b) => PATHWAY_NAMES.some((name) => b.textContent?.includes(name)));
@@ -67,7 +70,7 @@ describe('ProjectMarkets — a device project’s filing assembly', () => {
 
   it.each([
     ['a project not yet read', null, true],
-    ['a pathway with no feature (De Novo)', { ...PROJECT, program_type: 'de_novo' }, true],
+    ['a route Plan does not record (HDE)', { ...PROJECT, program_type: 'hde' }, true],
     ['a device project that records no pathway', { ...PROJECT, program_type: null, regulatory_path: null }, true],
     ['a project the step does not treat as a device filing', PROJECT, false],
   ] as const)('%s is given no door and no words', (_, project, deviceFiling) => {

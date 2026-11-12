@@ -1,0 +1,24 @@
+s13 red: server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts on trunk 51c52751e (the parent of this change), 2026-11-09T19:52Z
+ × server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > POST /m2/nonclinical is no longer registered 
+ × server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > POST /m2/clinical is no longer registered 
+ × server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > POST /m2/clinical-overview is no longer registered 
+ × server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > POST /csr/tabulate is no longer registered 
+ × server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > POST /validate/hardened is no longer registered 
+ × server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > the audit helper written only for them is gone 
+ ✓ server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > the replacement is reached: a run from the program's records, sent by the run controls 
+ ✓ server/routes/__tests__/orchestrator-request-body-builders-retired.test.ts > S13: the orchestrator's request-body builders are retired > the run still composes with the same builders, over stored inputs 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '/**\n * Submission-Package Orchestrat…' not to match /router\.post\(\s*'\/m2\/nonclinica…/m2\
+    let continuationError: string | undefined;
+AssertionError: expected '/**\n * Submission-Package Orchestrat…' not to match /router\.post\(\s*'\/m2\/clinical'/m2\
+    let continuationError: string | undefined;
+AssertionError: expected '/**\n * Submission-Package Orchestrat…' not to match /router\.post\(\s*'\/m2\/clinical-o…/m2\
+    let continuationError: string | undefined;
+AssertionError: expected '/**\n * Submission-Package Orchestrat…' not to match /router\.post\(\s*'\/csr\/tabulate'/csr\
+    let continuationError: string | undefined;
+AssertionError: expected '/**\n * Submission-Package Orchestrat…' not to match /router\.post\(\s*'\/validate…/validate\
+    let continuationError: string | undefined;
+AssertionError: expected '/**\n * Submission-Package Orchestrat…' not to match /auditOrchestratorAccess|orchestrator_…/
+    let continuationError: string | undefined;
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)

@@ -1,0 +1,40 @@
+# LINT: npx eslint on each changed file, working tree vs. git show HEAD:<file> (same config, via --stdin-filename) (2026-11-09T20:48:41Z)
+
+client/src/concept2cure/v2/styles/project-home-v2.css: CSS; npx eslint reports it as ignored/unmatched by this repo's config (shown below), so no count to compare. CSS gates run instead: ci:check-shell-css-collisions OK (22, baseline 22), ci:check-css-selector-shadowing OK (0 new), ci:undefined-css-classes OK
+  
+  /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/styles/project-home-v2.css
+    0:0  warning  File ignored because no matching configuration was supplied
+  
+  ✖ 1 problem (0 errors, 1 warning)
+  
+client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+  HEAD:         0 errors, 6 warnings
+  working tree: 0 errors, 6 warnings
+client/src/concept2cure/v2/surfaces/programSequence.ts
+  HEAD:         0 errors, 0 warnings
+  working tree: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/projectHomeFilingCardCss.test.ts
+  HEAD:         (new file, no HEAD version) 0 errors, 0 warnings
+  working tree: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx
+  HEAD:         0 errors, 0 warnings
+  working tree: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx
+  HEAD:         0 errors, 0 warnings
+  working tree: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx
+  HEAD:         0 errors, 0 warnings
+  working tree: 0 errors, 0 warnings
+
+# detail (working tree)
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+   434:1   warning  Function 'DataRoom' has too many lines (322). Maximum allowed is 100          max-lines-per-function
+   434:1   warning  Function 'DataRoom' has a complexity of 68. Maximum allowed is 15             complexity
+   676:1   warning  File has too many lines (1800). Maximum allowed is 500                        max-lines
+  1798:1   warning  Function 'ProjectWorkspace' has too many lines (430). Maximum allowed is 100  max-lines-per-function
+  1798:1   warning  Function 'ProjectWorkspace' has a complexity of 184. Maximum allowed is 15    complexity
+  1994:33  warning  Arrow function has a complexity of 52. Maximum allowed is 15                  complexity
+
+✖ 6 problems (0 errors, 6 warnings)
+

@@ -1,0 +1,23 @@
+# LINT: 2026-11-09T21:08:18Z. Per file: eslint in the working tree vs. git show HEAD:<file> linted under the same filename (--stdin --stdin-filename). [line:rule] lists each problem.
+client/src/concept2cure/v2/surfaces/AnaVerbs.tsx
+    HEAD: errors=0 warnings=2 [160:max-lines-per-function 160:complexity]
+    now:  errors=0 warnings=2 [182:max-lines-per-function 182:complexity]
+server/routes/submissions.ts
+    HEAD: errors=0 warnings=1 [633:max-lines]
+    now:  errors=0 warnings=1 [644:max-lines]
+client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+    HEAD: errors=0 warnings=0
+    now:  errors=0 warnings=0
+server/routes/__tests__/submissions-market-support.test.ts
+    HEAD: errors=0 warnings=0
+    now:  errors=0 warnings=0
+client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx
+    HEAD: errors=0 warnings=0
+    now:  errors=0 warnings=0
+client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx
+    HEAD: errors=0 warnings=0
+    now:  errors=0 warnings=0
+client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx
+    HEAD: errors=0 warnings=0
+    now:  errors=0 warnings=0
+# Result: no new error or warning in any changed file. submissions.ts keeps its one pre-existing max-lines warning (file length); AnaVerbs.tsx keeps its two pre-existing RegistryPicker warnings (length, complexity), shifted down by the added helper.

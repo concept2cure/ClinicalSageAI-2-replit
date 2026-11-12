@@ -1,0 +1,109 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "who": "ana.author@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "sequences": {
+    "a": {
+      "sub": "20",
+      "id": "36",
+      "n": "0000"
+    },
+    "b": {
+      "sub": "18",
+      "id": "31",
+      "n": "0001"
+    }
+  },
+  "browser": "141.0.7390.37",
+  "screens": {
+    "c2-dispatch-after-1440-light": {
+      "file": "c2-dispatch-after-1440-light.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-card-1440-light": {
+      "file": "c2-card-1440-light.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": "On file at the agencythrough sequence 00003 documents are on file, read from what each sequence sent. Sequence 0000 is read from what it sent (read back from the package it sent, on 9 November 2026). Includes 0000 (sent to the agency).Module 1SectionDocumentHeld in sequenceActm1.2Cover letter (walk stand-in)m1/us/1-2/cover-letter.pdf0000newModule 2SectionDocumentHeld in sequenceAct2.5Clinical overview (walk stand-in)m2/2-5/clinical-overview.pdf0000newModule 3SectionDocumentHeld in sequenceAct3.2.S.4.2Analytical procedures (walk stand-in)m3/3-2-s-4-2/analytical-procedures.pdf0000new",
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-dispatch-after-1440-dark": {
+      "file": "c2-dispatch-after-1440-dark.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-card-1440-dark": {
+      "file": "c2-card-1440-dark.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": "On file at the agencythrough sequence 00003 documents are on file, read from what each sequence sent. Sequence 0000 is read from what it sent (read back from the package it sent, on 9 November 2026). Includes 0000 (sent to the agency).Module 1SectionDocumentHeld in sequenceActm1.2Cover letter (walk stand-in)m1/us/1-2/cover-letter.pdf0000newModule 2SectionDocumentHeld in sequenceAct2.5Clinical overview (walk stand-in)m2/2-5/clinical-overview.pdf0000newModule 3SectionDocumentHeld in sequenceAct3.2.S.4.2Analytical procedures (walk stand-in)m3/3-2-s-4-2/analytical-procedures.pdf0000new",
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-dispatch-after-390-light": {
+      "file": "c2-dispatch-after-390-light.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-card-390-light": {
+      "file": "c2-card-390-light.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": "On file at the agencythrough sequence 00003 documents are on file, read from what each sequence sent. Sequence 0000 is read from what it sent (read back from the package it sent, on 9 November 2026). Includes 0000 (sent to the agency).Module 1SectionDocumentHeld in sequenceActm1.2Cover letter (walk stand-in)m1/us/1-2/cover-letter.pdf0000newModule 2SectionDocumentHeld in sequenceAct2.5Clinical overview (walk stand-in)m2/2-5/clinical-overview.pdf0000newModule 3SectionDocumentHeld in sequenceAct3.2.S.4.2Analytical procedures (walk stand-in)m3/3-2-s-4-2/analytical-procedures.pdf0000new",
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-dispatch-after-390-dark": {
+      "file": "c2-dispatch-after-390-dark.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-card-390-dark": {
+      "file": "c2-card-390-dark.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": null,
+      "card": "On file at the agencythrough sequence 00003 documents are on file, read from what each sequence sent. Sequence 0000 is read from what it sent (read back from the package it sent, on 9 November 2026). Includes 0000 (sent to the agency).Module 1SectionDocumentHeld in sequenceActm1.2Cover letter (walk stand-in)m1/us/1-2/cover-letter.pdf0000newModule 2SectionDocumentHeld in sequenceAct2.5Clinical overview (walk stand-in)m2/2-5/clinical-overview.pdf0000newModule 3SectionDocumentHeld in sequenceAct3.2.S.4.2Analytical procedures (walk stand-in)m3/3-2-s-4-2/analytical-procedures.pdf0000new",
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {}
+}
