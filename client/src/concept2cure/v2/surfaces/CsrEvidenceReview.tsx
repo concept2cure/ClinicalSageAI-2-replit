@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { capturedActorHeaders } from '@/utils/authToken';
+import { csrHeadingOnlySectionIds, csrSectionHoldsText } from '@shared/authoring/csr-scientific-review';
 import type { RetainedScientificRun, ScientificReviewSubmission } from '@shared/authoring/csr-scientific-review';
 import type { AuthoringReviewContext } from '@shared/authoring/peer-review';
 import {
@@ -218,14 +219,22 @@ function SectionStatement({ m, s, anyMapped }: { m: EvidenceMap; s: SavedSection
   </div>;
 }
 
-function SectionFigures({ m, s }: { m: EvidenceMap; s: SavedSection }) {
+function SectionFigures({ m, s, headingOnly }: { m: EvidenceMap; s: SavedSection; headingOnly: boolean }) {
   const mine = m.occurrences.filter((o) => o.sectionId === s.id);
   const content = s.content ?? '';
+  const written = csrSectionHoldsText(content);
+  // P-126: a heading that holds only its subsections has nothing to check and nothing to state.
+  if (headingOnly) {
+    return <section className="rv-csr-section">
+      <h4>{s.code}{s.title ? ` · ${s.title}` : ''}</h4>
+      <p>Heading only. Its subsections hold the text, and each is listed here.</p>
+    </section>;
+  }
   return <section className="rv-csr-section">
     <h4>{s.code}{s.title ? ` · ${s.title}` : ''}</h4>
-    {!content.trim() && <p className="esign-err">No saved text. A CSR is approved only when every section is written.</p>}
+    {!written && <p className="esign-err">No saved text. A CSR is approved only when every section is written. Write it in the document, or state it not applicable there with your reason.</p>}
     {mine.map((o) => <FigureChoice key={o.key} m={m} o={o} content={content} />)}
-    {content.trim() && <SectionStatement m={m} s={s} anyMapped={mine.some((o) => m.choices.get(o.key))} />}
+    {written && <SectionStatement m={m} s={s} anyMapped={mine.some((o) => m.choices.get(o.key))} />}
   </section>;
 }
 
@@ -242,6 +251,7 @@ function Attestation({ m, disabled }: { m: EvidenceMap; disabled: boolean }) {
 export function CsrEvidenceReview(props: CsrEvidenceReviewProps) {
   const { runs, error: runError } = useSavedRuns(props.scope, props.programId);
   const m = useEvidenceMap(props);
+  const headingOnly = React.useMemo(() => csrHeadingOnlySectionIds(m.sections), [m.sections]);
   return <section className="rv-csr-evidence" aria-label="CSR scientific review">
     <h3>CSR scientific review</h3>
     <p>This document is a clinical study report. Before you approve it, map each result it reports to the exact cell of the retained clinical table it comes from. The server checks every mapping against the saved text and the retained tables; it does not judge clinical meaning, which is yours to attest.</p>
@@ -249,7 +259,7 @@ export function CsrEvidenceReview(props: CsrEvidenceReviewProps) {
     {m.preview && <fieldset disabled={props.disabled}>
       <legend>2. Each figure in the saved text</legend>
       {m.occurrences.length === 0 && <p role="status">No figure in the saved text matches a retained table cell exactly. If the document reports results, check that they are written as the tables give them.</p>}
-      {m.sections.map((s) => <SectionFigures key={s.id} m={m} s={s} />)}
+      {m.sections.map((s) => <SectionFigures key={s.id} m={m} s={s} headingOnly={headingOnly.has(s.id)} />)}
     </fieldset>}
     {m.preview && <Attestation m={m} disabled={props.disabled} />}
   </section>;
