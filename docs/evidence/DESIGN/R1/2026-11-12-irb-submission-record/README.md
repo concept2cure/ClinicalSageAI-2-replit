@@ -111,9 +111,12 @@ Red first: each suite was run against the code before its fix.
   status form says a determination is not set there.
 - **Vulnerable populations cannot be changed after creation.** `PATCH …/context` records four facts and this is not
   one of them. The form says so. Slice 2 extends that route.
-- **The protocol workspace at phone width.** The section list keeps its 268px column beside every tab, so a tab's
-  content is a narrow strip at 390. It is the workspace's grid (`research-v2.css` `.pd-grid`), not this tab; fixed in
-  the next commit.
+- **The protocol workspace on a narrow window: fixed in the commit after this one** (F1,
+  `styles/protocol-dev-editing.css`). The section list kept its 268px column beside every tab, so a tab's content was
+  about 100px wide at 390 (`phone-before-390.png`) and 177px at 761. Under 1100px the list now sits above the tab,
+  capped at 216px. Measured in the running app on the Document, IRB package and Statistics tabs: the tab is 358px
+  wide at 390 (`phone-after-390.png`), 524 at 820, 804 at 1100; from 1101 the list is beside it again and the tab has
+  517px or more; 856 at 1440, as before. No sideways scroll at any of them.
 - **Other reads on a connection with no `BEGIN`.** The same pattern may exist outside IRB. A sweep is listed for the
   coordinating session.
 - **No seed.** The Lumen pack records no IRB submission; a person records it in the demo, as above.
