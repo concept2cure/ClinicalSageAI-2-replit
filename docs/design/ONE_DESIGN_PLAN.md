@@ -2620,7 +2620,7 @@ under `docs/evidence/DESIGN/D7/`.
 | — R1: a record linked to a change can be removed from it, with its reason; why a record was linked is shown | `94450dd2c` | A change's row: Remove |
 | — D7 (P-122 rule 2): the change procedure and the coverage method are open again, the procedure's steps numbered; three unruled classes carry a rule | `9d1f8ea22` | Change control; the SOP tab's training section |
 | — D7: who is due to train, coverage and the review schedule follow a confirmed write; a controlled document walked end to end | `dd8f5488d` | "Training overdue, due or lapsing" after an assignment or an acknowledgement |
-| — F1: one read admits a project once, however many of its sources it lists; a failed Quality projection logs its cause | `df1a57ef1` | The editor's Sources rail and the data room: 7.5 to 8 s down to about 5 s for 168 sources |
+| — F1: a failed Quality projection logs its cause; a project's sources read measured on a project of Quality records. The per-source admission repair was made twice the same hour: the data room lane's (`f51844891`) stands and this lane's is withdrawn | `df1a57ef1`, withdrawn at the merge | The server log on a 503; `docs/evidence/F1/2026-11-12-source-scope-admissions/` |
 | — D7: a write the server did not confirm says so, and says to check before trying again | `c446043c2` | Any Quality drawer with the connection down |
 
 The sweep's C1–C18 are done, except C7. Every other `readWhat` in the product names a project-scoped read (CMC's
@@ -2644,10 +2644,10 @@ and `docs/evidence/F1/2026-11-12-source-scope-admissions/`.
     `readSubject` (found by `readWhat=` naming a record);
   - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
     and its eyebrow; the Vault's test asserts it;
-  - the editor's project-sources read is still about 5 s for a project with 168 sources, and answers 503
+  - the editor's project-sources read is still 6.6 to 7 s for a project of 183 Quality records, and answers 503
     `SOURCE_READ_ACCESS_CHANGED` when a Quality record is written while it runs. What remains is measured in
-    `docs/evidence/F1/2026-11-12-source-scope-admissions/` and handed to the coordinating session in
-    `.design/claude-convergence/COORDINATION.md`;
+    `docs/evidence/F1/2026-11-12-source-scope-admissions/`; the Quality evidence reader's share is this lane's next
+    change, and the retry is handed to the coordinating session in `.design/claude-convergence/COORDINATION.md`;
   - the editor's save toast on a controlled document speaks of a filing the document is never bound to (handed on in
     the same place).
 
