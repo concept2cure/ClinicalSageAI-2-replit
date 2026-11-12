@@ -36,7 +36,7 @@ function routes(method: string, path: string) {
   if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });
   if (path.includes('/csr/study-data?')) return ok({ studyData: [] });
   if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies: [{ source: receipt, tables }] });
-  if (method === 'GET' && path === `/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}`) {
+  if (method === 'GET' && path === `/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}&documentId=${CSR_DOC}`) {
     return ok({ jobs: [{ jobId: 41, studyId: 'SYN-201-P', status: 'complete', progress: 100, updatedAt: '2026-10-30T09:00:00Z' }] });
   }
   if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings: manualHeadings });

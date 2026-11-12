@@ -352,3 +352,47 @@ it('refuses to approve when the section read is missing or its hash has changed'
   expect(approve.disabled).toBe(true);
   expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
 });
+
+/* 2026-11-12, the Lumen walk: a build drafts 69 headings, and the person who started it sent each for review with
+   its own click. Sending is not a judgement on the text (the approval is, and stays one heading at a time, after
+   the exact saved text was read), so the drafts go in one act. It is the same decision, sent once per heading. */
+const draft = (num: string, label: string, hash: string, more: Partial<CsrBoardHeading> = {}): CsrBoardHeading =>
+  ({ num, label, depth: 2, manual: false, state: 'draft', contentHash: hash, ...more });
+const REVIEW = (num: string) => `/api/csr/jobs/41/sections/${num}/review`;
+
+it('sends every draft for review in one act, each bound to its saved text, and leaves every other row alone', async () => {
+  const onChanged = vi.fn();
+  const headings = [draft('10.1', 'Disposition', 'b'.repeat(64)), draft('11.1', 'Data sets analysed', 'c'.repeat(64)),
+    draft('11.2', 'Template text', 'd'.repeat(64), { placeholder: true }), draft('12.3', 'Damaged', 'e'.repeat(64), { integrityFailure: true }),
+    draft('12.1', 'Extent of exposure', 'f'.repeat(64), { state: 'in_review' }), draft('9.1', 'Overall design', '1'.repeat(64), { state: 'approved' })];
+  render(<CsrHeadingReview jobId={41} headings={headings} onChanged={onChanged} onImport={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Send 2 drafts for review' }));
+  expect((await screen.findByRole('status')).textContent).toBe('2 headings were sent for review.');
+  expect(apiRequest.mock.calls).toEqual([
+    ['POST', REVIEW('10.1'), { decision: 'submit', expectedContentHash: 'b'.repeat(64) }],
+    ['POST', REVIEW('11.1'), { decision: 'submit', expectedContentHash: 'c'.repeat(64) }],
+  ]);
+  expect(onChanged).toHaveBeenCalledTimes(1);
+});
+
+it('stops at the first heading the server refuses, and says how far it got and why', async () => {
+  const onChanged = vi.fn();
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === REVIEW('11.1')) throw refusal(409, { code: 'CSR_SECTION_CHANGED', error: 'CSR section 11.1 was redrafted since it was opened. Reload it and review the current text.' });
+    return ok({ review: { state: 'in_review' } });
+  });
+  render(<CsrHeadingReview jobId={41} headings={[draft('10.1', 'Disposition', 'b'.repeat(64)), draft('11.1', 'Data sets analysed', 'c'.repeat(64)),
+    draft('11.3', 'Protocol deviations', 'd'.repeat(64))]} onChanged={onChanged} onImport={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Send 3 drafts for review' }));
+  expect((await screen.findByRole('alert')).textContent).toBe('1 of 3 headings was sent for review. §11.1 was not: CSR section 11.1 was redrafted since it was opened. Reload it and review the current text.');
+  expect(apiRequest.mock.calls.map(([, path]) => path)).toEqual([REVIEW('10.1'), REVIEW('11.1')]);
+  expect(screen.queryByRole('status')).toBeNull();
+  expect(onChanged).toHaveBeenCalledTimes(1);
+});
+
+it('offers the one act only when more than one draft waits; a single draft has its own button', () => {
+  render(<CsrHeadingReview jobId={41} headings={[draft('10.1', 'Disposition', 'b'.repeat(64)), draft('9.1', 'Overall design', '1'.repeat(64), { state: 'approved' })]}
+    onChanged={vi.fn()} onImport={vi.fn()} />);
+  expect(screen.queryByRole('button', { name: /drafts for review/ })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Send for review' })).toBeTruthy();
+});
