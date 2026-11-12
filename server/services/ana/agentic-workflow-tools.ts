@@ -149,7 +149,7 @@ export const RUN_AGENT: AnaTool = {
     'compare only those spans, not semantic support or source authenticity. For other citations, the agent can only find and ' +
     'quote source passages, and its report is advisory. Optionally pass source_document_ids (existing Vault version UUIDs) ' +
     'for an independent server read and deterministic clinical figure comparison. Recognized complete numeric/arm/explicit-zero frames can be contradicted or unsupported by those sources. ' +
-    'General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. All child model calls treat the unassessed brief as T3/local-only. The verdict comes only from the checks.',
+    'General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. A child model call carries the conversation’s data tier, raised by every source the run has read, and is refused on a provider that tier may not reach. The verdict comes only from the checks.',
   input_schema: {
     type: 'object',
     properties: {

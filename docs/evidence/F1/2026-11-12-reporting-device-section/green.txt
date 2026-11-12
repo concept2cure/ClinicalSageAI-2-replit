@@ -1,0 +1,5 @@
+# After the change: every client test file that reads the Reporting screens, then the Reporting server suites.
+ Test Files  64 passed (64)
+      Tests  694 passed (694)
+ Test Files  97 passed (97)
+      Tests  1211 passed (1211)

@@ -1,0 +1,29 @@
+# Before the change (HEAD 91197119fe + the new and changed cases): the four files, failing cases and totals.
+ × server/services/report-os/__tests__/device-portfolio.pglite.test.ts > whether the open project is among the device projects counted > says a drug project is not counted, and a device project is 9ms
+   → expected { state: 'computed', …(4) } to match object { state: 'computed', …(2) }
+ × server/services/report-os/__tests__/device-portfolio.pglite.test.ts > whether the open project is among the device projects counted > does not count a device project the reader cannot open, a deleted one, or another tenant’s 3ms
+   → expected { state: 'computed', …(4) } to match object { projectCount: 1, …(1) }
+ × server/services/report-os/__tests__/device-portfolio.pglite.test.ts > whether the open project is among the device projects counted > refuses an open project id that is not a positive integer, before reading anything 6ms
+   → promise resolved "{ state: 'computed', …(4) }" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack button counts the reports it runs, not the ones no engine computes 23ms
+   → .toMatch() expects to receive a string, but got undefined
+ × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > no pack is named for CMC, which no pack holds a report for 20ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > states each recorded status with its count, the pace and the acceptance rate 161ms
+   → Unable to find an element with the text: 3 submitted in the 24 months to October 2026.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > names each month in words, oldest first, with the record’s own month kept for a machine 25ms
+   → expected [] to have a length of 24 but got +0
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > keeps every month listed, and marks the months with no submission as quiet 25ms
+   → expected [ '2024-110', '2024-120', …(22) ] to deeply equal [ 'Nov 20251', 'Sep 20262' ]
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > with nothing submitted, says so and still lists the 24 months 16ms
+   → Unable to find an element with the text: 0 submitted in the 24 months to October 2026.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > shows a month key it cannot read as the record holds it, never a guessed month 23ms
+   → Unable to find an element with the text: 1 submitted in the 2 months to Q3.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says the open project is not counted when the device read says so 171ms
+   → Unable to find an accessible element with the role "note"
+ × client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > under an open project that is not a device project, it stays and names that project as not counted 255ms
+   → Unable to find an accessible element with the role "note"
+ × server/routes/__tests__/insights-canvas-open-program.test.ts > GET /overview?programId= — the open program leads > tells the device read which project leads the canvas, and nothing when none does 58ms
+   → expected undefined to be 11 // Object.is equality
+ Test Files  4 failed (4)
+      Tests  13 failed | 53 passed (66)

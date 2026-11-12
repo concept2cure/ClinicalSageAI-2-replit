@@ -1,0 +1,3 @@
+Projects says archived · Reporting: {"picker":false,"projects":7,"board":false,"boardCount":7}
+unarchive 200 · Reporting: {"picker":true,"projects":8,"board":true,"boardCount":8}
+archive again 200 · Reporting: {"picker":false,"projects":7,"board":false,"boardCount":7}

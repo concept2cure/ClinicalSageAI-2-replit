@@ -15,7 +15,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn(), anchor: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn() }));
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), segments: vi.fn(), anchor: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn(), device: vi.fn() }));
 
 
 // These suites isolate audit/compute contracts; sharing itself is exercised
@@ -42,6 +42,10 @@ vi.mock('../../services/report-os/segment', async (importOriginal) => ({
 vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
   fetchOrgPortfolioSummary: h.summary,
+}));
+vi.mock('../../services/report-os/device-portfolio', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/device-portfolio')>()),
+  readDevicePortfolio: h.device,
 }));
 vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor, readProgramAnchorRow: h.actualAnchor }));
 // Consumer fixtures retain their original auth/portfolio assumptions; canonical
@@ -84,9 +88,26 @@ beforeEach(() => {
   h.segments.mockReset().mockResolvedValue(['pharma']);
   h.summary.mockReset().mockResolvedValue(SUMMARY);
   h.anchor.mockReset();
+  h.device.mockReset().mockResolvedValue({ state: 'none' });
 });
 
 describe('GET /overview?programId= — the open program leads', () => {
+  /* S12 biotech sweep, finding 94: the device section sat under an open biotech project's reports and did not say
+     whose figures it showed. The device read is told which project leads, so it can say whether that project is
+     one of the device projects it counted. With none leading it is told nothing, and claims nothing. */
+  it('tells the device read which project leads the canvas, and nothing when none does', async () => {
+    h.anchor.mockResolvedValue(11);
+    expect((await overview(`?programId=${PROGRAM}`)).status).toBe(200);
+    expect(h.device.mock.calls[0][4]).toBe(11);
+    h.device.mockClear();
+    expect((await overview()).status).toBe(200);
+    expect(h.device.mock.calls[0][4]).toBeNull();
+    h.device.mockClear();
+    h.anchor.mockResolvedValue(null); // the open project has no tracking record: it does not lead
+    expect((await overview(`?programId=${PROGRAM}`)).status).toBe(200);
+    expect(h.device.mock.calls[0][4]).toBeNull();
+  });
+
   it('leads with the open program’s anchored project, not the flagship', async () => {
     h.anchor.mockResolvedValue(11);
     const res = await overview(`?programId=${PROGRAM}`);
