@@ -3773,7 +3773,12 @@
   "fulfill_regulatory_commitment": {
    "class": "confirm",
    "writes": "UPDATE regulatory_commitments fulfilled (terminal), meeting commitment or other only; a PMR, PMC or REMS writes nothing (a signed act, P-41)",
-   "site": "AnaToolExecutor.ts registerToolHandler('fulfill_regulatory_commitment')"
+   "site": "AnaToolExecutor.ts registerToolHandler('fulfill_regulatory_commitment')",
+   "present": {
+    "verb": "record",
+    "object": "a commitment as fulfilled",
+    "source": "project"
+   }
   },
   "gateway_configuration_status": {
    "class": "read",
