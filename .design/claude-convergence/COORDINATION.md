@@ -15,35 +15,33 @@ with the other sessions that are given this same instructions." The goal is the 
 what exists, harden it, and bring it to a commercial release, in the UI. Nothing here changes a lane or a rule. Each
 session keeps the lane it holds below and writes its row before it edits outside it.
 
-**Push slots, from 03:30 UTC on 2026-11-12.** Thirteen sessions push to the one branch, and every push runs minutes of
-gates, so an unscheduled push loses ref races for an hour or more (one repair lost twelve; another six). Each session
-pushes only in its own slot, once an hour, which is also what the batch rule ("What every session does", 6) asks.
+**Push slots, revised: from 05:00 UTC on 2026-11-12, eight minutes each, on a two-hour cycle.** Thirteen sessions
+push to the one branch, and every push runs minutes of gates, so an unscheduled push loses ref races for an hour or
+more (one repair lost twelve; another six). Each session pushes only in its own slot.
 
-| Minute of every hour, UTC | Session | Lane |
+The first table (03:30 to 05:00 UTC) gave each session four minutes an hour. That was too short: a push that carries
+a `.ts` or `.tsx` file took 443 seconds in its slot, because merging the push before it made the typecheck start
+nearly cold, and it lost to the next slot's push. A slot must be as long as the slowest push.
+
+| Starts, UTC | Even hours (04, 06, 08 …) | Odd hours (05, 07, 09 …) |
 |---|---|---|
-| :00 | `011Dpx…` | Manager; the release-shaped checks (launch-scope gate, request limits, the built client under the release's content security policy); cross-lane repairs |
-| :04 | `01QoxbLZjz…` | The CSR path |
-| :08 | `01QoxbLdTr…` | S2, the data catalog |
-| :12 | `01QoxbLZVw…` | Security |
-| :16 | `01QoxbLdJq…` | S11, the plan and schedule |
-| :20 | `01QoxbLcnW…` | The project page |
-| :24 | `01QoxbLdKp…` | R1, reach |
-| :28 | `01SuVLo2QX…` | AnA's runtime |
-| :32 | `01T2wooCZu…` | CSR draft control |
-| :36 | `01J935DZwf…` | Trunk CI |
-| :40 | `01E8btkB8m…` | The screen walk; the device screens |
-| :44 | `01KnUGoX3g…` | Vault |
-| :48 | `01QoxbLbUD…` | RBM's screens (started 2026-11-12 02:55 UTC) |
-| :52, :56 | spare | A session whose slot lost or was missed; a session not listed here |
+| :00 | `011Dpx…` manager; release-shaped checks; cross-lane repairs | `01SuVLo2QX…` AnA's runtime |
+| :08 | `01QoxbLZjz…` the CSR path | `01T2wooCZu…` CSR draft control |
+| :16 | `01QoxbLdTr…` S2, the data catalog | `01J935DZwf…` trunk CI |
+| :24 | `01QoxbLZVw…` security | `01E8btkB8m…` the screen walk; the device screens |
+| :32 | `01QoxbLdJq…` S11, the plan and schedule | `01KnUGoX3g…` Vault |
+| :40 | `01QoxbLcnW…` the project page | `01QoxbLbUD…` RBM's screens |
+| :48 | `01QoxbLdKp…` R1, reach | spare, for a push that carries code |
+| :56 | spare, only for a push with no `.ts` or `.tsx` file (about two minutes) | the same |
 
 - **Before your slot:** with your app stopped, fetch, merge and run
-  `TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental`, so the hook's typecheck is
-  warm. It must be `--incremental`: that is the cache the hook reads (`node_modules/.cache`). The npm script without
-  it, which this entry and the messages of 03:10 UTC first named, checks the types and warms nothing. Warm, a whole
-  push took 117 seconds; cold, about 400. In a 15 GB sandbox the typecheck is killed if the app runs beside it.
-- **At your minute:** fetch, merge (never rebase), push, once. If it loses, use a spare slot or your next one. Do not
-  retry inside another session's slot.
-- **Outside your slot:** commit locally and keep working.
+  `TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental`. It must be `--incremental`:
+  that is the cache the hook reads (`node_modules/.cache`). The npm script without it, which this entry first named,
+  checks the types and warms nothing. In a 15 GB sandbox the typecheck is killed if the app runs beside it.
+- **At your minute:** fetch, merge (never rebase), push, once. A push not finished when your eight minutes end has
+  lost: let it fail, and do not start another until your next slot or a spare.
+- **Outside your slot:** commit locally and keep working. One landed push every two hours is the price of thirteen
+  sessions on one branch, and it is what the batch rule ("What every session does", 6) already asks.
 - A session not in the table takes a spare slot and tells `011Dpx…`, which gives it one.
 - The 15-minute window of rule 6 still exists for a push that cannot wait: ask `011Dpx…`.
 
