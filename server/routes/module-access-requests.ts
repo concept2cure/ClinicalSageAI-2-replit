@@ -333,6 +333,19 @@ router.get(
 
 // ─── POST /:id/decision — approve or decline ─────────────────────────────────
 //
+/**
+ * The platform owner's answer is a licensing decision, so its audit row carries
+ * the token the owner's Decisions record selects on (licensing-history.ts,
+ * invariant 1: presence of `masterAdminAction`). Without it an approval that
+ * turned a module on for a workspace never appeared there (running app,
+ * 2026-11-12). An organisation administrator's answer stays in that
+ * workspace's own Access requests history.
+ */
+function ownerDecisionToken(isMasterAdmin: boolean, decision: string): { masterAdminAction?: string } {
+  if (!isMasterAdmin) return {};
+  return { masterAdminAction: decision === 'approved' ? 'access_request.approved' : 'access_request.declined' };
+}
+
 // One handler for both answers because they are one governed act with two
 // outcomes: same authority, same reason floor, same audit record. Two handlers
 // would be two places for the authorization to drift apart.
@@ -462,6 +475,7 @@ export async function decideAccessRequest(req: Request, res: Response) {
         /** True when this answer also wrote the grant. */
         granted: body.decision === 'approved',
         decidedByMasterAdmin: actor.isMasterAdmin && actor.organizationId !== organizationId,
+        ...ownerDecisionToken(actor.isMasterAdmin, body.decision),
         reason,
       },
     });

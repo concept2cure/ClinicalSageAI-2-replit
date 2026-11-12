@@ -144,6 +144,26 @@ describe('the decisions themselves', () => {
     expect(document.body.textContent).not.toContain('access_request.approve');
   });
 
+  it("names the owner's answer to an access request, the token module-access-requests.ts writes", async () => {
+    serve(() =>
+      payload({
+        entries: [
+          entry({
+            id: 'aud-ar',
+            action: 'access_request.approved',
+            changed: { accessRequestAction: 'request.approved', granted: true, decidedByMasterAdmin: true },
+            reason: 'pilot of CMC for their IND',
+          }),
+        ],
+      }),
+    );
+    render(<LicensingHistoryPanel />);
+
+    expect(await screen.findByText('Access request approved: module turned on')).toBeTruthy();
+    expect(screen.getByText('pilot of CMC for their IND')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('access_request.approved');
+  });
+
   it('filters to one workspace and one module', async () => {
     serve(() => payload());
     render(<LicensingHistoryPanel />);
