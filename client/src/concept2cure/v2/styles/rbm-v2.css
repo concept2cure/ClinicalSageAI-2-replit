@@ -298,11 +298,13 @@
   .rbm-sig{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);overflow:hidden;}
   .rbm-sig[data-sev="critical"]{border-left:3px solid var(--error);}
   .rbm-sig[data-sev="high"]{border-left:3px solid var(--warning);}
-  .rbm-sig-main{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 13px;}
+  /* The title keeps a readable measure: the time beside it does not wrap, and squeezed the title to a few words a
+     line. When the row is too narrow for both, the time and status move under the title. */
+  .rbm-sig-main{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;width:100%;text-align:left;padding:10px 13px;}
   .rbm-sig-main:hover{background:var(--bg-050);}
   .rbm-sig-src{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 6px;white-space:nowrap;}
   .rbm-sig-src[data-src="central_stat"]{color:var(--ai);border-color:var(--ai-muted);}
-  .rbm-sig-t{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--text-100);}
+  .rbm-sig-t{flex:1 1 300px;min-width:0;font-size:12.5px;font-weight:600;color:var(--text-100);}
   .rbm-sig-meta{font-size:10.5px;color:var(--text-400);white-space:nowrap;}
   .rbm-sig-detail{padding:2px 14px 12px;border-top:1px solid var(--bg-100);}
   .rbm-sig-detail p{font-size:12px;line-height:1.55;color:var(--text-300);margin:9px 0;}

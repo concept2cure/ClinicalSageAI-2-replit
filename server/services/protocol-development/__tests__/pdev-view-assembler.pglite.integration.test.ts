@@ -47,7 +47,7 @@ CREATE TABLE protocol_soa_assessments (id serial PRIMARY KEY, organization_id in
 CREATE TABLE protocol_soa_cells (id serial PRIMARY KEY, organization_id int, protocol_document_id int, assessment_id int, visit_id int, required boolean);
 CREATE TABLE protocol_team_members (id serial PRIMARY KEY, organization_id int, protocol_document_id int, member_name text, role text, responsibilities text, deleted_at timestamptz);
 CREATE TABLE consent_forms (id serial PRIMARY KEY, organization_id int, protocol_document_id int, title text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
-CREATE TABLE consent_form_elements (id serial PRIMARY KEY, organization_id int, consent_form_id int, element_key text, title text, required boolean, present boolean, order_index int);
+CREATE TABLE consent_form_elements (id serial PRIMARY KEY, organization_id int, consent_form_id int, element_key text, title text, content text, required boolean, present boolean, order_index int);
 `;
 
 beforeAll(async () => {
@@ -276,5 +276,37 @@ describe('protocol assessment and qualified detail assembly', () => {
     // Not 'met'. Nobody recorded that this study excludes children; passing
     // `false` for an unrecorded flag would manufacture that claim.
     for (const f of subparts) expect(f.status).toBe('not-assessed');
+  });
+
+  /* 2026-11-11 (F1). The consent tab printed "% complete" from the `present`
+     ticks alone. The gate that decides approval (evaluateConsentCompleteness,
+     2026-10-22) also needs content, the FDA-inspection wording, and every
+     element the form is now held to. So a form the gate refuses read "100%
+     complete" on the screen. The tab's figure is now the gate's own. */
+  it('the consent figure is the approval gate\'s verdict, not a count of ticks', async () => {
+    const id = await seedFullProtocol(ORG);
+    await pglite.exec(`DELETE FROM consent_form_elements; DELETE FROM consent_forms;`);
+    const f = await pglite.query(`INSERT INTO consent_forms (organization_id, protocol_document_id, title, version, status) VALUES ($1,$2,'ICF','0.1','in_review') RETURNING id`, [ORG, id]);
+    const formId = (f.rows[0] as { id: number }).id;
+    // Every element ticked present; confidentiality never says FDA may inspect, and one has no content.
+    await pglite.query(
+      `INSERT INTO consent_form_elements (organization_id, consent_form_id, element_key, title, content, required, present, order_index) VALUES
+       ($1,$2,'risks','Risks','Drafted.',true,true,0),
+       ($1,$2,'confidentiality','Confidentiality','Your records are confidential.',true,true,1),
+       ($1,$2,'benefits','Benefits',NULL,true,true,2)`,
+      [ORG, formId],
+    );
+    const doc = (await assembleOrgPdevDocs(ORG)).find((d) => String(d.id) === String(id)) as any;
+    expect(doc.consent.map((c: any) => [c.key, c.present, c.complete])).toEqual([
+      ['risks', true, true], ['confidentiality', true, false], ['benefits', true, false],
+    ]);
+    expect(doc.consentGate.readyToApprove).toBe(false);
+    expect(doc.consentGate.requiredComplete).toBe(1);
+    expect(doc.consentGate.requiredTotal).toBeGreaterThan(3); // elements not yet on the form count
+    expect(doc.consentGate.findings.join(' ')).toMatch(/Food and Drug Administration may inspect/);
+    expect(doc.consentGate.findings.join(' ')).toMatch(/not yet on this form/);
+    // A person reads the element's title, never its key.
+    expect(doc.consentGate.findings.join(' ')).toMatch(/"Extent of confidentiality of records, noting that FDA may inspect the records" does not state/);
+    expect(doc.consentGate.findings.join(' ')).not.toMatch(/"confidentiality"|clinicaltrials_gov/);
   });
 });
