@@ -2880,6 +2880,41 @@ lanes' files (the IND registers and forms, the Part 11 chain view, the CMC clien
 **For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
 `COORDINATION.md` row): the first six decide the most.
 
+#### L1 (row D2) and F1 — the regulatory-document AI lane: the Phase 2 CSR demo, AnA's tier start, the demo-day re-walk, and readiness that belongs to a project (session `session_017CFkfG9BWXkZddxgGjkoFY`, 2026-11-02 to 2026-11-12)
+
+The founder, 2026-11-02: "I have a demo of our platform coming up for a phase two CSR report project. Focus there
+and fully aligned to our roadmap." And 2026-11-12: finish the work in flight, stay on the roadmap and the rules, and
+move the platform closer to people using it at GA.
+
+| What | Commits | Evidence |
+|---|---|---|
+| The Phase 2 CSR path walked on the CDISC pilot; a demo-mode reply is no longer saved as an AI draft; the CSR scientific review offers the document's frozen study data | `c226754e3`, `c29fdcb4e`, `d39a037dc`, `0dbaa3215` | `docs/evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md` |
+| F8: a CSR section that still holds a data placeholder cannot pass the scientific review, so it cannot be approved, signed, frozen, exported or filed | `0563a8274`, `559f8057f`, `6dcc56be2` | the same README, "Addendum" |
+| AnA's conversation reaches a frontier model again: a run starts at tier 1, each classified source it reads raises it, and restored derivative text is recorded at tier 2. The founder chose this start on 2026-11-09; the AnA runtime lane reached the same fix and the two were merged (`78e07c9ac`) | `d8febe020` | the README, "Demo day, 2026-11-09" |
+| A fresh Codespace installs playwright before it prepares the CSR study | `80561f8de` | the same README |
+| The demo runbook; then, after the demo, its two wrong steps corrected (the reviewer's path; Send for review before the review) | `b3f19ee7c`, `d35a86e38`, `c7876641f` | the README, "Demo runbook" |
+| The demo-day re-walk: 79 findings on `51c52751e`, each of the 55 a client would notice checked on `a9b5af187` (14 fixed, 16 partly, 25 open), with holders | `c7876641f` | `docs/evidence/DEMO/2026-11-09-demo-day-rewalk/` |
+| S12 sweep finding 92: the Investigator's Brochure readiness is one project's, admitted through the Projects check, and counts only the sections that need project data | `b6d35728c` | `docs/evidence/F1/2026-11-12-ib-readiness-one-project/` |
+| Home says a project's status in words, as Projects does | `f39b6a82b` | `docs/evidence/F1/2026-11-12-home-status-in-words/` |
+
+**Found, and with whom.** The re-walk's open findings that no later record carries are in
+`.design/claude-convergence/COORDINATION.md`, "Found by the demo-day re-walk", by holder. Two are policy, not
+repair: a Vault upload is stored Confidential unless the upload says otherwise, so with a first-party model AnA can
+read no uploaded source until a person classifies it Internal (P-115 item 6; the mechanism is S4's); and a person's
+own saved rules are recorded at tier 3, so an account that has one has every turn refused on a frontier model.
+
+**For the founder.**
+- The Investigator's Brochure check is still a page. The reach map (row 7; §4 rank 3) puts it inside the IB document
+  in the one editor, as the CSR's study-data build is, and removes the page. Removing a page is the founder's under
+  P-122 item 2. One yes or no.
+- No model answer has been seen on any drafting path from this lane: every walk ran with a refused key. P-115's
+  order starts with the founder's key and one whole-report build.
+
+**Next.** With filing types (`011Fyq…`), split by file on 2026-11-12: the New document list shows one row per
+document (14 documents are listed twice under one name; 14 US lifecycle documents exist as a refused worksheet and
+a draftable twin, and a project's start opens the refused one). Filing types lands the lifecycle rows' drafting
+first. Then the "at risk this week" rows name their project, once the Projects list carries the id they are keyed by.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
