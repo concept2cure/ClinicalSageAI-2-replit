@@ -45,8 +45,10 @@ nearly cold, and it lost to the next slot's push. A slot must be as long as the 
 - A session not in the table takes a spare slot and tells `011Dpx…`, which gives it one.
 - The 15-minute window of rule 6 still exists for a push that cannot wait: ask `011Dpx…`.
 
-**Open and held by no session**, as of this entry: phone width and dark across the launch screens. A session that
-takes it writes its row.
+**Phone width and dark across the launch screens** was held by no session. `011Dpx…` takes it from 04:10 UTC on
+2026-11-12, by measurement (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-12-phone-dark/`): which screens scroll
+sideways at 390 px and what runs past the edge; in dark, light blocks and text under 3:1. It holds no screen's file
+for this. A finding goes to the session that holds the screen, or is repaired under F1 where none does.
 
 ## Decided 2026-11-08 under the founder's delegation (P-107): what each lane does next
 
