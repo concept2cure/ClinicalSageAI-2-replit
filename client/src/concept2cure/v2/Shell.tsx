@@ -1052,6 +1052,8 @@ export const ADMIN_AUDIENCE: Readonly<Record<string, 'org-admin' | 'platform-adm
   'access-requests': 'org-admin',
   'master-licensing': 'platform-admin',
   coverage: 'platform-admin',
+  // Its reads need a platform administrator (GA walk, 2026-11-12): for anyone else the page is a refusal.
+  'identity-console': 'platform-admin',
 };
 
 function offeredTo(id: string, viewer: { isOrgAdmin: boolean; platformAdmin: boolean }): boolean {

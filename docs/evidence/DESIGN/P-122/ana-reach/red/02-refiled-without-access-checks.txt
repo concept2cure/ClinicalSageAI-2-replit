@@ -1,0 +1,74 @@
+# RED 2 — HEAD 45a3fbe8b plus the inventory re-file ONLY: what the executors answered before the access checks were added.
+# The tools are offered and run; these are the failures a re-file alone would have shipped.
+# 2026-11-12T00:33:21Z  npx vitest run <the two pglite files> --reporter=verbose
+
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member of the project is answered from the engine and their organisation’s history 1072ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > RULE 2: no model is asked for anything, and the same design gives the same answer 47ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a user of another organisation who opens this project is refused, and nothing is simulated 3ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member who cannot open a private project is refused there 25ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > each organisation’s prior rests on its own reports, never another’s 29ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a member of the project is recommended the endpoints their organisation’s reports record 2464ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an endpoint a model proposes carries no rate and no count, and is labelled as a model’s 20ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an evaluation carries no score, even when the model’s commentary contains one 18ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation who opens this project is refused, and no command runs 4ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation reads their own organisation’s corpus, never this one’s 25ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a member of the project is answered: the organisation’s own commitments they may open, counted by urgency 217ms
+   → expected { total: 3, overdue: 2, …(5) } to match object { total: 2, overdue: 1, …(2) }
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > with the project open in the conversation, the same member is answered for that project’s sponsor 23ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a private project’s commitment is counted only for someone who can open that project 13ms
+   → expected { total: 3, overdue: 2, …(5) } to match object { total: 2, overdue: 1 }
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a submission of a project the person cannot open is refused, in the words a missing one is 26ms
+   → expected true to be undefined
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation is refused that submission, and never counts this organisation’s commitments 12ms
+   → expected true to be undefined
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation who opens this organisation’s project is refused before anything is read 6ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > nobody identified, or someone who is not a current member, is refused 8ms
+   → {"ok":true,"summary":{"total":3,"overdue":2,"due_30":1,"due_90":0,"later":0,"undated":0,"closed":0},"message":"2 commitment(s) overdue; 1 due within 30 days."}: expected undefined to be truthy
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a sharing policy that cannot be read is an error, never an empty portfolio 12ms
+   → {"ok":true,"summary":{"total":3,"overdue":2,"due_30":1,"due_90":0,"later":0,"undated":0,"closed":0},"message":"2 commitment(s) overdue; 1 due within 30 days."}: expected undefined to be truthy
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who may change the project records a commitment on its submission, in the organisation’s register 75ms
+   → expected 4 to be 3 // Object.is equality
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a commitment that names no submission and no meeting is the organisation’s own: an editor records it 31ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a user of another organisation cannot record a commitment against this organisation’s submission 20ms
+   → expected true to be undefined
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > nor from this organisation’s meeting 17ms
+   → expected 'create_regulatory_commitment failed: …' to match /Nothing was recorded/
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who can open the project but not change it is refused, and nothing is recorded 22ms
+   → expected true to be undefined
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a private project’s submission, or its meeting, is refused in the words a missing one is 29ms
+   → expected { ok: true, id: 6, …(2) } to deeply equal { Object (error) }
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a submission in no project is refused: there is no project whose edit right could admit it 25ms
+   → expected true to be undefined
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > the project’s owner records a commitment on the private project’s submission 22ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a viewer is refused before any of it: the write needs an editor role 9ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a sharing policy that cannot be read records nothing, and says so 17ms
+   → expected true to be undefined
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a member of the project is answered: the organisation’s own commitments they may open, counted by urgency
+AssertionError: expected { total: 3, overdue: 2, …(5) } to match object { total: 2, overdue: 1, …(2) }
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a private project’s commitment is counted only for someone who can open that project
+AssertionError: expected { total: 3, overdue: 2, …(5) } to match object { total: 2, overdue: 1 }
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a submission of a project the person cannot open is refused, in the words a missing one is
+AssertionError: expected true to be undefined
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation is refused that submission, and never counts this organisation’s commitments
+AssertionError: expected true to be undefined
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > nobody identified, or someone who is not a current member, is refused
+AssertionError: {"ok":true,"summary":{"total":3,"overdue":2,"due_30":1,"due_90":0,"later":0,"undated":0,"closed":0},"message":"2 commitment(s) overdue; 1 due within 30 days."}: expected undefined to be truthy
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a sharing policy that cannot be read is an error, never an empty portfolio
+AssertionError: {"ok":true,"summary":{"total":3,"overdue":2,"due_30":1,"due_90":0,"later":0,"undated":0,"closed":0},"message":"2 commitment(s) overdue; 1 due within 30 days."}: expected undefined to be truthy
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who may change the project records a commitment on its submission, in the organisation’s register
+AssertionError: expected 4 to be 3 // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a user of another organisation cannot record a commitment against this organisation’s submission
+AssertionError: expected true to be undefined
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > nor from this organisation’s meeting
+AssertionError: expected 'create_regulatory_commitment failed: …' to match /Nothing was recorded/
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who can open the project but not change it is refused, and nothing is recorded
+AssertionError: expected true to be undefined
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a private project’s submission, or its meeting, is refused in the words a missing one is
+AssertionError: expected { ok: true, id: 6, …(2) } to deeply equal { Object (error) }
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a submission in no project is refused: there is no project whose edit right could admit it
+AssertionError: expected true to be undefined
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a sharing policy that cannot be read records nothing, and says so
+AssertionError: expected true to be undefined
+ Test Files  1 failed | 1 passed (2)
+      Tests  13 failed | 15 passed (28)
