@@ -167,7 +167,7 @@ describe('what AnA can see of the page is what the section read', () => {
     await waitFor(() => expect(published?.summary).toBe('The trial master file of BX-204 in plaque psoriasis (all records) is being read; nothing on screen is final yet.'));
     expect(facts()).toEqual({ studyId: STUDY.studyId, study: 'BX-204 in plaque psoriasis', scope: 'all' });
     await act(async () => { answer(json(completenessOf(STUDY.studyId, 'all'))); });
-    await waitFor(() => expect(facts().figures).toEqual({ zonesComplete: 0, zoneCount: 11, filed: 1, required: 41, open: 40, unverified: 0 }));
+    await waitFor(() => expect(facts().figures).toEqual({ zonesComplete: 0, zoneCount: 11, filed: 1, required: 41, open: 40, unverified: 0, notApplicable: 0 }));
     expect(facts().scope).toBe('all');
     expect(published?.summary).toMatch(/^Trial master file of BX-204 in plaque psoriasis, all records\. 1 of 41 records are filed\. 40 are missing\. 0 of 11 zones are complete; 1 of 41 records are filed; 40 are open/);
     expect(published?.summary).not.toMatch(/essential/);

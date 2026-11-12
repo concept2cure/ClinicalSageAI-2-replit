@@ -1,0 +1,162 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-12T06:22:18.472Z",
+  "steps": [
+    {
+      "name": "biotech-1440: Home offers the getting-started course",
+      "offered": true
+    },
+    {
+      "name": "biotech-1440: the step opens the course for the client type"
+    },
+    {
+      "name": "biotech-1440: Help & training from the account menu, with the right course"
+    },
+    {
+      "name": "biotech-1440: search finds and opens the password article"
+    },
+    {
+      "name": "biotech-1440: a search with no answer says so and offers support"
+    },
+    {
+      "name": "biotech-1440: the course lists 7 lessons and says progress is not recorded"
+    },
+    {
+      "name": "biotech-1440: a lesson opens its article"
+    },
+    {
+      "name": "biotech-1440: a request is sent and opens with its number",
+      "eyebrow": "SUP-000007 · Open"
+    },
+    {
+      "name": "biotech-1440: reply, resolve and rate"
+    },
+    {
+      "name": "biotech-1440: the request is listed under Your support requests"
+    },
+    {
+      "name": "biotech-1440: AnA's drafted request opens prefilled and is sent by the person"
+    },
+    {
+      "name": "biotech-1440: Get help opens the conversation marked From Help & training"
+    },
+    {
+      "name": "biotech-390: Home offers the getting-started course",
+      "offered": true
+    },
+    {
+      "name": "biotech-390: the step opens the course for the client type"
+    },
+    {
+      "name": "biotech-390: Help & training from the account menu, with the right course"
+    },
+    {
+      "name": "biotech-390: search finds and opens the password article"
+    },
+    {
+      "name": "biotech-390: a search with no answer says so and offers support"
+    },
+    {
+      "name": "biotech-390: the course lists 7 lessons and says progress is not recorded"
+    },
+    {
+      "name": "biotech-390: a lesson opens its article"
+    },
+    {
+      "name": "biotech-390: a request is sent and opens with its number",
+      "eyebrow": "SUP-000009 · Open"
+    },
+    {
+      "name": "biotech-390: reply, resolve and rate"
+    },
+    {
+      "name": "biotech-390: the request is listed under Your support requests"
+    },
+    {
+      "name": "biotech-390: AnA's drafted request opens prefilled and is sent by the person"
+    },
+    {
+      "name": "biotech-390: Get help opens the conversation marked From Help & training"
+    },
+    {
+      "name": "device-1440: Home offers the getting-started course",
+      "offered": true
+    },
+    {
+      "name": "device-1440: the step opens the course for the client type"
+    },
+    {
+      "name": "device-1440: Help & training from the account menu, with the right course"
+    },
+    {
+      "name": "device-1440: search finds and opens the password article"
+    },
+    {
+      "name": "device-1440: a search with no answer says so and offers support"
+    },
+    {
+      "name": "device-1440: the course lists 7 lessons and says progress is not recorded"
+    },
+    {
+      "name": "device-1440: a lesson opens its article"
+    },
+    {
+      "name": "device-1440: a request is sent and opens with its number",
+      "eyebrow": "SUP-000011 · Open"
+    },
+    {
+      "name": "device-1440: reply, resolve and rate"
+    },
+    {
+      "name": "device-1440: the request is listed under Your support requests"
+    },
+    {
+      "name": "device-1440: AnA's drafted request opens prefilled and is sent by the person"
+    },
+    {
+      "name": "device-1440: Get help opens the conversation marked From Help & training"
+    },
+    {
+      "name": "device-390: Home offers the getting-started course",
+      "offered": true
+    },
+    {
+      "name": "device-390: the step opens the course for the client type"
+    },
+    {
+      "name": "device-390: Help & training from the account menu, with the right course"
+    },
+    {
+      "name": "device-390: search finds and opens the password article"
+    },
+    {
+      "name": "device-390: a search with no answer says so and offers support"
+    },
+    {
+      "name": "device-390: the course lists 7 lessons and says progress is not recorded"
+    },
+    {
+      "name": "device-390: a lesson opens its article"
+    },
+    {
+      "name": "device-390: a request is sent and opens with its number",
+      "eyebrow": "SUP-000013 · Open"
+    },
+    {
+      "name": "device-390: reply, resolve and rate"
+    },
+    {
+      "name": "device-390: the request is listed under Your support requests"
+    },
+    {
+      "name": "device-390: AnA's drafted request opens prefilled and is sent by the person"
+    },
+    {
+      "name": "device-390: Get help opens the conversation marked From Help & training"
+    }
+  ],
+  "apiErrors": [],
+  "pageErrors": [],
+  "failures": [],
+  "finishedAt": "2026-11-12T06:23:36.880Z"
+}

@@ -23,6 +23,16 @@
  * This gate keeps the mount from silently reverting to a bare mount (→ 500s) or
  * being handed a per-user scope it can't produce inline. Source-level so it runs
  * in the fast unit tier with no app boot.
+ *
+ * ── The comment stripper (2026-11-12) ─────────────────────────────────────────
+ * This file stripped comments with its own regex, /\/\*[\s\S]*?\*\//g, which
+ * does not know about strings. A string holding `/*` opened a "comment" that
+ * ran to the next real `*` `/`, and the code between was never read. It now
+ * uses scripts/ci/lib/strip-comments.mjs, which walks quotes, templates and
+ * regex literals. Measured the day it changed: the regex hid 178 lines of code
+ * in server/bootstrap/register-document-routes.ts (140–453, from the
+ * '/api/ectd/v4/*' in a log line to the first block comment after it) and 188
+ * in server/bootstrap/register-inline-routes.ts (838–1131).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -30,14 +40,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// The shared, string-aware comment stripper the CI gates use. See the note at the foot of the header comment.
+// @ts-expect-error — a .mjs module with no type declaration.
+import { stripComments } from '../scripts/ci/lib/strip-comments.mjs';
+
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FILE = 'server/bootstrap/register-platform-routes.ts';
-
-function stripComments(src: string): string {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
-}
 
 /**
  * Argument-list text of the `app.use('<mount>', ...)` call, via plain string

@@ -67,11 +67,11 @@ function VisualPreview({ profile, zoom }: { profile: CompanyDocumentProfile; zoo
       padding: `${margin.top * 25 * scale}px ${margin.right * 25 * scale}px ${margin.bottom * 25 * scale}px ${margin.left * 25 * scale}px`,
     }}>
       <PreviewHeader profile={profile} scale={scale} />
-      <main style={{ fontSize: Math.max(9, s.typography.bodySizePt * .75) * scale, lineHeight: s.typography.lineSpacing, padding: `${12 * scale}px 0` }}>
+      <div className="company-preview-body" style={{ fontSize: Math.max(9, s.typography.bodySizePt * .75) * scale, lineHeight: s.typography.lineSpacing, padding: `${12 * scale}px 0` }}>
         <h3 style={{ fontFamily: s.typography.headingFont, fontSize: 13 * scale }}>Regulatory correspondence</h3>
         <p>Recipient and submission reference</p><p>This space contains the correspondence you prepare for the selected recipient.</p>
         <p className="company-preview-placeholder">Your document content</p>
-      </main>
+      </div>
       <PreviewFooter profile={profile} scale={scale} />
     </article>
   </div>;

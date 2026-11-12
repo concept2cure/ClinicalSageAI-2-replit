@@ -575,6 +575,22 @@ if ! npm run --silent ci:client-ip-single-source 2>&1; then
 fi
 echo "   ✅ One source for the client address."
 
+# ── Every server-sent event stream has a heartbeat (MR-03 Stage 6, OPS-17) ───
+#
+# Behind CloudFront and the ALB, 60 s without a byte closes the connection, and
+# an answer waiting on a model's first token is cut mid-stream. Until 12 Nov 2026
+# ten routes opened their own streams and eight sent no heartbeat. Every stream
+# is opened by openSseStream (server/utils/sse-stream.ts).
+echo "   Checking that every event stream is opened with a heartbeat..."
+if ! npm run --silent ci:sse-heartbeat:selftest >/dev/null 2>&1 || ! npm run --silent ci:sse-heartbeat 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A server-sent event stream is opened by hand, without the heartbeat."
+  echo "   Open it with openSseStream (server/utils/sse-stream.ts)."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every event stream has a heartbeat."
+
 # ── A `sign` ledger row must come from a signature ceremony ──────────────────
 #
 # recordGovernedAction(…, command: 'sign') is read by an inspector as an
@@ -761,6 +777,26 @@ if ! npm run --silent ci:pushed-lint-warnings 2>&1; then
   exit 1
 fi
 echo "   ✅ The pushed files gained no ESLint warnings."
+
+# ── CI's Lint-job gates, on what this push brings (MR-02, 2026-11-12) ────────
+#
+# 113 of the Lint job's 130 steps ran commands this hook never ran. A red in one of
+# them landed with no push refused, and was seen when CI reached it, about 47 hours
+# later: five at once on 2026-11-12 (error envelope, internals in copy, empty-state
+# clearance, success before ok, tenant isolation). This runs those gates, read from
+# ci.yml so a gate added there runs here too. It leaves out selftests, test suites and
+# the slow full-tree tools, which CI keeps. It takes under a minute, refuses a red that
+# names a file this push changes (or a gate script this push changes), and names
+# trunk's other reds without blaming this push for them.
+echo "   Running CI's Lint-job gates on what this push brings..."
+if ! npm run --silent ci:pushed-lint-gates 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a gate of CI's Lint job is red on what this push changes (listed above)."
+  echo "   CI would fail its Lint job on it. Fix it here; a file you touch leaves green."
+  echo ""
+  exit 1
+fi
+echo "   ✅ CI's Lint-job gates: nothing this push brings is red."
 
 # ── TypeScript, before the push rather than after ────────────────────────────
 #

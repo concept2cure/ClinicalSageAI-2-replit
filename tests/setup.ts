@@ -11,6 +11,8 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+// The product's zod wording, as the server and the browser load it.
+import '../shared/zod-messages';
 
 // Set env vars before any imports so server/db/runtime.ts initializes a pool
 // (mocked via pg below). Without DATABASE_URL set at module-load time, db.js

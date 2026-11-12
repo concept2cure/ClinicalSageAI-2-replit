@@ -2,13 +2,13 @@
  * The TMF Reference Model catalog — the ONE copy in this repository.
  *
  * The 11 DIA TMF Reference Model zones and the 41 artifacts (26 essential)
- * this platform files, assesses and seeds, each with its stable code, its
+ * this platform files and assesses, each with its stable code, its
  * name, its zone and whether it is an essential record (ICH E6(R3) Appendix C).
  * Client-safe: no server imports.
  *
  * Read by:
  *   - server/services/etmf/tmf-completeness.ts — inspection-readiness
- *     assessment, the seed skeleton, GET /api/etmf/reference-model
+ *     assessment, GET /api/etmf/reference-model
  *   - server/services/etmf/etmf-logic.ts — zone names and the artifact
  *     classifier (catalog names and codes first, keyword rules after)
  *   - shared/constants/domain/vault-taxonomy.ts — the service view's zone folders
@@ -183,7 +183,7 @@ export function tmfArtifactName(code: string): string {
 // ─── Zone references (folder / rail use) ─────────────────────────────────────
 
 export interface TmfZoneRef {
-  /** DIA RM zone number, 1–11 (matches tmf_artifacts.zone). */
+  /** DIA RM zone number, 1–11 (matches tmf_artifact_filings.zone_number). */
   zone: number;
   /** Stable slug id for folder/rail use ('z01'..'z11'). */
   id: string;

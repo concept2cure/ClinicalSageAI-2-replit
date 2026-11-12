@@ -31,8 +31,6 @@ beforeAll(async () => {
     ALTER TABLE c2c_documents ADD COLUMN agency text;
     ALTER TABLE c2c_documents ADD COLUMN readiness text;
     ALTER TABLE c2c_documents ADD COLUMN updated_at timestamptz;
-    CREATE TABLE tmf_artifacts (id text PRIMARY KEY, organization_id integer, tmf_file_id text,
-      zone text, artifact_name text, status text, deleted_at timestamptz);
     -- Since F1 (2026-11-05) each listed artifact names its project and sponsor
     -- (ana-vault-tools-project-scope.pglite.test.ts).
     ALTER TABLE projects ADD COLUMN code text;

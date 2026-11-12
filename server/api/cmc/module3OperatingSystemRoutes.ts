@@ -654,7 +654,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
     if (!reauthResult.ok) {
       res.setHeader('WWW-Authenticate', 'ReAuth required');
-      return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+      return res.status(401).json({ success: false, error: reauthResult.error, message: reauthResult.message });
     }
 
     const pool = getPool();

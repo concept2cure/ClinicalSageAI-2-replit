@@ -39,7 +39,7 @@ const tables = Object.fromEntries(['disposition', 'analysisPopulations', 'demogr
   .map(key => [key, { title: `${key} table`, headers: ['Measure', 'Result'], rows: [['Randomized', '23']] }]));
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });
 const refusal = (status: number, payload: unknown) => Object.assign(new Error('refused'), { name: 'ApiRequestError', status, payload });
-const BUILDS = `/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}`;
+const BUILDS = `/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}&documentId=${CSR_DOC}`;
 const build = (jobId: number, status = 'complete') => ({ jobId, studyId: 'SYN-201-P', status, progress: status === 'complete' ? 100 : 0, updatedAt: '2026-10-30T09:00:00Z' });
 let builds: unknown[] = [];
 const HASH_10 = 'b'.repeat(64);

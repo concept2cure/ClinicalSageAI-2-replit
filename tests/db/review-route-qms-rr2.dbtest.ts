@@ -396,6 +396,8 @@ describe('an interim QMS approval is its own record (RR2 records, Part 11 §11.5
     expect.soft((await byTarget(id)).map((r) => [Number(r.id), r.signature_type, r.interim_approval, r.approvals_recorded, r.approvals_required])).toEqual([
       [Number(final.id), 'qms-document-approval', false, 2, 2], [Number(interim.id), 'qms-document-interim-approval', true, 1, 2],
     ]);
+    // GA-D5-02: the manifestation read serves the digest each signature is bound to (§11.70), not only its basis.
+    expect.soft((await byTarget(id)).map((r) => /^[0-9a-f]{64}$/.test(String(r.bound_payload_digest)))).toEqual([true, true]);
     expect.soft((await qms('author', 'get', `/documents/${id}`)).body.data.approval_signature).toMatchObject({ signatureId: Number(final.id), signerName: actors.qa2.name });
   });
 

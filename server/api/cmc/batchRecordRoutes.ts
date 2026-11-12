@@ -552,7 +552,7 @@ router.post('/:id/release', async (req, res) => {
   const reauthResult = await verifyReauth(userId, data.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
-    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    return res.status(401).json({ error: reauthResult.error, message: reauthResult.message });
   }
 
   const client = await pool.connect();

@@ -473,7 +473,11 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       ? { ...defaultSettings, ...organization.settings }
       : defaultSettings;
 
-    res.json({ success: true, settings: generalSettingsView(settings) });
+    // Credentials are withheld from every reader; the integrations and the network allowlist are an
+    // administrator's (or platform staff's) to read. tenant-settings-writer.ts generalSettingsView.
+    const role = (req as any).userRole ?? (req as any).user?.role;
+    const administrator = role === 'admin' || role === 'owner' || await isPlatformStaff(req);
+    res.json({ success: true, settings: generalSettingsView(settings, { administrator }) });
   } catch (error) {
     console.error('Error fetching organization settings:', error);
     res.status(500).json({
@@ -569,7 +573,8 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     res.json({
       success: true,
       message: 'Organization settings updated successfully',
-      settings: settingsUpdate,
+      // What was changed, with any credential in it withheld as a read withholds it.
+      settings: generalSettingsView(settingsUpdate),
       auditTrail: { persisted: true, chained: true },
     });
   } catch (error) {

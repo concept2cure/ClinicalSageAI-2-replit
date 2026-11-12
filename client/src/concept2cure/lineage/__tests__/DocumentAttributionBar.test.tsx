@@ -248,3 +248,16 @@ describe('DocumentAttributionBar — names what it measures', () => {
     await screen.findByText(/% of this section has a recorded origin/i);
   });
 });
+
+/* Walked 2026-11-12: on a section that cites a Data Room source, the legend's "Author-asserted" row said "nothing is
+   cited". The bar counts recorded origins over the text; a citation marker in a sentence the author wrote does not
+   make that sentence's origin a source, so the sentence is counted as the author's, citation or not. */
+describe('DocumentAttributionBar — the author-asserted row on a cited section', () => {
+  it('does not say nothing is cited', async () => {
+    fetchDocumentAttribution.mockResolvedValue(summary({ byKind: { fromSources: 0, authorAsserted: 70, machineDrafted: 0, machineDraftedUnaccepted: 0 } }));
+    render(<DocumentAttributionBar {...DOC} subject="section" />);
+    await screen.findByText(/Author-asserted/);
+    expect(document.body.textContent).not.toMatch(/nothing is cited/i);
+    expect(document.body.textContent).toMatch(/a person stands behind it, cited or not/i);
+  });
+});

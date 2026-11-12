@@ -288,6 +288,23 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 
   // ── Administration & platform ──
+  // Help & training (P-127): the Help Center, training courses and support requests.
+  {
+    id: 'training', label: 'Help & training', description: 'The Help Center’s articles, the training courses for the person’s client type, and their support requests; ask support from here.', scope: 'global', group: 'global',
+    // Consumed on arrival (surfaces/Training.tsx helpViewFromParams): the article, course or support request to open,
+    // or a request AnA drafted (request "new" with its fields), which the person reads and sends there.
+    params: [
+      { name: 'article', required: false, description: 'A Help Center article slug to open (from search_help_center).' },
+      { name: 'course', required: false, description: 'A training course id to open.' },
+      { name: 'request', required: false, description: 'A support request number (SUP-…) to open, or "new" for a drafted request.' },
+      { name: 'subject', required: false, description: 'With request "new": the drafted subject.' },
+      { name: 'details', required: false, description: 'With request "new": the drafted details.' },
+      { name: 'category', required: false, description: 'With request "new": the drafted category.',
+        enum: ['general', 'technical', 'bug_report', 'account', 'billing', 'compliance', 'integration', 'feature_request'] },
+      { name: 'priority', required: false, description: 'With request "new": the drafted urgency.', enum: ['low', 'medium', 'high', 'critical'] },
+      { name: 'articles', required: false, description: 'With request "new": the help articles already read, comma-separated slugs.' },
+    ],
+  },
   { id: 'admin-console', label: 'Admin & access', description: 'Organization administration — members, roles, SSO, API keys, and settings.', scope: 'global', group: 'global' },
   { id: 'access-requests', label: 'Access requests', description: 'The organization’s module access-request queue.', scope: 'global', group: 'global' },
   { id: 'licensing', label: 'Compare subscriptions', description: 'The organization’s current subscription and the pricing catalog.', scope: 'global', group: 'global' },

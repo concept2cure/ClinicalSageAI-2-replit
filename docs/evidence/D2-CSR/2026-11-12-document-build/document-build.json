@@ -1,0 +1,30 @@
+{
+  "opened": {
+    "open": "16",
+    "options": [
+      "CSR build 18 · complete",
+      "CSR build 17 · complete",
+      "CSR build 16 · complete · this document’s sections"
+    ],
+    "status": "CSR build 16 · complete · 100%",
+    "line": [
+      "This document’s imported sections come from this build."
+    ],
+    "review": "69 of 119 ICH E3 headings drafted · 4 approved"
+  },
+  "other": {
+    "open": "18",
+    "options": [
+      "CSR build 18 · complete",
+      "CSR build 17 · complete",
+      "CSR build 16 · complete · this document’s sections"
+    ],
+    "status": "CSR build 18 · complete · 100%",
+    "line": [
+      "This document holds sections imported from CSR build 16. A document takes its imported sections from one build, so sections approved in build 18 cannot be imported into it."
+    ],
+    "review": "69 of 119 ICH E3 headings drafted · 0 approved"
+  },
+  "failedRequests": [],
+  "consoleErrors": []
+}

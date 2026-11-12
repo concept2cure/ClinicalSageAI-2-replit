@@ -1,0 +1,134 @@
+{
+ "device-postmarket light": {
+  "textColour": "rgb(20, 20, 19)",
+  "tiles": [
+   {
+    "label": "MDRs due ≤72h",
+    "figure": "0",
+    "note": "FDA 5-day · 30-day · EU 15-day · filed MDRs not yet excluded",
+    "tone": "err",
+    "figureColour": "rgb(182, 57, 57)"
+   },
+   {
+    "label": "CAPAs open",
+    "figure": "0",
+    "note": "0 past target date",
+    "tone": "warn",
+    "figureColour": "rgb(149, 93, 34)"
+   },
+   {
+    "label": "PMS plan entries",
+    "figure": "0",
+    "note": "No PMS plan execution recorded",
+    "tone": "",
+    "figureColour": "rgb(20, 20, 19)"
+   },
+   {
+    "label": "Open signals",
+    "figure": "0",
+    "note": "0 critical · awaiting MDR roll-up",
+    "tone": "",
+    "figureColour": "rgb(20, 20, 19)"
+   }
+  ]
+ },
+ "device-udi light": {
+  "textColour": "rgb(20, 20, 19)",
+  "tiles": [
+   {
+    "label": "Documents in flight",
+    "figure": "0",
+    "note": "0 labels · 0 submissions",
+    "tone": "",
+    "figureColour": "rgb(20, 20, 19)"
+   },
+   {
+    "label": "Blocked documents",
+    "figure": "0",
+    "note": "—",
+    "tone": "ok",
+    "figureColour": "rgb(20, 20, 19)"
+   },
+   {
+    "label": "Awaiting signature",
+    "figure": "0",
+    "note": "Pending Part 11 e-signature",
+    "tone": "warn",
+    "figureColour": "rgb(149, 93, 34)"
+   },
+   {
+    "label": "Avg completion",
+    "figure": "—",
+    "note": "Across all label and submission artifacts",
+    "tone": "",
+    "figureColour": "rgb(20, 20, 19)"
+   }
+  ]
+ },
+ "device-postmarket dark": {
+  "textColour": "rgb(250, 249, 245)",
+  "tiles": [
+   {
+    "label": "MDRs due ≤72h",
+    "figure": "0",
+    "note": "FDA 5-day · 30-day · EU 15-day · filed MDRs not yet excluded",
+    "tone": "err",
+    "figureColour": "rgb(239, 125, 125)"
+   },
+   {
+    "label": "CAPAs open",
+    "figure": "0",
+    "note": "0 past target date",
+    "tone": "warn",
+    "figureColour": "rgb(217, 154, 88)"
+   },
+   {
+    "label": "PMS plan entries",
+    "figure": "0",
+    "note": "No PMS plan execution recorded",
+    "tone": "",
+    "figureColour": "rgb(250, 249, 245)"
+   },
+   {
+    "label": "Open signals",
+    "figure": "0",
+    "note": "0 critical · awaiting MDR roll-up",
+    "tone": "",
+    "figureColour": "rgb(250, 249, 245)"
+   }
+  ]
+ },
+ "device-udi dark": {
+  "textColour": "rgb(250, 249, 245)",
+  "tiles": [
+   {
+    "label": "Documents in flight",
+    "figure": "0",
+    "note": "0 labels · 0 submissions",
+    "tone": "",
+    "figureColour": "rgb(250, 249, 245)"
+   },
+   {
+    "label": "Blocked documents",
+    "figure": "0",
+    "note": "—",
+    "tone": "ok",
+    "figureColour": "rgb(250, 249, 245)"
+   },
+   {
+    "label": "Awaiting signature",
+    "figure": "0",
+    "note": "Pending Part 11 e-signature",
+    "tone": "warn",
+    "figureColour": "rgb(217, 154, 88)"
+   },
+   {
+    "label": "Avg completion",
+    "figure": "—",
+    "note": "Across all label and submission artifacts",
+    "tone": "",
+    "figureColour": "rgb(250, 249, 245)"
+   }
+  ]
+ }
+}

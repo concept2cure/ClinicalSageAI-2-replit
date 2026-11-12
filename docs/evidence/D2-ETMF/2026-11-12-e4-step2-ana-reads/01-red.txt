@@ -1,0 +1,12 @@
+# The step 2 pins against AnA's TMF reads as they stood (the executor and the two definition files reverted, tmf-filing-search.ts absent; tests and fixtures as changed)
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > search_all_documents searches only the projects the person can open > no project open: the vault and governed stores of open projects of every sponsor, never a private project 32ms
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > search_all_documents searches only the projects the person can open > inside a project: only the open project's sponsor's 50ms
+ × server/services/ana/__tests__/ana-tmf-reads-project-scope.pglite.test.ts > AnA reads a trial master file only in the projects the person can open > a trial master file record is found in the studies of the projects the person can open, and its study is named 454ms
+ × server/services/ana/__tests__/ana-tmf-reads-project-scope.pglite.test.ts > AnA reads a trial master file only in the projects the person can open > a declaration that a record does not apply, or a removed filing, is not a hit 16ms
+ × server/services/ana/__tests__/ana-tmf-reads-project-scope.pglite.test.ts > AnA reads a trial master file only in the projects the person can open > get_tmf_view with no study lists the studies of the projects the person can open, each with its project 40ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > eTMF AnA tools — context + input guards > review_tmf_completeness reads only for an identified person, and only a named study 6ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > get_tmf_view with study_id: the store's readiness and counts as they are, the filings, and the declarations apart 47ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > get_tmf_view named by the retired store's id is refused, never read as "list everything" 3ms
+ × server/services/ana/__tests__/etmf-tools.test.ts > AnA reads a study's trial master file from the deployed store > review_tmf_completeness answers the same readiness, and a study the person cannot open is the store's own refusal 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 41 passed (50)

@@ -104,6 +104,9 @@ export const draftAgencyResponse = defineTool({
         callerModule: 'mcp:c2c_draft_agency_response',
         maxTokens: 2000,
         temperature: 0.2,
+        // The call's signal: the client's cancel, and the connector's 50 s
+        // deadline (runtime.ts), so an abandoned draft stops its model call.
+        signal: ctx.ana.signal,
       });
       if (response.deterministic || response.model === 'demo-mode') {
         return refused(GATEWAY_NO_PROVIDER_REFUSAL, { provider: response.provider, model: response.model });

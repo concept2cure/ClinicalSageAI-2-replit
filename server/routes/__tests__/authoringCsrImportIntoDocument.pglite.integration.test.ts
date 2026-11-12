@@ -371,6 +371,18 @@ describe('two CSR documents in one project retain their own cuts and imports', (
     expect(await counts()).toEqual(countBefore);
   });
 
+  it('says which build a document holds imported sections from, so the build section can open on it', async () => {
+    const { csrBuildOfDocument } = await import('../../services/authoring/csr-import-into-document');
+    expect(await csrBuildOfDocument(db.pool as never, ORG, PROGRAM, initial.documentId)).toBe(initial.jobId);
+    expect(await csrBuildOfDocument(db.pool as never, ORG, PROGRAM, later.documentId)).toBe(later.jobId);
+    // Another organization, another project, and a document that holds no imported section: none.
+    expect(await csrBuildOfDocument(db.pool as never, ORG + 1, PROGRAM, initial.documentId)).toBeNull();
+    expect(await csrBuildOfDocument(db.pool as never, ORG, randomUUID(), initial.documentId)).toBeNull();
+    const blank = await author(request(app).post('/api/authoring/docs')).send({ title: 'A CSR nothing was imported into', module: 'M5',
+      template_id: CSR_TEMPLATE, client_program_id: PROGRAM });
+    expect(await csrBuildOfDocument(db.pool as never, ORG, PROGRAM, String(blank.body.data?.id ?? blank.body.document?.id ?? blank.body.id))).toBeNull();
+  });
+
 });
 
 describe('collaborators share the existing CSR with current document and project grants', () => {
