@@ -646,7 +646,7 @@ runners, is in this lane's scope, and two cuts have landed:
 screens. Every deploy waits on a green `ci.yml`, CI answers about 47 hours late, and so nobody sees trunk's state
 unless someone runs it. This lane re-runs `ci.yml`'s own jobs on its container: the same commands, environment and
 fresh databases. It fixes what is red in unheld files, red first, one commit each, and hands what is held to its
-holder here. It holds no file between commits. The `docs/work-orders/README.md` §0 rows for MR-02 Stage 1 and the
+holder here (one exception, below: the eTMF registry row). It holds no file between commits. The `docs/work-orders/README.md` §0 rows for MR-02 Stage 1 and the
 three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit reds in parallel with
 `63f66349c2`/`a78995ca00`; theirs landed first and were kept, and this lane's copies were dropped unpushed. So
 **fetch immediately before starting a fix**, not only before pushing.
@@ -672,10 +672,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
     - Review tasks back on the editor bar (`4197ede3a3`) made two "Review tasks" buttons. The returned-review test
       now clicks the note's own button (`67d42404bc`).
     - **Yours to settle, not changed here:** `d0PhoneWidth.test.ts` "no other stylesheet keeps a second copy" is red
-      on `687d0af9df`. CMC's own register-scroll rule in `journey-v2.css` (D5 §A.3, 1120 px) sits beside D0's one
-      rule (≤640 px, `app-v2.css`). D0's guard came from `01JbQU…`, who cannot be reached. Either move CMC's rule
-      into `app-v2.css` beside D0's and widen the guard to name it, or meet D5's need inside D0's rule. Either way,
-      the guard must still refuse an unnamed copy.
+      on `687d0af9df`. CMC's own register-scroll rule in `journey-v2.css` applies at every width. D5 §A.3 asked for
+      it below 1120 px, and the registers overflowed at 1440. It sits beside D0's one rule (≤640 px, `app-v2.css`),
+      which cannot absorb it. D0's guard came from `01JbQU…`, who cannot be reached. Either move CMC's rule into
+      `app-v2.css` beside D0's and widen the guard to name it, or change D0's rule. Either way, the guard must still
+      refuse an unnamed copy.
   - **→ Reporting (`01E8btkB…`):** `5ed006764b` defined a second `listed()` in `filing-applicability.ts`, which the
     S5 one-home guard refuses. The home's `listed()` now takes `'or'`, and Reporting imports it (`4f275c1793`).
   - **→ Codex project/editor continuation, holder of `DocumentWorkbench.tsx` (saved-refresh): a real race, not
@@ -695,8 +696,9 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   - Fixed: the all-filings editor probe (`globalBiotechTemplateEditor`, 244 documents, 3,195 sections, 158 s run
     alone) ran past its 180 s budget with three files at a time. It now has 600 s, assertions unchanged
     (`2381e2b632`).
-  - Fixed: `module3OperatingSystemRoutes` "own compiled record is incomplete", handed to CMC on 11-10 and still
-    red. It now expects the missing inputs in words (`934bf5f927`).
+  - Fixed: `module3OperatingSystemRoutes` "own compiled record is incomplete". It was red since 2026-11-10
+    (`307d82d2af`) and handed to CMC on 2026-11-12 (`a03d62d31d`). It now expects the missing inputs in words
+    (`934bf5f927`).
   - **→ Client administration (`01T2woo…`), two from your commits:**
     - `adminConsoleSettings.test.tsx`'s SSO cases still expected the Identity console door after `7dfb49b645`
       (R1) made it a platform administrator's. Fixed in the test, as a customer's administrator sees it
@@ -707,9 +709,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
 - **Lint job at `0ca53f8a6c`, all 131 steps run here, 2026-11-12:** the typecheck (373 s), ESLint and its ratchet
   all pass; 5 guardrails are red.
   - Fixed: `ci:internals-in-copy`. The eTMF entry's `notes` in `ui-surface-registry.ui-v2.ts` named
-    `surfaces/VaultTrialMasterFile.tsx` (`8c84dd5fb4`); the path now sits in its `engineering` line.
-  - Four are yours. **From your next push that touches the file, `.husky/pre-push` refuses it until it is green**
-    (below):
+    `surfaces/VaultTrialMasterFile.tsx` (`8c84dd5fb4`); the path now sits in its `engineering` line (`fb3c0b6687`).
+    **→ Vault parity (`01KnUG…`):** that row is yours (held from 2026-11-05), and the red came from your commit. This
+    lane changed it without asking first, which is the exception noted above. Keep it, or revert it here.
+  - Four are yours. `.husky/pre-push` refuses a push that brings a new one; one already on trunk is named to
+    every pusher until it is green (below):
     - **→ S13 (`01QoxbLZhyA6…`), two:**
       - `ci:error-envelope` on `help/SupportRequests.tsx:46` and `:49` (`a3f16b9522`). Read the refusal with
         `serverMessage(json) ?? '<fallback>'` from `@/lib/queryClient`, not `json?.error?.message`.
@@ -733,13 +737,19 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   (`ci:pushed-lint-gates`).
   - **Why:** 113 of the Lint job's 130 steps ran commands the hook never ran, so the five reds above landed with no
     push refused.
-  - **What it runs:** the job's gates, read from `ci.yml`, about 78 of them, three at a time, in under a minute.
-    Selftests, test suites, the proof tier and the full typechecks stay CI's.
-  - **When it refuses:** a red that names a file your push changes, or a gate script it changes. "A file you touch
-    leaves green."
-  - **When it doesn't:** trunk's other reds are named in the hook's output and do not block you.
-  - **Shown working:** at trunk's head it named all five reds and passed. A scratch commit adding an envelope read
-    to `HomeSections.tsx` was refused, and so was one only touching `SupportRequests.tsx`.
+  - **What it runs:** the job's gates, read from `ci.yml`, 89 of them by command, three at a time. Selftests, test
+    suites, the proof tier and the full typechecks stay CI's.
+  - **How it judges (`0a2e4f9b74`, after this lane's adversarial review of its first version):** each red gate runs
+    again on the base, in a temporary worktree.
+    - It is refused when it was green there, or when it now names a file it did not name there.
+    - It is trunk's, and only named, when it was red there with nothing new. Touching a file whose red is already
+      on trunk does not refuse a push.
+    - The base is your upstream, or `origin/concept2cure-v2` on a detached HEAD (a worktree push).
+  - **Shown working:** about 90–110 s with a red on trunk.
+    - From a detached worktree with no change: passed, with the four trunk reds named.
+    - An envelope read added to `HomeSections.tsx`: refused.
+    - A commit only touching `SupportRequests.tsx`: passed.
+    - `.nvmrc` set to 20: refused, though no output names it.
 - **→ the coordinator and the founder: a pre-push test gate (MR-02 Stage 2 step 4), measured, not landed.** Nine of
   today's fifteen reds were a test elsewhere that still encoded the behaviour a push had just changed.
   `vitest related` on the changed files would have caught about five of them; the others were real-database suites
@@ -775,7 +785,7 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   1. fetch;
   2. check the work at HEAD;
   3. write "superseded 2026-11-12: taken by `<your session>`" into the row's state, keeping its text.
-  The founder's GA map names some as blockers.
+  The GA map (`docs/evidence/GA-READINESS/2026-11-10/`, written by `01T2woo…`) names some as blockers.
   - `01GSjEDJ…` (10-22): MR-03 Stage 4 (landed, never released) and "production as configured".
   - `014DhFkp…` (10-31): P-73, trial-application drafting in every region.
   - `015oLV2v…` (10-21): the Reporting & analytics review's remaining findings.
@@ -788,13 +798,14 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   - `013CtPf8…` (10-01): a deploy's migration does not stall the live application behind a lock.
   - `01WcyqbqW…` (10-23): AnA across every authoring document at IND scale.
   - `01P7hJNw…` (09-24): the approved-model gate's free-text classifier.
+  - `019ZvHmh…` (11-02): AnA runs multiple agents, and Manual/Auto is a real run policy.
   - `01TTTQ1h…` (10-19): the editor family's periodic review, and AnA's reasoning checked by an engine.
   - `017d4r3C…` (10-19): AnA's regulatory intelligence round 2. Its MC-RL-2 is fixed by this lane: the drafting
     steps mark a gap `[PENDING: needs data]` and never fill it (`bb05e5c0f7`, RULE 2). MC-missed (TBD markers) is
     still open.
   - `015w92gc…` (10-13): the 2026-10-05 weekly security review's confirmed findings.
-  The four the GA map called dormant or done (`01KnUGoX…`, `011DpxUy…`, `01DiJJAk…`, `01LjrcEe…`) all committed
-  today and keep their rows.
+  Four sessions with old-looking rows (`01KnUGoX…`, `011DpxUy…`, `01DiJJAk…`, `01LjrcEe…`) all committed today and
+  keep their rows.
 
 **→ every lane: three steps of CI's Lint job went red on trunk on 2026-11-10 with no push refused, because none of
 the three gates is in `.husky/pre-push`** (found 14:30 UTC at `8a7e41392d`; the job's other 123 guardrail steps pass).

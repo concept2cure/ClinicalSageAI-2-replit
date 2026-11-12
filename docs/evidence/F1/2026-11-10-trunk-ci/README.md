@@ -267,7 +267,7 @@ throughput lane re-ran `ci.yml`'s jobs here, with the same commands, environment
 used `npm ci` at that commit, PostgreSQL 16 with pgvector, the Noto fonts, and python-docx/lxml. The job record is
 `run-2026-11-12/steps.txt`; the Test verdict's own summary is `run-2026-11-12/shards.json`.
 
-| Job (ci.yml) | Command | Result at `21c6837180` |
+| Job (ci.yml) | Command | Result (see "Not a clean run at one commit" below) |
 |---|---|---|
 | Integration Tests: real-database suite | install-fresh, deploy-migrate, `npm run test:db` as `app_service`, `RLS_ENFORCE=on` | 5 of 3,243 failed in 3 files (997 s) |
 | Integration Tests: `RUN_INTEGRATION_TESTS` files | the job's `grep` list, three files | 17 passed, 27 skipped by their own guard |
@@ -277,8 +277,21 @@ used `npm ci` at that commit, PostgreSQL 16 with pgvector, the Noto fonts, and p
 Each shard took 24 to 28 minutes, on this 4-core container, three files at a time. That is what
 `docs/evidence/MR-02/2026-10-30-ci-verdict/` predicted for CI's runners.
 
-**The 18 reds, and what became of each.** Every fix below was shown red at HEAD, then green. Each test was also made
-to fail, by a change made for that run only, on the case it exists to catch. The commit message records that check.
+**Not a clean run at one commit (corrected 2026-11-12 by this lane's own adversarial review).** The run used the main
+checkout, and this lane committed its fixes in that same checkout while the shards ran. It also made short-lived
+edits there to show a test failing, and drafted GA-ADV-01 there. So:
+- the real-database suite (05:09–05:26) and shard 1 (from 05:26:32) ran at `21c6837180`;
+- shard 2 (from 05:50:58) also had `4f80673c6c` to `4f275c1793`;
+- shards 3 and 4 (from 06:14:41 and 06:42:36) also had `bb05e5c0f7` and `269e57f168`, then `2381e2b632`.
+Shard logs show edited sources in their code frames. A result for a file this lane edited during the run is
+therefore not evidence for `21c6837180`. A replay in a detached worktree pinned to `ef0472c7b8`, which nothing else
+touches, is filed below when it finishes.
+
+**The 18 reds, and what became of each.** Every fix below was shown red at HEAD, then green. Eight of the ten fix
+commits also record a run in which the test was made to fail, by a change for that run only, on the case it exists to
+catch. The two that do not:
+- `4f275c1793`: the S5 one-home guard, red at head and green after; no separate run;
+- `2381e2b632`: a time budget raised; the pinned replay above is its first run three files at a time.
 
 | Red | Cause | Outcome |
 |---|---|---|
@@ -288,7 +301,7 @@ to fail, by a change made for that run only, on the case it exists to catch. The
 | `submissionRequiredDeliverables` | the header door "Gateway transmittals" (`eadab4b845`) matched `/transmit/` | fixed, `3f1797813d` |
 | `authoringReturnedReviewOnOpen` | Review tasks back on the editor bar (`4197ede3a3`): two buttons by that name | fixed, `67d42404bc` |
 | `s5-three-valued-helpers-have-one-home` | a second `listed()` in `filing-applicability.ts` (`5ed006764b`) | fixed, `4f275c1793` |
-| `d0PhoneWidth` "no other stylesheet keeps a second copy" | CMC's own 1120 px register scroll (`687d0af9df`) beside D0's 640 px rule | handed to R1 (`01DiJJAk…`) |
+| `d0PhoneWidth` "no other stylesheet keeps a second copy" | CMC's own register scroll at every width (`687d0af9df`; D5 asked for it below 1120 px) beside D0's ≤640 px rule | handed to R1 (`01DiJJAk…`) |
 | `cmdkPlaces` (palette focus rule) | `845a63b2bf` grew D0's composer list; the test pinned the whole list | fixed, `269e57f168` |
 | `workbenchRemedies` "insert-empty" | a real race: the sections re-read after AnA's turn rebuilds the editor bridge during `propose`'s hash | handed to the Codex editor continuation |
 | `globalBiotechTemplateEditor` (all filings) | 244 documents, 3,195 sections: 158 s alone, over 180 s three files at a time | fixed, `2381e2b632` |
