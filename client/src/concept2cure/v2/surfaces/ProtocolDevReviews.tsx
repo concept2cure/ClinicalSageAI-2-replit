@@ -195,13 +195,42 @@ export function ReviewsTab({ doc, onEdit }: ReviewPaneProps) {
   );
 }
 
+interface ConsentGate { requiredTotal: number; requiredComplete: number; pct: number | null; readyToApprove: boolean; findings: string[]; predates: string[] }
+
+/** What the gate says about the form: approvable, not yet (and why), or signed before a requirement existed. */
+function ConsentVerdict({ gate, status }: { gate: ConsentGate; status: string }) {
+  const signed = status === 'approved' || status === 'superseded';
+  if (signed) {
+    if (gate.predates.length === 0) return null;
+    return (
+      <div className="pde-note">
+        This form was {status} before the platform held consent forms to: {gate.predates.join('; ')}.
+        The {status} record is unchanged; a new version must include {gate.predates.length === 1 ? 'it' : 'them'}.
+      </div>
+    );
+  }
+  if (gate.readyToApprove) return <div className="pde-note" role="status">Every required element is complete, so this form can be approved.</div>;
+  return (
+    <div className="pde-note" role="status">
+      <strong>This form cannot be approved yet.</strong> {gate.findings.length === 1 ? 'One required element is' : gate.findings.length + ' required elements are'} incomplete:
+      {/* The gate's reasons, as sentences: drawn as rows they read as more unticked elements. */}
+      {gate.findings.map((text, i) => <div key={i}>{text}</div>)}
+    </div>
+  );
+}
+
+/* 2026-11-11 (F1). The figure here was `present` ticks over required rows. The
+   gate that decides approval also needs each element's content, the wording
+   21 CFR 50.25 prescribes, and every element the form is now held to — so a
+   form approval would refuse could read "100% complete". The tab now shows the
+   gate's own verdict (`consentGate`, from the same evaluateConsentCompleteness
+   the approve path runs) and says, in the gate's words, what is missing. */
 export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
   const consent = asRows(doc.consent);
   const form = (doc.consentForm ?? null) as Row | null;
-  const required = consent.filter((c) => c.required !== false);
-  const present = required.filter((c) => c.present).length;
+  const gate = (doc.consentGate ?? null) as ConsentGate | null;
 
-  if (!form || consent.length === 0) {
+  if (!form || consent.length === 0 || !gate) {
     return (
       <div className="pd-pane">
         <PaneHead title="Informed consent" sub="Read from the linked consent form" />
@@ -215,27 +244,29 @@ export function ConsentTab({ doc }: { doc: Record<string, unknown> }) {
     );
   }
 
-  const pct = Math.round((present / required.length) * 100);
   return (
     <div className="pd-pane">
       <PaneHead
         title="Informed consent"
-        sub={present + ' of ' + required.length + ' required elements present'}
+        sub={gate.requiredComplete + ' of ' + gate.requiredTotal + ' required elements complete'}
       />
       <div className="pde-note">
         {str(form.title)} · version {str(form.version) || '—'} · {PG.labelize(str(form.status)) || 'no status'}
         {Number(form.formsLinked) > 1 ? ` · ${Number(form.formsLinked)} forms linked, the most recently updated is shown` : ''}
       </div>
-      <div className="pd-consent-meter">
-        <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: pct + '%' }} /></div>
-        <span className="pd-consent-pct">{pct + '% complete'}</span>
-        <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
-      </div>
+      {gate.pct !== null && (
+        <div className="pd-consent-meter">
+          <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: gate.pct + '%' }} /></div>
+          <span className="pd-consent-pct">{gate.pct + '% complete'}</span>
+          <PG.Citation basis="21 CFR 50.25; 45 CFR 46.116 — Elements of informed consent" />
+        </div>
+      )}
+      <ConsentVerdict gate={gate} status={str(form.status)} />
       <ul className="pd-consent-list">{consent.map((c) => (
-        <li key={str(c.id)} className={'pd-consent-row' + (c.present ? '' : ' missing')}>
-          <span className="pd-consent-ck" data-on={Boolean(c.present)} aria-hidden="true">{c.present ? '✓' : ''}</span>
-          <span>{str(c.el)}</span>
-          <span className="sr-only">{c.present ? 'present' : 'not present'}</span>
+        <li key={str(c.id)} className={'pd-consent-row' + (c.complete ? '' : ' missing')}>
+          <span className="pd-consent-ck" data-on={Boolean(c.complete)} aria-hidden="true">{c.complete ? '✓' : ''}</span>
+          <span>{str(c.el)}{c.required === false ? ' (optional)' : ''}</span>
+          <span className="sr-only">{c.complete ? 'complete' : c.present ? 'included, not complete' : 'not included'}</span>
         </li>))}</ul>
     </div>
   );
