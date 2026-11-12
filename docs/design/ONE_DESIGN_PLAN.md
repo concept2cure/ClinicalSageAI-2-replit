@@ -647,6 +647,7 @@ whether work may be committed under it:
 | D5 | **Work areas I.** CMC / Module 3 and Biostatistics on the one page pattern. | — | open |
 | D6 | **Work areas II.** Tasks, Communication and Vault. | — | open |
 | D7 | **Work areas III.** Submission Center, Quality, Risk-based monitoring, and Reporting & analytics. | — | open |
+| D8 | **Device and diagnostics screens** (P-128). §2's design on the existing device screens (`client/src/concept2cure/mdx/**`), the shared look first. Nothing a screen shows is removed (P-122). Moving the per-type device screens into the one editor is not in this package. | — | open |
 | R1 | **Reach.** Every server capability with no UI caller is reached in its package's screen, or retired by a founder decision. The inventory and each reach are filed under `docs/evidence/DESIGN/R1/`. | — | open |
 | F1 | **Repairs.** Defects in shipped behaviour, such as the 2026-10-31 running-app audit findings. Repairs add no screen, mount or table. | — | open |
 | L1 | **Launch rows** D1–D10 of `docs/LAUNCH_DEFINITION_OF_DONE.md`, as defined there. | — | open |
@@ -669,7 +670,7 @@ Each spine package (S1–S8) starts with its "What already exists" section (RULE
 own searches, filed under `docs/evidence/SPINE/<ID>/`. Its UI work is done on the §2 design. When a screen is in a
 queued design package's files, the S package changes only behaviour there, never the layout.
 
-Each design package (D0–D7) runs its own work in this order:
+Each design package (D0–D8) runs its own work in this order:
 1. **Spec.** Append `## <ID> spec` to `.design/claude-convergence/<ID>.md`. For each screen it says what the screen
    is today, Claude's pattern, the change (by file), the capabilities kept, and the acceptance checks.
 2. **Build.**
