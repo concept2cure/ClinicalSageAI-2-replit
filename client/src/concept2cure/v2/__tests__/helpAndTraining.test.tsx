@@ -35,6 +35,7 @@ beforeEach(() => {
     }
     if (url === '/api/enablement/paths') return json(200, { data: [{ id: 'p1', title: 'Medical writing basics', lessons: 4, done: 1, mins: 40, level: 'Intro', tone: 'ai' }] });
     if (url === '/api/enablement/certifications') return json(200, { data: [] });
+    if (url === '/api/support/tickets') return json(200, { data: { tickets: [], scope: 'yours' } });
     return json(200, { data: null });
   });
 });

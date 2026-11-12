@@ -105,7 +105,7 @@ When the account is created, select **Open Concept2Cure**. You arrive on Home, w
     summary: 'Ask AnA, read the Help Center, or open a request to the Concept2Cure support team.',
     keywords: ['support', 'help', 'contact', 'ticket', 'request', 'problem', 'bug', 'talk to a person', 'human'],
     surfaces: ['training', 'conversation-thread'],
-    related: ['meet-ana', 'what-ana-can-and-cannot-do'],
+    related: ['track-your-support-requests', 'meet-ana', 'what-ana-can-and-cannot-do'],
     checked: '2026-11-12',
     body: `There are two ways to get help, and both are always available.
 
@@ -115,7 +115,7 @@ When the account is created, select **Open Concept2Cure**. You arrive on Home, w
 
 - answers questions about using Concept2Cure, from the Help Center;
 - can show you a feature by moving through the screens with you;
-- offers to **contact a person** when she cannot resolve something. She drafts the request with what you have tried, you read it, and nothing is sent until you confirm.
+- offers to **contact a person** when she cannot resolve something. She drafts the request with what you have tried and gives you a link; it opens the request on Help & training, where you read it, change it if you want, and select **Send request**. Nothing is sent until you do.
 
 **Help & training** (account menu) holds the Help Center articles, the training courses, and **Your requests**: every request you have sent to support, its status, and the replies.`,
   },
@@ -159,5 +159,29 @@ When the account is created, select **Open Concept2Cure**. You arrive on Home, w
 3. **Create your first project**: one regulatory filing, for example an IND or a 510(k), from plan to submission.
 
 The list disappears from Home when every step is done. Members who are not administrators do not see it.`,
+  },
+  {
+    slug: 'track-your-support-requests',
+    title: 'Write, follow and close a support request',
+    collection: 'getting-started',
+    summary: 'Every request has a number; read the replies, answer, mark it resolved and rate the answer on Help & training.',
+    keywords: ['support request', 'ticket', 'case', 'reply', 'status', 'resolved', 'rate', 'follow up', 'contact support', 'request number'],
+    surfaces: ['training'],
+    related: ['get-help-and-contact-support', 'meet-ana'],
+    checked: '2026-11-12',
+    body: `Open **Help & training** from the account menu. **Your support requests** lists each request you have sent, open ones first: its subject, its number (for example SUP-000123), its status, how many replies it has and when it last changed. An administrator sees every request from the organisation.
+
+**Write a request.** Select **New request**. Give a **Subject** (the problem in a few words) and say **What happened**: what you were doing, where, what you expected, and what happened, with any message copied word for word. Choose what it is **About** and its **Urgency**, then select **Send request**. It opens with its number.
+
+**From AnA.** When AnA drafts a request for you, her link opens the same form, filled in. Read it, change what you want, and send it.
+
+**Follow it.** Select a request to read it and every reply. Its status is one of Open, In progress, Waiting for you, With support, Escalated, Resolved or Closed.
+
+- **Reply** to add something or to answer support.
+- **Mark resolved** when you have your answer.
+- A reply to a resolved request opens it again. A closed request takes no reply: write a new one and mention the old number.
+- Once it is resolved, the person who opened it can **rate the answer** from 1 to 5.
+
+If a request cannot be sent, the form says why and keeps what you wrote; nothing is saved.`,
   },
 ];
