@@ -1,0 +1,14 @@
+# The console tab strip: measured in the running app (Chromium, 1440x900), then pinned
+before: .ml-tabs height 1px, overflow 'auto hidden' (shots/03b-tabs-clip.png)
+after flex-shrink:0: .ml-tabs height 39.5px, all eight tabs visible (shots/03c-tabs-clip-after.png)
+
+## RED: CSS fix stashed
+ × client/src/concept2cure/v2/__tests__/masterLicensing.test.tsx > the console tab strip stays on the screen > scrolls sideways and never shrinks to nothing 24ms
+   → the scrolling strip can shrink to its 1px border: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+
+## GREEN
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
