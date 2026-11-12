@@ -7,7 +7,7 @@ import { nonclinicalOutline } from './ctd-component-outline.js';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor.js';
 import { looksLikeProgramUuid } from '../../lib/project-id.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
-import { captureCurrentRunSourceGate, recordCurrentRunSource } from '../ai-gateway/model-call-scope.js';
+import { captureCurrentRunSourceGate, recordCurrentRunSource, CONVERSATION_DEFAULT_TIER } from '../ai-gateway/model-call-scope.js';
 import { buildEnrichedM24, type NonclinicalStudyInput } from '../preclinical/nonclinical-m24-adapter.js';
 import { buildM26NonclinicalSummaries } from '../preclinical/m26-nonclinical-summaries.js';
 
@@ -84,8 +84,11 @@ async function registerSnapshot(client: RequestSqlClient, project: AdmittedProje
   // SSE may publish the tool result before the next model call. Check now as
   // well as on every protected SDK dispatch/retry/fallback.
   await recheck();
+  // An empty eligible set releases no study, so it does not raise the run to the studies' tier; the absence is
+  // still pinned by the recheck. At Tier 3 the next call was refused and AnA could not say there were no studies.
+  const tier = snapshot.studies.length === 0 ? CONVERSATION_DEFAULT_TIER : 3;
   const registered = recordCurrentRunSource({ organizationId, userId, projectId, programId,
-    key: `nonclinical:${organizationId}:${projectId}:${programId}:${hash}`, tier: 3, recheck });
+    key: `nonclinical:${organizationId}:${projectId}:${programId}:${hash}`, tier, recheck });
   if (!registered) throw new NonclinicalSourceUnavailable();
 }
 

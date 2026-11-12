@@ -16,6 +16,13 @@
  * which folded into this one (fold F2, 2026-10-29). What AnA may see of the
  * board is handed to the host (onReadinessContext), which publishes it inside
  * device-diagnostics' one context.
+ *
+ * P-114 item 3, 2026-11-12 (decided under the founder's delegation; MDX journey
+ * M3; docs/evidence/MDX-JOURNEY/2026-11-12-p114-3-eu-technical-file-per-project/):
+ * for a project that files EU technical documentation, "Assemble technical
+ * file" assembles the project's own governed document through the per-project
+ * route, and the FDA eSTAR panels are not offered. The ask to AnA it used to
+ * be stays beside it. A project on an FDA route is unchanged.
  */
 
 import * as React from 'react';
@@ -33,6 +40,8 @@ import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import { useRecordedPhaseLine } from './PmaSurface';
+import { technicalFileStatusLine, useTechnicalFileExport } from '../hooks/useCerExport';
+import { euTechnicalFileRegulation } from '@shared/constants/mdx';
 import { EmptyState } from '../../v2/dataConnect';
 import { readyRows, toDataState } from '../lib/dataState';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
@@ -186,6 +195,22 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLette
 
   const subjectName = program.title;
 
+  /* P-114 item 3. The EU regulation this project files its technical
+     documentation under, read from its recorded filing; null on an FDA route or
+     an unrecorded one. It decides two things here: what "Assemble technical
+     file" does, and whether the FDA eSTAR is offered at all. */
+  const euRegulation = euTechnicalFileRegulation(program.programType);
+  const technicalFile = useTechnicalFileExport(String(program.id));
+  const technicalFileStatus = euRegulation
+    ? technicalFileStatusLine(technicalFile.busy, technicalFile.outcome, euRegulation)
+    : null;
+  const askAnaAboutTechnicalFile = () =>
+    onAskAna(
+      `Assemble the IVDR technical file for ${program?.code ?? 'this IVD'} — Annex II/III structure: ` +
+        `device description, GSPR checklist, analytical + clinical performance, and the declaration of ` +
+        `conformity. Note any GSPR requirements still open.`,
+    );
+
   const workspace = (
     <>
       <div className="section-hdr">
@@ -197,19 +222,34 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLette
             {phaseLine} · {program.dueLabel}
           </div>
         </div>
-        <button
-          className="section-more"
-          onClick={() =>
-            onAskAna(
-              `Assemble the IVDR technical file for ${program?.code ?? 'this IVD'} — Annex II/III structure: ` +
-                `device description, GSPR checklist, analytical + clinical performance, and the declaration of ` +
-                `conformity. Note any GSPR requirements still open.`,
-            )
-          }
-        >
-          Assemble technical file {I.fileText}
-        </button>
+        {euRegulation ? (
+          <div>
+            {/* The ask this button used to be, kept (P-122): AnA's account of what is still open. */}
+            <button className="section-more" onClick={askAnaAboutTechnicalFile}>
+              Ask AnA about the technical file {I.sparkles}
+            </button>
+            <button
+              className="section-more"
+              style={{ marginLeft: 8 }}
+              disabled={technicalFile.busy}
+              title={`Assemble a ZIP of this project’s written ${euRegulation.toUpperCase()} Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.`}
+              onClick={() => void technicalFile.assemble(euRegulation)}
+            >
+              Assemble technical file {I.fileText}
+            </button>
+          </div>
+        ) : (
+          <button className="section-more" onClick={askAnaAboutTechnicalFile}>
+            Assemble technical file {I.fileText}
+          </button>
+        )}
       </div>
+
+      {technicalFileStatus && (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }} data-testid="technical-file-status">
+          {technicalFileStatus}
+        </div>
+      )}
 
       <div className="stage-strip">
         {IVD_STAGES.map((s, i) => (
@@ -624,16 +664,24 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLette
         comment that used to sit here claimed the IVD family was "by
         construction"; there is no such construction.
       */}
-      <OfficialEstarPanel
-        program={program}
-        type={officialEstarTypeFor(program)}
-        variant={officialEstarVariantFor(program)}
-      />
+      {/* P-114 item 3: neither is offered to a project that files EU technical
+          documentation. Its filing goes to a Notified Body, and the eSTAR is an
+          FDA form; until 2026-11-12 the one output this screen could produce for
+          an EU IVDR project was "Official eSTAR · 510(k) · IVD eSTAR". */}
+      {!euRegulation && (
+        <>
+          <OfficialEstarPanel
+            program={program}
+            type={officialEstarTypeFor(program)}
+            variant={officialEstarVariantFor(program)}
+          />
 
-      {/* eSTAR filing journey — register → assess → produce-gate → track,
-          scoped to THIS programme — without programId the readiness verdict
-          is computed over every device in the organisation. The IVD eSTAR shares this flow. */}
-      <EstarFilingPanel programId={program?.id ?? null} defaultVariant={officialEstarVariantFor(program)} />
+          {/* eSTAR filing journey — register → assess → produce-gate → track,
+              scoped to THIS programme — without programId the readiness verdict
+              is computed over every device in the organisation. The IVD eSTAR shares this flow. */}
+          <EstarFilingPanel programId={program?.id ?? null} defaultVariant={officialEstarVariantFor(program)} />
+        </>
+      )}
     </>
   );
 

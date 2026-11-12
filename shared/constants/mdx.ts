@@ -65,6 +65,26 @@ export function docClassForPathway(pathway: string): string {
   return PATHWAY_DOC_CLASS[pathway as RegulatoryPathway] ?? pathway;
 }
 
+/**
+ * The EU regulation whose Annex II and III technical documentation a project
+ * files, read from its recorded filing (program_type): `mdr` or `ivdr`. Null
+ * for every other filing, a clinical evaluation report included: a CER project
+ * files its report (`cer`), not the technical file.
+ *
+ * P-114 item 3 (2026-11-09, decided under the founder's delegation; MDX journey
+ * M3): such a project's technical file is assembled from its own governed
+ * document, and it is not offered the FDA eSTAR. A device project files on one
+ * pathway, so a project that files an EU technical file has no FDA filing. The
+ * table of record is server/services/c2c/document-class.ts PROGRAM_TO_DOC_TYPE,
+ * which names the document class by program_type alone; a test holds this to it
+ * (server/services/c2c/__tests__/pathway-doc-class.test.ts).
+ */
+export type EuTechnicalFileRegulation = 'mdr' | 'ivdr';
+export function euTechnicalFileRegulation(programType: string | null | undefined): EuTechnicalFileRegulation | null {
+  const type = String(programType ?? '').trim().toLowerCase();
+  return type === 'mdr' || type === 'ivdr' ? type : null;
+}
+
 /** Exact evaluation/regional filing identity wins over a separately recorded
  * US route. Generic IVD/device programs may still carry their actual route. */
 export const PATHWAY_IDENTITY_PROGRAM_TYPES = [
