@@ -3111,6 +3111,15 @@
    "lane": "infra",
    "sevAtBasis": "P1",
    "id": "OPS-06",
+   "recheck": {
+    "head": "c4b63f82e",
+    "date": "2026-11-12",
+    "status": "PARTIALLY_FIXED",
+    "testerImpact": "none",
+    "fixedBy": "MR-04 Stage 2 commit, 2026-11-12",
+    "evidence": "terraform/stack/monitoring.tf: one SNS topic under its own KMS key (cloudwatch.amazonaws.com may Decrypt and GenerateDataKey*), an email subscription per alarm_emails address, 28 alarms each notifying on ALARM and OK (ALB 5xx/healthy hosts/p95, API and embedding running tasks/CPU/memory, RDS CPU/storage/memory/connections, CloudFront 5xx rate, six server log lines including AUDIT INTEGRITY FAILURE on its own alarm, five CloudTrail CIS filters, and JobSucceeded staleness for retention-sweep and audit-chain-integrity-sweep). server/db/scheduledOnce.ts writes the EMF JobSucceeded line after a run's finish is recorded. Production refuses an empty alarm_emails. docs/runbooks/incident-response.md and rollback.md. terraform/stack/tests/monitoring.tftest.hcl red before, 10/10 after; scheduledOnce-job-succeeded-metric.test.ts red before, 5/5 after. docs/evidence/MR-04/2026-11-12/stage-2/.",
+    "remaining": "The founder names the alarm addresses and the on-call rota (NEW-1). Sentry is not made mandatory: whether errors go to Sentry is the founder's decision (MR-03 NEW-3). The staging drills that show a page arriving within 5 minutes need MR-03's staging deploy."
+   },
    "workOrder": "MR-04",
    "depth": "thorough",
    "batchFile": "infra-hi-2.json",
@@ -3287,6 +3296,15 @@
    "lane": "infra",
    "sevAtBasis": "P1",
    "id": "OPS-14",
+   "recheck": {
+    "head": "c4b63f82e",
+    "date": "2026-11-12",
+    "status": "PARTIALLY_FIXED",
+    "testerImpact": "none",
+    "fixedBy": "c4b63f82e",
+    "evidence": "MR-04 Stage 1. terraform/stack/database_keys.tf and vault_storage.tf: the database and vault keys are multi_region; release_signing.tf already was. aws_kms_replica_key.database, .vault and .release_signing are made through the aws.dr provider, each under its primary's policy; the vault replica's account statement still holds no use of the key. Each root takes dr_region (required, no default, the founder's NEW-2) and passes aws.dr; the stack declares it in configuration_aliases. terraform/stack/tests/dr.tftest.hcl red at 08bf12033, 5/5 green after, six mutations each caught. docs/evidence/MR-04/2026-11-12/stage-1/.",
+    "remaining": "Everything but the keys: no AWS Backup plan or vault lock, no cross-region snapshot copy, no CRR for the vault or evidence buckets, no vault object lock, RPO/RTO undefined, no restore exercised against RDS, the drill still restores a fixture on postgres:16, no KMS break-glass SOP (Stages 4 and 6). The DR region itself is the founder's (NEW-2), given at apply."
+   },
    "workOrder": "MR-04",
    "depth": "thorough",
    "batchFile": "infra-hi-4.json",
@@ -4087,6 +4105,15 @@
    "lane": "security",
    "sevAtBasis": "P1",
    "id": "SEC-11",
+   "recheck": {
+    "head": "c4b63f82e",
+    "date": "2026-11-12",
+    "status": "PARTIALLY_FIXED",
+    "testerImpact": "none",
+    "fixedBy": "MR-04 Stage 2 commit, 2026-11-12",
+    "evidence": "The alarm and alert items: terraform/stack/monitoring.tf alarms on the CIS CloudTrail events (root activity, IAM policy change, KMS key disable or scheduled deletion, security-group change, console sign-in failure) and on reportSecurityAlert's line, now marked [SECURITY] [alert:<kind>] (server/services/security-alerts.ts) so a blocked CORS origin does not page. All publish to the one alarm topic. docs/evidence/MR-04/2026-11-12/stage-2/.",
+    "remaining": "No WAF, GuardDuty, Config, VPC flow logs or ALB access logs (MR-04 Stages 3 and 5). SECURITY_ALERT_WEBHOOK_URL is still unprovisioned; the alarm topic is the paging path."
+   },
    "workOrder": "MR-04",
    "depth": "thorough",
    "batchFile": "security-hi-3.json",

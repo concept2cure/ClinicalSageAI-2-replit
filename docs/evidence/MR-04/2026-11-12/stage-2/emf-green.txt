@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes one JobSucceeded line, in embedded metric format, when the run finishes and is recorded 3ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when the job throws 1ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when this window was already claimed 0ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when another task holds the lease 0ms
+ ✓ server/db/__tests__/scheduledOnce-job-succeeded-metric.test.ts > runScheduledOncePerWindow reports a finished run to CloudWatch > writes nothing when the finish could not be recorded 0ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  19:12:09
+   Duration  365ms (transform 98ms, setup 140ms, import 43ms, tests 8ms, environment 0ms)
+

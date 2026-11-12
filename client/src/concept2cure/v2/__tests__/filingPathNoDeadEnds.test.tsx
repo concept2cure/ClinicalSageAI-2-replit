@@ -14,7 +14,10 @@
  *      surface (offered only where surfaceAvailable says it can be opened) is
  *      pinned with the verdict a release without it returns.
  *   2. Vault, with a project open: "Inspection readiness" opened `etmf`, also
- *      locked. The button is named "Trial master file" since 2026-11-10.
+ *      locked. The button is named "Trial master file" since 2026-11-10. The
+ *      eTMF joined the Vault app on 2026-11-12 (P-124 item 6), so the button
+ *      now shows the Vault's own trial master file section; where the eTMF is
+ *      locked it is still not offered (`lockedHere`).
  *   3. Vault, with no project open: each project's Vault is listed (2026-11-06; it read "Open a project to see its vault") and
  *      nothing to click.
  *   4. Submission Center, Builder: with no Co-Author documents it said to
@@ -101,9 +104,10 @@ afterEach(() => {
 
 describe('No dead ends on the filing path (F16)', () => {
   it('the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it', () => {
-    expect(['etmf', 'ectd-coauthor'].map(isLaunchSurface)).toEqual([false, false]);
+    // ectd-coauthor is the one this suite treats as locked; it adds etmf to that set with `lockedHere`.
     // device-510k: a feature of the client's project since the founder's request of 2026-10-23.
-    expect(['projects', 'vault', 'document-authoring', 'device-510k'].map(isLaunchSurface)).toEqual([true, true, true, true]);
+    // etmf: in the Vault app since its admission (2026-11-12, P-124 item 6).
+    expect(['ectd-coauthor', 'projects', 'vault', 'document-authoring', 'device-510k', 'etmf'].map(isLaunchSurface)).toEqual([false, true, true, true, true, true]);
   });
 
   it('Submission Center: a device filing row opens the 510(k) surface, which is in this release', async () => {
@@ -160,7 +164,8 @@ describe('No dead ends on the filing path (F16)', () => {
     });
   });
 
-  it('Vault, with a project open: no "Trial master file" door into the locked eTMF', async () => {
+  it('Vault, with a project open: no "Trial master file" door where the eTMF is locked', async () => {
+    lockedHere.add('etmf');
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
     expect(await screen.findByText(/No documents in this project's vault yet/)).toBeTruthy();
@@ -213,7 +218,7 @@ describe('No dead ends on the filing path (F16)', () => {
   it('the launch-scope panel has one way back: Projects', () => {
     const onNav = vi.fn();
     render(
-      <LaunchScopeGate surfaceId="etmf" surface={{ id: 'etmf', label: 'eTMF' } as never} onNav={onNav}>
+      <LaunchScopeGate surfaceId="ectd-coauthor" surface={{ id: 'ectd-coauthor', label: 'eCTD co-author' } as never} onNav={onNav}>
         <div>the locked surface</div>
       </LaunchScopeGate>,
     );

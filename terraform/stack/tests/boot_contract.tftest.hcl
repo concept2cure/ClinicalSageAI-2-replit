@@ -43,6 +43,10 @@ mock_provider "aws" {
   mock_resource "aws_iam_role" {
     defaults = { arn = "arn:aws:iam::123456789012:role/mock" }
   }
+  # The alarm topic (monitoring.tf): alarms and subscriptions validate its ARN.
+  mock_resource "aws_sns_topic" {
+    defaults = { arn = "arn:aws:sns:us-east-1:123456789012:c2c-production-alarms" }
+  }
   mock_resource "aws_kms_key" {
     defaults = { arn = "arn:aws:kms:us-east-1:123456789012:key/mock" }
   }
@@ -77,6 +81,18 @@ mock_provider "aws" {
   # No arn default for secrets: the mock then generates a DISTINCT value per
   # instance. A shared fixed ARN made every "this variable reads that secret"
   # assertion below pass even with DATABASE_URL pointed at jwt_secret.
+}
+
+# The disaster-recovery region's provider, aws.dr (MR-04 Stage 1). The key
+# replicas go through it; tests/dr.tftest.hcl asserts them.
+mock_provider "aws" {
+  alias = "dr"
+  mock_data "aws_region" {
+    defaults = { name = "us-west-2" }
+  }
+  mock_data "aws_caller_identity" {
+    defaults = { account_id = "123456789012" }
+  }
 }
 
 # Throwaway values of the right SHAPE, for production's settings. Nothing here
@@ -156,6 +172,8 @@ variables {
   # records for `local`, which boot_contract now requires.
   # A commit id's shape, not bge-m3's real commit (the stack leaves it unset
   # until one is recorded; warns_while_the_embedding_model_is_unpinned below).
+  # Production refuses to apply with nobody to page (monitoring.tf).
+  alarm_emails             = ["oncall@example.com"]
   embedding_model_revision = "0123456789abcdef0123456789abcdef01234567"
 }
 

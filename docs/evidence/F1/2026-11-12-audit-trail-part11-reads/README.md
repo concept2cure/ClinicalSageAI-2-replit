@@ -62,9 +62,30 @@ entries; 100 real settings changes, each with its reason, took it to 224.
   read the heading would have said 200 beside a verdict over 224. Screenshot: `audit-trail-224-entries.png`.
 - No status line is shown, because the list is the whole trail.
 
-**Not shown in the running app.** This database has no e-signature rows (`electronic_signatures` is empty), so
-"E-sign finds the seeded signatures" was checked in the component test only, not against the biotech demo seed.
-The more-than-1,000 case was also checked in the component test only.
+**"Filter E-sign finds the seeded signatures", in the running app (walked later on 2026-11-12, on trunk
+`889dc6b87d` and after).** The launch demo's biotech pack (`scripts/demo/launch-demo/seed.mjs --pack biotech`)
+was run through the product's API as the administrator, with a second person as signer (`OQ_SIGNER_EMAIL`). It
+froze the protocol synopsis v1.0 and e-signed it: two signatures by the second signer, each its own
+`authoring_signatures` row. Then 230 governed settings changes were made on top, so that both signatures sit
+behind the newest 200 entries:
+
+| Read | Entries | E-sign entries |
+|---|---|---|
+| The route's default read, what the screen asked for before | 200 | **0** |
+| `?limit=1000`, what the screen asks for now | 702 | **2** |
+
+On the screen, as the administrator: "703 entries — hash-chained", and the E-sign filter, counted 2, lists both
+signatures by the second signer on "[Demo · Biotech] Protocol Synopsis C2C-101-201" with their signed mark
+(`audit-trail-esign-filter.png`). The chain verdict beside it covers the same 703.
+
+Found on the way, for other lanes (recorded in COORDINATION.md): the pack's freeze is refused (403
+`AUTHORING_OBJECT_FORBIDDEN`) when its second signer holds only the organisation role `approver`. A freeze is an
+approval-class act and the authoring permissions admit it for an organisation administrator or a document-level
+APPROVER grant, so the pack needs a second administrator. Its QMS step then stops until QMS approvers are designated.
+And both signatures read "Document e-signed" although the first is the freeze; the event names are the ledger
+route's.
+
+The more-than-1,000 case was checked in the component test only.
 
 **Left for the route's holder.** A trail longer than 1,000 entries still cannot be filtered or searched past the
 newest 1,000 from this screen. That needs a cursor or a `kind` parameter on the route, which is another session's
