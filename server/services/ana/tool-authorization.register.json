@@ -4715,6 +4715,16 @@
     "source": "project"
    }
   },
+  "list_my_support_tickets": {
+   "class": "read",
+   "writes": "none",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "list",
+    "object": "your support requests",
+    "source": "screen"
+   }
+  },
   "list_platform_commands": {
    "class": "read",
    "writes": "none",
@@ -5075,6 +5085,16 @@
    "class": "confirm",
    "writes": "INSERT grant_closeout_records + governed-action row",
    "site": "AnaToolExecutor.ts registerToolHandler('open_grant_closeout')"
+  },
+  "open_support_ticket": {
+   "class": "read",
+   "writes": "none: drafts the request and links it; the person sends it from Help & training (POST /api/support/tickets)",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "draft",
+    "object": "a support request",
+    "source": "screen"
+   }
   },
   "override_import_mapping": {
    "class": "confirm",
@@ -5537,6 +5557,16 @@
     "verb": "read",
     "object": "a governed document",
     "source": "submissions"
+   }
+  },
+  "read_help_article": {
+   "class": "read",
+   "writes": "none",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "read",
+    "object": "a help article",
+    "source": "screen"
    }
   },
   "read_project_document": {
@@ -6821,6 +6851,19 @@
     "verb": "search",
     "object": "Grants.gov",
     "source": "agency",
+    "preview": [
+     "query"
+    ]
+   }
+  },
+  "search_help_center": {
+   "class": "read",
+   "writes": "none",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "search",
+    "object": "the Help Center",
+    "source": "screen",
     "preview": [
      "query"
     ]
