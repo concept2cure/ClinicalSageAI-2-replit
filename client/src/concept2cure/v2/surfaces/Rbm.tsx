@@ -3,7 +3,7 @@ import { authService, useAuthUser } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
-import { useLiveData, EmptyState, type DataReadOwner } from '../dataConnect';
+import { useLiveData, EmptyState, ProjectBack, type DataReadOwner } from '../dataConnect';
 import { captureShellProjectGuard, publishShellProject, shellProgramId, useShellProject, type ShellProject } from '../shellProject';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
@@ -13,6 +13,8 @@ import { rbmWrite, RbmWriteNote } from './rbmWrites';
 import {
   SeedEmpty,
   RbmAnaDock,
+  RbmAnaComposer,
+  RbmStarters,
   type RbmAnaMessage,
   RbmOverview,
   RbmReport,
@@ -120,6 +122,25 @@ const LINK_ICONS: Record<string, string> = {
  */
 const ATTENTION_CONTEXT_CAP = 8;
 
+/** Under this width the conversation cannot sit beside the board: it opens as a drawer over it (D7.md §C.4.6). */
+const DOCK_MIN_WIDTH = 1024;
+
+/** True while the window is narrower than the docked width. A browser without matchMedia is treated as wide. */
+function useNarrowWindow(): boolean {
+  const query = `(max-width: ${DOCK_MIN_WIDTH - 1}px)`;
+  const read = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(query).matches;
+  const [narrow, setNarrow] = useState(read);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const media = window.matchMedia(query);
+    const onChange = () => setNarrow(media.matches);
+    onChange();
+    media.addEventListener?.('change', onChange);
+    return () => media.removeEventListener?.('change', onChange);
+  }, [query]);
+  return narrow;
+}
+
 export function Rbm(props: OwnedSurfaceViewProps) {
   const project = useShellProject();
   const session = useAuthoringReadSession(useAuthUser());
@@ -139,7 +160,12 @@ export function Rbm(props: OwnedSurfaceViewProps) {
 
 function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProps & { project: ShellProject | null; owner: DataReadOwner }) {
   const [tab, setTab] = useState('overview');
-  const [anaOpen, setAnaOpen] = useState(true);
+  /* AnA's conversation leads this screen (the founder, 2026-11-12: "place AnA chat prominently more"). Where
+     there is room beside the board it is open on arrival; on a narrow window it would cover the board, so it
+     waits there behind the composer under the title, and opens as a drawer on the first question. */
+  const narrow = useNarrowWindow();
+  const [anaChoice, setAnaOpen] = useState<boolean | null>(null);
+  const anaOpen = anaChoice ?? !narrow;
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const current = () => mounted.current && owner.current();
@@ -200,7 +226,7 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
     }
   };
   const startEmpty = unstarted ? (
-    <div style={{ padding: 24 }}>
+    <div>
       <SeedEmpty
         title="Risk-based monitoring has not started for this project"
         body="Starting it records the ICH E6(R3) default risk assessment (RACT) for the open project, ready to tailor. No indicator, limit or score is recorded until you add or seed it."
@@ -329,22 +355,28 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
   const Body = SURFACES[tab];
   if (!current()) return <EmptyState title="Risk-based monitoring is unavailable for this session" hint="Reopen monitoring after selecting your account and project." />;
 
+  /* The conversation names the study by its code ("LMN-201"), which is how a team says it; a project with no code
+     is named as the picker names it. The full name made the dock's question three lines long. */
+  const studyName = selProgram ? (selProgram.code?.trim() || studyLabel.split(' --')[0]) : '';
+  /* The study's size, in the title's one sentence. It was a caption under the picker; the board is its only source,
+     so nothing is said until this study's board has been read. */
+  const counted = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
+  const studySize = bd && bd.programId === study
+    ? `: ${counted(bd.summary.sites.total, 'site')}, ${counted(bd.summary.patients.scored, 'subject')} scored.`
+    : '.';
+  const toggleAna = () => { if (current()) setAnaOpen(!anaOpen); };
+
   return (
-    <div className="page-inner" data-screen-label={`RBM — ${nav.label}`}>
-      <div className="reg-head">
+    <div className="page-inner rbm-page" data-work-area="rbm" data-screen-label={`RBM — ${nav.label}`}>
+      <ProjectBack onNav={onNav} />
+      <header className="ph">
         <div>
-          <div className="ph-eyebrow">Clinical — risk-based quality management</div>
-          <h1 className="reg-title">Risk-based monitoring</h1>
-          <p className="reg-sub">
-            ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central statistical
-            monitoring, site oversight and the monitoring plan. Every score is engine output — the
-            number behind each chip is always visible.
-          </p>
+          <h1 className="ph-title">Risk-based monitoring</h1>
+          <p className="ph-sub">ICH E6(R3) risk-based quality management for the study{studySize}</p>
         </div>
-        <div className="rbm-study">
-          <span className="rbm-study-l">Project</span>
+        <div className="ph-acts">
           <select
-            className="rbm-study-sel"
+            className="c2c-input rbm-study-sel"
             value={study ?? ''}
             onChange={e => selectProject(e.target.value)}
             aria-label="Select a project for risk-based monitoring"
@@ -357,13 +389,23 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
                 </option>
               ))}
           </select>
-          {/* With no project's board read there is nothing to say here; this
-              read "Live RBM read-model", the implementation's name for it. */}
-          {bd && bd.programId === study && (
-            <span className="rbm-study-m">{`${bd.summary.sites.total} sites — ${bd.summary.patients.scored} subjects scored`}</span>
-          )}
+          {/* The conversation's own control, where the title is: it replaces the sideways "AnA" strip that was
+              left at the board's edge when the dock was closed. */}
+          <button type="button" className="btn ghost rbm-ana-toggle" aria-pressed={anaOpen} onClick={toggleAna}
+            title={anaOpen ? 'Close the conversation with AnA' : 'Open the conversation with AnA'}>
+            <span className="mk" aria-hidden="true">{'✻'}</span>AnA
+          </button>
         </div>
-      </div>
+      </header>
+
+      {/* With the conversation closed, AnA is still the first thing under the title: her composer and the open
+          tab's suggestions. A question opens the conversation and sends. */}
+      {!anaOpen && study && (
+        <div className="rbm-askbar" role="group" aria-label="Ask AnA">
+          <RbmAnaComposer study={studyName} onSend={askAna} />
+          <RbmStarters nav={nav} onAsk={askAna} layout="row" />
+        </div>
+      )}
 
       <div className="rbm-links">
         <span className="rbm-links-l">{I.network}Linked to</span>
@@ -385,7 +427,6 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
                 <b>{L.label}</b>
                 <em>{L.value}</em>
               </span>
-              <span className="rbm-link-go">{I.chevRight}</span>
             </button>
           );
         })}
@@ -393,13 +434,13 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
 
       {reconciliationRequired && <p className="rbm-note" role="status">Some project relationships need repair before monitoring can be shown. No unavailable project details are supplied.</p>}
 
-      <div className="reg-tabs rbm-tabs" role="tablist">
+      <div className="tabs" role="tablist">
         {RBM_NAV.map(n => (
           <button
             key={n.id}
             role="tab"
             aria-selected={tab === n.id}
-            className={`reg-tab${tab === n.id ? ' on' : ''}`}
+            className="tab"
             onClick={() => { if (current()) setTab(n.id); }}
           >
             {n.label}
@@ -407,50 +448,40 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
         ))}
       </div>
 
-      <div className="rbm-workarea" data-ana={anaOpen || undefined}>
+      <div className={`rbm-workarea${anaOpen && !narrow ? ' wa-split' : ''}`} data-ana={anaOpen || undefined}>
         <div className="rbm-content">
           {programs.loading ? (
-            <div style={{ padding: 24 }}>
-              <EmptyState title="Loading RBM studies…" icon={I.clock} />
-            </div>
+            <EmptyState title="Loading RBM studies…" icon={I.clock} />
           ) : programs.error ? (
-            <div style={{ padding: 24 }}>
-              <EmptyState
-                tone="error"
-                icon={I.alertTriangle}
-                title="Couldn't load RBM studies"
-                hint="The risk-based monitoring service didn't respond. Nothing is shown from a cached sample."
-                retry={retryRoster}
-              />
-            </div>
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load RBM studies"
+              hint="The risk-based monitoring service didn't respond. Nothing is shown from a cached sample."
+              retry={retryRoster}
+            />
           ) : startEmpty ? (
             startEmpty
           ) : programs.rows.length === 0 ? (
-            <div style={{ padding: 24 }}>
-              <EmptyState
-                icon={I.clipboardList}
-                title={reconciliationRequired ? 'Monitoring project relationships need repair' : 'No monitoring projects yet'}
-                hint={reconciliationRequired ? 'Ask your project administrator to repair the project relationships before opening monitoring.' : 'Open a project and start its monitoring here, or select risk-based monitoring when setting up a project. Projects with recorded monitoring data appear here; no risk assessment or score is invented.'}
-              />
-            </div>
+            <EmptyState
+              icon={I.clipboardList}
+              title={reconciliationRequired ? 'Monitoring project relationships need repair' : 'No monitoring projects yet'}
+              hint={reconciliationRequired ? 'Ask your project administrator to repair the project relationships before opening monitoring.' : 'Open a project and start its monitoring here, or select risk-based monitoring when setting up a project. Projects with recorded monitoring data appear here; no risk assessment or score is invented.'}
+            />
           ) : !study ? (
-            <div style={{ padding: 24 }}><EmptyState icon={I.folder}
+            <EmptyState icon={I.folder}
               title={project ? 'This project is not available for risk-based monitoring' : 'Choose a project for risk-based monitoring'}
-              hint="Choose an accessible monitoring project from the project selector. Another project is never opened automatically." /></div>
+              hint="Choose an accessible monitoring project from the project selector. Another project is never opened automatically." />
           ) : board.error ? (
-            <div style={{ padding: 24 }}>
-              <EmptyState
-                tone="error"
-                icon={I.alertTriangle}
-                title="Couldn't load the RBM board"
-                hint="The board didn't respond for this study. Nothing is shown from a cached sample."
-                retry={reload}
-              />
-            </div>
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load the RBM board"
+              hint="The board didn't respond for this study. Nothing is shown from a cached sample."
+              retry={reload}
+            />
           ) : board.loading || !bd || bd.programId !== study ? (
-            <div style={{ padding: 24 }}>
-              <EmptyState title="Loading the RBM board…" icon={I.clock} />
-            </div>
+            <EmptyState title="Loading the RBM board…" icon={I.clock} />
           ) : hasData ? (
             <Body
               key={bd.programId + '@' + bd.asOf}
@@ -470,15 +501,16 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
           )}
           {!startEmpty && <RbmWriteNote note={writeNote} />}
         </div>
-        {anaOpen ? (
+        {anaOpen && (
           <RbmAnaDock
             nav={nav}
-            study={studyLabel.split(' --')[0]}
+            study={studyName}
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => { if (current()) setAnaOpen(false); }}
             onNav={navigate}
             onStartDemo={liveDrive?.onStartDemo}
+            drawer={narrow}
             /* The live work dock reads the raw turns: phases, tool timings,
                pending steers and outputs the pane's message shape does not carry. */
             work={{
@@ -488,10 +520,6 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
               pendingSteers: anaChat.pendingSteers,
             }}
           />
-        ) : (
-          <button className="rbm-ana-seam" onClick={() => { if (current()) setAnaOpen(true); }} title="Open AnA">
-            <span className="mk">{'✻'}</span>AnA
-          </button>
         )}
       </div>
     </div>
