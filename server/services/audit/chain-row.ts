@@ -45,6 +45,23 @@ export interface SequencedRowVerdict {
  * walk, so it is reported, not trusted. The whole-chain walk is
  * verifyAuditChain; this checks one link of it.
  */
+/** PostgreSQL's text form of a timestamptz: `2026-11-12 00:36:03.117+00`, as a driver in text mode returns it. */
+const PG_TEXT_TIMESTAMP = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?[+-]\d{2}(:?\d{2})?$/;
+
+/**
+ * The row's timestamp as the writer hashed it. node-postgres hands a reader a
+ * Date; drizzle's `execute` hands it PostgreSQL's text for the same instant.
+ * The writer hashed the ISO form of that instant, so the text is read back to
+ * the instant first. Until 2026-11-12 the text was hashed as it stood, and
+ * every row read on a drizzle connection was reported broken. Anything that
+ * is not that text form is left exactly as given.
+ */
+function occurredAtAsWritten(value: string | Date): string | Date {
+  if (value instanceof Date || !PG_TEXT_TIMESTAMP.test(value)) return value;
+  const at = new Date(value);
+  return Number.isNaN(at.getTime()) ? value : at;
+}
+
 export async function verifySequencedRow(client: PoolClient, row: SequencedRowInput): Promise<SequencedRowVerdict> {
   const noKey = !process.env.AUDIT_HMAC_KEY;
   if (!row.sha256_chain || row.chain_seq == null) return { link: 'unsequenced', seal: noKey ? 'no-key' : 'absent' };
@@ -63,7 +80,8 @@ export async function verifySequencedRow(client: PoolClient, row: SequencedRowIn
         [row.tenant_id],
       );
   const previousHash = (legacy.rows[0]?.sha256_chain as string | undefined) ?? GENESIS_PREVIOUS_HASH;
-  if (deriveChainHash(row, previousHash) !== row.sha256_chain) return { link: 'broken', seal: noKey ? 'no-key' : 'absent' };
+  const asWritten = { ...row, occurred_at: occurredAtAsWritten(row.occurred_at) };
+  if (deriveChainHash(asWritten, previousHash) !== row.sha256_chain) return { link: 'broken', seal: noKey ? 'no-key' : 'absent' };
   if (noKey) return { link: 'linked', seal: 'no-key' };
   if (!row.hmac_seal) return { link: 'linked', seal: 'absent' };
   const sealed = verifyLinkSeal({ recordHash: row.sha256_chain, previousHash, sequenceNumber: AUDIT_SEAL_SEQ }, row.hmac_seal);
