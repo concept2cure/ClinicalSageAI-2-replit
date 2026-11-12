@@ -1,0 +1,106 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > takes it from the environment's READYZ_TOKEN secret 6ms
+   → expected undefined to be '${{ secrets.READYZ_TOKEN }}' // Object.is equality
+ × tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > sends it in x-readyz-token, from a file, never on the command line 19ms
+   → expected [] to deeply equal [ Array(1) ]
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > prints the dependencies it was shown 13ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > a deployment that is not ready fails, and the log names what failed 27ms
+ × tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > without the secret: no header, the verdict is checked the same, and the step says the detail is not shown 13ms
+   → expected '✅ https://app.example.com/readyz repo…' to match /::notice::READYZ_TOKEN is not set/
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > without the secret: a deployment that is not ready still fails 27ms
+ ✓ tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > with the secret: a 200 that is not the verdict (the SPA, an error page) still fails 42ms
+ × tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > a token the deployment does not accept is said, and changes no verdict 13ms
+   → expected '✅ https://app.example.com/readyz repo…' to match /::warning::R…/readyz returned no detail
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > takes it from the environment's READYZ_TOKEN secret
+AssertionError: expected undefined to be '${{ secrets.READYZ_TOKEN }}' // Object.is equality
+
+- Expected:
+"${{ secrets.READYZ_TOKEN }}"
+
++ Received:
+undefined
+
+ ❯ tests/ci/deploy-smoke-readyz-detail.contract.test.ts:58:54
+     56| describe('the smoke test presents the readiness token', () => {
+     57|   it("takes it from the environment's READYZ_TOKEN secret", () => {
+     58|     expect(wf.jobs['smoke-test']?.env?.READYZ_TOKEN).toBe('${{ secrets…
+       |                                                      ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the smoke test presents the readiness token > sends it in x-readyz-token, from a file, never on the command line
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "header-file: x-readyz-token: rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+- ]
++ []
+
+ ❯ tests/ci/deploy-smoke-readyz-detail.contract.test.ts:64:33
+     62|     const r = run({ READYZ_TOKEN: TOKEN, FAKE_STATUS: '200', FAKE_BODY…
+     63|     expect(r.status, r.out).toBe(0);
+     64|     expect(headerFiles(r.argv)).toEqual([`header-file: x-readyz-token:…
+       |                                 ^
+     65|     expect(curls(r.argv).length).toBe(1);
+     66|     expect(curls(r.argv).join('\n')).not.toContain(TOKEN);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > without the secret: no header, the verdict is checked the same, and the step says the detail is not shown
+AssertionError: expected '✅ https://app.example.com/readyz repo…' to match /::notice::READYZ_TOKEN is not set/
+
+- Expected:
+/::notice::READYZ_TOKEN is not set/
+
++ Received:
+"✅ https://app.example.com/readyz reports ready
+null
+"
+
+ ❯ tests/ci/deploy-smoke-readyz-detail.contract.test.ts:91:19
+     89|     expect(headerFiles(r.argv)).toEqual([]);
+     90|     expect(curls(r.argv).join('\n')).not.toMatch(/--header/);
+     91|     expect(r.out).toMatch(/::notice::READYZ_TOKEN is not set/);
+       |                   ^
+     92|     expect(r.out).toContain('per-dependency detail not shown');
+     93|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/ci/deploy-smoke-readyz-detail.contract.test.ts > the token decides only what is printed > a token the deployment does not accept is said, and changes no verdict
+AssertionError: expected '✅ https://app.example.com/readyz repo…' to match /::warning::R…/readyz returned no detail
+
+- Expected:
+/::warning::READYZ_TOKEN was presented and \/readyz returned no detail/
+
++ Received:
+"✅ https://app.example.com/readyz reports ready
+null
+"
+
+ ❯ tests/ci/deploy-smoke-readyz-detail.contract.test.ts:110:23
+    108|     const ready = run({ READYZ_TOKEN: TOKEN, FAKE_STATUS: '200', FAKE_…
+    109|     expect(ready.status, ready.out).toBe(0);
+    110|     expect(ready.out).toMatch(/::warning::READYZ_TOKEN was presented a…
+       |                       ^
+    111|
+    112|     const down = run({ READYZ_TOKEN: TOKEN, FAKE_STATUS: '503', FAKE_B…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+   Start at  23:58:23
+   Duration  561ms (transform 118ms, setup 88ms, import 70ms, tests 163ms, environment 0ms)
+
