@@ -67,4 +67,14 @@ describe('the regulatory knowledge tools are wired', () => {
     expect(prompt).not.toMatch(/requirements from your training/);
     expect(prompt).toMatch(/never promise that a submission will pass it/);
   });
+
+  // MC-RL-2 (docs/work-orders/README.md, 2026-10-04 map; RULE 2: the model narrates). The drafting steps asked for
+  // "SUBMISSION-READY prose — not placeholders" and "no hedging", which tells the model to fill what the sources do
+  // not hold, against step 6's own [PENDING: needs data].
+  it('tell AnA to mark what the sources do not hold, never to fill it', () => {
+    const prompt = buildAnaRISystemPrompt();
+    expect(prompt).not.toMatch(/SUBMISSION-READY|not placeholders|no hedging/i);
+    expect(prompt).toMatch(/\[PENDING: needs data\]/);
+    expect(prompt).toMatch(/A marked gap is correct; an invented fact, figure or result is a defect/);
+  });
 });

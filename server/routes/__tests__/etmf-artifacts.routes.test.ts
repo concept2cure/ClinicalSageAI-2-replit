@@ -163,11 +163,24 @@ describe('eTMF artifact persistence', () => {
     expect(list.status).toBe(200);
     expect(list.body.map((a: any) => [a.artifactCode, a.document])).toEqual([
       ['protocol', null], // filed against 'doc-1', an off-platform reference
-      ['sample_crf', { id: DOC_A, title: 'Sample case report form', version: '2.0', current: true }],
+      ['sample_crf', { id: DOC_A, title: 'Sample case report form', version: '2.0', current: true, lifecycleStage: null }],
       ['sample_icf', null], // another project's document is not named
     ]);
     expect(JSON.stringify(list.body)).not.toContain('A document of project B');
     await fixture.query(`DELETE FROM tmf_artifact_filings WHERE artifact_code = 'sample_icf'`);
+  });
+
+  it('a filing\'s document carries its review stage, as the Library reads it: a record\'s state is its document\'s', async () => {
+    await fixture.query(
+      `INSERT INTO canonical_documents (canonical_id, organization_id, stage, source_refs)
+       VALUES ('cd-a', 1, 'approved', jsonb_build_object('vault_documents', jsonb_build_object('nativeId', $1::text)))`, [DOC_A]);
+    const list = await request(app).get('/api/etmf/trials/STUDY-A/artifacts');
+    expect(list.body.find((a: any) => a.artifactCode === 'sample_crf').document).toMatchObject({ id: DOC_A, lifecycleStage: 'approved' });
+    // Another organization's record of the same document id is not this document's stage.
+    await fixture.query(`UPDATE canonical_documents SET organization_id = 2 WHERE canonical_id = 'cd-a'`);
+    const other = await request(app).get('/api/etmf/trials/STUDY-A/artifacts');
+    expect(other.body.find((a: any) => a.artifactCode === 'sample_crf').document.lifecycleStage).toBeNull();
+    await fixture.query(`DELETE FROM canonical_documents WHERE canonical_id = 'cd-a'`);
   });
 
   it('re-filing the same artifact updates the one row, and records the document it replaced', async () => {
@@ -266,5 +279,117 @@ describe('eTMF removal keeps the record', () => {
     expect((await fixture.query('SELECT count(*)::int AS n FROM tmf_artifact_filings WHERE trial_id = $1 AND artifact_code = $2', ['STUDY-A', 'protocol'])).rows).toEqual([{ n: 1 }]);
     expect((await auditOf(artifactId))[3]).toMatchObject({ details: { outcome: 'filed_after_removal',
       clearedRemoval: { removedBy: 9, reason: 'Filed against the wrong study.', documentRef: 'doc-1-v2' } } });
+  });
+});
+
+/*
+ * "Not applicable", with a reason (P-124 item 5), on the deployed store. A study to which an essential record does not
+ * apply could otherwise never read complete. The declaration is the record's row: who (created_by), when (filed_at)
+ * and why (not_applicable_reason); it names no document, is counted as neither filed nor missing, and says how many
+ * were declared. STUDY-B, so the suites above keep STUDY-A's rows.
+ */
+describe('a record declared not applicable to the study', () => {
+  const NA = 'No investigational product is imported for this single-country study.';
+  let declaredId: string;
+
+  it('is refused without a reason, or with a document, and nothing is written', async () => {
+    const unreasoned = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'monitoring_plan', notApplicable: true });
+    expect(unreasoned.status).toBe(400);
+    expect(unreasoned.body).toMatchObject({ success: false, error: 'REASON_REQUIRED' });
+    const withDoc = await request(app).post('/api/etmf/trials/STUDY-B/artifacts')
+      .send({ artifactCode: 'monitoring_plan', notApplicable: true, documentRef: `vault://${DOC_B}`, reason: NA });
+    expect(withDoc.status).toBe(400);
+    expect(withDoc.body).toMatchObject({ success: false, error: 'NOT_APPLICABLE_WITH_DOCUMENT' });
+    expect((await fixture.query(`SELECT count(*)::int AS n FROM tmf_artifact_filings WHERE trial_id = 'STUDY-B'`)).rows).toEqual([{ n: 0 }]);
+  });
+
+  it('is declared with who, when and why, audited, listed, and counted as neither filed nor missing', async () => {
+    await fixture.query(`INSERT INTO tmf_test_users (id, name, email) VALUES (9, 'Dana Reyes', 'dana@example.test') ON CONFLICT (id) DO NOTHING`);
+    const before = await request(app).get('/api/etmf/trials/STUDY-B/completeness');
+    const res = await request(app).post('/api/etmf/trials/STUDY-B/artifacts')
+      .send({ artifactCode: 'monitoring_plan', notApplicable: true, reason: NA });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body).toMatchObject({ trialId: 'STUDY-B', studyRef: 2, createdBy: 9, documentRef: null, notApplicableReason: NA,
+      meta: { auditTrail: { persisted: true, chained: true } } });
+    declaredId = res.body.id;
+    expect(await auditOf(declaredId)).toMatchObject([{ action: 'TMF_ARTIFACT_DECLARED_NOT_APPLICABLE', reason: NA,
+      details: { study: { studyId: 'STUDY-B' }, artifactCode: 'monitoring_plan', outcome: 'declared', reason: NA } }]);
+
+    const list = await request(app).get('/api/etmf/trials/STUDY-B/artifacts');
+    expect(list.body).toEqual([expect.objectContaining({ id: declaredId, artifactCode: 'monitoring_plan', notApplicableReason: NA,
+      document: null, filedByName: 'Dana Reyes' })]);
+
+    const after = await request(app).get('/api/etmf/trials/STUDY-B/completeness');
+    const zoneOf = (body: any) => body.zones.find((z: any) => z.notApplicable.includes('monitoring_plan') || z.required.includes('monitoring_plan'));
+    expect(zoneOf(before.body).required).toContain('monitoring_plan');
+    expect(zoneOf(after.body)).toMatchObject({ notApplicable: ['monitoring_plan'] });
+    expect(zoneOf(after.body).required).not.toContain('monitoring_plan');
+    expect(zoneOf(after.body).missing).not.toContain('monitoring_plan');
+    expect(zoneOf(after.body).present).not.toContain('monitoring_plan');
+    expect(after.body.summary).toMatchObject({ totalNotApplicable: 1, totalRequired: before.body.summary.totalRequired - 1,
+      totalMissing: before.body.summary.totalMissing - 1 });
+  });
+
+  it('a filed record is not declared over: 409 RECORD_FILED, and the filing stands', async () => {
+    const filed = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'protocol', documentRef: `vault://${DOC_B}`, reason: WHY });
+    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
+    const res = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'protocol', notApplicable: true, reason: NA });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ success: false, error: 'RECORD_FILED' });
+    const row = await fixture.query('SELECT document_ref, not_applicable_reason FROM tmf_artifact_filings WHERE id = $1', [filed.body.id]);
+    expect(row.rows).toEqual([{ document_ref: `vault://${DOC_B}`, not_applicable_reason: null }]);
+    expect((await auditOf(filed.body.id)).map((a: any) => a.action)).toEqual(['TMF_ARTIFACT_FILED']);
+  });
+
+  it('declared again, the new reason replaces the old on the same row, and the audit row keeps the old one', async () => {
+    const again = 'Single country; no import licence is needed for this study.';
+    const res = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'monitoring_plan', notApplicable: true, reason: again });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ id: declaredId, notApplicableReason: again });
+    expect((await auditOf(declaredId))[1]).toMatchObject({ details: { outcome: 'redeclared', replacedDeclaration: { reason: NA, declaredBy: 9 } } });
+  });
+
+  it('is withdrawn as a filing is removed, with a reason that is kept, and the record is required again', async () => {
+    const res = await request(app).delete(`/api/etmf/artifacts/${declaredId}`).send({ reason: 'The plan applies after the protocol amendment.' });
+    expect(res.status).toBe(204);
+    expect((await auditOf(declaredId))[2]).toMatchObject({ action: 'TMF_ARTIFACT_REMOVED', reason: 'The plan applies after the protocol amendment.',
+      details: { artifactCode: 'monitoring_plan', withdrewDeclaration: { reason: 'Single country; no import licence is needed for this study.' } } });
+    const after = await request(app).get('/api/etmf/trials/STUDY-B/completeness');
+    expect(after.body.summary.totalNotApplicable).toBe(0);
+    expect(after.body.zones.some((z: any) => z.missing.includes('monitoring_plan'))).toBe(true);
+  });
+
+  it('a document filed against a declared record ends the declaration on the same row, and says which it ended', async () => {
+    const declared = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'monitoring_plan', notApplicable: true, reason: NA });
+    expect(declared.status).toBe(201);
+    expect(declared.body.id).toBe(declaredId);
+    expect((await auditOf(declaredId))[3]).toMatchObject({ details: { outcome: 'declared_after_removal' } });
+    const filed = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'monitoring_plan', documentRef: `vault://${DOC_B}`, reason: WHY });
+    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
+    expect(filed.body).toMatchObject({ id: declaredId, documentRef: `vault://${DOC_B}`, notApplicableReason: null });
+    expect((await auditOf(declaredId))[4]).toMatchObject({ action: 'TMF_ARTIFACT_FILED',
+      details: { outcome: 'filed_over_not_applicable', endedDeclaration: { reason: NA, declaredBy: 9 } } });
+  });
+
+  it('the database refuses a declaration that names a document, or carries no reason', async () => {
+    await expect(fixture.query(`UPDATE tmf_artifact_filings SET not_applicable_reason = $2 WHERE id = $1`, [declaredId, NA]))
+      .rejects.toThrow(/tmf_artifact_filings_not_applicable_chk/);
+    await expect(fixture.query(`UPDATE tmf_artifact_filings SET document_ref = NULL, not_applicable_reason = 'short' WHERE id = $1`, [declaredId]))
+      .rejects.toThrow(/tmf_artifact_filings_not_applicable_chk/);
+  });
+
+  it('the inspection package lists a declaration with its reason, and does not count it as filed', async () => {
+    const declared = await request(app).post('/api/etmf/trials/STUDY-B/artifacts').send({ artifactCode: 'tmf_plan', notApplicable: true, reason: NA });
+    expect(declared.status).toBe(201);
+    const res = await request(app).get('/api/etmf/trials/STUDY-B/inspection-package').buffer(true)
+      .parse((r, cb) => { const chunks: Buffer[] = []; r.on('data', (c: Buffer) => chunks.push(c)); r.on('end', () => cb(null, Buffer.concat(chunks))); });
+    expect(res.status).toBe(200);
+    const zip = await JSZip.loadAsync(res.body);
+    const csv = (await zip.file('inspection-index.csv')!.async('string')).trim().split('\n');
+    expect(csv[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence,not_applicable_reason');
+    expect(csv.find((l) => l.split(',')[1] === 'tmf_plan')).toMatch(/,,not_applicable,No investigational product is imported for this single-country study\.$/);
+    const readme = await zip.file('README.txt')!.async('string');
+    expect(readme).toMatch(/Not applicable: {3}1 \(declared, each with its reason; not required\)/);
+    expect(readme).toMatch(/Artifacts filed: {2}2/);
   });
 });

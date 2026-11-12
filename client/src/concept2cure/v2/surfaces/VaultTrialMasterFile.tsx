@@ -38,7 +38,7 @@ import React, { useContext, useEffect, useId, useMemo, useRef, useState } from '
 import type { TmfCompletenessResult, ZoneCompleteness } from '../../../../../server/services/etmf/tmf-completeness';
 import { useLiveData, type DataState } from '../dataConnect';
 import { I } from '../icons';
-import { VaultTmfFileForm, VaultTmfRemoveForm } from './VaultTmfFiling';
+import { VaultTmfDeclareForm, VaultTmfFileForm, VaultTmfRemoveForm } from './VaultTmfFiling';
 import { PackageDownloadButton, PackageDownloadNote, TmfFiguresLine, VaultTmfPackage, usePackageDownload } from './VaultTmfPackage';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 import {
@@ -84,7 +84,7 @@ function useTellHost(state: TmfSectionState | null): void {
   useEffect(() => { if (latest.current) onState?.(latest.current); }, [key, onState]);
 }
 
-type Act = { code: string; kind: 'file' | 'remove' };
+type Act = { code: string; kind: 'file' | 'remove' | 'declare' };
 
 interface ZoneProps {
   zone: ZoneCompleteness; filings: ReadonlyMap<string, TmfFiling> | null; documents: readonly TmfVaultDocument[];
@@ -105,7 +105,10 @@ function ZoneRows({ zone, filings, documents, canWrite, busy, act, onAct, form }
       <div className="vd-dr-row vd-cov-mod" data-testid={`vault-tmf-zone-${zone.number}`}>
         <span className="vd-dr-kind">Zone {zone.number}</span>
         <span className="vd-dr-name">{zone.name}</span>
-        <span className="vd-dr-detail">{zone.present.length} of {zone.required.length} filed</span>
+        <span className="vd-dr-detail">
+          {zone.present.length} of {zone.required.length} filed
+          {(zone.notApplicable?.length ?? 0) > 0 ? ` · ${zone.notApplicable.length} not applicable` : ''}
+        </span>
       </div>
       {recordsOf(zone, filings).map((r) => (
         <React.Fragment key={r.code}>
@@ -115,7 +118,12 @@ function ZoneRows({ zone, filings, documents, canWrite, busy, act, onAct, form }
             <span className="vd-dr-detail">{recordSentence(r, documents)}</span>
             {canWrite && r.state !== 'filed'
               ? <RowAct label="File a document" name={`File a document as ${r.name}`} busy={busy} onAct={() => onAct({ code: r.code, kind: 'file' })} /> : null}
-            {canWrite && r.filing
+            {/* Declared only where nothing is filed: a filing is removed first, with its own reason. */}
+            {canWrite && r.state === 'missing' && !r.filing
+              ? <RowAct label="Not applicable…" name={`Declare ${r.name} not applicable to this study`} busy={busy} onAct={() => onAct({ code: r.code, kind: 'declare' })} /> : null}
+            {canWrite && r.filing && r.state === 'not_applicable'
+              ? <RowAct label="Withdraw" name={`Withdraw the declaration that ${r.name} does not apply`} busy={busy} onAct={() => onAct({ code: r.code, kind: 'remove' })} /> : null}
+            {canWrite && r.filing && r.state !== 'not_applicable'
               ? <RowAct label="Remove" name={`Remove the filing of ${r.name}`} busy={busy} onAct={() => onAct({ code: r.code, kind: 'remove' })} /> : null}
           </div>
           {/* Open only from a button above, so only for a role that may write; a re-read does not close it. */}
@@ -211,9 +219,13 @@ function AssessedTmf({ projectId, study, scope, documents, result, rereading, fi
   const filings = filed.data ? new Map(filed.data.map((f) => [f.artifactCode, f])) : null;
   const filingsFailure = !filings && !filed.loading ? readFailure(filed, FILINGS_READ) : null;
   const done = (said: TmfNote) => { say(said); setAct(null); reread(); };
-  const form = (record: TmfRecord, kind: Act['kind']) => (kind === 'file'
-    ? <VaultTmfFileForm projectId={projectId} studyId={study.studyId} record={record} onDone={done} onCancel={() => setAct(null)} onVaultChanged={onVaultChanged} />
-    : <VaultTmfRemoveForm record={record} onDone={done} onCancel={() => setAct(null)} />);
+  const form = (record: TmfRecord, kind: Act['kind']) => {
+    if (kind === 'file') {
+      return <VaultTmfFileForm projectId={projectId} studyId={study.studyId} record={record} onDone={done} onCancel={() => setAct(null)} onVaultChanged={onVaultChanged} />;
+    }
+    if (kind === 'declare') return <VaultTmfDeclareForm studyId={study.studyId} record={record} onDone={done} onCancel={() => setAct(null)} />;
+    return <VaultTmfRemoveForm record={record} onDone={done} onCancel={() => setAct(null)} />;
+  };
   return (
     <>
       <div className="vd-tmf-read">
@@ -229,9 +241,9 @@ function AssessedTmf({ projectId, study, scope, documents, result, rereading, fi
       {filingsFailure ? (
         <ReadFailureNote failure={{ ...filingsFailure, message: `${filingsFailure.message} ${FILINGS_UNREAD}` }} onRetry={reread} testId="vault-tmf-filings-error" />
       ) : null}
-      {canWrite ? null : <VaultViewOnly act="file a document in the trial master file or remove a filing" testId="vault-tmf-view-only" />}
+      {canWrite ? null : <VaultViewOnly act="file a document in the trial master file, remove a filing or declare a record not applicable" testId="vault-tmf-view-only" />}
       <div className="vd-dr-rows vd-cov-rows vd-tmf-rows">
-        {result.zones.filter((z) => z.required.length > 0).map((z) => (
+        {result.zones.filter((z) => z.required.length > 0 || (z.notApplicable?.length ?? 0) > 0).map((z) => (
           <ZoneRows key={z.number} zone={z} filings={filings} documents={documents} canWrite={canWrite} busy={rereading || filed.loading}
             act={act} onAct={setAct} form={form} />
         ))}

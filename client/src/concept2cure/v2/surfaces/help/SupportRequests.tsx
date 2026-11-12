@@ -66,7 +66,10 @@ export function YourRequests({ onOpen, onNew }: { onOpen: (number: string) => vo
         <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load your support requests"
           hint="This is a failed read, not an empty list." retry={() => setVersion((v) => v + 1)} />
       ) : read.data.tickets.length === 0 ? (
-        <p className="hc-coll-s">You have no support requests. When the Help Center does not answer you, write one, or ask support.</p>
+        <p className="hc-coll-s">
+          {read.data.scope === 'organisation' ? 'Your organisation has no support requests.' : 'You have no support requests.'}
+          {' '}When the Help Center does not answer you, write one, or ask support.
+        </p>
       ) : (
         <ul className="hc-list">
           {read.data.tickets.map((t) => (

@@ -826,7 +826,7 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
   const verified = await verifyReauth(userId, reauth);
   if (!verified.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
-    return res.status(401).json({ error: verified.error ?? 'REAUTH_REQUIRED' });
+    return res.status(401).json({ error: verified.error, message: verified.message });
   }
 
   try {
