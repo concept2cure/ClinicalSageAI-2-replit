@@ -115,3 +115,32 @@ describe('Home: set up your organisation', () => {
     expect(companyDetailsState({ loading: false, data: { data: {} } })).toBe('unknown');
   });
 });
+
+describe('Home: the getting-started course (P-127)', () => {
+  beforeEach(() => { try { window.localStorage.clear(); } catch { /* none */ } });
+
+  it('an administrator is offered it inside the checklist, not counted as a step, and it opens the course', async () => {
+    const { onNav } = mount();
+    const section = await screen.findByTestId('home-setup');
+    await waitFor(() => expect(stateOf('company')).toBe('todo'));
+    expect(within(section).getByText('0 of 3 done')).toBeTruthy();
+    fireEvent.click(within(section).getByRole('button', { name: /Take the getting-started course/ }));
+    expect(onNav).toHaveBeenCalledWith('training');
+    expect((window as unknown as { C2C_NAV_PARAMS?: { surfaceId: string; params: unknown } }).C2C_NAV_PARAMS)
+      .toMatchObject({ surfaceId: 'training', params: { course: 'getting-started' } });
+  });
+
+  it('a member who is not an administrator sees it alone, until they have opened it', async () => {
+    auth.user = { id: 8, organizationId: '4', firstName: 'Lee', roles: ['member'] };
+    const { onNav } = mount();
+    const start = await screen.findByTestId('home-getting-started');
+    expect(screen.queryByTestId('home-setup')).toBeNull();
+    fireEvent.click(within(start).getByRole('button', { name: /Take the getting-started course/ }));
+    expect(onNav).toHaveBeenCalledWith('training');
+    cleanup();
+    apiRequest.mockClear();
+    mount();
+    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+    expect(screen.queryByTestId('home-getting-started')).toBeNull();
+  });
+});
