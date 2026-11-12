@@ -131,3 +131,26 @@ describe('declaring a record not applicable to the study', () => {
     expect(screen.getByTestId('vault-tmf-view-only').textContent).toMatch(/declare a record not applicable/);
   });
 });
+
+/*
+ * The other half of P-124 item 5: "A record's status is its document's." A filed record says the review stage of the
+ * Vault document it is filed against, in the Library's words; nobody types a status for a record.
+ */
+describe('a filed record says its document\'s review stage', () => {
+  it.each([
+    ['approved', 'Review: Approved.'],
+    ['in_review', 'Review: In review.'],
+    [null, 'Review: Not sent for review.'],
+  ])('stage %s reads “%s”', async (stage, words) => {
+    tmf.vaultDocs.set('33333333-3333-4333-8333-333333333333', { title: 'Protocol BX-204-201', version: '1.0', current: true, lifecycleStage: stage });
+    section();
+    await verdict();
+    expect(text(row('protocol'))).toContain(`Filed against “Protocol BX-204-201”, version 1.0 on 2026-11-02. ${words}`);
+  });
+
+  it('says nothing of a stage the server did not name', async () => {
+    section();
+    await verdict();
+    expect(text(row('protocol'))).not.toContain('Review:');
+  });
+});

@@ -39,6 +39,11 @@ CREATE TABLE IF NOT EXISTS vault.documents (
   id UUID PRIMARY KEY, program_id UUID NOT NULL, organization_id INTEGER NOT NULL, deleted_at TIMESTAMPTZ,
   document_code TEXT, document_title TEXT, file_name TEXT, version TEXT, supersedes_id UUID
 );
+-- A Vault document's review stage, as the Library reads it (vaultLifecycleStageSql): the columns that read uses.
+CREATE TABLE IF NOT EXISTS canonical_documents (
+  canonical_id TEXT PRIMARY KEY, organization_id INTEGER NOT NULL, stage TEXT NOT NULL DEFAULT 'authoring',
+  source_refs JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 -- Who filed or declared a record, by name: public.actor_name as 20260929_actor_names.sql declares it (its
 -- organization filter is exercised on PostgreSQL), over the two columns it reads.
 CREATE TABLE IF NOT EXISTS tmf_test_users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);

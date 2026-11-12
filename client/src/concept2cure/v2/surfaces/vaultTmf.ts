@@ -29,6 +29,7 @@ import { assessmentStateFor, mayReassure } from '../assessmentState';
 import type { DataState, ShapeGuard } from '../dataConnect';
 import { downloadBlob, safeFileName } from '../download';
 import { sha256Hex } from './vaultArchiveDownload';
+import { stageLabel } from './VaultLifecycle';
 
 export type TmfStudy = Pick<StudyDesignRow, 'studyId' | 'title' | 'phase'>;
 /** What is checked: the essential records (ICH E6(R3) Appendix C), or every record of the reference model. */
@@ -36,7 +37,7 @@ export type TmfScope = 'essential' | 'all';
 /** A filing as GET /api/etmf/trials/:studyId/artifacts lists it, with the document the server found for its reference. */
 export interface TmfFiling {
   id: string; artifactCode: string; documentRef: string | null; filedAt?: string | null;
-  document?: { id: string; title: string | null; version: string | null; current: boolean } | null;
+  document?: { id: string; title: string | null; version: string | null; current: boolean; lifecycleStage?: string | null } | null;
   /** Set on a declaration that the record does not apply to the study (P-124 item 5): why, in the person's words. */
   notApplicableReason?: string | null;
   /** Who filed or declared it, by name; null where the server could not name them. */
@@ -398,5 +399,16 @@ export function recordSentence(r: TmfRecord, documents: readonly TmfVaultDocumen
   }
   if (!r.filing) return 'Filed against a Vault document.';
   const on = typeof r.filing.filedAt === 'string' && r.filing.filedAt ? ` on ${r.filing.filedAt.slice(0, 10)}` : '';
-  return `Filed against ${documentName(r.filing, documents)}${on}.`;
+  return `Filed against ${documentName(r.filing, documents)}${on}.${documentStageSentence(r.filing)}`;
+}
+
+/**
+ * A record's state is its document's (P-124 item 5): the review stage of the Vault document it is filed against, in
+ * the words the Library uses for it. Said only where the server named the document; never a stage nobody recorded.
+ */
+function documentStageSentence(filing: TmfFiling): string {
+  const doc = filing.document;
+  if (!doc || doc.lifecycleStage === undefined) return '';
+  // "Review", as the Library's filter and rows name the same stage.
+  return ` Review: ${stageLabel(doc.lifecycleStage)}.`;
 }

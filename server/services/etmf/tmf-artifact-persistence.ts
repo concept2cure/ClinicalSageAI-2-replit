@@ -467,6 +467,12 @@ export interface TmfFilingDocument {
   version: string | null;
   /** False when a live later version has replaced it (the Vault's one link rule, vault-version-family.ts). */
   current: boolean;
+  /**
+   * The document's review stage, as the Vault's Library reads it (canonical_documents.stage: authoring, in_review,
+   * approved, placed, packaged, submitted, superseded, withdrawn), or null when it was never sent for review. A
+   * record's state is its document's (P-124 item 5): nobody types a status for a record.
+   */
+  lifecycleStage: string | null;
 }
 
 /**
@@ -512,7 +518,9 @@ async function filedDocuments(ids: readonly string[], organizationId: number, pr
   const documents = new Map<string, TmfFilingDocument>();
   if (ids.length === 0) return documents;
   // "current" is VALID_LINK('succ', 'd') of services/vault/vault-version-family.ts written out, as that file's
-  // readSuccessors does, so this SQL text carries no interpolation (ci:sql-interpolation).
+  // readSuccessors does, so this SQL text carries no interpolation (ci:sql-interpolation). "lifecycle_stage" is
+  // vaultLifecycleStageSql('d') of services/vault/vault-document-filter.ts written out the same way: the stage the
+  // Library shows for the same document.
   // tenant-isolation-safe: d is bound to the organization and the program; the link holds succ to the same ones.
   const { rows } = await pool.query(
     `SELECT d.id::text AS id, d.document_title, d.file_name, d.version,
@@ -523,7 +531,8 @@ async function filedDocuments(ids: readonly string[], organizationId: number, pr
                  AND succ.document_code IS NOT DISTINCT FROM d.document_code
                  AND succ.organization_id = d.organization_id
                  AND succ.deleted_at IS NULL AND d.deleted_at IS NULL
-            ) AS current
+            ) AS current,
+            (SELECT c.stage FROM canonical_documents c WHERE c.organization_id = d.organization_id AND c.source_refs ? 'vault_documents' AND c.source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text ORDER BY c.created_at, c.canonical_id LIMIT 1) AS lifecycle_stage
        FROM vault.documents d
       WHERE d.id::text = ANY($1::text[])
         AND d.organization_id = $2 AND d.deleted_at IS NULL
@@ -544,6 +553,7 @@ async function filedDocuments(ids: readonly string[], organizationId: number, pr
       version: trimmedOrNull(row.version),
       // Current only when the database said so.
       current: row.current === true,
+      lifecycleStage: trimmedOrNull(row.lifecycle_stage),
     });
   }
   return documents;

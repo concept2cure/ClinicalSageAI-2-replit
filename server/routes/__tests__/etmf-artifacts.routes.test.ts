@@ -163,11 +163,24 @@ describe('eTMF artifact persistence', () => {
     expect(list.status).toBe(200);
     expect(list.body.map((a: any) => [a.artifactCode, a.document])).toEqual([
       ['protocol', null], // filed against 'doc-1', an off-platform reference
-      ['sample_crf', { id: DOC_A, title: 'Sample case report form', version: '2.0', current: true }],
+      ['sample_crf', { id: DOC_A, title: 'Sample case report form', version: '2.0', current: true, lifecycleStage: null }],
       ['sample_icf', null], // another project's document is not named
     ]);
     expect(JSON.stringify(list.body)).not.toContain('A document of project B');
     await fixture.query(`DELETE FROM tmf_artifact_filings WHERE artifact_code = 'sample_icf'`);
+  });
+
+  it('a filing\'s document carries its review stage, as the Library reads it: a record\'s state is its document\'s', async () => {
+    await fixture.query(
+      `INSERT INTO canonical_documents (canonical_id, organization_id, stage, source_refs)
+       VALUES ('cd-a', 1, 'approved', jsonb_build_object('vault_documents', jsonb_build_object('nativeId', $1::text)))`, [DOC_A]);
+    const list = await request(app).get('/api/etmf/trials/STUDY-A/artifacts');
+    expect(list.body.find((a: any) => a.artifactCode === 'sample_crf').document).toMatchObject({ id: DOC_A, lifecycleStage: 'approved' });
+    // Another organization's record of the same document id is not this document's stage.
+    await fixture.query(`UPDATE canonical_documents SET organization_id = 2 WHERE canonical_id = 'cd-a'`);
+    const other = await request(app).get('/api/etmf/trials/STUDY-A/artifacts');
+    expect(other.body.find((a: any) => a.artifactCode === 'sample_crf').document.lifecycleStage).toBeNull();
+    await fixture.query(`DELETE FROM canonical_documents WHERE canonical_id = 'cd-a'`);
   });
 
   it('re-filing the same artifact updates the one row, and records the document it replaced', async () => {

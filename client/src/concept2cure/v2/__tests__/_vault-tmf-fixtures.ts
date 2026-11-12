@@ -30,7 +30,7 @@ export const ESSENTIAL = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.filter((
 export const tmfBase = (studyId: string) => `/api/etmf/trials/${studyId}`;
 export const BASE = tmfBase(STUDY.studyId);
 
-export type VaultDocument = { title: string | null; version: string | null; current: boolean };
+export type VaultDocument = { title: string | null; version: string | null; current: boolean; lifecycleStage?: string | null };
 export type FilingRow = {
   id: string; artifactCode: string; documentRef: string | null; filedAt: string;
   /** A declaration that the record does not apply (P-124 item 5), and who made it, as GET …/artifacts lists them. */

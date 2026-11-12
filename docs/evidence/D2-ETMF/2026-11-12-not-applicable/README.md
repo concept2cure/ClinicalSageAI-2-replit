@@ -72,9 +72,31 @@ Nothing on the deployed store said "not applicable". No route, table, AnA tool o
 | `03-green.txt` | Those pass; every eTMF server suite (173), every trial master file client suite (104), the PostgreSQL suites on a deploy-migrated database (30, including the declaration's audit row on the organization's intact chain and `actor_name` under the app's own role), and the gates |
 | `04`–`07` (`.png`) | The declare form, the declared row, the withdraw form, and the declared row in the dark theme |
 
+## The second half of item 5: a record's state is its document's
+
+P-124 item 5: "A record's status is its document's … a record's state is the lifecycle stage of the Vault document
+it is filed against, shown on the record. No status is typed separately." The second store let a person type a
+status (received, in review, final) with no document behind it. The deployed store never had one, and its section
+said nothing about the document's own state.
+
+- `tmf-artifact-persistence.ts`: each listed filing's `document` carries `lifecycleStage`. This is the review stage
+  the Vault's Library reads for the same document (`vaultLifecycleStageSql` of
+  `services/vault/vault-document-filter.ts`, written out so the SQL text carries no interpolation, as the same read's
+  version rule already is). It is null when the document was never sent for review, and is held to the
+  document's own organization.
+- `vaultTmf.ts`: a filed record's sentence ends with the stage, in the Library's words, e.g. "Filed against “Protocol
+  BX-204-201”, version 1.0 on 2026-11-02. Review: Approved." Nothing is said where the server named no document.
+- Readiness is unchanged. A record counts as filed when its document exists. Whether an essential record must also
+  be approved to count is not decided here.
+
+| File | What it shows |
+|---|---|
+| `08-red-stage.txt` | The stage pins against the code as it stood, whole files so each suite's own setup runs: 8 fail (the route, the unit suite's three document shapes, the three client sentences). "Nothing where the server named no document" holds either way |
+| `10-filed-row-stage.png` | In the running app: each filed record ends "Review: Not sent for review." (the demo's documents were never sent), with no console error or failed request |
+| `09-green-stage.txt` | They pass, with every eTMF server, client and PostgreSQL suite; the PostgreSQL case reads `approved` from a real `canonical_documents` row under the app's own role |
+
 ## Not done here
 
 - AnA's TMF tools still read Store B. They converge in slice E4 (`docs/design/ETMF_CONVERGENCE_E4_PLAN_2026-11-10.md`),
   and `get_tmf_view` will then report declarations from this store.
-- "A record's status is its document's" (P-124 item 5, the lifecycle stage on the record) is not shown yet.
 - Admission: the URS and OQ, then the section moves into the Vault's Required documents view (P-124 item 6).
