@@ -259,10 +259,14 @@ export function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.Rea
  * Evidence: docs/evidence/S7/2026-11-09-register-header-honesty/.
  */
 export function headerMeta<T>(
-  live: { loading: boolean; error: string | null },
+  /* Structural, so it takes a `ListState` without importing dataConnect into
+     this module — and `error` is optional there, not `string | null`. */
+  live: { loading: boolean; error?: string | null },
   rows: T[],
-  meta: (rows: T[]) => string,
-): string {
+  /* A node, not a string: a register's meta line may carry markup (a tone span,
+     a count the card colours), which is what `RegisterCardProps.meta` returns. */
+  meta: (rows: T[]) => React.ReactNode,
+): React.ReactNode {
   if (rows.length > 0 || (!live.loading && !live.error)) return meta(rows);
   return live.error ? 'Not loaded' : 'Loading…';
 }
