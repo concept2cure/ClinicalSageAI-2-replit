@@ -30,7 +30,7 @@ import type { CsrIntoDocumentOutcome, CsrIntoDocumentReceipt } from '@shared/aut
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { I } from '../icons';
-import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading, type CsrSendNotice } from './CsrBuildProgress';
 import { CsrNotApplicable } from './CsrNotApplicable';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
 
@@ -431,6 +431,8 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
 }) {
   const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
   const [importing, setImporting] = useState<string[] | null>(null);
+  // Held here, not in the review: the list is emptied and read again after a decision, and the review with it.
+  const [sendNotice, setSendNotice] = useState<CsrSendNotice | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {buildStateWord(build)} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
     {build.writing && <LiveDraft writing={build.writing} />}
@@ -439,10 +441,11 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
       <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
     </p>}
     {!error && headings === null && <p role="status">Reading the build’s sections…</p>}
+    {sendNotice && <p role={sendNotice.alert ? 'alert' : 'status'}>{sendNotice.text}</p>}
     {/* If section provenance cannot be read, the next governed action must
         not appear as though it is ready. The server enforces admission too. */}
     {headings && <>
-      <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload} importLabel="Import approved sections into this document"
+      <CsrHeadingReview jobId={build.jobId} headings={headings} onChanged={reload} importLabel="Import approved sections into this document" onSendNotice={setSendNotice}
         onImport={sectionNumbers => setImporting(sectionNumbers)} />
       {importing && <ImportIntoDocument key={importing.join(',')} programId={programId} documentId={documentId} jobId={build.jobId}
         sectionNumbers={importing} onClose={() => setImporting(null)} onImported={onDocumentChanged} />}
