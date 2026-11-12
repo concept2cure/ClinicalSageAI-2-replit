@@ -59,4 +59,13 @@ describe('four trial master file tools retire with the store they wrote', () => 
     expect(offered).toContain('get_tmf_view');
     for (const tool of RETIRED) expect(offered).not.toContain(tool);
   });
+
+  /* 2026-11-12: the trial master file surface's catalog entry named `generate_inspection_package`, which no tool is.
+     The surfaces catalog and the shell's search read it. Its tools are the two that stayed. */
+  it('the trial master file surface names its AnA tools, each a defined tool', async () => {
+    const { UI_SURFACES } = await import('../../../../shared/constants/ui-surface-registry.js');
+    const etmf = UI_SURFACES.find((s) => s.id === 'etmf')!;
+    expect(etmf.anaToolFamilies).toEqual(['get_tmf_view', 'classify_tmf_artifact']);
+    for (const tool of etmf.anaToolFamilies) expect(names).toContain(tool);
+  });
 });
