@@ -1,0 +1,45 @@
+// Flow 6a: as the administrator of Northgate Biologics GmbH (org 6), use Concept2Cure Therapeutics' ids (org 2,
+// member 1) in the same API calls. Probes are chosen so that an unexpected pass changes nothing (same role, same
+// name, no reason).
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const call = (page, m, u, b, h) => page.evaluate(async ([m, u, b, h]) => {
+  const r = await fetch(u, { method: m, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}`, ...(h || {}) }, body: b === undefined ? undefined : JSON.stringify(b) });
+  const t = await r.text(); return `${r.status} ${t.slice(0, 300)}`;
+}, [m, u, b, h]);
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  const probes = [
+    ['GET', '/api/tenant-users/2'],
+    ['GET', '/api/organizations/2'],
+    ['GET', '/api/organizations/2/settings'],
+    ['GET', '/api/organizations/2/clients'],
+    ['GET', '/api/tenant-config/2/settings'],
+    ['GET', '/api/tenant-config/2/claude-connector'],
+    ['GET', '/api/mdx/admin?organizationId=2'],
+    ['GET', '/api/mdx/admin', undefined, { 'X-Organization-Id': '2', 'x-tenant-id': '2', 'x-org-id': '2' }],
+    ['GET', '/api/c2c/projects', undefined, { 'X-Organization-Id': '2', 'x-tenant-id': '2' }],
+    ['GET', '/api/clients?organizationId=2'],
+    ['GET', '/api/api-keys?organizationId=2'],
+    ['GET', '/api/audit/logs?organizationId=2&limit=5'],
+    ['GET', '/api/client-branding/company-documents?organizationId=2'],
+    ['GET', '/api/onboarding/discovery?organizationId=2'],
+    ['GET', '/api/module-access-requests?organizationId=2'],
+    ['PATCH', '/api/tenant-users/2/1', { role: 'admin', reason: 'cross-organization probe: same role, changes nothing if it passes' }],
+    ['DELETE', '/api/tenant-users/2/1', {}],
+    ['PUT', '/api/tenant-users/2/1/qms-approver', { designated: false }],
+    ['PATCH', '/api/organizations/2/profile', { name: 'Concept2Cure Therapeutics', reason: 'cross-organization probe: same name' }],
+    ['PATCH', '/api/organizations/2/settings', {}],
+    ['PATCH', '/api/tenant-config/2/settings', { settings: {}, reason: 'cross-organization probe' }],
+    ['PUT', '/api/tenant-config/2/claude-connector', {}],
+    ['POST', '/api/tenant-users', { name: 'Cross Probe', email: 'cross.probe@northgate-bio.example.test', role: 'viewer', organizationId: 2 }],
+    ['POST', '/api/tenant-users', { name: 'Cross Probe', email: 'cross.probe@northgate-bio.example.test', role: 'viewer', organizationId: '2' }],
+    // my own org's routes with the other organization's member id
+    ['PATCH', '/api/tenant-users/6/1', { role: 'admin', reason: 'probe: a member id that belongs to another organization' }],
+    ['DELETE', '/api/tenant-users/6/1', { reason: 'probe: a member id that belongs to another organization' }],
+    ['PUT', '/api/tenant-users/6/1/qms-approver', { designated: true, reason: 'probe: a member id that belongs to another organization' }],
+  ];
+  for (const [m, u, b, h] of probes) note(`${m} ${u}${h ? ' +headers ' + Object.keys(h).join(',') : ''}${b ? ' ' + JSON.stringify(b).slice(0, 80) : ''}`, await call(page, m, u, b, h));
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

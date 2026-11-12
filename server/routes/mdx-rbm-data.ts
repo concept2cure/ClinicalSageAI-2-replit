@@ -10,7 +10,8 @@
  *     GET   /api/mdx/rbm-data-runs            ingestion history + provenance
  *
  *   Engine runs over that data
- *     POST  /api/mdx/rbm-site-risk/recompute      site risk from Site Intelligence
+ *     POST  /api/mdx/rbm-site-risk/recompute      site risk from Site Intelligence, or, where it holds no site
+ *                                                 for the study, from the study's own site-level indicator readings
  *     POST  /api/mdx/rbm-central-monitoring/run   cross-site outlier scan
  *     POST  /api/mdx/rbm-patient-profiles/score   cohort anomaly scoring
  *     GET   /api/mdx/rbm-site-oversight/:programId
@@ -67,6 +68,30 @@ function num(v: unknown): number | null {
 /** Every route here is scoped to one program. */
 const seedProgramBody = z.object({ programId: z.string().regex(UUID_RE) });
 
+/** The request-scoped client when tenant context installed one; otherwise the engine takes a pool client. */
+function siteExecOf(req: Request): SiteExec | undefined {
+  const reqDb = (req as unknown as { dbClient?: SiteExec | null }).dbClient;
+  return reqDb && typeof reqDb.query === 'function' ? reqDb : undefined;
+}
+
+/**
+ * Rescore the study's sites after an extract that carried site-level rows has been committed, so Site risk never
+ * shows the previous extract's sites beside this one's readings. The load has already succeeded and stands either
+ * way: the answer says whether the sites were rescored, and if not, why.
+ */
+async function rescoreSitesAfterLoad(req: Request, orgId: number, programId: string):
+Promise<{ rescored: number; source: string } | { notRescored: string }> {
+  try {
+    const out = await recomputeSiteRisk(orgId, programId, siteExecOf(req));
+    if (out.ok) return { rescored: out.snapshots.length, source: out.source };
+    log.warn('site risk was not rescored after an extract load', { reason: out.reason, programId, detail: out.detail });
+    return { notRescored: SITE_READ_MESSAGE[out.reason] };
+  } catch (err) {
+    log.warn('site risk was not rescored after an extract load', { programId, detail: err instanceof Error ? err.message : String(err) });
+    return { notRescored: SITE_READ_MESSAGE.source_error };
+  }
+}
+
 router.post('/rbm-site-risk/recompute', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -77,11 +102,7 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
     // pinned connection carrying the RLS session, so the read is scoped by the
     // database as well as by the ownership check); otherwise the engine takes a
     // dedicated pool client. Either way the replace runs in one transaction.
-    const reqDb = (req as unknown as { dbClient?: SiteExec | null }).dbClient;
-    const out = await recomputeSiteRisk(
-      orgId, parsed.data.programId,
-      reqDb && typeof reqDb.query === 'function' ? reqDb : undefined,
-    );
+    const out = await recomputeSiteRisk(orgId, parsed.data.programId, siteExecOf(req));
     if (!out.ok) {
       // A failed source read is reported as a failure, never as a study with no
       // sites. The prior snapshot is intact, and the message says so.
@@ -94,7 +115,9 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
       // `reason` is machine-readable so the surface can say which.
       return clientError(res, 502, SITE_READ_MESSAGE[out.reason], { reason: out.reason });
     }
-    return ok(res, out.snapshots, { count: out.snapshots.length });
+    // `source` says where the figures came from, so the screen never credits Site Intelligence for a snapshot
+    // derived from the study's own indicators, or the reverse.
+    return ok(res, out.snapshots, { count: out.snapshots.length, source: out.source });
   } catch (err) { return serverError(res, log, 'recompute-site-risk', err); }
 });
 
@@ -369,7 +392,12 @@ router.post('/rbm-metric-ingest', async (req, res) => {
         { reason: result.reason, priorRun: p });
     }
     await client.query('COMMIT');
-    return created(res, result, {
+    const siteRisk = result.projection.siteObservations > 0
+      ? await rescoreSitesAfterLoad(req, orgId, parsed.data.programId) : undefined;
+    // On the result as well as in meta: the load's own outcome panel reads the result, and says what became of
+    // the site rows it stored.
+    return created(res, siteRisk ? { ...result, siteRisk } : result, {
+      ...(siteRisk ? { siteRisk } : {}),
       runId: result.runId,
       status: result.status,
       accepted: result.accepted,

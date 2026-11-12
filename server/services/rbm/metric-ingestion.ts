@@ -353,10 +353,12 @@ function latestByKey(observations: ParsedObservation[]): Map<string, ParsedObser
  *                    neither.
  *   - subject scope → merged into the subject's patient-profile metrics, which
  *                    is what scorePatientCohort reads.
- *   - site/country  → stored with provenance and available, but NOT folded
- *                    into the site-risk composite, which still derives from
- *                    Site Intelligence. Counted so the caller can see they
- *                    landed without inferring they changed a score.
+ *   - site/country  → stored with provenance, and counted. This module still
+ *                    folds them into nothing. Since 2026-11-11 the site-risk
+ *                    engine reads the site rows when Site Intelligence holds
+ *                    no site for the study (site-risk-engine.ts
+ *                    readSiteIndicatorReadings), and the load route rescores
+ *                    the sites after its commit (routes/mdx-rbm-data.ts).
  *
  * The caller owns the transaction: pass a pooled client inside BEGIN/COMMIT.
  */

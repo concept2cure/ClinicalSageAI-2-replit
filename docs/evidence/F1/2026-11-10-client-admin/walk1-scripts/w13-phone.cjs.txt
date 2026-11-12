@@ -1,0 +1,71 @@
+// The main screens again at 390x844.
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const PHONE = L.VIEWPORTS.phone;
+// elements whose right edge runs past the viewport, or that are narrower than their content and clip it
+const wide = (page) => page.evaluate(() => {
+  const out = [];
+  for (const e of document.querySelectorAll('main *, [role=dialog] *, form *')) {
+    const r = e.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    if (r.right > innerWidth + 2 && r.left < innerWidth) out.push(`${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} right=${Math.round(r.right)} "${(e.innerText || '').trim().slice(0, 30)}"`);
+  }
+  return [...new Set(out)].slice(0, 8);
+});
+const small = (page) => page.evaluate(() => [...document.querySelectorAll('main button, main a, [role=dialog] button')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.height < 24 || r.width < 24); }).map(e => `${(e.getAttribute('aria-label') || e.innerText || '').trim().slice(0, 30)} ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`).slice(0, 8));
+(async () => {
+  const browser = await L.chromium.launch();
+  const report = async (page, name, shot) => { await L.sleep(600); note(name, { overflowX: await L.overflowX(page), pastRightEdge: await wide(page), smallTargets: await small(page) }); await L.shot(page, shot); };
+  if (process.argv[3] !== 'app') {
+  // anonymous
+  { const ctx = await browser.newContext({ viewport: PHONE }); const page = await ctx.newPage();
+    await page.goto(L.BASE + '/concept2cure/login', { waitUntil: 'networkidle' }); await report(page, 'sign-in', 'w1-p01-login-390.png');
+    await page.goto(L.BASE + '/concept2cure/signup', { waitUntil: 'networkidle' }); await report(page, 'sign-up step 1', 'w1-p02-signup-390.png');
+    await page.fill('#firstName', 'Avery'); await page.fill('#lastName', 'Lind'); await page.fill('#email', 'phone.walk@example.test'); await page.fill('#password', process.env.WALK_PASSWORD); await page.fill('#confirmPassword', process.env.WALK_PASSWORD); await page.fill('#jobTitle', 'Head of Regulatory Affairs');
+    await page.getByRole('button', { name: 'Continue' }).click(); await report(page, 'sign-up step 2', 'w1-p03-signup-org-390.png');
+    await page.fill('#organization', 'Phone Walk Co'); await page.selectOption('#organizationType', 'biotech'); await page.fill('#country', 'Germany'); await page.selectOption('#useCase', 'ind');
+    await page.getByRole('button', { name: 'Continue' }).click(); await report(page, 'sign-up step 3 (plan)', 'w1-p04-signup-plan-390.png');
+    await page.getByRole('button', { name: 'Continue' }).click(); await report(page, 'sign-up step 4 (agreements)', 'w1-p05-signup-agreements-390.png');
+    await page.goto(L.BASE + '/concept2cure/verify-email', { waitUntil: 'networkidle' }); await report(page, 'verify-email (no token)', 'w1-p06-verify-390.png');
+    await ctx.close(); }
+  }
+  // administrator
+  { const { page, context } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test', { viewport: PHONE });
+    await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await report(page, 'home (admin)', 'w1-p07-home-390.png');
+    note('home: is the account menu reachable at phone width?', await page.getByRole('button', { name: /Avery Lind/ }).first().isVisible().catch(() => false));
+    const menuBtn = page.getByRole('button', { name: /menu|navigation|sidebar|Expand|Open/i }).first();
+    note('rail toggle', await menuBtn.evaluate(e => e.getAttribute('aria-label') || e.textContent).catch(() => '(none found)'));
+    await menuBtn.click().catch(() => {}); await L.sleep(500);
+    await L.shot(page, 'w1-p08-rail-open-390.png');
+    const acct = page.getByRole('button', { name: /Avery Lind/ }).first();
+    if (await acct.isVisible().catch(() => false)) { await acct.click(); await L.sleep(500); await report(page, 'account menu', 'w1-p09-account-menu-390.png'); await page.keyboard.press('Escape'); }
+    // close the drawer again, as a person does before using the page
+    const closeRail = page.getByRole('button', { name: /Collapse|Close the sidebar|Close sidebar/i }).first();
+    note('rail close control', await closeRail.evaluate(e => e.getAttribute('aria-label') || e.title || e.textContent).catch(() => '(none found)'));
+    await closeRail.click().catch(() => {}); await L.sleep(400);
+    note('rail still covering the page?', await page.locator('nav.rail').evaluate(e => { const r = e.getBoundingClientRect(); return `${Math.round(r.left)}..${Math.round(r.right)}`; }).catch(() => 'n/a'));
+    await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1200); await report(page, 'admin console: members', 'w1-p10-admin-members-390.png');
+    await page.locator('.ctable-row', { hasText: 'Vik Osei' }).first().click().catch(() => {}); await L.sleep(500);
+    const drawer = page.locator('aside.adm-drawer'); await drawer.scrollIntoViewIfNeeded().catch(() => {}); await report(page, 'admin console: member drawer', 'w1-p11-admin-drawer-390.png');
+    note('member table columns visible', await page.locator('.ctable-head > div').evaluateAll(els => els.map(e => `${e.textContent.trim()}:${Math.round(e.getBoundingClientRect().left)}-${Math.round(e.getBoundingClientRect().right)}`)));
+    await page.getByTestId('admin-invite-member').scrollIntoViewIfNeeded(); await page.getByTestId('admin-invite-member').click(); await L.sleep(600); await report(page, 'invite dialog', 'w1-p12-invite-dialog-390.png');
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+    await page.getByTestId('member-change-role').scrollIntoViewIfNeeded(); await page.getByTestId('member-change-role').click(); await L.sleep(600); await report(page, 'change role dialog', 'w1-p13-role-dialog-390.png');
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+    await page.locator('main').getByRole('button', { name: 'Settings', exact: true }).click(); await L.sleep(1200);
+    await page.getByLabel('Organization name').scrollIntoViewIfNeeded(); await report(page, 'settings: profile card', 'w1-p14-profile-card-390.png');
+    await page.goto(L.BASE + '/concept2cure/onboarding', { waitUntil: 'networkidle' }); await L.sleep(1200); await report(page, 'onboarding step 1', 'w1-p15-onboarding-390.png');
+    for (let i = 0; i < 5; i += 1) { await page.getByRole('button', { name: /^(Continue|Save & continue)$/ }).last().click(); await L.sleep(900); }
+    await report(page, 'onboarding step 6 (invite personnel)', 'w1-p16-onboarding-invite-390.png');
+    await page.getByRole('button', { name: /^(Continue|Save & continue)$/ }).last().click(); await L.sleep(700); await page.getByRole('button', { name: /^(Continue|Save & continue)$/ }).last().click(); await L.sleep(900);
+    await report(page, 'onboarding step 8 (security)', 'w1-p17-onboarding-security-390.png');
+    await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(800);
+    const orgBtn = page.getByRole('button', { name: 'Organizations and invitations' });
+    note('Organizations and invitations button visible at phone width', await orgBtn.isVisible().catch(() => false));
+    await context.close(); }
+  // viewer
+  { const { page, context } = await L.signedIn(browser, 'vik.osei@northgate-bio.example.test', { viewport: PHONE });
+    await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1200); await report(page, 'admin console refused (viewer)', 'w1-p18-viewer-admin-390.png');
+    await context.close(); }
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
