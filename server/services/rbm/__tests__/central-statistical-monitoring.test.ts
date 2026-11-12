@@ -8,6 +8,7 @@ import {
   scoreCohort, severityFromScore, detectSiteOutliers, MIN_COHORT,
   scorePatientCohort, patientStatusFromScore,
   type SiteMetric, type PatientMetric,
+  detectSiteIndicatorOutliers, type SiteIndicatorCohortRow,
 } from '../central-statistical-monitoring';
 
 describe('scoreCohort', () => {
@@ -146,5 +147,69 @@ describe('scorePatientCohort', () => {
     expect(out[0].dimensions).toEqual([]);
     expect(out[0].topDimension).toBeNull();
     expect(out[0].status).toBe('normal');
+  });
+});
+
+
+/**
+ * A snapshot scored from the study's own site-level indicators is scanned indicator by indicator (GA-S8-02
+ * follow-on, 2026-11-11). Scanning its composite found nothing on LMN-201: five of eight sites tie at 0, so the MAD
+ * is 0, and the classic z it falls back to cannot reach 3.5 in a cohort under 15 (its maximum is (n-1)/sqrt(n)).
+ * The readings themselves are what a cross-site comparison is for.
+ */
+describe('detectSiteIndicatorOutliers — each site-level indicator across the study\'s sites', () => {
+  const reading = (kriName: string, value: number, over: Record<string, unknown> = {}) => ({ kriName, value, unit: 'days', direction: 'higher_worse' as const, ...over });
+  const site = (siteNumber: string, indicators: ReturnType<typeof reading>[]): SiteIndicatorCohortRow => ({ siteId: siteNumber, siteNumber, indicators });
+  const LMN = [
+    site('101', [reading('Open query aging', 12), reading('AE reporting lag', 3)]),
+    site('102', [reading('Open query aging', 10), reading('AE reporting lag', 2)]),
+    site('103', [reading('Open query aging', 14), reading('AE reporting lag', 4)]),
+    site('104', [reading('Open query aging', 58), reading('AE reporting lag', 21)]),
+    site('105', [reading('Open query aging', 11), reading('AE reporting lag', 3)]),
+    site('106', [reading('Open query aging', 16), reading('AE reporting lag', 5)]),
+    site('107', [reading('Open query aging', 6), reading('AE reporting lag', 3)]),
+    site('108', [reading('Open query aging', 2), reading('AE reporting lag', 2)]),
+  ];
+
+  it('flags the site whose reading stands apart, on each indicator, with the value, the study median and the cohort size', () => {
+    const findings = detectSiteIndicatorOutliers(LMN);
+    expect(findings.map((f) => [f.siteNumber, f.dimension])).toEqual([['104', 'AE reporting lag'], ['104', 'Open query aging']]);
+    const aging = findings.find((f) => f.dimension === 'Open query aging')!;
+    expect(aging).toMatchObject({ value: 58, unit: 'days', cohortMedian: 11.5, cohortSize: 8, direction: 'higher_worse', severity: 'critical' });
+    expect(aging.score).toBeGreaterThan(5);
+  });
+
+  it('the composite of the same sites cannot flag anything, which is why the readings are scanned', () => {
+    const composite = [100, 50, 25, 0, 0, 0, 0, 0].map((v, i) => ({ siteId: String(i), siteNumber: String(i), metrics: { composite: v } }));
+    expect(detectSiteOutliers(composite, ['composite'])).toEqual([]);
+  });
+
+  it('a lower-is-worse indicator is flagged on its low side, and reports the reading as recorded', () => {
+    const sites = [97, 98, 99, 96, 98, 97, 99, 41].map((v, i) => site(`20${i}`, [reading('Consent completeness', v, { unit: '%', direction: 'lower_worse' })]));
+    const findings = detectSiteIndicatorOutliers(sites);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ siteNumber: '207', dimension: 'Consent completeness', value: 41, unit: '%', direction: 'lower_worse', cohortMedian: 97.5 });
+    // A site far better than its peers is not a finding, in either direction.
+    const better = [12, 11, 13, 12, 14, 11, 13, 0].map((v, i) => site(`30${i}`, [reading('Open query aging', v)]));
+    expect(detectSiteIndicatorOutliers(better)).toEqual([]);
+  });
+
+  it('an indicator read at fewer than five sites is not scanned, and one with no limit still is', () => {
+    const few = LMN.slice(0, 4);
+    expect(detectSiteIndicatorOutliers(few)).toEqual([]);
+    const unbanded = LMN.map((s) => ({ ...s, indicators: [reading('Screen failures', s.siteNumber === '104' ? 40 : 3, { unit: null })] }));
+    expect(detectSiteIndicatorOutliers(unbanded).map((f) => [f.siteNumber, f.dimension, f.unit])).toEqual([['104', 'Screen failures', null]]);
+  });
+
+  it('where most sites tie, the score takes the mean-absolute-deviation form, which can still tell one site apart', () => {
+    const tied = [3, 3, 3, 40, 3, 3, 3, 3];
+    // The default fallback, classic z, tops out at (n-1)/sqrt(n) = 2.47 for eight sites: under the 3.5 threshold.
+    expect(Math.max(...scoreCohort(tied).map((s) => s.score))).toBeLessThan(3.5);
+    const robust = scoreCohort(tied, { whenTied: 'mean_absolute_deviation' });
+    expect(robust[3]).toMatchObject({ method: 'modified_z_meanad', score: 6.383 });
+    expect(robust.filter((s) => s.score !== 0)).toHaveLength(1);
+    // With a spread the two agree: the option changes nothing unless the MAD is 0.
+    const spread = [12, 10, 14, 58, 11, 16, 6, 2];
+    expect(scoreCohort(spread, { whenTied: 'mean_absolute_deviation' })).toEqual(scoreCohort(spread));
   });
 });
