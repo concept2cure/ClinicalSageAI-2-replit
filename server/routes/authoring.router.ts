@@ -116,7 +116,7 @@ import { importSourceDocument } from '../services/authoring/authoring-source-imp
 import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload, rollbackAuthoringTransaction, settleAuthoringTransactionFailure, type AuthoringTransactionState } from '../services/authoring/authoring-create-outcome';
 import { AuthoringSectionWriteOutcomeError, authoringSectionRecoveryPayload } from '../services/authoring/authoring-section-outcome';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
-import { consentDocumentGate, isConsentTemplateId } from '../services/protocol-consent/protocol-consent-logic';
+import { consentApprovalVerdict, consentDocumentGate, isConsentTemplateId } from '../services/protocol-consent/protocol-consent-logic';
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
@@ -4577,7 +4577,7 @@ async function consentElementsField(docId: unknown, tenantId: unknown, templateI
         findings: gate.findings,
         elements: gate.elements,
         applicable_clinical_trial_note:
-          'The ClinicalTrials.gov statement (21 CFR 50.25(c)) is required for an applicable clinical trial. It is counted here until the study is recorded as not being one.',
+          'The ClinicalTrials.gov statement (21 CFR 50.25(c)) is required for an applicable clinical trial, so it is counted here. If the study is not one, the approver says so when approving, and that is recorded with the approval.',
       },
     };
   } catch {
@@ -5102,7 +5102,8 @@ async function approvalRefused(
       `Approved with ${openCommentCount} unresolved comment(s) and ${pendingEdits} undecided tracked change(s), acknowledged by ${getActorEmail(req)}.`,
       { openCommentCount, pendingEdits, acknowledged: true }, client);
   }
-  return figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' });
+  if (await figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' })) return true; // P-89
+  return consentRefused(client, req, res, current, ids); // P-102
 }
 
 /* ── P-95: A REGULATED DOCUMENT IS APPROVED ONLY AFTER ITS REVIEW ──
@@ -5156,6 +5157,43 @@ async function approverIndependenceRefused(
   }
   if (await separationOfDutiesRefused(client, req, res, ids)) return true;
   return reviewRefused(client, req, res, current, ids);
+}
+
+/* ── P-102: AN INFORMED-CONSENT FORM IS APPROVED ONLY OVER ITS 21 CFR 50.25 ELEMENTS ──
+ *
+ * The founder, 2026-11-05: "informed consent is one record", its checklist the
+ * editor's checks for that type and its approval the editor's one signing. The
+ * editor's Check showed the gate (slice 1, 2026-11-12) and nothing read it at
+ * signing, so a consent form with no risks section was approved and frozen.
+ *
+ * An APPROVER signature on an informed-consent document (by its template, the
+ * only record of its type) is refused, 409, while an element 50.25(a) requires
+ * is not met. Nothing lifts that. The ClinicalTrials.gov statement (50.25(c))
+ * is owed only by an applicable clinical trial and no record holds a study's
+ * status, so its absence refuses until the approver states the study is not
+ * one (`notApplicableClinicalTrial`); the statement is then written on this
+ * transaction, and the act's own chained row names it. Before the credential.
+ */
+async function consentRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined },
+): Promise<boolean> {
+  if (!isConsentTemplateId(current.doc?.template_id)) return false;
+  const gate = consentDocumentGate(current.sections.map((s: { code: unknown; content: string | null }) => ({
+    code: String(s.code ?? ''), text: sectionReadableText(s.content ?? ''),
+  })));
+  const verdict = consentApprovalVerdict(gate, req.body?.notApplicableClinicalTrial === true);
+  if (verdict.kind === 'clear') return false;
+  if (verdict.kind === 'refused') {
+    res.status(409).json({ success: false, error: { code: verdict.code, message: verdict.message }, consentElements: { incomplete: verdict.elements } });
+    return true;
+  }
+  current.consentTrialStatus = { applicableClinicalTrial: false, statedBy: getActorEmail(req) ?? 'unknown' };
+  await createAuditTrail(req, ids.docId, null, 'CONSENT_NOT_APPLICABLE_CLINICAL_TRIAL_STATED', null, null,
+    `Approved without the ClinicalTrials.gov statement (21 CFR 50.25(c)): ${getActorEmail(req)} stated that the study is not an applicable clinical trial.`,
+    { act: 'approve', element: 'clinicaltrials_gov', applicableClinicalTrial: false, documentHash: sectionsDigest(current.sections) }, client);
+  return false;
 }
 
 /* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
@@ -5381,7 +5419,9 @@ async function lockedSigningContent(client: Queryable, req: Request, docId: stri
   const current = { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
     actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) },
     /** Set by figuresRefused when the signer acknowledged unverified figures (P-89); the act's chained row names it. */
-    figuresAcknowledged: null as { digest: string; count: number } | null };
+    figuresAcknowledged: null as { digest: string; count: number } | null,
+    /** Set by consentRefused when the approver stated the study is not an applicable clinical trial (P-102). */
+    consentTrialStatus: null as { applicableClinicalTrial: false; statedBy: string } | null };
   await assertIndependentCheckRelease(client, current);
   return current;
 }
@@ -5859,7 +5899,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         // signatureId: §11.70's link from this audit row to the signature it
         // records — what the audit-trail ledger joins on to show the row as
         // signed, with the signer's meaning (#24).
-        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(current.consentTrialStatus ? { consentTrialStatus: current.consentTrialStatus } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');
@@ -7844,6 +7884,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       if (meaning === 'APPROVER' ? await approverIndependenceRefused(client, req, res, current, { docId, tenantId, meaning }) // P-18, P-95, P-116, P-117
         : await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
       if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
+      if (meaning === 'APPROVER' && await consentRefused(client, req, res, current, { docId })) return; // P-102
 
       const signer = await reverifyAuthoringSigner(req, res);
       if (!signer) return;
@@ -7932,7 +7973,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
+        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(current.figuresAcknowledged ? { figuresAcknowledged: current.figuresAcknowledged } : {}), ...(current.consentTrialStatus ? { consentTrialStatus: current.consentTrialStatus } : {}), ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');

@@ -1,0 +1,13 @@
+Route test with authoring.router.ts at HEAD (no consent gate):
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > an informed-consent form is approved only over its 21 CFR 50.25(a) elements > refuses 409 CONSENT_INCOMPLETE before the credentia
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > an informed-consent form is approved only over its 21 CFR 50.25(a) elements > no statement lifts a missing 50.25(a) element 13ms
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > the ClinicalTrials.gov statement > missing, the approver is asked whether the study is an applicable clinical trial 7ms
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > the ClinicalTrials.gov statement > stated not one, the form approves and the statement is recorded on the trail and on the signat
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > /sign as APPROVER asks the same > refuses an incomplete form, and a REVIEWER signature is not asked (control) 6ms
+ × server/routes/__tests__/authoring-signature-consent-gate.test.ts > /sign as APPROVER asks the same > signs once the trial status is stated, and its chained row names it 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 2 passed (8)
+
+Filing bar test with AuthoringFilingBar.tsx and authoringApprovalQuestions.ts at HEAD:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)
