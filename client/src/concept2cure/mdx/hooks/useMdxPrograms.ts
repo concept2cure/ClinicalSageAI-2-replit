@@ -176,6 +176,7 @@ function rowToKit(row: ServerProgramRow): Program | null {
     pathway,
     productType:  row.productType,
     regulatoryPath: row.regulatoryPath ?? undefined,
+    programType:  row.programType ?? undefined,
     stage,
     stageIdx,
     // progress_percent is initialized at creation and is not a readiness assessment.
