@@ -356,6 +356,8 @@ export const STABILITY_STATUSES = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CA
 
 export interface StabilityStudyBody {
   studyTitle?: string;
+  /** The shelf life the study proposes; the claim §3.2.P.8 (or the retest period §3.2.S.7) prints. */
+  shelfLife?: string;
   productName: string;
   batchNumber: string;
   dosageForm: string;
@@ -402,6 +404,9 @@ export function stabilityForm(): C2CFormConfig {
       { key: 'timePoints', label: 'Pull points (months)', type: 'text', required: true, default: '0, 3, 6, 9, 12, 18, 24', placeholder: '0, 3, 6, 12…' },
       { key: 'testParameters', label: 'Parameters tested at each pull', type: 'text', required: true, default: 'Appearance, Assay, Related substances, Water content', placeholder: 'Appearance, Assay, …' },
       { key: 'status', label: 'Status', type: 'select', options: STABILITY_STATUSES, required: true, half: true, default: 'ACTIVE' },
+      /* Not required: a study is registered before its data support a claim. Until 2026-11-12 no form offered
+         it at all, so §3.2.P.8 could be completed only by closing the study out under signature. */
+      { key: 'shelfLife', label: 'Proposed shelf life', type: 'text', half: true, placeholder: 'e.g. 24 months at or below 25 °C', desc: 'The claim §3.2.P.8 prints, or the retest period §3.2.S.7 prints. Leave it blank until the data support one.' },
       { key: 'notes', label: 'Notes', type: 'textarea', placeholder: 'Container closure on stability, orientation, bracketing/matrixing design…' },
     ],
   };
@@ -434,6 +439,8 @@ export function stabilityBody(v: Record<string, string>, projectId?: string): St
   if (strength) body.strength = strength;
   const notes = opt(v.notes);
   if (notes) body.notes = notes;
+  const shelfLife = opt(v.shelfLife);
+  if (shelfLife) body.shelfLife = shelfLife;
   // Planned end is derivable, and deriving it is honest: it is start + the
   // duration the study was registered for, not an invented commitment.
   const start = isoDate(v.startDate);
@@ -444,6 +451,28 @@ export function stabilityBody(v: Record<string, string>, projectId?: string): St
   }
   if (projectId) body.projectId = projectId;
   return body;
+}
+
+/**
+ * The shelf life a running study proposes, set by the ordinary (audited) edit
+ * the register takes. The study stays open: closing it out, which fixes the
+ * shelf life, is the separate signed act (stabilityCloseoutForm).
+ */
+export function stabilityShelfLifeForm(current: { shelfLife?: string | null; scope?: string | null }): C2CFormConfig {
+  const section = current.scope === 'DS' ? '§3.2.S.7' : '§3.2.P.8';
+  return {
+    eyebrow: 'Stability programme — proposed shelf life',
+    title: current.shelfLife ? 'Change the proposed shelf life' : 'Set the proposed shelf life',
+    sub: `${section} prints it at the next compile. The study stays open; closing it out is a separate, signed act.`,
+    submitLabel: 'Save shelf life',
+    fields: [
+      { key: 'shelfLife', label: 'Proposed shelf life', type: 'text', required: true, default: current.shelfLife ?? '', placeholder: 'e.g. 24 months at or below 25 °C' },
+    ],
+  };
+}
+
+export function stabilityShelfLifeBody(v: Record<string, string>): { shelfLife: string } {
+  return { shelfLife: req(v.shelfLife) };
 }
 
 /* ── Stability pull-point results ──
