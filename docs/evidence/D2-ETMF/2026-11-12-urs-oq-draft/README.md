@@ -50,3 +50,12 @@ Not tested by any suite, and so made OQ steps: that the launch boundary refuses 
 Validation numbers and files them, and writes the runner. After execution under the W3 posture, the held admission
 change is applied (task E6 of the convergence design), and the founder's note of 2026-11-10 ("I don't see the TMF on
 the vault UI anywhere") is fully answered: the trial master file is a section of the Vault.
+
+**Amended 2026-11-12, later: admission came first, as CMC's did** (`docs/evidence/D2-ETMF/2026-11-12-admission/`).
+CMC's URS-007 landed with its admission and its OQ-008 was executed after it, so the held change is applied now, with
+these drafts. The eTMF is in the release and is not described as validated until the OQ is executed and filed. The
+OQ's launch-boundary steps can be run against the admitted state:
+- **OQ-ETMF-36:** the launch boundary now serves `/api/etmf`. The step's expected result is the refusal before
+  admission, and it is recorded by this lane's development suites up to `2ccfe707cb`.
+- **OQ-ETMF-37:** the screen offers the trial master file only to an organisation whose plan includes it. The API
+  refuses an organisation outside the plan when module enforcement is `enforce`.
