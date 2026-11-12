@@ -508,6 +508,7 @@ import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
 import { CODING_TOOLS } from './codingTools';
 import { NAVIGATION_TOOLS } from './navigationTools';
+import { HELP_SUPPORT_TOOLS } from './help-support-tools';
 import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
 import { HEOR_MARKET_ACCESS_TOOLS } from './heorTools';
 import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
@@ -2695,6 +2696,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Self-navigation: discover + navigate to any app screen via the governed
   // navigation registry (shared/navigation). See navigationTools.ts.
   ...NAVIGATION_TOOLS,
+  // The Help Center (P-127): how to use Concept2Cure, from its own articles. See help-support-tools.ts.
+  ...HELP_SUPPORT_TOOLS,
   // HEOR modeling, SPL labeling XML, CDISC define.xml/conformance, and reference
   // formatting — deterministic engines newly reachable by AnA. See
   // extendedRegulatoryTools.ts.

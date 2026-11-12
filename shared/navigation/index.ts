@@ -288,6 +288,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 
   // ── Administration & platform ──
+  // Help & training (P-127): the Help Center, training courses and support requests.
+  { id: 'training', label: 'Help & training', description: 'The Help Center’s articles, the training courses for the person’s client type, and their support requests; ask support from here.', scope: 'global', group: 'global' },
   { id: 'admin-console', label: 'Admin & access', description: 'Organization administration — members, roles, SSO, API keys, and settings.', scope: 'global', group: 'global' },
   { id: 'access-requests', label: 'Access requests', description: 'The organization’s module access-request queue.', scope: 'global', group: 'global' },
   { id: 'licensing', label: 'Compare subscriptions', description: 'The organization’s current subscription and the pricing catalog.', scope: 'global', group: 'global' },
