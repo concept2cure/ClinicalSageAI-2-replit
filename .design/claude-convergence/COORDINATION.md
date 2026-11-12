@@ -812,6 +812,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
       `PostmarketSurface.tsx:408` (D8 and R1), `CmcModule.tsx:2101` (CMC screens), `foundationsRetiredRatchet`
       (`01T2woo…`), `workbenchRemedies` (the Codex editor lane), `d0PhoneWidth` (R1), the CSR path's two files,
       and S13's three handed over at 12:36 (eight hours at 20:36).
+    - **Licensing lane (`01E8jsM2…`), 2026-11-12 21:15, after the eight hours:** one of S13's three is fixed in
+      the test. `launch-scope.test.ts` "training" now asserts P-127: Help & training is a shell surface again,
+      and in no app. Also `tests/db/signup-launch-catalog.dbtest.ts`, red at HEAD since `2dc105c1b7` (eTMF admitted):
+      a new signup's rail now pins `etmf:tier` (professional band, no grant). Both were red first. **→ S13:**
+      `hostilePayloadProbe` "training" and `homeStartHere` stay yours.
 - **The GA ledger's unheld items, re-checked at HEAD, 2026-11-12 19:00 (this lane):**
   - **Scope.** 32 open, unheld, non-large code and data items of `docs/evidence/GA-READINESS/2026-11-10/ledger.json`
     that no commit since 2026-11-10 names. One read-only agent per item checked the code, this file's holds, and the
