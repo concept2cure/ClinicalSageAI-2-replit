@@ -188,10 +188,44 @@ function noTables(f: DataRoomGradeFacts): GradeBasisLine {
   return { criterion: 'conformance', points: null, max: MAX.conformance, detail: 'Not a dataset: CDISC conformance does not apply.' };
 }
 
+/** An ADaM dataset's own name, by the ADaM naming rule: AD and up to six more letters or digits. */
+const ADAM_NAME = /^AD[A-Z0-9]{1,6}$/;
+
+/**
+ * One profiled CDISC table through its validator: the name it was validated under and its error count.
+ *
+ * 2026-11-12. An ADaM table was validated under the profile's `domain`, which for ADaM is the class the columns
+ * show ("BDS", "OCCDS"), not a dataset: the validator answered UNKNOWN_DATASET for every analysis dataset, so the
+ * CDISC pilot's own ADVS failed. An ADaM table is validated under its own name. The validator lists thirteen
+ * dataset names, and the ADaM guide lets a sponsor name an analysis dataset (ADLBC, ADQSADAS): for a table whose
+ * columns show an ADaM class and whose name follows the naming rule, that one finding is not counted. Every other
+ * finding is.
+ */
+function validatedTable(t: GradeProfiledTable): { name: string; errors: number } {
+  const variables = t.columns.map((c) => ({ name: c.name, ...(VAR_TYPE[c.type] ? { type: VAR_TYPE[c.type] } : {}) }));
+  if (t.cdisc?.standard !== 'ADaM') {
+    const name = (t.cdisc?.domain || t.name).toUpperCase();
+    return { name, errors: validateSdtmDataset({ domain: name, variables }).findings.filter((x) => x.severity === 'error').length };
+  }
+  // A table read from a file carries the file's name (advs.csv): the dataset's name is that without the extension.
+  const own = t.name.trim().replace(/\.[a-z0-9]{1,8}$/i, '').toUpperCase();
+  const name = ADAM_NAME.test(own) ? own : (t.cdisc.domain || own).toUpperCase();
+  const errors = validateAdamDataset({ dataset: name, variables }).findings
+    .filter((x) => x.severity === 'error' && !(x.rule === 'UNKNOWN_DATASET' && ADAM_NAME.test(name)));
+  return { name, errors: errors.length };
+}
+
 /** The CDISC validators over each profiled CDISC table; findings named per table. */
 function conformance(f: DataRoomGradeFacts): GradeBasisLine {
-  const tables = f.datasetTables;
-  if (!tables || tables.length === 0) return noTables(f);
+  const described = f.datasetTables;
+  if (!described || described.length === 0) return noTables(f);
+  /* A define file describes datasets and lists none of their variables (2026-11-12): validating its tables found
+     every required variable "missing". Only a table whose columns were read is validated. */
+  const tables = described.filter((t) => t.columns.length > 0);
+  if (tables.length === 0) {
+    return { criterion: 'conformance', points: null, max: MAX.conformance,
+      detail: `Describes ${described.length} dataset${described.length === 1 ? '' : 's'} and holds none of their data: CDISC conformance is checked on the datasets themselves.` };
+  }
   const cdisc = tables.filter((t) => t.cdisc?.standard === 'SDTM' || t.cdisc?.standard === 'ADaM');
   if (cdisc.length === 0) {
     return { criterion: 'conformance', points: 0, max: MAX.conformance, detail: 'A dataset with no CDISC standard recognized in its columns.' };
@@ -199,17 +233,12 @@ function conformance(f: DataRoomGradeFacts): GradeBasisLine {
   let clean = 0;
   const notes: string[] = [];
   for (const t of cdisc) {
-    const variables = t.columns.map((c) => ({ name: c.name, ...(VAR_TYPE[c.type] ? { type: VAR_TYPE[c.type] } : {}) }));
-    const name = (t.cdisc?.domain || t.name).toUpperCase();
     try {
-      const r = t.cdisc?.standard === 'ADaM'
-        ? validateAdamDataset({ dataset: name, variables })
-        : validateSdtmDataset({ domain: name, variables });
-      const errors = r.findings.filter((x) => x.severity === 'error').length;
+      const { name, errors } = validatedTable(t);
       if (errors === 0) clean += 1;
       else notes.push(`${name}: ${errors} error${errors === 1 ? '' : 's'}`);
     } catch (e) {
-      notes.push(`${name}: not validated (${e instanceof Error ? e.message : 'refused'})`);
+      notes.push(`${t.name.toUpperCase()}: not validated (${e instanceof Error ? e.message : 'refused'})`);
     }
   }
   const points = Math.round((MAX.conformance * clean) / tables.length);
@@ -270,7 +299,7 @@ export interface GradeableSource {
 const obj = (v: unknown): Record<string, any> | null => (v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, any> : null);
 
 /** The dataset profile's tables, when the capture carries one. */
-function profiledTables(meta: Record<string, any> | null): GradeProfiledTable[] | null {
+export function profiledTables(meta: Record<string, any> | null): GradeProfiledTable[] | null {
   const profile = obj(meta?.datasetProfile);
   if (!profile || !Array.isArray(profile.tables)) return null;
   return profile.tables

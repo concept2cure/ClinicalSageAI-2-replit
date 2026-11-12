@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { EmptyState, useDataReadVisit, useLiveData, type DataReadOwner, type DataState } from '../dataConnect';
 import { SourceCatalogLine, SourceSnippet } from './SourceCatalogLine';
 import { SourceImportDialog, sourceImportUnavailableReason } from './SourceImportDialog';
@@ -323,7 +323,11 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner
   // Retained controls and receipts must keep the visit that created them.
   const capturedCurrent = useRef(ownerCurrent).current;
   const mounted = useRef(true);
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  /* A layout effect, not a passive one (2026-11-12). The list below reads `current()` in its own passive effect, and
+     a child's effects run before its parent's. In development React mounts, unmounts and mounts again: with a passive
+     effect here the list's second mount saw `mounted` still false, sent nothing, and the editor's Data room stayed
+     on "Loading project sources…" for good. Layout effects all run before any passive effect. */
+  useLayoutEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const current = useCallback(() => mounted.current && capturedCurrent(), [capturedCurrent]);
   const searchId = useId();
   const [query, setQuery] = useState('');

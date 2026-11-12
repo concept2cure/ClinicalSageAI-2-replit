@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MR-03 Stage 6 step 2: how long do compile, sequence assemble and export take,
+ * MR-03 Stage 6 step 2: how long do compile and sequence assemble take,
  * on the production image, for an FDA IND sequence of 50 and of 200 leaves?
  *
  * Run INSIDE the production image, as ci.yml's production-image-boot job runs
@@ -166,7 +166,7 @@ function pdf(marker, pages) {
 
 /** Sections across Modules 1-5 an IND carries; leaves are dealt round-robin, as study reports pile into m5. */
 const SECTIONS = [
-  'm1.2', 'm1.3.1.1', 'm1.4.4', 'm1.12.4', 'm1.14.1',
+  'm1.1.1', 'm1.1.2', 'm1.2', 'm1.3.1.1', 'm1.4.4', 'm1.12.4', 'm1.14.1',
   'm2.2', 'm2.3.s', 'm2.3.p', 'm2.4', 'm2.5', 'm2.6.2', 'm2.6.4', 'm2.6.6', 'm2.7.1', 'm2.7.3',
   'm3.2.s.1.1', 'm3.2.s.2.2', 'm3.2.s.4.1', 'm3.2.s.7.1', 'm3.2.p.1', 'm3.2.p.3.3', 'm3.2.p.5.1', 'm3.2.p.8.1',
   'm4.2.1.1', 'm4.2.2.2', 'm4.2.3.1', 'm4.2.3.2', 'm4.2.3.3.1', 'm4.2.3.4.1',
@@ -195,6 +195,26 @@ for (const n of SIZES) {
   const project = await call('POST', '/api/c2c/projects', { name: `Edge timing IND ${tag}`, programType: 'ind', productType: 'drug', primaryAgency: 'FDA' }, token);
   const programId = project.json?.data?.id ?? project.json?.program?.id;
   if (project.status !== 201 || !programId) fail(`project ${n}`, `${project.status} ${project.text}`);
+  // The package's recorded identity, which compile requires (package-identity.ts): the agency's application
+  // number, a bound applicant with a D-U-N-S number, and a regulatory contact. Recorded here as the database
+  // owner, not through Submission Center's Forms and letters screens: it is metadata the assembly reads once,
+  // and it does not change what is compiled or how long that takes.
+  {
+    const owner = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    await owner.connect();
+    try {
+      const orgRow = await owner.query('SELECT organization_id FROM regulatory_programs WHERE id = $1', [programId]);
+      const sponsor = await owner.query(
+        `INSERT INTO ind_sponsors (organization_id, name, duns, contact_name, contact_phone, contact_email)
+         VALUES ($1, 'Edge Timing Therapeutics', '123456789', 'Edge Timing', '+1 555 010 0100', 'edge-timing@example.invalid') RETURNING id`,
+        [orgRow.rows[0].organization_id],
+      );
+      await owner.query('UPDATE regulatory_programs SET application_number = $2, applicant_sponsor_id = $3 WHERE id = $1',
+        [programId, String(100000 + Math.floor(Math.random() * 899999)), sponsor.rows[0].id]);
+    } finally {
+      await owner.end();
+    }
+  }
   const sub = await call('POST', '/api/submissions', { programId, title: `Edge timing IND ${tag}`, productName: `Edge timing ${tag}`, applicationType: 'IND', clientType: 'biotech', primaryRegion: 'fda' }, token);
   if (sub.status !== 201) fail(`submission ${n}`, `${sub.status} ${sub.text}`);
   const seq = await call('POST', `/api/submissions/${sub.json.id}/sequences`, { region: 'fda', sequenceNumber: '0000', type: 'original' }, token);
@@ -214,9 +234,15 @@ for (const n of SIZES) {
     const up = await call('POST', '/api/vault/ingest', null, token, { form });
     if (up.status !== 201) fail(`upload ${n}/${i}`, `${up.status} ${up.text}`);
     const section = SECTIONS[i % SECTIONS.length];
+    // A Module 4/5 study report belongs to a study: FDA rejects one no Study Tagging File references (validation 1789).
+    // The ICH STF tag for the report body: a nonclinical report is "pre-clinical-study-report", a clinical one
+    // "study-report-body" (ICH eCTD STF Specification v2.6.1).
+    const study = /^m4\.2\./.test(section) ? { studyId: `EDGE-NC-${Math.floor(i / 5) + 1}`, stfFileTag: 'pre-clinical-study-report' }
+      : /^m5\.3\./.test(section) ? { studyId: `EDGE-CL-${Math.floor(i / 5) + 1}`, stfFileTag: 'study-report-body' } : {};
     const place = await call('PUT', `/api/submissions/sequences/${seq.json.id}/leaves`, {
       sectionCode: section, title: `Edge timing leaf ${i + 1} (${section})`, documentTable: 'vault_documents',
       documentUuid: up.json.document.id, lifecycleOp: 'new', reason: 'Placed by the edge-timing measurement (MR-03 Stage 6 step 2)',
+      ...study,
     }, token);
     if (place.status !== 200) fail(`place ${n}/${i}`, `${place.status} ${place.text}`);
   }
@@ -225,7 +251,6 @@ for (const n of SIZES) {
   const endpoints = [
     ['compile', 'POST', `/api/ectd-compile/${programId}/compile`, { region: 'FDA', submissionType: 'initial' }],
     ['sequence-assemble', 'POST', `/api/submissions/sequences/${seq.json.id}/assemble`, {}],
-    ['export', 'POST', `/api/ectd-export/${sub.json.id}`, { region: 'FDA', validateAfter: true, governance: { humanReviewApproved: true, reviewerName: 'Edge Timing', reviewerRole: 'Regulatory Lead', reviewTimestamp: new Date().toISOString() } }],
   ];
   for (const [name, method, path, body] of endpoints) {
     const times = [];
@@ -234,7 +259,7 @@ for (const n of SIZES) {
       const out = await call(method, path, body, token);
       times.push(out.ms);
       statuses.push(out.status);
-      console.info(JSON.stringify({ event: 'call', leaves: n, endpoint: name, run: r + 1, status: out.status, ms: Math.round(out.ms), bytes: out.bytes, ...(out.status >= 400 ? { body: out.text } : {}) }));
+      console.info(JSON.stringify({ event: 'call', leaves: n, endpoint: name, run: r + 1, status: out.status, ms: Math.round(out.ms), bytes: out.bytes, ...(out.status >= 400 ? { body: out.text } : {}), ...(r === 0 && out.json && typeof out.json === 'object' ? { outcome: { status: out.json.status ?? null, leafFilesRendered: out.json.leafFilesRendered ?? out.json.materialized ?? null, blockers: (out.json.submissionBlockers ?? []).slice(0, 3), errors: (out.json.errors ?? []).slice(0, 3) } } : {}) }));
     }
     summary.push({ leaves: n, endpoint: name, runs: RUNS, statuses: [...new Set(statuses)], p50_s: +(pct(times, 50) / 1000).toFixed(2), p95_s: +(pct(times, 95) / 1000).toFixed(2), max_s: +(Math.max(...times) / 1000).toFixed(2) });
   }

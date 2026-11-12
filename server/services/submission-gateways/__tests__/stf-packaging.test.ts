@@ -12,6 +12,7 @@ import * as os from 'os';
 import * as path from 'path';
 import JSZip from 'jszip';
 import { packageEctdSubmission, studyFolderSlug, commonDir, type EctdLeaf } from '../regional-packager';
+import { ValidationError } from '../types';
 import { minimalPdf } from '../../ectd/__tests__/support/signed-pdf-fixture';
 
 async function build(work: string): Promise<JSZip> {
@@ -113,5 +114,48 @@ describe('STF cross-linking in packageEctdSubmission', () => {
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }
+  }, 30000);
+});
+
+/**
+ * A study leaf the Study Tagging File cannot describe is a refusal of the package, as a ValidationError,
+ * the same refusal FDA 1789 is. Measured on the running server 2026-11-12 (MR-03 Stage 6 step 2): a
+ * nonclinical report tagged "study-report" reached POST /api/submissions/sequences/:id/assemble as 500
+ * "Request failed.". The STF generator threw a plain Error, and assemble-from-core turns only a
+ * ValidationError into the recorded 422 (ECTD_ASSEMBLE_BLOCKED). The sentence that says how to correct
+ * it was already written; it was only lost.
+ */
+describe('a study leaf the STF cannot describe refuses the package', () => {
+  async function packageWith(leaf: Partial<EctdLeaf>): Promise<unknown> {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'stf-refused-'));
+    try {
+      const src = path.join(work, 'src');
+      await fs.mkdir(src, { recursive: true });
+      await fs.writeFile(path.join(src, 'tox.pdf'), minimalPdf('tox'));
+      await packageEctdSubmission({
+        region: 'fda', applicationId: '123456', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'ind' },
+        sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
+        environment: 'staging',
+        leaves: [{ ctdSection: '4.2.3.2', operation: 'new', sourcePath: path.join(src, 'tox.pdf'), fileName: 'tox.pdf', title: '28-day rat toxicology', studyId: 'TOX-001', ...leaf } as EctdLeaf],
+      });
+      return null;
+    } catch (err) {
+      return err;
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }
+
+  it('a nonclinical report tagged "study-report" is a ValidationError naming the leaf and the right tag', async () => {
+    const err = await packageWith({ stfFileTag: 'study-report' });
+    expect(err).toBeInstanceOf(ValidationError);
+    expect((err as Error).message).toMatch(/"study-report" is not a defined file-tag on "28-day rat toxicology"/);
+    expect((err as Error).message).toMatch(/tagged "pre-clinical-study-report"\. Correct it in Submission Center, Builder, Edit study tagging\./);
+    expect((err as ValidationError).findings).toEqual([expect.objectContaining({ ruleId: 'STF-LEAF-REFUSED', severity: 'error', filePath: 'tox.pdf' })]);
+  }, 30000);
+
+  it('the right tag packages', async () => {
+    expect(await packageWith({ stfFileTag: 'pre-clinical-study-report' })).toBeNull();
   }, 30000);
 });
