@@ -40,7 +40,8 @@ import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_sh
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
 import { barRefusalNote, useCsrSigningGate } from '../editor/reviewTaskState';
-import { APPROVAL_UNSETTLED_FORM, describeUnresolved, NOT_REVIEWED_FORM, UNSETTLED_FORM, type Unresolved } from './authoringApprovalQuestions';
+import { APPROVAL_UNSETTLED_FORM, describeUnresolved, NOT_REVIEWED_FORM, TRIAL_STATUS_FORM, UNSETTLED_FORM, useTrialStatusQuestion, withTrialMeta,
+  type TrialQuestion, type Unresolved } from './authoringApprovalQuestions';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -86,7 +87,7 @@ export interface AuthoringFilingBarProps {
   onSendForReview?: () => void;
 }
 
-type Dialog = 'freeze' | 'freeze-unsettled' | 'freeze-figures' | 'esign' | 'esign-unsettled' | 'esign-figures' | 'esign-unreviewed' | null;
+type Dialog = 'freeze' | 'freeze-unsettled' | 'freeze-figures' | 'esign' | 'esign-unsettled' | 'esign-figures' | 'esign-unreviewed' | 'esign-trial' | null;
 
 const FROZEN_STATES = new Set(['FROZEN', 'APPROVED']);
 
@@ -210,14 +211,14 @@ export async function postAuthoringSignature(
   input: SignInput,
   adoptWorkflowSource = false,
   acknowledgeUnresolved = false,
-  acknowledgedFigures: readonly string[] | null = null,
+  acks: ApprovalAcks = NO_ACKS,
 ): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string; notApproved: string[] }> {
   const meaning = AUTHORING_MEANING[input.meaning];
   if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
   let res: Response;
   try {
     res = await apiRequest('POST', `/api/authoring/docs/${docId}/e-sign`,
-      signatureBody(input, meaning, adoptWorkflowSource, acknowledgeUnresolved, acknowledgedFigures));
+      signatureBody(input, meaning, adoptWorkflowSource, acknowledgeUnresolved, acks));
   } catch (e) {
     // An approval of an unsettled document is a question for the approver, not a failure (2026-10-30).
     throw approvalQuestionOr(e);
@@ -287,9 +288,13 @@ export function notApprovedNote(keys: readonly string[]): string {
   );
 }
 
+/** What an approval carries after the server asked: the figures kept (P-89), and the trial status stated (P-102). */
+export interface ApprovalAcks { figures: readonly string[] | null; notApplicableClinicalTrial: boolean }
+const NO_ACKS: ApprovalAcks = { figures: null, notApplicableClinicalTrial: false };
+
 /** What /e-sign is sent. Adoption goes only with a review; the acknowledgements only with an approval. */
 function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER', adopt: boolean, acknowledge: boolean,
-  figures: readonly string[] | null) {
+  { figures, notApplicableClinicalTrial }: ApprovalAcks) {
   const approval = meaning === 'APPROVER';
   return {
     password: input.password,
@@ -299,6 +304,7 @@ function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPRO
     ...(meaning === 'REVIEWER' && adopt ? { adoptWorkflowSource: true } : {}),
     ...(approval && acknowledge ? { acknowledgeUnresolved: true } : {}),
     ...(approval && figures?.length ? { acknowledgedFigures: [...figures] } : {}),
+    ...(approval && notApplicableClinicalTrial ? { notApplicableClinicalTrial: true } : {}),
   };
 }
 
@@ -306,6 +312,7 @@ function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPRO
 function approvalQuestionOr(e: unknown): unknown {
   const err = e as Partial<ApiRequestError> | null;
   if (err?.code === 'REVIEW_REQUIRED') return new ApprovalNotReviewed(String(err.message ?? ''));
+  if (err?.code === 'CONSENT_TRIAL_STATUS_REQUIRED') return new ApprovalTrialStatusRequired(String(err.message ?? ''));
   const unresolved = notSettledCounts(e);
   if (unresolved) return new ApprovalNotSettled(unresolved);
   const figures = unverifiedFiguresIn(e);
@@ -333,6 +340,14 @@ class ApprovalNotReviewed extends Error {
   constructor(message: string) {
     super(message || 'This document has not been reviewed. Send it for review before approving it. Nothing was signed.');
     this.name = 'ApprovalNotReviewed';
+  }
+}
+
+/** The server refused a consent form's approval until the approver says whether the study is an applicable clinical trial (P-102). */
+class ApprovalTrialStatusRequired extends Error {
+  constructor(message: string) {
+    super(message || 'Not approved — this informed consent form has no ClinicalTrials.gov statement. Nothing was signed.');
+    this.name = 'ApprovalTrialStatusRequired';
   }
 }
 
@@ -457,6 +472,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
   /** The server's sentence when it refused an approval because review is not complete (P-95). */
   const [notReviewed, setNotReviewed] = useState<string | null>(null);
+  /** P-102: the server's sentence when it asked about trial status, and whether the approver said "not one". */
+  const trial = useTrialStatusQuestion((next) => setDialog(next === 'question' ? 'esign-trial' : next === 'sign' ? 'esign' : null));
   /** Set when the server refused an approval or a seal over unverified figures (P-89). */
   const { figures, setFigures, onFiguresChoice } = useFigureQuestion(setDialog, () => setUnresolved(null));
   const frozen = FROZEN_STATES.has(docStatus);
@@ -473,7 +490,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     setDialog(v.acknowledge === 'seal' ? 'freeze' : null);
   };
 
-  const closeAll = () => { setUnresolved(null); setFigures(null); setNotReviewed(null); setDialog(null); };
+  const closeAll = () => { setUnresolved(null); setFigures(null); setNotReviewed(null); trial.clear(); setDialog(null); };
   /** The review question's answer: open the editor's Send for review, when the host offers it (P-95). */
   const onNotReviewedChoice = () => { closeAll(); onSendForReview?.(); };
 
@@ -517,8 +534,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     if (refused) throw new Error(refused);
     let signed;
     try {
-      signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current,
-        input.meaning === 'approval' && unresolved !== null, input.meaning === 'approval' ? figures?.acknowledged ?? null : null);
+      const approval = input.meaning === 'approval';
+      signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current, approval && unresolved !== null,
+        approval ? { figures: figures?.acknowledged ?? null, notApplicableClinicalTrial: trial.stated } : NO_ACKS);
     } catch (e) {
       if (e instanceof ApprovalFiguresUnverified) {
         setFigures({ list: e.figures, acknowledged: null });
@@ -529,6 +547,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       } else if (e instanceof ApprovalNotReviewed) {
         setNotReviewed(e.message);
         setDialog('esign-unreviewed');
+      } else if (e instanceof ApprovalTrialStatusRequired) {
+        trial.ask(e.message);
       }
       throw e;
     }
@@ -565,7 +585,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} reviewOnly={reviewOnly} signerIsAuthor={signerIsAuthor} signer={signer}
         gate={gate.forMeaning} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
         onSign={doSign} onClose={closeAll} onChoice={onApprovalUnsettledChoice} onFiguresChoice={onFiguresChoice('esign')}
-        notReviewed={notReviewed} canSendForReview={!!onSendForReview} onNotReviewedChoice={onNotReviewedChoice} />
+        notReviewed={notReviewed} canSendForReview={!!onSendForReview} onNotReviewedChoice={onNotReviewedChoice} trial={trial} />
     </>
   );
 }
@@ -624,7 +644,7 @@ function withFiguresMeta(meta: string, figures: FigureQuestion | null): string {
 }
 
 /** The E-sign dialog, and the approval's questions when the server asked them (not settled, 2026-10-30; figures, P-89). */
-function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, gate, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice, notReviewed, canSendForReview, onNotReviewedChoice }: {
+function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, gate, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice, notReviewed, canSendForReview, onNotReviewedChoice, trial }: {
   dialog: Dialog; docTitle: string; unresolved: Unresolved | null; figures: FigureQuestion | null; reviewOnly?: boolean; signerIsAuthor?: boolean;
   /** The refusal for the meaning chosen: the server's, or the CSR review gate's (B7), shown before a password is sent. */
   signer: AuthoringFilingBarProps['signer']; gate: (m: EsigMeaning) => string | null;
@@ -633,7 +653,12 @@ function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signe
   onFiguresChoice: (v: Record<string, string>) => void;
   /** P-95: the server's sentence when review is not complete, whether the host offers Send for review, and its answer. */
   notReviewed: string | null; canSendForReview: boolean; onNotReviewedChoice: () => void;
+  /** P-102: whether the study is an applicable clinical trial, asked of a consent form's approver. */
+  trial: TrialQuestion;
 }) {
+  if (dialog === 'esign-trial' && trial.sentence) {
+    return <C2CForm config={TRIAL_STATUS_FORM(docTitle, trial.sentence)} onCancel={onClose} onSubmit={trial.onChoice} />;
+  }
   if (dialog === 'esign-unreviewed' && notReviewed) {
     return <C2CForm config={NOT_REVIEWED_FORM(notReviewed, canSendForReview)} onCancel={onClose} onSubmit={onNotReviewedChoice} />;
   }
@@ -645,13 +670,13 @@ function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signe
   }
   if (dialog !== 'esign') return null;
   const offer = esignOffer(reviewOnly, signerIsAuthor);
-  const approving = unresolved !== null || !!figures?.acknowledged;
+  const approving = unresolved !== null || !!figures?.acknowledged || trial.stated;
   return (
     <EsignModal
       open
       action="Sign document"
       target={docTitle}
-      targetMeta={withFiguresMeta(unresolved ? approveAsItStandsMeta(unresolved) : offer.targetMeta, figures)}
+      targetMeta={withTrialMeta(withFiguresMeta(unresolved ? approveAsItStandsMeta(unresolved) : offer.targetMeta, figures), trial)}
       defaultMeaning={approving ? 'approval' : 'review'}
       meanings={offer.meanings}
       onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
