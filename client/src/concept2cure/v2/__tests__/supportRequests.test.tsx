@@ -139,3 +139,19 @@ describe('support requests on Help & training', () => {
     expect(screen.queryByRole('button', { name: /try again/i })).toBeNull();
   });
 });
+
+describe('Ask support', () => {
+  it('opens the conversation asked as support: from Help & training, and the turn carries { support: true }', async () => {
+    const { originTurnContext } = await import('../editor/authoringConversationOrigin');
+    const onNav = vi.fn();
+    render(<Training surface={{ id: 'training', label: 'Help & training' } as never} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />);
+    fireEvent.click(await screen.findByRole('button', { name: /Ask support/ }));
+    expect(onNav).toHaveBeenCalledWith('conversation-thread');
+    const handed = (window as unknown as { C2C_CONVO: { id: string; seed: null; origin: Parameters<typeof originTurnContext>[0] } }).C2C_CONVO;
+    expect(handed).toMatchObject({ id: 'new', seed: null, origin: { surfaceId: 'training', label: 'Help & training' } });
+    // What the conversation sends with the person's first turn (ConversationThread sendTurn).
+    expect(originTurnContext(handed.origin, { state: 'none' } as never, null)).toMatchObject({
+      screenName: 'training', moduleContext: { surface: 'training', support: true },
+    });
+  });
+});

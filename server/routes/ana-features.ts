@@ -35,6 +35,7 @@ import { clientIpOf } from '../utils/client-ip';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
+import { openSseStream } from '../utils/sse-stream';
 
 const logger = createScopedLogger('ana-features');
 
@@ -5180,25 +5181,10 @@ router.post(
         .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
 
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no',
-    });
-
-    let clientClosed = false;
-    req.on('close', () => {
-      clientClosed = true;
-    });
-
+    // Headers and a heartbeat past the edge's 60 s (server/utils/sse-stream.ts).
+    const sse = openSseStream(req, res);
     const writeEvent = (event: any) => {
-      if (clientClosed) return;
-      try {
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
-      } catch {
-        clientClosed = true;
-      }
+      sse.send(event);
     };
 
     try {
@@ -5224,7 +5210,7 @@ router.post(
       });
       logger.error('[AnA submission-chat stream] failed:', { error: err?.message || err });
     } finally {
-      if (!clientClosed) res.end();
+      sse.end();
     }
   }
 );

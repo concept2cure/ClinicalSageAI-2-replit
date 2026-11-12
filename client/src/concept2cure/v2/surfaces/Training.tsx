@@ -8,6 +8,7 @@ import { LiveDriveControlsContext } from '../LiveDriveSwitch';
 import { availableDemoScripts } from '../../components/ana/anaLockedScreens';
 import { helpClientType } from '@shared/help';
 import { askSupport } from './help/supportEntry';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { NewRequest, RequestView, YourRequests, type RequestDraft } from './help/SupportRequests';
 import '../styles/project-home-v2.css';
 import '../styles/help-v2.css';
@@ -62,6 +63,22 @@ export function helpViewFromLocation(search: string): View {
   const course = q.get('course');
   if (course) return { kind: 'course', id: course };
   return { kind: 'home' };
+}
+
+/** The same views, named by the navigation-params channel (navParams.ts): AnA's navigate_to chip, Home's
+ *  getting-started step. Its keys are the address's (article, course, request and a draft's fields). */
+export function helpViewFromParams(params: Record<string, string> | null): View | null {
+  if (!params) return null;
+  const view = helpViewFromLocation(`?${new URLSearchParams(params).toString()}`);
+  return view.kind === 'home' ? null : view;
+}
+
+/** A course by id; "getting-started" is the getting-started course for this client type (the index lists only the
+ *  courses for it), which Home's onboarding step opens without knowing the client type. */
+export function courseFor(courses: CourseRead[] | undefined, id: string): CourseRead | null {
+  if (!courses) return null;
+  return courses.find((c) => c.id === id)
+    ?? (id === 'getting-started' ? courses.find((c) => c.id.startsWith('getting-started-')) ?? null : null);
 }
 
 function writeLocation(view: View) {
@@ -131,6 +148,16 @@ export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [version, setVersion] = useState(0);
   useEffect(() => { const t = setTimeout(() => setDebounced(query.trim()), 250); return () => clearTimeout(t); }, [query]);
   const go = (next: View) => { setView(next); setQuery(''); writeLocation(next); };
+  /* A view handed over by the navigation-params channel, read after mount and on its event while mounted
+     (consumed on read, so a later visit opens the front page). */
+  const goRef = React.useRef(go);
+  goRef.current = go;
+  useEffect(() => {
+    const receive = () => { const v = helpViewFromParams(consumeNavParams('training')); if (v) goRef.current(v); };
+    receive();
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
 
   const indexPath = `/api/docs${clientType ? `?clientType=${clientType}` : ''}`;
   const index = useLiveData<HelpIndexRead>(indexPath, [indexPath, version]);
@@ -197,7 +224,7 @@ export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
       ) : view.kind === 'new-request' ? (
         <NewRequest draft={view.draft} onBack={() => go({ kind: 'home' })} onSent={(number) => go({ kind: 'request', number })} />
       ) : view.kind === 'course' ? (
-        <CourseView course={index.data?.courses.find((c) => c.id === view.id) ?? null} loading={index.loading}
+        <CourseView course={courseFor(index.data?.courses, view.id)} loading={index.loading}
           onBack={() => go({ kind: 'home' })} onOpen={(slug) => go({ kind: 'article', slug })} />
       ) : (
         <>
