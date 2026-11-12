@@ -17,6 +17,7 @@ import {
   createCommitmentTx,
   listCommitments,
   projectOfSubmission,
+  subjectsOfCommitment,
   submissionOfInteraction,
   submissionReadableIn,
 } from '../ha-service';
@@ -130,5 +131,39 @@ describe('listing the organisation’s own commitments', () => {
   it("never another organisation's, whatever the scope", async () => {
     expect(submissionsOf(await listCommitments(1, 20, ORG_LEVEL, q, [PROGRAM_A]))).toEqual([]);
     expect(submissionsOf(await listCommitments(2, undefined, ORG_LEVEL, q, [PROGRAM_A]))).toEqual([20]);
+  });
+});
+
+/* 2026-11-12: the screen's routes and AnA's fulfilment tool admit a commitment by the project of the submission it
+   names, or of the meeting it was made at. The list hides what those acts would refuse. */
+describe('a commitment made at a meeting', () => {
+  const atMeeting = (sourceInteractionId: number) => ({ commitmentType: 'meeting_commitment' as const, description: 'Send the protocol', sourceInteractionId });
+  const meetingsOf = (rows: Array<{ source_interaction_id: number | null }>) => rows.map((r) => r.source_interaction_id).sort();
+  let onSubmission: number; let namesNone: number;
+
+  beforeAll(async () => {
+    await pg.exec('TRUNCATE regulatory_commitments RESTART IDENTITY');
+    onSubmission = (await createCommitmentTx(q, 1, 5, atMeeting(1))).id; // meeting 1 is on submission 10, program A
+    namesNone = (await createCommitmentTx(q, 1, 5, atMeeting(2))).id; // meeting 2 names no submission
+  });
+
+  it('names its submission and its meeting for admission, in its own organisation only', async () => {
+    expect(await subjectsOfCommitment(q, 1, onSubmission)).toEqual({ submissionId: null, sourceInteractionId: 1 });
+    expect(await subjectsOfCommitment(q, 1, namesNone)).toEqual({ submissionId: null, sourceInteractionId: 2 });
+    expect(await subjectsOfCommitment(q, 2, onSubmission)).toBeUndefined();
+    expect(await subjectsOfCommitment(q, 1, 999)).toBeUndefined();
+  });
+
+  it('a project\'s own commitment is not the organisation\'s door\'s to admit', async () => {
+    await pg.query('UPDATE regulatory_commitments SET project_id = 100 WHERE id = $1', [namesNone]);
+    expect(await subjectsOfCommitment(q, 1, namesNone)).toBeUndefined();
+    await pg.query('UPDATE regulatory_commitments SET project_id = NULL WHERE id = $1', [namesNone]);
+  });
+
+  it('is listed for a reader who can open the meeting\'s submission, and not for one who cannot', async () => {
+    expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q))).toEqual([1, 2]);
+    expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q, [PROGRAM_A]))).toEqual([1, 2]);
+    expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q, [PROGRAM_B]))).toEqual([2]);
+    expect(meetingsOf(await listCommitments(1, undefined, ORG_LEVEL, q, []))).toEqual([2]);
   });
 });
