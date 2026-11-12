@@ -415,13 +415,10 @@
 .c2c-v2 .cm-fit-svg .dot{fill:var(--cm-series);stroke:var(--bg-000);stroke-width:2;}
 /* The caption is the work area's quiet line (`p.sec-sub`), sat close under its chart. */
 .c2c-v2 [data-work-area] p.sec-sub.cm-fit-cap{margin:6px 0 0;}
-/* A register wider than the page scrolls inside its section, at every width
-   (P-122). D5's spec already said it should below 1120 px (D5.md §A.3), and
-   the page column is 1,040 px at 1440: with the demo's registers filled,
-   Materials pushed the page 108 px sideways and Stability 120 px. D0's rule
-   does this only below 640 px, for every work area; this is CMC's own. */
-.c2c-v2 [data-work-area="cmc"] :is(.pj-sec, .pj-card-b) > .reg-tbl{display:block;overflow-x:auto;}
-/* The same for the per-study tables under a register (the ICH Q1E fit, the
+/* A CMC register wider than the page scrolls inside its section at every width
+   (P-122). That rule is in app-v2.css beside D0's phone rule, as D0's one named
+   exception (2026-11-12): a table-scroll rule lives in one sheet.
+   The same for the per-study tables under a register (the ICH Q1E fit, the
    trending and close-out detail), which sit in a plain block: since the
    Stability register estimates on open (P-122), its Q1E table is on screen at
    once, and at 390 px it pushed the page 241 px sideways. */
