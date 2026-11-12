@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 27,
+    "durationMs": 20,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -20,7 +20,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -30,7 +30,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -40,7 +40,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -50,7 +50,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -60,7 +60,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -70,7 +70,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -80,7 +80,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -90,7 +90,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -100,7 +100,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -110,7 +110,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -120,7 +120,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -130,7 +130,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -140,7 +140,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -150,7 +150,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -160,7 +160,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -170,7 +170,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -180,7 +180,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -190,7 +190,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -200,7 +200,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -210,7 +210,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -220,7 +220,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T13:08:30.945Z",
+          "updatedAt": "2026-11-12T00:36:30.993Z",
           "completeness": 100,
           "missingInputs": []
         }

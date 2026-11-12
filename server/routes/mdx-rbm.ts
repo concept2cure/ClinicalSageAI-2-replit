@@ -32,7 +32,7 @@
  *
  *   Site risk
  *     GET   /api/mdx/rbm-site-risk?program_id=
- *     POST  /api/mdx/rbm-site-risk/recompute   (derives from site_intel)
+ *     POST  /api/mdx/rbm-site-risk/recompute   (mdx-rbm-data.ts; from site_intel, else the study's site-level indicators)
  *
  *   Monitoring plan + actions
  *     GET   /api/mdx/rbm-monitoring-plans?program_id=
@@ -73,7 +73,7 @@ import {
 import {
   generatePlanFromAssessment, RBM_PLAN_REFUSAL, amendAssessment, approveAssessment, approvePlan,
   amendMonitoringPlan, nextPlanVersion, createAction, requireDraftAssessment, RbmAssessmentEditError,
-  addCtqFactor, CTQ_CATEGORY, CTQ_ITEM_STATUS,
+  addCtqFactor, CTQ_CATEGORY, CTQ_ITEM_STATUS, defineKri,
 } from '../services/rbm/rbm-actuator';
 import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
@@ -496,21 +496,10 @@ router.post('/rbm-kris', async (req, res) => {
   if (orgId === null) return orgRequired(res);
   const parsed = createKriBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  const dir: KriDirection = p.direction ?? 'higher_worse';
-  const status = computeKriStatus(p.currentValue, p.thresholdAmber, p.thresholdRed, dir);
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_kris (
-         organization_id, program_id, assessment_id, name, metric_definition, data_source,
-         unit, direction, threshold_amber, threshold_red, current_value, status, evaluated_at
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, CASE WHEN $11 IS NULL THEN NULL ELSE NOW() END)
-       RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.name, p.metricDefinition ?? null,
-        p.dataSource ?? 'manual', p.unit ?? null, dir, p.thresholdAmber ?? null, p.thresholdRed ?? null,
-        p.currentValue ?? null, status],
-    );
-    return created(res, rows[0]);
+    // The actuator's defineKri is the one KRI INSERT (status from the engine, evaluated_at only with a reading).
+    const { kri } = await defineKri(pool, orgId, parsed.data);
+    return created(res, kri);
   } catch (err) { return serverError(res, log, 'create-kri', err); }
 });
 

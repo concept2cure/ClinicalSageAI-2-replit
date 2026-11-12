@@ -1,0 +1,6 @@
+[
+ {"name":"M1 old JS timestamp guess back","file":"server/routes/part11-compliance.ts","old":"(row.timestamp_text ?? '') + '|' +","new":"(row.timestamp ? new Date(row.timestamp).toISOString().replace('T', ' ').replace('Z', '+00') : '') + '|' +","tests":["server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts"]},
+ {"name":"M2 reason left out of the preimage (lenient)","file":"server/routes/part11-compliance.ts","old":"        (row.reason ?? '') + '|' +\n        (row.previous_hash ?? 'GENESIS');\n\n      const expectedHash","new":"        '' + '|' +\n        (row.previous_hash ?? 'GENESIS');\n\n      const expectedHash","tests":["server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts"]},
+ {"name":"M3 a mismatch is not recorded (verifier passes anything)","file":"server/routes/part11-compliance.ts","old":"      if (row.record_hash !== expectedHash) {\n        brokenLinks.push({","new":"      if (false && row.record_hash !== expectedHash) {\n        brokenLinks.push({","tests":["server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts"]},
+ {"name":"M4 timestamp_text not selected","file":"server/routes/part11-compliance.ts","old":"timestamp, \"timestamp\"::text AS timestamp_text, reason,","new":"timestamp, reason,","tests":["server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts"]}
+]

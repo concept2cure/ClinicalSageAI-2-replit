@@ -1,0 +1,115 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts
+{
+  "timestamp": "2026-11-12T00:54:01.150Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T00:54:01.152Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts
+{
+  "timestamp": "2026-11-12T00:54:01.153Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts
+{
+  "timestamp": "2026-11-12T00:54:02.311Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/fda-510k > an empty body is refused, naming the questions: it is not a letter to file 43ms
+   → expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/fda-510k > one unanswered question is refused, by name 7ms
+   → expected 200 to be 422 // Object.is equality
+ ✓ server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/fda-510k > every question answered gets the engine's decision, with its rationale 6ms
+ × server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/eu-significant > an empty body is refused: it is not "not significant" 5ms
+   → expected 200 to be 422 // Object.is equality
+ ✓ server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/eu-significant > every question answered no is the engine's "not significant"; one yes is significant 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/fda-510k > an empty body is refused, naming the questions: it is not a letter to file
+AssertionError: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts:36:24
+     34|   it('an empty body is refused, naming the questions: it is not a lett…
+     35|     const res = await post('/change/fda-510k', {});
+     36|     expect(res.status).toBe(422);
+       |                        ^
+     37|     expect(res.body.decision).toBeUndefined();
+     38|     for (const q of DEVICE_CHANGE_QUESTIONS.us) expect(res.body.error)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/fda-510k > one unanswered question is refused, by name
+AssertionError: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts:43:24
+     41|   it('one unanswered question is refused, by name', async () => {
+     42|     const res = await post('/change/fda-510k', { ...allNo('us'), softw…
+     43|     expect(res.status).toBe(422);
+       |                        ^
+     44|     expect(res.body.error).toMatch(/softwareChangeAffectsRisk \(true o…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts > POST /change/eu-significant > an empty body is refused: it is not "not significant"
+AssertionError: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ server/routes/__tests__/ivd-lifecycle-change-refuses-an-unanswered-question.test.ts:58:24
+     56|   it('an empty body is refused: it is not "not significant"', async ()…
+     57|     const res = await post('/change/eu-significant', {});
+     58|     expect(res.status).toBe(422);
+       |                        ^
+     59|     expect(res.body.significant).toBeUndefined();
+     60|     for (const q of DEVICE_CHANGE_QUESTIONS.eu) expect(res.body.error)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  00:53:59
+   Duration  3.70s (transform 2.03s, setup 106ms, import 3.23s, tests 74ms, environment 0ms)
+

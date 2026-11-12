@@ -1,0 +1,44 @@
+npx vitest run <40 files> --maxWorkers=2, 2026-11-12, after the repair. Files:
+client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx
+server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts
+server/routes/__tests__/audit-compliance-reports.test.ts
+server/routes/__tests__/audit-export-tenant-scope.test.ts
+server/routes/__tests__/audit-export-verify-authority.test.ts
+server/routes/__tests__/audit-second-doors.test.ts
+server/routes/__tests__/audit-trail-ledger-governed-change.test.ts
+server/routes/__tests__/audit-trail-ledger.routes.test.ts
+server/routes/__tests__/mdx-admin-facets.test.ts
+server/routes/__tests__/mdx-admin-honesty.test.ts
+server/routes/__tests__/part11-audit-actor-identity.test.ts
+server/routes/__tests__/part11-chain-empty-honesty.test.ts
+server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts
+server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts
+server/routes/__tests__/part11-chain-unhashed-honesty.test.ts
+server/routes/__tests__/part11-compliance-5xx-containment.test.ts
+server/routes/__tests__/part11-compliance-honesty.test.ts
+server/routes/__tests__/part11-manifest-governed.test.ts
+server/routes/__tests__/part11-signature-manifest.test.ts
+server/routes/__tests__/part11-signature-post-removed.test.ts
+server/routes/__tests__/part11-signatures-by-target.test.ts
+server/routes/__tests__/part11-static-tables-removed.test.ts
+server/routes/__tests__/part11ChainIntegrityRoute.test.ts
+server/routes/__tests__/part11TenantScoping.test.ts
+server/routes/c2c/__tests__/vault-document-history-route.test.ts
+server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+server/services/ana/__tests__/verified-seal-service.test.ts
+server/services/audit/__tests__/chain-head-on-demand.test.ts
+server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts
+server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts
+server/services/audit/__tests__/signed-audit-export-key-id.test.ts
+server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts
+server/services/audit/compliance-reports/__tests__/csv.test.ts
+server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts
+server/services/audit/compliance-reports/__tests__/signed-report.test.ts
+server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+server/services/submission-service/__tests__/submission-history-read.test.ts
+server/services/vault/__tests__/vault-archive-audit-projection.test.ts
+server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+
+ Test Files  40 passed (40)
+      Tests  374 passed (374)

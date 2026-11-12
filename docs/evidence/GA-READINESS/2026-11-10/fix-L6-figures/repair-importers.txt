@@ -1,0 +1,40 @@
+Command: npx vitest run <36 files below> --maxWorkers=1  (2026-11-12, repaired tree)
+Files run (the number is how many lines of the run log name the file, not a test count):
+     16 server/routes/__tests__/ana-biostats-refusal-is-422.test.ts
+     11 server/routes/__tests__/ana-biostats-save-on-request-client.test.ts
+     16 server/routes/__tests__/biostat-bridge-reproduce-route.test.ts
+      4 server/services/__tests__/statistical-defensibility.deterministic.test.ts
+     22 server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+     15 server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts
+     42 server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts
+      4 server/services/ana-biostats/__tests__/refuse-unless-stated-is-one-helper.test.ts
+     14 server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts
+      3 server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts
+      5 server/services/ana-biostats/__tests__/workflow-integrator-no-db-fails-closed.test.ts
+     13 server/services/ana-ri/__tests__/biostat-command-input.test.ts
+     14 server/services/ana/__tests__/biostat-refusal-is-not-a-failure.test.ts
+     16 server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+     19 server/services/biostatistics-bridge/__tests__/design-adapter.test.ts
+     17 server/services/biostatistics-bridge/__tests__/filing-placement.test.ts
+      4 server/services/biostatistics-bridge/__tests__/reproduce-under-tenant-scope.test.ts
+      7 server/services/biostatistics-bridge/__tests__/statistical-review.test.ts
+      9 server/services/biostatistics-bridge/__tests__/structural-design-reaches-the-engine.test.ts
+      9 server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts
+     18 tests/biostat/adaptive-and-spending-reference.test.ts
+     25 tests/biostat/ana-sizing-reference.test.ts
+     31 tests/biostat/analytical-and-reader-reference.test.ts
+     13 tests/biostat/design-dispatch-reaches-its-method.test.ts
+     34 tests/biostat/external-control-and-signal-reference.test.ts
+     18 tests/biostat/group-sequential-reference.test.ts
+      7 tests/biostat/hazard-ratio-convention-is-stated.test.ts
+     40 tests/biostat/json-wire-contract.test.ts
+      6 tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts
+     19 tests/biostat/normal-precision-reference.test.ts
+     20 tests/biostat/power-and-sizing-reference.test.ts
+     37 tests/biostat/statistical-core-reference.test.ts
+     15 tests/biostat/study-design-and-fragility-reference.test.ts
+      5 tests/biostat/survival-curve-reaches-the-caller.test.ts
+     20 tests/biostat/win-ratio-and-projection-reference.test.ts
+    132 tests/services/ana-biostats.test.ts
+ Test Files  36 passed (36)
+      Tests  640 passed (640)

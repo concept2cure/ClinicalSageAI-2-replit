@@ -18,20 +18,20 @@
         "method": "Dye ingress, blue dye at -60 kPa for 10 min",
         "result": "No ingress in 30 of 30 blisters"
       },
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 37,
+    "durationMs": 42,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 9,
+        "id": 14,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "scope": "drug_product",
         "systemName": "PVC/PVDC-aluminium blister",
         "componentType": "primary",
@@ -52,8 +52,8 @@
         "status": "draft",
         "qualifiedBy": null,
         "qualificationDate": null,
-        "createdAt": "2026-11-10T13:06:38.139Z",
-        "updatedAt": "2026-11-10T13:06:38.139Z"
+        "createdAt": "2026-11-12T00:34:41.173Z",
+        "updatedAt": "2026-11-12T00:34:41.173Z"
       },
       "module3Linked": true
     }

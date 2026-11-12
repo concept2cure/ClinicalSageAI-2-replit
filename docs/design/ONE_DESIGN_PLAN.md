@@ -647,6 +647,7 @@ whether work may be committed under it:
 | D5 | **Work areas I.** CMC / Module 3 and Biostatistics on the one page pattern. | — | open |
 | D6 | **Work areas II.** Tasks, Communication and Vault. | — | open |
 | D7 | **Work areas III.** Submission Center, Quality, Risk-based monitoring, and Reporting & analytics. | — | open |
+| D8 | **Device and diagnostics screens** (P-128). §2's design on the existing device screens (`client/src/concept2cure/mdx/**`), the shared look first. Nothing a screen shows is removed (P-122). Moving the per-type device screens into the one editor is not in this package. | — | open |
 | R1 | **Reach.** Every server capability with no UI caller is reached in its package's screen, or retired by a founder decision. The inventory and each reach are filed under `docs/evidence/DESIGN/R1/`. | — | open |
 | F1 | **Repairs.** Defects in shipped behaviour, such as the 2026-10-31 running-app audit findings. Repairs add no screen, mount or table. | — | open |
 | L1 | **Launch rows** D1–D10 of `docs/LAUNCH_DEFINITION_OF_DONE.md`, as defined there. | — | open |
@@ -669,7 +670,7 @@ Each spine package (S1–S8) starts with its "What already exists" section (RULE
 own searches, filed under `docs/evidence/SPINE/<ID>/`. Its UI work is done on the §2 design. When a screen is in a
 queued design package's files, the S package changes only behaviour there, never the layout.
 
-Each design package (D0–D7) runs its own work in this order:
+Each design package (D0–D8) runs its own work in this order:
 1. **Spec.** Append `## <ID> spec` to `.design/claude-convergence/<ID>.md`. For each screen it says what the screen
    is today, Claude's pattern, the change (by file), the capabilities kept, and the acceptance checks.
 2. **Build.**
@@ -704,6 +705,16 @@ deep. Evidence and the "What already exists" survey: `docs/evidence/SPINE/S2/202
 capture of another project may be assembled into, or filed for, this project's documents (a governance decision for
 the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
 "S2: the walk of the CSR example and AnA's tools, recorded".
+
+**2026-11-11, for GA** ("R1: the data catalog lists the Vault's documents, graded and usable, beside the captures",
+`docs/evidence/SPINE/S2/2026-11-11-ga-surface-walk/`). Walked at head, the catalog was Quality records and almost no
+files: documents and study data are filed in the project's Vault, and the catalog read captures only. It now also
+lists the Vault's current documents of the same projects (step 2 of §1: items get in "from Vault"), organized by Vault
+folder, graded by the same engine from the Vault's facts, with **Use in this project** (kind `vault_doc`, checked
+against the person's catalog), and AnA's catalog tool answers them. A read only: **LX-03** (every Vault version a
+data-room source) still needs the founder's decision. Also fixed: the project's "what this project uses" read failed
+for any pinned item that was not a capture. 2026-11-10: the project's data room lists files first and shows a Quality
+record as a record (`docs/evidence/SPINE/S2/2026-11-10-quality-records/`).
 
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
@@ -1070,6 +1081,22 @@ RBM, QMS and more; Vault … and tasking too")
     answered 503 there.
   - Open: the other system packages a Codespace lacks beside the production image (LibreOffice, Ghostscript,
     veraPDF, `xmllint`, python-docx). Not exercised.
+- **Risk-based monitoring, the two defects the GA map lists under S8** (2026-11-11, the founder: "focus entirely
+  on getting what we built surfaced correctly on the UI and working for GA"). Record:
+  `docs/evidence/SPINE/S8/2026-11-11-site-risk-from-study-data/README.md`.
+  - GA-S8-01, "New KRI" answered 500 from the screen and from AnA: one KRI INSERT, typed (`c7f797d89`).
+  - GA-S8-02, Site risk and Site oversight read "0 sites": a study's sites are scored from its own site-level
+    indicator readings where Site Intelligence holds none (`e9fad2163`). The rule is stated on the screen and on
+    every row. A load that carries site rows rescores the sites.
+  - The Lumen seed scores LMN-201's eight sites, and no longer stops on an indicator a person added
+    (`bcf2b595f`).
+  - "Run central monitoring" compares each site-level indicator across the study's sites, and Critical signals
+    list first (`7e4284cc5`). On LMN-201 it raises two Critical signals for site 104.
+  - Open: clinical operations has not confirmed the scoring weights; a change to a KRI's limits does not rescore;
+    Site Intelligence itself stays unreached and needs a founder decision to reach or retire.
+- **AnA's three agency-commitment tools are in scope in production** (2026-11-11, `7994dc8f1`; reach map section 4
+  rank 7). They write the store Communication writes. A PMR, PMC or REMS is still fulfilled only by a person's
+  signature (P-41). Record: `docs/evidence/DESIGN/R1/2026-11-11-ana-commitment-tools/README.md`.
 
 **Finding shared with the design lead**
 
@@ -1752,6 +1779,26 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
   URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
   URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
   owner's signature.
+
+#### F1 — the document path and CMC / Module 3 walked in the running app (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-12)
+
+At the founder's direction to surface what is built and make it work for GA. Both paths were driven through the real
+screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-ui-walk/`.
+
+- **An approved, sealed document can be placed into a sequence** (`705ff05e7a`). The editor and the Builder both
+  refused it 409 although its checks were current. The chain verifier hashed a timestamp as the drizzle driver hands
+  it over (text), so the gate read every ledger row as broken. Only PostgreSQL shows it. Red first, then proven live.
+- **Placing an unchanged Module 3 again writes nothing** (`efafdc077a`). It had rewritten every filing document and
+  stopped a release signature clearing the sequence. OQ-008 v0.14 asserts it: 41 pass, 0 fail, 2 deviation, of 43.
+- **Two compiled sentences were untrue and are corrected**: §3.2.P.3 named a rejected batch as representative and
+  called its rejection a release; §3.1 named the product as the drug substance.
+- **The export gate says stale drafts need a compile**, and "stale after approval" only of approved sections.
+- **Found, for the screens** (not yet repaired): a person cannot record the product's shelf-life claim; a signed batch
+  rejection never shows; a placement shows no result; a citation reads as a file name outside the Section view; no
+  screen shows the sealed version a Vault copy was rendered from. Hand-offs to the lanes that hold the other screens
+  are in COORDINATION.
+- **For the founder:** whether the independent checks are required before a review approval (the reviewer's screen
+  calls them optional; once run they block); a document edited during review cannot be signed or re-requested.
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
@@ -2610,6 +2657,48 @@ caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence i
   - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
     and its eyebrow; the Vault's test asserts it;
   - the editor's project-sources read answered 409 and 503 in the walk environment.
+
+
+#### R1 and F1 — client administration, and the open screen work (2026-11-10 to 2026-11-12)
+
+The founder, 2026-11-10: "Continue across all client onboarding, setup, licensing, admin, client security settings in
+their client admin", and "add user roles per biotech, pharma, CRO, cmc". 2026-11-11: "Continue and focus entirely on
+getting what we built surfaces correctly on the UI and working for GA. Stay aligned with our roadmap and rules."
+Session `…01T2wooCZu`. Decisions: P-119 (job roles by client type) and P-125 (P-122 applied to client administration).
+
+| What | Commits | Evidence |
+|---|---|---|
+| Sign-up can be typed into; a refusal is tied to its field; the acceptances and the job title are kept | `8a65a6f3a`, `452ea0ac6` | `docs/evidence/F1/2026-11-10-client-admin/fix-signup/` |
+| P-119 slice 1: 53 standard job roles by client type, as data | `7649a63be` | `…/2026-11-10-client-admin/job-roles/`, `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md` |
+| A platform-wide agreement is published by platform administrators, with a reason and an audit row | `e44b0c0b8`, `1ec422033`, `a341aff77` | `…/2026-11-10-client-admin/fix-S1a-agreements/` |
+| The walk and audit of client administration: 162 findings in twelve lanes | `a4711c1db` | `docs/evidence/F1/2026-11-10-client-admin/README.md` |
+| The GA and sales readiness map: 246 open items at HEAD | `bf04c749c` | `docs/evidence/GA-READINESS/2026-11-10/` |
+| The whole-platform sales rehearsal: a run of show per client type, an avoid list, 17 lanes | `1be270c1a` | `docs/evidence/DEMO/2026-11-10-sales-rehearsal/` |
+| The fifth P-122 inventory: 66 capabilities of client administration, 30 restorations | `d5cad6366`, `20511f85e` | `docs/evidence/DESIGN/P-122/inventory/administration.md` |
+
+**What was found.**
+- The security findings came first: any client administrator could publish a platform-wide agreement (fixed);
+  a client administrator could set their own seats and weekly limits; approval granted modules outside the plan; any
+  member could set budgets; provisioning attached accounts without consent (each fixed in a lane, in repair).
+- In client administration little was deleted. The losses are reach and truth: twelve settings cards in one column
+  under a tab that does not open by default, and single sign-on status, seats and groups shown that the server never
+  recorded.
+- Across the other four inventories and the rehearsal, read row by row against trunk on 2026-11-11 (204 rows): 68
+  restored, 13 held by another session, 77 open and unheld, 20 waiting on the founder.
+- Two sessions fixed the same finding twice in one day (the Quality-record titles in the data room; the eSTAR
+  section requirement). In both the later copy was withdrawn unpushed. A claim that is not pushed is not a claim.
+
+**In flight** (held in `COORDINATION.md`): the 21 fix lanes of the walk and the map, each verified by a second agent,
+repaired and re-checked, then the restoration for its own screen (P-125); the Administration chain, which carries
+P-119 slices 2 and 3 (job roles in Administration and in the account); and eight lanes over unheld files, led by the
+spine's centre: a frozen, signed document that answers 409 when placed into a filing.
+
+**Next.** Land each lane as its re-check passes; file each restoration's before and after under
+`docs/evidence/DESIGN/P-122/administration/`; then the rows the scout left for a later wave, which wait on these
+lanes' files (the IND registers and forms, the Part 11 chain view, the CMC client rows, an IVD lane).
+
+**For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
+`COORDINATION.md` row): the first six decide the most.
 
 ## 4. How everyone works
 

@@ -150,6 +150,7 @@ import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
 import { AuthoredHtml } from './AuthoredHtml';
+import { ConsentElementsCheck, type ConsentElementsCheckData } from './ConsentElementsCheck';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
 
@@ -709,6 +710,8 @@ interface ScanResults {
   record_requirements?: RecordRequirements;
   /** Whether the open document's own figures agree with each other, across its sections. */
   document_figure_consistency?: DocumentFigureConsistency;
+  /** P-102: an informed-consent document's 21 CFR 50.25 required elements. Absent for any other type. */
+  consent_elements?: ConsentElementsCheckData;
   quality_score?: number;
   status?: string;
   deficiencies: ScanDeficiency[];
@@ -5511,6 +5514,7 @@ export function DocumentWorkbench({
                         when the server sent it — a failed read of the sections is not "it agrees" —
                         and it never says the figures are consistent, only that none of the pairs it
                         compared disagree, with the count it compared beside it. */}
+                    {check.consent_elements && <ConsentElementsCheck check={check.consent_elements} />}
                     {check.document_figure_consistency && (
                       <div
                         data-testid="section-check-consistency"

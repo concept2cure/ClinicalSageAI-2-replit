@@ -1,0 +1,78 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-10T16:22:36.308Z","pid":25874,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T16:22:36.310Z","pid":25874,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T16:22:36.310Z","pid":25874,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-milestone-writes.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-milestone-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > records it on a private project, with its linked sections, and the Schedule's timeline lists it 104ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > moves its date, then marks it done 50ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > refuses a date that is not one, before anything is written 51ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > the milestone list shares the path: it is read only on a project the person can open 30ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > who may not > a colleague not on the private project is answered as if it did not exist, and nothing is written or changed 31ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > who may not > a member who may open the project but not edit it is refused, and nothing is written or changed 59ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > who may not > another organisation's project is 404 both ways, and nothing is written or changed 42ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > who may not > the project owner deletes a milestone (DELETE shares the claimed path, and is admitted as a write) 21ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections?project_id=PROJECT 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/initialize 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/m2.5?project_id=PROJECT 7ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5/status 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5/assign 6ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5/deadline 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/m2.5/comments 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/m2.5/comments?project_id=PROJECT 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/m2.5/history?project_id=PROJECT 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/dependencies 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/dependencies?project_id=PROJECT 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/notifications 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/notifications/1/read 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/notifications/read-all 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > a section route reached under the claimed path answers as no section or milestone, and writes nothing 15ms
+{"level":30,"time":"2026-11-10T16:22:39.281Z","pid":25943,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T16:22:39.288Z","pid":25943,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T16:22:39.288Z","pid":25943,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-project-management-reads.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-project-management-reads.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section owners and deadlines (/api/project-sections/summary) 107ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section deadlines and milestones in date order (/api/project-sections/timeline) 36ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project task list and its summary, and the milestone catalogue 95ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy 55ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it 32ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them 31ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers 40ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days 45ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the section list 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > section dependencies 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > Sentinel's status 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > submission-ops' workload 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the project cockpit read model 8ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the unified task dashboard 4ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing 13ms
+{"level":30,"time":"2026-11-10T16:22:46.520Z","pid":25964,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T16:22:46.521Z","pid":25964,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T16:22:46.522Z","pid":25964,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-project-milestones.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-project-milestones.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > project_milestones.project_id references projects 3ms
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > a member records one on a regulatory project of their organization, and the Schedule's timeline lists it 103ms
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > another organization's project is refused as one that does not exist, and nothing is written 29ms
+
+ Test Files  3 passed (3)
+      Tests  42 passed (42)
+   Start at  16:22:34
+   Duration  13.36s (transform 5.09s, setup 143ms, import 11.28s, tests 1.27s, environment 0ms)
+

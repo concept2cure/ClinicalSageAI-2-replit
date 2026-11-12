@@ -33,8 +33,9 @@ const mount = (d: QmsDoc, meId = 2) => {
   const row = screen.getByText(d.title, { selector: '.qms-title' }).closest('tbody') as HTMLElement;
   return { row, calls: h.calls };
 };
-/** The buttons a person sees on the row before opening More: the number, the inline actions, Ask AnA and More. */
-const inline = (row: HTMLElement) => within(row.querySelector('tr') as HTMLElement).getAllByRole('button')
+/** The buttons a person sees on the record before opening More: the number in its facts, then, on the line under
+ *  them, the inline actions, Ask AnA and More. */
+const inline = (row: HTMLElement) => [...row.querySelectorAll<HTMLElement>(':scope > tr:not(.qms-row-more-tr):not(.qcc-detail-tr) button')]
   .map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
 const behindMore = (row: HTMLElement, name: string) => {
   fireEvent.click(within(row).getByRole('button', { name: `More actions for ${name}` }));
@@ -90,10 +91,30 @@ describe('a controlled document row shows the actions that fit its state', () =>
     expect(behindMore(row, 'QS-SOP-007')).toEqual(['Open']);
   });
 
-  it('scrolls a wide register inside its own box, so its pinned actions are never clipped by the page', () => {
+  it('scrolls a wide register inside its own box, never the page', () => {
     const { row } = mount(doc({}));
     const table = row.closest('table') as HTMLElement;
     expect(table.parentElement?.className).toBe('qms-reg-scroll');
+  });
+
+  /* Walked 2026-11-11 (w37): the content column is 1040px and the register with its actions in the row needs 1083,
+     so the actions, pinned at the right edge, covered the last columns on every monitor: the Next review header at
+     1440, the Effective and Next review dates of every document at 1280, the Status at 1024. A record's actions are
+     on their own line under its facts, and the table has no actions column. */
+  it("puts a record's actions on their own line under its facts, so they cover none of them", () => {
+    const { row } = mount(doc({}));
+    const table = row.closest('table') as HTMLElement;
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual([...REGISTER_COLUMNS]);
+    const [facts, acts] = [...row.querySelectorAll<HTMLElement>(':scope > tr')];
+    expect(facts.children).toHaveLength(REGISTER_COLUMNS.length);
+    expect(facts.querySelector('.qms-rowacts')).toBeNull();
+    expect(acts.className).toBe('qms-row-acts-tr');
+    expect(acts.children).toHaveLength(1);
+    expect((acts.firstElementChild as HTMLTableCellElement).colSpan).toBe(REGISTER_COLUMNS.length);
+    expect(within(acts).getByRole('button', { name: 'More actions for QS-SOP-007' })).toBeTruthy();
+    fireEvent.click(within(acts).getByRole('button', { name: 'More actions for QS-SOP-007' }));
+    const more = row.querySelector(':scope > tr.qms-row-more-tr > td') as HTMLTableCellElement;
+    expect(more.colSpan).toBe(REGISTER_COLUMNS.length);
   });
 
   it('every inline action is a ghost button, and Ask AnA is an icon with its name for assistive technology', () => {

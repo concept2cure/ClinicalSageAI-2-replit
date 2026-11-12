@@ -1,0 +1,121 @@
+{
+ "probedAt": "2026-11-12",
+ "sheet": "client/src/concept2cure/mdx/app.css",
+ "uppercaseRules": 43,
+ "seenOnArrival": {
+  ".mdx-shell .tbl thead th": {
+   "screens": [
+    "01-device-510k",
+    "02-device-pma",
+    "04-device-diagnostics"
+   ],
+   "texts": [
+    "K-number",
+    "Device",
+    "Cleared",
+    "Match",
+    "Diffs",
+    "Status",
+    "Field",
+    "Value",
+    "Source"
+   ]
+  },
+  ".mdx-shell .page-eyebrow": {
+   "screens": [
+    "05-device-clinical-studies",
+    "06-device-software",
+    "07-device-engineering",
+    "08-device-udi",
+    "09-device-postmarket",
+    "10-device-presub"
+   ],
+   "texts": [
+    "Workstream",
+    "Workstream · Class II · 510k · [Demo · MDX] NeuroPanel-Dx 510(k)",
+    "Workbench"
+   ]
+  },
+  ".mdx-shell .metric-label": {
+   "screens": [
+    "05-device-clinical-studies",
+    "06-device-software",
+    "07-device-engineering",
+    "08-device-udi",
+    "09-device-postmarket",
+    "10-device-presub"
+   ],
+   "texts": [
+    "Studies",
+    "Enrollment",
+    "IRB approved",
+    "BIMO ready",
+    "Overall risk",
+    "Open risk items",
+    "Documentation level",
+    "Completeness",
+    "Approved",
+    "Documents in flight",
+    "Open risks",
+    "Open change requests"
+   ]
+  },
+  ".mdx-shell .ctable-head": {
+   "screens": [
+    "05-device-clinical-studies"
+   ],
+   "texts": [
+    "SeverityKindItem",
+    "Study typeDomainEndpointsPrimary filing mapping"
+   ]
+  },
+  ".mdx-shell .eng-blocker-kind": {
+   "screens": [
+    "07-device-engineering"
+   ],
+   "texts": [
+    "dhf"
+   ]
+  }
+ },
+ "notSeenOnArrival": [
+  ".mdx-shell .pg-list-hdr",
+  ".mdx-shell .se-row.header",
+  ".mdx-shell .se-matrix-multi.header",
+  ".mdx-shell .indesign-phase",
+  ".mdx-shell .ed-tree-title",
+  ".mdx-shell .ed-tree-vlabel",
+  ".mdx-shell .ed-masthead-lbl",
+  ".mdx-shell .ed-prov-lbl",
+  ".mdx-shell .ed-flag-rule",
+  ".mdx-shell .ed-table th",
+  ".mdx-shell .ed-verdict",
+  ".mdx-shell .ed-comment-suggest-lbl",
+  ".mdx-shell .docs-type",
+  ".mdx-shell .docs-framework",
+  ".mdx-shell .docs-esig",
+  ".mdx-shell .vault-rail-lbl",
+  ".mdx-shell .vault-tree-lbl",
+  ".mdx-shell .vault-type",
+  ".mdx-shell .drawer-eyebrow",
+  ".mdx-shell .drawer-meta .k",
+  ".mdx-shell .drawer-section-lbl",
+  ".mdx-shell .sub-detail-eyebrow",
+  ".mdx-shell .sub-gate-lbl",
+  ".mdx-shell .sub-gate-k",
+  ".mdx-shell .ph-rec-kind",
+  ".mdx-shell .ph-qms-scope",
+  ".mdx-shell .gov-action-eyebrow",
+  ".mdx-shell .udi-mri",
+  ".mdx-shell .pv-capa-label",
+  ".mdx-shell .ps-type",
+  ".mdx-shell .ps-detail-eyebrow",
+  ".mdx-shell .ps-meeting-state",
+  ".mdx-shell .ps-q-status",
+  ".mdx-shell .ps-q-pos-lbl",
+  ".mdx-shell .ps-q-fda-lbl",
+  ".mdx-shell .ps-q-commit-lbl",
+  ".mdx-shell .ps-q-commit-state",
+  ".mdx-shell .ps-commit-state"
+ ]
+}

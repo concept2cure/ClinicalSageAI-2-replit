@@ -87,6 +87,76 @@ function num(v: unknown): number | null {
 }
 
 /** Serialize a timestamp column (Date | string | null) to an ISO string, or null. */
+/**
+ * Where a site-risk row's figures came from, and for a row scored from the study's own indicators, how many of
+ * them are red, amber, green or have no limit (site-risk-engine.ts writes both into the row's metadata). A row
+ * stored before the source was recorded came from Site Intelligence: it was the only source then.
+ */
+function siteBasis(metadata: unknown): {
+  source: 'site_intelligence' | 'study_indicators';
+  basis: { red: number; amber: number; green: number; unbanded: number } | null;
+} {
+  const m = metadata && typeof metadata === 'object' ? metadata as { source?: unknown; indicators?: unknown } : {};
+  if (m.source !== 'study_indicators') return { source: 'site_intelligence', basis: null };
+  const statuses = (Array.isArray(m.indicators) ? m.indicators : []).map((i) => (i as { status?: unknown })?.status);
+  const count = (status: string) => statuses.filter((s) => s === status).length;
+  return { source: 'study_indicators', basis: { red: count('red'), amber: count('amber'), green: count('green'), unbanded: count('not_evaluated') } };
+}
+
+/** One of the study's indicators as last read at one site, with the band the engine gave it. */
+export interface BoardSiteIndicator {
+  name: string;
+  value: number;
+  unit: string | null;
+  status: 'red' | 'amber' | 'green' | 'not_evaluated';
+  amber: number | null;
+  red: number | null;
+  dir: 'higher_worse' | 'lower_worse';
+  at: string | null;
+  cutoff: string | null;
+}
+
+const SITE_INDICATOR_STATUS = new Set(['red', 'amber', 'green', 'not_evaluated']);
+
+/**
+ * The readings behind a site scored from the study's own indicators (site-risk-engine.ts stores them on the row as
+ * `metadata.indicators`, with the band it gave each). The board used to send only their counts, so a screen could
+ * say "1 red · 1 amber" and not which indicator, at what value, against what limit: the site-by-indicator view and
+ * an indicator's readings by site had nothing to draw. Nothing is computed here. Each entry is checked on its own,
+ * so one malformed element does not discard the rest, and a band the engine did not write is never guessed.
+ * A Site Intelligence row has none: its figures are its four risk scores.
+ */
+export function siteIndicatorReadings(metadata: unknown): BoardSiteIndicator[] {
+  const m = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? metadata as { source?: unknown; indicators?: unknown } : {};
+  if (m.source !== 'study_indicators' || !Array.isArray(m.indicators)) return [];
+  return m.indicators.map(boardSiteIndicator).filter((r): r is BoardSiteIndicator => r !== null);
+}
+
+/** A non-empty string, or null. */
+const textOrNull = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
+
+/** One stored reading as the board sends it, or null when it has no indicator name, value or known band. */
+function boardSiteIndicator(entry: unknown): BoardSiteIndicator | null {
+  if (!entry || typeof entry !== 'object') return null;
+  const e = entry as Record<string, unknown>;
+  const name = textOrNull(e.kriName)?.trim();
+  const value = num(e.value);
+  const status = textOrNull(e.status);
+  if (!name || value === null || status === null || !SITE_INDICATOR_STATUS.has(status)) return null;
+  return {
+    name: e.kriName as string,
+    value,
+    unit: textOrNull(e.unit),
+    status: status as BoardSiteIndicator['status'],
+    amber: num(e.amber),
+    red: num(e.red),
+    dir: e.direction === 'lower_worse' ? 'lower_worse' : 'higher_worse',
+    at: textOrNull(e.observedAt),
+    cutoff: textOrNull(e.dataCutoff),
+  };
+}
+
 function iso(v: unknown): string | null {
   if (!v) return null;
   if (v instanceof Date) return v.toISOString();
@@ -521,6 +591,8 @@ export default function createRbmBoardRoutes(): Router {
           tier: s.monitoringTier,
           drivers: Array.isArray(s.drivers) ? (s.drivers as string[]) : [],
           at: iso(s.scoredAt),
+          ...siteBasis(s.metadata),
+          indicators: siteIndicatorReadings(s.metadata),
         }));
 
       const actions = [...actionRows]

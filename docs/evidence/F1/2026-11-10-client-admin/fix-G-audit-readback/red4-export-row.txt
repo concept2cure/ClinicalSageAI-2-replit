@@ -1,0 +1,4 @@
+ × server/routes/__tests__/audit-trail-ledger-governed-change.test.ts > a signed export, recorded on the audit-event chain, is named in words > reads "Signed audit trail exported", about the audit trail, not "Audit Export" / audit_export 16ms
+   → expected 'Audit Export' to be 'Signed audit trail exported' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)

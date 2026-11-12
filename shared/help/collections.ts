@@ -1,0 +1,31 @@
+import type { HelpCollection } from './types';
+
+/** The Help Center's collections, in the order a new user reads them. */
+export const HELP_COLLECTIONS: readonly HelpCollection[] = [
+  { id: 'getting-started', title: 'Getting started', audience: 'everyone',
+    summary: 'Signing in, Home, AnA, and your first project.' },
+  { id: 'projects', title: 'Projects and the plan', audience: 'everyone',
+    summary: 'Creating a project, its six steps, the program plan, and assigning work.' },
+  { id: 'evidence', title: 'Evidence and the data room', audience: 'everyone',
+    summary: "The project's files and the sources its documents are written from." },
+  { id: 'writing', title: 'Writing documents with AnA', audience: 'everyone',
+    summary: 'Starting a document, the editor, and working with AnA on a draft.' },
+  { id: 'review', title: 'Review, approval and e-signatures', audience: 'everyone',
+    summary: 'Sending for review, resolving comments, approving and signing.' },
+  { id: 'submission', title: 'Submission Center and eCTD', audience: 'everyone',
+    summary: 'Markets, sequences, validation and compiling a submission.' },
+  { id: 'respond', title: 'Responding to the agency', audience: 'everyone',
+    summary: "Logging the agency's letters and drafting the answers." },
+  { id: 'vault', title: 'Vault', audience: 'everyone',
+    summary: "The organisation's controlled document store." },
+  { id: 'quality', title: 'Quality', audience: 'everyone',
+    summary: 'Controlled documents, SOP training, CAPA and change control.' },
+  { id: 'work-areas', title: 'Work areas', audience: 'everyone',
+    summary: 'CMC / Module 3, risk-based monitoring, biostatistics, and reporting.' },
+  { id: 'administration', title: 'Administration', audience: 'administrators',
+    summary: 'Your organisation, members and roles, sign-in and security settings.' },
+  { id: 'technical', title: 'Technical reference', audience: 'administrators',
+    summary: 'Data handling, the audit trail and Part 11, API keys and the connector, export.' },
+  { id: 'troubleshooting', title: 'Troubleshooting', audience: 'everyone',
+    summary: 'When something does not work as expected, and how to get help.' },
+];

@@ -718,6 +718,7 @@ function AccountMenu({
       ? { label: 'Subscription & billing', ic: 'creditCard', to: 'licensing' }
       : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
+    { label: 'Help & training', ic: 'book', to: 'training' },
     { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
@@ -1052,6 +1053,8 @@ export const ADMIN_AUDIENCE: Readonly<Record<string, 'org-admin' | 'platform-adm
   'access-requests': 'org-admin',
   'master-licensing': 'platform-admin',
   coverage: 'platform-admin',
+  // Its reads need a platform administrator (GA walk, 2026-11-12): for anyone else the page is a refusal.
+  'identity-console': 'platform-admin',
 };
 
 function offeredTo(id: string, viewer: { isOrgAdmin: boolean; platformAdmin: boolean }): boolean {

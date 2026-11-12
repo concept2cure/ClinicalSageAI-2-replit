@@ -75,9 +75,11 @@ describe('the strategy at the head of the Plan step', () => {
     const sec = await screen.findByTestId('pj-plan-strategy');
     fireEvent.click(within(sec).getByRole('button', { name: 'State the strategy' }));
     const drawer = await screen.findByRole('dialog');
+    // The form is named for what the person came to state.
+    expect(within(drawer).getByText("Record the project's regulatory strategy")).toBeTruthy();
     fireEvent.change(within(drawer).getByLabelText(/Regulatory strategy/), { target: { value: 'Priority review; rolling submission.' } });
     fireEvent.change(within(drawer).getByLabelText(/^Reason/), { target: { value: 'Agreed at the pre-IND meeting' } });
-    fireEvent.click(within(drawer).getByRole('button', { name: 'Record objective' }));
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Record strategy' }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]).toMatchObject({ objective: 'File the IND for BX-204.', strategy: 'Priority review; rolling submission.',
       reason: 'Agreed at the pre-IND meeting', sources: [{ kind: 'protocol', title: 'Protocol BX-204-201' }] });
@@ -124,6 +126,15 @@ describe("Use the schedule's date", () => {
     const onMoved = mount();
     await confirm();
     expect((await screen.findByRole('alert')).textContent).toBe('The due date was not changed: This task changed. Reload its current assignment before trying again.');
+    expect(onMoved).not.toHaveBeenCalled();
+  });
+
+  it('never shows a refusal\'s code as its words', async () => {
+    // A refusal that sends only a code (the launch gate, an access check) has no sentence to show.
+    apiRequest.mockImplementation(async () => ok({ success: false, error: 'FORBIDDEN' }, 403));
+    const onMoved = mount();
+    await confirm();
+    expect((await screen.findByRole('alert')).textContent).toBe('The due date was not changed: the server refused it (HTTP 403).');
     expect(onMoved).not.toHaveBeenCalled();
   });
 

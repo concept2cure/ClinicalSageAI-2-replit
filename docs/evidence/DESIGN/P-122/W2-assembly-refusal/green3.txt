@@ -1,0 +1,35 @@
+ ✓ server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > assembleSequence throws the refusal, records it, and names the document by its title 316ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a package the packager refuses is a recorded refusal, not an outage > POST /assemble answers 422 in the packager's words, never 500 "Request failed." 134ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.package-refusal.pglite.test.ts > a device filing is not held to the drug Study Tagging File rule > POST /assemble on a 510(k) sequence names the device rule only, never 1789 101ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so 311ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing 123ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row 257ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded 46ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success 273ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses to file a 510(k) as a New Drug Application 77ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses pma, de_novo, maa and cta for the same reason 60ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > never emits fdaat1 for anything that is not actually an NDA 221ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > an original IND is not declared an IND Safety Report 55ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > a follow-up sequence does not guess that it is an original 14ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > both refusals are ValidationErrors — the type every caller branches on to show the reason 46ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > the unresolved-submission-type refusal names terms that actually resolve 12ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789 3ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > is an error for a US sequence and a warning for an EU one 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > covers every M4/M5 section 1789 names, including 4.2.3.7 and 5.3.7 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > says nothing about 4.3, 5.2, 5.3.6 and 5.4, which need no STF, nor about M1-M3 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a leaf with a real study id passes; a delete ships no file and is not checked 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > is exported from the leaf validator 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > when the caller models file-tags, a study id without a tag is still not covered 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged 5.3.5.1 report refuses the package, citing 1789 and naming the file 9ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged leaf with no title is named by its file name, not by empty quotes 5ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a study id with no file-tag is refused too (the leaf would be in no STF) 4ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: 5.3.6 postmarketing reports and 5.4 literature need no STF and package 137ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a diagnostic (De Novo IVD) filing with an untagged 5.3.1.4 report is not refused for 1789 62ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a device named only by fda.applicationType (510(k)) is not refused for 1789 29ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it 72ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > qualify — an uncovered study file is an error, not a warning > stfCoverageFindings reports untagged study files as errors citing 1789 1ms
+ ✓ server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > carries the outcome of a recorded assembly 58ms
+ ✓ server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > says so when the assembly was not recorded 40ms
+ ✓ server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > answers a refused assembly as a refusal, with the record of it 9ms
+ Test Files  5 passed (5)
+      Tests  33 passed (33)

@@ -1,0 +1,22 @@
+const c = require('../walk/common.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'signup' });
+  await page.goto(c.BASE + '/concept2cure/signup', { waitUntil: 'networkidle' });
+  const out = {};
+  for (const [id, text] of [['#firstName', 'Avery'], ['#email', 'avery@example.test'], ['#password', 'abcdefgh']]) {
+    await page.click(id);
+    await page.keyboard.type(text, { delay: 40 });
+    out[id] = { typed: text, holds: await page.inputValue(id), focusAfter: await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName) };
+  }
+  // tab order: click first name, press Tab, where is focus?
+  await page.click('#firstName'); await page.keyboard.press('Tab');
+  out.tabFromFirstName = await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName);
+  await c.shot(page, 'w1-12-signup-typing-loses-focus.png');
+  // the same on the sign-in page, for comparison
+  await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+  await page.click('#login-email'); await page.keyboard.type('someone@example.test', { delay: 20 });
+  out.login = await page.inputValue('#login-email');
+  console.log(JSON.stringify(out, null, 1));
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

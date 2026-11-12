@@ -1,0 +1,30 @@
+AssertionError: expected [ 'MDR-acknowledged', …(5) ] to deeply equal [ 'MDR-followup_required', …(2) ]
+
+- Expected
++ Received
+
+  [
++   "MDR-acknowledged",
++   "MDR-closed",
++   "MDR-filed",
+    "MDR-followup_required",
+    "MDR-open",
+    "MDR-preparing",
+  ]
+
+ ❯ server/services/capa-mdr/__tests__/triage-queue-open-mdrs.pglite.test.ts:64:19
+     62|     const items = await getTriageQueue(1, { programId: PROGRAM }, call…
+     63|     const codes = items.filter(i => i.kind === 'mdr').map(i => i.code)…
+     64|     expect(codes).toEqual(['MDR-followup_required', 'MDR-open', 'MDR-p…
+       |                   ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  12:04:37
+   Duration  5.08s (transform 255ms, setup 110ms, import 707ms, tests 3.88s, environment 0ms)
+

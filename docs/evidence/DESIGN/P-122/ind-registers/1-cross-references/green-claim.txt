@@ -1,0 +1,3 @@
+# ind-registers-launch-claim, ind-launch-claim and sequence-qc-launch-claim, with the claim.
+ Test Files  3 passed (3)
+      Tests  105 passed (105)

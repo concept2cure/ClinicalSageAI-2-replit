@@ -64,7 +64,8 @@ describe('GET /api/mdx/qms/changes', () => {
   it('lists the register, org-scoped', async () => {
     query
       .mockResolvedValueOnce({ rows: [changeRow(), changeRow({ id: 2, change_number: 'CC-2026-002' })] })
-      .mockResolvedValueOnce({ rows: [] }); // links
+      .mockResolvedValueOnce({ rows: [] }) // links
+      .mockResolvedValueOnce({ rows: [] }); // the changes' projects, and the organization's device projects
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
     expect(query.mock.calls[0][1][0]).toBe(9);          // organization_id = $1
@@ -91,7 +92,8 @@ describe('GET /api/mdx/qms/changes', () => {
           { id: 11, organization_id: 9, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-2026-041', relationship: 'triggered_by' },
           { id: 12, organization_id: 9, change_id: 1, link_type: 'validation', linked_ref: 'VP-7', relationship: 'requires' },
         ],
-      });
+      })
+      .mockResolvedValueOnce({ rows: [] });
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
     const [first, second] = res.body.data;
@@ -107,6 +109,44 @@ describe('GET /api/mdx/qms/changes', () => {
     expect(String(query.mock.calls[0][0])).toMatch(/CURRENT_DATE/);
   });
 
+  /* P-122 (2026-11-12): each row says whether the device change determination applies to it and what is recorded
+     (services/qms/change-regulatory-impact.ts), from one organization-scoped read of the changes' projects. The
+     browser does not decide which project is a device's. */
+  it('says, per change, whether the device change determination applies and what is recorded', async () => {
+    const DEVICE = '11111111-1111-4111-8111-111111111111';
+    const DRUG = '22222222-2222-4222-8222-222222222222';
+    const us = {
+      engine: 'fda-510k-change', ruleVersion: 'fda-510k-change-2017/1',
+      inputs: { affectsIndicationsForUse: false, changesControlMechanismOrOperatingPrinciple: false, changesPatientContactingMaterials: false,
+        softwareChangeAffectsRisk: false, riskAssessmentShowsNewOrModifiedRisk: false, couldSignificantlyAffectSafetyOrEffectiveness: false,
+        verificationDemonstratesEquivalence: true },
+      result: { decision: 'letter_to_file', rationale: 'No flowchart trigger is met; document the change in a Letter-to-File.', triggers: [] },
+      by: { id: 7, name: 'Invented Person' }, at: '2026-11-12T10:00:00.000Z',
+    };
+    query
+      .mockResolvedValueOnce({
+        rows: [
+          changeRow({ id: 1, program_id: DEVICE, metadata: { regulatoryImpact: { us, eu: { result: { significant: 'no' } } } } }),
+          changeRow({ id: 2, change_number: 'CC-2026-002', program_id: DEVICE, status: 'approved' }),
+          changeRow({ id: 3, change_number: 'CC-2026-003', program_id: DRUG }),
+          changeRow({ id: 4, change_number: 'CC-2026-004' }),
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: DEVICE, product_type: 'samd', live: true }, { id: DRUG, product_type: 'biologic', live: true }] });
+    const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+    expect(res.status).toBe(200);
+    const impact = res.body.data.map((c: { regulatory_impact: unknown }) => c.regulatory_impact);
+    // Recorded for the US; what is kept for the EU is not a determination, and is said to be unreadable.
+    expect(impact[0]).toEqual({ applies: 'device', productType: 'samd', organisationHasDevices: true, assessable: true, us, eu: { unreadable: true } });
+    // Approved: its content is fixed, so nothing more is recorded on it.
+    expect(impact[1]).toEqual({ applies: 'device', productType: 'samd', organisationHasDevices: true, assessable: false, us: null, eu: null });
+    expect(impact[2]).toEqual({ applies: 'not_device', productType: 'biologic', organisationHasDevices: true, assessable: false, us: null, eu: null });
+    expect(impact[3]).toEqual({ applies: 'no_project', productType: null, organisationHasDevices: true, assessable: false, us: null, eu: null });
+    expect(String(query.mock.calls[2][0])).toMatch(/regulatory_programs/);
+    expect(query.mock.calls[2][1].slice(0, 2)).toEqual([9, [DEVICE, DRUG]]);
+  });
+
   it('fails closed to an empty list when the store is missing (42P01)', async () => {
     query.mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
@@ -120,7 +160,7 @@ describe('GET /api/mdx/qms/changes', () => {
 describe('GET /api/mdx/qms/changes — the digest an approval binds', () => {
   it('returns each change with the content digest its approval signs', async () => {
     const row = changeRow({ status: 'under_assessment', impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
-    query.mockResolvedValueOnce({ rows: [row] }).mockResolvedValueOnce({ rows: [] });
+    query.mockResolvedValueOnce({ rows: [row] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
     expect(res.body.data[0].content_digest).toBe(computeQmsChangeContentDigest(row as never));
@@ -352,6 +392,34 @@ describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
 });
 
 
+/* 2026-11-12: the link's removal had no screen (no client called it), and its audit row named the link by its id
+   alone, which says nothing once the link is off the record's list. The row now names the record and keeps the reason. */
+describe('DELETE /api/mdx/qms/changes/:id/links/:linkId — a link is removed with its reason', () => {
+  const WHY = 'Linked to the wrong deviation.';
+  it('removes the link, and records which record it was and why', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 3, link_type: 'deviation', linked_ref: 'DEV-2026-014' }] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: WHY });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ id: 3, removed: true });
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.unlink', reason: WHY,
+      details: { linkId: 3, linkType: 'deviation', linkedRef: 'DEV-2026-014', reason: WHY } }));
+  });
+
+  it('422 without a reason; nothing is read or written', async () => {
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: 'short' });
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a link that is not a standing link of an open change; no audit row', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1/links/3').send({ reason: WHY });
+    expect(res.status).toBe(404);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+});
+
 /**
  * DP-60 (2026-10-01): every change-control write carries the editor gate the
  * document, supplier, audit and nonconformance writes carry (P1-31). A viewer
@@ -375,7 +443,7 @@ describe('change-control writes refuse a viewer (DP-60)', () => {
   });
 
   it('a viewer still reads the register', async () => {
-    query.mockResolvedValueOnce({ rows: [changeRow()] }).mockResolvedValueOnce({ rows: [] }); // changes, links
+    query.mockResolvedValueOnce({ rows: [changeRow()] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] }); // changes, links, projects
     const res = await request(appWith(9, 7, 'viewer')).get('/api/mdx/qms/changes');
     expect(res.status).toBe(200);
   });

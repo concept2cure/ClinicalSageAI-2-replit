@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/576afa28-6c58-488a-82a8-6b12921fe5c0/resolve",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/be3eb6b1-332b-4968-a0d3-4570d8ff479f/resolve",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {}
@@ -9,7 +9,7 @@
   "response": {
     "status": 422,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 23,
+    "durationMs": 30,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

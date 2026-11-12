@@ -76,3 +76,17 @@ Traditional or Abbreviated 510(k)" as an open decision; the organisation-wide `/
 - A 510(k)'s kind (Traditional, Special, Abbreviated) is not recorded at intake (P-123 item 2; the device lane's).
 - AnA over folders walked in a conversation: needs a model key.
 - A J-NDA or Health Canada NDS project is refused at intake.
+
+## 2026-11-12: every S6 walk re-run on current trunk
+
+Trunk moved two days under the Vault (the eTMF inside it, the data catalog, the server-side sponsor rule, the
+device-coverage rule). All seven walks were run again on trunk `9410b73246`: `walk-folders`, `walk-binders`,
+`walk-folder-moves` (2026-11-06) and `walk-seal-superseded`, `walk-sponsor-first`, `walk-rendition`,
+`walk-risk-management` (this folder). All pass. No product regression was found. Two walk scripts were corrected so
+they run on any day: `walk-folders.cjs` still looked for the binder below the authored documents (it has been first
+in the tree since step 2), and `walk-seal-superseded.cjs` now accepts a database where its earlier run already
+checked in the successor (the Vault refuses a second, `VERSION_NOT_CURRENT`).
+
+Handed to the device lane through the lead session, not built here: the device questions are asked only at intake and
+cannot be changed afterwards, so a section that reads "Not decided" can never be resolved by the customer; and the
+kind of 510(k) is not recorded (P-123 item 2).

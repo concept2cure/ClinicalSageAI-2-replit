@@ -1,0 +1,61 @@
+// Flow 1d continued: steps 6-10 with one invitation, a security requirement, and activation.
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const stepBody = async (page) => (await L.textOf(page, 'main')).split('Review & activate\n').slice(1).join('Review & activate\n');
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  await page.goto(L.BASE + '/concept2cure/onboarding', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  L.drain(page);
+  const next = async (label) => {
+    const b = page.getByRole('button', { name: /^(Continue|Save & continue|Next)$/ }).last();
+    const enabled = await b.isEnabled();
+    if (!enabled) { note(`${label}: continue`, `${await b.innerText()} (disabled)`); return false; }
+    await b.click(); await L.sleep(1300);
+    const w = L.drain(page); if (w.length) note(`${label}: writes`, w.map(x => x.slice(0, 300)));
+    return true;
+  };
+  for (let i = 1; i <= 5; i += 1) await next(`step ${i}`);
+  // step 6: invitations
+  note('role options', await page.getByLabel('Role for invitee 1').locator('option').evaluateAll(o => o.map(x => `${x.value}=${x.textContent}`)));
+  await page.getByLabel('Email for invitee 1').fill('not-an-address');
+  await page.getByRole('button', { name: 'Add another' }).click();
+  await page.getByLabel('Email for invitee 2').fill('noor.haddad@northgate-bio.example.test');
+  await page.getByLabel('Role for invitee 2').selectOption('reviewer');
+  await L.shot(page, 'w1-38-onboarding-step06-invites.png', { fullPage: true });
+  note('step 6 with an invalid address: can continue?', await page.getByRole('button', { name: /^Continue$/ }).last().isEnabled());
+  note('step 6 text', (await stepBody(page)).slice(0, 900));
+  // duplicate address check, then correct row 1
+  await page.getByLabel('Email for invitee 1').fill('NOOR.HADDAD@northgate-bio.example.test'); await L.sleep(300);
+  note('step 6 with the same address twice (different case): can continue?', await page.getByRole('button', { name: /^Continue$/ }).last().isEnabled());
+  await page.getByLabel('Email for invitee 1').fill('avery.lind@northgate-bio.example.test'); await L.sleep(300);
+  note('step 6 inviting myself: can continue?', await page.getByRole('button', { name: /^Continue$/ }).last().isEnabled());
+  note('row controls', (await L.controls(page)).filter(x => /invitee|Remove|Add another/.test(x)));
+  await page.getByLabel('Email for invitee 1').fill('');  await L.sleep(300);
+  note('step 6 with an empty first row: can continue?', await page.getByRole('button', { name: /^Continue$/ }).last().isEnabled());
+  await next('step 6');
+  await next('step 7');
+  // step 8: security
+  for (const lbl of ['Multi-factor authentication', 'Roles and access review']) await page.locator('main label').filter({ hasText: new RegExp(`^${lbl}$`) }).locator('input').check();
+  await L.shot(page, 'w1-39-onboarding-step08-security.png', { fullPage: true });
+  note('idle/concurrent values', [await page.getByLabel('Idle sign-out in minutes').inputValue(), await page.getByLabel('Maximum concurrent sessions').inputValue()]);
+  await next('step 8');
+  note('STEP 9', (await stepBody(page)).slice(0, 2500));
+  await L.shot(page, 'w1-36-onboarding-step09.png', { fullPage: true });
+  await next('step 9');
+  note('STEP 10', (await stepBody(page)).slice(0, 5000));
+  note('STEP 10 controls', (await L.controls(page)).filter(x => !/Collaborate|New task|Your work/.test(x)));
+  await L.shot(page, 'w1-36-onboarding-step10.png', { fullPage: true });
+  if (process.argv[3] === 'activate') {
+    const act = page.getByRole("button", { name: /Start 14-day trial|Activate/ }).last();
+    note('activate button', `${await act.innerText()}${(await act.isEnabled()) ? '' : ' (disabled)'}`);
+    await act.click(); await L.sleep(6000);
+    note('activation writes', L.drain(page).map(x => x.replace(/"(setupLink|setupUrl|inviteUrl|link|url)":"[^"]+"/g, '"$1":"<redacted>"').slice(0, 700)));
+    note('url after', page.url());
+    note('AFTER ACTIVATE', (await L.textOf(page, 'main')).replace(/token=[A-Za-z0-9._-]+/g, 'token=<redacted>').slice(0, 5000));
+    note('controls after', (await L.controls(page)).filter(x => !/Collaborate|New task|Your work/.test(x)));
+    await L.shot(page, 'w1-40-onboarding-activated.png', { fullPage: true });
+  }
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

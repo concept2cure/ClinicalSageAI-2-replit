@@ -842,10 +842,12 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
     const orgFilter = `WHERE organization_id = $1`;
     const params = [orgId];
 
-    // Fetch all audit_events rows in chain order
+    // Fetch all audit_events rows in chain order. `timestamp_text` is the
+    // timestamp as the database renders it as text: exactly what the hash-chain
+    // trigger hashed (`NEW.timestamp::text`, db/migrations/20260222_audit_events_hash_chain.sql).
     const { rows } = await pool.query(
       `SELECT id, organization_id, sequence_number, event_type, entity_type,
-              entity_id, user_id, user_name, timestamp, reason,
+              entity_id, user_id, user_name, timestamp, "timestamp"::text AS timestamp_text, reason,
               record_hash, previous_hash
        FROM audit_events ${orgFilter}
        ORDER BY organization_id, sequence_number ASC`,
@@ -912,7 +914,18 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
         continue;
       }
 
-      // Recompute record_hash using the same formula as the DB trigger
+      // Recompute record_hash from exactly the input the DB trigger hashed.
+      //
+      // AUD-02 (client administration walk, 2026-11-10): this used to rebuild
+      // the timestamp in JavaScript, as an ISO string cut to milliseconds with
+      // "+00" appended, and then as String(Date). The trigger hashes
+      // `timestamp::text`; audit_events.timestamp is `timestamp without time
+      // zone` (0000_sweet_joseph.sql) and NOW() writes microseconds, so neither
+      // guess was ever the trigger's input. Every row the trigger hashed read as
+      // a broken link: three signed exports in a new organisation showed "3
+      // broken links over 3 entries" over a sound chain. The database's own text
+      // is used now, and nothing else: there is one preimage, so a changed field
+      // still breaks the link (part11-chain-trigger-written.pglite.test.ts).
       const payload =
         (row.sequence_number ?? '') + '|' +
         (row.event_type ?? '') + '|' +
@@ -920,36 +933,20 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
         (row.entity_id ?? '') + '|' +
         (row.user_id ?? '') + '|' +
         (row.user_name ?? '') + '|' +
-        (row.timestamp ? new Date(row.timestamp).toISOString().replace('T', ' ').replace('Z', '+00') : '') + '|' +
+        (row.timestamp_text ?? '') + '|' +
         (row.reason ?? '') + '|' +
         (row.previous_hash ?? 'GENESIS');
 
       const expectedHash = computeHash(payload);
 
-      // Allow for timestamp format differences — also verify without reformatting
       if (row.record_hash !== expectedHash) {
-        // Try raw timestamp string as PostgreSQL stores it
-        const rawPayload =
-          (row.sequence_number ?? '') + '|' +
-          (row.event_type ?? '') + '|' +
-          (row.entity_type ?? '') + '|' +
-          (row.entity_id ?? '') + '|' +
-          (row.user_id ?? '') + '|' +
-          (row.user_name ?? '') + '|' +
-          String(row.timestamp ?? '') + '|' +
-          (row.reason ?? '') + '|' +
-          (row.previous_hash ?? 'GENESIS');
-
-        const altHash = computeHash(rawPayload);
-        if (row.record_hash !== altHash) {
-          brokenLinks.push({
-            id: row.id,
-            sequenceNumber: row.sequence_number,
-            orgId: oid,
-            expected: expectedHash.substring(0, 16) + '...',
-            actual: (row.record_hash || '(null)').substring(0, 16) + '...',
-          });
-        }
+        brokenLinks.push({
+          id: row.id,
+          sequenceNumber: row.sequence_number,
+          orgId: oid,
+          expected: expectedHash.substring(0, 16) + '...',
+          actual: (row.record_hash || '(null)').substring(0, 16) + '...',
+        });
       }
 
       prevHashByOrg[oid] = row.record_hash;

@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
-      "target": "ectd-sequence:14",
+      "target": "ectd-sequence:18",
       "reason": "Releasing sequence 0001 for transmission.",
       "payload": {
         "intent": "dispatch",
@@ -20,12 +20,12 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 417,
+    "durationMs": 380,
     "rateLimitRetries": 0,
     "body": {
-      "actionId": "act_16655457400243818ff16044a9626b71",
-      "auditId": "021aab5d-16f1-4c86-8e03-1f8e6cac5d5a",
-      "sha256Chain": "6fc51abefba642c29b51cffe447a5e6798880d7b599da9c7a6daa26815edbd5d",
+      "actionId": "act_e84c620f818940068f26f861e75767be",
+      "auditId": "175b055a-4d94-43f5-9c08-222c861347fc",
+      "sha256Chain": "c428fa070b6e5184acde5c2c29a68269f7f4d33cc5305edadf5c91c2b27ba1b7",
       "state": "executed"
     }
   }

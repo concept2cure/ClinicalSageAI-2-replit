@@ -33,7 +33,7 @@
 
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { ChangeRecordDetail, ChangeRecordFacts, changeRecordRows } from './ChangeRecordDetail';
+import { ChangeRecordDetail, ChangeRecordFacts, changeImpactRows, changeRecordRows } from './ChangeRecordDetail';
 import { AskAnaButton, INLINE_ACTIONS, RegisterBody, RegisterTable } from './SopRegisterRow';
 import { useQualityScope } from './registerContext';
 import { ChangeFlow } from './ChangeFlow';
@@ -46,11 +46,17 @@ import {
   CLASSIFICATION_TONE,
   RISK_LABEL,
   ASSESSABLE_STATES,
+  LINK_TYPE_LABEL,
+  takesLinks,
   deriveStageCounts,
   summaryOfChanges,
   isImplementationOverdue,
   formatDate,
+  IMPACT_DECISION_LABEL,
+  IMPACT_MARKET_LABEL,
+  regulatoryImpactOf,
   type ChangeState,
+  type ChangeLink,
   /* The row type shares this component's name; the alias keeps both usable. */
   type ChangeControl as ChangeControlRow,
 } from './changeData';
@@ -66,8 +72,9 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { createQmsChange, transitionQmsChange, linkQmsChange, updateQmsChange } from './qmsWrites';
+import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange, assessQmsChangeImpact } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
+import { ChangeImpactForm } from './ChangeImpactForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import type { ChangeType, Classification, Relationship, RiskLevel } from './changeData';
 import { apiRequest } from '@/lib/queryClient';
@@ -104,7 +111,12 @@ const CHANGE_COLUMNS = ['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 
 const chip = (tone: string | null) => `rd-chip${tone ? ` tone-${tone}` : ''}`;
 
 
-const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+/* A refusal's sentence is the server's own, and qmsWrites' own for a reply it could not read. A TypeError is the
+   browser's throw when the request never reached the server ("Failed to fetch", "Load failed"): not user copy. */
+const errText = (err: unknown) => {
+  if (err instanceof TypeError) return 'the server could not be reached, so nothing was sent. Check your connection and try again.';
+  return err instanceof Error ? err.message : String(err);
+};
 const optionsOf = <K extends string>(labels: Record<K, string>) =>
   (Object.keys(labels) as K[]).map((k) => ({ value: k, label: labels[k] }));
 /** The moves a row may take here: the server's list, less approval (the signed route). */
@@ -162,7 +174,9 @@ function ChangeControlSession({
     | { kind: 'raise' }
     | { kind: 'advance'; change: ChangeControlRow }
     | { kind: 'link'; change: ChangeControlRow }
+    | { kind: 'unlink'; change: ChangeControlRow; link: ChangeLink }
     | { kind: 'assess'; change: ChangeControlRow }
+    | { kind: 'impact'; change: ChangeControlRow }
     | { kind: 'document' }
     | null
   >(null);
@@ -315,11 +329,14 @@ function ChangeControlSession({
                     Edit assessment
                   </button>,
                 ] : []),
-                <button key="link" type="button" className="btn ghost small"
-                  title="Link the deviation, CAPA or validation record this change touches"
-                  onClick={() => openDrawer({ kind: 'link', change: c })}>
-                  Link a record
-                </button>,
+                /* The server takes no link on a closed, cancelled or rejected change, so none is offered (2026-11-12). */
+                ...(takesLinks(c) ? [
+                  <button key="link" type="button" className="btn ghost small"
+                    title="Link the deviation, CAPA or validation record this change touches"
+                    onClick={() => openDrawer({ kind: 'link', change: c })}>
+                    Link a record
+                  </button>,
+                ] : []),
               ].filter((b): b is React.ReactElement => b !== null);
               const ask = <AskAnaButton key="ask" label="Ask AnA about this change"
                 onAsk={() => onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)} />;
@@ -351,8 +368,9 @@ function ChangeControlSession({
                   </>}
                   after={open && (
                     <tr className="qcc-detail-tr">
-                      <td colSpan={CHANGE_COLUMNS.length + 1}>
-                        <ChangeRecordDetail change={c} onAsk={onAsk} />
+                      <td colSpan={CHANGE_COLUMNS.length}>
+                        <ChangeRecordDetail change={c} onAsk={onAsk} onAssessImpact={() => openDrawer({ kind: 'impact', change: c })}
+                          onUnlink={takesLinks(c) ? (link) => openDrawer({ kind: 'unlink', change: c, link }) : undefined} />
                       </td>
                     </tr>
                   )}
@@ -528,6 +546,56 @@ function ChangeControlSession({
           }}
         />
       )}
+      {/* P-122: the device change determination. The form sends the answers; the server runs the engine and returns
+          its verdict, which the toast repeats. A reply whose determination cannot be read is not reported as a
+          verdict: the write stands (the server answered), so the log is re-read and the change shows what is kept. */}
+      {drawer?.kind === 'impact' && (
+        <ChangeImpactForm
+          change={drawer.change}
+          refusal={refusal}
+          onCancel={closeDrawer}
+          onSubmit={(v) => {
+            const c = drawer.change;
+            void runWrite(async () => {
+              const reply = await assessQmsChangeImpact(c.id, v);
+              const determined = regulatoryImpactOf(reply.regulatory_impact)?.[v.market];
+              if (!determined || determined === 'unreadable') {
+                return `${c.changeNumber}: the assessment for the ${IMPACT_MARKET_LABEL[v.market]} was recorded. Its determination could not be read from the reply; read it on the change.`;
+              }
+              return `${c.changeNumber}: the engine's determination for the ${IMPACT_MARKET_LABEL[v.market]} is ${IMPACT_DECISION_LABEL[determined.decision]}. It is kept on the change.`;
+            });
+          }}
+        />
+      )}
+      {drawer?.kind === 'unlink' && (
+        <C2CForm
+          config={{
+            eyebrow: 'Change control',
+            title: `Remove ${drawer.link.linkedRef} from ${drawer.change.changeNumber}`,
+            sub: `${LINK_TYPE_LABEL[drawer.link.linkType]}${drawer.link.linkedLabel ? `: ${drawer.link.linkedLabel}` : ''}. It leaves this change's linked records.`,
+            governed: 'The link is kept on the record as removed, with your name, the time and this reason.',
+            submitLabel: 'Remove link',
+            ...(refusal ? { notice: refusal } : {}),
+            fields: [
+              { key: 'reason', label: 'Reason for removing it', type: 'textarea', rows: 3, required: true,
+                desc: `At least ${GOVERNED_REASON_MIN} characters, recorded verbatim.` },
+            ],
+          }}
+          onCancel={closeDrawer}
+          onSubmit={(v) => {
+            const { change: c, link } = drawer;
+            const reason = v.reason.trim();
+            if (reason.length < GOVERNED_REASON_MIN) {
+              setRefusal(`A reason of at least ${GOVERNED_REASON_MIN} characters is required. Nothing was removed.`);
+              return;
+            }
+            void runWrite(async () => {
+              await unlinkQmsChange(c.id, link.id, reason);
+              return `${link.linkedRef} was removed from ${c.changeNumber}'s linked records.`;
+            });
+          }}
+        />
+      )}
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
           templates={changeForms}
@@ -556,7 +624,7 @@ function ChangeControlSession({
           renderMeaningDetails={(_meaning, committing) => <>
             <div className="qcc-sign-record" data-testid="change-approval-record">
               <p className="qcc-sign-lead">What you approve</p>
-              <ChangeRecordFacts change={approving} />
+              <ChangeRecordFacts change={approving} withImpact />
             </div>
             {learningReview && !('unavailable' in learningReview) && <LearningInvariantReview
               review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} />}
@@ -564,6 +632,7 @@ function ChangeControlSession({
           signedRows={[
             { label: 'Classification', value: CLASSIFICATION_LABEL[approving.classification] },
             ...changeRecordRows(approving),
+            ...changeImpactRows(approving),
             { label: 'Target implementation date', value: approving.targetImplementationDate ? formatDate(approving.targetImplementationDate) : 'Not recorded yet.' },
           ]}
           onClose={() => setApproving(null)}

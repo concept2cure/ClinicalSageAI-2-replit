@@ -31,6 +31,7 @@ import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/gove
 import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { I } from '../icons';
 import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { CsrNotApplicable } from './CsrNotApplicable';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
 
 const JOBS = '/api/csr/jobs';
@@ -366,6 +367,34 @@ function ResumeBuild({ jobId, onResumed }: { jobId: number; onResumed: () => voi
 }
 
 /**
+ * Stop a build that is queued or drafting (POST /api/csr/jobs/:jobId/cancel; reach R1, 2026-11-11: the server stopped
+ * a build and no screen asked it to). The runner looks after each model call and saves nothing more; the headings
+ * already saved are kept. A build that ended before the request arrived is reported as ended, and the list is read
+ * again either way.
+ */
+function StopBuild({ jobId, onEnded }: { jobId: number; onEnded: (note: string | null) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const stop = async () => {
+    setBusy(true); setError(null);
+    const result = await apiCall('POST', `${JOBS}/${jobId}/cancel`, {});
+    setBusy(false);
+    if (result?.ok) onEnded(null);
+    else if (result?.status === 409) onEnded(`Build ${jobId} had already ended, so there was nothing to stop.`);
+    else setError(apiErrorText(result, 'This build could not be stopped.'));
+  };
+  return <>
+    <p style={{ margin: 0 }}>
+      <button type="button" className="btn ghost" disabled={busy} onClick={() => void stop()}>{busy ? 'Stopping…' : `Stop build ${jobId}`}</button>
+      {' '}The headings already saved are kept, and the build can be resumed.
+    </p>
+    {error && <p role="alert">{error}</p>}
+  </>;
+}
+
+const RUNNING = new Set(['queued', 'drafting']);
+
+/**
  * How a build's state reads. The server records `failed` for three different ends, and says which in `failure`
  * (csr-job-runner.ts csrBuildFailureText): a build that ran to its end and left a heading without text ("Not
  * complete: …"), a build a provider refusal stopped ("… The build stopped at §N."), and a failure it cannot name.
@@ -373,10 +402,28 @@ function ResumeBuild({ jobId, onResumed }: { jobId: number; onResumed: () => voi
  * changes: the recorded state, the reason and "Resume build" are as before.
  */
 export function buildStateWord(build: Pick<RunBuild, 'status' | 'failure'>): string {
+  // A build a person stopped is recorded `cancelled`; it reads "stopped", as one a provider refusal stopped does.
+  if (build.status === 'cancelled') return 'stopped';
   if (build.status !== 'failed') return build.status;
   const why = build.failure?.trim() ?? '';
   if (why.startsWith('Not complete:')) return 'not complete';
   return /The build stopped at §/.test(why) ? 'stopped' : 'failed';
+}
+
+/** What a person can do about a build's state: stop one that is running; read why one ended; resume one that
+ * stopped, whether a refusal or a person stopped it. */
+function BuildActs({ build, onBuildChanged }: { build: RunBuild; onBuildChanged: () => void }) {
+  const [stopNote, setStopNote] = useState<string | null>(null);
+  const running = RUNNING.has(build.status);
+  const stopped = build.status === 'cancelled';
+  const failed = build.status === 'failed';
+  return <>
+    {running && <StopBuild jobId={build.jobId} onEnded={note => { setStopNote(note); onBuildChanged(); }} />}
+    {stopNote && !running && <p role="status">{stopNote}</p>}
+    {failed && <p role="alert">{build.failure?.trim() || 'This build stopped before it finished. No reason was recorded.'}</p>}
+    {stopped && <p role="status">This build was stopped. The sections already saved are kept.</p>}
+    {(failed || stopped) && <ResumeBuild jobId={build.jobId} onResumed={onBuildChanged} />}
+  </>;
 }
 
 function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentChanged }: {
@@ -387,8 +434,7 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {buildStateWord(build)} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
     {build.writing && <LiveDraft writing={build.writing} />}
-    {build.status === 'failed' && <p role="alert">{build.failure?.trim() || 'This build stopped before it finished. No reason was recorded.'}</p>}
-    {build.status === 'failed' && <ResumeBuild jobId={build.jobId} onResumed={onBuildChanged} />}
+    <BuildActs build={build} onBuildChanged={onBuildChanged} />
     {error && <p role="alert">{error}{' '}
       <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
     </p>}
@@ -400,6 +446,7 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
         onImport={sectionNumbers => setImporting(sectionNumbers)} />
       {importing && <ImportIntoDocument key={importing.join(',')} programId={programId} documentId={documentId} jobId={build.jobId}
         sectionNumbers={importing} onClose={() => setImporting(null)} onImported={onDocumentChanged} />}
+      <CsrNotApplicable documentId={documentId} jobId={build.jobId} headings={headings} onDocumentChanged={onDocumentChanged} />
       <CsrNarrativeBuild jobId={build.jobId} headings={headings} onChanged={reload} />
       <CsrAssemblyControl jobId={build.jobId} />
     </>}

@@ -24,6 +24,7 @@ import {
   type UnassignedObservation,
 } from './cmc/recorded-stability';
 import { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } from './cmc/recorded-capability';
+import { recordedResultVerdict } from './cmc/batch-release-evidence';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -229,6 +230,17 @@ export { NON_BATCH_SAMPLE_TYPES, FINISHED_PRODUCT } from '../../shared/cmc/qc-sa
    name a different one than the composer reaches. */
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** A batch record's release decision as the register wrote it, lower-cased; '' when none. */
+function batchDecision(batch: Record<string, any>): string {
+  return String(batch.releaseStatus || batch.disposition || '').trim().toLowerCase();
+}
+
+/** A decision has been taken on the batch: anything but none, and not still pending. */
+function batchIsDecided(batch: Record<string, any>): boolean {
+  const decision = batchDecision(batch);
+  return decision !== '' && decision !== 'pending';
+}
 
 function val(sources: CanonicalSource[], field: string): string {
   for (const s of sources) {
@@ -895,27 +907,13 @@ function qcResultVerdict(p: Record<string, any>): 'within' | 'outside' | 'not-co
      `testResults: { value, unit, observation }` object and a `specifications:
      { acceptanceCriteria }` object — not the flat keys. Reading only the flat
      ones made every real record not-comparable, which is a silent no-op
-     dressed as a refusal. */
-  const results = p.testResults;
-  const value = parseNumeric(
-    results && typeof results === 'object' && !Array.isArray(results)
-      ? (results as Record<string, unknown>).value
-      : results ?? p.resultValue ?? p.result ?? p.testResult,
+     dressed as a refusal. The comparison itself is the one batch release
+     uses (2026-11-10, GA-DEMO-02): a release and the dossier cannot disagree
+     about whether a recorded result meets its criterion. */
+  return recordedResultVerdict(
+    p.testResults ?? p.resultValue ?? p.result ?? p.testResult,
+    [p.specifications ?? p.specification, p.acceptanceCriteria, p.specificationLimit],
   );
-  if (value === null) return 'not-comparable';
-  const specs = p.specifications ?? p.specification;
-  const criterion = parseAcceptanceCriterion([
-    specs && typeof specs === 'object' && !Array.isArray(specs)
-      ? (specs as Record<string, unknown>).acceptanceCriteria
-      : specs,
-    p.acceptanceCriteria,
-    p.specificationLimit,
-  ]);
-  if (!criterion) return 'not-comparable';
-  const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
-  const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
-  const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
-  return belowLower || aboveUpper || aboveRange ? 'outside' : 'within';
 }
 
 /** A sentence about the recorded results, or '' when none were recorded. */
@@ -2836,7 +2834,6 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
 
   '3.2.P.3': (m) => {
     const formulation = val(m, 'formulation');
-    const batchNum = val(m, 'batchNumber');
     /* The §11 release decision, read from ONE batch record.
        val() scans each key independently across sources, so with more than one
        batch source the disposition, the releaser and the date could each come
@@ -2844,12 +2841,21 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        The facts travel together or not at all. Gated on what the register
        actually writes (release_status / released_by / released_at); the old
        `disposition` gate was a column no route ever populates, so the clause
-       could never render. */
-    const releasedBatch = m
+       could never render.
+       2026-11-12: a rejected batch is not read here at all. With one rejected
+       under signature the section read "Representative batch: <it> …
+       disposition: rejected, released by <the signer>": a rejected batch
+       represents nothing, and a rejection is not a release. A batch whose
+       decision is still pending has no disposition to state either. */
+    const batches = m
       .filter((s) => s.sourceType === 'batch')
       .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-      .find((p) => p.releasedBy || p.releasedAt || p.releaseStatus || p.disposition) ?? null;
-    const disposition = String(releasedBatch?.disposition || releasedBatch?.releaseStatus || val(m, 'disposition') || '');
+      .filter((p) => batchDecision(p) !== 'rejected');
+    const representative = batches[0] ?? null;
+    const anyBatchRecorded = m.some((s) => s.sourceType === 'batch');
+    const batchNum = representative ? String(representative.batchNumber || '') : (anyBatchRecorded ? '' : val(m, 'batchNumber'));
+    const releasedBatch = batches.find((p) => p.releasedBy || p.releasedAt || batchIsDecided(p)) ?? null;
+    const disposition = String(releasedBatch?.disposition || releasedBatch?.releaseStatus || '');
     const releasedBy = String(releasedBatch?.releasedBy || '');
     const releasedAt = String(releasedBatch?.releasedAt || '');
     const releasedBatchNumber = String(releasedBatch?.batchNumber || '');
@@ -2938,9 +2944,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     return {
       narrative: `The drug product is manufactured according to the batch formula described below. ` +
-        (batchNum ? `Representative batch: ${batchNum}` : '') +
-        (batchSize ? ` (batch size: ${batchSize})` : '') +
-        `. ` +
+        (batchNum ? `Representative batch: ${batchNum}` + (batchSize ? ` (batch size: ${batchSize})` : '') + `. ` : '') +
         (manufacturingSite ? `Manufactured at: ${manufacturingSite}. ` : '') +
         process.narrative +
         (legacySteps.length > 0 ? `The process comprises ${legacySteps.length} unit operations. ` : '') +
@@ -3122,13 +3126,18 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     };
   },
 
+  /* GA-DEMO-03 (2026-11-10): §3.1 and §3.3 read `name` across the substance
+     AND product records with val(), which takes the first — so whenever the
+     product arrived first, §3.1 said "The drug substance is C2C-201 tablets".
+     Each name is read from its own record now. */
   '3.1': (m) => {
-    const name = val(m, 'name');
-    const form = val(m, 'dosageFormDescription');
+    const name = val(m.filter((s) => s.sourceType === 'drug_substance'), 'name');
+    const productName = val(m.filter((s) => s.sourceType === 'drug_product'), 'name');
+    const form = val(m.filter((s) => s.sourceType === 'drug_product'), 'dosageFormDescription');
     return {
       narrative: `This section provides a table of contents and introductory overview for Module 3 — Quality. ` +
         (name ? `The drug substance is ${name}. ` : '') +
-        (form ? `The drug product is formulated as a ${form}. ` : '') +
+        (form ? `The drug product${productName ? `, ${productName},` : ''} is formulated as a ${form}. ` : '') +
         `Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.`,
       tables: [{
         title: 'Module 3 — Table of Contents',
@@ -3158,8 +3167,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   },
 
   '3.3': (m) => {
-    const name = val(m, 'name');
-    const form = val(m, 'dosageFormDescription');
+    const name = val(m.filter((s) => s.sourceType === 'drug_substance'), 'name');
+    const form = val(m.filter((s) => s.sourceType === 'drug_product'), 'dosageFormDescription');
     /* Primacy is a RECORDED type, never the order sources arrived in. Reading
        one `referenceStandardDescription` with val() named whichever standard
        happened to be first "the primary reference standard" — so a working

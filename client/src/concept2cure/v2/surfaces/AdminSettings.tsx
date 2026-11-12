@@ -147,19 +147,32 @@ export function AdminSettingsTab({ settings, settingsDown, onRetry, onNav, onAsk
   );
 }
 
-/** The SSO tab's door: SAML, SCIM tokens and the SCIM IP allowlist are governed in the Identity console. */
-export function IdentityConsoleDoor({ onNav }: { onNav: (id: string) => void }) {
+/**
+ * The SSO tab's door: SAML, SCIM tokens and the SCIM IP allowlist are governed in the Identity console. Its reads
+ * need a platform administrator, so the door is offered only to one (GA walk, 2026-11-12); a customer's
+ * administrator is told who sets these up, not sent to a page that refuses them.
+ */
+export function IdentityConsoleDoor({ onNav, platformAdmin }: { onNav: (id: string) => void; platformAdmin: boolean }) {
   return (
     <section className="section" aria-label="Identity console">
       <div className="section-head">
         <h2>Identity console</h2>
-        <span className="section-sub">
-          SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist are governed there, not here. A
-          switch on this page would be a second copy of that state with nothing to reconcile it.
-        </span>
-        <button type="button" className="btn ghost small adm-key-create" onClick={() => onNav('identity-console')}>
-          {I.lock} Open Identity console
-        </button>
+        {platformAdmin ? (
+          <>
+            <span className="section-sub">
+              SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist are governed there, not here. A
+              switch on this page would be a second copy of that state with nothing to reconcile it.
+            </span>
+            <button type="button" className="btn ghost small adm-key-create" onClick={() => onNav('identity-console')}>
+              {I.lock} Open Identity console
+            </button>
+          </>
+        ) : (
+          <span className="section-sub">
+            Single sign-on and SCIM provisioning are set up for your organisation by Concept2Cure. To add or change
+            an identity provider, a provisioning token or the allowed addresses, ask your Concept2Cure contact.
+          </span>
+        )}
       </div>
     </section>
   );

@@ -1,0 +1,1 @@
+scoped tsc: 26 lines of output, 0 in this lane's 8 files (all in files outside the scope's ambient declarations)

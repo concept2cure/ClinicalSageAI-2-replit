@@ -1,0 +1,37 @@
+// Walk 2, flow 5d: while Quality is off, is its API closed to a member? Then the administrator's "Access requests".
+const c = require('./lib.cjs');
+const sub = (m) => c.psql(`select module_id, enabled, disabled_at is not null, enabled_by, disabled_by from module_subscriptions where organization_id=7 and module_id='${m}'`);
+const reqs = () => c.psql(`select id, module_id, requested_by, coalesce(note,'(no note)'), status, decided_by, coalesce(decision_reason,'') from module_access_requests where organization_id=7 order by id`);
+const audit = (n = 2) => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(new_values::text, 300) from audit_logs where tenant_id=7 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const owner = (await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test')).page;
+  const member = (await c.pageFor(browser, 'w2member', 'walk2.member2@example.test')).page;
+  await c.step('with Quality off: the surface by address, and its API, as a member and as the administrator', async (s) => {
+    s.notes.push('db: ' + sub('quality'));
+    const seen = new Set(); const rec = (r) => { if (r.url().includes('/api/') && r.request().method() === 'GET') seen.add(`${r.status()} ${r.url().replace(c.BASE, '').split('?')[0]}`); };
+    member.on('response', rec);
+    await member.goto(`${c.BASE}/concept2cure/quality`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    member.off('response', rec);
+    s.notes.push('member, /concept2cure/quality by address: url ' + member.url() + ' | ' + (await c.mainText(member, 500)).replace(/\n+/g, ' | '));
+    s.notes.push('requests the page made: ' + JSON.stringify([...seen].filter((x) => /qms|quality|sop|controlled/i.test(x))));
+    await c.shot(member, 'w2-52-member-quality-by-address.png');
+    for (const p of ['/api/quality/controlled-documents', '/api/qms-documents', '/api/mdx/quality', '/api/controlled-documents']) {
+      const r = await c.api(member, 'GET', p); s.notes.push(`member GET ${p} -> ${r.status} ${JSON.stringify(r.body).slice(0, 160)}`);
+    }
+    await owner.goto(`${c.BASE}/concept2cure/quality`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    s.notes.push('administrator, /concept2cure/quality by address: url ' + owner.url() + ' | ' + (await c.mainText(owner, 300)).replace(/\n+/g, ' | '));
+  });
+  await c.step('administrator: the account menu\'s "Access requests"', async (s) => {
+    await owner.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1000);
+    await owner.locator('button', { hasText: 'Wanda Walker' }).first().click(); await c.sleep(500);
+    s.notes.push('menu item: ' + (await owner.locator('[role=menu]').getByText(/Access requests/).first().innerText()).replace(/\n+/g, ' | '));
+    await owner.locator('[role=menu]').getByText(/Access requests/).first().click(); await c.sleep(2500);
+    s.notes.push('url ' + owner.url());
+    s.notes.push((await c.mainText(owner, 2500)));
+    await c.shot(owner, 'w2-52-access-requests-1440.png');
+    s.notes.push('controls: ' + JSON.stringify(await owner.locator('main button:visible, main select:visible, main textarea:visible, main input:visible').evaluateAll(els => els.map(e => `${e.tagName.toLowerCase()}:${(e.getAttribute('aria-label') || e.textContent || e.getAttribute('placeholder') || '').trim().replace(/\s+/g, ' ').slice(0, 60)}${e.disabled ? ' [disabled]' : ''}`))));
+  });
+  c.report(); c.save('w2-20-access-requests');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

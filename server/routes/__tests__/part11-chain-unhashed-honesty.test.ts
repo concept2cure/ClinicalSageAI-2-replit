@@ -55,7 +55,9 @@ function row(over: Record<string, unknown> = {}) {
   return {
     id: 1, organization_id: 101, sequence_number: 1, event_type: 'CREATE',
     entity_type: 'doc', entity_id: 'D1', user_id: 'u1', user_name: 'A',
-    timestamp: TS, reason: 'r', record_hash: null, previous_hash: null,
+    // The route hashes the timestamp as the database renders it as text (what the
+    // trigger hashed, AUD-02), so a mocked row carries that text too.
+    timestamp: TS, timestamp_text: '2026-08-14 09:00:00', reason: 'r', record_hash: null, previous_hash: null,
     ...over,
   };
 }
@@ -69,7 +71,7 @@ function realHash(r: ReturnType<typeof row>) {
     (r.entity_id ?? '') + '|' +
     (r.user_id ?? '') + '|' +
     (r.user_name ?? '') + '|' +
-    (r.timestamp ? new Date(r.timestamp).toISOString().replace('T', ' ').replace('Z', '+00') : '') + '|' +
+    (r.timestamp_text ?? '') + '|' +
     (r.reason ?? '') + '|' +
     (r.previous_hash ?? 'GENESIS');
   return crypto.createHash('sha256').update(payload).digest('hex');

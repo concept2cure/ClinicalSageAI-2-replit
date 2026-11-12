@@ -243,8 +243,15 @@ export const UI_SURFACES: UiSurface[] = [
     // '/api/concept2cure/submission-milestones': the catalogue of each filing type's milestones the project's task
     // list is generated from (c2c/tasks.ts; read-only, the same for every organization). Its tasks are under
     // '/api/concept2cure/projects', already claimed.
+    // 2026-11-10 (P-122, Plan: R1): '/api/project-sections/milestones': the Schedule records a milestone (POST), moves
+    // its date or marks it done (PATCH /:id). The claim is a path, so it also serves the milestone list (GET, read
+    // admitted) and DELETE /:id; every write is admitted as a write on the project (project-sections.ts
+    // admitMilestoneWrite: a role that writes, edit permission, not archived), and no section route answers to
+    // "milestones" as a section code. The section list and section writes stay unclaimed
+    // (tests/db/p122-milestone-writes.dbtest.ts).
     apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
-      '/api/project-hierarchy', '/api/project-sections/summary', '/api/project-sections/timeline', '/api/concept2cure/submission-milestones'],
+      '/api/project-hierarchy', '/api/project-sections/summary', '/api/project-sections/timeline', '/api/project-sections/milestones',
+      '/api/concept2cure/submission-milestones'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -624,6 +631,12 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',
+      /* 2026-11-12 (P-122 inventory B5, Plan: R1): the ICH Q6A/Q6B specification test sets, read under the
+         specification table (CmSpecReference in surfaces/cmcSpecReference.tsx). Claimed at the one route the
+         screen calls; the rest of '/api/global-ri' stays with the locked Global RI screen, so production still
+         refuses it. The route is a reference with no tenant data: it reads no record, takes a product type and a
+         dosage form, and needs a signed-in author role (server/routes/global-ri/cmc.routes.ts). */
+      '/api/global-ri/cmc/specifications',
       // Deferred UI caller; the route itself refuses when launch scope is on.
       '/api/cmc/variations/classify',
       /* 2026-11-10 (P-122, Plan: R1): the same deferred assessment records the
@@ -704,6 +717,21 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/ind-lifecycle/annual-report',
       '/api/ind-lifecycle/amendment-plan',
       '/api/ind-lifecycle/amendment',
+      // P-122 (2026-11-10): the registers the IND lifecycle routes keep, shown on this screen
+      // (SubmissionIndRegisters.tsx). Built and never called; each is claimed by a `:param` segment
+      // (api-prefix-map.ts), because the segment above the id would admit the IND safety-report and
+      // ICSR registers beside them, which P-32 keeps shut. The routes admit the submission's project
+      // first (tests/db/p122-ind-registers.dbtest.ts). The cross-reference / LOA register: its list
+      // and recording one, filing the letter beneath it, the LOA-coverage QC, and marking or removing one.
+      '/api/ind-lifecycle/submission/:id/cross-references',
+      '/api/ind-lifecycle/submission/:id/cross-reference-register',
+      '/api/ind-lifecycle/cross-references',
+      // The annual-report tracker (21 CFR 312.33): the tracked reports and tracking one, and the server's overdue
+      // feed beneath it. One report by its id (/annual-reports/:id) has no caller and stays unclaimed.
+      '/api/ind-lifecycle/submission/:id/annual-reports',
+      // The amendment tracker (21 CFR 312.30, 312.31): the tracked amendments and tracking one. One amendment by its
+      // id (/amendments/:id) has no caller and stays unclaimed.
+      '/api/ind-lifecycle/submission/:id/amendments',
     ],
     anaToolFamilies: [],
     sharedContract: null,

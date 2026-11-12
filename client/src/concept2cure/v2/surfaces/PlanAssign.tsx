@@ -21,7 +21,7 @@
  * by the title.
  */
 import React, { useState } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { isRowsWith, useLiveRows } from '../dataConnect';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { I } from '../icons';
@@ -315,7 +315,7 @@ export function UseScheduleDate({ assignment, scheduleDay, scheduleWords, onMove
         const unknown = json?.error === 'OUTCOME_UNKNOWN';
         setSaid({ ok: false, text: unknown
           ? 'The save could not be confirmed. The task is read again so you can see its date.'
-          : `The due date was not changed: ${String(json?.error ?? `the server refused it (HTTP ${res.status})`).replace(/[.\s]+$/, '')}.` });
+          : `The due date was not changed: ${(serverMessage(json) ?? `the server refused it (HTTP ${res.status})`).replace(/[.\s]+$/, '')}.` });
         if (unknown) onMoved();
         return;
       }

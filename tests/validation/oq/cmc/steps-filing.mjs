@@ -20,7 +20,7 @@ await step(
     urs: ['URS-CMC-011'],
     title: 'Placement writes the approved sections into the programme’s own sequence',
     action: 'on the second programme: validate the method under signature, compile, sweep, approve every section as the signer, read the final-export gate; create the IND sequence; place into another submission, then into its own; then place again',
-    expected: 'every section approved and the gate 200; another submission refused with no leaf; 200 with one leaf per section; the repeat adds no leaf',
+    expected: 'every section approved and the gate 200; another submission refused with no leaf; 200 with one leaf per section; the repeat writes nothing',
     dependsOn: ['OQ-CMC-17'],
     note: 'v0.13: executed for the first time, on the second programme (OQ-CMC-03b). Until v0.12 the step acted on the first programme, whose sections cannot be approved, and recorded the gate\'s 409 as a deviation. The step now also observes the gate with every blocker cleared (URS-CMC-010) and the placement into another submission\'s sequence, both owed since v0.11.',
   },
@@ -88,11 +88,14 @@ await step(
     const again = await postAsSigner(ctx, signer, place, target);
     const afterRepeat = await leaves();
     const repeated = dataOf(again).placements ?? [];
-    attach('placement-repeat.json', { status: again.status, leaves: afterRepeat, updatedInPlace: repeated.filter((x) => x.updatedInPlace).length,
-      newFilingDocuments: repeated.filter((x, i) => x.coauthorDocumentId !== placements[i]?.coauthorDocumentId).length });
+    const unchanged = repeated.filter((x) => x.unchanged).length;
+    const sameDocuments = repeated.filter((x, i) => x.coauthorDocumentId === placements[i]?.coauthorDocumentId).length;
+    attach('placement-repeat.json', { status: again.status, leaves: afterRepeat, unchanged, sameFilingDocuments: sameDocuments, of: repeated.length });
     expect(again.status === 200 && afterRepeat === written, `the repeat expected 200 and no further leaf: ${again.status}, ${written} → ${afterRepeat}`, again.json);
+    expect(unchanged === sections.length && sameDocuments === sections.length,
+      `the repeat of an identical placement expected every section unchanged on its own filing document; ${unchanged} unchanged, ${sameDocuments} on the same document`, again.json);
     return `21 sections approved; gate 200; another submission ${foreign.status} with no leaf; placed ${written} leaves, one per section; ` +
-      `the repeat ${again.status} with ${afterRepeat} leaves still (each leaf updated in place)`;
+      `the repeat ${again.status}: ${unchanged} of ${repeated.length} sections unchanged, no leaf and no filing document written`;
   },
 );
 

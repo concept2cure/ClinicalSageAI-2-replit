@@ -1,6 +1,6 @@
 # Help, training and support, the way Claude's are run (2026-11-10)
 
-Package S13 (P-121 (proposed; not recorded until the founder confirms)). Owned by the walking session (`01QoxbLZhy…`).
+Package S13 (P-127). Owned by the walking session (`01QoxbLZhy…`).
 
 The founder, 2026-11-10:
 
@@ -28,7 +28,7 @@ Two entrances, as the founder asked, both always available:
 
 1. **AnA chat, directly.** Any composer. "How do I add a market?" is answered from the help corpus, with the article
    named and openable.
-2. **The help and support agent.** Account menu → **Get help** (and Help & training → "Ask support"). It opens the
+2. **The help and support agent.** Account menu → **Get help**, the top bar's **Help** (P-122 §3.4), and Help & training → "Ask support". It opens the
    conversation in support mode: it answers only about using Concept2Cure, from the articles; it can start a guided
    demo; and when it cannot resolve something it opens a ticket with the conversation attached, after the person
    confirms.
@@ -113,7 +113,7 @@ Every slice: tests red without it, walked in the running app at 1440 and 390, ev
     excerpt) and the person confirms before it is sent. Nothing is sent on AnA's own decision.
 - The same model routing as AnA. **Fable 5** is not on the approved-models list
   (`server/services/ai-governance/approved-models.ts`); RULE 2 lets a model serve users only as an approved entry with
-  a pinned version, rationale and evaluation reference. P-121 (proposed; not recorded until the founder confirms) item 7 records the founder's request and the route to
+  a pinned version, rationale and evaluation reference. P-127 item 7 records the founder's request and the route to
   qualify it under P-118's protocol; until then, support mode uses the approved routing.
 
 ### 3.4 Tickets (tracking, for the customer and for support staff)
@@ -153,14 +153,15 @@ Every slice: tests red without it, walked in the running app at 1440 and 390, ev
 ### 3.7 Where it is seen
 
 - **One page: Help & training**, the existing `training` surface, re-purposed and admitted to the launch catalog
-  (P-121 (proposed; not recorded until the founder confirms) item 3): search; "Ask support"; the collections; the courses for the person's client type; **Your requests**
+  (P-127 item 3): search; "Ask support"; the collections; the courses for the person's client type; **Your requests**
   (tickets), and for support staff, the queue. Reached from the account menu ("Help & training") and from Get help's
   conversation. The `deferred-capability-inventory` entry for `training` changes from "converge into Quality" to this.
-- Read in the page as Claude's Help Center reads: a column of text, quiet type, no cards, no coach marks.
+- Read in the page as Claude's Help Center reads: a column of text, quiet type, no cards, no coach marks. It keeps the
+  learning paths and certifications it shows today (P-122 §2, zero capability loss).
 
 ## 4. What is added, and the decision that admits it
 
-All under P-121 (proposed; not recorded until the founder confirms), package S13. Each is in `approvedAdditions`.
+All under P-127, package S13. Each is in `approvedAdditions`.
 
 | Kind | Name | Why it is not avoidable |
 |---|---|---|
@@ -174,7 +175,7 @@ No new table. No new screen. No new model.
 
 ## 5. Order of work
 
-1. P-121 (proposed; not recorded until the founder confirms) recorded (this design, the decision, the ledger). 2. The corpus and `/api/docs`. 3. AnA's two help tools and
+1. P-127 recorded (this design, the decision, the ledger). 2. The corpus and `/api/docs`. 3. AnA's two help tools and
 the "answer from the corpus" instruction. 4. Help & training page with articles and courses; Get help. 5. Tickets:
 migration path, route, page, staff queue. 6. Support mode and its two ticket tools. 7. Onboarding step. Articles are
 written alongside every slice.

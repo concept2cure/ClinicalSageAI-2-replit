@@ -51,6 +51,7 @@ const test = (over: Partial<RecordedReleaseTest> = {}): RecordedReleaseTest => (
   passFail: 'pass',
   reviewed: true,
   passed: true,
+  contradicted: false,
   sampleType: 'in-process',
   analystId: 2,
   reviewerId: 1,

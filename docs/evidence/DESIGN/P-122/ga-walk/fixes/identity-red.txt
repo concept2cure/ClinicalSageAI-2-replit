@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx > ⌘K: administration pages by audience > a customer's administrator is not offered Enterprise identity; a platform administrator is 36ms
+ × client/src/concept2cure/v2/__tests__/identityConsoleDoorAudience.test.tsx > the Identity console door on the SSO tab > gives a customer's administrator no door to a page they cannot use, and says who sets it up 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed (7)

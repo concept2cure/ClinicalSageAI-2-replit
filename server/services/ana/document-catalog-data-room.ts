@@ -53,11 +53,18 @@ function gradeForAna(g: { grade: string; score: number; cap: string | null; basi
   };
 }
 
-/** The narrowings the model may ask for; each is checked by the catalog's own parser. */
+/**
+ * The narrowings the model may ask for, each beside the catalog parameter it becomes; the catalog's own parser checks
+ * every one. `filed_in` is the catalog's Vault-folder narrowing. It is not named `folder`: this tool is one a
+ * sub-agent is offered, and no input of such a tool is named for a path, a directory or a folder
+ * (__tests__/sub-agent-toolset.test.ts).
+ */
+const CATALOG_NARROWINGS = { query: 'q', kind: 'kind', ctd: 'ctd', filed_in: 'folder', project: 'project', study: 'study' } as const;
+
 function catalogQuery(input: Record<string, unknown>): Record<string, unknown> {
   const raw: Record<string, unknown> = { limit: String(Math.min(CATALOG_LIMIT, Math.max(1, Math.floor(Number(input.limit) || 25)))) };
-  for (const key of ['query', 'kind', 'ctd', 'folder', 'project', 'study'] as const) {
-    if (typeof input[key] === 'string' || typeof input[key] === 'number') raw[key === 'query' ? 'q' : key] = String(input[key]);
+  for (const [key, parameter] of Object.entries(CATALOG_NARROWINGS)) {
+    if (typeof input[key] === 'string' || typeof input[key] === 'number') raw[parameter] = String(input[key]);
   }
   return raw;
 }
@@ -117,19 +124,43 @@ export async function listDataCatalogForAna(
       fileable: s.clientProgramId === scope.programId && s.isCurrent !== false && Boolean(prov.fileUploadId),
     };
   });
+  const vault = await vaultItemsForAna(scope.orgId, query);
   return JSON.stringify({
     ok: true,
     scope: { catalog: true, projects: query.programIds.length, actorFiltered: true },
     total: page.total, returned: items.length, truncated: page.total > items.length,
     organizedBy: page.facets,
     items,
+    ...vault,
     message:
-      `The data catalog: ${page.total} captured file(s) across ${query.programIds.length} project(s) of this sponsor, the same list as ` +
+      `The data catalog: ${page.total} captured file(s)${vault.vaultTotal === undefined ? '' : ` and ${vault.vaultTotal} Vault document(s)`} across ${query.programIds.length} project(s) of this sponsor, the same list as ` +
       'Vault → Data catalog. Each grade is computed by the data-room grade engine from recorded facts: quote it and its basis, never ' +
       'set or change one. To bring a capture into this project, PROPOSE it and say where the person confirms it: Vault → Data catalog ' +
       '(or the project’s Data room) → "Use in this project". To file a fileable capture into the Vault, use ' +
       'file_chat_upload_to_vault with its source_id; it lands suggested, for a person to confirm.',
   });
+}
+
+/**
+ * The Vault's current documents of the same projects under the same narrowings (data-room-vault.ts), as the screen
+ * lists them, paged with the captures. A failed read says so; the captures are still answered.
+ */
+async function vaultItemsForAna(orgId: number, query: import('../clinical-regulatory-evidence/data-room-search.js').DataRoomQuery):
+Promise<{ vaultTotal?: number; vaultDocuments?: Array<Record<string, unknown>>; vaultUnavailable?: string }> {
+  try {
+    const { listVaultForCatalog } = await import('../clinical-regulatory-evidence/data-room-vault.js');
+    const page = await listVaultForCatalog(orgId, query);
+    return {
+      vaultTotal: page.total,
+      vaultDocuments: page.documents.map((d) => ({
+        documentId: d.documentId, title: d.title, project: d.projectName, projectId: d.projectId, kind: d.evidenceKind,
+        ctdSection: d.ctdSection, folder: d.folderLabel ?? d.folder, placementStatus: d.placementStatus, version: d.version,
+        grade: gradeForAna(d.grade),
+      })),
+    };
+  } catch {
+    return { vaultUnavailable: 'The Vault’s documents could not be listed for the catalog. The captured files above are complete.' };
+  }
 }
 
 /**

@@ -1,0 +1,24 @@
+const L = require('./lib.cjs');
+const shape = (v, d = 0) => v === null ? 'null' : Array.isArray(v) ? `[${v.length}${v.length && d < 2 ? ': ' + shape(v[0], d + 1) : ''}]` : typeof v === 'object' ? (d > 2 ? '{…}' : '{' + Object.entries(v).map(([k, x]) => `${k}:${shape(x, d + 1)}`).join(', ') + '}') : typeof v === 'string' ? (v.length > 40 ? 'str' : JSON.stringify(v)) : String(v);
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'vik.osei@northgate-bio.example.test');
+  for (const u of ['/api/tenant-config/6/settings', '/api/organizations/6/settings', '/api/organizations/6', '/api/tenant-users/6', '/api/licensing/entitlements', '/api/organizations', '/api/tenants', '/api/tenant-users/invitations/mine', '/api/client-branding/company-documents?includeLegal=false']) {
+    const r = await L.api(page, 'GET', u);
+    console.log(`## GET ${u} -> ${r.status}: ${shape(r.body).slice(0, 1800)}`);
+  }
+  // what the viewer's Home offers: click "Create your first project"
+  await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(1200);
+  L.drain(page);
+  await page.getByRole('button', { name: 'Create your first project' }).first().click(); await L.sleep(1500);
+  console.log('## viewer clicks Create your first project ->', page.url(), '|', JSON.stringify(await page.locator('[role=dialog]').allInnerTexts()).slice(0, 900));
+  await L.shot(page, 'w1-68-viewer-create-first-project.png');
+  console.log('## calls', JSON.stringify(L.drain(page)));
+  // admin console as viewer: does "Invite member" open?
+  await page.keyboard.press('Escape');
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1200);
+  await page.getByTestId('admin-invite-member').click().catch(e => console.log('## invite click failed', e.message.split('\n')[0])); await L.sleep(600);
+  console.log('## viewer clicks Invite member on the refused Admin console ->', JSON.stringify(await page.locator('[role=dialog]').allInnerTexts()).slice(0, 400));
+  await L.shot(page, 'w1-69-viewer-admin-console-invite.png');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

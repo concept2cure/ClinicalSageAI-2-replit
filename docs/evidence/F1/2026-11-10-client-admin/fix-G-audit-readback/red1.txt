@@ -1,0 +1,18 @@
+ × server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > three signed exports, each recorded by the trigger, verify as an intact chain of three 72ms
+   → no row the trigger wrote is a broken link: expected [ …(3) ] to deeply equal []
+ × server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a row written with a microsecond timestamp verifies (the case the walk hit) 11ms
+   → expected 'broken' to be 'intact' // Object.is equality
+ × server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a changed reason on a written row still reads BROKEN: the verifier is not lenient 31ms
+   → expected 3 to be 1 // Object.is equality
+ × server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a changed timestamp on a written row reads BROKEN 17ms
+   → expected [ 1, 2 ] to deeply equal [ 1 ]
+ ✓ server/routes/__tests__/part11-chain-trigger-written.pglite.test.ts > a chain the product wrote verifies intact (AUD-02) > a changed actor on a written row reads BROKEN 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: no row the trigger wrote is a broken link: expected [ …(3) ] to deeply equal []
++     "expected": "3926096b0c0ba8dc...",
++     "expected": "2bb1abcbb62de3fe...",
++     "expected": "c632ec097446543d...",
+AssertionError: expected 'broken' to be 'intact' // Object.is equality
+AssertionError: expected 3 to be 1 // Object.is equality
+AssertionError: expected [ 1, 2 ] to deeply equal [ 1 ]
+      Tests  4 failed | 1 passed (5)

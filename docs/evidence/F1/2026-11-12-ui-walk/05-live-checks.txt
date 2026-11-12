@@ -1,0 +1,38 @@
+Live checks on the W3 validation installation (PostgreSQL 16, RLS enforced, runtime role app_service), 2026-11-12.
+The lines are the scripts' own output.
+
+1. The release gate over the two access paths, for the document the walk approved and sealed
+   (authoring document 5a4d5989-…, 49 sections). Before the repair:
+
+     doc APPROVED sections 49
+     pg pool -> current, hard 0, receipt 5fbe68fb
+     drizzle -> THREW INDEPENDENT_CHECK_REQUIRED Independent checks or their human finding decisions are missing, stale or unavailable. …
+     occurred_at via pg: [object Date] 2026-11-12T00:36:03.117Z | via drizzle: [object String] 2026-11-12 00:36:03.117+00
+
+   After:
+
+     pg pool -> current, hard 0, receipt 5fbe68fb
+     drizzle -> current, hard 0, receipt 5fbe68fb
+
+2. The editor's place-into-filing request for that document (POST /api/coauthor/documents). In the walk: 409
+   INDEPENDENT_CHECK_REQUIRED from the editor and from the Builder. On the repaired server:
+
+     snapshot 201 {"success":true,"written":true,"id":192,"status":"approved","seal":"approved","hash":"1a98777beb8f"}
+
+3. A repeat of an identical Module 3 placement (the fully approved programme of the 2026-11-10 run, sequence 14),
+   with a release signature made first:
+
+     sign 200 release {"required":true,"verdict":"signed","signatureId":115,"detail":"signed for dispatch on ectd-sequence:14, bound to the current leaf manifest","cleared":true}
+     repeat placement 200 placements 21 unchanged 21 updatedInPlace 0
+     leaf documents unchanged: true leaves 21
+     release after the repeat: {"required":true,"verdict":"signed","signatureId":115,…,"cleared":true}
+
+   Before the repair the same repeat wrote 21 new filing documents (ids 22 to 42 beside 1 to 21) and the verdict
+   became "invalid … leaf manifest digest differs".
+
+4. A real change after the signature (the product's shelf life edited):
+
+     gate after the edit 409 2 section(s) went stale after approval and must be re-approved before final export
+     re-approve 3.2.P.8 200 / re-approve 3.2.S.7 200 / gate after re-approval 200
+     place 200 unchanged 20 updated 3.2.P.8
+     release after {"verdict":"invalid","detail":"the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content","cleared":false}

@@ -157,3 +157,65 @@ describe('the grid or list choice is remembered (P-122 §3.2)', () => {
     expect(viewButton('Grid').getAttribute('aria-pressed')).toBe('true');
   });
 });
+
+/* The second of the three figures P-122 §3.2 and ONE_DESIGN_PLAN §2 name. It is the server's
+   (meta.counts.averageReadiness, measured over every selected project): the browser never
+   computes one, which the cases above pin for a read that carries none. */
+describe('Projects shows the portfolio’s average readiness as the server measured it', () => {
+  const withAverage = (readiness: Record<string, unknown>, total = 12) => {
+    body = { data: ROWS, meta: { count: 2, hasMore: false, counts: { ...COUNTS, total, ...readiness } } };
+  };
+  const figures = () => Array.from(document.querySelectorAll('.pj-summary-i')).map((n) => n.textContent?.replace(/\s+/g, ' ').trim());
+
+  it('sits between the two counts, and is not the mean of the page’s rows', async () => {
+    // The page's one measured row reads 42%; the server measured 61% over all twelve.
+    withAverage({ averageReadiness: 61, readinessMeasured: 12, readinessState: 'measured' });
+    render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    expect(figures()).toEqual(['12 active projects', '61% average readiness', '3 filings due within 60 days']);
+  });
+
+  it('says how many projects the mean covers when some have nothing to measure', async () => {
+    withAverage({ averageReadiness: 61, readinessMeasured: 9, readinessState: 'measured' });
+    render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    expect(figures()[1]).toBe('61% average readiness over 9 measured');
+  });
+
+  it('says none is measured, never 0%', async () => {
+    withAverage({ averageReadiness: null, readinessMeasured: 0, readinessState: 'none' });
+    render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    expect(figures()[1]).toBe('no readiness measured yet');
+    expect(summary()?.textContent).not.toMatch(/\d+%/);
+  });
+
+  it('says a portfolio too large to measure is not measured, and how to narrow it', async () => {
+    withAverage({ averageReadiness: null, readinessMeasured: 0, readinessState: 'not_measured' }, 1234);
+    render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    expect(figures()[1]).toBe('average readiness not measured for this many projects');
+    expect(document.querySelectorAll('.pj-summary-i')[1].getAttribute('title')).toMatch(/client, workstream or pathway/);
+  });
+
+  it('says a figure that could not be read, and a malformed one, as not read', async () => {
+    withAverage({ averageReadiness: null, readinessMeasured: 0, readinessState: 'unavailable' });
+    const first = render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    expect(figures()[1]).toBe('average readiness could not be read');
+    first.unmount();
+    withAverage({ averageReadiness: 'high', readinessMeasured: 3, readinessState: 'measured' });
+    render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    expect(figures()[1]).toBe('average readiness could not be read');
+  });
+
+  it('is in list view too', async () => {
+    withAverage({ averageReadiness: 61, readinessMeasured: 12, readinessState: 'measured' });
+    render(<Projects {...props()} />);
+    await screen.findByText('Program alpha');
+    fireEvent.click(viewButton('List'));
+    await waitFor(() => expect(document.querySelector('.ctable')).toBeTruthy());
+    expect(figures()[1]).toBe('61% average readiness');
+  });
+});

@@ -1,0 +1,28 @@
+Scoped tsc, NODE_OPTIONS=--max-old-space-size=4096, 2026-11-12. Files:
+  server/services/ana-biostats/judgment-engine.ts
+  server/services/ana-biostats/document-generator.ts
+  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts
+  server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts
+  tests/services/ana-biostats.test.ts
+  server/services/biostatistics-bridge/__tests__/design-adapter.test.ts
+  server/services/biostatistics-bridge/__tests__/statistical-review.test.ts
+
+Errors in the lane's files (judgment-engine.ts, document-generator.ts, sensitivity-breakpoints-recompute-power.test.ts): 0
+
+Errors elsewhere (not lane files; ambient types outside the scope, and four strict-null errors in tests/services/ana-biostats.test.ts at lines 1618-1664 about result.scenarios, a file and a type this lane did not change):
+      4 server/db/requestDbLease.ts TS2339
+      1 server/export/renderers.ts TS7006
+      1 server/export/renderers.ts TS7016
+      1 server/middleware/establishRequestTenantScope.ts TS2339
+      1 server/middleware/requirePlatformAdmin.ts TS2339
+      1 server/routes/c2c/shared.ts TS7016
+      1 server/services/ana-ri/proposal-seal.ts TS7016
+      1 server/services/authoring/authoring-permissions.ts TS2339
+      1 server/services/cmc/link-to-module3.ts TS7016
+      2 server/services/mfaService.ts TS7016
+      1 server/services/token-revocation.ts TS7016
+      1 server/utils/jwtVerify.ts TS7016
+      3 tests/services/ana-biostats.test.ts TS18048
+      1 tests/services/ana-biostats.test.ts TS2532
+
+Not in the scope: server/routes/ana-biostats.ts and server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts pull the whole server graph and ran out of memory at 4 GB. They import only the singletons and types, whose signatures this lane did not change; the lane only adds exports (SENSITIVITY_POWER_THRESHOLD, EFFECT_HOLDS_NOTE, SENSITIVITY_NOT_ASSESSED_NOTE).

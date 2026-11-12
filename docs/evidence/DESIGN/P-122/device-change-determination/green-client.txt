@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a device project's change offers it, with no verdict before the engine has run 223ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a biologic project's change does not offer it, and says so in one sentence 17ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a drug project's change says the same of a drug project 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an organisation-wide change says where it is offered 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > says nothing about it where nobody would look: an organisation with no device project 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a row that carries no answer from the server neither offers nor describes it 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an approved device change is not assessed any more, and says why 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the US engine's questions in plain words, with none answered 225ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > does not send while a question is unanswered 255ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > posts the answers, never a verdict, and reports the engine's determination 269ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the EU engine's questions when the European Union is chosen, and posts those answers 210ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > assessing again shows the recorded answer beside each question, answers none for the person, and states why 333ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > shows the US verdict with the engine's rationale and what it found, the rules' version, who and when 28ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > says it is the engine's determination, and that a person classifies the change 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > the approval reads the determination among what it signs 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a refusal stays in the drawer in the server's words, and no verdict appears 280ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a reply whose determination cannot be read names no verdict, and the log is read again 253ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > something kept that is not a determination is said to be unreadable, not shown as a verdict or as none 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > reads the server's row: an outcome it does not know is unreadable, a missing answer is no answer 1ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  00:58:31
+   Duration  3.74s (transform 604ms, setup 161ms, import 756ms, tests 2.18s, environment 487ms)
+

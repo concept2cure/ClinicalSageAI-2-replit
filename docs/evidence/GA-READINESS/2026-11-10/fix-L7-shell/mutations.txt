@@ -1,0 +1,15 @@
+KILLED | restored sha256 ok | client/src/concept2cure/v2/OpenWork.tsx | "if (t.moduleType !== 'Vault') return go('review');" -> "return go('review');" | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/OpenWork.tsx | 'openRouteVersion(t.taskId, go).catch((e) => setOpenError(fai' -> 'openRouteVersion(t.taskId, go).catch(() ' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/OpenWork.tsx | "onOpen={() => { setOpenError(''); openApprovalDocument(a, go" -> "onOpen={() => go('review')}" | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Orchestration.tsx | 'const chosen = openId == null' -> 'const chosen = true' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Orchestration.tsx | 'return { prog: null, unmatched: openId != null ? openTitle :' -> 'return { prog: null, unmatched: null };' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Orchestration.tsx | 'if (res.error) return { prog: null, unmatched: null, unread:' -> 'if (res.error) return { prog: null, unma' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Orchestration.tsx | 'if (res.error) return { prog: null, unmatched: null, unread:' -> 'if (res.error || !res.data) return { pro' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Orchestration.tsx | "? `This project is not in the organisation's project list fo" -> '? `This project has no orchestration rec' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Review.tsx | 'const editorQueueOnly = vaultInReview > 0 || namedBelow;' -> 'const editorQueueOnly = vaultInReview > ' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Review.tsx | 'const namedBelow = Boolean(namedState.error) ||' -> 'const namedBelow =' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Review.tsx | "            : editorQueueOnly ? EDITOR_QUEUE_EMPTY : 'Nothin" -> "            : 'Nothing is in review.',\n " | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/surfaces/Review.tsx | "            : editorQueueOnly ? EDITOR_QUEUE_EMPTY : 'Nothin" -> "            : 'Nothing is in review.',\n " | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/styles/app-v2.css | '.c2c-v2 .tt-badge{min-width:16px;' -> '.c2c-v2 .tt-badge{position:absolute;top:' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/styles/app-v2.css | 'padding-bottom:0;overflow-x:auto;overflow-y:hidden;' -> 'padding-bottom:0;' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+KILLED | restored sha256 ok | client/src/concept2cure/v2/styles/app-v2.css | 'var(--error) 8%, transparent)), var(--bg-000);' -> 'var(--error) 8%, transparent));' | ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

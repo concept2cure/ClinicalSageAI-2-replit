@@ -236,6 +236,7 @@ import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
+import { registerHelpSupportHandlers } from './help-support-tools.js';
 import { registerAuthoringReadHandlers } from './authoring-read-tools.js';
 import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tools.js';
 import { registerCsrSectionEvidenceHandlers } from './csr-section-evidence-tool.js';
@@ -11185,6 +11186,46 @@ registerToolHandler('create_ha_interaction', async (input, ctx) => {
   }
 });
 
+/**
+ * Null when the person may record a commitment that names this submission, or a meeting on one; otherwise the refusal
+ * (P-122, 2026-11-12, when the tool was reached under launch scope). Until then the organisation's editor role was the
+ * only check, so an editor could record a commitment against a submission of a project they cannot open. A submission
+ * belongs to a project, and the write is admitted by that project's edit right (artifactEditRefusal), as a meeting on a
+ * submission is (routes/ha-interactions.ts admitSubmissionWrite). A submission or meeting of another organisation, of
+ * no project, or of a project the person cannot change is answered in the same words, and nothing is recorded. A
+ * commitment that names neither is the organisation's own and needs no project.
+ */
+async function commitmentWriteRefusal(
+  client: PoolClient,
+  who: { organizationId: number; userId: number },
+  named: { submissionId: number | null; sourceInteractionId: number | null },
+  /** What the person named, when it was neither the submission nor the meeting: a fulfilment names the commitment. */
+  subject?: string,
+): Promise<string | null> {
+  const { projectOfSubmission, submissionOfInteraction } = await import('../ha-interactions/ha-service.js');
+  const refuse = (what: string) => JSON.stringify({
+    error: `That ${subject ?? what} is not one of a project you may change. Nothing was recorded.`, code: 'PROJECT_WRITE_ACCESS_DENIED',
+  });
+  const mayChange = async (submissionId: number): Promise<boolean> => {
+    const projectId = await projectOfSubmission(client, who.organizationId, submissionId);
+    return projectId !== null && (await artifactEditRefusal(client, { ...who, projectIds: [] }, projectId)) === null;
+  };
+  if (named.submissionId !== null && !(await mayChange(named.submissionId))) return refuse('submission');
+  if (named.sourceInteractionId === null) return null;
+  const meetingSubmission = await submissionOfInteraction(client, who.organizationId, named.sourceInteractionId);
+  if (meetingSubmission === undefined) return refuse('meeting');
+  if (meetingSubmission !== null && !(await mayChange(meetingSubmission))) return refuse('meeting');
+  return null;
+}
+
+/** The submission and the meeting a commitment call names, as the numbers given or null. */
+function commitmentSubjects(input: Record<string, unknown>): { submissionId: number | null; sourceInteractionId: number | null } {
+  return {
+    submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+    sourceInteractionId: typeof input.source_interaction_id === 'number' ? input.source_interaction_id : null,
+  };
+}
+
 registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_regulatory_commitment requires tenant + user context.' });
   const commitmentType = typeof input.commitment_type === 'string' ? input.commitment_type : '';
@@ -11196,16 +11237,21 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createCommitmentTx } = await import('../ha-interactions/ha-service.js');
   const reason = gatedReason(input);
+  const named = commitmentSubjects(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    const denied = await commitmentWriteRefusal(client, { organizationId: ctx.organizationId, userId: ctx.userId }, named);
+    if (denied) {
+      await client.query('ROLLBACK');
+      return denied;
+    }
     const { id, provenanceLinkIds } = await createCommitmentTx(client, ctx.organizationId, ctx.userId, {
       commitmentType: commitmentType as any, description,
       dueDate: typeof input.due_date === 'string' ? input.due_date : null,
       regulatoryBasis: typeof input.regulatory_basis === 'string' ? input.regulatory_basis : null,
-      sourceInteractionId: typeof input.source_interaction_id === 'number' ? input.source_interaction_id : null,
-      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      ...named,
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -11222,17 +11268,30 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   }
 });
 
+/* P-122 (2026-11-12), reached under launch scope: counted for the reader. The organisation's own commitments
+   (ORG_LEVEL) that name no submission, or a submission of a project this person can open (programReadScope, inside a
+   project its sponsor's); until then every commitment of the organisation was counted for any caller, identified or
+   not. A named submission outside that scope is refused in the words a missing one is, never answered as an empty
+   portfolio. */
 registerToolHandler('review_commitment_portfolio', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_commitment_portfolio requires tenant context.' });
-  const { listCommitments } = await import('../ha-interactions/ha-service.js');
+  const scope = await programReadScope('review_commitment_portfolio', ctx);
+  if (typeof scope === 'string') return scope;
+  const { listCommitments, submissionReadableIn, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
   const { summarizeCommitmentPortfolio } = await import('../ha-interactions/ha-logic.js');
   try {
+    const { getPool } = await import('../../db.js');
+    const reader = getPool() as never;
     const submissionId = typeof input.submission_id === 'number' ? input.submission_id : undefined;
-    const rows = await listCommitments(ctx.organizationId, submissionId);
+    if (submissionId !== undefined && !(await submissionReadableIn(reader, scope.organizationId, submissionId, scope.programIds))) {
+      return JSON.stringify({ error: 'submission_id does not name a submission of a project you can open. Nothing was read.', code: 'SUBMISSION_NOT_READABLE' });
+    }
+    const rows = await listCommitments(scope.organizationId, submissionId, ORG_LEVEL, reader, scope.programIds);
     const today = new Date().toISOString().slice(0, 10);
     const summary = summarizeCommitmentPortfolio(rows.map((r: any) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), today);
     return JSON.stringify({
       ok: true, summary,
+      counted: 'The organisation\'s own commitments that name no submission, or a submission of a project you can open.',
       message: summary.overdue > 0
         ? `${summary.overdue} commitment(s) overdue; ${summary.due_30} due within 30 days.`
         : `No overdue commitments; ${summary.due_30} due within 30 days, ${summary.due_90} within 90.`,
@@ -11440,12 +11499,13 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_irb_submission requires tenant context.' });
   const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
   if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
-  const { getPool } = await import('../../db.js');
   const { getCompletenessInput, getLifecycleStatus } = await import('../irb/irb-service.js');
   const { evaluateIrbCompleteness } = await import('../irb/irb-logic.js');
-  const client = await getPool().connect();
   try {
-    const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
+    /* Through the pool, inside the tenant scope. A connection from connect()
+       carries no tenant until BEGIN, so this read found no submission for any
+       organization (2026-11-12). */
+    const inp = await getCompletenessInput(ctx.organizationId, submissionId);
     const gate = evaluateIrbCompleteness(inp);
     /* The three-valued lifecycle, as GET /api/irb/submissions/:id/completeness
        serves it. continuingReviewStatus answered "not required, not expired"
@@ -11471,8 +11531,6 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -13681,13 +13739,25 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
+  const { fulfillCommitmentTx, readCommitmentForFulfilment, subjectsOfCommitment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
   const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
   const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    /* 2026-11-12, after the tool was re-filed under Communication (7994dc8f1): a commitment that names a submission,
+       or was made at a meeting on one, is marked fulfilled only by someone who may change that submission's project,
+       as it is recorded (commitmentWriteRefusal) and as the screen's route admits it (routes/ha-interactions.ts
+       admitCommitment). Until then the organisation's editor role was the only check, and the status is terminal.
+       Asked before the type is read, so a refusal confirms nothing about a commitment the person cannot open. */
+    const named = await subjectsOfCommitment(client, ctx.organizationId, commitmentId);
+    const denied = named
+      ? await commitmentWriteRefusal(client, { organizationId: ctx.organizationId, userId: ctx.userId }, named, 'commitment') : null;
+    if (denied) {
+      await client.query('ROLLBACK');
+      return denied;
+    }
     /* P-41 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
        Part 11 signature naming what met it, and AnA cannot sign. The type is
        read from the record, never taken from the model; for those three the
@@ -16229,6 +16299,8 @@ registerDocumentSpineHandlers(registerToolHandler);
 // Project-folder document catalog (list/read/catalog over vault.documents,
 // with read-coverage enforcement) — same injected-register pattern.
 registerDocumentCatalogHandlers(registerToolHandler);
+// The Help Center's two read tools (P-127), injected the same way.
+registerHelpSupportHandlers(registerToolHandler);
 // The authoring store, read-only (outline / one section windowed / search),
 // scoped to the open project — same injected-register pattern.
 registerAuthoringReadHandlers(registerToolHandler);

@@ -27,6 +27,9 @@ import {
   listInteractions,
   listCommitments,
   getInteractionReadinessInput,
+  projectOfSubmission,
+  submissionOfInteraction,
+  subjectsOfCommitment,
   ORG_LEVEL,
 } from '../services/ha-interactions/ha-service';
 import { evaluateMeetingReadiness } from '../services/ha-interactions/ha-logic';
@@ -137,20 +140,19 @@ const interactionSchema = z.object({
  * Answers the refusal and returns false; true when admitted or when the
  * meeting names no submission.
  */
-async function admitSubmissionWrite(req: Request, res: Response, orgId: number, submissionId: number | null | undefined, forWrite = true): Promise<boolean> {
+async function admitSubmissionWrite(req: Request, res: Response, orgId: number, submissionId: number | null | undefined,
+  { forWrite = true, notFound = 'Interaction not found for this organization.' }: { forWrite?: boolean; notFound?: string } = {}): Promise<boolean> {
   if (submissionId == null) return true;
-  const { rows } = await requestPgClient(req).query(
-    `SELECT p.id FROM submissions s
-       JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
-      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 2`, [submissionId, orgId]);
-  if (rows.length !== 1) {
-    res.status(404).json({ error: { code: 'NOT_FOUND', message: forWrite ? 'That submission is not one of a project you may change. Nothing was recorded.' : 'Interaction not found for this organization.' } });
+  // The submission's one project, read where AnA's commitment tools read it (ha-service.ts).
+  const projectId = await projectOfSubmission(requestPgClient(req) as never, orgId, submissionId);
+  if (projectId === null) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: forWrite ? 'That submission is not one of a project you may change. Nothing was recorded.' : notFound } });
     return false;
   }
-  try { await requireProjectAdmission(req, String(rows[0].id), forWrite); return true; } catch (err) {
+  try { await requireProjectAdmission(req, String(projectId), forWrite); return true; } catch (err) {
     if (!(err instanceof ProjectAdmissionRefusal)) throw err;
     // A read refused is a meeting this person cannot see: said as not found, never confirmed.
-    if (!forWrite) res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Interaction not found for this organization.' } });
+    if (!forWrite) res.status(404).json({ error: { code: 'NOT_FOUND', message: notFound } });
     else res.status(err.status).json({ error: { code: err.code, message: `${err.message} Nothing was recorded.` } });
     return false;
   }
@@ -161,8 +163,33 @@ async function admitMeeting(req: Request, res: Response, id: number, forWrite: b
   const orgId = resolveOrgId(req);
   if (!orgId) return true; // governedMutation and the reads answer the missing identity themselves
   return meetingSubmission(req, orgId, id)
-    .then((sub) => admitSubmissionWrite(req, res, orgId, sub, forWrite))
+    .then((sub) => admitSubmissionWrite(req, res, orgId, sub, { forWrite }))
     .catch((err) => { fail(res, err); return false; });
+}
+
+const COMMITMENT_NOT_FOUND = 'Commitment not found here.';
+
+/**
+ * Admit a read or write of commitment `id` by the project of the submission it names, and of the meeting it was made
+ * at (2026-11-12). Until then the organisation's editor role alone added a milestone to, or fulfilled, a commitment
+ * on a program the person cannot open; a meeting has been admitted this way since P-39 step 4, and AnA's commitment
+ * tools since 1ac146d37. Answers the refusal and returns false. A commitment that names neither is the
+ * organisation's own, and one that is not here is left to the handler, which says so in its own words.
+ */
+async function admitCommitment(req: Request, res: Response, id: number, forWrite: boolean): Promise<boolean> {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return true; // governedMutation and the fulfilment route answer the missing identity themselves
+  try {
+    const named = await subjectsOfCommitment(requestPgClient(req) as never, orgId, id);
+    if (!named) return true;
+    const how = { forWrite, notFound: COMMITMENT_NOT_FOUND };
+    if (!(await admitSubmissionWrite(req, res, orgId, named.submissionId, how))) return false;
+    if (named.sourceInteractionId == null) return true;
+    return await admitSubmissionWrite(req, res, orgId, await meetingSubmission(req, orgId, named.sourceInteractionId), how);
+  } catch (err) {
+    fail(res, err);
+    return false;
+  }
 }
 
 router.post('/interactions', async (req, res) => {
@@ -203,9 +230,7 @@ const statusSchema = z.object({
 
 /** The submission a meeting names, for its write admission; undefined when there is no such meeting here. */
 async function meetingSubmission(req: Request, orgId: number, id: number): Promise<number | null | undefined> {
-  const { rows } = await requestPgClient(req).query(
-    `SELECT submission_id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, orgId]);
-  return rows.length ? (rows[0].submission_id == null ? null : Number(rows[0].submission_id)) : undefined;
+  return submissionOfInteraction(requestPgClient(req) as never, orgId, id);
 }
 
 router.patch('/interactions/:id/status', async (req, res) => {
@@ -273,6 +298,10 @@ const commitmentSchema = z.object({
 router.post('/commitments', async (req, res) => {
   const parsed = commitmentSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
+  // A commitment on a submission, or made at a meeting on one, is recorded by someone who may change its project.
+  const org = resolveOrgId(req);
+  if (org && !(await admitSubmissionWrite(req, res, org, parsed.data.submissionId).catch((err) => { fail(res, err); return false; }))) return;
+  if (parsed.data.sourceInteractionId != null && !(await admitMeeting(req, res, parsed.data.sourceInteractionId, true))) return;
   await governedMutation(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id, provenanceLinkIds } = await createCommitmentTx(client, orgId, userId, parsed.data);
     recordHaCommitmentCreated(parsed.data.commitmentType);
@@ -288,7 +317,11 @@ router.get('/commitments', async (req, res) => {
     // On the request's tenant-pinned connection, projected per reader
     // (2026-10-19): evidence in a program this person cannot open is said to
     // exist and not named, and no raw fulfilment column is sent.
-    const rows = await listCommitments(orgId, Number.isFinite(submissionId) ? submissionId : undefined, ORG_LEVEL, requestPgClient(req) as never);
+    // Only commitments this reader may see (2026-11-12): none that names a submission, or was made at a meeting
+    // on one, of a program they cannot open. The meetings list beside it has been bound this way since P-39 step 4.
+    const q = requestPgClient(req);
+    const scope = await getCurrentAccessibleProgramScope(q as never, { organizationId: orgId, userId: resolveUserId(req) ?? undefined });
+    const rows = await listCommitments(orgId, Number.isFinite(submissionId) ? submissionId : undefined, ORG_LEVEL, q as never, scope.programIds);
     res.json(await commitmentsForRequest(req, orgId, rows));
   } catch (err) {
     answerFulfilmentFailure(res, err);
@@ -308,8 +341,16 @@ const ORG_DOOR: CommitmentDoor = {
   viewer: organisationViewerCapabilities,
 };
 
-router.post('/commitments/:id/fulfill', (req, res) => fulfilCommitmentRoute(req, res, ORG_DOOR));
-router.get('/commitments/:id/fulfilment-options', (req, res) => fulfilmentOptionsRoute(req, res, ORG_DOOR));
+router.post('/commitments/:id/fulfill', async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isInteger(id) && !(await admitCommitment(req, res, id, true))) return;
+  await fulfilCommitmentRoute(req, res, ORG_DOOR);
+});
+router.get('/commitments/:id/fulfilment-options', async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isInteger(id) && !(await admitCommitment(req, res, id, false))) return;
+  await fulfilmentOptionsRoute(req, res, ORG_DOOR);
+});
 
 const milestoneSchema = z.object({ title: z.string().min(1).max(500), dueDate: z.string().optional(), reason });
 
@@ -318,6 +359,7 @@ router.post('/commitments/:id/milestones', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = milestoneSchema.safeParse(req.body ?? {});
   if (!parsed.success) return validationRefusal(res, parsed.error);
+  if (!(await admitCommitment(req, res, id, true))) return;
   await governedMutation(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     const { id: mid } = await addMilestoneTx(client, orgId, userId, id, parsed.data);
     return { target: `regulatory-commitment:${id}`, payload: { milestoneId: mid }, body: { commitmentId: id, milestoneId: mid } };
