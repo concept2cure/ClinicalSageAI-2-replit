@@ -32,6 +32,7 @@
 
 import React from 'react';
 import { I } from '../icons';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { clause, mutateVerbatim } from './SubmissionSeqWorkspaces';
 
 /** The route's success body (sanitized: no server paths). */
@@ -50,7 +51,7 @@ interface AssembleAnswer {
 
 type Run =
   | { phase: 'idle' }
-  | { phase: 'running' }
+  | { phase: 'running'; seconds?: number }
   | { phase: 'done'; answer: AssembleAnswer }
   | { phase: 'refused'; text: string; audit: string | null }
   | { phase: 'unknown'; text: string | null };
@@ -73,6 +74,51 @@ function refusalAudit(body: unknown, code: string | undefined): string | null {
   const a = body && typeof body === 'object' ? (body as { auditTrail?: unknown }).auditTrail : undefined;
   if (a && typeof a === 'object') return auditLine(a as AssembleAnswer['auditTrail'], 'refusal');
   return code === 'ECTD_ASSEMBLE_BLOCKED' ? auditLine(null, 'refusal') : null;
+}
+
+/* Assembling a 200-leaf IND took about a minute (MR-03 Stage 6;
+   docs/evidence/D1/2026-11-12-edge-timeouts/), and CloudFront cuts a request
+   at 60 s. So the assembly asks to be answered at once (Prefer: respond-async):
+   the server answers 202 with a job, and this polls it every 2 s. The job holds
+   the answer the route would have sent, its status and its body, and each is
+   shown as it would have been. A failed job or a poll that cannot be read is
+   "could not be confirmed": the server may have assembled and audited it. */
+const ASSEMBLE_ASYNC = { Prefer: 'respond-async' };
+const POLL_MS = 2000;
+type AssembleJob =
+  | { status: 'running' }
+  | { status: 'completed'; result: { status: number; body: unknown } }
+  | { status: 'failed'; error: string };
+
+/** One poll: the job, or the HTTP status that kept it from being read. */
+async function readAssembleJob(poll: string): Promise<{ job: AssembleJob | null; httpStatus: number }> {
+  try {
+    const res = await apiRequest('GET', poll);
+    return { job: res.ok ? ((await res.json().catch(() => null)) as AssembleJob | null) : null, httpStatus: res.status };
+  } catch (e) {
+    return { job: null, httpStatus: (e as { status?: number } | null)?.status ?? 0 };
+  }
+}
+
+/** The route's answer, held by the job, as the synchronous answer would have been shown. */
+function runFromAnswer({ status, body }: { status: number; body: unknown }): Run {
+  if (status === 200 && (body as AssembleAnswer | null)?.ok === true) return { phase: 'done', answer: body as AssembleAnswer };
+  const code = (body as { error?: { code?: string } } | null)?.error?.code;
+  return { phase: 'refused', text: serverMessage(body) ?? `The server did not accept that (HTTP ${status}).`, audit: refusalAudit(body, code) };
+}
+
+async function followAssembleJob(poll: string, stillWanted: () => boolean, onElapsed: (s: number) => void): Promise<Run | null> {
+  const started = Date.now();
+  for (;;) {
+    await new Promise((r) => setTimeout(r, POLL_MS));
+    if (!stillWanted()) return null;
+    onElapsed(Math.round((Date.now() - started) / 1000));
+    const { job, httpStatus } = await readAssembleJob(poll);
+    if (!stillWanted()) return null;
+    if (!job) return { phase: 'unknown', text: `its progress could not be read (HTTP ${httpStatus || 'no answer'})` };
+    if (job.status === 'failed') return { phase: 'unknown', text: job.error };
+    if (job.status === 'completed') return runFromAnswer(job.result);
+  }
 }
 
 function AssembleResult({ answer, sequenceNumber }: { answer: AssembleAnswer; sequenceNumber: string }) {
@@ -124,12 +170,21 @@ function AssembleResult({ answer, sequenceNumber }: { answer: AssembleAnswer; se
 
 export function SequenceAssembleTestPackage({ seq }: { seq: { id: number; sequenceNumber: string } }) {
   const [run, setRun] = React.useState<Run>({ phase: 'idle' });
-  React.useEffect(() => setRun({ phase: 'idle' }), [seq.id]);
+  // Which run is current: a sequence change or a newer run retires a job being followed.
+  const current = React.useRef(0);
+  React.useEffect(() => { current.current += 1; setRun({ phase: 'idle' }); }, [seq.id]);
 
   const assemble = async () => {
     if (run.phase === 'running') return;
+    const mine = ++current.current;
     setRun({ phase: 'running' });
-    const r = await mutateVerbatim<AssembleAnswer>('POST', `/api/submissions/sequences/${seq.id}/assemble`, {});
+    const r = await mutateVerbatim<AssembleAnswer & { jobId?: string; poll?: string }>('POST', `/api/submissions/sequences/${seq.id}/assemble`, {}, ASSEMBLE_ASYNC);
+    if (mine !== current.current) return;
+    if (r.status === 202 && typeof r.data?.poll === 'string') {
+      const ended = await followAssembleJob(r.data.poll, () => mine === current.current, (seconds) => setRun({ phase: 'running', seconds }));
+      if (ended) setRun(ended);
+      return;
+    }
     if (r.data && r.data.ok === true) setRun({ phase: 'done', answer: r.data });
     /* Only a definite refusal can say the package was not assembled. */
     else if (r.unconfirmed || !r.error) {
@@ -148,7 +203,7 @@ export function SequenceAssembleTestPackage({ seq }: { seq: { id: number; sequen
       </div>
       <div className="cm-pushbar sc-mb">
         <button type="button" className="sc-trans-b" disabled={run.phase === 'running'} onClick={assemble}>
-          {I.layers} {run.phase === 'running' ? 'Assembling the test package…' : 'Assemble a test package'}
+          {I.layers} {run.phase === 'running' ? `Assembling the test package…${run.seconds ? ` ${run.seconds} s` : ''}` : 'Assemble a test package'}
         </button>
       </div>
       {run.phase === 'refused' && (

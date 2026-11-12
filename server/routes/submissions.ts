@@ -17,6 +17,7 @@ import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
 import { ok, respondIfConverterBusy } from '../lib/api-response';
 import { requestDb, requestPgClient } from '../db/requestDb';
+import { retainRequestDbClient } from '../db/requestDbLease';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
@@ -1995,24 +1996,13 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
 // with the digest of bytes it then deleted. A package names only recorded
 // identity (package-identity.ts); this route produces none, so it takes no
 // identity — a body naming one is refused rather than silently ignored — and the
-// answer carries dryRun / packageProduced / notice.
-const DRY_RUN_IDENTITY_FIELDS = ['applicationId', 'sponsorId', 'sponsorName'] as const;
-router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
-  const ctx = ctxOf(req);
-  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const seqId = idParam(req.params.seqId);
-  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const named = DRY_RUN_IDENTITY_FIELDS.filter((f) => (req.body ?? {})[f] !== undefined);
-  if (named.length > 0) {
-    return res.status(400).json({
-      error: {
-        code: 'DRY_RUN_TAKES_NO_IDENTITY',
-        message:
-          `This assembly is a dry run and takes no identity (${named.join(', ')}). A package's application number and ` +
-          'applicant are read from the record when it is exported, compiled or sent. Nothing was assembled.',
-      },
-    });
-  }
+
+/**
+ * The test-package dry run's answer: 200 with what the publisher built, or 422
+ * ECTD_ASSEMBLE_BLOCKED with its recorded refusal. Anything else is thrown, for
+ * fail() (synchronously) or the job's failure (asynchronously).
+ */
+async function sequenceAssembleAnswer(seqId: number, ctx: Ctx): Promise<{ status: number; body: unknown }> {
   const assembly = await import('../services/ectd/assemble-from-core');
   try {
     const { assembleSequence, assembledTransmitBlockers } = assembly;
@@ -2027,7 +2017,7 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
     // bundle is discarded before answering — nothing of it is kept.
     await result.cleanup();
     // Sanitized — never expose the server temp path.
-    res.json({
+    return { status: 200, body: {
       ok: true,
       dryRun: true,
       packageProduced: false,
@@ -2048,17 +2038,108 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       // What happened to the ECTD_ASSEMBLE row (§11.10(e)): an assembly that
       // went unrecorded says so here, not only in a server log.
       auditTrail: result.auditTrail,
-    });
+    } };
   } catch (err) {
     // A refused assembly is a refusal, not an outage. It carries no `code`, so
     // fail() answered it 500 "Request failed." and dropped the ECTD_ASSEMBLE_BLOCKED
     // row's outcome, which IS the record that the refusal happened.
     if (err instanceof assembly.EctdAssemblyBlockedError) {
-      return res.status(422).json({
+      return { status: 422, body: {
         error: { code: 'ECTD_ASSEMBLE_BLOCKED', message: err.message },
         auditTrail: err.auditTrail,
-      });
+      } };
     }
+    throw err;
+  }
+}
+
+/**
+ * The test package answered 202 with a job (MR-03 Stage 6 steps 4–6, OPS-17).
+ * Assembling a 200-leaf IND of 80-page documents took p95 56 s on four cores
+ * (docs/evidence/D1/2026-11-12-edge-timeouts/), at the 60 s CloudFront and ALB
+ * edge. A caller that sends `Prefer: respond-async` gets 202 with a job once the
+ * request's refusals are decided; the same dry run goes on in the request's
+ * scope, holding its database connection (retainRequestDbClient), and its
+ * answer, status and body, is stored on the job (artifact_compute_jobs,
+ * server/services/compute/computeService.ts). GET .../assemble/jobs/:jobId
+ * reads it, for the session's organization only. A caller that does not ask,
+ * or a sequence with no tracking project, keeps the synchronous answer.
+ */
+async function assembleAsJob(req: Request, res: Response, seqId: number, ctx: Ctx): Promise<boolean> {
+  if (!/(^|[,;\s])respond-async([,;\s]|$)/i.test(String(req.headers.prefer ?? ''))) return false;
+  const q = requestPgClient(req);
+  const { rows } = await q.query(
+    `SELECT p.id FROM ectd_sequences e
+       JOIN submissions s ON s.id = e.submission_id AND s.organization_id = $2
+       JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = $2
+      WHERE e.id = $1 ORDER BY p.id LIMIT 1`,
+    [seqId, ctx.organizationId],
+  );
+  const projectId = Number((rows[0] as { id?: unknown } | undefined)?.id);
+  if (!Number.isInteger(projectId) || projectId <= 0) return false;
+  const { startRouteJob, finishRouteJob } = await import('../services/compute/computeService');
+  const jobId = await startRouteJob(q, {
+    organizationId: ctx.organizationId, projectId, surfaceKey: 'sequence-assemble', intentType: 'ectd_sequence_dry_run',
+    requestedById: ctx.userId, payload: { sequenceId: seqId },
+  });
+  const releaseDb = retainRequestDbClient(req);
+  res.setHeader('Preference-Applied', 'respond-async');
+  res.status(202).json({ jobId, status: 'running', poll: `/api/submissions/sequences/${seqId}/assemble/jobs/${jobId}` });
+  void (async () => {
+    try {
+      await finishRouteJob(q, jobId, ctx.organizationId, { status: 'completed', result: await sequenceAssembleAnswer(seqId, ctx) });
+    } catch (err) {
+      logger.error('the test-package job failed', { jobId, sequenceId: seqId, error: err instanceof Error ? err.message : String(err) });
+      await finishRouteJob(q, jobId, ctx.organizationId, {
+        status: 'failed', error: `The test package could not be assembled on the server. Reference ${jobId}.`,
+      }).catch(() => logger.error('the failed test-package job could not be recorded', { jobId }));
+    } finally {
+      await releaseDb?.().catch(() => undefined);
+    }
+  })();
+  return true;
+}
+
+router.get('/sequences/:seqId/assemble/jobs/:jobId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const jobId = String(req.params.jobId ?? '');
+  if (idParam(req.params.seqId) === null || !/^rjob_[0-9]+_[0-9a-f]{16}$/.test(jobId)) {
+    return res.status(404).json({ error: { code: 'JOB_NOT_FOUND', message: 'No such test-package job.' } });
+  }
+  try {
+    const { readRouteJob } = await import('../services/compute/computeService');
+    const job = await readRouteJob(requestPgClient(req), jobId, ctx.organizationId, 'sequence-assemble');
+    if (!job) return res.status(404).json({ error: { code: 'JOB_NOT_FOUND', message: 'No such test-package job.' } });
+    res.json(job);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// answer carries dryRun / packageProduced / notice.
+const DRY_RUN_IDENTITY_FIELDS = ['applicationId', 'sponsorId', 'sponsorName'] as const;
+router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const named = DRY_RUN_IDENTITY_FIELDS.filter((f) => (req.body ?? {})[f] !== undefined);
+  if (named.length > 0) {
+    return res.status(400).json({
+      error: {
+        code: 'DRY_RUN_TAKES_NO_IDENTITY',
+        message:
+          `This assembly is a dry run and takes no identity (${named.join(', ')}). A package's application number and ` +
+          'applicant are read from the record when it is exported, compiled or sent. Nothing was assembled.',
+      },
+    });
+  }
+  if (await assembleAsJob(req, res, seqId, ctx)) return;
+  try {
+    const answer = await sequenceAssembleAnswer(seqId, ctx);
+    res.status(answer.status).json(answer.body);
+  } catch (err) {
     fail(res, err);
   }
 });

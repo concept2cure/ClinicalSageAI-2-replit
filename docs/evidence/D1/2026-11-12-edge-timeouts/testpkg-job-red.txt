@@ -1,0 +1,1642 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > asks to be answered at once 161ms
+   → expected undefined to deeply equal { Prefer: 'respond-async' }
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > polls every 2 s, shows how long it has run, and renders the answer when the job completes 129ms
+   → Unable to find an accessible element with the role "button" and name `/Assembling the test package… 2 s/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Dispatch":
+  <h2 />
+
+  Name "Test package":
+  <h3
+    class="sec-title"
+  />
+
+  Name "Package and transmit":
+  <h3
+    class="sec-title"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    data-testid="sc-dispatch-verdict"
+    role="status"
+  />
+
+  Name "":
+  <div
+    class="sc-verdict tone-warn"
+    role="status"
+  />
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  <ul
+    class="sc-blockers"
+  />
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  <li />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="sec-sub sc-mb"
+    data-testid="sc-dispatch-counts"
+  />
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  <details
+    class="pj-more sc-mb"
+  />
+
+  Name "":
+  <details
+    class="pj-more"
+    data-testid="retire-sequence"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Assemble a test package":
+  <button
+    class="sc-trans-b"
+    type="button"
+  />
+
+  Name "Download an inspection copy of the package (zip)":
+  <button
+    class="sc-trans-b"
+    type="button"
+  />
+
+  Name "Run dispatch QC":
+  <button
+    class="sc-trans-b"
+    type="button"
+  />
+
+  --------------------------------------------------
+  note:
+
+  Name "":
+  <p
+    role="note"
+    style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-200); margin: 0px 0px 8px;"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-sec sc-dispatch"
+    >
+      <div
+        class="pj-sec-h"
+      >
+        <h2>
+          Dispatch
+        </h2>
+        <span
+          class="sec-sub"
+        >
+          sequence 
+          0001
+        </span>
+      </div>
+      <div>
+        <div
+          data-testid="sc-dispatch-verdict"
+          role="status"
+        >
+          <div
+            class="al-lead al-urgent"
+            data-emphasis="verdict"
+          >
+            <div
+              class="al-k"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-clock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                />
+              </svg>
+              <span
+                class="sr-only"
+              >
+                Urgent:
+              </span>
+               
+              Cleared to dispatch?
+            </div>
+            <div
+              class="al-h"
+            >
+              Not yet. 
+              One
+               
+              thing stands
+               between sequence 
+              0001
+               and dispatch.
+            </div>
+            <div
+              class="al-b"
+            >
+              <ul
+                class="sc-blockers"
+              >
+                <li>
+                  A 21 CFR Part 11 release signature is required.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <p
+          class="sec-sub sc-mb"
+          data-testid="sc-dispatch-counts"
+        >
+          0
+           validation 
+          errors
+           ·
+           
+          0
+           unacknowledged shadow
+           
+          criticals
+           ·
+           
+          1
+           shadow 
+          review
+           
+          run · 
+          3
+           
+          leaves
+           · status
+           
+          Validated
+        </p>
+        <details
+          class="pj-more sc-mb"
+        >
+          <summary>
+            How the dispatch gate works
+          </summary>
+          <p>
+            Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.
+          </p>
+        </details>
+        <div
+          class="sc-disp-actions"
+        />
+        <div
+          class="sc-mt"
+        >
+          <div
+            class="pj-sec-h"
+          >
+            <h3
+              class="sec-title"
+            >
+              Test package
+            </h3>
+          </div>
+          <div
+            class="scaf-note sc-mb"
+          >
+            Assembles sequence 
+            0001
+            's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.
+          </div>
+          <div
+            class="cm-pushbar sc-mb"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Assemble a test package
+            </button>
+          </div>
+          <div
+            class="sc-verdict tone-warn"
+            role="status"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-triangle-alert"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+              />
+              <path
+                d="M12 9v4"
+              />
+              <path
+                d="M12 17h.01"
+              />
+            </svg>
+             Whether the test package was assembled could not be confirmed
+            . Check the sequence's audit trail before assembling again.
+          </div>
+        </div>
+        <div
+          class="sc-mt"
+        >
+          <div
+            class="pj-sec-h sc-mt"
+          >
+            <h3
+              class="sec-title"
+            >
+              Package and transmit
+            </h3>
+          </div>
+          <p
+            role="note"
+            style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-200); margin: 0px 0px 8px;"
+          >
+            No signed-in user is known here, so no review can be confirmed.
+             The export is sent without a confirmed review, which production refuses.
+          </p>
+          <div
+            class="cm-pushbar sc-mb"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Download an inspection copy of the package (zip)
+            </button>
+          </div>
+          <div
+            class="scaf-note sc-mt"
+          >
+            Transmit opens once sequence 
+            0001
+             is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
+          </div>
+        </div>
+        <div
+          class="scaf-note sc-mt"
+        >
+          Freeze stays locked while the gate blocks.
+           
+          The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here.
+        </div>
+        <div
+          class="cm-pushbar sc-mt"
+        >
+          <button
+            class="sc-trans-b"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            Run dispatch QC
+          </button>
+        </div>
+      </div>
+      <details
+        class="pj-more"
+        data-testid="retire-sequence"
+      >
+        <summary>
+          Retire sequence 
+          0001
+          …
+        </summary>
+      </details>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a refusal the job holds is shown as the refusal, in the server words, with its audit outcome 5028ms
+   → expected 'Dispatchsequence 0001Urgent: Cleared …' to match /No test package was assembled/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="pj-sec sc-dispatch"
+      >
+        <div
+          class="pj-sec-h"
+        >
+          <h2>
+            Dispatch
+          </h2>
+          <span
+            class="sec-sub"
+          >
+            sequence 
+            0001
+          </span>
+        </div>
+        <div>
+          <div
+            data-testid="sc-dispatch-verdict"
+            role="status"
+          >
+            <div
+              class="al-lead al-urgent"
+              data-emphasis="verdict"
+            >
+              <div
+                class="al-k"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-clock"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <polyline
+                    points="12 6 12 12 16 14"
+                  />
+                </svg>
+                <span
+                  class="sr-only"
+                >
+                  Urgent:
+                </span>
+                 
+                Cleared to dispatch?
+              </div>
+              <div
+                class="al-h"
+              >
+                Not yet. 
+                One
+                 
+                thing stands
+                 between sequence 
+                0001
+                 and dispatch.
+              </div>
+              <div
+                class="al-b"
+              >
+                <ul
+                  class="sc-blockers"
+                >
+                  <li>
+                    A 21 CFR Part 11 release signature is required.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <p
+            class="sec-sub sc-mb"
+            data-testid="sc-dispatch-counts"
+          >
+            0
+             validation 
+            errors
+             ·
+             
+            0
+             unacknowledged shadow
+             
+            criticals
+             ·
+             
+            1
+             shadow 
+            review
+             
+            run · 
+            3
+             
+            leaves
+             · status
+             
+            Validated
+          </p>
+          <details
+            class="pj-more sc-mb"
+          >
+            <summary>
+              How the dispatch gate works
+            </summary>
+            <p>
+              Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.
+            </p>
+          </details>
+          <div
+            class="sc-disp-actions"
+          />
+          <div
+            class="sc-mt"
+          >
+            <div
+              class="pj-sec-h"
+            >
+              <h3
+                class="sec-title"
+              >
+                Test package
+              </h3>
+            </div>
+            <div
+              class="scaf-note sc-mb"
+            >
+              Assembles sequence 
+              0001
+              's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.
+            </div>
+            <div
+              class="cm-pushbar sc-mb"
+            >
+              <button
+                class="sc-trans-b"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-layers"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                  />
+                  <path
+                    d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                  />
+                  <path
+                    d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                  />
+                </svg>
+                 
+                Assemble a test package
+              </button>
+            </div>
+            <div
+              class="sc-verdict tone-warn"
+              role="status"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-triangle-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                />
+                <path
+                  d="M12 9v4"
+                />
+                <path
+                  d="M12 17h.01"
+                />
+              </svg>
+               Whether the test package was assembled could not be confirmed
+              . Check the sequence's audit trail before assembling again.
+            </div>
+          </div>
+          <div
+            class="sc-mt"
+          >
+            <div
+              class="pj-sec-h sc-mt"
+            >
+              <h3
+                class="sec-title"
+              >
+                Package and transmit
+              </h3>
+            </div>
+            <p
+              role="note"
+              style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-200); margin: 0px 0px 8px;"
+            >
+              No signed-in user is known here, so no review can be confirmed.
+               The export is sent without a confirmed review, which production refuses.
+            </p>
+            <div
+              class="cm-pushbar sc-mb"
+            >
+              <button
+                class="sc-trans-b"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-layers"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                  />
+                  <path
+                    d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                  />
+                  <path
+                    d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                  />
+                </svg>
+                 
+                Download an inspection copy of the package (zip)
+              </button>
+            </div>
+            <div
+              class="scaf-note sc-mt"
+            >
+              Transmit opens once sequence 
+              0001
+               is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
+            </div>
+          </div>
+          <div
+            class="scaf-note sc-mt"
+          >
+            Freeze stays locked while the gate blocks.
+             
+            The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here.
+          </div>
+          <div
+            class="cm-pushbar sc-mt"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-shield-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="m9 12 2 2 4-4"
+                />
+              </svg>
+               
+              Run dispatch QC
+            </button>
+          </div>
+        </div>
+        <details
+          class="pj-more"
+          data-testid="retire-sequence"
+        >
+          <summary>
+            Retire sequence 
+            0001
+            …
+          </summary>
+        </details>
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a failed job is "could not be confirmed", in the job words 29ms
+   → expected 'Dispatchsequence 0001Urgent: Cleared …' to contain 'Reference rjob_1762900000000_01234567…'
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a poll that cannot be read is "could not be confirmed", never "not assembled" 21ms
+   → expected 'Dispatchsequence 0001Urgent: Cleared …' to match /its progress could not be read \(HTTP…/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > asks to be answered at once
+AssertionError: expected undefined to deeply equal { Prefer: 'respond-async' }
+
+- Expected:
+{
+  "Prefer": "respond-async",
+}
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx:82:23
+     80|     await startAssembly();
+     81|     const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && …
+     82|     expect(call?.[3]).toEqual({ Prefer: 'respond-async' });
+       |                       ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > polls every 2 s, shows how long it has run, and renders the answer when the job completes
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Assembling the test package… 2 s/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Dispatch":
+  <h2 />
+
+  Name "Test package":
+  <h3
+    class="sec-title"
+  />
+
+  Name "Package and transmit":
+  <h3
+    class="sec-title"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    data-testid="sc-dispatch-verdict"
+    role="status"
+  />
+
+  Name "":
+  <div
+    class="sc-verdict tone-warn"
+    role="status"
+  />
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  <ul
+    class="sc-blockers"
+  />
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  <li />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="sec-sub sc-mb"
+    data-testid="sc-dispatch-counts"
+  />
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  <details
+    class="pj-more sc-mb"
+  />
+
+  Name "":
+  <details
+    class="pj-more"
+    data-testid="retire-sequence"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Assemble a test package":
+  <button
+    class="sc-trans-b"
+    type="button"
+  />
+
+  Name "Download an inspection copy of the package (zip)":
+  <button
+    class="sc-trans-b"
+    type="button"
+  />
+
+  Name "Run dispatch QC":
+  <button
+    class="sc-trans-b"
+    type="button"
+  />
+
+  --------------------------------------------------
+  note:
+
+  Name "":
+  <p
+    role="note"
+    style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-200); margin: 0px 0px 8px;"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-sec sc-dispatch"
+    >
+      <div
+        class="pj-sec-h"
+      >
+        <h2>
+          Dispatch
+        </h2>
+        <span
+          class="sec-sub"
+        >
+          sequence 
+          0001
+        </span>
+      </div>
+      <div>
+        <div
+          data-testid="sc-dispatch-verdict"
+          role="status"
+        >
+          <div
+            class="al-lead al-urgent"
+            data-emphasis="verdict"
+          >
+            <div
+              class="al-k"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-clock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                />
+              </svg>
+              <span
+                class="sr-only"
+              >
+                Urgent:
+              </span>
+               
+              Cleared to dispatch?
+            </div>
+            <div
+              class="al-h"
+            >
+              Not yet. 
+              One
+               
+              thing stands
+               between sequence 
+              0001
+               and dispatch.
+            </div>
+            <div
+              class="al-b"
+            >
+              <ul
+                class="sc-blockers"
+              >
+                <li>
+                  A 21 CFR Part 11 release signature is required.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <p
+          class="sec-sub sc-mb"
+          data-testid="sc-dispatch-counts"
+        >
+          0
+           validation 
+          errors
+           ·
+           
+          0
+           unacknowledged shadow
+           
+          criticals
+           ·
+           
+          1
+           shadow 
+          review
+           
+          run · 
+          3
+           
+          leaves
+           · status
+           
+          Validated
+        </p>
+        <details
+          class="pj-more sc-mb"
+        >
+          <summary>
+            How the dispatch gate works
+          </summary>
+          <p>
+            Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.
+          </p>
+        </details>
+        <div
+          class="sc-disp-actions"
+        />
+        <div
+          class="sc-mt"
+        >
+          <div
+            class="pj-sec-h"
+          >
+            <h3
+              class="sec-title"
+            >
+              Test package
+            </h3>
+          </div>
+          <div
+            class="scaf-note sc-mb"
+          >
+            Assembles sequence 
+            0001
+            's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.
+          </div>
+          <div
+            class="cm-pushbar sc-mb"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Assemble a test package
+            </button>
+          </div>
+          <div
+            class="sc-verdict tone-warn"
+            role="status"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-triangle-alert"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+              />
+              <path
+                d="M12 9v4"
+              />
+              <path
+                d="M12 17h.01"
+              />
+            </svg>
+             Whether the test package was assembled could not be confirmed
+            . Check the sequence's audit trail before assembling again.
+          </div>
+        </div>
+        <div
+          class="sc-mt"
+        >
+          <div
+            class="pj-sec-h sc-mt"
+          >
+            <h3
+              class="sec-title"
+            >
+              Package and transmit
+            </h3>
+          </div>
+          <p
+            role="note"
+            style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-200); margin: 0px 0px 8px;"
+          >
+            No signed-in user is known here, so no review can be confirmed.
+             The export is sent without a confirmed review, which production refuses.
+          </p>
+          <div
+            class="cm-pushbar sc-mb"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Download an inspection copy of the package (zip)
+            </button>
+          </div>
+          <div
+            class="scaf-note sc-mt"
+          >
+            Transmit opens once sequence 
+            0001
+             is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
+          </div>
+        </div>
+        <div
+          class="scaf-note sc-mt"
+        >
+          Freeze stays locked while the gate blocks.
+           
+          The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here.
+        </div>
+        <div
+          class="cm-pushbar sc-mt"
+        >
+          <button
+            class="sc-trans-b"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+             
+            Run dispatch QC
+          </button>
+        </div>
+      </div>
+      <details
+        class="pj-more"
+        data-testid="retire-sequence"
+      >
+        <summary>
+          Retire sequence 
+          0001
+          …
+        </summary>
+      </details>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx:89:20
+     87|     await startAssembly();
+     88|     await tick(2000);
+     89|     expect((screen.getByRole('button', { name: /Assembling the test pa…
+       |                    ^
+     90|     await tick(2000);
+     91|     vi.useRealTimers();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a refusal the job holds is shown as the refusal, in the server words, with its audit outcome
+AssertionError: expected 'Dispatchsequence 0001Urgent: Cleared …' to match /No test package was assembled/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="pj-sec sc-dispatch"
+      >
+        <div
+          class="pj-sec-h"
+        >
+          <h2>
+            Dispatch
+          </h2>
+          <span
+            class="sec-sub"
+          >
+            sequence 
+            0001
+          </span>
+        </div>
+        <div>
+          <div
+            data-testid="sc-dispatch-verdict"
+            role="status"
+          >
+            <div
+              class="al-lead al-urgent"
+              data-emphasis="verdict"
+            >
+              <div
+                class="al-k"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-clock"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <polyline
+                    points="12 6 12 12 16 14"
+                  />
+                </svg>
+                <span
+                  class="sr-only"
+                >
+                  Urgent:
+                </span>
+                 
+                Cleared to dispatch?
+              </div>
+              <div
+                class="al-h"
+              >
+                Not yet. 
+                One
+                 
+                thing stands
+                 between sequence 
+                0001
+                 and dispatch.
+              </div>
+              <div
+                class="al-b"
+              >
+                <ul
+                  class="sc-blockers"
+                >
+                  <li>
+                    A 21 CFR Part 11 release signature is required.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <p
+            class="sec-sub sc-mb"
+            data-testid="sc-dispatch-counts"
+          >
+            0
+             validation 
+            errors
+             ·
+             
+            0
+             unacknowledged shadow
+             
+            criticals
+             ·
+             
+            1
+             shadow 
+            review
+             
+            run · 
+            3
+             
+            leaves
+             · status
+             
+            Validated
+          </p>
+          <details
+            class="pj-more sc-mb"
+          >
+            <summary>
+              How the dispatch gate works
+            </summary>
+            <p>
+              Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.
+            </p>
+          </details>
+          <div
+            class="sc-disp-actions"
+          />
+          <div
+            class="sc-mt"
+          >
+            <div
+              class="pj-sec-h"
+            >
+              <h3
+                class="sec-title"
+              >
+                Test package
+              </h3>
+            </div>
+            <div
+              class="scaf-note sc-mb"
+            >
+              Assembles sequence 
+              0001
+              's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record.
+            </div>
+            <div
+              class="cm-pushbar sc-mb"
+            >
+              <button
+                class="sc-trans-b"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-layers"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                  />
+                  <path
+                    d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                  />
+                  <path
+                    d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                  />
+                </svg>
+                 
+                Assemble a test package
+              </button>
+            </div>
+            <div
+              class="sc-verdict tone-warn"
+              role="status"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-triangle-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                />
+                <path
+                  d="M12 9v4"
+                />
+                <path
+                  d="M12 17h.01"
+                />
+              </svg>
+               Whether the test package was assembled could not be confirmed
+              . Check the sequence's audit trail before assembling again.
+            </div>
+          </div>
+          <div
+            class="sc-mt"
+          >
+            <div
+              class="pj-sec-h sc-mt"
+            >
+              <h3
+                class="sec-title"
+              >
+                Package and transmit
+              </h3>
+            </div>
+            <p
+              role="note"
+              style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5; color: var(--text-200); margin: 0px 0px 8px;"
+            >
+              No signed-in user is known here, so no review can be confirmed.
+               The export is sent without a confirmed review, which production refuses.
+            </p>
+            <div
+              class="cm-pushbar sc-mb"
+            >
+              <button
+                class="sc-trans-b"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-layers"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                  />
+                  <path
+                    d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                  />
+                  <path
+                    d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                  />
+                </svg>
+                 
+                Download an inspection copy of the package (zip)
+              </button>
+            </div>
+            <div
+              class="scaf-note sc-mt"
+            >
+              Transmit opens once sequence 
+              0001
+               is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
+            </div>
+          </div>
+          <div
+            class="scaf-note sc-mt"
+          >
+            Freeze stays locked while the gate blocks.
+             
+            The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here.
+          </div>
+          <div
+            class="cm-pushbar sc-mt"
+          >
+            <button
+              class="sc-trans-b"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-shield-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="m9 12 2 2 4-4"
+                />
+              </svg>
+               
+              Run dispatch QC
+            </button>
+          </div>
+        </div>
+        <details
+          class="pj-more"
+          data-testid="retire-sequence"
+        >
+          <summary>
+            Retire sequence 
+            0001
+            …
+          </summary>
+        </details>
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected:
+/No test package was assembled/
+
++ Received:
+"Dispatchsequence 0001Urgent: Cleared to dispatch?Not yet. One thing stands between sequence 0001 and dispatch.A 21 CFR Part 11 release signature is required.0 validation errors · 0 unacknowledged shadow criticals · 1 shadow review run · 3 leaves · status ValidatedHow the dispatch gate worksDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.Test packageAssembles sequence 0001's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record. Assemble a test package Whether the test package was assembled could not be confirmed. Check the sequence's audit trail before assembling again.Package and transmitNo signed-in user is known here, so no review can be confirmed. The export is sent without a confirmed review, which production refuses. Download an inspection copy of the package (zip)Transmit opens once sequence 0001 is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.Freeze stays locked while the gate blocks. The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here. Run dispatch QCRetire sequence 0001…"
+
+ ❯ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx:106:40
+    104|     await tick(2000);
+    105|     vi.useRealTimers();
+    106|     await waitFor(() => expect(text()).toMatch(/No test package was as…
+       |                                        ^
+    107|     expect(text()).toContain('Correct it in Submission Center, Builder…
+    108|     expect(text()).toContain('The refusal audit entry could not be wri…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a failed job is "could not be confirmed", in the job words
+AssertionError: expected 'Dispatchsequence 0001Urgent: Cleared …' to contain 'Reference rjob_1762900000000_01234567…'
+
+Expected: "Reference rjob_1762900000000_0123456789abcdef"
+Received: "Dispatchsequence 0001Urgent: Cleared to dispatch?Not yet. One thing stands between sequence 0001 and dispatch.A 21 CFR Part 11 release signature is required.0 validation errors · 0 unacknowledged shadow criticals · 1 shadow review run · 3 leaves · status ValidatedHow the dispatch gate worksDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.Test packageAssembles sequence 0001's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record. Assemble a test package Whether the test package was assembled could not be confirmed. Check the sequence's audit trail before assembling again.Package and transmitNo signed-in user is known here, so no review can be confirmed. The export is sent without a confirmed review, which production refuses. Download an inspection copy of the package (zip)Transmit opens once sequence 0001 is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.Freeze stays locked while the gate blocks. The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here. Run dispatch QCRetire sequence 0001…"
+
+ ❯ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx:118:20
+    116|     vi.useRealTimers();
+    117|     await waitFor(() => expect(text()).toMatch(/Whether the test packa…
+    118|     expect(text()).toContain(`Reference ${JOB}`);
+       |                    ^
+    119|     expect(text()).not.toMatch(/No test package was assembled/);
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx > Dispatch tab: the test package follows its job > a poll that cannot be read is "could not be confirmed", never "not assembled"
+AssertionError: expected 'Dispatchsequence 0001Urgent: Cleared …' to match /its progress could not be read \(HTTP…/
+
+- Expected:
+/its progress could not be read \(HTTP 500\)/
+
++ Received:
+"Dispatchsequence 0001Urgent: Cleared to dispatch?Not yet. One thing stands between sequence 0001 and dispatch.A 21 CFR Part 11 release signature is required.0 validation errors · 0 unacknowledged shadow criticals · 1 shadow review run · 3 leaves · status ValidatedHow the dispatch gate worksDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce with the e-signature.Test packageAssembles sequence 0001's leaves into an eCTD package on the server, reports what in those leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency identifiers: its application number and applicant are placeholders, not the ones on record. Assemble a test package Whether the test package was assembled could not be confirmed. Check the sequence's audit trail before assembling again.Package and transmitNo signed-in user is known here, so no review can be confirmed. The export is sent without a confirmed review, which production refuses. Download an inspection copy of the package (zip)Transmit opens once sequence 0001 is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.Freeze stays locked while the gate blocks. The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here. Run dispatch QCRetire sequence 0001…"
+
+ ❯ client/src/concept2cure/v2/__tests__/sequenceAssembleAsyncJob.test.tsx:128:20
+    126|     vi.useRealTimers();
+    127|     await waitFor(() => expect(text()).toMatch(/Whether the test packa…
+    128|     expect(text()).toMatch(/its progress could not be read \(HTTP 500\…
+       |                    ^
+    129|     expect(text()).not.toMatch(/No test package was assembled/);
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  17:53:24
+   Duration  7.11s (transform 949ms, setup 151ms, import 1.12s, tests 5.37s, environment 374ms)
+

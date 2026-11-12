@@ -30,7 +30,7 @@ const PASSWORD = `Edge-Timing-${crypto.randomBytes(9).toString('base64url')}!7`;
 const SIZES = (process.env.SIZES ?? '50,200').split(',').map(Number);
 const RUNS = Number(process.env.RUNS ?? 5);
 const PAGES = Number(process.env.PAGES ?? 8);
-// ASYNC=1: compile asks for Prefer: respond-async (MR-03 Stage 6 step 4) and polls its job every 2 s. Each call
+// ASYNC=1: each call asks for Prefer: respond-async (MR-03 Stage 6 step 4) and polls its job every 2 s. Each call
 // then records the time to the 202 (`acceptMs`) and to the job's end (`ms`), so the edge sees only the first.
 const ASYNC = process.env.ASYNC === '1';
 
@@ -271,8 +271,8 @@ for (const n of SIZES) {
     const times = [];
     const statuses = [];
     for (let r = 0; r < RUNS; r += 1) {
-      let out = await call(method, path, body, token, ASYNC && name === 'compile' ? { headers: { prefer: 'respond-async' } } : {});
-      if (ASYNC && name === 'compile' && out.status === 202 && out.json?.jobId) out = await followJob(out, token);
+      let out = await call(method, path, body, token, ASYNC ? { headers: { prefer: 'respond-async' } } : {});
+      if (ASYNC && out.status === 202 && out.json?.jobId) out = await followJob(out, token);
       times.push(out.ms);
       statuses.push(out.status);
       console.info(JSON.stringify({ event: 'call', leaves: n, endpoint: name, run: r + 1, status: out.status, ms: Math.round(out.ms), ...(out.acceptMs != null ? { acceptMs: Math.round(out.acceptMs), jobStatus: out.jobStatus } : {}), bytes: out.bytes, ...(out.status >= 400 ? { body: out.text } : {}), ...(r === 0 && out.json && typeof out.json === 'object' ? { outcome: { status: out.json.status ?? null, leafFilesRendered: out.json.leafFilesRendered ?? out.json.materialized ?? null, blockers: (out.json.submissionBlockers ?? []).slice(0, 3), errors: (out.json.errors ?? []).slice(0, 3) } } : {}) }));
