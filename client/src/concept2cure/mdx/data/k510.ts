@@ -78,6 +78,86 @@ export const K510_STAGES: K510Stage[] = [
   { id: 'submit',     label: 'Submit',                  meta: 'eSTAR + cover letter' },
 ];
 
+/**
+ * What the 510(k) screen calls its parts, for the pathway the project files.
+ *
+ * P-114 item 4 (2026-11-09, decided under the founder's delegation; MDX journey
+ * M7). A De Novo project's eSTAR is produced on this screen (the kit folds
+ * De Novo into it), and until 2026-11-12 the screen called it a 510(k)
+ * throughout: its pathway, its package, a "predicate search" and a
+ * "substantial equivalence matrix". A De Novo claims no predicate (FD&C Act
+ * 513(f)(2)). Its request shows the search that found none, says how the
+ * device differs from similar ones, and proposes the class and special
+ * controls (21 CFR 860.220): the governed De Novo outline's group C. The
+ * panels are the same panels; a De Novo reads them for what they serve.
+ */
+export interface K510PathwayWords {
+  /** The pathway, in FDA's words. */
+  pathway: string;
+  searchTitle: string;
+  searchEmptyHint: string;
+  searchRegulation: string;
+  comparisonTitle: string;
+  /** What the subject device is compared with, plural. */
+  comparedWith: string;
+  /** The comparison's rows, as an empty or failed read names them. */
+  comparisonRows: string;
+  /** The comparison, inside a sentence. */
+  comparisonNoun: string;
+  /** Why the comparison is empty when predicate intelligence is not configured. */
+  comparisonNotConfigured: string;
+  comparisonEmptyHint: string;
+  comparisonRegulation: string;
+  estarRegulation: string;
+  /** The section the header's editor button opens. */
+  editorSection: { ref: string; code: string | number; label: string };
+  stages: K510Stage[];
+}
+
+const K510_WORDS: K510PathwayWords = {
+  pathway: '510(k)',
+  searchTitle: 'Predicate search · K-numbers',
+  searchEmptyHint: 'Run a predicate search for this device to populate candidates.',
+  searchRegulation: 'Serves the 510(k) predicate comparison (21 CFR 807.92)',
+  comparisonTitle: 'Substantial equivalence matrix',
+  comparedWith: 'predicates',
+  comparisonRows: 'substantial-equivalence rows',
+  comparisonNoun: 'the substantial-equivalence matrix',
+  comparisonNotConfigured: 'The SE matrix is built by predicate intelligence, which is not configured for this workspace.',
+  comparisonEmptyHint: 'Compare this device against a selected predicate to build the SE matrix.',
+  comparisonRegulation: 'Serves the 510(k) substantial-equivalence discussion',
+  estarRegulation: 'Serves the FDA eSTAR 510(k) submission template',
+  editorSection: { ref: '§11', code: 11, label: 'Substantial Equivalence Discussion' },
+  stages: K510_STAGES,
+};
+
+const DE_NOVO_STAGE_WORDS: Record<string, Pick<K510Stage, 'label' | 'meta'>> = {
+  predicate: { label: 'Similar-device search', meta: 'No predicate exists' },
+  se: { label: 'Classification and special controls', meta: 'Class · controls · benefit-risk' },
+};
+
+const DE_NOVO_WORDS: K510PathwayWords = {
+  pathway: 'De Novo',
+  searchTitle: 'Similar devices · K-numbers',
+  searchEmptyHint: 'Search for similar devices to show that none is a predicate for this one.',
+  searchRegulation: 'Serves the De Novo classification summary: the search that found no predicate (21 CFR 860.220)',
+  comparisonTitle: 'Comparison with similar devices',
+  comparedWith: 'similar devices',
+  comparisonRows: 'similar-device comparison rows',
+  comparisonNoun: 'the comparison with similar devices',
+  comparisonNotConfigured: 'The comparison with similar devices is built by predicate intelligence, which is not configured for this workspace.',
+  comparisonEmptyHint: 'Compare this device with a similar device to show how it differs.',
+  comparisonRegulation: 'Serves the De Novo classification summary: how this device differs from similar ones (21 CFR 860.220)',
+  estarRegulation: 'Serves the FDA eSTAR De Novo submission template',
+  editorSection: { ref: '§C1', code: 'C1', label: 'Reason De Novo is appropriate (no legally marketed predicate)' },
+  stages: K510_STAGES.map((s) => ({ ...s, ...DE_NOVO_STAGE_WORDS[s.id] })),
+};
+
+/** The screen's words for a pathway: De Novo's for a De Novo, a 510(k)'s for anything else it is opened on. */
+export function k510PathwayWords(pathway: string | null | undefined): K510PathwayWords {
+  return pathway === 'de_novo' ? DE_NOVO_WORDS : K510_WORDS;
+}
+
 /*
  * K510_PREDICATES, K510_SE_ROWS and K510_ESTAR — removed. What each asserted:
  *
