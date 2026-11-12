@@ -121,3 +121,76 @@ Red first: each suite was run against the code before its fix.
   coordinating session.
 - **No seed.** The Lumen pack records no IRB submission; a person records it in the demo, as above.
 - HawkScan did not run: no `HAWK_API_KEY` in this environment.
+
+---
+
+# Slice 2 (2026-11-12): what is on file, the board's determination, and the approval as a signature
+
+## What a person saw after slice 1
+
+- Sites, consent documents, amendments, reportable events and the board's determinations each had a governed write
+  on `/api/irb` and **no read**: nothing anyone recorded could be shown back. None had a caller under `client/`.
+- **A disapproval left the status alone.** `recordReviewTx` set the status only for `approved` and
+  `modifications_required`; a `deferred` or `disapproved` determination wrote a review row and the submission still
+  read "under review".
+- **Vulnerable populations (45 CFR 46.111(b)) could be answered only at creation**, so a submission recorded without
+  the answer (AnA's `create_irb_submission` never asks) kept the safeguards check "not assessed" with no way out.
+
+## What already exists (RULE 3)
+
+Unchanged from slice 1, plus: `recordReviewTx`, `addSiteTx`, `addConsentDocumentTx`, `addAmendmentTx`,
+`addReportableEventTx` in `server/services/irb/irb-service.ts` and their routes in `server/routes/irb.ts`; the signing
+ceremony `signGovernedAct` (`server/routes/governed-signed-act.ts`), which an approval already ran; the one signing
+dialog `client/src/concept2cure/_shared/components/EsignModal.tsx`, already used by the protocol workspace
+(`ProtocolDevSigning.tsx`). No table, mount, route file or service is added.
+
+## What changed
+
+- **`GET /api/irb/submissions/:id/record`**, in the existing router: the five registers, read through the scoped
+  pool, dates as recorded, another organization's rows and removed rows left out, 404 for a submission that is not
+  the caller's.
+- **Every determination is the status.** `deferred` and `disapproved` now set it, with the board's review type.
+- **`PATCH …/context`** records `involvesVulnerablePopulations` (three answers) and `vulnerablePopulationProtections`
+  (text; blank or null takes it back), beside the four facts it already recorded.
+- **The tab** (`IrbSubmissionRegisters.tsx`, split out of `IrbSubmissionRecord.tsx` into the same folder): an "On
+  file for this submission" card with each register in words and an add form for each; "Record a determination" for
+  modifications required, deferred and disapproved (approved is not offered there); "Record approval", whose form
+  collects only what the board decided (review, date, the expiration it set, conditions) and then opens the signing
+  dialog. The request is made only from the dialog, with the meaning (responsibility or approval, the two a decision
+  act takes) and the password. The dialog says: "You are recording its decision from its letter and answer for this
+  record; this is your signature, not the board's." The facts form takes vulnerable populations and the safeguards.
+  A failed read says so and lists nothing. A viewer is offered no write. Nothing is appended locally.
+- `printedSigner` in `ProtocolDevSigning.tsx` is exported so the approval prints the signer the same way.
+
+## Verified
+
+| What | Where | Result |
+|---|---|---|
+| The record read, determinations as status, vulnerable populations after creation, the list | `server/services/irb/__tests__/submission-record.route.test.ts` (10 cases; a checked-out connection sees nothing before `BEGIN`) | Against the old route and service: 9 fail. After: pass |
+| The registers, the forms, the unsigned determination, the signed approval | `client/…/__tests__/irbSubmissionRegisters.test.tsx` (15 cases) | Pass. Against the old tab none can run: nothing renders the registers |
+| Slice 1's tab tests, every IRB suite, the review-read suites | 19 files | 197 pass |
+| Type check | `typecheck-no-regression --incremental` on the merged tree | Caught a wrong import in the new file before the push; fixed; 0 errors |
+
+**In the running app**, as the Lumen lead on LMN-201's protocol (IRB submission 1, under review):
+
+- Before (`slice2-on-file-before.png`): every register "None recorded"; "The board has made no decision on this record."
+- Two sites, a consent document (version 1.2), a substantive amendment, a protocol deviation reported 2026-11-10, a
+  "modifications required" determination of 2026-11-05 with its condition, and "involves vulnerable populations: no"
+  (`slice2-after-writes-1440.png`). The status read "modifications required". The record checks went from "2 ran,
+  2 could not" with a critical consent finding to "4 ran, 0 could not" with one major finding: two sites and no
+  single IRB of record (45 CFR 46.114).
+- "Record approval": full board, 2026-11-11, expiring 2027-11-10. The signing dialog (`slice2-approval-signing-1440.png`)
+  offered Approval and Responsibility, printed the signer, and said the signature is the recorder's. Signed with the
+  password: "Responsibility signature recorded". Status "approved"; Approval "approved, current", continuing review
+  required, expiration 2027-11-10 (the board's date), 363 days; and the lifecycle's major finding that the
+  substantive amendment is recorded as submitted and not yet approved (`slice2-approved-1440.png`).
+- At 390 (`slice2-on-file-390.png`) the card reads in full and the page does not scroll sideways. No failed request.
+
+## Open
+
+- **Status changes of a register row** (a site activated, a consent document approved, an amendment approved, an
+  event closed) have no route; nothing here adds one (RULE 6). So the amendment above stays "submitted" and its
+  lifecycle finding stays open. That is the next decision for this lane: reach it through an existing route if one
+  is found, or ask the founder.
+- The approval form stays offered after an approval; a later approval (continuing review) is a real act, so it is
+  not hidden.

@@ -27,7 +27,7 @@ import {
   setSubmissionContextTx,
   linkSubmissionTx,
   IRB_CONTEXT_FIELDS,
-  type IrbContextField,
+  type IrbContextInput,
   recordReviewTx,
   addSiteTx,
   addConsentDocumentTx,
@@ -35,6 +35,7 @@ import {
   addReportableEventTx,
   listSubmissions,
   getCompletenessInput,
+  getSubmissionRecord,
   getPackageManifest,
   getLifecycleStatus,
 } from '../services/irb/irb-service';
@@ -203,6 +204,9 @@ const contextSchema = z
     isIndStudy: z.boolean().nullable().optional(),
     usesPhi: z.boolean().nullable().optional(),
     usesRecruitmentMaterial: z.boolean().nullable().optional(),
+    // 45 CFR 46.111(b): the same three answers, and the safeguards documented (2026-11-12).
+    involvesVulnerablePopulations: z.boolean().nullable().optional(),
+    vulnerablePopulationProtections: z.string().max(4000).nullable().optional(),
     reason,
   })
   .strict();
@@ -215,10 +219,11 @@ router.patch('/submissions/:id/context', async (req, res) => {
   /* Picked by name rather than by spreading everything-but-reason: the
      service distinguishes a field that is ABSENT from one that is `null`, so
      what reaches it has to be exactly the facts this request mentioned. */
-  const facts: Partial<Record<IrbContextField, boolean | null>> = {};
+  const facts: IrbContextInput = {};
   for (const [field] of IRB_CONTEXT_FIELDS) {
     if (field in parsed.data) facts[field] = parsed.data[field] ?? null;
   }
+  if ('vulnerablePopulationProtections' in parsed.data) facts.vulnerablePopulationProtections = parsed.data.vulnerablePopulationProtections ?? null;
   await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
     const out = await setSubmissionContextTx(client, orgId, id, facts);
     return { target: `irb-submission:${id}`, payload: { recorded: out.recorded }, body: out };
@@ -336,6 +341,17 @@ router.post('/submissions/:id/reportable-events', async (req, res) => {
     recordIrbReportableEvent(parsed.data.eventType);
     return { target: `irb-submission:${id}`, payload: { eventId: eid, eventType: parsed.data.eventType }, body: { irbSubmissionId: id, eventId: eid } };
   });
+});
+
+/* What is on file for the submission: determinations, sites, consent documents,
+   amendments and reportable events. Each had a write and no read, so nothing a
+   person recorded could be shown back to them (2026-11-12). Read-only. */
+router.get('/submissions/:id/record', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try { res.json(await getSubmissionRecord(orgId, id)); } catch (err) { fail(res, err); }
 });
 
 /* The package manifest (docs/design/IRB_SUBMISSION.md step 3): which artifacts

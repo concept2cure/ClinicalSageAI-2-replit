@@ -512,7 +512,9 @@ export class DocumentGenerator {
       if (comp.missingDataImpact) {
         content += `Expected missing data rate: ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%.\n`;
         content += `Effective sample size after missing data: ${comp.missingDataImpact.effectiveSampleSize}.\n`;
-        content += `Estimated power after missing data: ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%.\n`;
+        content += comp.missingDataImpact.adjustedPower === null
+          ? `Power after missing data: not computed for ${missingDataLabel(input.missingDataMethod)}; it depends on the missingness mechanism.\n`
+          : `Estimated power after missing data (complete cases, recomputed at the effective sample size): ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%.\n`;
         content += `Bias risk: ${comp.missingDataImpact.biasRisk}.\n\n`;
         content += `${comp.missingDataImpact.recommendation}\n\n`;
       }
@@ -784,7 +786,7 @@ export class DocumentGenerator {
 
     c += `## 9. Missing Data\n\n`;
     if (input.missingDataMethod && comp.missingDataImpact) {
-      c += `Primary approach: **${missingDataLabel(input.missingDataMethod)}**. Expected missing rate ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%; effective N ${comp.missingDataImpact.effectiveSampleSize}; adjusted power ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%; bias risk ${comp.missingDataImpact.biasRisk}. ${comp.missingDataImpact.recommendation}\n\n`;
+      c += `Primary approach: **${missingDataLabel(input.missingDataMethod)}**. Expected missing rate ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%; effective N ${comp.missingDataImpact.effectiveSampleSize}; ${comp.missingDataImpact.adjustedPower === null ? 'power under this method is not computed (it depends on the missingness mechanism)' : `complete-case power ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%`}; bias risk ${comp.missingDataImpact.biasRisk}. ${comp.missingDataImpact.recommendation}\n\n`;
     } else {
       c += `Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.\n\n`;
     }
