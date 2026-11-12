@@ -1,0 +1,5 @@
+MUTATION C3M06-any-meaning in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T19:26:51.525160Z): replaced [  [HELD_SEND_REOPEN_INTENT]: (m) => (m === 'responsibility' ? null : 're-opening a settlement is signed with the meaning responsibility'),] with [  [HELD_SEND_REOPEN_INTENT]: () => null,]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > Gate 1 refuses a signature with another meaning, and voids it 372ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb (expected 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb)

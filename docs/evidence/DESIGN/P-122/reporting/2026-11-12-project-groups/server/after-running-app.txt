@@ -1,0 +1,16 @@
+BAD PATCH: status and empty name 400 {"error":{"formErrors":[],"fieldErrors":{"name":["Too small: expected string to have >=1 characters"],"status":["Invalid option: expected one of \"active\"|\"archived\""]}}}
+BAD PATCH: unknown field 400 {"error":{"formErrors":["Unrecognized key: \"organizationId\"","Name at least one change."],"fieldErrors":{}}}
+BAD PATCH: empty members 400 {"error":{"formErrors":[],"fieldErrors":{"projectIds":["Too small: expected array to have >=1 items"]}}}
+CREATE 201 {"data":{"id":3,"groupUuid":"ef57626d-c71b-4a81-afbd-70c94f4ac5bf","organizationId":2,"clientWorkspaceId":null,"name":"Lumen pipeline","description":"The four Lumen INDs","status":"active","metadata":null,"createdBy":1,"updatedBy":1,"createdAt":"2026-11-12T22:01:59.218Z","updatedAt":"2026-11-12T22:0
+PATCH members 200 {"data":{"id":3,"groupUuid":"ef57626d-c71b-4a81-afbd-70c94f4ac5bf","organizationId":2,"clientWorkspaceId":null,"name":"Lumen pipeline","description":"The four Lumen INDs","status":"active","metadata":null,"createdBy":1,"updatedBy":1,"createdAt":"2026-11-12T22:01:59.218Z","updatedAt":"2026-11-12T22:0
+SNAPSHOT 201 {"data":{"id":3,"programGroupId":3,"organizationId":2,"snapshotLabel":"Q4 board","snapshotReason":"Board pack issued","asOf":"2026-11-12T22:01:59.328Z","projectSetHash":"0ebea980ae66bc19629c329d9f721736055545554836aad215a65e07f1de59c0","projectIds":[4,5,6,7],"createdBy":1,"createdAt":"2026-11-12T22:
+PATCH another organization's id 404 {"error":"Program group not found"}
+GROUP_ID 3
+
+-- audit_logs, the organization's chain:
+885|report_os.program_group_created|{"name":"Lumen pipeline","description":"The four Lumen INDs","projectIds":[4,5]}|64
+886|report_os.program_group_updated|{"projectIds":[4,5,6,7],"previousProjectIds":[4,5]}|64
+887|report_os.program_group_snapshot_recorded|{"snapshotId":2,"snapshotLabel":"Q4 board","snapshotReason":"Board pack issued","projectIds":[4,5,6,7],"projectSetHash":"0ebea980ae66bc19629c329d9f721736055545554836aad215a65e07f1de59c0"}|64
+888|report_os.program_group_created|{"name":"Lumen pipeline","description":"The four Lumen INDs","projectIds":[4,5]}|64
+889|report_os.program_group_updated|{"projectIds":[4,5,6,7],"previousProjectIds":[4,5]}|64
+890|report_os.program_group_snapshot_recorded|{"snapshotId":3,"snapshotLabel":"Q4 board","snapshotReason":"Board pack issued","projectIds":[4,5,6,7],"projectSetHash":"0ebea980ae66bc19629c329d9f721736055545554836aad215a65e07f1de59c0"}|64

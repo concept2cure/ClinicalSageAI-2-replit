@@ -1,0 +1,7 @@
+# P-92 C4 red for both lists' words and the package form (ruling 1), 2026-11-09T18:16:51Z, before the change
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a sequence's technical rejection is said under its status, readably, with no control added 17ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > the package form says it serves only package transmittals written before 2026-10-17 5053ms
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > FDA's technical rejection recorded by signature says so on its row 36ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  3 failed | 22 passed (25)

@@ -150,9 +150,10 @@ describe('declared lifecycle acts', () => {
     // was left out, so this sequence bound against an empty prior: its replace was skipped
     // and the rest filed as new while the agency held 0000 (F1 review, 2026-11-01). Nothing
     // is packaged now. A declared replace with no filed prior at all is still skipped, with
-    // its reason (lifecycle-rehearsal.pglite.test.ts, "for filing").
+    // its reason (lifecycle-rehearsal.pglite.test.ts, "for filing"). The refusal names the
+    // one place it is put right (P-99 C2: the read-back on the sequence's Dispatch tab).
     await expect(assemble(6)).rejects.toThrow(
-      /^Sequence 0000 was sent to the agency, but nothing on record says what it carried: no record of the send, and no compile\. What is on file cannot be read, so nothing was bound against it\.$/,
+      /^Sequence 0000 was sent to the agency, but nothing on record says what it carried: no record of the send, and no compile\. What is on file cannot be read, so nothing was bound against it\. Put it on record from its Dispatch tab in Submission Center\.$/,
     );
   });
 

@@ -1,0 +1,397 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "ana.author@concept2cure.pro",
+  "signer": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "submission": "18",
+  "sequences": {
+    "a": {
+      "id": "31",
+      "n": "0001"
+    },
+    "b": {
+      "id": "34",
+      "n": "0004"
+    }
+  },
+  "browser": "141.0.7390.37",
+  "screens": {
+    "c3-closed-1440-light": {
+      "file": "c3-closed-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-offered-1440-light": {
+      "file": "c3-offered-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-signing-1440-light": {
+      "file": "c3-signing-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "covered by span.es-field-hint",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0001 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · re-opens the settlement on FDA's signed answer of 9 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer."
+      },
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-creator-1440-light": {
+      "file": "c3-creator-1440-light.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…You created sequence 0001, so you cannot sign the re-opening of its settlement. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-closed-1440-dark": {
+      "file": "c3-closed-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-offered-1440-dark": {
+      "file": "c3-offered-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-signing-1440-dark": {
+      "file": "c3-signing-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "covered by span.es-field-hint",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0001 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · re-opens the settlement on FDA's signed answer of 9 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer."
+      },
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-creator-1440-dark": {
+      "file": "c3-creator-1440-dark.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…You created sequence 0001, so you cannot sign the re-opening of its settlement. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-closed-390-light": {
+      "file": "c3-closed-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-offered-390-light": {
+      "file": "c3-offered-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-signing-390-light": {
+      "file": "c3-signing-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "covered by q",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0001 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · re-opens the settlement on FDA's signed answer of 9 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer."
+      },
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-creator-390-light": {
+      "file": "c3-creator-390-light.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…You created sequence 0001, so you cannot sign the re-opening of its settlement. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-closed-390-dark": {
+      "file": "c3-closed-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-offered-390-dark": {
+      "file": "c3-offered-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-signing-390-dark": {
+      "file": "c3-signing-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "covered by q",
+        "text": "Re-open the settlement on FDA's answer…By signing, you would state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Sign: re-open sequence 0001's settlement",
+        "buttons": [
+          {
+            "text": "Sign: re-open sequence 0001's settlement",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0001 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · re-opens the settlement on FDA's signed answer of 9 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's signed receipt for the send of sequence 0001 on 7 November 2026 at 14:12 UTC, kept on 9 November 2026, shows that FDA received it. The release of 9 November 2026 is re-opened on FDA's answer. Sequence 0001 is recorded as received by FDA: it is on file with FDA and is not sent again. The release stays on the record beside FDA's answer."
+      },
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-creator-390-dark": {
+      "file": "c3-creator-390-dark.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Re-open the settlement on FDA's answer…",
+        "summaryHit": "hit",
+        "text": "Re-open the settlement on FDA's answer…You created sequence 0001, so you cannot sign the re-opening of its settlement. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #4 · sequence 0004ack2_received · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #1 · sequence 0001 (this one)rejected · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was receivedTransmittal #2 · sequence 0002validation_failed · <reply-0002@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · Technical rejection recorded: FDA's center did not accept sequence 0002. · recorded as received on FDA's Ack2, by signature, 9 November 2026 · rejected by FDA on its Ack3, by signature, 9 Nove",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {}
+}

@@ -1,0 +1,5 @@
+MUTATION C4M06-R5-other-project in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T18:28:07.794672Z): replaced [  if (!doc || !/^[0-9a-f]{64}$/i.test(doc.contentHash) || meta?.program_id !== program) return { refusal: absent };] with [  if (!doc || !/^[0-9a-f]{64}$/i.test(doc.contentHash)) return { refusal: absent };]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R5 the Ack3 another project's is refused before signing 341ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 f7aae4ad66646ce24ca7040d469b19cd5d8be21d3a8089b0a988a66eeeadc383 (expected f7aae4ad66646ce24ca7040d469b19cd5d8be21d3a8089b0a988a66eeeadc383)

@@ -1,0 +1,5 @@
+MUTATION C4M19-statement-not-asked-again in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T18:30:08.148728Z): replaced [    if ((f.kind === 'held-send-settlement' || f.kind === 'technical-rejection') && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);] with [    if (f.kind === 'held-send-settlement' && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);]
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > a statement that changed after the dialog opened is not signed 5425ms
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 0b6d92c3b2a033dff96dd1b387ddd77abcfcd671ffc2aafe4b491fe6d9077b59 (expected 0b6d92c3b2a033dff96dd1b387ddd77abcfcd671ffc2aafe4b491fe6d9077b59)

@@ -342,6 +342,10 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
       // two are what the filed state reads as on file at the agency (F1,
       // 2026-11-01); for an unbound transmit both are undefined, which JSON
       // drops, so a caller's own keys of those names never reach the row.
+      // A signed act's record is written on the row later, by its act alone
+      // (P-92: the settlement, the technical rejection, the receipt path), and
+      // both lists say each "by signature"; a caller's keys of those names are
+      // dropped too, so no new row reads as an act nobody signed (F1, 2026-11-09).
       const result = await impl.transmit({
         ...req,
         account,
@@ -351,6 +355,14 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           sentPackage,
           dispatchBinding: req.dispatchBinding ?? undefined,
           leafManifest: sentLeaves,
+          heldSendSettlement: undefined,
+          technicalRejection: undefined,
+          as2Receipt: undefined,
+          as2ReceiptHistory: undefined,
+          // P-99 C2: a sent sequence's record put back on record, and the binding its act restores, are that act's alone.
+          leafManifestDerivation: undefined,
+          sentRecordStatement: undefined,
+          restoredBinding: undefined,
         },
       });
       // What was checked travels with the result — including checks that

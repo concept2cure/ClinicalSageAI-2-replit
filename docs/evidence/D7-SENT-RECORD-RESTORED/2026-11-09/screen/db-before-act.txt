@@ -1,0 +1,15 @@
+ id | sequence_number | dispatch_status |          updated_at           
+----+-----------------+-----------------+-------------------------------
+ 36 | 0000            | sent            | 2026-11-09 20:53:10.618284+00
+
+ transmittal | has_leaf_manifest | leaves | method | method_version | manifest_sha256 | derived_by | not_recoverable | has_restored_binding 
+-------------+-------------------+--------+--------+----------------+-----------------+------------+-----------------+----------------------
+           6 | f                 |      0 |        |                |                 |            |                 | f
+
+ recorded 
+----------
+ 
+
+ action | user_id | record_id | reason | manifest_sha256 | leaf_count | method | chained | sealed | created_at 
+--------+---------+-----------+--------+-----------------+------------+--------+---------+--------+------------
+

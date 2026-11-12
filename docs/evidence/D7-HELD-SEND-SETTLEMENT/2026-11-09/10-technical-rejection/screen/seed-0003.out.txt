@@ -1,0 +1,5 @@
+ id | sequence_number | dispatch_status | transmittal_id |  status  | error_message 
+----+-----------------+-----------------+----------------+----------+---------------
+ 33 | 0003            | sent            |              3 | received | 
+(1 row)
+

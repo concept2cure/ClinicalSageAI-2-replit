@@ -1,0 +1,5 @@
+MUTATION C2M19-payload-without-what-was-read in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T21:18:05.897445Z): replaced [{ reason: reason.trim(), manifestSha256: rb.manifestSha256 }] with [{ reason: reason.trim() }]
+ × client/src/concept2cure/v2/__tests__/dispatchSentRecord.test.tsx > C4a — the read-back, recorded as the person read it > records what the person read, with their reason, then says so and re-reads the panel 271ms
+      Tests  1 failed | 7 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 4626a5140b8912489379219c45b15733be9a7a264c3096b6890478bee333ed14 (expected 4626a5140b8912489379219c45b15733be9a7a264c3096b6890478bee333ed14)

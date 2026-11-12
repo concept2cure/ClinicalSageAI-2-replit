@@ -1,0 +1,165 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "ana.author@concept2cure.pro",
+  "signer": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "submission": "18",
+  "sequences": {
+    "a": {
+      "id": "31",
+      "n": "0001"
+    },
+    "b": {
+      "id": "34",
+      "n": "0004"
+    }
+  },
+  "browser": "141.0.7390.37",
+  "screens": {
+    "c3-row-a-1440-light": {
+      "file": "c3-row-a-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001 (this one)received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-b-1440-light": {
+      "file": "c3-row-b-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004 (this one)rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-gateway-1440-light": {
+      "file": "c3-gateway-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-a-1440-dark": {
+      "file": "c3-row-a-1440-dark.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001 (this one)received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-b-1440-dark": {
+      "file": "c3-row-b-1440-dark.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004 (this one)rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-gateway-1440-dark": {
+      "file": "c3-gateway-1440-dark.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-a-390-light": {
+      "file": "c3-row-a-390-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001 (this one)received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-b-390-light": {
+      "file": "c3-row-b-390-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004 (this one)rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-gateway-390-light": {
+      "file": "c3-gateway-390-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-a-390-dark": {
+      "file": "c3-row-a-390-dark.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001 (this one)received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-row-b-390-dark": {
+      "file": "c3-row-b-390-dark.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": "Transmissions and acknowledgementsFiltered by project and FDA, not by sequence: a transmittal records the number of the sequence it carried.Transmittal #3 · sequence 0003validation_failed · <walk-p92-0003@sponsor.example> · acknowledged 11/8/2026, 7:39:48 PM · sent by Ana Author on 11/8/2026, 6:39:48 PM to the agency's production environment · rejected by FDA on its Ack3, by signature, 9 November 2026Transmittal #5 · sequence 0005ack2_received · <reply-0005@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 7:28:25 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses itTransmittal #4 · sequence 0004 (this one)rejected · <reply-0004@intermediary.example> · not acknowledged · sent by Ana Author on 11/7/2026, 6:56:23 PM to the agency's production environment · recorded as received on FDA's Ack2, by signature, 8 November 2026 · FDA's signed answer, kept 9 November 2026, refuses it · re-opened on FDA's answer, by signature, 9 November 2026Transmittal #1 · sequence 0001received · acknowledged 11/9/2026, 4:56:23 PM · sent by Ana Author on 11/7/2026, 2:12:04 PM to the agency's production environment · The AS2 message could not be prepared for this send; nothing was transmitted. · released as not received on the platform's own record that it never left, by signature, 9 November 2026 · FDA's signed receipt, kept 9 November 2026, shows it was received · ",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c3-gateway-390-dark": {
+      "file": "c3-gateway-390-dark.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": null,
+      "rows": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {}
+}

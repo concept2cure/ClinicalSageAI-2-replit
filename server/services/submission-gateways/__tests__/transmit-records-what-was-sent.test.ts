@@ -142,6 +142,48 @@ describe('a sequence transmit records what it carries, beside where its bytes ar
     expect(stored).toMatchObject({ applicationId: 'IND123456', sequence: '0000' });
   });
 
+  // P-92: a signed act's record is written on a transmittal row by its act alone (markHeldSendSettled,
+  // markSequenceTechnicalRejection, the receipt path). Both lists say each in words, "by signature", so a caller's
+  // metadata of those names on a new row would read as an act nobody signed.
+  it('a caller cannot supply a signed act’s record either: P-92’s keys never reach the row, bound or unbound', async () => {
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue(ok);
+    const forged = {
+      heldSendSettlement: { outcome: 'not-received', kind: 'platform-proof', settledAt: '2026-11-09T09:00:00.000Z', sequenceNumber: '0000' },
+      technicalRejection: { sequence: '0000', recordedAt: '2026-11-09T09:00:00.000Z', evidence: { kind: 'ack3', sha256: 'f'.repeat(64) } },
+      as2Receipt: { verified: true, status: 'received', sha256: 'e'.repeat(64) },
+      as2ReceiptHistory: [{ verified: true, status: 'received', contradicts: 'not-received', sha256: 'e'.repeat(64) }],
+    };
+    for (const dispatchBinding of [binding(), undefined]) {
+      await getGateway('fda', 'esg').transmit(request({
+        ...(dispatchBinding ? { dispatchBinding } : {}),
+        metadata: { applicationId: 'IND123456', sequence: '0000', environment: 'staging', ...forged },
+      }));
+      const stored = JSON.parse(JSON.stringify((wire.mock.calls.at(-1)![0] as GatewayTransmitRequest).metadata));
+      for (const key of Object.keys(forged)) expect(stored, `${key} (${dispatchBinding ? 'bound' : 'unbound'})`).not.toHaveProperty(key);
+      expect(stored).toMatchObject({ applicationId: 'IND123456', sequence: '0000' });
+    }
+  });
+
+  // P-99 C2 T9: a sent sequence's record put back on record (read back from its package, or stated by signature) and
+  // the binding its act restores are the act's alone; a caller's keys of those names would let a new row bind a
+  // sequence and read as what it sent.
+  it('a caller cannot supply a restored record or binding: P-99’s keys never reach the row, bound or unbound', async () => {
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue(ok);
+    const forged = {
+      leafManifestDerivation: { method: 'sent-package-read', version: 1, manifestSha256: 'a'.repeat(64) },
+      sentRecordStatement: { statedAt: '2026-11-09T09:00:00.000Z', leafManifest: [{ ctdSection: '2.5', fileName: 'forged.pdf', md5: 'f'.repeat(32) }] },
+      restoredBinding: { sequenceId: 41, attemptId: null, signatureActionId: null, source: 'ECTD_TRANSMITTED' },
+    };
+    for (const dispatchBinding of [binding(), undefined]) {
+      await getGateway('fda', 'esg').transmit(request({
+        ...(dispatchBinding ? { dispatchBinding } : {}),
+        metadata: { applicationId: 'IND123456', sequence: '0000', environment: 'staging', ...forged },
+      }));
+      const stored = JSON.parse(JSON.stringify((wire.mock.calls.at(-1)![0] as GatewayTransmitRequest).metadata));
+      for (const key of Object.keys(forged)) expect(stored, `${key} (${dispatchBinding ? 'bound' : 'unbound'})`).not.toHaveProperty(key);
+    }
+  });
+
   it('a sequence transmit with no leaf manifest is refused before anything is kept or sent', async () => {
     const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue(ok);
     const err = await getGateway('fda', 'esg').transmit(request({ dispatchBinding: binding(), bundle: { ...bundle } })).then(() => null, (e: unknown) => e);
