@@ -22,7 +22,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -634,12 +634,15 @@ describe('CmOverview — the export gate’s verdict comes before the table it s
     const none = await screen.findByRole('button', { name: 'Advance the next section' });
     expect((none as HTMLButtonElement).disabled).toBe(true);
     expect(none.getAttribute('title')).toBe('This project has no Module 3 sections yet');
-    cleanup();
+  });
 
+  /* Its own case: a second mount inside one case read the first mount's board. */
+  it('says an approved section is out of date, rather than that every section is approved', async () => {
     wire(board({ sections: [{ ...section('3.2.S.1', 'approved', 100), stale: true, staleReason: 'specification:7 changed' }] }));
     renderOverview();
     const stale = await screen.findByRole('button', { name: 'Advance the next section' });
-    expect(stale.getAttribute('title')).toBe('Every section is approved, but 1 is out of date: recompile it on the Module 3 build board');
+    /* Awaited: the section list is adopted one render after the board arrives. */
+    await waitFor(() => expect(stale.getAttribute('title')).toBe('Every section is approved, but 1 is out of date: recompile it on the Module 3 build board'));
   });
 });
 

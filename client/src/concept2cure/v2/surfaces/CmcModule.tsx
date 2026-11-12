@@ -93,7 +93,7 @@ import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
 import { CmcVariationAssessment } from './CmcVariationAssessment';
 import { RecordHistoryPanel } from './cmcRecordHistory';
 /* The Q1E fit, drawn from the engine's own line and bound (P-122). */
-import { StabilityFitCharts, useAutoQ1e, type Q1eChartEstimate } from './cmcStabilityChart';
+import { ClaimAgainstEstimate, StabilityFitCharts, useAutoQ1e, withoutStudy, type Q1eChartEstimate, type RecordedClaim } from './cmcStabilityChart';
 /* Agency questions on Module 3 are the letter's record (2026-10-19, P-38 /
    P-39 item 1): read once at this module's root, shown by the Overview, the
    per-tab signposts and Program records, and worked on the letter in
@@ -1769,6 +1769,8 @@ interface Q1eReport {
   limitingParameter: string | null;
   supportedShelfLife: number | null;
   estimates: Q1eEstimate[];
+  /** The study's recorded shelf life judged against this estimate, by the server (ich-compliance-q1e.ts). */
+  recordedClaim?: RecordedClaim;
 }
 
 /* ── Batch poolability (POST /api/cmc/stability-studies/poolability) ──
@@ -1894,7 +1896,9 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      the estimate is a read, and its chart is the register's. A refusal is kept
      per study and said in the table. */
   const q1eRefused = useAutoQ1e<Q1eReport>(
-    rows.map((r) => ({ id: r.id, hasResults: readStabilityResults(r.stabilityData).length > 0 })),
+    /* `stamp` is how many results the study holds: an estimate belongs to the
+       results it was fitted from, and is asked for again when they change. */
+    rows.map((r) => { const n = readStabilityResults(r.stabilityData).length; return { id: r.id, hasResults: n > 0, stamp: n }; }),
     q1e,
     (id, report) => setQ1e((m) => ({ ...m, [id]: report })),
     (v): v is Q1eReport => Array.isArray((v as Q1eReport | null)?.estimates),
@@ -1966,6 +1970,14 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
       setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
+      /* What was fitted from the earlier results is no longer this study's
+         estimate, trend or pooled claim. Each stayed on screen as it was
+         while "Longest pull" and "Within limits" beside it moved — after an
+         out-of-specification pull the Q1E cell still read the old shelf life.
+         Dropped here; the estimate is asked for again (useAutoQ1e). */
+      setQ1e((m) => withoutStudy(m, study.id));
+      setTrend((m) => withoutStudy(m, study.id));
+      if (poolPick.includes(study.id)) setPool(null);
       setRecording(null);
       setExpanded(study.id);
       const within = v.withinSpecification !== 'no';
@@ -2401,7 +2413,10 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                             </>
                           )}
                         </td>
-                        <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
+                        <td>
+                          {r.shelfLife || <span className="cm-meta">not set</span>}
+                          <ClaimAgainstEstimate studyId={r.id} claim={fit?.recordedClaim} />
+                        </td>
                       </tr>
                     );
                   })}

@@ -305,6 +305,14 @@ batch rows or the approvals table, which `01QoxbLcnW…` holds). Nothing in `ser
 - The Overview prints the export gate's verdict above Section approvals and names the next section a signer can act on
   (P-122 inventory row A6).
 
+**→ Wave B lane W4 (`01T2woo…`), holder of `server/api/cmc/routes.ts`: five additive lines in one handler of your
+file, 2026-11-12.** `POST /stability-studies/:id/shelf-life` now also selects `shelfLife` and answers
+`recordedClaim` beside the estimate: the study's recorded shelf life judged against its own Q1E fit, by
+`judgeRecordedShelfLifeClaim` in `services/cmc/ich-compliance-q1e.ts` (not yours). Nothing else in the file is
+touched. If it collides with what you have in flight, keep yours and say so here; the judgement is one call.
+Also landed, in files nobody holds: an elemental impurity recorded in ppm with its daily dose is assessed (ICH Q3D
+§7), and the Stability register re-estimates a study when its results change.
+
 **→ `01QoxbLcnW…` (the approvals table in `CmOverview`):** one attribute beside your table, changed by me and said here:
 the disabled "Advance the next section" button's `title` in the Section approvals header now gives its true reason
 (it said "Every section is approved" on a project with no sections). And one for you, not touched: the table's **Path
