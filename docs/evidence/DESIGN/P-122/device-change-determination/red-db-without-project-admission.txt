@@ -1,0 +1,99 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-12T00:42:39.058Z","pid":31452,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:42:39.059Z","pid":31452,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:42:39.059Z","pid":31452,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-device-change-determination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-device-change-determination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > before any assessment, the register says the determination applies and none is recorded 22ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the US verdict is the engine's, and is kept on the change with the answers, the rules' version, who and when 24ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the audit trail has a chained row for it, with the answers and the outcome 4ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > a verdict sent by the caller is not kept: the engine decides from the answers 21ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the engine does not classify the change: its classification and state are as they were 1ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the register carries both determinations, and the content an approval signs has changed with them 12ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > an unanswered question is refused, by name, and nothing is kept or audited 26ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > a market that is not one of the two is refused 6ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > assessing again states why, and the audit row keeps the determination it replaced 24ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > another organisation gets 404, and learns nothing 23ms
+ × tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who is not on a private project gets 403 17ms
+   → {"data":{"id":14,"change_number":"p122-dcd-98851bcb-private","regulatory_impact":{"applies":"device","productType":"device","organisationHasDevices":true,"assessable":true,"us":{"engine":"fda-510k-change","ruleVersion":"fda-510k-change-2017/1","inputs":{"affectsIndicationsForUse":false,"changesControlMechanismOrOperatingPrinciple":false,"changesPatientContactingMaterials":false,"softwareChangeAffe: expected 200 to be 403 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who can open the project and does not edit it gets 403 12ms
+   → {"error":"A determination is already recorded for this market. State why it is assessed again (a reason of at least 8 characters). Nothing was recorded.","details":{"code":"QMS_CHANGE_REASSESSMENT_REASON"}}: expected 422 to be 403 // Object.is equality
+ × tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > the private project's owner assesses it 13ms
+   → expected [ { user_id: 10, …(4) }, …(1) ] to have a length of 1 but got 2
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > a drug project's change is refused, and the register says it is not a device's 13ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation-wide change is refused: there is no device to assess 15ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an approved change's content is fixed: nothing is recorded on it 20ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation with no device project is told so on its rows 8ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > what is kept and cannot be read is said to be unreadable, never shown as a verdict or as none 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who is not on a private project gets 403
+AssertionError: {"data":{"id":14,"change_number":"p122-dcd-98851bcb-private","regulatory_impact":{"applies":"device","productType":"device","organisationHasDevices":true,"assessable":true,"us":{"engine":"fda-510k-change","ruleVersion":"fda-510k-change-2017/1","inputs":{"affectsIndicationsForUse":false,"changesControlMechanismOrOperatingPrinciple":false,"changesPatientContactingMaterials":false,"softwareChangeAffe: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:263:35
+    261|   it('a colleague who is not on a private project gets 403', async () …
+    262|     const res = await assess('memberA', change.priv, { market: 'us', a…
+    263|     expect(res.status, show(res)).toBe(403);
+       |                                   ^
+    264|     expect(res.body.details.code).toBe('PROJECT_PERMISSION_DENIED');
+    265|     expect((await kept(change.priv)).metadata.regulatoryImpact).toBeUn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who can open the project and does not edit it gets 403
+AssertionError: {"error":"A determination is already recorded for this market. State why it is assessed again (a reason of at least 8 characters). Nothing was recorded.","details":{"code":"QMS_CHANGE_REASSESSMENT_REASON"}}: expected 422 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 422
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:271:35
+    269|   it('a colleague who can open the project and does not edit it gets 4…
+    270|     const res = await assess('readerA', change.priv, { market: 'us', a…
+    271|     expect(res.status, show(res)).toBe(403);
+       |                                   ^
+    272|     const open = await assess('readerA', change.approved, { market: 'u…
+    273|     expect(open.status, show(open)).toBe(403);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > the private project's owner assesses it
+AssertionError: expected [ { user_id: 10, …(4) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/db/p122-device-change-determination.dbtest.ts:281:42
+    279|     expect(res.status, show(res)).toBe(200);
+    280|     expect(res.body.data.regulatory_impact.eu.result).toMatchObject({ …
+    281|     expect(await auditRows(change.priv)).toHaveLength(1);
+       |                                          ^
+    282|   });
+    283| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 15 passed (18)
+   Start at  00:42:37
+   Duration  8.77s (transform 5.39s, setup 77ms, import 7.88s, tests 528ms, environment 0ms)
+

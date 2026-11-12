@@ -116,6 +116,7 @@ import { importSourceDocument } from '../services/authoring/authoring-source-imp
 import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload, rollbackAuthoringTransaction, settleAuthoringTransactionFailure, type AuthoringTransactionState } from '../services/authoring/authoring-create-outcome';
 import { AuthoringSectionWriteOutcomeError, authoringSectionRecoveryPayload } from '../services/authoring/authoring-section-outcome';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
+import { consentDocumentGate, isConsentTemplateId } from '../services/protocol-consent/protocol-consent-logic';
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
@@ -4553,6 +4554,37 @@ function consistencyField(check: DocumentConsistencyCheck | null): { document_fi
   return check ? { document_figure_consistency: check } : {};
 }
 
+/**
+ * P-102: on an informed-consent document, the 21 CFR 50.25 required elements and which of them
+ * the document satisfies, by the same gate the consent record is held to. An empty object for any
+ * other document, and when the sections could not be read: an absent field says nothing, where an
+ * empty checklist would read as "nothing is required".
+ */
+async function consentElementsField(docId: unknown, tenantId: unknown, templateId: unknown): Promise<{ consent_elements?: Record<string, unknown> }> {
+  if (!isConsentTemplateId(templateId)) return {};
+  try {
+    const rows = await pool.query(
+      `SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index ASC, code ASC`,
+      [docId, tenantId],
+    );
+    const gate = consentDocumentGate(rows.rows.map((r: { code: string | null; content: string | null }) => ({ code: String(r.code ?? ''), text: sectionReadableText(r.content) })));
+    return {
+      consent_elements: {
+        basis: '21 CFR 50.25; 45 CFR 46.116',
+        required_total: gate.requiredTotal,
+        required_complete: gate.requiredComplete,
+        ready: gate.readyToApprove,
+        findings: gate.findings,
+        elements: gate.elements,
+        applicable_clinical_trial_note:
+          'The ClinicalTrials.gov statement (21 CFR 50.25(c)) is required for an applicable clinical trial. It is counted here until the study is recorded as not being one.',
+      },
+    };
+  } catch {
+    return {};
+  }
+}
+
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
 router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res: Response) => {
   try {
@@ -4562,7 +4594,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
 
     // Get section content
     const sectionResult = await pool.query(
-      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.template_id
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
@@ -4579,6 +4611,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
     // One engine run over every section of the open document, before the heuristics below.
     const documentConsistency = await documentFigureConsistency(section.doc_id, tenantId, section.code);
+    const consentElements = await consentElementsField(section.doc_id, tenantId, section.template_id);
 
     // Perform deficiency analysis
     const deficiencies: Array<Record<string, unknown>> = [];
@@ -4779,6 +4812,8 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
            sections could not be read — never an empty result, which would read
            as "it agrees". Not a check and not counted as one. */
         ...consistencyField(documentConsistency),
+        /* P-102: the consent document's required elements. Not counted in the score above. */
+        ...consentElements,
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
