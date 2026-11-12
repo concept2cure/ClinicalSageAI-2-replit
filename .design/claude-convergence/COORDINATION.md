@@ -450,6 +450,14 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   in the submission's project, so the Builder says "Source verified" instead of "not yet determined" for all 21.
   Also red on trunk, not touched: `server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts` and
   `company-branding.test.ts` (5 cases) beside the report-pack export suite below. **→ Reporting.**
+- **Also landed in this block, 2026-11-12 (unheld files, one change each, released):**
+  `editor/RichSectionEditor.tsx` (the paused-attribution note says why on a read-only section, `attributionPausedNote`);
+  the Vault PDF branch of `server/services/ectd/submission-leaf-source-evidence.ts` (a rendition filed from a sealed
+  document has its text established from the seal its chained receipt names, LX-10).
+- **→ S2 data catalog (`01QoxbLdTr…`), by message:** the Data Room grade says "arrived by chat upload" for a Data Room
+  upload; the stored origin is right and shared by both doors, the sentence is not (`data-room-grade.ts` ~:124).
+- **Real PostgreSQL for the Submission Center deliverables suite:** its fixture accepts only the CI database name;
+  a local disposable copy under `concept2cure-ri_dbtest` (built by install-fresh + deploy-migrate) runs it: 38 of 38.
 - **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
   200/403/503, got 422), with or without the change above. Not touched.
 
