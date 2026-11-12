@@ -224,6 +224,59 @@ describe('GET /licensing/history — the decisions, newest first', () => {
     expect(res.body.entries[0].changed).toEqual({ requestId: 99, grantedModules: ['ectd'] });
   });
 
+  it("an owner's answer to an access request is not repeated as raw tokens and ids", async () => {
+    // What module-access-requests.ts records (6fd195ef88). The action names the
+    // answer, the row names the workspace, and every row here is the owner's.
+    const answer = (over: Record<string, unknown>) =>
+      auditRow({
+        table_name: 'module_access_request',
+        record_id: '239',
+        new_values: {
+          masterAdminAction: 'access_request.approved',
+          accessRequestAction: 'request.approved',
+          moduleId: 'cmc',
+          organizationId: 7,
+          requestedBy: 22,
+          granted: true,
+          decidedByMasterAdmin: false,
+          reason: 'pilot of CMC for their IND',
+        },
+        ...over,
+      });
+    wireQuery({
+      history: async () => ({
+        rows: [answer({ id: 'aud-ar1', requester_email: 'member@bright.bio' }), answer({ id: 'aud-ar2', requester_email: null })],
+      }),
+    });
+
+    const res = await request(makeApp()).get('/api/admin/master/licensing/history');
+    const [named, unresolved] = res.body.entries;
+    expect(named.action).toBe('access_request.approved');
+    expect(named.reason).toBe('pilot of CMC for their IND');
+    expect(named.changed).toEqual({ moduleId: 'cmc', requesterEmail: 'member@bright.bio' });
+    // An account that no longer resolves keeps its id, rather than losing who asked.
+    expect(unresolved.changed).toEqual({ moduleId: 'cmc', requestedBy: 22 });
+    // The read joins the requester only for an access-request row, with a guarded cast.
+    const sql = String(queryMock.mock.calls.find((c) => /FROM audit_logs a/.test(String(c[0])))?.[0]);
+    expect(sql).toMatch(/LEFT JOIN users ru/);
+    expect(sql).toMatch(/'\^\[0-9\]\{1,9\}\$'/);
+  });
+
+  it('another action keeps every field it recorded, requestedBy included', async () => {
+    wireQuery({
+      history: async () => ({
+        rows: [
+          auditRow({
+            new_values: { masterAdminAction: 'tenant.module_toggle', moduleId: 'cmc', organizationId: 7, granted: true, requestedBy: 5, reason: 'x' },
+            requester_email: 'should-not-appear@x',
+          }),
+        ],
+      }),
+    });
+    const res = await request(makeApp()).get('/api/admin/master/licensing/history');
+    expect(res.body.entries[0].changed).toEqual({ moduleId: 'cmc', organizationId: 7, granted: true, requestedBy: 5 });
+  });
+
   it('passes the workspace and module filters through to the read', async () => {
     wireQuery({});
     await request(makeApp())
