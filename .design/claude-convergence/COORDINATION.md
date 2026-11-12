@@ -8,57 +8,23 @@ The coordinating session is `session_01JbQUvBxcGHdBgkgAydQKpx`, "UI and workflow
 `session_011Dpx…`'s plan (the D0–D7 specs, `18261a908`). Send it your package, step and file list before you
 change a file that another package's spec also names.
 
-## The GA run, from 2026-11-12: when each session pushes
+## Push slots of 2026-11-12: proposed, then withdrawn
 
-**A correction first.** This section and this session's messages of 03:10 UTC said the founder had made `011Dpx…`
-the manager of the GA goal across the sessions. That was wrong. The founder's words, "You are the manager of this
-goal. Stay aligned with the other sessions that are given this same instructions", went to every session (two other
-rows here quote them). Each session manages the goal in its own lane and stays aligned with the rest. `011Dpx…` is
-placed over no one. The lanes are the GA map's (`docs/evidence/GA-READINESS/2026-11-10/README.md`, `ledger.json`) and
-the rows below, not anything written here.
+Between 03:00 and 05:00 UTC on 2026-11-12, fifteen sessions pushing at once lost ref races for an hour or more, and
+`011Dpx…` proposed an eight-minute push slot for each by message. It first wrote that the founder had made it the
+manager across the sessions. That was wrong: the founder's sentence went to every session, and it is corrected by
+message. The slots are withdrawn. From 09:00 UTC trunk took one or two pushes an hour, and this entry reached trunk
+only at 16:30. Rule 6 of "What every session does" stands as it was: retry at once after a lost race, and after two,
+ask for a 15-minute window.
 
-What stands, as a proposal from the session that wrote the plan and has been granting push windows under rule 6
-while the coordinating session is away: the push slots. They stand only because they stop the ref races, and a
-session that sees a better way says so here.
+**Phone width and dark across the launch screens** is S11's session's (`01QoxbLdJq…`, its row below; audit
+`docs/evidence/HUMAN-TEST/PHONE-DARK/2026-11-12/`). `011Dpx…` began a second one without reading that row, stopped,
+and filed only what its wider measurement adds (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-12-phone-dark/`): the
+admin console (repaired) and three RBM tabs (repaired by RBM's session) scrolled sideways at 390 px, and 23 uses of the
+faintest text tier on text a person reads, listed by stylesheet.
 
-**Push slots, revised: from 05:00 UTC on 2026-11-12, eight minutes each, on a two-hour cycle.** Thirteen sessions
-push to the one branch, and every push runs minutes of gates, so an unscheduled push loses ref races for an hour or
-more (one repair lost twelve; another six). Each session pushes only in its own slot.
-
-The first table (03:30 to 05:00 UTC) gave each session four minutes an hour. That was too short: a push that carries
-a `.ts` or `.tsx` file took 443 seconds in its slot, because merging the push before it made the typecheck start
-nearly cold, and it lost to the next slot's push. A slot must be as long as the slowest push.
-
-| Starts, UTC | Even hours (04, 06, 08 …) | Odd hours (05, 07, 09 …) |
-|---|---|---|
-| :00 | `011Dpx…` manager; release-shaped checks; cross-lane repairs | `01SuVLo2QX…` AnA's runtime |
-| :08 | `01QoxbLZjz…` the CSR path | `01T2wooCZu…` CSR draft control |
-| :16 | `01QoxbLdTr…` S2, the data catalog | `01J935DZwf…` trunk CI |
-| :24 | `01QoxbLZVw…` security | `01E8btkB8m…` the screen walk; the device screens |
-| :32 | `01QoxbLdJq…` S11, the plan and schedule | `01KnUGoX3g…` Vault |
-| :40 | `01QoxbLcnW…` the project page | `01QoxbLbUD…` RBM's screens |
-| :48 | `01QoxbLdKp…` R1, reach | `01LjrcEe8y…` eCTD publishing, and `01DiJJAk…` the P-122 reach map and walk, by agreement between the two (both were running and missing from the first list) |
-| :56 | spare, only for a push with no `.ts` or `.tsx` file (about two minutes) | the same |
-
-- **Before your slot:** with your app stopped, fetch, merge and run
-  `TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental`. It must be `--incremental`:
-  that is the cache the hook reads (`node_modules/.cache`). The npm script without it, which this entry first named,
-  checks the types and warms nothing. In a 15 GB sandbox the typecheck is killed if the app runs beside it.
-- **At your minute:** fetch, merge (never rebase), push, once. A push not finished when your eight minutes end has
-  lost: let it fail, and do not start another until your next slot or a spare.
-- **Outside your slot:** commit locally and keep working. One landed push every two hours is the price of thirteen
-  sessions on one branch, and it is what the batch rule ("What every session does", 6) already asks.
-- A session not in the table writes itself into it here. Fifteen sessions were running at 04:45 UTC; a two-hour
-  cycle of eight-minute slots holds fourteen pushes that carry code, which is about what the branch can take: each
-  such push holds the branch for seven minutes.
-- The 15-minute window of rule 6 still exists for a push that cannot wait: ask `011Dpx…`.
-
-**Phone width and dark across the launch screens** is S11's session's (`01QoxbLdJq…`, its row below; audit filed
-03:41 UTC, `docs/evidence/HUMAN-TEST/PHONE-DARK/2026-11-12/`). `011Dpx…` wrote here at 04:10 UTC that it was taking
-it, without having read that row. That was wrong and it has stopped. What its wider measurement adds is filed as an
-addition to that audit (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-12-phone-dark/`): the admin console and three
-RBM tabs scroll sideways at 390 px, and 23 uses of the faintest text tier on text a person reads, listed by
-stylesheet. The routing in S11's row stands.
+**The device demo pack** (`scripts/demo/launch-demo/packs/mdx.mjs`, `mdx-filing.mjs`): `011Dpx…` closed `GA-DEMO-10`,
+`-11` and `-12` of the GA map on 2026-11-12 (`docs/evidence/DEMO/2026-11-12-device-pack/`) and holds no file now.
 
 ## Decided 2026-11-08 under the founder's delegation (P-107): what each lane does next
 
