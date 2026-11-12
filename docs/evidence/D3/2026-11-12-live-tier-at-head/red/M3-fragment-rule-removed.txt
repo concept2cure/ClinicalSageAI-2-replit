@@ -1,0 +1,51 @@
+M3: borrowedCteNames returns nothing, as before the change. The contract test, then the gate on the same database.
+
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > normalizes public and unqualified names to the same identity 2ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > keeps a non-public schema, so same-named tables never collide 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > reads schema-qualified CREATE TABLE correctly 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > handles unqualified, public-qualified, quoted and IF NOT EXISTS forms 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > does NOT treat DDL inside comments as a creator 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > ignores prose that merely contains the word FROM 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > still captures genuine queries in every quoting style 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > is skipped, not reported as a table named after its schema 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > does not settle for a shorter name to satisfy the rejection 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > still reads the same schema when the object half is written out 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: the reference scan ignores non-relations > excludes SQL keywords and prose words that follow FROM/UPDATE 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds MATERIALIZED and NOT MATERIALIZED CTEs 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a table merely named after a CTE keyword 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds a CTE that names its columns 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > still reports the storage a column-list CTE reads 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a function call or a column alias 0ms
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE a query takes from the fragment it opens with > binds the fragment’s names in every query that opens with it 7ms
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE a query takes from the fragment it opens with > still reports a table the fragment does not bind 2ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE a query takes from the fragment it opens with > lends nothing to a query that does not open with it 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE a query takes from the fragment it opens with > lends nothing from a constant the file does not declare 0ms
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE a query takes from the fragment it opens with > resolves a fragment built from a fragment 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "SELECT id FROM vault.documents WHERE organization_id = $1" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "select id from vault.documents where organization_id = $1" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "  -- the current rows\n  select id from projects" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "(select 1 from projects)" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "with recent as (select id from projects) select * from recent" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "UPDATE projects SET metadata = $2 WHERE id = $1" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > counts "Reads the rows: SELECT id FROM projects WHERE id = $1" 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > does not count "Keep unanswered facts as not_stated and dependent results derived from missing data unresolved; select the next step." 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > does not count "Plan the trial around the marker: whether to select patients, and what that means for the claim made from that." 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > does not count "Milk excretion is not inferred from conversation inputs. Select the data source." 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > isSqlish: queries count, prose does not > does not count "Authentication required to select organization" 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 30 passed (33)
+
+[ci:tables-live-schema] 1326 relations on the live database; 799 referenced by server SQL; 14 resolved as functions; 32 absent
+
+[ci:tables-live-schema] ❌ 3 table(s) referenced by server SQL do not exist on the provisioned database:
+
+  server/services/c2c/project-portfolio.ts
+      portfolio
+      selected
+      workstream
+
+  These were checked against a REAL database built by install-fresh +
+  deploy-migrate, not against the repo. A CREATE TABLE existing somewhere
+  in the tree is not the question and does not resolve this: the applier
