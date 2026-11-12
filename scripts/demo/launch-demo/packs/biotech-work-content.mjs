@@ -165,6 +165,19 @@ export const BIOTECH_SM = {
   indication: 'Moderate-to-severe atopic dermatitis in adults',
 };
 
+/**
+ * C2C-201's objective of record (GA-DEMO-15). The pack holds no protocol for it: it is the CMC-only programme whose
+ * Module 3 the product composes (biotech.mjs PROGRAMS). So the objective states what the programme is, and its
+ * source says there is no protocol, rather than giving it a clinical objective nobody wrote.
+ */
+export const C2C201_OBJECTIVE = {
+  label: BIOTECH_SM.molecule,
+  objective: `Open a US IND for ${BIOTECH_SM.productName} in ${BIOTECH_SM.indication.toLowerCase()}, with its Module 3 quality section composed from the programme's CMC records.`,
+  successCriteria: 'Module 3 (3.2.S and 3.2.P) composed from approved CMC records and placed in the original IND sequence.',
+  sources: [{ kind: 'other', title: 'C2C-201 programme description (fictional demo sponsor); no protocol is written for this programme yet' }],
+  reason: 'Demo seed: the objective the programme description states.',
+};
+
 /** C2C-201's CMC registers: a small molecule, so §3.2.S and §3.2.P compose. */
 export const BIOTECH_SM_CMC = {
   substance: {

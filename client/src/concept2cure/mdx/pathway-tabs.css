@@ -526,7 +526,8 @@
 .mdx-shell .dd-doc-dot.saved { background: var(--success); }
 /* A failed governed write must not read like a successful one. */
 .mdx-shell .dd-doc-dot.err   { background: var(--error); }
-.mdx-shell .dd-doc-hint { color: var(--text-500); margin-left: auto; }
+/* D8 (P-128): readable text is not in the faintest tier (v2/__tests__/faintestTextTier.test.ts reads this tree). */
+.mdx-shell .dd-doc-hint { color: var(--text-400); margin-left: auto; }
 
 .mdx-shell .dd-doc-edit {
   font-family: var(--font-mono);
@@ -574,7 +575,7 @@
   color: var(--text-100);
 }
 .mdx-shell .dd-att-drop svg { width: 20px; height: 20px; color: var(--text-400); }
-.mdx-shell .dd-att-drop-sub { font-size: 10.5px; color: var(--text-500); }
+.mdx-shell .dd-att-drop-sub { font-size: 10.5px; color: var(--text-400); }
 
 .mdx-shell .dd-att-empty {
   text-align: center; padding: 32px 16px;

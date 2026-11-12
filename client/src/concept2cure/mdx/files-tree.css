@@ -177,7 +177,8 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.mdx-shell .ftp-trunc { color: var(--text-500); }
+/* D8 (P-128): "showing first 200" is read; not the faintest tier. */
+.mdx-shell .ftp-trunc { color: var(--text-400); }
 .mdx-shell .ftp-json {
   margin: 0;
   padding: 20px 32px 48px;

@@ -1066,6 +1066,29 @@ function refuseDeviceFilingOnEctd(input: PackagerInput): void {
    held to it; it was refused "Assemble a test package" for it. The refusal now
    names each document by its title and section (the packaged file name is a
    generated one a person cannot place); findings keep the file name. */
+
+/**
+ * The Study Tagging Files, or the package's refusal. generateStfFiles refuses a
+ * study leaf it cannot describe (a missing or undefined file-tag, a dataset
+ * tagged as a document) with a plain Error whose message says how to correct
+ * it. That is the package's refusal, as FDA 1789 is, so it is raised as this
+ * packager's ValidationError: assemble-from-core then records
+ * ECTD_ASSEMBLE_BLOCKED and the route answers 422 with the sentence. As a plain
+ * Error it reached the person as 500 "Request failed." (measured 2026-11-12,
+ * MR-03 Stage 6 step 2). A programming error is not a refusal and passes on.
+ */
+function generateStfOrRefuse(...args: Parameters<typeof generateStfFiles>): ReturnType<typeof generateStfFiles> {
+  try {
+    return generateStfFiles(...args);
+  } catch (err) {
+    if (!(err instanceof Error) || err.constructor !== Error) throw err;
+    const leaf = args[0].find((l) => err.message.includes(`"${l.title}"`) || err.message.includes(`"${l.href}"`));
+    throw new ValidationError(err.message, [
+      { ruleId: 'STF-LEAF-REFUSED', severity: 'error', ...(leaf ? { filePath: path.posix.basename(leaf.href) } : {}) },
+    ]);
+  }
+}
+
 function refuseUntaggedStudyFiles(input: PackagerInput, registryEntry: ReturnType<typeof resolveToRegistryEntry>) {
   if (isDeviceFiling(input, registryEntry)) return [];
   const stfUncovered = input.leaves.flatMap((leaf) =>
@@ -1337,7 +1360,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
           });
         }
       }
-      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? [], {
+      const stfResult = generateStfOrRefuse(stfLeaves, input.studyMeta ?? [], {
         dtdSystemPath: studyId => path.posix.relative(studyFolder.get(studyId)!, `util/dtd/${STF_DTD}`),
         stylesheetPath: studyId => path.posix.relative(studyFolder.get(studyId)!, `util/style/${STF_STYLESHEET}`),
       });

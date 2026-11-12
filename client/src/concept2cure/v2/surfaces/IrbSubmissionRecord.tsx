@@ -12,13 +12,17 @@
  *   PATCH /api/irb/submissions/:id/link        its Submission Center submission
  *   GET   /api/irb/submissions/:id/completeness   the record checks and the approval lifecycle
  *
+ * What is on file for the submission (the board's determinations, sites,
+ * consent documents, amendments, reportable events) is IrbSubmissionRegisters.tsx.
+ *
  * Every write is a governed action with a reason, and this file appends
  * nothing locally: after a confirmed write the tab reads the record again.
  *
  * D3: a status is what a person records about a board they dealt with
  * elsewhere. Nothing here delivers anything to a board, and no word here says
- * it did. D4: the board's decision is a determination, which is not a status a
- * person sets here, and the engine's suggested review pathway is not shown.
+ * it did. D4: the board's decision is a determination, recorded under "On
+ * file" and never as a status a person picks; the engine's suggested review
+ * pathway is not shown.
  *
  * A study fact has three answers: yes, no, and not recorded. "Not recorded" is
  * never sent as no.
@@ -29,18 +33,20 @@ import { KV } from './ProtocolDevShared';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig, C2CFormFieldOption } from '../C2CForm';
 import { apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
+import { IrbRegisters, REASON_FIELD, governedWrite, reasonOf, type IrbFormProps } from './IrbSubmissionRegisters';
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 const tri = (v: unknown): boolean | null => (v === true ? true : v === false ? false : null);
 
 /* ── The record ────────────────────────────────────────────────────────────── */
 
-/** The four facts `PATCH …/context` records, by the name the route takes. */
+/** The facts `PATCH …/context` records, by the name the route takes. */
 export const IRB_FACTS = [
   ['isIndStudy', 'is_ind_study', 'Runs under an IND'],
   ['involvesChildren', 'involves_children', 'Involves children'],
   ['usesPhi', 'uses_phi', 'Uses protected health information'],
   ['usesRecruitmentMaterial', 'uses_recruitment_material', 'Uses recruitment material'],
+  ['involvesVulnerablePopulations', 'involves_vulnerable_populations', 'Involves vulnerable populations'],
 ] as const;
 
 export type IrbFactKey = (typeof IRB_FACTS)[number][0];
@@ -53,8 +59,8 @@ export interface IrbRecord {
   riskLevel: string;
   linkedSubmissionId: number | null;
   facts: Record<IrbFactKey, boolean | null>;
-  /** Recorded at creation only: no route changes it afterwards. */
-  vulnerablePopulations: boolean | null;
+  /** The safeguards documented for vulnerable populations (45 CFR 46.111(b)), or '' when none is. */
+  safeguards: string;
   consentWaiverRequested: boolean;
   singleIrb: boolean;
 }
@@ -71,7 +77,7 @@ export function toIrbRecord(raw: Record<string, unknown>): IrbRecord {
     riskLevel: str(raw.risk_level),
     linkedSubmissionId: raw.submission_id == null ? null : Number(raw.submission_id),
     facts,
-    vulnerablePopulations: tri(raw.involves_vulnerable_populations),
+    safeguards: str(raw.vulnerable_population_protections),
     consentWaiverRequested: raw.consent_waiver_requested === true,
     singleIrb: raw.is_single_irb === true,
   };
@@ -89,29 +95,6 @@ const STATUS_WORD: Record<string, string> = {
 };
 
 /* ── Writing ───────────────────────────────────────────────────────────────── */
-
-/** A governed write, or the server's refusal in its own words. Nothing is kept locally. */
-async function governedWrite(method: 'POST' | 'PATCH', path: string, body: Record<string, unknown>, what: string): Promise<Record<string, unknown>> {
-  const res = await apiRequest(method, path, body);
-  const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  if (res.status === 401) throw new Error('Not recorded: your session isn’t authenticated.');
-  if (!res.ok) {
-    const detail = serverMessage(json) ?? errorCodeOf(json) ?? `HTTP ${res.status}`;
-    throw new Error(`Couldn’t ${what}: ${detail}`);
-  }
-  return json ?? {};
-}
-
-const REASON_FIELD = {
-  key: 'reason', label: 'Reason for change (governed)', type: 'textarea' as const, required: true,
-  placeholder: 'Why this is being recorded. At least 8 characters; written to the audit trail.',
-};
-
-function reasonOf(v: Record<string, string>): string {
-  const reason = (v.reason ?? '').trim();
-  if (reason.length < 8) throw new Error('The governed reason must be at least 8 characters.');
-  return reason;
-}
 
 /** Three answers. '' is "not recorded" and is sent as absent, never as no. */
 const FACT_OPTIONS: C2CFormFieldOption[] = [
@@ -149,13 +132,6 @@ function useSubmissionChoices(programId: string | null, open: boolean): Submissi
 
 /* ── Record the submission ─────────────────────────────────────────────────── */
 
-export interface IrbFormProps {
-  onCancel: () => void;
-  /** Fires only after the server confirms the write. */
-  onDone: (message: string) => void;
-  onError: (message: string) => void;
-}
-
 function createConfig(protocolNumber: string, title: string, choices: SubmissionChoices | null): C2CFormConfig {
   return {
     eyebrow: 'Protocol · IRB submission', title: 'Record the IRB submission',
@@ -172,9 +148,7 @@ function createConfig(protocolNumber: string, title: string, choices: Submission
         desc: 'The submission that carries the package’s documents. Leave it unselected to link later; once linked it is not moved.',
         descStatus: choices?.note ?? '' },
       ...IRB_FACTS.map(([key, , label]) => ({ key, label: `${label}?`, type: 'seg' as const, options: FACT_OPTIONS, half: true })),
-      { key: 'involvesVulnerablePopulations', label: 'Involves vulnerable populations?', type: 'seg', options: FACT_OPTIONS, half: true,
-        desc: 'Asked once, here: it cannot be changed on this record afterwards.' },
-      { key: 'vulnerablePopulationProtections', label: 'Additional safeguards', type: 'textarea',
+      { key: 'vulnerablePopulationProtections', label: 'Additional safeguards', type: 'textarea' as const,
         placeholder: 'The safeguards documented for vulnerable populations, if any (45 CFR 46.111(b))' },
       { key: 'isSingleIrb', label: 'One IRB of record for every site?', type: 'seg', options: YES_NO, default: 'no', half: true },
       { key: 'consentWaiverRequested', label: 'Consent waiver requested?', type: 'seg', options: YES_NO, default: 'no', half: true },
@@ -189,7 +163,7 @@ export function RecordIrbSubmissionForm({ protocolNumber, title, programId, onCa
     try {
       const body: Record<string, unknown> = { protocolNumber, title: (v.title ?? '').trim(), riskLevel: v.riskLevel, reason: reasonOf(v) };
       if (v.submissionId) body.submissionId = Number(v.submissionId);
-      for (const key of [...IRB_FACTS.map(([k]) => k), 'involvesVulnerablePopulations']) {
+      for (const [key] of IRB_FACTS) {
         const value = declared(v[key]);
         if (value !== undefined) body[key] = value;
       }
@@ -222,6 +196,8 @@ function factsConfig(record: IrbRecord): C2CFormConfig {
         key, label: `${label}?`, type: 'seg' as const, default: KEEP,
         options: [{ value: KEEP, label: `Leave as it is (${answer(record.facts[key])})` }, { value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }, { value: 'unrecord', label: 'Not recorded' }],
       })),
+      { key: 'vulnerablePopulationProtections', label: 'Additional safeguards', type: 'textarea' as const, default: record.safeguards,
+        desc: 'The safeguards documented for vulnerable populations (45 CFR 46.111(b)). Clear it to take it back.' },
       REASON_FIELD,
     ],
   };
@@ -230,7 +206,7 @@ function factsConfig(record: IrbRecord): C2CFormConfig {
 function statusConfig(record: IrbRecord): C2CFormConfig {
   return {
     eyebrow: 'Protocol · IRB submission', title: 'Change status',
-    sub: `Now ${STATUS_WORD[record.status] ?? record.status}. This records where the submission stands with the board, which you deal with in its own portal or inbox: nothing is delivered from here. A board's decision (approved, modifications required, deferred, disapproved) is a determination and is not set here. Recorded as a governed action.`,
+    sub: `Now ${STATUS_WORD[record.status] ?? record.status}. This records where the submission stands with the board, which you deal with in its own portal or inbox: nothing is delivered from here. A board's decision (approved, modifications required, deferred, disapproved) is recorded as a determination under "On file", not here. Recorded as a governed action.`,
     governed: true, submitLabel: 'Record status',
     fields: [
       { key: 'status', label: 'Status', type: 'select', required: true,
@@ -278,6 +254,9 @@ export function IrbRecordForm({ kind, record, programId, onCancel, onDone, onErr
         else if (v[key] === 'no') body[key] = false;
         else if (v[key] === 'unrecord') body[key] = null;
       }
+      /* The safeguards text is sent only when the person changed it; cleared, it is taken back as null. */
+      const safeguards = (v.vulnerablePopulationProtections ?? '').trim();
+      if (safeguards !== record.safeguards.trim()) body.vulnerablePopulationProtections = safeguards || null;
       if (Object.keys(body).length === 1) throw new Error('Nothing was changed: every fact was left as it is.');
       await governedWrite('PATCH', `${base}/context`, body, 'record the study facts');
       return onDone('Study facts recorded.');
@@ -447,7 +426,7 @@ export function IrbSubmissionRecord({ record, canWrite, programId, onChanged, on
         <KV k="Risk level" v={RISK_WORD[record.riskLevel] ?? 'not recorded'} />
         <KV k="Submission Center submission" v={linked == null ? 'not linked' : `submission ${linked}`} />
         {IRB_FACTS.map(([key, , label]) => <KV key={key} k={label} v={answer(record.facts[key])} />)}
-        <KV k="Involves vulnerable populations" v={answer(record.vulnerablePopulations)} />
+        {record.safeguards && <div className="pde-note">{`Additional safeguards: ${record.safeguards}`}</div>}
         <KV k="One IRB of record for every site" v={record.singleIrb ? 'yes' : 'no'} />
         <KV k="Consent waiver requested" v={record.consentWaiverRequested ? 'yes' : 'no'} />
         {canWrite && (
@@ -458,6 +437,10 @@ export function IrbSubmissionRecord({ record, canWrite, programId, onChanged, on
           </div>
         )}
       </section>
+      <IrbRegisters
+        submissionId={record.id} title={record.title} canWrite={canWrite} reads={reads}
+        onChanged={done} onError={onError}
+      />
       <Standing state={standing} />
       {form && (
         <IrbRecordForm kind={form} record={record} programId={programId} onCancel={() => setForm(null)} onDone={done} onError={onError} />

@@ -176,6 +176,12 @@ proof only; nothing was applied.
 **Still open in this order, engineering:**
 - Stage 6 steps 2 and 4–6 (OPS-17: long submission work behind the 60 s edge). Step 2, the measurement on the
   production image, comes first and decides whether steps 4–6 are needed. Then the staging acceptance, after Stage 5.
+  **2026-11-12, step 2 measured** (`docs/evidence/D1/2026-11-12-edge-timeouts/`). The production code and toolchain ran
+  on a 4-core host, because the image itself could not be built in the cloud session. A 200-leaf IND of 80-page
+  documents compiles in p95 59.3 s and assembles in p95 56.0 s. At 8 pages a leaf the same 200 leaves take 20 s. Time
+  is linear in leaves and pages. **Steps 4–6 are needed:** a realistic IND reaches the 60 s edge, and production's
+  API task has half these cores. Found on the way and fixed: a study leaf with an undefined STF tag made sequence
+  assemble answer 500. It now answers the recorded 422 with the sentence that says how to correct it.
 - Stage 7 steps 2–3 (shared rate-limit counters in Postgres). **This now waits for the founder:** the step creates
   `public.rate_limit_counters`, and since RULE 6 (P-80) a new table needs an `approvedAdditions` entry in
   `docs/design/one-design-plan.json` under a founder decision. NEW-2 (confirm B6 for rate limits) is the same decision.

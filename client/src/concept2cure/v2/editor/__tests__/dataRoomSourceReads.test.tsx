@@ -30,6 +30,15 @@ afterEach(() => cleanup());
 const refused = (status: number, code?: string) =>
   Object.assign(new Error('Request refused.'), { name: 'ApiRequestError', status, ...(code ? { code } : {}) });
 
+describe('the Data Room inside the editor\'s Vault panel, as development mounts it', () => {
+  it('loads the project\'s sources when React mounts the panel twice, with the editor\'s read owner', async () => {
+    apiRequest.mockResolvedValue(ok(page()));
+    render(<React.StrictMode><DataRoomSourcesPanel programId={programId} readOwner={{ key: 'library', current: () => true }} /></React.StrictMode>);
+    expect(await screen.findByText('Protocol source')).toBeTruthy();
+    expect(screen.queryByText('Loading project sources…')).toBeNull();
+  });
+});
+
 describe('a Data Room refusal is said as itself, never as a failed read', () => {
   it.each([
     { name: 'a plan without the feature', err: refused(403, 'MODULE_NOT_LICENSED'), title: 'Not enabled for your organization' },

@@ -254,7 +254,10 @@ export class SMERouter {
           }
         }
         if (comp.missingDataImpact) {
-          guidance.push(`Missing data sensitivity: ${comp.missingDataImpact.method} reduces power by ${(comp.missingDataImpact.powerReduction * 100).toFixed(1)}%. Bias risk: ${comp.missingDataImpact.biasRisk}.`);
+          const loss = comp.missingDataImpact.powerReduction;
+          guidance.push(loss === null
+            ? `Missing data sensitivity: the power under ${comp.missingDataImpact.method} is not computed (it depends on the missingness mechanism); ${comp.missingDataImpact.effectiveSampleSize} subjects are expected to complete. Bias risk: ${comp.missingDataImpact.biasRisk}.`
+            : `Missing data sensitivity: ${comp.missingDataImpact.method} reduces power by ${(loss * 100).toFixed(1)}%. Bias risk: ${comp.missingDataImpact.biasRisk}.`);
         }
         if (input.interimAnalyses && input.interimAnalyses > 0) {
           guidance.push(`Interim analysis: ${input.interimAnalyses} planned looks. Ensure alpha spending function is pre-specified and IDMC charter is in place.`);
