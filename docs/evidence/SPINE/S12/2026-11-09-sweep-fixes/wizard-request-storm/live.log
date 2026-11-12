@@ -1,0 +1,8 @@
+# LIVE (read-only) 2026-11-09T21:04:05Z: the dev server on :5000 was NOT restarted, so it runs the route as at HEAD.
+# Signed in via POST /api/auth/dev-login {email:'jm.smith@concept2cure.pro'}; two GETs, no writes.
+GET /api/submissions/market-support?applicationType=nda
+  keys: applicationType,asOf,markets | applicationType: "nda" | rows: 12 | summaries: Module 1 to the agency's headings / No outline, no transmit channel / Not supported | byType: false
+GET /api/submissions/market-support?applicationType=nda%2Cmaa
+  keys: applicationType,asOf,markets | applicationType: "nda,maa" | rows: 12 | summaries: No outline, no transmit channel / Not supported | byType: false
+# Reading: at HEAD the route takes 'nda,maa' as ONE unknown type and answers every market 'No outline' / 'Not supported'.
+# The batched form needs a server restart; until then the edited client (served by Vite) receives no byType and the picker shows its failure state with Retry (fail closed), never a wrong offer.

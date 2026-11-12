@@ -273,3 +273,54 @@ describe('one read, several readers (D3-2b)', () => {
     expect(await within(filing).findByRole('button', { name: 'Commitments: Could not be read' })).toBeTruthy();
   });
 });
+
+/* Sweep defect D3 (b), 2026-11-09: the Commitments row opened Respond at its top, the agency's letters, as the Agency
+   letters row does; the commitments it names are further down. It lands on them now, as a market's line lands on its
+   verdict (openMarketOnSubmit). jsdom has no scrollIntoView, so each test gives one and restores it. */
+describe("the Filing card's rows land where they say", () => {
+  const COMMIT_URL = '/api/concept2cure/projects/51/commitments';
+  const COMMITMENT = { id: 1, commitment_type: 'post_marketing', description: 'Commitment 1', regulatory_basis: null,
+    due_date: '2099-12-01', status: 'open', fulfilled_date: null, effectiveStatus: 'open', project_id: 51,
+    fulfilment: { state: 'not_started', rule: { signatureRequired: false } } };
+  let scrolled: Array<{ el: Element; arg: unknown }> = [];
+  const original = Element.prototype.scrollIntoView;
+  beforeEach(() => {
+    scrolled = [];
+    Element.prototype.scrollIntoView = function (this: Element, arg?: unknown) { scrolled.push({ el: this, arg }); } as never;
+    request.mockImplementation(async (_method: string, path: string) => {
+      if (path === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Programme A' });
+      if (path === `/api/c2c/projects/${PID}/team`) return ok(TEAM);
+      if (path === URL) return ok(sharing());
+      if (path === COMMIT_URL) return ok({ commitments: [COMMITMENT] });
+      return ok({});
+    });
+  });
+  afterEach(() => { Element.prototype.scrollIntoView = original; });
+  const openRow = async (name: RegExp) => {
+    render(<ProjectHome {...props} />);
+    const filing = await screen.findByRole('region', { name: /^Filing$/ });
+    fireEvent.click(await within(filing).findByRole('button', { name }));
+    await waitFor(() => expect(document.querySelector('.pj-lc-stage[aria-current="step"]')?.textContent?.trim()).toBe('Respond'));
+    return screen.findByRole('heading', { name: 'Commitments to the agency' });
+  };
+
+  it("the Commitments row lands on Respond's commitments, scrolled to and focused", async () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    try {
+      const heading = await openRow(/^Commitments: /);
+      await waitFor(() => expect(scrolled.map((s) => s.el)).toContain(heading));
+      expect(scrolled.find((s) => s.el === heading)?.arg).toEqual({ block: 'start', behavior: 'smooth' });
+      expect(document.activeElement).toBe(heading);
+      /* Focus does not scroll a second time over the smooth scroll. */
+      expect(focus.mock.calls.find((_, i) => focus.mock.contexts[i] === heading)?.[0]).toEqual({ preventScroll: true });
+    } finally {
+      focus.mockRestore();
+    }
+  });
+
+  it('the Agency letters row still opens Respond at its top, where the letters are', async () => {
+    await openRow(/^Agency letters: /);
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    expect(scrolled.some((s) => (s.el as HTMLElement).id === 'pj-commitments-h')).toBe(false);
+  });
+});

@@ -48,30 +48,58 @@ const MDX_TASKS = [
 
 // ─── 1. Projects ─────────────────────────────────────────────────────────────
 
+/** The fictional diagnostics sponsor's client workspace, created only when the program must be created. */
+export const MDX_CLIENT = { name: `${MANUFACTURER} (fictional demo)`, slug: 'concept2cure-diagnostics-demo' };
+
+/** The NeuroPanel-Dx 510(k) program's canonical intake body, in the workspace it is given (none: intake decides). */
+export function mdxProgramBody(clientWorkspaceId) {
+  return {
+    ...(clientWorkspaceId !== undefined ? { clientWorkspaceId } : {}),
+    name: T(PROGRAM_NAME),
+    productName: T(PROGRAM_NAME),
+    // '510k', not 'ivd': the filing type is what intake keys on — it sets
+    // regulatory_path=510k, scaffolds the k510 governed document and derives
+    // the device class; productType 'ivd' then selects the IVD vault view.
+    // 'ivd' as a program type carries no US premarket path and no scaffold.
+    programType: '510k',
+    productType: 'ivd',
+    primaryAgency: 'FDA',
+    indication: 'Differential diagnosis of viral CNS infection (meningitis / encephalitis) from CSF',
+    priority: 'high',
+    targetSubmissionDate: inDays(120),
+    deviceClassification: {
+      deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology',
+      // The eSTAR prints the predicate's trade name beside its number; the server refuses one without the other.
+      predicateK: 'K223456', predicateName: 'SepsiScreen Panel (demo predicate)', intendedUse: INTENDED_USE, flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'],
+    },
+  };
+}
+
+async function ensureMdxClient({ api, run }) {
+  const listed = must(await api('GET', '/api/clients'), 200, 'list client workspaces');
+  const rows = Array.isArray(listed.clients) ? listed.clients : rowsOf(listed);
+  const found = rows.find((c) => c.slug === MDX_CLIENT.slug);
+  let id = found ? Number(found.id) : null;
+  if (!found) {
+    const j = must(await api('POST', '/api/clients', { name: MDX_CLIENT.name, slug: MDX_CLIENT.slug }), [200, 201], 'create client workspace');
+    id = Number(j.client?.id ?? j.data?.id ?? j.id);
+    if (!Number.isSafeInteger(id) || id <= 0) throw new Error(`client workspace create answered no id: ${JSON.stringify(j).slice(0, 300)}`);
+  }
+  run.record('client', { ...MDX_CLIENT, id, created: !found });
+  return id;
+}
+
 async function seedProgram({ api, run }) {
   const list = must(await api('GET', '/api/c2c/projects?limit=200'), 200, 'list programs');
   let row = findDemo(list.data ?? [], PACK, PROGRAM_NAME, 'title');
   let meta = null;
   if (!row) {
-    const body = must(await api('POST', '/api/c2c/projects', {
-      name: T(PROGRAM_NAME),
-      productName: T(PROGRAM_NAME),
-      // '510k', not 'ivd': the filing type is what intake keys on — it sets
-      // regulatory_path=510k, scaffolds the k510 governed document and derives
-      // the device class; productType 'ivd' then selects the IVD vault view.
-      // 'ivd' as a program type carries no US premarket path and no scaffold.
-      programType: '510k',
-      productType: 'ivd',
-      primaryAgency: 'FDA',
-      indication: 'Differential diagnosis of viral CNS infection (meningitis / encephalitis) from CSF',
-      priority: 'high',
-      targetSubmissionDate: inDays(120),
-      deviceClassification: {
-        deviceClass: 'II', productCode: 'QNX', regulationNumber: '866.3985', reviewPanel: 'Microbiology',
-        // The eSTAR prints the predicate's trade name beside its number; the server refuses one without the other.
-        predicateK: 'K223456', predicateName: 'SepsiScreen Panel (demo predicate)', intendedUse: INTENDED_USE, flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'],
-      },
-    }), 201, 'create program');
+    /* Creation only (the coordinating session's ruling (b), 2026-11-09): with the Lumen pack's workspace present and
+       no organization default, intake refuses a creation that names no workspace (AMBIGUOUS_CLIENT_WORKSPACE). The
+       program gets its fictional sponsor's own workspace; an existing program above is found wherever it is and is
+       never moved or refused. */
+    const clientWorkspaceId = await ensureMdxClient({ api, run });
+    const body = must(await api('POST', '/api/c2c/projects', mdxProgramBody(clientWorkspaceId)), 201, 'create program');
     row = body.data;
     meta = body.meta ?? null;
     if (meta && meta.submissionId == null) {

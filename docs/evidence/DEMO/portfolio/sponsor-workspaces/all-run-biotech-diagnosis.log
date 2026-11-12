@@ -1,0 +1,34 @@
+# 2026-11-09T19:50:42Z read-only diagnosis of the biotech failure in all-run1.log / all-run2.log (review round 2): "Tasks: 6 tasks on C2C-101 … The project Task Board contains malformed or duplicate task titles".
+# The refusal is the existing guard in scripts/demo/launch-demo/packs/work-areas.mjs ensureTasks (a title is an idempotency key only when unique within the project's board). Not changed; no other pack and none of the sweep's data was touched.
+# All SQL below ran inside BEGIN READ ONLY against the local database; nothing was written.
+
+## duplicate live titles on C2C-101's board project (projects.id 1), with creation time and the study design that raised each
+BEGIN
+title | task_id | created_at | source_entity_type | source_entity_id
+Draft the protocol statistical section for the IND | 8387372e-a054-4293-bb16-67569150b1c4 | 2026-11-09 18:37:01.831306 | study_design | sd_66e9ac5708d74cec82b6d350a180f947
+Draft the protocol statistical section for the IND | 889c3456-6aab-44da-95ce-a25a35783728 | 2026-11-09 19:10:09.23168 | study_design | sd_403db359ba8f4cfcb36bdca7585d2d0a
+Draft the randomization and blinding plan for the IND | 584ce2b5-0546-44d1-8d17-9e21aa334c7e | 2026-11-09 18:37:01.831306 | study_design | sd_66e9ac5708d74cec82b6d350a180f947
+Draft the randomization and blinding plan for the IND | dd64e640-def5-48c4-9d4e-8952a6d2296c | 2026-11-09 19:10:09.23168 | study_design | sd_403db359ba8f4cfcb36bdca7585d2d0a
+Draft the sample size rationale for the IND | 51e93103-ce92-4316-9fbf-832c823539ff | 2026-11-09 18:37:01.831306 | study_design | sd_66e9ac5708d74cec82b6d350a180f947
+Draft the sample size rationale for the IND | d5fad878-50ac-4ebb-9eff-6b3f91cf378b | 2026-11-09 19:10:09.23168 | study_design | sd_403db359ba8f4cfcb36bdca7585d2d0a
+Draft the sap section draft for the IND | 2e528bfb-738a-4ecf-b1b7-4ce6ea48c7e1 | 2026-11-09 18:37:01.831306 | study_design | sd_66e9ac5708d74cec82b6d350a180f947
+Draft the sap section draft for the IND | 362e3125-1320-42b7-a58a-5d7f0d909a76 | 2026-11-09 19:10:09.23168 | study_design | sd_403db359ba8f4cfcb36bdca7585d2d0a
+Draft the statistical analysis plan for the IND | 2ecf8fd0-9240-4f00-9e40-4240b7a712ad | 2026-11-09 18:37:01.831306 | study_design | sd_66e9ac5708d74cec82b6d350a180f947
+Draft the statistical analysis plan for the IND | 1f86b6c5-bc5d-4752-9119-c38be617e27e | 2026-11-09 19:10:09.23168 | study_design | sd_403db359ba8f4cfcb36bdca7585d2d0a
+(10 rows)
+COMMIT
+
+
+## the study designs bound to C2C-101 (program 6065271c-d4b0-4936-aad1-02855423a738), from cdisc_prm_studies, the table GET /api/biostat-bridge/designs reads
+BEGIN
+study_id | protocol_title | updated_at
+sd_66e9ac5708d74cec82b6d350a180f947 | [Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis | 2026-11-09 19:48:56.167079
+sd_403db359ba8f4cfcb36bdca7585d2d0a | Sweep SP C2C-101-203 design | 2026-11-09 19:05:32.21366
+C2C-101-201-WALK | D3-4/S12 walk: stability study register entry (local only) | 2026-11-09 00:11:16.472708
+(3 rows)
+COMMIT
+
+## grep for the sweep design title in the seed packs (expected: no match)
+no match
+
+## still present at 2026-11-09T19:51:35Z: the sweep's second design (sd_403db359…, raised its 5 blueprint tasks at 19:10:09) and its duplicate titles, so all-run1.log and all-run2.log stop at the same step as round 1 and the verifier's runs. The remedy named in the review: re-run --pack all twice once the sweep's owner has removed that design's duplicate tasks on C2C-101, or after the sweep's freeze (until 23:00 UTC) ends.

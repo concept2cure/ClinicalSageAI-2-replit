@@ -1,0 +1,78 @@
+Mon Nov  9 18:04:59 UTC 2026
+Signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: portfolio ===
+  • Editor: the canonical CSR template … ok — 
+  • Client workspace: the organisation's own (no workspace created) … ok — 
+  • Project (a) Corvane Oncology (fictional) · CRV-310-301 Phase 3 CSR (planning) — SYNTHETIC … ok — 
+  • Vault: CRV-310-301 protocol · synthetic … ok — 
+  • Vault: CRV-310-301 statistical analysis plan · synthetic … ok — 
+  • Editor: CSR working document for CRV-310-301 … ok — 
+  • Tasks: 3 tasks on CRV-310-301 … ok — 0 created, 3 already there (board project 197863)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Corvane Oncology (fictional) · CRV-310-30 … ok — 0 corrected
+  • Project (b) Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC … ok — 
+  • Vault: PTR-022-301 protocol · synthetic … ok — 
+  • Biostatistics: study design "[Demo · Portfolio] PTR-022-301 — Phase 3 study design (fictional)" … ok — updated sd_70de6919e18e4ef489868f919d94baff
+  • Editor: CSR working document for PTR-022-301 … ok — 
+  • Tasks: 3 tasks on PTR-022-301 … ok — 0 created, 3 already there (board project 197864)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Petrelline Rare Therapeutics (fictional)  … ok — 0 corrected
+  • Project (c) Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC … ok — 
+  • Vault: QLM-118-202 protocol · synthetic … ok — 
+  • Vault: QLM-118-202 statistical analysis plan · synthetic … ok — 
+  • Vault: QLM-118-202 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for QLM-118-202 … ok — 
+  • Tasks: 3 tasks on QLM-118-202 … ok — 0 created, 3 already there (board project 197865)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-11 … ok — 0 corrected
+  • Project (d) Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC … ok — 
+  • Vault: HLY-09-201 protocol · synthetic … ok — 
+  • Vault: HLY-09-201 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for HLY-09-201 … ok — 
+  • Editor: write 5 ICH E3 narrative headings (saved revisions) … ok — 
+  • Tasks: 3 tasks on HLY-09-201 … ok — 0 created, 3 already there (board project 197866)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 … ok — 0 corrected
+  • Project (e) Corvane Oncology (fictional) · CRV-310-201 Phase 2 CSR (in review) — SYNTHETIC … ok — 
+  • Vault: CRV-310-201 protocol · synthetic … ok — 
+  • Vault: CRV-310-201 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for CRV-310-201 … ok — 
+  • Editor: write 8 ICH E3 narrative headings (saved revisions) … ok — 
+  • Editor: 4 reviewer comments … ok — 
+  • Tasks: 3 tasks on CRV-310-201 … ok — 0 created, 3 already there (board project 197867)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Corvane Oncology (fictional) · CRV-310-20 … ok — 0 corrected
+  • Project (f) Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC … ok — 
+  • Vault: PTR-022-102 protocol · synthetic … ok — 
+  • Vault: PTR-022-102 clinical study source · synthetic v3 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for PTR-022-102 … ok — 
+  • Editor: write 8 ICH E3 narrative headings (saved revisions) … ok — 
+  • Editor: 2 reviewer comments … ok — 
+  • Signature: freeze and e-sign PTR-022-102 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Tasks: 3 tasks on PTR-022-102 … ok — 0 created, 3 already there (board project 197868)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Petrelline Rare Therapeutics (fictional)  … ok — 0 corrected
+  • Project (g) Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC … ok — 
+  • Vault: QLM-118-101 protocol · synthetic … ok — 
+  • Vault: QLM-118-101 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for QLM-118-101 … ok — 
+  • Editor: write 8 ICH E3 narrative headings (saved revisions) … ok — 
+  • Submission Center: CSR at m5.3.5.1 in IND sequence 0000 … ok — 
+  • Tasks: 3 tasks on QLM-118-101 … ok — 3 created, 0 already there (board project 197871)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-11 … ok — 0 corrected
+  • Project (h) Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC … ok — 
+  • Vault: HLY-09-101 protocol · synthetic … ok — 
+  • Vault: HLY-09-101 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for HLY-09-101 … ok — 
+  • Editor: write 8 ICH E3 narrative headings (saved revisions) … ok — 
+  • Submission Center: CSR at m5.3.5.1 in IND sequence 0000 … ok — 
+  • Communication: data-room source "[Demo · Portfolio] FDA information request (fictional) - IND HLY-09 - CSR HLY-09-101.txt" on HLY-09-101 … ok — uploaded 419 (text read: already_complete)
+  • Communication: agency inbox entry for "FDA information request (fictional demo) on CSR HLY-09-101, IND HLY-09" on HLY-09-101 … ok — found ace_1794247409732_d682cf6e
+  • Communication: the inbox reads "[Demo · Portfolio] FDA information request (fictional) - IND HLY-09 - CSR HLY-09-101.txt" … ok — 3 questions, 0 commitments proposed
+  • Tasks: 3 tasks on HLY-09-101 … ok — 0 created, 3 already there (board project 197870)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND … FAILED
+✗ portfolio: reopen task "[Demo · Portfolio] HLY-09-101 · Confirm the CSR leaf at 5.3.5.1": HTTP 404 {"success":false,"error":"Task not found"}
+EXIT=1
+Mon Nov  9 18:05:43 UTC 2026

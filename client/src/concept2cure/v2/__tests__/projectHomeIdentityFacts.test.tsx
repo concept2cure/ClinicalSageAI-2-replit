@@ -151,6 +151,20 @@ describe('project home shows the program identity from the database', () => {
     expect(fact('Code')).toBe('BX-512');
   });
 
+  /* Sweep defect D3 (c), 2026-11-09: the byline printed the stored key ("dmf") and a document class's label in lower
+     case ("clinical study report"), where the project list said "DMF" and "Clinical study report" (filingLabel). */
+  it.each([
+    ['dmf', 'DMF'],
+    ['csr', 'Clinical study report'],
+    ['ind_amendment', 'IND amendment'],
+  ])('the header names the filing %s as the project list does: %s', async (stored, words) => {
+    mockProgram(program({ program_type: stored, code: null }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByRole('region', { name: /project identity/i });
+    const byline = document.querySelector('.pj-top .pj-tags');
+    expect(byline?.querySelector('.rd-chip')?.textContent).toBe(words);
+  });
+
   it('a filing type no client type is known for is still "not recorded", never a guess', async () => {
     mockProgram(program({ program_type: 'other', product_type: null }));
     render(<ProjectHome {...props()} />);
