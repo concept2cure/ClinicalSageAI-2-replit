@@ -1,0 +1,17 @@
+# "Place legal hold" from a record, in the running app (local server on PostgreSQL, the demo's IND project C2C-101,
+# signed in as the organisation's administrator through the real form). Chromium through Playwright.
+
+hold notice before: none
+record offers: Place legal hold
+submit enabled with nothing typed: false
+said: Legal hold FDA-PAI-2026-11 is placed on this version of MT-007 method transfer plan. Your reason is recorded with it.
+hold notice after: On legal hold: FDA-PAI-2026-11 (this version, since 2026-11-12). While a hold is in place this document cannot be withdrawn or disposed of. A hold is lifted in Admin, Settings.
+another document shows a hold: 0
+console errors: []
+responses >= 400: []
+
+# The database afterwards, read as the owner:
+$ select reference, scope, left(reason,60), placed_by, lifted_at is null as active from vault.legal_holds order by placed_at desc limit 1
+FDA-PAI-2026-11 | document | Preserve for the pre-approval inspection announced for Decem | 1 | t
+$ select chain_seq, action, chained from audit_logs where action like 'vault.legal_hold%' order by chain_seq desc limit 1
+597 | vault.legal_hold.placed | chained

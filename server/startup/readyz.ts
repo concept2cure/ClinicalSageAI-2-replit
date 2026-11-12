@@ -6,6 +6,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
 import type { Pool } from 'pg';
 import { probeVaultStore } from '../services/storage/store-readiness';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 import { pingClamdCached } from '../utils/virusScan';
 import {
   getSchemaReadiness,
@@ -46,18 +47,57 @@ async function virusScanReadiness(): Promise<'ok' | 'skipped' | 'down'> {
   }
 }
 
+/**
+ * The shared session store, as /readyz reports it (MR-03 Stage 7 step 4, SEC-08).
+ * Sign-in sessions are coordinated across API tasks through Postgres
+ * (session_activity; decision B6, production runs no Redis). A task that cannot
+ * read that table judges each session from its own memory
+ * (services/session-inactivity.ts), so the idle timeout, the concurrent-session
+ * limit and superseded sessions hold per task and not for the deployment. That
+ * used to be a log line; a deployment whose database lacked the table, or whose
+ * runtime role could not read it, read ready. Required in production; skipped
+ * elsewhere, as the scanner is.
+ *
+ * Read as the session service reads it: organisation 0, under the system tenant
+ * scope, which is the only scope the table's policy admits.
+ */
+export async function probeSessionStore(pool: Pool): Promise<{ status: 'ok' | 'skipped' | 'down'; detail?: string }> {
+  if (process.env.NODE_ENV !== 'production') return { status: 'skipped' };
+  try {
+    await runWithSystemTenantScope('ops:readyz:session-store', () =>
+      pool.query('SELECT 1 FROM session_activity WHERE organization_id = 0 LIMIT 1'),
+    );
+    return { status: 'ok' };
+  } catch (err) {
+    return {
+      status: 'down',
+      detail: `session_activity could not be read, so sessions are judged per task: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
 export interface ReadyzIoProbes {
   database: 'ok' | 'down';
   storage: Awaited<ReturnType<typeof probeVaultStore>>;
+  sessions: Awaited<ReturnType<typeof probeSessionStore>>;
 }
 
-/** The two probes that cost a round trip: the database and the Vault store. */
+/** The probes that cost a round trip: the database, the Vault store and the shared session store. */
 export async function probeReadyzIo(pool: Pool): Promise<ReadyzIoProbes> {
-  const [database, storage] = await Promise.all([
+  const [database, storage, sessions] = await Promise.all([
     pool.query('select 1').then(() => 'ok' as const, () => 'down' as const),
     probeVaultStore(),
+    probeSessionStore(pool),
   ]);
-  return { database, storage };
+  return { database, storage, sessions };
+}
+
+/** Why a round-trip probe is down, for the failure body. */
+function ioDetail(probes: ReadyzIoProbes): Record<string, string> {
+  const detail: Record<string, string> = {};
+  if (probes.storage.detail) detail.storageDetail = probes.storage.detail;
+  if (probes.sessions.detail) detail.sessionsDetail = probes.sessions.detail;
+  return detail;
 }
 
 /**
@@ -99,6 +139,11 @@ export async function computeReadiness(io: () => Promise<ReadyzIoProbes>): Promi
   // (services/storage/store-readiness.ts).
   const storage = probes.storage;
   deps.storage = storage.status;
+
+  // The shared session store — required in production: without it each task
+  // judges sessions from its own memory (probeSessionStore above).
+  const sessions = probes.sessions;
+  deps.sessions = sessions.status;
 
   deps.virusScan = await virusScanReadiness();
 
@@ -169,7 +214,7 @@ export async function computeReadiness(io: () => Promise<ReadyzIoProbes>): Promi
           ? 'schema was never verified — no boot-time verdict was recorded'
           : 'schema verification did not complete');
     }
-    if (storage.detail) body.storageDetail = storage.detail;
+    Object.assign(body, ioDetail(probes));
     if (deps.ana === 'down') {
       body.anaDetail =
         anaDetail ||
@@ -200,11 +245,11 @@ export async function computeReadiness(io: () => Promise<ReadyzIoProbes>): Promi
  * OPS-22). It is mounted before rate limiting and reachable through CloudFront,
  * so each hit used to run a database query, a Vault-store probe and a scanner
  * ping, and answer with every dependency's state to anyone.
- *  - The database query and the Vault-store probe run at most once per
- *    READYZ_CACHE_MS (default 5000, at most 10000) per process, and concurrent
- *    hits share them. The rest (schema, AnA, the registry) is in-memory state,
- *    read on every hit, so a change in it shows at once; the scanner keeps its
- *    own 30 s ping cache.
+ *  - The database query, the Vault-store probe and the session-store read run
+ *    at most once per READYZ_CACHE_MS (default 5000, at most 10000) per
+ *    process, and concurrent hits share them. The rest (schema, AnA, the
+ *    registry) is in-memory state, read on every hit, so a change in it shows
+ *    at once; the scanner keeps its own 30 s ping cache.
  *  - In production the body is { ready } alone, unless the caller presents
  *    READYZ_TOKEN (header x-readyz-token) or is a loopback peer, i.e. inside the
  *    task or container: CI's boot jobs and an operator's ECS exec. The TCP peer

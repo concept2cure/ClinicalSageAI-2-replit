@@ -37,6 +37,8 @@ import {
   stabilityResultBody,
   stabilityCloseoutBody,
   stabilityCloseoutForm,
+  stabilityShelfLifeForm,
+  stabilityShelfLifeBody,
   readStabilityResults,
   processValidationForm,
   processValidationBody,
@@ -281,6 +283,39 @@ describe('stability studies — stability_studies', () => {
     for (const k of ['productName', 'batchNumber', 'dosageForm', 'scope', 'climaticZone', 'condition', 'duration', 'testParameters', 'timePoints', 'startDate', 'status']) {
       expect(keys).toContain(k);
     }
+  });
+
+  /* 2026-11-12 (CMC walked in the running app): no form could record the drug product's shelf-life claim on a
+     running study, so §3.2.P.8 stayed at 0% ("the drug product's shelf-life claim"). The only control was the
+     close-out, a Part 11 signature that ends the study. The register's create and edit routes both take
+     `shelfLife`; the forms did not offer it. */
+  describe('the proposed shelf life', () => {
+    const base = {
+      productName: 'BX-204 injection', batchNumber: 'BX204-DP-2407', scope: 'DP', dosageForm: 'Solution for injection',
+      climaticZone: 'II', condition: 'LT|25°C ± 2°C / 60% ± 5% RH', duration: '24', startDate: '2026-01-15',
+      timePoints: '0, 3, 6', testParameters: 'Assay', status: 'ACTIVE',
+    };
+
+    it('is offered at registration, and is not required: a study is registered before its data support a claim', () => {
+      const field = stabilityForm().fields.find((f) => f.key === 'shelfLife');
+      expect(field).toMatchObject({ label: 'Proposed shelf life', type: 'text' });
+      expect(requiredKeys(stabilityForm())).not.toContain('shelfLife');
+    });
+
+    it('is sent with the registration when given, and left out when blank', () => {
+      expect(stabilityBody({ ...base, shelfLife: ' 24 months at or below 25 °C ' }).shelfLife).toBe('24 months at or below 25 °C');
+      expect(stabilityBody({ ...base, shelfLife: '  ' })).not.toHaveProperty('shelfLife');
+      expect(stabilityBody(base)).not.toHaveProperty('shelfLife');
+    });
+
+    it('can be set on a running study by an ordinary edit, with what is recorded now as the default', () => {
+      const form = stabilityShelfLifeForm({ shelfLife: '18 months', scope: 'DP' });
+      const field = form.fields.find((f) => f.key === 'shelfLife');
+      expect(field).toMatchObject({ required: true, default: '18 months' });
+      expect(form.sub).toMatch(/3\.2\.P\.8/);
+      expect(stabilityShelfLifeForm({ shelfLife: null, scope: 'DS' }).sub).toMatch(/3\.2\.S\.7/);
+      expect(stabilityShelfLifeBody({ shelfLife: ' 24 months ' })).toEqual({ shelfLife: '24 months' });
+    });
   });
 
   it('derives the study type from the chosen ICH condition code', () => {

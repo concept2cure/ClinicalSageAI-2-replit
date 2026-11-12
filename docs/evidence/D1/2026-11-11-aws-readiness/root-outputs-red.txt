@@ -1,0 +1,238 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports cloudfront_domain (the DNS alias points at it) 2ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports frontend_bucket (the GitHub environment's FRONTEND_BUCKET variable) 0ms
+ × tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports github_deploy_role_arn (the GitHub environment's AWS_DEPLOY_ROLE_ARN secret) 4ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'github_deploy_role_arn'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports github_build_role_arn (the GitHub environment's AWS_BUILD_ROLE_ARN secret) 1ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'github_build_role_arn'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports cloudfront_distribution_id (the GitHub environment's CLOUDFRONT_DISTRIBUTION_ID secret) 1ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'cloudfront_distribution_id'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports first_run_setup (where the first administrator's setup token is, and the one call that uses it) 0ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'first_run_setup'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports readyz_detail (where /readyz's detail token is, and the GitHub environment's READYZ_TOKEN secret) 0ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'readyz_detail'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports engine_version_actual (the PostgreSQL version RDS runs, for the IQ record) 0ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'engine_version_actual'
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports api_task_boot_contract (reviewed before apply) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports only what the stack declares, each under its own name 1ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports every output its own terraform.tfvars.example tells the operator to read 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports cloudfront_domain (the DNS alias points at it) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports frontend_bucket (the GitHub environment's FRONTEND_BUCKET variable) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports github_deploy_role_arn (the GitHub environment's AWS_DEPLOY_ROLE_ARN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports github_build_role_arn (the GitHub environment's AWS_BUILD_ROLE_ARN secret) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports cloudfront_distribution_id (the GitHub environment's CLOUDFRONT_DISTRIBUTION_ID secret) 0ms
+ × tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports first_run_setup (where the first administrator's setup token is, and the one call that uses it) 0ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(11) ] to include 'first_run_setup'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports readyz_detail (where /readyz's detail token is, and the GitHub environment's READYZ_TOKEN secret) 0ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(11) ] to include 'readyz_detail'
+ × tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports engine_version_actual (the PostgreSQL version RDS runs, for the IQ record) 0ms
+   → expected [ 'vpc_id', 'alb_dns_name', …(11) ] to include 'engine_version_actual'
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports api_task_boot_contract (reviewed before apply) 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports only what the stack declares, each under its own name 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports every output its own terraform.tfvars.example tells the operator to read 0ms
+ × tests/ci/terraform-root-outputs.contract.test.ts > staging and production > export the same outputs: staging is applied first, from the same instructions 4ms
+   → expected [ 'alb_dns_name', …(9) ] to deeply equal [ 'alb_dns_name', …(12) ]
+ × tests/ci/terraform-root-outputs.contract.test.ts > staging and production > both examples say which output feeds each GitHub value 2ms
+   → staging: expected [] to deeply equal ArrayContaining{…}
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the instructions read outputs that exist > terraform/README.md 0ms
+ × tests/ci/terraform-root-outputs.contract.test.ts > the instructions read outputs that exist > docs/work-orders/MR-03-first-deploy-staging-to-production.md 1ms
+   → expected [ 'engine_version_actual' ] to deeply equal []
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the readers > read an output block and its value 0ms
+ ✓ tests/ci/terraform-root-outputs.contract.test.ts > the readers > read the names an instruction runs, with -raw, -json and -chdir 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports github_deploy_role_arn (the GitHub environment's AWS_DEPLOY_ROLE_ARN secret)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'github_deploy_role_arn'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports github_build_role_arn (the GitHub environment's AWS_BUILD_ROLE_ARN secret)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'github_build_role_arn'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports cloudfront_distribution_id (the GitHub environment's CLOUDFRONT_DISTRIBUTION_ID secret)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'cloudfront_distribution_id'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports first_run_setup (where the first administrator's setup token is, and the one call that uses it)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'first_run_setup'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports readyz_detail (where /readyz's detail token is, and the GitHub environment's READYZ_TOKEN secret)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'readyz_detail'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the staging root > exports engine_version_actual (the PostgreSQL version RDS runs, for the IQ record)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(8) ] to include 'engine_version_actual'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports first_run_setup (where the first administrator's setup token is, and the one call that uses it)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(11) ] to include 'first_run_setup'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports readyz_detail (where /readyz's detail token is, and the GitHub environment's READYZ_TOKEN secret)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(11) ] to include 'readyz_detail'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the production root > exports engine_version_actual (the PostgreSQL version RDS runs, for the IQ record)
+AssertionError: expected [ 'vpc_id', 'alb_dns_name', …(11) ] to include 'engine_version_actual'
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:65:33
+     63|
+     64|   it.each(Object.entries(OPERATOR_OUTPUTS))('exports %s (%s)', (name) …
+     65|     expect([...outputs.keys()]).toContain(name);
+       |                                 ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > staging and production > export the same outputs: staging is applied first, from the same instructions
+AssertionError: expected [ 'alb_dns_name', …(9) ] to deeply equal [ 'alb_dns_name', …(12) ]
+
+- Expected
++ Received
+
+  [
+    "alb_dns_name",
+    "api_task_boot_contract",
+-   "cloudfront_distribution_id",
+    "cloudfront_domain",
+    "ecr_api_url",
+    "ecs_cluster",
+    "evidence_bucket",
+    "frontend_bucket",
+-   "github_build_role_arn",
+-   "github_deploy_role_arn",
+    "rds_endpoint",
+    "release_signing_key_arn",
+    "vpc_id",
+  ]
+
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:81:46
+     79| describe('staging and production', () => {
+     80|   it('export the same outputs: staging is applied first, from the same…
+     81|     expect([...roots.staging.keys()].sort()).toEqual([...roots.product…
+       |                                              ^
+     82|   });
+     83|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > staging and production > both examples say which output feeds each GitHub value
+AssertionError: staging: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "github_deploy_role_arn",
+-   "github_build_role_arn",
+-   "cloudfront_distribution_id",
+-   "frontend_bucket",
+-   "readyz_detail",
+- ]
++ []
+
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:87:26
+     85|     for (const env of ENVIRONMENTS) {
+     86|       const named = outputsRead(read(`terraform/environments/${env}/te…
+     87|       expect(named, env).toEqual(expect.arrayContaining(['github_deplo…
+       |                          ^
+     88|     }
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/ci/terraform-root-outputs.contract.test.ts > the instructions read outputs that exist > docs/work-orders/MR-03-first-deploy-staging-to-production.md
+AssertionError: expected [ 'engine_version_actual' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "engine_version_actual",
++ ]
+
+ ❯ tests/ci/terraform-root-outputs.contract.test.ts:100:21
+     98|       (n) => !bootstrap.has(n) && !ENVIRONMENTS.every((env) => roots[e…
+     99|     );
+    100|     expect(missing).toEqual([]);
+       |                     ^
+    101|   });
+    102| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 16 passed (28)
+   Start at  00:00:18
+   Duration  554ms (transform 98ms, setup 105ms, import 15ms, tests 25ms, environment 0ms)
+
