@@ -1,0 +1,16 @@
+ id | sequence_number | dispatch_status |          updated_at           
+----+-----------------+-----------------+-------------------------------
+ 36 | 0000            | sent            | 2026-11-09 21:07:13.177738+00
+
+ transmittal | has_leaf_manifest | leaves |      method       | version |                         manifest_sha256                          | derived_by |          not_recoverable          | has_restored_binding 
+-------------+-------------------+--------+-------------------+---------+------------------------------------------------------------------+------------+-----------------------------------+----------------------
+           6 | t                 |      3 | sent-package-read | 1       | c697302ab733fd5e5894e90ca29d8eabc56ea8c2bf84114559438ff4bd9e3ba5 | 16         | ["sourceMd5", "originalPdfProof"] | f
+
+                                                       recorded                                                        
+-----------------------------------------------------------------------------------------------------------------------
+ ["2.5 · clinical-overview.pdf · new", "3.2.S.4.2 · analytical-procedures.pdf · new", "m1.2 · cover-letter.pdf · new"]
+
+           action           | user_id | record_id |                                                     reason                                                     |                         manifest_sha256                          | leaf_count |      method       | method_version | chained | sealed |         created_at         
+----------------------------+---------+-----------+----------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------+------------+-------------------+----------------+---------+--------+----------------------------
+ ECTD_SENT_RECORD_REDERIVED |      16 | 36        | Sequence 0000's send has no record of what it carried; read it back from the package the platform kept (walk). | c697302ab733fd5e5894e90ca29d8eabc56ea8c2bf84114559438ff4bd9e3ba5 | 3          | sent-package-read | 1              | t       | f      | 2026-11-09 21:07:13.177738
+

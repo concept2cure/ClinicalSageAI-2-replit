@@ -48,7 +48,10 @@ import { stashNavParamsForTarget } from '../navParams';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
-import { gatewayLabel, transmittalStatusTone as statusTone, heldSendSettlementWords, type HeldSendSettlementRecord, type KeptReceipt } from '../gatewayLabels';
+import {
+  gatewayLabel, transmittalStatusTone as statusTone, heldSendSettlementWords, technicalRejectionWords, type HeldSendSettlementRecord, type KeptReceipt,
+  type TechnicalRejectionRecord,
+} from '../gatewayLabels';
 import { useTransmittalTarget } from './useTransmittalTarget';
 import { ceremonyOpen } from '../ceremony';
 import { canGovernedWrite } from '@shared/constants/permissions';
@@ -70,7 +73,7 @@ interface Transmittal {
    *  is written by the governed technical-rejection action (sweep F19). */
   metadata?: {
     signature?: { meaning?: string | null; signatureId?: number | null } | null;
-    technicalRejection?: { sequence?: string | null; recordedAt?: string | null } | null;
+    technicalRejection?: TechnicalRejectionRecord | null;
     /** 2026-10-01 (D7): whose account the transmit went out under, stamped by the
      *  guarded transmit. Absent on rows transmitted before the choice existed. */
     gatewayAccount?: { mode?: string | null; senderIdentifier?: string | null } | null;
@@ -120,7 +123,8 @@ async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: un
 const TECHNICAL_REJECTION_FORM = (id: number): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: `Record the agency’s technical rejection of transmittal #${id}`,
-  sub: 'Only for a sequence the agency did not load (for FDA, a failed Ack3). Recording it takes the sequence off this '
+  sub: 'Only for a package transmittal written before 2026-10-17. Every send since is a sequence\'s: record its technical '
+     + 'rejection from that sequence\'s Dispatch tab. For a package: only for a sequence the agency did not load (for FDA, a failed Ack3). Recording it takes the sequence off this '
      + 'package’s filed history, and the next assembly reuses its number. This is not a rollback: a rolled-back sequence '
      + 'stays on file, because the agency still holds it. Only the latest sequence on file qualifies, and a transmittal '
      + 'the agency accepted is refused.',
@@ -148,15 +152,12 @@ const TECHNICAL_REJECTION_FORM = (id: number): C2CFormConfig => ({
 
 /** Only a package's transmittal files a sequence, and a rejection is recorded once. */
 const canRecordRejection = (t: Transmittal): boolean => t.package_id != null && !t.metadata?.technicalRejection;
-/** The line under a transmittal's status once its technical rejection is recorded (sweep F19). */
+/** The line under a transmittal's status once its technical rejection is recorded: a package's (sweep F19) or a
+ *  sequence's, on FDA's Ack3 (P-92 C4). --text-300 is the ramp's tested secondary; --muted is not defined in v2. */
 function technicalRejectionNote(t: Transmittal): React.ReactNode {
-  const recorded = t.metadata?.technicalRejection;
-  if (!recorded) return null;
-  return (
-    <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>
-      technical rejection recorded{recorded.sequence ? ` · sequence ${recorded.sequence} off file` : ''}
-    </div>
-  );
+  const words = technicalRejectionWords(t.metadata, 'log');
+  if (!words) return null;
+  return <div data-testid="technical-rejection-note" style={{ fontSize: 11, color: 'var(--text-300)' }}>{words}</div>;
 }
 
 /** The line under a transmittal's status once its held send is settled by signature (P-92 C2), with FDA's verified

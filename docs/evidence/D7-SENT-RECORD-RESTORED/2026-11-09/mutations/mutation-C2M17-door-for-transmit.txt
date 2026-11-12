@@ -1,0 +1,6 @@
+MUTATION C2M17-door-for-transmit in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T21:17:53.964785Z): replaced [(t.sentRecord?.basis === 'none' || t.sentRecord?.basis === 'compiles')] with [(t.sentRecord?.basis === 'none' || t.sentRecord?.basis === 'compiles' || t.sentRecord?.basis === 'transmit')]
+ × client/src/concept2cure/v2/__tests__/dispatchSentRecord.test.tsx > C4a — "Put sequence NNNN's send on record…" under a filed sequence with nothing, or only compiles, on record > there is no door already read from what it sent 85ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchSentRecord.test.tsx > C4a — "Put sequence NNNN's send on record…" under a filed sequence with nothing, or only compiles, on record > there is no door not on file 25ms
+      Tests  1 failed | 1 passed | 6 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 4626a5140b8912489379219c45b15733be9a7a264c3096b6890478bee333ed14 (expected 4626a5140b8912489379219c45b15733be9a7a264c3096b6890478bee333ed14)

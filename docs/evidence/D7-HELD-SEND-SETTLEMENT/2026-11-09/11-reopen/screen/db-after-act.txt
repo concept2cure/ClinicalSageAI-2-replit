@@ -1,0 +1,19 @@
+-- P-92 C3 walk: the walk database after both re-openings (throwaway p86_walk; FDA answers are labelled stand-ins)
+ id | sequence_number | dispatch_status | signature_bound | attempt_bound 
+----+-----------------+-----------------+-----------------+---------------
+ 31 | 0001            | sent            | t               | t
+ 34 | 0004            | rejected        | t               | t
+(2 rows)
+
+ id |  status  | ack_at | mdn_kept | receipt_status | receipt_verified | settlement_outcome | reopened_by_user | reopened_on_kept_answer | history_entries 
+----+----------+--------+----------+----------------+------------------+--------------------+------------------+-------------------------+-----------------
+  1 | received | t      | t        | received       | true             | not-received       | 17               | t                       |               1
+  4 | rejected | f      | f        | rejected       | true             | received           | 17               | t                       |               1
+(2 rows)
+
+ sequence |         action          |                                         reason                                          |    meaning     |   outcome    |          dispatch_status           |             transmittal_status              
+----------+-------------------------+-----------------------------------------------------------------------------------------+----------------+--------------+------------------------------------+---------------------------------------------
+ 31       | ECTD_HELD_SEND_REOPENED | FDA's signed receipt (a labelled walk stand-in) shows it received sequence 0001's send. | responsibility | not-received | {"to": "sent", "from": "pending"}  | {"to": "received", "from": "rejected"}
+ 34       | ECTD_HELD_SEND_REOPENED | FDA's signed answer (a labelled walk stand-in) refuses sequence 0004's send.            | responsibility | received     | {"to": "rejected", "from": "sent"} | {"to": "rejected", "from": "ack2_received"}
+(2 rows)
+

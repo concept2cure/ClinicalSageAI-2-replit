@@ -1,0 +1,63 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "ana.author@concept2cure.pro",
+  "signer": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "submission": "18",
+  "sequence": "32",
+  "browser": "141.0.7390.37",
+  "screens": {
+    "c4-signed-1440-light": {
+      "file": "c4-signed-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": {
+        "text": "Signature appliedResponsibility signature recorded against Sequence 0002 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionRecord sequence 0002 as rejected by FDAFDA's Ack3Walk stand-in for FDA Ack3 for sequence 0002 (not an FDA document), version 1StatedFDA's Ack3 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC is the document chosen from this project's Vault. It reports that the center did not accept sequence 0002. Sequence 0002 is recorded as rejected by FDA: it is no longer on file with FDA. It can then be sent again under its own number; FDA's notice decides whether that number can be used again, or whether a new sequence is needed.Signed byDana Signer · dana.signer@concept2cure.proMeaningResponsibilityReasonFDA's Ack3 (the walk's labelled stand-in) reports the center did not accept sequence 0002.When2026-11-09 18:37:27 UTCNov 09, 2026, 18:37 · UTCChaind796c852fa24b24485d667fd5a617a932d938f3b15a2c10bc81c1dd28755ad00Done",
+        "meanings": [],
+        "statement": null,
+        "buttons": [
+          {
+            "text": "Done",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": "Sequence 0002 is recorded as rejected by FDA, on its Ack3 kept in the Vault, signed by Dana Signer (responsibility). It is no longer on file with FDA.",
+      "note": null,
+      "retire": "Retire sequence 0002…",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c4-recorded-1440-light": {
+      "file": "c4-recorded-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": "Sequence 0002 is recorded as rejected by FDA, on its Ack3 kept in the Vault, signed by Dana Signer (responsibility). It is no longer on file with FDA.",
+      "note": null,
+      "retire": "Retire sequence 0002…",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {
+    "recorded": {
+      "file": "c4-recorded-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": "Sequence 0002 is recorded as rejected by FDA, on its Ack3 kept in the Vault, signed by Dana Signer (responsibility). It is no longer on file with FDA.",
+      "note": null,
+      "retire": "Retire sequence 0002…",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  }
+}

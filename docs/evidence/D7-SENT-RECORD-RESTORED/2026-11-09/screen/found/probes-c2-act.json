@@ -1,0 +1,77 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "who": "ana.author@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "sequences": {
+    "a": {
+      "sub": "20",
+      "id": "36",
+      "n": "0000"
+    },
+    "b": {
+      "sub": "18",
+      "id": "31",
+      "n": "0001"
+    }
+  },
+  "browser": "141.0.7390.37",
+  "screens": {
+    "c2-reason-1440-light": {
+      "file": "c2-reason-1440-light.png",
+      "lineBeforeDoor": "Sequence 0000 is read from its compiles, which may differ from what it sent.",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Put sequence 0000's send on record…",
+        "summaryHit": "hit",
+        "text": "Put sequence 0000's send on record…The platform kept the exact package sequence 0000 sent to FDA on 20 October 2026 at 20:53 UTC. Its record can be read back from that package: 3 documents, listed below. Nothing is sent to the agency.What would be recorded2.5 · clinical-overview.pdf · new3.2.S.4.2 · analytical-procedures.pdf · newm1.2 · cover-letter.pdf · newTwo things a package does not hold are not recorded: a file's checksum before it was converted to PDF/A, and the proof kept for a signed original. If such a document is filed again unchanged, the next sequence replaces it.Why you are recording thisRecord what sequence 0000 sent",
+        "items": [
+          "2.5 · clinical-overview.pdf · new",
+          "3.2.S.4.2 · analytical-procedures.pdf · new",
+          "m1.2 · cover-letter.pdf · new"
+        ],
+        "buttons": [
+          {
+            "text": "Record what sequence 0000 sent",
+            "className": "btn ghost small",
+            "disabled": false,
+            "hit": "hit"
+          }
+        ],
+        "reasonLabel": "Why you are recording this"
+      },
+      "notice": null,
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "c2-recorded-1440-light": {
+      "file": "c2-recorded-1440-light.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": "Sequence 0000's record was read back from the package it sent, on 9 November 2026. The next sequence can now be built against it.",
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {
+    "disabledBeforeReason": true,
+    "recorded": {
+      "file": "c2-recorded-1440-light.png",
+      "lineBeforeDoor": null,
+      "door": null,
+      "notice": "Sequence 0000's record was read back from the package it sent, on 9 November 2026. The next sequence can now be built against it.",
+      "card": null,
+      "recordKeyOnScreen": false,
+      "shaOnScreen": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "doorAfterRecord": 0
+  }
+}

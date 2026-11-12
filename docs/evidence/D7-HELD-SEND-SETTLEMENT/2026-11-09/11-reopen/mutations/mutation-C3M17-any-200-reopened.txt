@@ -1,0 +1,5 @@
+MUTATION C3M17-any-200-reopened in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T19:18:30.156727Z): replaced [      if (done.data?.reopened !== true || done.data.sequenceId !== f.seq.id) {] with [      if (done.data?.reopened !== true) {]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R2 — the one signature, Responsibility only, the statement word for word > a 200 that is not the re-opening of this sequence is not a success 5408ms
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7a0fa27c9e19b4dbdd71a8483df14de17bf0960691be82657e99dba2c15b57f1 (expected 7a0fa27c9e19b4dbdd71a8483df14de17bf0960691be82657e99dba2c15b57f1)

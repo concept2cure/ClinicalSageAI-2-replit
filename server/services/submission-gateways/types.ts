@@ -290,7 +290,10 @@ export interface GatewayTransmitRequest {
   submissionType?: string;
   /** Free-form metadata stored on the transmittal row. The transmit guard
    *  (index.ts) overwrites `gatewayAccount`, `sentPackage`, `dispatchBinding`
-   *  and `leafManifest`, so a caller can supply none of them. */
+   *  and `leafManifest`, and drops a signed act's record (`heldSendSettlement`,
+   *  `technicalRejection`, `as2Receipt`, `as2ReceiptHistory`) and a restored
+   *  send's (`leafManifestDerivation`, `sentRecordStatement`, `restoredBinding`,
+   *  P-99), so a caller can supply none of them. */
   metadata?: Record<string, unknown>;
   /** Internal server binding; public transmit routes do not accept this field. */
   dispatchBinding?: {

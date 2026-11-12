@@ -1,0 +1,9 @@
+BEGIN
+DO
+INSERT 0 1
+ submission_id | sequence_id | sequence_number | dispatch_status 
+---------------+-------------+-----------------+-----------------
+            20 |          36 | 0000            | sent
+(1 row)
+
+COMMIT

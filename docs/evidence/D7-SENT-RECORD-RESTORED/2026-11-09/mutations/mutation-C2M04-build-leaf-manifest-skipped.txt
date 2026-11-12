@@ -1,0 +1,9 @@
+MUTATION C2M04-build-leaf-manifest-skipped in server/services/submission-gateways/sent-package-read.ts (on the final code and tests, 2026-11-09T21:15:52.181898Z): replaced [const leaves = buildLeafManifest([...s.leaves]] with [const leaves = ([...s.leaves]]
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T1 two sequences sent through the real guard each read back to exactly what the guard stamped 330ms
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T2 what a package cannot hold is not recorded, and is named 158ms
+ ✓ server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T3 each leaf’s precise section is read back from its ID and folder, and two that disagree refuse it by name 191ms
+ ✓ server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T4 what points outside the package is bound against the filed state, or refused 131ms
+ ✓ server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T5 the same bytes and the same filed state always give the same record 134ms
+      Tests  2 failed | 3 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 1ec61ec53935b2ad8576ad9ae8992ef101c46bf5e3fd8ba32ccfab5d70a078be (expected 1ec61ec53935b2ad8576ad9ae8992ef101c46bf5e3fd8ba32ccfab5d70a078be)

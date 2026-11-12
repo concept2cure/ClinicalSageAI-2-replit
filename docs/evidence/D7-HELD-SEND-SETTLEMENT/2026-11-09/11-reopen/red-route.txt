@@ -1,0 +1,8 @@
+# P-92 C3 route red, 2026-11-09T18:49:45Z, before the route: submissions-held-send-reopen.test.ts
+ × server/routes/__tests__/submissions-held-send-reopen.test.ts > the re-open door > refuses a body without the signature, and re-opens nothing 42ms
+ × server/routes/__tests__/submissions-held-send-reopen.test.ts > the re-open door > passes the sequence, the signature and the caller, and answers the record 7ms
+ × server/routes/__tests__/submissions-held-send-reopen.test.ts > the re-open door > answers the act's refusal as 409 in its own words 4ms
+ × server/routes/__tests__/submissions-held-send-reopen.test.ts > the re-open's precheck, answered at the route > sends the step to its own function, never to the generic precheck 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

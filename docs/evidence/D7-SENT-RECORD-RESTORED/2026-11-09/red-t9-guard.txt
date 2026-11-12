@@ -1,0 +1,6 @@
+# P-99 C2 T9 red, 2026-11-09T20:33:28Z, at 8608bcd4a9, before the guard stamps P-99's keys
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply a restored record or binding: P-99’s keys never reach the row, bound or unbound 17ms
+   → leafManifestDerivation (bound): expected { applicationId: 'IND123456', …(9) } to not have property "leafManifestDerivation"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)

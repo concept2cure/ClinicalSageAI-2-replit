@@ -1,0 +1,7 @@
+MUTATION C4M10-statement-not-compared in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T18:28:47.246935Z): replaced [  if (fields.some(([key, value]) => evidence[key] !== value) || signed?.statement !== judged.statement) {
+    return `The signature does not record this technical rejection] with [  if (fields.some(([key, value]) => evidence[key] !== value)) {
+    return `The signature does not record this technical rejection]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > the signed statement is compared word for word: one character changed is refused 428ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 f7aae4ad66646ce24ca7040d469b19cd5d8be21d3a8089b0a988a66eeeadc383 (expected f7aae4ad66646ce24ca7040d469b19cd5d8be21d3a8089b0a988a66eeeadc383)
