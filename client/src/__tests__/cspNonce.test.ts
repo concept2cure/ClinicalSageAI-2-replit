@@ -57,6 +57,17 @@ describe('cspNonce createElement patch', () => {
     expect(style.getAttribute('nonce')).toBe(NONCE);
   });
 
+  /* 2026-11-12, the built client under the release's policy: Zod probes `new Function` once to choose its compiled
+     parser. The release's script-src refuses it; Zod catches that, but the browser reports a violation on every
+     page. `jitless` skips the probe, and a release cannot compile anyway. */
+  it('tells Zod not to probe for eval, so a release reports no script-src violation', async () => {
+    const { z } = await import('zod');
+    // Zod is one instance across this file's module resets, so start from its default.
+    z.config({ jitless: false });
+    await import('../cspNonce');
+    expect(z.config().jitless).toBe(true);
+  });
+
   it('leaves other tag names alone', async () => {
     installMetaNonce(NONCE);
     await import('../cspNonce');

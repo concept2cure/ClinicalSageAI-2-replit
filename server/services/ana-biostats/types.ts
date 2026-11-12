@@ -201,9 +201,16 @@ export interface CrossoverResult {
 export interface MissingDataImpact {
   method: string;
   expectedMissingRate: number;
+  /** Subjects expected to have complete data: the design's evaluable N less the missing rate. */
   effectiveSampleSize: number;
-  powerReduction: number;
-  adjustedPower: number;
+  /**
+   * The power, and its reduction from the design's, only where the engine computes it: complete-case analysis,
+   * whose power is the same test's at `effectiveSampleSize`. Null for every other method. Their power depends on
+   * the missingness mechanism and the correlation structure, which this engine does not model. Until 2026-11-12
+   * these were the design's power times a fixed constant per method (RULE 2).
+   */
+  powerReduction: number | null;
+  adjustedPower: number | null;
   biasRisk: 'low' | 'moderate' | 'high';
   recommendation: string;
 }

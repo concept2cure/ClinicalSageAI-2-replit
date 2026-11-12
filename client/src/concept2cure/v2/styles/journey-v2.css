@@ -451,7 +451,7 @@
 .c2c-v2 .cm-cell[data-t="ok"]{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .cm-cell[data-t="warn"]{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .cm-cell[data-t="err"]{background:var(--error-muted);color:var(--error);}
-.c2c-v2 .cm-cell[data-t="dim"]{color:var(--text-500);}
+.c2c-v2 .cm-cell[data-t="dim"]{color:var(--text-400);}
 .c2c-v2 .cm-projbar{height:8px;border-radius:5px;background:var(--bg-200);overflow:hidden;position:relative;}
 .c2c-v2 .cm-projbar span{position:absolute;top:0;left:0;height:100%;}
 .c2c-v2 .cm-projbar .fill{background:var(--accent-100);}

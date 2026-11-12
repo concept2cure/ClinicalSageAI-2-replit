@@ -29,6 +29,10 @@ import {
 import { evaluateProtocolCompleteness, approvalReviewStatus, recommendReviewType } from '../services/iacuc/iacuc-logic';
 import { recordIacucProtocolCreated, recordIacucApproval, recordIacucReview } from '../services/iacuc-metrics';
 
+/** Reads go through the pool, which sets the tenant for each statement. A connection from connect() carries
+ *  no tenant before BEGIN, so a read on one found no row for any organization (2026-11-12). */
+const scopedReads = { query: (sql: string, params?: unknown[]) => pool.query(sql, params as unknown[]) };
+
 const router = Router();
 // A viewer reads these records and writes none of them: one gate for every
 // write, as the ProtocolDev routers (P11-C-1). The signed review routes also
@@ -232,9 +236,8 @@ router.get('/protocols/:id/completeness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const client = await pool.connect();
   try {
-    const input = await getProtocolCompletenessInput(client, orgId, id);
+    const input = await getProtocolCompletenessInput(scopedReads, orgId, id);
     const completeness = evaluateProtocolCompleteness(input);
     // Undetermined without an approval date; reviewStatus said "not expired". The
     // committee's recorded expiration wins over approval + 3 years (2026-10-15).
@@ -242,8 +245,6 @@ router.get('/protocols/:id/completeness', async (req, res) => {
     res.json({ completeness, reviewStatus: status, recommendedReview: recommendReviewType(input.painCategory) });
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 

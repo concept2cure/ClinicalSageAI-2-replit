@@ -50,6 +50,13 @@ describe('vaultFilterSql', () => {
     expect(sql).toBe(' AND d.ctd_section = ANY($2::text[])');
     expect(params).toEqual([1, ['3.2.P']]);
   });
+
+  it('keeps the data catalog\'s match: the section as recorded or beneath it by whole segment, unnormalised', () => {
+    const params: unknown[] = [1];
+    const sql = vaultFilterSql({ evidenceKinds: ['protocol'], ctdSections: ['5.3'] }, params, 'd', { ctdMatch: 'exactWithin' });
+    expect(sql).toBe(' AND d.evidence_kind = ANY($2::text[]) AND (d.ctd_section = ANY($3::text[]) OR d.ctd_section LIKE ANY($4::text[]))');
+    expect(params).toEqual([1, ['protocol'], ['5.3'], ['5.3.%']]);
+  });
 });
 
 describe('one vocabulary, one predicate', () => {
