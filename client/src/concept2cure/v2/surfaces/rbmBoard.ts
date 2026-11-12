@@ -172,6 +172,10 @@ export interface RbmBoardSite {
   tier: string;
   drivers: string[];
   at: string | null;
+  /** Where the figures came from. Absent on a board served before the source was recorded: Site Intelligence. */
+  source?: 'site_intelligence' | 'study_indicators';
+  /** For a site scored from the study's own indicators: how many are red, amber, green, or have no limit. */
+  basis?: { red: number; amber: number; green: number; unbanded: number } | null;
 }
 
 export interface RbmBoardPlan {
