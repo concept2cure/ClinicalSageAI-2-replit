@@ -96,6 +96,20 @@ resource "random_password" "setup_token" {
   special = false
 }
 
+# /readyz's detail (server/startup/readyz.ts; MR-03 Stage 7, OPS-22). In
+# production the endpoint answers { ready } alone to the public, and names the
+# dependency that is down only to a caller presenting this in x-readyz-token,
+# or to one inside the task. The server ignores a token under 32 characters.
+# The deploy's smoke test presents it from the GitHub environment's READYZ_TOKEN
+# secret (outputs.tf, readyz_detail), so a failed deploy says why. To rotate:
+# `terraform apply -replace=random_password.readyz_token`, roll the API, then
+# set the GitHub secret again. A stale GitHub secret loses the detail and
+# nothing else: the verdict and the status code are the same for every caller.
+resource "random_password" "readyz_token" {
+  length  = 48
+  special = false
+}
+
 resource "random_password" "db_app_service" {
   length  = 40
   special = false
@@ -153,6 +167,10 @@ module "secrets" {
     setup_token = {
       description = "First-run setup token: POST /api/setup/initialize requires it in X-Setup-Token in production"
       value       = random_password.setup_token.result
+    }
+    readyz_token = {
+      description = "Readiness detail token: /readyz names the failing dependency only to a caller presenting it in x-readyz-token"
+      value       = random_password.readyz_token.result
     }
     app_service_db_password = {
       description = "app_service password, for deploy-migrate to mint the role"
@@ -335,7 +353,7 @@ locals {
 
   # What every container of this image needs to boot: the API, and the one-off
   # database task (no worker: P-10, amended 2026-10-22). The API adds its setup
-  # token below; the database task adds the owner's secrets.
+  # and readiness tokens below; the database task adds the owner's secrets.
   boot_secrets = concat([
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
     { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
@@ -460,6 +478,8 @@ module "ecs" {
   api_secrets = concat(local.boot_secrets, [
     # First-run setup (setup_token above). Only the API serves the route.
     { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
+    # /readyz's detail (readyz_token above). Only the API serves the endpoint.
+    { name = "READYZ_TOKEN", value_from = module.secrets.secret_arns["readyz_token"] },
   ])
   # deploy-migrate and the first provision: the API's boot secrets, so they
   # verify the readiness contract as the API would boot, and the owner's.
