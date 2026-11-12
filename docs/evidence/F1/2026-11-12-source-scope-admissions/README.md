@@ -95,8 +95,9 @@ verification moved inside the bracket, the second case fails ("promise resolved 
 case that guards the bracket. `green.txt`: `server/services/clinical-regulatory-evidence`, `server/services/c2c` and
 the Quality project-evidence suite pass, 90 files. The run's two failures are
 `report-os/__tests__/quality-evidence-report.test.ts`, which needs the reporting PDF fonts this machine does not have
-(`REPORT_PDF_FONTS_UNAVAILABLE`); it fails the same way with this change stashed. Of the 154 other test files that
-name these readers, 152 pass and the other two are PDF exports that fail for the same fonts.
+(`REPORT_PDF_FONTS_UNAVAILABLE`); it fails the same way with this change stashed. Of the 154 test files elsewhere
+that name these readers, 152 pass; the two that fail are that file and `report-os-report-pack-export.test.ts`, a PDF
+export that needs the same fonts.
 
 `server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts`: a projection that fails on a
 deadlock answers 503, logs `{ organizationId, programId, code: '40P01', error }` once, and logs none of the error's

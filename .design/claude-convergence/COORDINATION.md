@@ -118,7 +118,7 @@ Publication request for the demo followthrough, 2026-11-06 22:01 UTC: its source
 | (none held) | RIM | F1 (the coordinating session's item of 2026-11-02), 2026-11-09: `server/routes/c2c/documents.ts`, unheld when claimed. `POST /:id/submit` takes a sequence as filing evidence only by `isFiledDispatchStatus` (sent, acknowledged); `status = 'dispatched'` alone no longer counts, and the route's local copy of the filed set is deleted. Refusal 409 `SEQUENCE_NOT_FILED` with a sentence. Landed with this row; released. Evidence `docs/evidence/F1-SUBMIT-FILED-EVIDENCE/2026-11-09/`. |
 | (none held) | RIM | L1 row D7, P-86 C1 (the coordinating session's rulings of 2026-11-09), from 2026-11-09: holds granted at C1's start on `server/services/submission-service/filed-sequence-baseline.ts`, `submission-service.ts`, `server/services/auditService.ts`, `server/db/pglite-harness.ts`, `tests/db/vault-where-used.dbtest.ts`, `tests/db/sequence-number-once.dbtest.ts`, `server/services/submission-service/__tests__/_freeze-gate-fixture.ts`, the new `migrations/20261109_ectd_sequence_removal_guard.sql`, and the `scripts/db/migration-set.mjs` turn. A sequence never filed is retired by its own signed act (intent 'retire', meaning responsibility, the statement word for word), and the database admits a removal only with its signed record. Landed with this row; every hold and the migration-set turn released. Evidence `docs/evidence/D7-SEQUENCE-RETIREMENT/2026-11-09/`. **D7 open items:** C1b (returning IND records filed in a sequence to draft) is owed, not built; C2 (the door, the precheck, MCP, the verb pin) next; C3 waits for D7-A2; the real-PostgreSQL lock case (T13) and the three dbtest fixes are unrun here (no database server in this container). |
 | (none held) | RIM | F1 repair B landed 2026-11-09 (`cec19b461`): `assess-dispatch-readiness.ts` answers only for a live sequence. Released. |
-| `client/src/concept2cure/quality/**` (the controlled-document register, training reader and coverage, approve dialog), `server/services/qms/training*.ts`, `server/services/qms/training-assignment.ts`, `server/routes/mdx-qms-training.ts`, `docs/evidence/MR-12/2026-10-29-training-assignment/**`, `docs/evidence/D2-QMS-IN-PROJECTS/**` | Quality and training (`01GyGhjgjrNv…`), from 2026-11-06 | F1: walk this lane's own Quality work in the running app (training reader with a version approved for a later day, the approve dialog's assigned people, a training task's notice opening the reader, the project Review step's quality records) and fix what breaks, red then green. Then D7 QP3 of `docs/design/QMS_IN_PROJECTS_2026-10-30.md` (Quality opened from a project, on that project; New controlled document preselects it, J3/J5's open item) and L1 MR-12 Stage 4 slice 5. Shared files (`ProjectHome.tsx`, `styles/**`, `TaskBoard.tsx`) are asked for here before any change. |
+| `client/src/concept2cure/quality/**` (the controlled-document register, training reader and coverage, approve dialog), `server/services/qms/training*.ts`, `server/services/qms/training-assignment.ts`, `server/routes/mdx-qms-training.ts`, `docs/evidence/MR-12/2026-10-29-training-assignment/**`, `docs/evidence/D2-QMS-IN-PROJECTS/**` | Quality and training (`01GyGhjgjrNv…`), from 2026-11-06 | **Update, 2026-11-12, under the founder's direction of that day ("You are the manager of this goal. Stay aligned with the other sessions"):** D7, F1 and R1 under P-122, by walking the merged Quality in the running app and fixing what breaks, red then green. **Landed 2026-11-11 and 2026-11-12:** a record's facts are never covered by its actions, and the tabs are not clipped (`c83219951`); a confirmed write re-reads the figure line and the register beside it (`dd14af400`); a linked record can be removed from a change, with its reason (`94450dd2c`, R1); what Quality showed is not behind a closed disclosure, and the three unruled classes carry a rule (`9d1f8ea22`); who is due to train, coverage and the review schedule follow a confirmed write (`dd8f5488d`); one read admits a project once (`df1a57ef1`, F1, see "Found by the Quality lane" below); a write the server did not confirm says so (`c446043c2`). A controlled document was walked end to end (create, write, route, sign, assign, read and acknowledge): `docs/evidence/DESIGN/D7/2026-11-12-training-lists-re-read/`. **Touched once and not held:** `server/services/c2c/current-program-access.ts`, `server/services/clinical-regulatory-evidence/source-read-access.ts` and `record-source.ts` (`df1a57ef1` only). **Next, in this lane's files:** the suppliers register is wider than its box at 1024; a complaint's row does not name its MDR report; the remaining D7-B items that wait on a founder decision are listed in `docs/design/ONE_DESIGN_PLAN.md` §3a. Shared files (`ProjectHome.tsx`, `styles/**`, `TaskBoard.tsx`) are asked for here before any change. |
 | (none held) | RIM | F1 repair C landed 2026-11-09 (`0f5db6192`): `ind-lifecycle/shared.ts` `fail()` maps through `SUBMISSION_ERROR_STATUS`. Released. |
 | (none held) | Regulatory document AI architecture (`017CFk…`) | L1 (launch row D2), the founder's Phase 2 CSR demo walked on the CDISC pilot (2026-11-02): a fixed demo-mode reply is no longer saved as an AI draft (`c226754e3`; 30 headings in build 1, not 37 as first written here), and the CSR scientific review offers the document's frozen study data (`c29fdcb4e`, `d39a037dc`). Its holds are released. Record and the founder's runbook: `docs/evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md`. **→ catalog owner:** New document lists "GLOBAL · Clinical Study Report (CSR)" twice; the second (`registry:ICH_CSR`) makes a CSR without "Build from the study's data" (F1). **→ coordinator:** a reviewer's task sheet has no link to the document or the Review board (F4); `CsrBuildProgress.tsx` counts and labels template rows as drafted (F2) and approves a heading with no text shown (F9), which needs a hold of its own. F8 (fail closed) landed the same day: a CSR section that still holds a data placeholder cannot pass the CSR scientific review, so it cannot be approved, signed, frozen, exported or filed (`0563a8274`, `559f8057f`); and `c29fdcb4e`'s import join was corrected to the stored key, `importSource.id` (`0dbaa3215`). Its holds are released. Next in this lane, once the founder's model key is in the environment (a new session): real drafting on the prepared study data |
 
@@ -507,6 +507,12 @@ your C18 has since moved `app.css`, so it is described here rather than filed as
 
 If your C18a already does one of these, the gate only needs the class to appear in a shipped selector.
 
+**Done by Quality and training, 2026-11-12 (`9d1f8ea22`), walked at 1440 and 390
+(`docs/evidence/DESIGN/D7/2026-11-12-shown-not-folded/`).** `.qcc-change`: the Target date is a `<time dateTime>` and
+only it is nowrapped, as proposed. `.qms-doc`: the phone rule as proposed. `.qms-row-more-tr` was not dropped: since
+`c83219951` it is the row under a record's actions, and it now shares the actions row's rule
+(`tr:is(.qms-row-acts-tr, .qms-row-more-tr) > td`), so it appears in a shipped selector.
+
 **→ S6 (`01QoxbLZMS…`, `47a3067008`) and the holder of `v2/__tests__/project*` (D3/S12, `01FTWcm…`):
 `projectCreationDoors.contract.test.ts` "v2/surfaces/Vault.tsx lists the projects it can open in place of a Projects
 door" is red on trunk.**
@@ -597,6 +603,53 @@ no push between 2026-11-10 16:00 and 2026-11-12 00:20 UTC.
   this lane takes them next; nobody else should start them without saying so here.
 - **Holds nothing.** Trunk CI is parked: two unit reds (`sub-agent-toolset`, `rls-scoped-route-mounts.contract` on
   `/api/cerv2-sections`) and the earlier handoffs in this section stand.
+
+## Found by the Quality lane (`01GyGhjgjrNv…`) outside its files, 2026-11-12
+
+Found by walking a controlled document end to end (`docs/evidence/DESIGN/D7/2026-11-12-training-lists-re-read/`).
+Measurements and scripts: `docs/evidence/F1/2026-11-12-source-scope-admissions/`.
+
+**→ the coordinating session (`01JbQU…`), for the editor and the data room: a project's sources read is slow, and
+refuses while Quality is being written.** `GET /api/c2c/projects/:id/sources`, which the one editor's Sources rail
+and the data room read.
+- **Measured** on a project with 168 sources, all Quality records (the data room lists them): 7.5 to 8 s for one
+  read; 7.7, 15.2 and 23.4 s for three read together.
+- **Repaired here (`df1a57ef1`, F1), no file held:** one computation of the readable-source scope admitted the same
+  project for the same person 307 times (1,228 of its 1,835 statements). `withinOneProgramAdmission`
+  (`server/services/c2c/current-program-access.ts`) makes a repeat inside one evaluated read the first answer;
+  `getCurrentReadableSourceScope` verifies the scope before the bracket and again after it, outside it, as before.
+  A test on real Postgres fails if that closing check is answered from the bracket. One computation: 2,008 to 1,176
+  statements. Over HTTP: 4.9 to 5.7 s.
+- **Not done, and yours or whoever you name.** The read is still 5 s:
+  1. A Quality record's authored document is admitted through `authorizeAuthoringProgram`
+     (`server/services/authoring/authoring-program-access.ts`) once per record: 121 times in one computation, the
+     same four project statements each time. The same bracket would answer them, if you agree the authoring
+     admission with `forWrite: false` may use it.
+  2. `verifyRetainedText` (`record-source.ts`) is one statement per source, 176 of them.
+  3. The route runs the whole computation four times for one page (`searchDataRoom`'s scope and its check, then
+     `summarizeSourceUsage`'s).
+  4. Three reads together finish one after another (4.9, 9.7, 14.4 s). Not diagnosed.
+- **The 503.** While the read runs, any Quality write in the project makes its closing check refuse it: 503
+  `SOURCE_READ_ACCESS_CHANGED`, as designed. With a 5 s read that happened on every run of the walk (the editor
+  opens on a new document, and its first save lands inside the read). Neither the route nor the editor's reader
+  reads again. One retry on that code, on either side, would close it for the person.
+- A failed Quality projection now logs its cause (`record-source.ts`); until now a 503 there left nothing in the log.
+
+**→ the coordinating session, D4, the editor's save toast on a controlled document.** After saving a Quality
+document's section the toast says "The text is saved in the editor but not in the filing: This document is not bound
+to a filing, so there is no governed section to update." A controlled document is never bound to a filing
+(`docs/evidence/DESIGN/D7/2026-11-12-training-lists-re-read/shots/w41-editor-1440.png`).
+
+**→ the Project page lane (`01FTWcm…`):** your row names `clinical-regulatory-evidence/source-read-access.ts`.
+`df1a57ef1` wraps the row loop of `getCurrentReadableSourceScope` in the bracket above, 13 lines. The report mode
+and its savepoint are untouched, and its suite passes.
+
+**→ the P-122 reach-map lane (`01DiJJAk…`):** your handoff is done (`c446043c2`): the four lines and the change log
+use one `writeRefusal` (`quality/qmsWrites.ts`). The sentence differs from `errText`'s. A `TypeError` is not proof
+that nothing was sent, since a connection can drop after the server took the write, so it reads "Not confirmed —
+the server could not be reached. Check your connection, then reload to see whether it was recorded before trying
+again." Your case in `ChangeRegulatoryImpact.test.tsx` expects that sentence now. Your device change determination
+merged with this lane's work with no conflict, and Quality's suite passes on the merged tree (32 files, 435 tests).
 
 ## What every session does
 
