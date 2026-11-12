@@ -140,6 +140,10 @@
 /* The device section's 24-month submission pace (fold F4): one month per cell, the count beside it. */
 .ro-pace{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:0 14px; }
 .ro-pace .ro-li{ border-top:none; padding:3px 0; }
+/* A month with no submission stays listed and reads quieter than a month with one (sweep finding 94).
+   --text-300, not --text-400: this is normal-size text and needs 4.5:1 on the canvas. */
+.ro-pace .ro-pace-zero .ro-li-b, .ro-pace .ro-pace-zero .ro-bar-val{ color:var(--text-300); }
+.ro-pace .ro-li:not(.ro-pace-zero) .ro-bar-val{ color:var(--text-100); font-weight:600; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
 .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:var(--radius-lg); max-width:680px; }
 .ro-disc-h{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-bottom:4px; }
