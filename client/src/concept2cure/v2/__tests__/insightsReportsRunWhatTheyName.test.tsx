@@ -113,9 +113,19 @@ describe('1 — a type no engine computes', () => {
     renderCanvas();
     await ready();
     const presets = [...document.querySelectorAll('.rc-pack')].map((b) => b.textContent ?? '');
-    // BLA assembly pack: 3 types, 2 computed. Nonclinical & CMC readiness: 2 types, 1 computed.
+    // BLA assembly pack: 3 types, 2 computed. Nonclinical readiness pack: 2 types, 1 computed.
     expect(presets.find((t) => /BLA assembly pack/.test(t))).toMatch(/2 governed reports/);
-    expect(presets.find((t) => /Nonclinical & CMC readiness/.test(t))).toMatch(/1 governed report\b/);
+    expect(presets.find((t) => /Nonclinical readiness pack/.test(t))).toMatch(/1 governed report\b/);
+  });
+
+  /* S12 biotech sweep, finding 94: the pack was labelled "Nonclinical & CMC readiness". It holds the nonclinical
+     study register and the audit assurance pack, for Module 4, and no CMC report. A pack is named for what it holds. */
+  it('no pack is named for CMC, which no pack holds a report for', async () => {
+    renderCanvas();
+    await ready();
+    const presets = [...document.querySelectorAll('.rc-pack')].map((b) => b.textContent ?? '');
+    expect(presets.length).toBeGreaterThan(0);
+    expect(presets.filter((t) => /CMC|Module 3/.test(t))).toEqual([]);
   });
 
   it('engine-less types are listed once, as reports not available for the project', async () => {
