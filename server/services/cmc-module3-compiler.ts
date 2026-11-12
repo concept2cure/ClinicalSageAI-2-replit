@@ -1,44 +1,16 @@
 import crypto from 'crypto';
 
-export interface CmcSourceObject {
-  id: string;
-  sourceType: string;
-  sourcePayload: Record<string, any>;
-  sourceHash: string;
-}
-
-export interface CompiledSection {
-  sectionKey: string;
-  sectionPath: string;
-  deterministicJson: Record<string, any>;
-  compiledHash: string;
-  stale: boolean;
-  staleReason: string | null;
-  lineage: Array<{ sourceObjectId: string; sourceHashAtCompile: string }>;
-}
-
-const SECTION_MAP: Record<string, string[]> = {
-  // Drug Substance (S) subsections
-  '3.2.S.1': ['drug_substance'],
-  '3.2.S.2': ['drug_substance', 'manufacturing_process', 'process_validation'],
-  '3.2.S.3': ['drug_substance', 'characterization', 'impurity_profile'],
-  '3.2.S.4': ['specification', 'method', 'impurity_profile'],
-  '3.2.S.5': ['drug_substance', 'reference_standard'],
-  '3.2.S.6': ['container_closure'],
-  '3.2.S.7': ['stability'],
-  // Drug Product (P) subsections
-  '3.2.P.1': ['drug_product', 'formulation_record'],
-  '3.2.P.2': ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile'],
-  '3.2.P.3': ['drug_product', 'batch', 'change_control', 'process_validation'],
-  '3.2.P.4': ['excipient', 'raw_material_spec'],
-  '3.2.P.5': ['specification', 'method', 'dissolution_profile', 'impurity_profile'],
-  '3.2.P.6': ['drug_product', 'reference_standard'],
-  '3.2.P.7': ['container_closure'],
-  '3.2.P.8': ['stability', 'comparability'],
-  // Structural support sections
-  '3.1': ['drug_substance', 'drug_product'],
-  '3.3': ['drug_substance', 'drug_product', 'reference_standard'],
-};
+/*
+ * 2026-11-09 (R1 S29, founder-approved): the second Module 3 compile path that
+ * lived here (`compileModule3Sections`, `markStaleSections` and their
+ * `SECTION_MAP`) is retired. Only tests used it, and its source-to-section map
+ * disagreed with the composer the product runs. Module 3 is compiled by
+ * POST /api/cmc/module3-os/compile/:projectId → `composeProjectModule3`
+ * (services/cmc/module3-compile.ts) → `composeModule3FromCanonicalSources`
+ * (services/module3Composer.ts); staleness is `impactedSectionsForSourceType`
+ * and services/cmc/section-drift.ts. The hash, diff and finalize helpers below
+ * are live.
+ */
 
 function canonicalize(input: unknown): unknown {
   if (Array.isArray(input)) {
@@ -64,32 +36,6 @@ export function createSourceHash(sourcePayload: Record<string, any>): string {
   return stableHash(sourcePayload);
 }
 
-export function compileModule3Sections(sourceObjects: CmcSourceObject[]): CompiledSection[] {
-  return Object.entries(SECTION_MAP).map(([sectionKey, sourceTypes]) => {
-    const matched = sourceObjects.filter((s) => sourceTypes.includes(s.sourceType));
-    const deterministicJson = {
-      sectionKey,
-      sourceTypes,
-      objects: matched.map((m) => ({ type: m.sourceType, payload: m.sourcePayload })),
-    };
-
-    const lineage = matched.map((m) => ({
-      sourceObjectId: m.id,
-      sourceHashAtCompile: m.sourceHash,
-    }));
-
-    return {
-      sectionKey,
-      sectionPath: sectionKey,
-      deterministicJson,
-      compiledHash: stableHash(deterministicJson),
-      stale: false,
-      staleReason: null,
-      lineage,
-    };
-  });
-}
-
 export function summarizeSectionDiff(previous: Record<string, any> | null, next: Record<string, any>) {
   if (!previous) {
     return { addedTopLevelKeys: Object.keys(next), removedTopLevelKeys: [], changedTopLevelKeys: [] };
@@ -102,17 +48,6 @@ export function summarizeSectionDiff(previous: Record<string, any> | null, next:
     (k) => prevKeys.has(k) && JSON.stringify(previous[k]) !== JSON.stringify(next[k])
   );
   return { addedTopLevelKeys, removedTopLevelKeys, changedTopLevelKeys };
-}
-
-export function markStaleSections(
-  sections: CompiledSection[],
-  changedSourceType: string,
-  reason: string
-): CompiledSection[] {
-  return sections.map((section) => {
-    const impacted = (section.deterministicJson.sourceTypes || []).includes(changedSourceType);
-    return impacted ? { ...section, stale: true, staleReason: reason } : section;
-  });
 }
 
 export function canFinalizeExport(input: { approvalState: string; contradictions: Array<{ severity: string; status: string }> }): boolean {

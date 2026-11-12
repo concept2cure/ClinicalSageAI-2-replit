@@ -1,0 +1,35 @@
+Replacement screens opened and used in the running app (RULE 4), on the PATCHED server: trunk 51c52751e + S05b, S12, S13, S19, S29.
+Local dev database migrated by scripts/db/deploy-migrate.mjs (466 files, exit 0); biotech demo pack seeded (scripts/demo/launch-demo/seed.mjs --pack biotech: 234 created).
+Chromium via Playwright, 1440x900, signed in with POST /api/auth/dev-login (the call the sign-in card's Demo access button makes).
+C2C-101 = f2bd11f8-8dc5-4942-90d0-8a10ac74ebba (a biologic, mAb). C2C-201 = d1538750-314c-4d7f-9f2f-fc1a23ed3d01 (a small molecule).
+
+00-login: ok  /concept2cure
+01-project-home: ok  /concept2cure/project-home?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+02-editor-filing-outline: ok  /concept2cure/document-authoring?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    200 GET /api/authoring/templates
+03-template-picker: ok  /concept2cure/document-authoring?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    picker: Search templates; 469 of 469 templates; GLOBAL · Quality Overall Summary (QOS)
+04-ectd-compile-run-controls: ok  /concept2cure/ectd-compile?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    200 GET /api/submission-orchestrator/runs
+05-build-package-run: ok  /concept2cure/ectd-compile?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    409 POST /api/submission-orchestrator/runs/for-program
+    shown: A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the project code is not one). Nothing was built.  Clinical narrative inputs  0 completed CSR summaries are available for package reuse
+06-cmc-module3-build: ok  /concept2cure/cmc?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    409 GET /api/cmc/module3-os/build-state/f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+07-compile-module3: ok  /concept2cure/cmc?program=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    409 POST /api/cmc/module3-os/compile/f2bd11f8-8dc5-4942-90d0-8a10ac74ebba
+    shown: Module 3 is not composed here for this project This project records its product as a biologic, and Module 3 is composed here only for a drug (a small-molecule medicinal product). A biologic's quality requirements are ICH Q6B, Q5A(R2) and Q5C and its 
+08-cmc-module3-build-small-molecule: ok  /concept2cure/cmc?program=d1538750-314c-4d7f-9f2f-fc1a23ed3d01
+    200 GET /api/cmc/module3-os/build-state/d1538750-314c-4d7f-9f2f-fc1a23ed3d01
+09-compile-module3-small-molecule: ok  /concept2cure/cmc?program=d1538750-314c-4d7f-9f2f-fc1a23ed3d01
+    200 POST /api/cmc/module3-os/compile/d1538750-314c-4d7f-9f2f-fc1a23ed3d01
+    200 GET /api/cmc/module3-os/build-state/d1538750-314c-4d7f-9f2f-fc1a23ed3d01
+    shown: 21 sections in CTD §3.2 · 0 of 21 approved · 18 ready to compile · 0 stale · 0 blocked  Export readiness fail-closed — 2
+
+Notes:
+- 02: the editor shows "Filings in this project · FDA · IND — home filing" and the section tree. On this run the outline read fell outside the
+  stop's capture window; patched-server-probe.txt shows GET /api/c2c/documents/:id/outline answering 200 on the same server, and the
+  trunk walk captured it (200) at the same stop.
+- 05: the run controls load saved runs (200) and Build package run refuses with its named reason (409): the demo project records no agency
+  application number, and nothing edits that number after creation. That is the designed fail-closed answer, not a fault.
+- 07: Module 3 is refused for C2C-101 because it is a biologic (P-28 composition boundary); 09 compiles it for the small-molecule C2C-201 (200).
