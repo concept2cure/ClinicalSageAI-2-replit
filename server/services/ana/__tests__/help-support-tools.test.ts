@@ -83,3 +83,13 @@ describe('list_my_support_tickets', () => {
     expect(JSON.parse(await handleListMySupportTickets({}, undefined)).status).toBe('error');
   });
 });
+
+describe('a support turn', () => {
+  it('is read from the turn\'s own context, and only a true support flag makes one', async () => {
+    const { isSupportTurn, SUPPORT_TURN_BRIEF } = await import('../help-support-tools');
+    expect(isSupportTurn({ surface: 'training', support: true })).toBe(true);
+    for (const c of [null, undefined, {}, { support: 'true' }, { support: 1 }, 'support']) expect(isSupportTurn(c)).toBe(false);
+    expect(SUPPORT_TURN_BRIEF).toMatch(/open_support_ticket/);
+    expect(SUPPORT_TURN_BRIEF).toMatch(/never say it was sent/);
+  });
+});

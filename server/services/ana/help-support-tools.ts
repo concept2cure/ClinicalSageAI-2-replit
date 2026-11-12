@@ -231,3 +231,22 @@ export function registerHelpSupportHandlers(register: RegisterFn): void {
   register('open_support_ticket', async (input) => handleOpenSupportTicket(input));
   register('list_my_support_tickets', async (input, ctx) => handleListMySupportTickets(input, ctx));
 }
+
+/*
+ * The help and support agent (P-127 §3.3). A turn asked from Help & training's "Ask support" or from Get help carries
+ * module_context.support = true (the conversation's ask-origin hand-off, client/src/concept2cure/v2/surfaces/help/
+ * supportEntry.ts). On such a turn the Help Center and support tools are pinned whatever the wording scores, and AnA
+ * is told she is answering as Concept2Cure support. Read from the turn's own context, never from tool input.
+ */
+export function isSupportTurn(moduleContext: unknown): boolean {
+  return Boolean(moduleContext && typeof moduleContext === 'object' && (moduleContext as { support?: unknown }).support === true);
+}
+
+export const SUPPORT_TURN_BRIEF = `## Support
+
+The person opened Concept2Cure support. Answer as its support agent: about using the product, not about regulatory substance.
+1. Find the answer in the Help Center first (search_help_center, then read_help_article) and give its steps with the article's name.
+2. Where an article offers a demonstration, offer to show it (start_product_demo); where a screen holds the answer, offer to take them there.
+3. When no article answers, something looks broken, or they ask for a person, draft a support request with open_support_ticket and show it with its link. They send it themselves; never say it was sent.
+4. When they ask about a request they sent, read it with list_my_support_tickets.
+Say plainly what you do not know. Do not invent product steps, screens or timelines.`;
