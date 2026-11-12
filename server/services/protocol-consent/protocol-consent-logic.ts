@@ -238,3 +238,72 @@ export function consentGateView(elements: ConsentElementView[], status: string):
     predates: signed ? missingTemplateElements(elements, expected).filter((t) => t.required).map((t) => t.title) : [],
   };
 }
+
+// ─── The informed-consent document in the one editor (P-102) ─────────────────
+
+/**
+ * The built-in templates an informed-consent document is drafted from
+ * (builtinAuthoringTemplateId of `component:informed_consent` and
+ * `registry:ICH_ICF`; pinned by consent-document-gate.test.ts). A document's
+ * type is its stored template id: `authoring_documents` has no type column.
+ */
+export const CONSENT_TEMPLATE_IDS: readonly string[] = [
+  '7386a0c6-57e7-5b2e-a07a-ffe07c4b0996', // component:informed_consent
+  '185d820d-34fc-5a2a-8a11-c9890c249694', // registry:ICH_ICF
+];
+
+/** Whether a stored template id is one of the built-in informed-consent templates. */
+export const isConsentTemplateId = (value: unknown): boolean =>
+  typeof value === 'string' && CONSENT_TEMPLATE_IDS.includes(value.toLowerCase());
+
+/**
+ * The section of the consent outline each required element is drafted in
+ * (ICF_SECTIONS, shared/regulatory/project-bootstrap.ts). Section 1 carries
+ * the research statement and the purpose.
+ */
+const CONSENT_DOCUMENT_SECTION: Readonly<Record<string, string>> = Object.freeze({
+  research_statement: '1', purpose: '1', procedures: '2', risks: '3', benefits: '4', alternatives: '5',
+  confidentiality: '6', compensation_injury: '7', voluntary: '8', contacts: '9', clinicaltrials_gov: '11',
+});
+
+export interface ConsentDocumentElement {
+  key: string;
+  title: string;
+  /** The outline section it is drafted in; empty for the when-appropriate elements, which share one section. */
+  section: string;
+  required: boolean;
+  complete: boolean;
+  citation: string;
+}
+
+export interface ConsentDocumentGate extends ConsentGateView {
+  elements: ConsentDocumentElement[];
+}
+
+/**
+ * The approval gate's verdict on an informed-consent DOCUMENT (P-102: one
+ * record). The same evaluateConsentCompleteness the structured form is held
+ * to, read over the document's sections: an element is included when its
+ * section has text, and complete when the gate accepts that text. Pure.
+ */
+export function consentDocumentGate(sections: { code: string; text: string }[]): ConsentDocumentGate {
+  const textOf = new Map(sections.map((s) => [s.code.trim(), s.text]));
+  const templates = consentElementTemplates();
+  const rows: ConsentElementView[] = templates.filter((t) => t.required).map((t) => {
+    const text = textOf.get(CONSENT_DOCUMENT_SECTION[t.elementKey] ?? '') ?? '';
+    return { elementKey: t.elementKey, required: true, present: text.trim().length > 0, content: text };
+  });
+  const view = consentGateView(rows, 'draft');
+  const incomplete = new Set(view.incomplete);
+  return {
+    ...view,
+    elements: templates.filter((t) => t.required).map((t) => ({
+      key: t.elementKey,
+      title: t.title,
+      section: CONSENT_DOCUMENT_SECTION[t.elementKey] ?? '',
+      required: true,
+      complete: !incomplete.has(t.elementKey),
+      citation: t.basis,
+    })),
+  };
+}
