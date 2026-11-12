@@ -29,5 +29,5 @@ import { plainPdfFixture as pdf } from '../../../../../server/services/ectd/__te
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   const stored = await getStorageProvider().put({ orgId, projectId: 'sent-packages', filename: `fda-esg-${sha256}.zip`, bytes, mime: 'application/zip',
     metadata: { kind: 'sent-package', region: 'fda', gateway: 'esg', environment: 'production', sha256 } });
-  console.log(JSON.stringify({ storageVersionId: stored.vaultVersionId, provider: stored.provider, sha256: stored.sha256, sizeBytes: stored.sizeBytes, filename: `fda-esg-${sha256}.zip` }));
+  console.info(JSON.stringify({ storageVersionId: stored.vaultVersionId, provider: stored.provider, sha256: stored.sha256, sizeBytes: stored.sizeBytes, filename: `fda-esg-${sha256}.zip` }));
 })().catch((e) => { console.error(e); process.exit(1); });

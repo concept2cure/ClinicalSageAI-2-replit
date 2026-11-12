@@ -196,7 +196,8 @@ measured.
   the design's wording).
 
 **Gates** (`gates.txt`): the eleven design gates, `ci:sql-interpolation` and `check-db-test-isolation`, each 0.
-**Lint** (`lint.txt`): every new file at 0; the ratchet: no changed file gained a warning (two describes this slice
+**Lint** (`lint.txt`): every new test file at 0 (the walk's `screen/keep-package.ts` printed with `console.log`, which the
+ratchet refused at the push of 2026-11-12, when that file was first tracked; it prints with `console.info` now); the ratchet: no changed file gained a warning (two describes this slice
 lengthened past 100 lines were split, with no change of behaviour). **Typecheck** (`typecheck.txt`): 0 errors, at its baseline of 0.
 
 ## Before C2 deploys: read-only queries for each deployed database
