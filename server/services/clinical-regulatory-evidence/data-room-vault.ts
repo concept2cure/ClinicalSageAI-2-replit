@@ -47,7 +47,7 @@ export interface VaultCatalogDocument {
 }
 
 export interface VaultCatalogPage {
-  /** Every Vault document matching the narrowings, not only those listed. */
+  /** Every Vault document matching the narrowings, not only this page of them (the catalog's own limit and offset). */
   total: number;
   documents: VaultCatalogDocument[];
   facets: Pick<CatalogFacets, 'project' | 'kind' | 'ctd' | 'folder'>;
@@ -188,7 +188,7 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
                     ORDER BY a.occurred_at DESC LIMIT 1
                  ) fx ON TRUE
                 ORDER BY m.created_at DESC, m.id
-                LIMIT $10) x) AS documents,
+                LIMIT $10 OFFSET $11) x) AS documents,
             (SELECT COALESCE(jsonb_agg(jsonb_build_object('facet', f.facet, 'value', f.value, 'label', f.label, 'n', f.n)
                                        ORDER BY f.facet, f.n DESC, f.value), '[]'::jsonb)
                FROM (SELECT v.facet, v.value, max(v.label) AS label, count(*)::int AS n
@@ -201,7 +201,8 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
                       ) AS v(facet, value, label)
                       WHERE v.value IS NOT NULL AND v.value <> ''
                       GROUP BY v.facet, v.value) f) AS facets`,
-    [orgId, programIds, ...[p.project, p.kind, p.ctd, p.folder, p.from, p.to, p.q].map(orNull), VAULT_CATALOG_LIMIT],
+    [orgId, programIds, ...[p.project, p.kind, p.ctd, p.folder, p.from, p.to, p.q].map(orNull),
+      Math.min(p.limit ?? VAULT_CATALOG_LIMIT, VAULT_CATALOG_LIMIT), p.offset ?? 0],
   );
   return vaultPage(rows[0] ?? {}, programIds, await folderNamer(orgId, programIds));
 }
