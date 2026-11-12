@@ -13,9 +13,9 @@
  *     timeline the Schedule reads lists it;
  *   - another organization's project is refused as a project that does not exist, and nothing is written for it.
  *
- * Production's launch scope still refuses milestone writes (`/api/project-sections/milestones` is not claimed by a
- * launch surface; tests/db/p122-project-management-reads.dbtest.ts). This test mounts the router without that gate:
- * it proves the store and the route, not the admission.
+ * This test mounts the router without the launch-scope gate: it proves the store and the route, not the admission.
+ * Production serves milestone writes since project-home claimed `/api/project-sections/milestones` (2026-11-10), each
+ * admitted as a write on the project: tests/db/p122-milestone-writes.dbtest.ts.
  *
  * Evidence: docs/evidence/DESIGN/P-122/defects/1-milestones/.
  */

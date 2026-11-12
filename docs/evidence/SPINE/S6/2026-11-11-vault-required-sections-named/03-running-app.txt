@@ -1,0 +1,6 @@
+# The Required documents view in the running app (local server on PostgreSQL, the demo's IND project C2C-101)
+1440px IND: 33 of 33 missing sections named; no name for []; names cut 0; horizontal scroll false
+  first rows: ["1.1.1Form FDA 1571 — Investigational New Drug ApplicationNo confirmed document","1.1.2Form FDA 1572 — Statement of InvestigatorNo confirmed document","1.1.3Form FDA 3674 — Certification of Compliance (ClinicalTrials.gov)No confirmed document","1.2Cover letterNo confirmed document","1.3Administrative informationNo confirmed document","1.12.14Environmental analysis or claim of categorical exclusion (21 CFR 25.31)No confirmed document"]
+1440px console errors: []
+390px IND: 33 of 33 missing sections named; no name for []; names cut 0; horizontal scroll false
+390px console errors: []

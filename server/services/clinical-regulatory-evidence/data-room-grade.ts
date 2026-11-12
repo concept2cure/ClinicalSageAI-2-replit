@@ -91,6 +91,11 @@ export interface DataRoomGradeFacts {
    * not filed in Vault: its integrity is its snapshot's SHA-256, its verification its register's approval.
    */
   nativeLifecycle: string | null;
+  /**
+   * A dataset file (a Vault .xpt or .sas7bdat) whose structure was never read here. Present only when true,
+   * so the fingerprint of every other item is unchanged.
+   */
+  datasetUnprofiled?: true;
 }
 
 /** Statuses a register records only after a person approved the record. Anything else is not yet approved. */
@@ -167,12 +172,18 @@ function verification(f: DataRoomGradeFacts): GradeBasisLine {
 
 const VAR_TYPE: Record<string, VariableInput['type'] | undefined> = { number: 'Num', text: 'Char', date: 'Char' };
 
+/** No profiled table: not a dataset, or a dataset file whose structure was never read here. */
+function noTables(f: DataRoomGradeFacts): GradeBasisLine {
+  if (f.datasetUnprofiled) {
+    return { criterion: 'conformance', points: 0, max: MAX.conformance, detail: 'A dataset whose structure has not been read here, so CDISC conformance was not checked.' };
+  }
+  return { criterion: 'conformance', points: null, max: MAX.conformance, detail: 'Not a dataset: CDISC conformance does not apply.' };
+}
+
 /** The CDISC validators over each profiled CDISC table; findings named per table. */
 function conformance(f: DataRoomGradeFacts): GradeBasisLine {
   const tables = f.datasetTables;
-  if (!tables || tables.length === 0) {
-    return { criterion: 'conformance', points: null, max: MAX.conformance, detail: 'Not a dataset: CDISC conformance does not apply.' };
-  }
+  if (!tables || tables.length === 0) return noTables(f);
   const cdisc = tables.filter((t) => t.cdisc?.standard === 'SDTM' || t.cdisc?.standard === 'ADaM');
   if (cdisc.length === 0) {
     return { criterion: 'conformance', points: 0, max: MAX.conformance, detail: 'A dataset with no CDISC standard recognized in its columns.' };
