@@ -132,6 +132,13 @@ this session; 1440×900 and 390×844; Chromium):
 - All ten tabs at 1440 and three at 390: no console error, no page error, no failed request, and the page does not
   scroll sideways.
 
+**At 390, every tab holds to the page.** The lead session measured trunk as it stood at 04:00 UTC, before this
+change: Risk assessment 855px wide in a 390px window, Quality tolerance limits 698px, Site oversight 415px. With
+this change the three hold: the RACT's matrix and register wrap, and a table wider than its card scrolls inside the
+card. Measured on all ten tabs (the page's own width, its scrolling ancestors, and every element whose right edge
+passes the window outside a box that scrolls on its own): 390 on each. The same measure found one this change had
+caused, the report's three actions at 417px with "Download" added; they wrap now.
+
 **Found by opening it, and fixed:** the progress card covered the greeting, and an empty conversation scrolled to
 its end; the header's controls wrapped under the title (the shared input is full width); the conversation named
 the study by its full title, three lines long; three indicator cards across ran under the conversation; the

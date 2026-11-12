@@ -412,7 +412,8 @@
   .rbm-report-fw{font-size:var(--fs-caption);color:var(--text-400);font-weight:600;}
   .rbm-report-t{margin:4px 0 6px;font-size:19px;font-weight:600;color:var(--text-100);}
   .rbm-report-m{font-size:11.5px;color:var(--text-400);display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .rbm-report-acts{display:flex;gap:7px;flex-shrink:0;}
+  /* Three actions since the report can be downloaded: on a phone they wrap, where they pushed the page 27px wide. */
+  .rbm-report-acts{display:flex;flex-wrap:wrap;gap:7px;min-width:0;}
   .rbm-report-headline{font-size:13px;line-height:1.65;color:var(--text-200);border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);padding:14px 17px;margin:12px 0 16px;}
   .rbm-report-sec{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);margin-bottom:10px;overflow:hidden;}
   .rbm-report-sec[data-st="critical"]{border-left:3px solid var(--error);}
