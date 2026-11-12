@@ -209,3 +209,9 @@ What stands between the package and signature is in VSR-001 §21.
 - The run was written to a working folder and filed here unchanged. It was scanned for tokens and for every
   credential value of the run; none is in it.
 
+## 2026-11-12: OQ-008 v0.14 (after the placement repair)
+
+- `re-execution/OQ-CMC/`: **41 pass, 0 fail, 2 deviation, 0 not executed, of 43**, on the repaired code.
+- `re-execution/v0.13/OQ-CMC/`: the record it replaces (the same counts, before the repair).
+- What changed: VSR-001 §21.9. The protocol: OQ-008 v0.14. Scanned for tokens and credential values; none.
+

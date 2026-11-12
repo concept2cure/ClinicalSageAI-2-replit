@@ -46,14 +46,14 @@
         "mustChangePassword": false
       },
       "session": {
-        "id": "ffad1864-0b77-44cf-baa0-de422f7a7d32",
-        "createdAt": "2026-11-10T13:06:27.000Z",
-        "expiresAt": "2026-11-11T01:06:27.000Z",
-        "lastActivityAt": "2026-11-10T13:07:01.481Z",
+        "id": "bc62af25-1a8b-4519-b997-59deb65ec781",
+        "createdAt": "2026-11-12T00:34:31.000Z",
+        "expiresAt": "2026-11-12T12:34:31.000Z",
+        "lastActivityAt": "2026-11-12T00:35:01.526Z",
         "idleMinutes": 15,
         "lifetimeHours": 12
       },
-      "tokenExpiry": "2026-11-11T13:07:01.481Z"
+      "tokenExpiry": "2026-11-13T00:35:01.526Z"
     }
   }
 }

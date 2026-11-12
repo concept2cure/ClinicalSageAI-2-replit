@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
     "anonymous": false,
     "identity": null,
     "body": {}
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 79,
+    "durationMs": 47,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -17,13 +17,13 @@
       "canonicalGovernedState": {
         "context": {
           "organizationId": "2",
-          "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
           "documentType": "cmc_module3",
           "ctdSection": "3",
           "intendedAction": "export",
           "actorId": "1",
-          "requestId": "fe33a4d3-7146-4e49-aae9-eb7ad76dbffb",
-          "timestamp": "2026-11-10T13:19:01.026Z"
+          "requestId": "39c85a3a-a119-428d-92b3-594f280bfd65",
+          "timestamp": "2026-11-12T00:47:00.995Z"
         },
         "decision": {
           "decisionId": "",
@@ -33,14 +33,14 @@
           "blockerCount": 0,
           "warningCount": 3,
           "consequenceCount": 3,
-          "timestamp": "2026-11-10T13:19:01.027Z",
+          "timestamp": "2026-11-12T00:47:00.995Z",
           "decisionReference": {
-            "decisionId": "cdad6e5d-764d-4218-8513-fa2528d1362c",
-            "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+            "decisionId": "6f1dd751-8097-4b7a-97ed-270d40b9c69b",
+            "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
             "intent": "export",
             "outcome": "review",
             "actorId": "1",
-            "timestamp": "2026-11-10T13:19:01.027Z"
+            "timestamp": "2026-11-12T00:47:00.995Z"
           }
         },
         "readinessState": {
@@ -49,49 +49,49 @@
           "blockers": [],
           "warnings": [
             {
-              "id": "wrn_36892131-e590-4d27-a05d-9eade689cd07",
+              "id": "wrn_165ea13f-e626-4e2c-9f5e-0b5be3344765",
               "category": "evidence_incomplete",
               "severity": "warning",
               "message": "Evidence is missing or incomplete",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_879df3c2-793d-4292-8ddb-6709614c390b",
+              "id": "wrn_5def2b01-5dae-4505-be85-2c96980a04d2",
               "category": "low_completeness",
               "severity": "warning",
               "message": "Completeness score is 1% — below recommended threshold",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_bf08ea02-bd9d-4cfd-a3fb-2d1c98a83cb9",
+              "id": "wrn_a5763b8c-8324-4cad-889e-261cb0409ab0",
               "category": "incomplete_reviews",
               "severity": "warning",
               "message": "0/1 required reviews completed",
               "source": "readiness-gates"
             }
           ],
-          "evaluatedAt": "2026-11-10T13:19:01.026Z",
+          "evaluatedAt": "2026-11-12T00:47:00.995Z",
           "evaluatedBy": "readiness-gates@1.0.0",
           "confidence": "high"
         },
         "blockers": [],
         "warnings": [
           {
-            "id": "wrn_36892131-e590-4d27-a05d-9eade689cd07",
+            "id": "wrn_165ea13f-e626-4e2c-9f5e-0b5be3344765",
             "category": "evidence_incomplete",
             "severity": "warning",
             "message": "Evidence is missing or incomplete",
             "source": "readiness-gates"
           },
           {
-            "id": "wrn_879df3c2-793d-4292-8ddb-6709614c390b",
+            "id": "wrn_5def2b01-5dae-4505-be85-2c96980a04d2",
             "category": "low_completeness",
             "severity": "warning",
             "message": "Completeness score is 1% — below recommended threshold",
             "source": "readiness-gates"
           },
           {
-            "id": "wrn_bf08ea02-bd9d-4cfd-a3fb-2d1c98a83cb9",
+            "id": "wrn_a5763b8c-8324-4cad-889e-261cb0409ab0",
             "category": "incomplete_reviews",
             "severity": "warning",
             "message": "0/1 required reviews completed",
@@ -186,7 +186,7 @@
             "consequenceType": "update_readiness_score",
             "description": "Readiness evaluated: publish_ready (score: 60/100, confidence: high)",
             "targetObjectType": "project",
-            "targetObjectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+            "targetObjectId": "689b2e11-9727-43af-9aae-1369322b42cc",
             "severity": "info",
             "actionRequired": false,
             "autoExecutable": true,
@@ -212,12 +212,12 @@
           }
         ],
         "decisionReference": {
-          "decisionId": "cdad6e5d-764d-4218-8513-fa2528d1362c",
-          "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "decisionId": "6f1dd751-8097-4b7a-97ed-270d40b9c69b",
+          "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
           "intent": "export",
           "outcome": "review",
           "actorId": "1",
-          "timestamp": "2026-11-10T13:19:01.027Z"
+          "timestamp": "2026-11-12T00:47:00.995Z"
         },
         "uiPresentationHints": {
           "readinessBadge": {
@@ -273,8 +273,8 @@
         },
         "artifactBinding": {},
         "stateFreshness": {
-          "evaluatedAt": "2026-11-10T13:19:01.026Z",
-          "generatedAt": "2026-11-10T13:19:01.032Z"
+          "evaluatedAt": "2026-11-12T00:47:00.995Z",
+          "generatedAt": "2026-11-12T00:47:00.998Z"
         },
         "derivedFlags": {
           "isBlocked": false,

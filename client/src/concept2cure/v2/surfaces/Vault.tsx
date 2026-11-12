@@ -11,6 +11,7 @@ import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultHoldNotice, type VaultHoldNoticeShape } from './VaultHoldNotice';
 import { FolderExportButton } from './VaultFolderExport';
 import { VaultVersions } from './VaultVersions';
+import { RecordViewButton, VaultVersionViewer, useVaultVersionViewer } from './VaultVersionViewer';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import {
@@ -1745,6 +1746,11 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     return out;
   }, [cabinet]);
 
+  /* Reading a document from its record (the viewer the Versions section has, opened in a wide drawer), and which
+     record the last attempt was for: a refusal is said on that record and not on the next one opened. */
+  const reader = useVaultVersionViewer(projectId ?? '');
+  const [readDocId, setReadDocId] = useState<string | null>(null);
+
   /* What the Required documents view calls each section: the outline's own names. */
   const sectionNames = useMemo(() => sectionNamesOf(tree), [tree]);
   const sectionName = useCallback((code: string) => sectionNames.get(code.trim().toLowerCase()) ?? null, [sectionNames]);
@@ -2448,6 +2454,15 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
           {I.folder} Place into filing…
         </button>
       )}
+      {/* Read it here: the current version in the viewer the Versions section has, opened wide. A PDF as itself, a
+          Word document as its PDF rendition; nothing for a file the viewer cannot show, or one whose bytes are gone. */}
+      {sel.src === 'upload' && sel.docId && projectId && sel.originalFileAvailable !== false ? (
+        <RecordViewButton
+          doc={{ id: sel.docId, title: sel.title, mimeType: sel.mimeType, hash: sel.hash ?? null }}
+          viewingId={reader.viewing}
+          onView={(id, label, hash, as) => { setReadDocId(id); void reader.view(id, label, hash, as); }}
+        />
+      ) : null}
       {/* "Download" once typed a sentence into the chat. Only an uploaded
           document HAS bytes; a governed artifact's governed export renders its
           stored content; an authored section says there is nothing to download. */}
@@ -2498,6 +2513,14 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         {I.sparkles} Ask AnA
       </button>
       <VaultSourceBuildAction source={sel} programId={projectId} onNav={onNav} />
+    </div>
+  ) : null;
+
+  /* What the last View of this record came to when nothing was framed: a refusal, or a file downloaded because
+     its bytes are not a PDF. Said on the record, under its actions. */
+  const recordViewNote = sel?.docId && readDocId === sel.docId && !reader.viewer && reader.note ? (
+    <div className={reader.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={reader.note.tone === 'error' ? 'alert' : 'status'} data-testid="vault-record-view-note">
+      {reader.note.text}
     </div>
   ) : null;
 
@@ -2781,6 +2804,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         />}
         {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
         {recordActions}
+        {recordViewNote}
         {recordParts}
       </div>
     </React.Fragment>
@@ -3380,9 +3404,16 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
           label={`Record: ${sel.title}`}
           className="vd-detail"
           onClose={() => setRecordOpen(false)}
-          suspended={Boolean(filingIntoSubmission) || Boolean(projectId && workingSource)}
+          suspended={Boolean(filingIntoSubmission) || Boolean(projectId && workingSource) || Boolean(reader.viewer)}
         >
           {recordView}
+        </VaultDrawer>
+      ) : null}
+      {/* The document being read, wide: the same viewer, the same audited route and bytes rule. Over whichever
+          view is on screen; closing it releases the framed bytes. */}
+      {reader.viewer ? (
+        <VaultDrawer label={`Reading ${reader.viewer.doc.title}`} className="vd-read" onClose={reader.closeViewer}>
+          <VaultVersionViewer state={reader} />
         </VaultDrawer>
       ) : null}
 

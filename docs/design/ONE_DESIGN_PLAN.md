@@ -1779,6 +1779,26 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
   URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
   owner's signature.
 
+#### F1 — the document path and CMC / Module 3 walked in the running app (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-12)
+
+At the founder's direction to surface what is built and make it work for GA. Both paths were driven through the real
+screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-ui-walk/`.
+
+- **An approved, sealed document can be placed into a sequence** (`705ff05e7a`). The editor and the Builder both
+  refused it 409 although its checks were current. The chain verifier hashed a timestamp as the drizzle driver hands
+  it over (text), so the gate read every ledger row as broken. Only PostgreSQL shows it. Red first, then proven live.
+- **Placing an unchanged Module 3 again writes nothing** (`efafdc077a`). It had rewritten every filing document and
+  stopped a release signature clearing the sequence. OQ-008 v0.14 asserts it: 41 pass, 0 fail, 2 deviation, of 43.
+- **Two compiled sentences were untrue and are corrected**: §3.2.P.3 named a rejected batch as representative and
+  called its rejection a release; §3.1 named the product as the drug substance.
+- **The export gate says stale drafts need a compile**, and "stale after approval" only of approved sections.
+- **Found, for the screens** (not yet repaired): a person cannot record the product's shelf-life claim; a signed batch
+  rejection never shows; a placement shows no result; a citation reads as a file name outside the Section view; no
+  screen shows the sealed version a Vault copy was rendered from. Hand-offs to the lanes that hold the other screens
+  are in COORDINATION.
+- **For the founder:** whether the independent checks are required before a review approval (the reviewer's screen
+  calls them optional; once run they block); a document edited during review cannot be signed or re-requested.
+
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
 **Update, later on 2026-11-10: the walk is 15 of 15** (`60b1d53767`,

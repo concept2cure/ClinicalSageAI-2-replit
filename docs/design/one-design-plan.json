@@ -36,7 +36,8 @@
     "P-109",
     "P-110",
     "P-111",
-    "P-112"
+    "P-112",
+    "P-127"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -658,6 +659,38 @@
       ]
     },
     {
+      "id": "S13",
+      "title": "Help, training and support through AnA and a help and support agent, the way Claude's are run: the help corpus, Help & training, courses, tickets, onboarding (P-127)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "shared/help/**",
+        "server/routes/docs.ts",
+        "server/routes/support.ts",
+        "server/bootstrap/**",
+        "server/services/ana/**",
+        "server/services/ana-ri/**",
+        "server/routes/ana-ri/**",
+        "client/src/concept2cure/v2/surfaces/Training.tsx",
+        "client/src/concept2cure/v2/surfaces/HomeSetup.tsx",
+        "client/src/concept2cure/v2/surfaces/help/**",
+        "client/src/concept2cure/v2/Shell.tsx",
+        "client/src/concept2cure/v2/V2App.tsx",
+        "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/v2/__tests__/**",
+        "shared/constants/launch-scope.ts",
+        "shared/constants/ui-surface-registry.ui-v2.ts",
+        "shared/constants/deferred-capability-inventory.ts",
+        "shared/navigation/**",
+        "shared/schema/support-admin.ts",
+        "migrations/0007_support_admin.sql",
+        "scripts/db/migration-set.mjs",
+        "docs/evidence/HELP/**",
+        "docs/design/HELP_AND_SUPPORT_2026-11-10.md"
+      ]
+    },
+    {
       "id": "PLAN",
       "title": "The plan and its gate (founder decision only)",
       "status": "open",
@@ -699,6 +732,54 @@
       "decision": "P-91",
       "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
       "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    },
+    {
+      "kind": "ana-tool",
+      "name": "search_help_center",
+      "package": "S13",
+      "decision": "P-127",
+      "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
+      "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
+    },
+    {
+      "kind": "ana-tool",
+      "name": "read_help_article",
+      "package": "S13",
+      "decision": "P-127",
+      "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
+      "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
+    },
+    {
+      "kind": "ana-tool",
+      "name": "open_support_ticket",
+      "package": "S13",
+      "decision": "P-127",
+      "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
+      "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
+    },
+    {
+      "kind": "ana-tool",
+      "name": "list_my_support_tickets",
+      "package": "S13",
+      "decision": "P-127",
+      "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
+      "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
+    },
+    {
+      "kind": "route",
+      "name": "server/routes/support.ts",
+      "package": "S13",
+      "decision": "P-127",
+      "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
+      "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
+    },
+    {
+      "kind": "mount",
+      "name": "/api/support",
+      "package": "S13",
+      "decision": "P-127",
+      "where": "docs/design/HELP_AND_SUPPORT_2026-11-10.md \u00a74",
+      "scope": "help and support, the way Claude's are run: the help corpus, tickets and support mode; no table, no new screen, no new model"
     }
   ],
   "completesRequired": true,

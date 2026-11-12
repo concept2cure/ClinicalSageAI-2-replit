@@ -9,20 +9,20 @@
       "materialName": "Microcrystalline cellulose PH-102",
       "compendialMonograph": "Ph. Eur. 0316 / USP-NF",
       "origin": "plant",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 34,
+    "durationMs": 36,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 13,
+        "id": 19,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "materialRole": "excipient",
         "materialName": "Microcrystalline cellulose PH-102",
         "functionInFormulation": null,
@@ -39,8 +39,8 @@
         "novelExcipient": false,
         "novelExcipientJustification": null,
         "status": "draft",
-        "createdAt": "2026-11-10T13:06:40.985Z",
-        "updatedAt": "2026-11-10T13:06:40.985Z"
+        "createdAt": "2026-11-12T00:34:44.015Z",
+        "updatedAt": "2026-11-12T00:34:44.015Z"
       },
       "module3Linked": true
     }

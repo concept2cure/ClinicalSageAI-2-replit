@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
     "anonymous": false,
     "identity": null,
     "body": {}
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 37,
+    "durationMs": 29,
     "rateLimitRetries": 0,
     "body": {
       "success": true,

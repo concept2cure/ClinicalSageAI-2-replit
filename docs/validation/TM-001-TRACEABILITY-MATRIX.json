@@ -1,6 +1,6 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-11-10T13:29:13.810Z",
+  "generatedAt": "2026-11-12T01:00:22.114Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-11-10",
   "summary": {
@@ -100,7 +100,7 @@
     {
       "protocolId": "OQ-008",
       "app": "CMC / Module 3",
-      "executedAt": "2026-11-10T13:06:27.451Z",
+      "executedAt": "2026-11-12T00:34:30.495Z",
       "counts": {
         "pass": 41,
         "fail": 0,

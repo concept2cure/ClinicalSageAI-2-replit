@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/batch-records/9d97fa5b-5393-48f1-af3d-aa49e0130536/release",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "reason": "Releasing before any QC result is recorded.",
+      "meaning": "approval",
+      "decision": "approved",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "No QC result is recorded against batch B-20261110130629. A release is signed over the batch's recorded, reviewed results: record them in QC testing first.",
+      "code": "RELEASE_EVIDENCE"
+    }
+  }
+}
