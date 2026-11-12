@@ -1,0 +1,150 @@
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > is refused the same way when it names a meeting on such a submission
+AssertionError: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:97:22
+     95|     admit.mockRejectedValue(denied());
+     96|     const r = await request(app()).post('/api/ha-interactions/commitme…
+     97|     expect(r.status).toBe(403);
+       |                      ^
+     98|     expect(admit).toHaveBeenCalledWith(expect.anything(), '12', true);
+     99|     expect(createCommitmentTx).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > POST /api/ha-interactions/commitments > refuses a submission that is in no project here: no edit right could admit it
+AssertionError: expected 201 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 201
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:105:22
+    103|     world({ project: null });
+    104|     const r = await request(app()).post('/api/ha-interactions/commitme…
+    105|     expect(r.status).toBe(404);
+       |                      ^
+    106|     expect(createCommitmentTx).not.toHaveBeenCalled();
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > GET /api/ha-interactions/commitments > lists for the reader: the list is bound to the projects this person can open
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, …(1) ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:128:26
+    126|     const r = await request(app()).get('/api/ha-interactions/commitmen…
+    127|     expect(r.status).toBe(200);
+    128|     expect(programScope).toHaveBeenCalledWith(expect.anything(), { org…
+       |                          ^
+    129|     expect(listCommitments).toHaveBeenCalledWith(7, undefined, expect.…
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > GET /api/ha-interactions/commitments > a scope that cannot be read is an error, never an unscoped list
+AssertionError: expected 200 to be greater than or equal to 500
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:135:22
+    133|     programScope.mockRejectedValueOnce(new Error('sharing policy unava…
+    134|     const r = await request(app()).get('/api/ha-interactions/commitmen…
+    135|     expect(r.status).toBeGreaterThanOrEqual(500);
+       |                      ^
+    136|     expect(listCommitments).not.toHaveBeenCalled();
+    137|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > refuses a milestone on a commitment whose project the person may not change, with nothing recorded
+AssertionError: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:149:22
+    147|   it("refuses a milestone on a commitment whose project the person may…
+    148|     const r = await request(app()).post('/api/ha-interactions/commitme…
+    149|     expect(r.status).toBe(403);
+       |                      ^
+    150|     expect(admit).toHaveBeenCalledWith(expect.anything(), '12', true);
+    151|     expect(addMilestoneTx).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > refuses its fulfilment before the fulfilment route is reached
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:157:22
+    155|   it('refuses its fulfilment before the fulfilment route is reached', …
+    156|     const r = await request(app()).post('/api/ha-interactions/commitme…
+    157|     expect(r.status).toBe(403);
+       |                      ^
+    158|     expect(fulfil).not.toHaveBeenCalled();
+    159|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > answers a refused read of what could fulfil it as not found, never confirming the commitment
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:163:22
+    161|   it('answers a refused read of what could fulfil it as not found, nev…
+    162|     const r = await request(app()).get('/api/ha-interactions/commitmen…
+    163|     expect(r.status).toBe(404);
+       |                      ^
+    164|     expect(r.body.error.message).toBe('Commitment not found here.');
+    165|     expect(admit).toHaveBeenCalledWith(expect.anything(), '12', false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-commitment-admission.test.ts > acting on one commitment > a commitment made at a meeting is admitted by that meeting's submission
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/ha-interactions-commitment-admission.test.ts:172:22
+    170|     world({ commitment: { submission_id: null, source_interaction_id: …
+    171|     const r = await request(app()).post('/api/ha-interactions/commitme…
+    172|     expect(r.status).toBe(403);
+       |                      ^
+    173|     expect(fulfil).not.toHaveBeenCalled();
+    174|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 5 passed (14)
+   Start at  03:31:49
+   Duration  3.10s (transform 1.24s, setup 82ms, import 2.67s, tests 85ms, environment 0ms)
+

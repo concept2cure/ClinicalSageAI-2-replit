@@ -278,6 +278,22 @@ describe('honest states', () => {
     expect(within(detail()).getByTestId('change-impact').textContent).toContain('Not assessed yet.');
   });
 
+  /* Found in the running app (2026-11-12): with the connection down the drawer read "Not recorded — Failed to
+     fetch". That is the browser's own throw (a TypeError), not a sentence anyone wrote. */
+  it('a call that never reached the server says so in plain words, not in the browser\'s', async () => {
+    H.apiRequest.mockRejectedValue(new TypeError('Failed to fetch'));
+    renderLog(row(DEVICE));
+    fireEvent.click(within(detail()).getByRole('button', { name: 'Assess the regulatory impact' }));
+    const d = drawer();
+    for (const q of DEVICE_CHANGE_QUESTIONS.us) answer(d, q.question, 'No');
+    fireEvent.click(within(d).getByRole('button', { name: /Run the assessment/ }));
+    await waitFor(() => expect(within(drawer()).getByRole('status').textContent).toBe(
+      'Not recorded — the server could not be reached, so nothing was sent. Check your connection and try again.'));
+    expect(drawer().textContent).not.toContain('Failed to fetch');
+    expect(H.refresh).not.toHaveBeenCalled();
+    expect(within(detail()).getByTestId('change-impact').textContent).toContain('Not assessed yet.');
+  });
+
   /* The server answered, so the write stands; what cannot be read is the verdict. It is not called "not recorded",
      and no verdict is named: the log is re-read and the change shows what is kept. */
   it('a reply whose determination cannot be read names no verdict, and the log is read again', async () => {

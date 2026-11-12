@@ -1,0 +1,444 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a device project's change offers it, with no verdict before the engine has run 272ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a biologic project's change does not offer it, and says so in one sentence 15ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a drug project's change says the same of a drug project 13ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an organisation-wide change says where it is offered 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > says nothing about it where nobody would look: an organisation with no device project 15ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a row that carries no answer from the server neither offers nor describes it 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an approved device change is not assessed any more, and says why 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the US engine's questions in plain words, with none answered 194ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > does not send while a question is unanswered 248ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > posts the answers, never a verdict, and reports the engine's determination 264ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the EU engine's questions when the European Union is chosen, and posts those answers 206ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > assessing again shows the recorded answer beside each question, answers none for the person, and states why 324ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > shows the US verdict with the engine's rationale and what it found, the rules' version, who and when 28ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > says it is the engine's determination, and that a person classifies the change 13ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > the approval reads the determination among what it signs 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a refusal stays in the drawer in the server's words, and no verdict appears 255ms
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a call that never reached the server says so in plain words, not in the browser's 5280ms
+   → expected 'Not recorded — Failed to fetch' to be 'Not recorded — the server could not b…' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="qcc-log-h"
+        class="pj-sec qms-sec"
+      >
+        <div
+          class="pj-sec-h"
+        >
+          <h2
+            id="qcc-log-h"
+          >
+            Change control log
+          </h2>
+          <div
+            class="pj-sec-acts"
+          >
+            <button
+              class="btn primary small"
+              type="button"
+            >
+              Raise change request
+            </button>
+          </div>
+        </div>
+        <p
+          class="sec-sub"
+          data-testid="change-summary-absent"
+        >
+          Change-log totals appear once the change register loads.
+        </p>
+        <div
+          aria-label="Lifecycle stage"
+          class="seg qcc-stages"
+          role="group"
+        >
+          <button
+            aria-pressed="true"
+            class="seg-b"
+            type="button"
+          >
+            All
+          </button>
+          <button
+            aria-label="Proposed: 0 changes. Change request raised."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Proposed
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Under assessment: 1 change. Impact & risk assessed."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Under assessment
+             
+            <span
+              class="qcc-stage-n"
+            >
+              1
+            </span>
+          </button>
+          <button
+            aria-label="Approved: 0 changes. Independent approval."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Approved
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="In implementation: 0 changes. Actions executed."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            In implementation
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Verification: 0 changes. Effectiveness checked."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Verification
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Closed: 0 changes. Change record closed."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Closed
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Rejected: 0 changes."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Rejected
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Cancelled: 0 changes."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Cancelled
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+        </div>
+        <div
+          class="qms-reg-scroll"
+        >
+          <table
+            class="reg-tbl qms-reg"
+          >
+            <thead>
+              <tr>
+                <th
+                  scope="col"
+                >
+                  Number
+                </th>
+                <th
+                  scope="col"
+                >
+                  Title
+                </th>
+                <th
+                  scope="col"
+                >
+                  Type
+                </th>
+                <th
+                  scope="col"
+                >
+                  Class
+                </th>
+                <th
+                  scope="col"
+                >
+                  Status
+                </th>
+                <th
+                  scope="col"
+                >...
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a reply whose determination cannot be read names no verdict, and the log is read again 244ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > something kept that is not a determination is said to be unreadable, not shown as a verdict or as none 9ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > reads the server's row: an outcome it does not know is unreadable, a missing answer is no answer 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a call that never reached the server says so in plain words, not in the browser's
+AssertionError: expected 'Not recorded — Failed to fetch' to be 'Not recorded — the server could not b…' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <section
+        aria-labelledby="qcc-log-h"
+        class="pj-sec qms-sec"
+      >
+        <div
+          class="pj-sec-h"
+        >
+          <h2
+            id="qcc-log-h"
+          >
+            Change control log
+          </h2>
+          <div
+            class="pj-sec-acts"
+          >
+            <button
+              class="btn primary small"
+              type="button"
+            >
+              Raise change request
+            </button>
+          </div>
+        </div>
+        <p
+          class="sec-sub"
+          data-testid="change-summary-absent"
+        >
+          Change-log totals appear once the change register loads.
+        </p>
+        <div
+          aria-label="Lifecycle stage"
+          class="seg qcc-stages"
+          role="group"
+        >
+          <button
+            aria-pressed="true"
+            class="seg-b"
+            type="button"
+          >
+            All
+          </button>
+          <button
+            aria-label="Proposed: 0 changes. Change request raised."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Proposed
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Under assessment: 1 change. Impact & risk assessed."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Under assessment
+             
+            <span
+              class="qcc-stage-n"
+            >
+              1
+            </span>
+          </button>
+          <button
+            aria-label="Approved: 0 changes. Independent approval."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Approved
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="In implementation: 0 changes. Actions executed."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            In implementation
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Verification: 0 changes. Effectiveness checked."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Verification
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Closed: 0 changes. Change record closed."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Closed
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Rejected: 0 changes."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Rejected
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+          <button
+            aria-label="Cancelled: 0 changes."
+            aria-pressed="false"
+            class="seg-b"
+            type="button"
+          >
+            Cancelled
+             
+            <span
+              class="qcc-stage-n"
+            >
+              0
+            </span>
+          </button>
+        </div>
+        <div
+          class="qms-reg-scroll"
+        >
+          <table
+            class="reg-tbl qms-reg"
+          >
+            <thead>
+              <tr>
+                <th
+                  scope="col"
+                >
+                  Number
+                </th>
+                <th
+                  scope="col"
+                >
+                  Title
+                </th>
+                <th
+                  scope="col"
+                >
+                  Type
+                </th>
+                <th
+                  scope="col"
+                >
+                  Class
+                </th>
+                <th
+                  scope="col"
+                >
+                  Status
+                </th>
+                <th
+                  scope="col"
+                >...
+
+Expected: "Not recorded — the server could not be reached, so nothing was sent. Check your connection and try again."
+Received: "Not recorded — Failed to fetch"
+
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:290:82
+    288|     for (const q of DEVICE_CHANGE_QUESTIONS.us) answer(d, q.question, …
+    289|     fireEvent.click(within(d).getByRole('button', { name: /Run the ass…
+    290|     await waitFor(() => expect(within(drawer()).getByRole('status').te…
+       |                                                                                  ^
+    291|       'Not recorded — the server could not be reached, so nothing was …
+    292|     expect(drawer().textContent).not.toContain('Failed to fetch');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  03:27:01
+   Duration  8.98s (transform 599ms, setup 152ms, import 752ms, tests 7.42s, environment 494ms)
+

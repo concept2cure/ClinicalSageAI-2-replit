@@ -111,7 +111,12 @@ const CHANGE_COLUMNS = ['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 
 const chip = (tone: string | null) => `rd-chip${tone ? ` tone-${tone}` : ''}`;
 
 
-const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+/* A refusal's sentence is the server's own, and qmsWrites' own for a reply it could not read. A TypeError is the
+   browser's throw when the request never reached the server ("Failed to fetch", "Load failed"): not user copy. */
+const errText = (err: unknown) => {
+  if (err instanceof TypeError) return 'the server could not be reached, so nothing was sent. Check your connection and try again.';
+  return err instanceof Error ? err.message : String(err);
+};
 const optionsOf = <K extends string>(labels: Record<K, string>) =>
   (Object.keys(labels) as K[]).map((k) => ({ value: k, label: labels[k] }));
 /** The moves a row may take here: the server's list, less approval (the signed route). */
