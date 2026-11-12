@@ -158,7 +158,7 @@
 .c2c-v2 .py-res-row[data-over] .bar span{background:var(--error);}
 .c2c-v2 .py-res-row .v{text-align:right;}
 .c2c-v2 .py-over{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-caption);font-weight:600;color:var(--error);}
-.c2c-v2 .py-over.ok{color:var(--text-500);font-weight:600;}
+.c2c-v2 .py-over.ok{color:var(--text-400);font-weight:600;}
 .c2c-v2 .py-over svg{width:11px;height:11px;}
 .c2c-v2 .py-ana-note{font-size:11px;line-height:1.55;color:var(--text-400);padding:10px 15px;border-top:1px solid var(--bg-100);}
 .c2c-v2 .py-cov{padding:12px 15px;display:flex;flex-direction:column;gap:12px;}
@@ -172,7 +172,7 @@
 .c2c-v2 .py-cov-row .bar span[data-pc="1"]{background:var(--warning);}
 .c2c-v2 .py-cov-row .bar span[data-pc="2"]{background:var(--success);}
 .c2c-v2 .py-cov-row .v{text-align:right;}
-.c2c-v2 .py-cov-row .n{font-size:10px;color:var(--text-500);}
+.c2c-v2 .py-cov-row .n{font-size:10px;color:var(--text-400);}
 .c2c-v2 .py-cp{display:flex;align-items:stretch;gap:2px;flex-wrap:wrap;padding:14px 15px;}
 .c2c-v2 .py-cp-node{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;max-width:170px;transition:border-color var(--dur) var(--ease);position:relative;}
 .c2c-v2 .py-cp-node:hover{border-color:var(--text-400);}

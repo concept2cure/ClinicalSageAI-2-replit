@@ -8,16 +8,22 @@ import { nanoid } from 'nanoid';
  * Inject the per-request CSP nonce into the SPA template:
  *   1. Add `nonce="..."` to every <script> tag (authorizes the module
  *      loader under script-src).
- *   2. Replace the `__CSP_NONCE__` placeholder in the
+ *   2. Add it to every <style> tag in the template. The build writes one, the
+ *      inline theme block (`<style data-vite-theme>`). Without the nonce the
+ *      release's style-src-elem refused it on every page: a stylesheet
+ *      defines the same variables, so nothing looked different, but each
+ *      page load reported a violation (seen on the built client, 2026-11-12).
+ *   3. Replace the `__CSP_NONCE__` placeholder in the
  *      `<meta name="csp-nonce">` tag so client-side code (cspNonce.ts)
  *      can read it and apply it to runtime-injected <style> elements.
  *
- * No-op on the script transform if a script tag already has a nonce.
+ * A tag that already has a nonce is left as it is.
  */
-function injectCspNonce(html: string, nonce: string): string {
+export function injectCspNonce(html: string, nonce: string): string {
   if (!nonce) return html;
   return html
     .replace(/<script\b(?![^>]*\bnonce=)([^>]*)>/gi, `<script nonce="${nonce}"$1>`)
+    .replace(/<style\b(?![^>]*\bnonce=)([^>]*)>/gi, `<style nonce="${nonce}"$1>`)
     .replace(/__CSP_NONCE__/g, nonce);
 }
 

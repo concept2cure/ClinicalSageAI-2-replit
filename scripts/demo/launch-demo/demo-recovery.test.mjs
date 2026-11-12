@@ -93,6 +93,7 @@ export const makePdfBuffer = () => { throw new Error('PDF generation is not part
   await write('scripts/demo/launch-demo/packs/biotech-work-content.mjs', `
 export const BIOTECH_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_SM = { molecule: 'C2C-201', programName: 'C2C-201', productName: 'C2C-201', indication: 'Fictional test indication' };
+export const C2C201_OBJECTIVE = { objective: 'Fictional test objective' };
 export const BIOTECH_SM_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_STUDY_DESIGN = {};
 export const BIOTECH_ADAPTIVE_PLAN = { title: 'stub', designType: 'group_sequential', adaptations: [], interimLooks: [], stoppingRules: [], snapshots: [] };
@@ -113,6 +114,7 @@ export async function ensureAgencyLetter() { state.downstream.push('ensureAgency
 export const INDICATION = 'Fictional test indication', MOLECULE = 'C2C-101', PRODUCT_NAME = 'C2C-101', PROGRAM_NAME = 'C2C-101';
 export const PROVENANCE = { fictional: true }, SOPS = [], CHANGE = {}, VAULT_DOCS = [];
 export const C2C101_IDENTITY = { applicationNumber: '999101', sponsor: { name: 'Fictional test sponsor' } };
+export const C2C101_OBJECTIVE = { objective: 'Fictional test objective' };
 export const T = name => '[Demo · Biotech] ' + name;
 export const findDemoByTitle = (rows, name) => rows.find(row => row.title === T(name));
 export const inDays = () => '2027-04-30';
@@ -121,6 +123,7 @@ export const inDays = () => '2027-04-30';
 import { state } from '../../../../state.mjs';
 export const NOT_EXECUTED_NO_SIGNER = 'not executed — signer credential not supplied';
 export async function ensureApplicantIdentity() { state.downstream.push('ensureApplicantIdentity'); }
+export async function ensureObjective() { state.downstream.push('ensureObjective'); }
 export const asArray = (body, key) => body[key] ?? [];
 export function makeTally() { const tally = { created: {}, found: {} }; return { tally,
 created(key) { tally.created[key] = (tally.created[key] ?? 0) + 1; },

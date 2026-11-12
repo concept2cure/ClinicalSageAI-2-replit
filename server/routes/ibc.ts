@@ -28,6 +28,10 @@ import {
 import { evaluateContainment, registrationExpiration, requiresConvenedReview } from '../services/ibc/ibc-logic';
 import { recordIbcRegistrationCreated, recordIbcApproval, recordIbcAgentRegistered } from '../services/ibc-metrics';
 
+/** Reads go through the pool, which sets the tenant for each statement. A connection from connect() carries
+ *  no tenant before BEGIN, so a read on one found no row for any organization (2026-11-12). */
+const scopedReads = { query: (sql: string, params?: unknown[]) => pool.query(sql, params as unknown[]) };
+
 const router = Router();
 // A viewer reads these records and writes none of them: one gate for every
 // write, as the ProtocolDev routers (P11-C-1). The signed review routes also
@@ -217,17 +221,14 @@ router.get('/registrations/:id/containment', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const client = await pool.connect();
   try {
-    const input = await getContainmentInput(client, orgId, id);
+    const input = await getContainmentInput(scopedReads, orgId, id);
     const containment = evaluateContainment(input);
     // The committee's recorded expiration wins; approval + 1 year is labelled computed (2026-10-15).
     const expiration = registrationExpiration(input.approvalDate, new Date().toISOString().slice(0, 10), input.expirationDate);
     res.json({ containment, expiration });
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 
