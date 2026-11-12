@@ -17,8 +17,7 @@ import {
   type AuditEventChainRow,
 } from '../services/audit/chainIntegrityMonitor.js';
 import {
-  AUDIT_EVENT_CHAIN_COLUMNS,
-  AUDIT_EVENT_CHAIN_ORDER,
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
   auditEventChainGapReason,
   describeAuditEventChain,
 } from '../services/audit/audit-event-chain.js';
@@ -158,13 +157,7 @@ const NO_AUDIT_EVENTS = 'no entries: there is no chain to verify';
 /** audit_events: one organisation's linkage (the monitor's walk); null when it has no row. */
 async function verifyAuditEventsLinkage(client: PoolClient, organizationId: number): Promise<AuditStoreVerdict | null> {
   const verdict = await guarded('audit_events.linkage', async () => {
-    const { rows } = await client.query(
-      `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS}
-         FROM audit_events
-        WHERE organization_id = $1
-        ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`,
-      [organizationId],
-    );
+    const { rows } = await client.query(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, [organizationId]);
     const { broken, walk } = summarizeChainLinkage(
       rows as unknown as AuditEventChainRow[],
     );

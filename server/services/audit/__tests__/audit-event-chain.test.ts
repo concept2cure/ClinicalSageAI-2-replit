@@ -10,7 +10,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL,
   AUDIT_EVENT_CHAIN_COLUMNS,
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
+  AUDIT_EVENT_CHAIN_ORDER,
   AUDIT_EVENT_HASH_FIELDS,
   auditEventChainVerdict,
   auditEventPreimage,
@@ -302,5 +305,22 @@ describe('describeAuditEventChain: the sentence never outruns the check', () => 
       describeAuditEventChain(walkAuditEventChain(chainOf(2).map(r => ({ ...r, record_hash: null })))),
     ];
     for (const s of sentences) expect(s).not.toMatch(/record_hash|previous_hash|sequence_number|timestamp_text/);
+  });
+});
+
+describe('the statements that read the chain', () => {
+  it('reads one organisation by a bind parameter, and every organisation with none', () => {
+    expect(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL).toBe(
+      `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS} FROM audit_events WHERE organization_id = $1 ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`,
+    );
+    expect(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL.match(/\$\d+/g)).toEqual(['$1']);
+    expect(AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL).not.toMatch(/\$\d|WHERE/);
+  });
+
+  it('reads the timestamp as the database prints it, in both', () => {
+    for (const sql of [AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL]) {
+      expect(sql).toContain('"timestamp"::text AS timestamp_text');
+      expect(sql).toMatch(/ORDER BY organization_id, sequence_number ASC$/);
+    }
   });
 });

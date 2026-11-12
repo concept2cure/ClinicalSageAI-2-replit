@@ -35,8 +35,7 @@ import { runWithSystemTenantScope } from '../../db/tenantStore';
 import { readLatestWindowResult, runScheduledOncePerWindow, windowKeyOf } from '../../db/scheduledOnce';
 import { createScopedLogger } from '../../utils/logger';
 import {
-  AUDIT_EVENT_CHAIN_COLUMNS,
-  AUDIT_EVENT_CHAIN_ORDER,
+  AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL,
   auditEventChainGapReason,
   walkAuditEventChain,
   type AuditEventChainRow,
@@ -172,8 +171,8 @@ export interface ChainLinkageSummary {
  * its name for the monitor and the per-organisation verdict job
  * (jobs/auditChainOrganizationVerdicts.ts).
  *
- * `rows` MUST be selected with AUDIT_EVENT_CHAIN_COLUMNS and ordered by
- * (organization_id, sequence_number ASC). A row with no `record_hash` was never
+ * `rows` MUST be read with one of the walk's two statements
+ * (AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL). A row with no `record_hash` was never
  * hashed: it is counted, and its successor's pointer is not compared (WO-16C
  * finding 72). A row naming no predecessor although one was hashed is counted
  * too, and no longer passes as a verified link.
@@ -306,11 +305,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     // under RLS_ENFORCE=on; without it this 21 CFR Part 11 §11.10(e) monitor
     // silently never runs in production (the query fails closed every cycle).
     const outcome = await runWithSystemTenantScope('audit:chain-integrity-monitor', async () => {
-      const { rows } = await _pool!.query(
-        `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS}
-         FROM audit_events
-         ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`
-      );
+      const { rows } = await _pool!.query(AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL);
 
       if (rows.length === 0) {
         // Nothing to verify is not "verified" — same rule as

@@ -23,8 +23,7 @@ import type { ChainBreak } from './chain.js';
 import type { TenantChainHead, TenantChainVerifier } from './tenant-chain-verdict.js';
 import { exportChangeWords } from './audit-change-words.js';
 import {
-  AUDIT_EVENT_CHAIN_COLUMNS,
-  AUDIT_EVENT_CHAIN_ORDER,
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
   auditEventChainGapReason,
   auditEventChainVerdict,
   walkAuditEventChain,
@@ -298,13 +297,7 @@ export async function snapshotChainIntegrity(
   try {
     // One organisation's chain, always: both callers pass one, and an absent
     // filter read every tenant's events (reporting review 2026-10-01, SECURITY-9).
-    const { rows } = await pool.query(
-      `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS}
-       FROM audit_events
-       WHERE organization_id = $1
-       ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`,
-      [organizationId]
-    );
+    const { rows } = await pool.query(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, [organizationId]);
 
     const verifiedAt = new Date().toISOString();
     if (rows.length === 0) {

@@ -72,6 +72,20 @@ export const AUDIT_EVENT_CHAIN_COLUMNS = `id, organization_id, sequence_number, 
 export const AUDIT_EVENT_CHAIN_ORDER = `organization_id, sequence_number ASC`;
 
 /**
+ * The two statements that read this chain, whole. Every reader runs one of
+ * them as it stands, so no reader builds SQL text: the only things joined here
+ * are the two constants above, and the organisation is a bind parameter ($1).
+ * (`ci:sql-interpolation` refuses a value spliced into a query's text, and a
+ * select list spliced in at each call site looks the same to it.)
+ */
+export const AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL =
+  `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS} FROM audit_events WHERE organization_id = $1 ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`;
+
+/** Every organisation's chain, for the platform-wide monitor. It takes no parameter. */
+export const AUDIT_EVENT_CHAIN_ALL_ORGANIZATIONS_SQL =
+  `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS} FROM audit_events ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`;
+
+/**
  * The fields the trigger's hash commits to, in its order. Pinned to the
  * trigger's SQL by __tests__/audit-event-chain.test.ts.
  */

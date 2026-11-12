@@ -34,8 +34,7 @@ import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { approvalShareJoin } from '../services/review/approval-share';
 import {
-  AUDIT_EVENT_CHAIN_COLUMNS,
-  AUDIT_EVENT_CHAIN_ORDER,
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
   auditEventChainVerdict,
   describeAuditEventChain,
   walkAuditEventChain,
@@ -847,19 +846,13 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
   const pool: SqlClient = requestSql(req);
 
   try {
-    const orgFilter = `WHERE organization_id = $1`;
-    const params = [orgId];
 
     // Fetch all audit_events rows in chain order, with the columns the one walk
     // of this chain reads (services/audit/audit-event-chain.ts). `timestamp_text`
     // is the timestamp as the database renders it: exactly what the hash-chain
     // trigger hashed (`NEW.timestamp::text`, db/migrations/20260222_audit_events_hash_chain.sql).
-    const { rows } = await pool.query(
-      `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS}
-       FROM audit_events ${orgFilter}
-       ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`,
-      params
-    );
+    // One organisation's chain, always: the statement binds it, and has no other form.
+    const { rows } = await pool.query(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, [orgId]);
 
     /* No rows means nothing was re-computed, so there is no verdict to give.
        This used to answer `integrityValid: true` — a pass over zero entries —
