@@ -1193,6 +1193,42 @@ function ScheduleDashboard({ dashboard, onOpenProject }: { dashboard: DashboardD
   );
 }
 
+/** A readiness verdict in words. The stored value is the evaluator's; one it does not know is shown as recorded. */
+const READINESS_VERDICT_WORDS: Record<string, string> = { ready: 'Ready', partial: 'Partly ready', missing: 'Not ready' };
+
+/** The card's line of facts: the verdict, the risk and the count of critical blockers, each as the server gave it. */
+function portfolioFacts(r: PortfolioRow): string {
+  const verdict = r.status ? READINESS_VERDICT_WORDS[r.status] ?? r.status.replace(/[._-]/g, ' ') : 'Status not recorded';
+  const risk = r.riskLevel ? `${r.riskLevel.charAt(0).toUpperCase()}${r.riskLevel.slice(1)} risk` : null;
+  const blockers = typeof r.criticalBlockerCount === 'number' ? `${r.criticalBlockerCount} critical blocker${r.criticalBlockerCount === 1 ? '' : 's'}` : null;
+  return [verdict, risk, blockers].filter(Boolean).join(' · ');
+}
+
+/** One project on the readiness board: its figure and name on one row, and what holds it back across the card
+ *  below. It was a 210px row with the ring beside the text, about one word a line (rehearsal finding 5.4,
+ *  GA-DEMO-06). Every fact the card showed is still on it. */
+function PortfolioCardBody({ row: r }: { row: PortfolioRow }) {
+  return (
+    <>
+      <div className="ro-port-top">
+        {r.readiness == null
+          ? <div className="ro-port-ind" role="note">Readiness not computed</div>
+          : <ROChart chartType="readiness_ring" spec={{ value: r.readiness, label: '' }} />}
+        <div className="ro-port-b">
+          <div className="ro-port-code">{r.code}</div>
+          {r.indication ? <div className="ro-port-ind">{r.indication}</div> : null}
+          <div className="ro-port-filing">{portfolioFacts(r)}</div>
+        </div>
+      </div>
+      {r.topBlockers?.length ? (
+        <div className="ro-port-blockers">
+          {r.topBlockers.map((blocker, n) => <div key={n} className="ro-port-blocker">{blocker}</div>)}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; actualTier: string; tierResolved: boolean; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
   if (!dashboard) return null;
 
@@ -1207,10 +1243,7 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
         <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta">{/* A capped board says it is capped, here, beside the count it caps. */}<span>{dashboard.truncated ? `first ${rows.length} projects` : `${rows.length} projects`}</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => {
-            const content = <>{r.readiness == null
-              ? <div className="ro-port-ind" role="note">Readiness not computed</div>
-              : <ROChart chartType="readiness_ring" spec={{ value: r.readiness, label: '' }} />}
-              <div className="ro-port-b"><div className="ro-port-code">{r.code}</div><div className="ro-port-ind">{r.indication}</div><div className="ro-port-filing">{r.status || 'Status not recorded'}{r.riskLevel ? ` · ${r.riskLevel} risk` : ''}{typeof r.criticalBlockerCount === 'number' ? ` · ${r.criticalBlockerCount} critical blocker${r.criticalBlockerCount === 1 ? '' : 's'}` : ''}</div>{r.topBlockers?.map((blocker, n) => <div key={n} className="ro-port-ind">{blocker}</div>)}</div></>;
+            const content = <PortfolioCardBody row={r} />;
             return r.programId && onOpenProgram ? <button key={r.programId} type="button" className="ro-port-card ro-port-open" aria-label={`Open ${r.code}`} onClick={() => onOpenProgram(r)}>{content}</button> : <div key={r.projectId ?? i} className="ro-port-card">{content}</div>;
           })}
         </div>

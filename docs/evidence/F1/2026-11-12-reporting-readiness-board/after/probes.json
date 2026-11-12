@@ -1,0 +1,444 @@
+{
+  "board-1440-light": {
+    "cards": [
+      {
+        "code": "C2C-101",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-401",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "C2C-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section (0 of 72) or governed artifact (0 of 21) is approved or locked.",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-801",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-301",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "NEUR",
+        "facts": "Not ready · Critical risk · 12 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 31).",
+          "Cover Letter: Required section \"Cover Letter\" (1) has no usable current evidence",
+          "Indications for Use: Required section \"Indications for Use\" (2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      }
+    ],
+    "blockerColour": "rgb(61, 61, 58)",
+    "factsColour": "rgb(107, 105, 99)",
+    "cardBackground": "rgb(250, 249, 245)",
+    "overflow": 0,
+    "errors": []
+  },
+  "digest-1440-light": {
+    "title": "Executive Readiness Digest",
+    "tables": [
+      [
+        [
+          "Provider",
+          "Status",
+          "Note"
+        ],
+        [
+          "artifact_state",
+          "ready",
+          "—"
+        ],
+        [
+          "artifact_approval",
+          "missing",
+          "No filing section is approved or locked (0 of 72)."
+        ],
+        [
+          "submission_readiness",
+          "missing",
+          "23 regulatory gaps detected (Investigational New Drug Application)"
+        ],
+        [
+          "regional_package_manifest",
+          "partial",
+          "Required package sections/artifacts are incomplete"
+        ]
+      ]
+    ],
+    "blockers": [],
+    "text": "Readiness Executive Readiness Digest [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) partial generated Nov 12, 11:28 PM Executive summary Executive Readiness Digest for [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). Status: partial. [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) scores 0% on submission readiness, with 23 critical gaps outstanding. Evaluated against Investigational New Drug Application. Submission readiness 0% Source Critical gaps 23 Provider readiness Provider Status Note artifact_state ready — artifact_approval missing No filing section is approved or locked (0 of 72). submission_readiness missing 23 regulatory gaps detected (Investigational New Drug Application) regional_package_manifest partial Required package sections/artifacts are incomplete Source Blockers Blocking No filing section is approved or locked (0 of 72). Blocking Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence Blocking Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence Blocking Introduction: Required section \"Introduction\" (2.2) has no usable current evidence Blocking Quality Overall Summary: Required section \"Quality Overall Summary\" (2.3) has no usable current evidence Gaps Critical Administrative Forms Required section \"Administrative Forms\" (1.1) has no usable current evidence Critical Cover Letter Required section \"Cover Letter\" (1.2) has no usable current evidence Critical Introduction Required section \"Introduction\" (2.2) has no usable cur",
+    "errors": []
+  },
+  "board-1440-dark": {
+    "cards": [
+      {
+        "code": "C2C-101",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-401",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "C2C-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section (0 of 72) or governed artifact (0 of 21) is approved or locked.",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-801",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "LMN-301",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      },
+      {
+        "code": "NEUR",
+        "facts": "Not ready · Critical risk · 12 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 31).",
+          "Cover Letter: Required section \"Cover Letter\" (1) has no usable current evidence",
+          "Indications for Use: Required section \"Indications for Use\" (2) has no usable current evidence"
+        ],
+        "width": 292,
+        "height": 308,
+        "narrowestLine": 152
+      }
+    ],
+    "blockerColour": "rgb(232, 230, 220)",
+    "factsColour": "rgb(176, 174, 165)",
+    "cardBackground": "rgb(38, 38, 36)",
+    "overflow": 0,
+    "errors": []
+  },
+  "board-390-light": {
+    "cards": [
+      {
+        "code": "C2C-101",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-401",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "C2C-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section (0 of 72) or governed artifact (0 of 21) is approved or locked.",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 290,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-801",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-301",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "NEUR",
+        "facts": "Not ready · Critical risk · 12 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 31).",
+          "Cover Letter: Required section \"Cover Letter\" (1) has no usable current evidence",
+          "Indications for Use: Required section \"Indications for Use\" (2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      }
+    ],
+    "blockerColour": "rgb(61, 61, 58)",
+    "factsColour": "rgb(107, 105, 99)",
+    "cardBackground": "rgb(250, 249, 245)",
+    "overflow": 0,
+    "errors": []
+  },
+  "digest-390-light": {
+    "title": "Executive Readiness Digest",
+    "tables": [
+      [
+        [
+          "Provider",
+          "Status",
+          "Note"
+        ],
+        [
+          "artifact_state",
+          "ready",
+          "—"
+        ],
+        [
+          "artifact_approval",
+          "missing",
+          "No filing section is approved or locked (0 of 72)."
+        ],
+        [
+          "submission_readiness",
+          "missing",
+          "23 regulatory gaps detected (Investigational New Drug Application)"
+        ],
+        [
+          "regional_package_manifest",
+          "partial",
+          "Required package sections/artifacts are incomplete"
+        ]
+      ]
+    ],
+    "blockers": [],
+    "text": "Readiness Executive Readiness Digest [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) partial generated Nov 12, 11:28 PM Executive summary Executive Readiness Digest for [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). Status: partial. [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) scores 0% on submission readiness, with 23 critical gaps outstanding. Evaluated against Investigational New Drug Application. Submission readiness 0% Source Critical gaps 23 Provider readiness Provider Status Note artifact_state ready — artifact_approval missing No filing section is approved or locked (0 of 72). submission_readiness missing 23 regulatory gaps detected (Investigational New Drug Application) regional_package_manifest partial Required package sections/artifacts are incomplete Source Blockers Blocking No filing section is approved or locked (0 of 72). Blocking Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence Blocking Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence Blocking Introduction: Required section \"Introduction\" (2.2) has no usable current evidence Blocking Quality Overall Summary: Required section \"Quality Overall Summary\" (2.3) has no usable current evidence Gaps Critical Administrative Forms Required section \"Administrative Forms\" (1.1) has no usable current evidence Critical Cover Letter Required section \"Cover Letter\" (1.2) has no usable current evidence Critical Introduction Required section \"Introduction\" (2.2) has no usable cur",
+    "errors": []
+  },
+  "board-390-dark": {
+    "cards": [
+      {
+        "code": "C2C-101",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-401",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "C2C-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section (0 of 72) or governed artifact (0 of 21) is approved or locked.",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 290,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-801",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-201",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "LMN-301",
+        "facts": "Not ready · Critical risk · 23 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 72).",
+          "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      },
+      {
+        "code": "NEUR",
+        "facts": "Not ready · Critical risk · 12 critical blockers",
+        "blockers": [
+          "No filing section is approved or locked (0 of 31).",
+          "Cover Letter: Required section \"Cover Letter\" (1) has no usable current evidence",
+          "Indications for Use: Required section \"Indications for Use\" (2) has no usable current evidence"
+        ],
+        "width": 358,
+        "height": 272,
+        "narrowestLine": 218
+      }
+    ],
+    "blockerColour": "rgb(232, 230, 220)",
+    "factsColour": "rgb(176, 174, 165)",
+    "cardBackground": "rgb(38, 38, 36)",
+    "overflow": 0,
+    "errors": []
+  }
+}
