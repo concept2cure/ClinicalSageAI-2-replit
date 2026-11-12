@@ -493,3 +493,37 @@ describe('CmOverview — a stored state is shown as a word, never as its token',
     expect(chips).toEqual(expect.arrayContaining(['Approved', 'Draft', 'In review']));
   });
 });
+
+/* Walked 2026-11-12: a section whose source records changed after its compile read "Draft" with a live "Approve
+   section" on the Overview, and the approve route refused it as out of date. The board now says which sections are
+   stale and why; the table says so, offers the build board, and withholds the approval. */
+describe('CmOverview — a stale section says so, and is not offered for approval', () => {
+  const stale = (key: string, st: string, reason: string) => ({ ...section(key, st, 100), stale: true, staleReason: reason });
+
+  it('a stale draft names why, withholds approval and offers the build board', async () => {
+    wire(board({ sections: [stale('3.2.S.1', 'draft', 'specification:3 changed after compile'), section('3.2.P.1', 'draft', 100)] }));
+    const setTab = vi.fn();
+    (window as unknown as CmWindow).__cmSetTab = setTab;
+    renderOverview();
+    await screen.findByText('3.2.S.1', { selector: 'td' });
+
+    const s1 = row('3.2.S.1');
+    const chip = within(s1).getByText('Stale', { selector: '.rd-chip' });
+    expect(chip.getAttribute('title')).toMatch(/specification:3 changed after compile/);
+    expect((within(s1).getByRole('button', { name: /Approve section/ }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(within(s1).getByRole('button', { name: /Recompile on the build board/ }));
+    expect(setTab).toHaveBeenCalledWith('build');
+
+    // Control: a current draft is still offered.
+    expect((within(row('3.2.P.1')).getByRole('button', { name: /Approve section/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('an approved section that went stale says it owes a re-approval', async () => {
+    wire(board({ sections: [stale('3.2.P.5', 'approved', 'method:21 changed after compile')] }));
+    renderOverview();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    const p5 = row('3.2.P.5');
+    expect(within(p5).getByText('Stale', { selector: '.rd-chip' })).toBeTruthy();
+    expect(p5.textContent).toMatch(/approved before its sources changed: recompile, then approve again/i);
+  });
+});

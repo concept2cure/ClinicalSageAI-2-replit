@@ -430,6 +430,12 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   which the register's table has no columns for. Without it the ICH Q2 check named every method missing all four,
   with no way to clear it from the screen. Tests: `server/services/cmc/__tests__/method-q2-evidence.test.ts`.
   Released with the commit.
+- **→ CMC (`01GJidg5…`), one read in your file, 2026-11-12:** `server/routes/cmc-module3-board.routes.ts`
+  `buildSections` now also selects `stale, stale_reason` and sends them on each section row, so the Overview can
+  withhold "Approve section" on a section your approve route refuses as out of date. The board's database test
+  gained the two columns and one case. Released with the commit.
+- **→ the session that sent `ci:success-before-ok` and the `cm-meta` ratchet to me:** both repaired in
+  `CmcModule.tsx` (the close-out's refusal is one checked branch; the stability row's count is plain words).
 - **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
   200/403/503, got 422), with or without the change above. Not touched.
 

@@ -208,6 +208,8 @@ interface CmcSection {
       compiled record by the same rule the approve route and the export gate
       refuse on (server/services/cmc/compiled-record.ts). */
   completeness?: number | null; missingInputs?: string[];
+  /** A source record changed after the compile (the board's read of cmc_module3_sections.stale): the approve route refuses it until recompiled. */
+  stale?: boolean; staleReason?: string | null;
 }
 
 /* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ──
@@ -399,6 +401,38 @@ const CMC_SUGGEST: Record<string, string[]> = {
 function sectionIncomplete(s: CmcSection): boolean {
   return s.completeness !== 100 || (s.missingInputs ?? []).length > 0;
 }
+/** Why a stale section cannot be signed as it stands: the reason the compile recorded, in the approve route's terms. */
+function staleReason(s: CmcSection): string {
+  return `§${s.key} is out of date: ${s.staleReason || 'a source record changed after it was compiled'}. Recompile it on the Module 3 build board, then approve it.`;
+}
+
+const openBuildBoard = () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build');
+
+/**
+ * The approvals table's action for one section. A stale section is withheld
+ * like an incomplete one, with the build board offered (walked 2026-11-12: it
+ * read "Draft" with a live "Approve section", which the approve route refused
+ * as out of date). An approved section that went stale says it owes a new
+ * approval.
+ */
+function SectionApprovalAction({ section: s, incomplete, onApprove }: { section: CmcSection; incomplete: boolean; onApprove: () => void }) {
+  if (s.st === 'approved' && !s.stale) return <span className="cm-meta">{I.check} approved</span>;
+  if (!s.stale && !incomplete) return <button className="nda-open" onClick={onApprove}>{I.lock} Approve section</button>;
+  const why = s.stale ? staleReason(s) : incompleteReason(s);
+  return (
+    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {s.st === 'approved'
+        ? <span title={why}>Approved before its sources changed: recompile, then approve again.</span>
+        : <button className="nda-open" disabled title={why}>{I.lock} Approve section</button>}
+      <button
+        className="cm-linkish"
+        title={s.stale ? 'Recompile this section on the Module 3 build board' : 'Record the missing inputs and recompile on the Module 3 build board'}
+        onClick={openBuildBoard}
+      >{s.stale ? 'Recompile on the build board' : 'Open the build board'}</button>
+    </span>
+  );
+}
+
 /** Why the control is withheld, in the signer's terms — the same shape the approve route's 409 uses. */
 function incompleteReason(s: CmcSection): string {
   const missing = s.missingInputs ?? [];
@@ -1155,20 +1189,10 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                           chips in lower case and read as one of them. Sentence case,
                           same word, same reason on hover. */}
                       {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>Incomplete</span>}
+                      {s.stale && <span className="rd-chip tone-warn" style={{ marginLeft: 6 }} title={staleReason(s)}>Stale</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {s.st === 'approved'
-                        ? <span className="cm-meta">{I.check} approved</span>
-                        : incomplete
-                          ? <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                              <button className="nda-open" disabled title={incompleteReason(s)}>{I.lock} Approve section</button>
-                              <button
-                                className="cm-linkish"
-                                title="Record the missing inputs and recompile on the Module 3 build board"
-                                onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
-                              >Open the build board</button>
-                            </span>
-                          : <button className="nda-open" onClick={() => setReview(s)}>{I.lock} Approve section</button>}
+                      <SectionApprovalAction section={s} incomplete={incomplete} onApprove={() => setReview(s)} />
                     </td>
                   </tr>);
                 })}</tbody></table>
@@ -2092,28 +2116,24 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       const recordedJson = await recorded.json().catch(() => null);
       if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
 
-      /* apiRequest throws on a refusal, so the `!signed.ok` branch below was
-         never reached: an author whose role may not sign was told only
-         "Nothing was signed", although the edit above had saved the shelf
-         life. Both facts are said, and the row shows what was saved. */
-      let signed: Response;
-      try {
-        signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
-      } catch (e) {
+      /* The close-out is refused either way apiRequest reports it: thrown
+         (403, 409, 422…) or returned (401, a password or code not accepted).
+         Both are one branch, checked before anything is said: the shelf life
+         IS saved and the study is still running, and the row shows what was
+         saved. An author whose role may not sign was told only "Nothing was
+         signed" before 2026-11-12. */
+      const signed: unknown = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v))
+        .catch((e: unknown) => e);
+      if (!(signed instanceof Response) || !signed.ok) {
+        const why = signed instanceof Response
+          ? cmcWriteFailed('close-out', await signed.json().catch(() => null), signed.status)
+          : cmcWriteThrew('close-out', signed);
         const partial = adopt(recordedJson);
         if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
-        fireToast(`The shelf life is saved and the study is still running. ${cmcWriteThrew('close-out', e)}`, 'error');
+        fireToast(`The shelf life is saved and the study is still running. ${why}`, 'error');
         return;
       }
       const signedJson = await signed.json().catch(() => null);
-      if (!signed.ok) {
-        /* The shelf life IS recorded; only the signature failed. Say both. */
-        const why = cmcWriteFailed('close-out', signedJson, signed.status);
-        fireToast(`${why} The shelf life is recorded; the study is still running until the close-out is signed.`, 'error');
-        const partial = adopt(recordedJson);
-        if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
-        return;
-      }
       reportCmcLinkage(signedJson, 'CMC record');
       const row = adopt(signedJson);
       if (!row) { fireToast('Signed, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -2211,7 +2231,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                           ) : (
                             <button className="cm-linkish" onClick={() => setExpanded(isOpen ? null : r.id)}>
                               {results.length} recorded{failing ? <span className="sp-tone-warn"> · {failing} OOS</span> : null}
-                              {unassessed ? <span className="cm-meta"> · {unassessed} not assessed</span> : null}
+                              {/* Plain words in the control: `cm-meta` is retired (D0), and this line is part of the button's label. */}
+                              {unassessed ? ` · ${unassessed} not assessed` : null}
                             </button>
                           )}
                         </td>

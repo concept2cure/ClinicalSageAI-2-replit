@@ -124,8 +124,13 @@ The wording when an authenticator code is missing or wrong is repaired below ("A
 
 | The ICH Q2 check named every method "missing validation evidence: specificity, linearity / range, accuracy, precision", and nothing on the form could clear it | The register's table keeps the Q2 record in one JSON column and has no column per characteristic, so the write-through always sent null for the four values the check reads. The method form records each characteristic's result in the Q2 record (`evidence`), and the write-through reads it from there (`cmcRegisterForms.ts`, `cmc-write-through.ts` `q2Evidence`). No column, table or route | A new method added with its four results is not named missing evidence; the older, signed method still is, because its record is closed to edits under its signature (`after-b9-*`, `10-method-q2-evidence-red-green.txt`) |
 
-Still open on the CMC screens: stale sections on the Overview (the board's section read sends no stale flag,
-`server/routes/cmc-module3-board.routes.ts`).
+| Stale sections read "Draft" (or "approved") with a live "Approve section" on the Overview; the approve route refused them as out of date | The board's section read sends each section's stale flag and recorded reason (`server/routes/cmc-module3-board.routes.ts`); the approvals table shows "Stale" with the reason, withholds the approval, and offers "Recompile on the build board". An approved section that went stale says it owes a new approval (`CmcModule.tsx` `SectionApprovalAction`) | BX-733 after a method was added: 3.2.P.5, 3.2.S.4, 3.2.P.8 read "Approved · Stale … recompile, then approve again"; a stale draft elsewhere has its approval withheld (`after-b6-*`, `11-stale-sections-red-green.txt`) |
+| A close-out refused with a returned 401 (a password or code not accepted) did not take the refusal branch the thrown ones did; `ci:success-before-ok` named it | One refusal branch, checked before anything is said, for both | A wrong authenticator code: "The shelf life is saved and the study is still running. Couldn't save the close-out — The authenticator code was not accepted. Nothing was signed." (`after-b8-02`) |
+
+The retired-name ratchet (`foundationsRetiredRatchet.test.ts`) was red on trunk: `40cc8265b7` added a `cm-meta` span
+in the stability rows. The count is now written as plain words in its button, and the ratchet is green.
+
+Nothing is left open on the CMC screens from this walk in files this session holds.
 
 **The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
 author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The
