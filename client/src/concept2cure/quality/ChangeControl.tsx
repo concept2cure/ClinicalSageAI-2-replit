@@ -72,7 +72,7 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange, assessQmsChangeImpact } from './qmsWrites';
+import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange, assessQmsChangeImpact, writeRefusal } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
 import { ChangeImpactForm } from './ChangeImpactForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
@@ -111,12 +111,6 @@ const CHANGE_COLUMNS = ['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 
 const chip = (tone: string | null) => `rd-chip${tone ? ` tone-${tone}` : ''}`;
 
 
-/* A refusal's sentence is the server's own, and qmsWrites' own for a reply it could not read. A TypeError is the
-   browser's throw when the request never reached the server ("Failed to fetch", "Load failed"): not user copy. */
-const errText = (err: unknown) => {
-  if (err instanceof TypeError) return 'the server could not be reached, so nothing was sent. Check your connection and try again.';
-  return err instanceof Error ? err.message : String(err);
-};
 const optionsOf = <K extends string>(labels: Record<K, string>) =>
   (Object.keys(labels) as K[]).map((k) => ({ value: k, label: labels[k] }));
 /** The moves a row may take here: the server's list, less approval (the signed route). */
@@ -211,7 +205,7 @@ function ChangeControlSession({
       onRetry?.(); sum.refresh?.();
       after?.();
     } catch (err) {
-      setRefusal(`Not recorded — ${errText(err)}`);
+      setRefusal(writeRefusal(err));
     } finally {
       writing.current = false;
     }
@@ -355,7 +349,7 @@ function ChangeControlSession({
                     <td><span className={chip(STATE_TONE[c.status])}>{STATE_LABEL[c.status]}</span></td>
                     <td>
                       {c.targetImplementationDate ? <>
-                        {formatDate(c.targetImplementationDate)}
+                        <time dateTime={c.targetImplementationDate.slice(0, 10)}>{formatDate(c.targetImplementationDate)}</time>
                         {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
                       </> : '—'}
                     </td>
@@ -379,11 +373,12 @@ function ChangeControlSession({
             })}
           </RegisterTable>
         )}
-        {/* How a change is raised: the procedure's five steps, closed by default (D5 §WA.4.2 rule 8). Until
-            2026-11-10 a boxed guidance panel beside the forms, with an orange "Explain the procedure" and a
-            "Find the controlled procedure"; the explanation is the tab's third starter, and the SOP register,
-            where the procedure is read and acknowledged, is the tab beside this one. */}
-        <details className="pj-more">
+        {/* How a change is raised: the procedure's five steps. Until 2026-11-10 a boxed guidance panel beside the
+            forms, with an orange "Explain the procedure" and a "Find the controlled procedure"; the explanation is the
+            tab's third starter, and the SOP register, where the procedure is read and acknowledged, is the tab beside
+            this one. It was closed by default from 2026-11-10; P-122 rule 2 (nothing a screen showed goes behind a
+            closed disclosure) opens it again, and a person can close it. */}
+        <details className="pj-more" open>
           <summary>How a change is raised</summary>
           <ol className="qcc-steps">
             <li>Describe the change: current state and proposed state.</li>

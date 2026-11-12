@@ -1,0 +1,14 @@
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > does not flag a change the server says is on schedule, whatever a fixed date would say 1ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > claims nothing for a row that carries no verdict 0ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > useChangeRegister > carries the server verdict and the linked records onto each row 15ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > names the rows and counts read 2ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says whose rows these are while a project is open 1ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says a capped read is the most recent rows, never the whole register 1ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > never reads a failed register as empty, and never borrows another tab's rows 1ms
+ ✓ client/src/concept2cure/quality/__tests__/reviewOverdueToday.test.ts > review overdue is judged against today > marks a review due 2026-07-01 overdue on 2026-10-29, in the register and in the Record review row 5ms
+
+ Test Files  31 passed (31)
+      Tests  411 passed (411)
+   Start at  03:37:06
+   Duration  62.70s (transform 4.58s, setup 2.29s, import 11.13s, tests 29.64s, environment 14.62s)
+

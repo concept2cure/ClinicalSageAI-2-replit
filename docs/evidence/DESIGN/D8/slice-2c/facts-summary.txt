@@ -1,0 +1,1 @@
+8 pairs; 0 differ in failed requests, console errors, headings, controls, text length or sideways scroll
