@@ -1,0 +1,83 @@
+{
+ "nav": "device-diagnostics",
+ "bad": [
+  "404 /api/ivdr/gspr-checklist/f8af5607-3bec-4e73-8496-fe2031d64abd/matrix"
+ ],
+ "posts": [
+  {
+   "url": "/api/submissions/programs/f8af5607-3bec-4e73-8496-fe2031d64abd/technical-file/export",
+   "sent": {
+    "regulation": "ivdr"
+   },
+   "status": 200,
+   "answer": {
+    "ok": true,
+    "regulation": "ivdr",
+    "ready": false,
+    "fileCount": 1,
+    "leafCount": 1,
+    "materialized": 1,
+    "unfinalized": 1,
+    "unfinalizedSections": [
+     {
+      "sectionCode": "II.1.a",
+      "status": "drafted"
+     }
+    ],
+    "skipped": 0,
+    "unmappedLeaves": [],
+    "governed": true,
+    "sha256": "358ed1e9a63f192c8058ec793c7d889713ad1b5fecded85720553def1ecf0b97",
+    "sizeBytes": 3019,
+    "filename": "PROG-F8AF5607-technical-file-ivdr.zip",
+    "auditTrail": {
+     "persisted": true,
+     "chained": true
+    }
+   }
+  }
+ ],
+ "url": "/concept2cure/device-diagnostics?program=f8af5607-3bec-4e73-8496-fe2031d64abd",
+ "sectionTitles": [
+  "IVDR pathway · Aurora sepsis panel"
+ ],
+ "headerButtons": [
+  "Ask AnA about the technical file",
+  "Assemble technical file"
+ ],
+ "saysEstar": [],
+ "assembleOffered": 1,
+ "assembleTitle": "Assemble a ZIP of this project’s written IVDR Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.",
+ "status": "Downloaded PROG-F8AF5607-technical-file-ivdr.zip · not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section and whether it is present · 1 of its sections is still in draft or review",
+ "anaAsks": [],
+ "downloaded": "iv-written-PROG-F8AF5607-technical-file-ivdr.zip",
+ "zipEntries": [
+  "01-annex-ii-1/device-description/ii-1-a-c2c-document-sections-74.pdf",
+  "checksums.md5.txt",
+  "manifest.json"
+ ],
+ "manifest": {
+  "regulation": "ivdr",
+  "framework": "EU IVDR (Regulation 2017/746) — Annex II/III technical documentation",
+  "ready": false,
+  "totals": {
+   "sections": 12,
+   "requiredPresent": 1,
+   "requiredMissing": 9
+  },
+  "present": [
+   "device-description ← II.1.a"
+  ],
+  "requiredMissing": [
+   "manufacturer-information",
+   "design-manufacturing",
+   "gspr",
+   "risk-management",
+   "analytical-performance",
+   "clinical-performance",
+   "performance-evaluation",
+   "stability",
+   "pms-plan"
+  ]
+ }
+}

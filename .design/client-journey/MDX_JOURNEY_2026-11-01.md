@@ -127,7 +127,7 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 |---|---|---|---|
 | M1 | "Tap any row to open in the editor" does nothing on Engineering, UDI and Postmarket, and Postmarket's urgent-MDR click does nothing. The host passes no `onOpenEditor` to any of them. | `mdx/MdxSurfaceHost.tsx:399-407`; `EngineeringSurface.tsx:402`, `UdiSurface.tsx:260`, `PostmarketSurface.tsx:219,267`; `components/DocumentsPanel.tsx:183` | by hand |
 | M2 | AnA is told the device screens have no controls for signatures, uploads or profile changes. `EstarFilingPanel`, the dossier attachments and `DeviceProfilePanel` have all three. | `MdxSurfaceHost.tsx:145-148` | by hand |
-| M3 | An EU IVDR project's "Assemble the technical documentation" opens `IvdSurface`, whose only assembly is the FDA eSTAR, defaulting to 510(k). | `IvdSurface.tsx:627-636` | search |
+| M3 | **Fixed 2026-11-12** (`docs/evidence/MDX-JOURNEY/2026-11-12-p114-3-eu-technical-file-per-project/`), as P-114 item 3 decided: the IVD and CER screens' "Assemble technical file" assembles the project's own governed IVDR or MDR document through the per-project route, and an EU project is not offered the FDA eSTAR. An EU IVDR project's "Assemble the technical documentation" opens `IvdSurface`, whose only assembly is the FDA eSTAR, defaulting to 510(k). | `IvdSurface.tsx:627-636` | search |
 | M4 | Every device filing row in Submission Center says "Open 510(k) surface", PMA and IVD included, and its empty hint says filings are tracked from 510(k) only. | `DeviceFilings.tsx:250-260` | search |
 | M5 | The seeded 510(k) template files sections B1, B2, C1 and D1 under other sections' headings, and SE1 and SE2 reach no node. Its codes were never corrected. | `server/services/intelligence/template-seeds.ts:189`; evidence `docs/evidence/ANA-REASONING/2026-10-05/r16/template-outline-code-collision/` | search |
 | M6 | **Corrected 2026-11-01 by a trace of the creation path; the first wording here was wrong.** An IVD 510(k) gets the generic 510(k) governed outline (`k510:fda` `fda-estar-510k-v1.1`, A–G), and it does keep its cover letter, SE and labeling. What breaks: (a) the outline has no node for IVD analytical performance, so the IVD eSTAR's always-required `ivd-analytical-performance` slot (`estar-mapper.ts:375-420`) never reads present from governed content and an IVD 510(k) cannot reach "ready"; the nIVD-only E1 biocompatibility and E5 bench nodes stay mandatory; (b) the built-in template "US · 510(k) for IVD" is the `us_510k_ivd_sections` blueprint (`project-bootstrap.ts:906`, IVD_PERFORMANCE_SECTIONS, codes 1–6), whose sections reach no outline node, and which shows EU IVDR citations (Annex XIII, Article 56) to a US client through the template, AnA's briefs and the readiness digest; (c) the eSTAR variant is chosen two ways: `K510Surface` takes IVD from the product type, `EstarFilingPanel.tsx:605` and `510k-estar-routes.ts:1336,1402` default to the nIVD form. | `shared/regulatory/project-bootstrap.ts:906`, `server/services/pathway-engines/estar/estar-mapper.ts`, `migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`, `mdx/surfaces/EstarFilingPanel.tsx` | trace |
@@ -150,6 +150,11 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M23 | Found 2026-11-12: a 510(k) project's "Open §11 in editor" names a section the governed outline does not have; the substantial-equivalence discussion is C2 there. | `mdx/surfaces/K510Surface.tsx`, `mdx/data/k510.ts` (`editorSection`) | walk |
 | M24 | Found 2026-11-12: the 510(k) screen offers "predicate of record" on a De Novo project, which claims no predicate; nothing refuses the claim. | `mdx/surfaces/K510Surface.tsx`, `mdx/hooks/useDeviceProfile.ts` | walk |
 | M25 | Found 2026-11-12: a device screen's link to a section not yet started in the working copy says "not in the accessible working copies"; it does not offer to start the section from the outline. | `v2/editor/filingSectionTarget.ts` (the editor's, D4) | walk |
+| M26 | Found 2026-11-12: the EU technical file's ZIP is named by the project's id (`PROG-F8AF5607-technical-file-ivdr.zip`), not by the project. The per-project route takes no application identifier, and the assembler makes one from the id. M21 fixed the same on the eSTAR packages. | `server/routes/submissions.ts` (`techFileExportSchema`), `assemble-technical-file-from-core.ts:482` (the filing lane's) | walk |
+| M27 | Found 2026-11-12: an EU MDR technical documentation project's assembly door reads "Export the CER". The doors table keys a CER project and an MDR project as one filing (`filingToken`). The door opens the screen where the technical file is now assembled. | `v2/projectDoors.ts`, `v2/surfaces/ProjectMdxWorkflow.tsx` (the project page lane's) | walk |
+| M28 | Found 2026-11-12: the CER screen titles itself "Clinical Evaluation Report" and "EU MDR Article 61" for a project whose filing is the whole Annex II and III technical documentation. | `mdx/surfaces/CerSurface.tsx` (D8's design, P-128) | walk |
+| M29 | Found 2026-11-12: on an FDA-route project, the IVD screen's "Assemble technical file" asks AnA to assemble an IVDR technical file. Left as it was: P-114 item 3 decides only for EU projects, and removing a control needs a founder decision (P-122). | `mdx/surfaces/IvdSurface.tsx` (the founder's) | walk |
+| M30 | Found 2026-11-12: the IVD screen shows "CLIA categorization", a US laboratory requirement (42 CFR 493), on an EU IVDR project. Left as it was, for the same reason as M29. | `mdx/surfaces/IvdSurface.tsx` (the founder's) | walk |
 
 ## The order of work
 
@@ -173,7 +178,10 @@ on, not raced.
    technical-file assembler, after its placeholder identity is fixed) and M7 (De Novo). This is done with the R1
    lane (`01QoxbL`) because it reaches an endpoint no client calls. M3's server half landed on 2026-11-02: the
    technical file asks whether the filing holds the document's text, and refuses 409 `FILING_DIVERGED`
-   (`docs/evidence/MDX-JOURNEY/2026-11-02-m3-technical-file-asks-the-filing/`). The door is what remains.
+   (`docs/evidence/MDX-JOURNEY/2026-11-02-m3-technical-file-asks-the-filing/`). **The door landed on 2026-11-12**
+   (P-114 item 3; `docs/evidence/MDX-JOURNEY/2026-11-12-p114-3-eu-technical-file-per-project/`): the assembler is
+   reached per project, through the route that already existed for it, so no placeholder identity is sent. M7 landed
+   the same day (P-114 item 4).
 4. **Dead ends** (F1): M8 (Labeling create, through the existing labeling route) and M9 (Respond's device wording,
    in `ProjectRespond.tsx`, which is under D3 and S10. RIM holds S10, so this goes through the coordinator).
 5. **The journey walked in the running app** (L1 and RULE 4: "a screen is not done until it was opened in the
@@ -191,7 +199,7 @@ on, not raced.
 **2026-11-09: decided under the founder's delegation as P-114** (`docs/LAUNCH_DEFINITION_OF_DONE.md`):
 - question 2 is superseded by P-103;
 - question 3: no CDRH Portal adapter;
-- M3: the EU technical file per project;
+- M3: the EU technical file per project (built 2026-11-12);
 - M6(a): an IVD 510(k) outline;
 - M7: De Novo doors;
 - M16: the design file holds design records;

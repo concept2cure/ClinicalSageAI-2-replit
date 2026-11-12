@@ -14,6 +14,13 @@
  * data. Shared per-program fetches (sections,
  * program extras, device profile) live here so switching tabs never re-fetches
  * them; tab-specific feeds load lazily when their tab first opens.
+ *
+ * P-114 item 3, 2026-11-12 (decided under the founder's delegation; MDX journey
+ * M3): an EU MDR technical documentation project opens this screen from its
+ * assembly door, and its filing is the Annex II and III file, of which the CER
+ * is one part. For such a project the header also assembles that file, from the
+ * project's own governed document, through the per-project route. A CER project
+ * files its report and is offered no technical file.
  */
 
 import * as React from 'react';
@@ -31,6 +38,8 @@ import { EquivalenceTab } from './cer/EquivalenceTab';
 import { PmsPmcfTab } from './cer/PmsPmcfTab';
 import { GeneratorTab } from './cer/GeneratorTab';
 import type { EditorSectionRef } from '../../v2/editorTarget';
+import { technicalFileStatusLine, useTechnicalFileExport } from '../hooks/useCerExport';
+import { euTechnicalFileRegulation } from '@shared/constants/mdx';
 
 export interface CerSurfaceProps {
   /** Active CER program from the shell's selection. */
@@ -61,6 +70,14 @@ export function CerSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Ce
   const includedSignalCount =
     extras.safetySignals?.filter((s) => s.status === 'included').length ?? 0;
 
+  /* P-114 item 3: the EU regulation this project files its technical
+     documentation under, from its recorded filing; null for a CER project. */
+  const euRegulation = euTechnicalFileRegulation(program?.programType);
+  const technicalFile = useTechnicalFileExport(programId);
+  const technicalFileStatus = euRegulation
+    ? technicalFileStatusLine(technicalFile.busy, technicalFile.outcome, euRegulation)
+    : null;
+
   const tabs: CerTabDef[] = [
     {
       id: 'signals',
@@ -88,18 +105,37 @@ export function CerSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Ce
               : 'EU MDR Article 61 · select a CER project to load its evaluation'}
           </div>
         </div>
-        <button
-          className="section-more"
-          onClick={() =>
-            onAskAna(
-              `Generate the CER draft for ${program ? program.title : 'the selected project'} — pull from the included ` +
-                'safety signals, the literature corpus, and the equivalence data. Mark gaps in narrative form.',
-            )
-          }
-        >
-          Generate draft {I.sparkles}
-        </button>
+        <div>
+          <button
+            className="section-more"
+            onClick={() =>
+              onAskAna(
+                `Generate the CER draft for ${program ? program.title : 'the selected project'} — pull from the included ` +
+                  'safety signals, the literature corpus, and the equivalence data. Mark gaps in narrative form.',
+              )
+            }
+          >
+            Generate draft {I.sparkles}
+          </button>
+          {euRegulation && (
+            <button
+              className="section-more"
+              style={{ marginLeft: 8 }}
+              disabled={technicalFile.busy}
+              title={`Assemble a ZIP of this project’s written ${euRegulation.toUpperCase()} Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.`}
+              onClick={() => void technicalFile.assemble(euRegulation)}
+            >
+              Assemble technical file {I.fileText}
+            </button>
+          )}
+        </div>
       </div>
+
+      {technicalFileStatus && (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }} data-testid="technical-file-status">
+          {technicalFileStatus}
+        </div>
+      )}
 
       <CerTabBar tabs={tabs} active={tab} onSelect={setTab} />
 
