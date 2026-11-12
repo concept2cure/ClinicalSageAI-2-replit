@@ -1,0 +1,1931 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > targets the existing risk panel for the same project when opening engineering work 157ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > names an EU MDR project by its technical documentation, and a CER project by the CER 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k) 1ms
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens De Novo assembly on its own eSTAR, under its own name, never as a 510(k) 150ms
+   → Unable to find an accessible element with the role "button" and name "Assemble the De Novo eSTAR"
+
+Here are the accessible roles:
+
+  paragraph:
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Deliverables":
+  <h3 />
+
+  Name "Acceptance criteria":
+  <h3 />
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  <ul />
+
+  Name "":
+  <ul />
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  --------------------------------------------------
+  button:
+
+  Name "Write this work’s documents on Author":
+  <button
+    class="btn ghost"
+    type="button"
+  />
+
+  Name "Prepare this work with AnA":
+  <button
+    class="btn"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<details
+  class="pj-mdx-workstream"
+  data-work-package="submission-assembly"
+>
+  <summary>
+    <span>
+      Submission assembly
+    </span>
+    <span
+      class="pj-mdx-owner"
+    >
+      Regulatory Operations / Publishing
+    </span>
+  </summary>
+  <div
+    class="pj-mdx-detail"
+  >
+    <p>
+      Assemble the evidence into each filing’s required structure and validate completeness.
+    </p>
+    <dl
+      class="pj-mdx-facts"
+    >
+      <div>
+        <dt>
+          Contributors
+        </dt>
+        <dd>
+          Regulatory Affairs · Medical Writing · Quality Assurance / Quality Systems
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Applicability
+        </dt>
+        <dd>
+          Tailor deliverables and acceptance criteria to the recorded product, pathway, claims and justified evidence needs.
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Inputs from
+        </dt>
+        <dd>
+          Bench & performance testing · Clinical evidence · Medical writing · Human factors & usability · Electrical safety & EMC · Biocompatibility & materials · Labeling · Quality assurance & document control · Manufacturing & design transfer · Risk management
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Feeds
+        </dt>
+        <dd>
+          de_novo: Request assembly
+        </dd>
+      </div>
+    </dl>
+    <h3>
+      Deliverables
+    </h3>
+    <ul>
+      <li>
+        Filing content plan mapped to sections
+      </li>
+      <li>
+        Assembled submission package(s)
+      </li>
+      <li>
+        Pre-submission validation / completeness checklist
+      </li>
+    </ul>
+    <h3>
+      Acceptance criteria
+    </h3>
+    <ul>
+      <li>
+        Every required section populated from an accepted evidence package
+      </li>
+      <li>
+        Submission passes technical / eValidation checks
+      </li>
+    </ul>
+    <div
+      class="pj-mdx-actions"
+    >
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Write this work’s documents on Author
+      </button>
+      <button
+        class="btn"
+        type="button"
+      >
+        Prepare this work with AnA
+      </button>
+    </div>
+  </div>
+</details>
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports 76ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature 111ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k) 37ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing 188ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature 39ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature 39ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature 38ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature 41ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs 63ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 12 project features once, each opened from Plan 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those twelve features from a device project's Plan, over every recorded route and product type 1748ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k' 312ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma' 98ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer' 112ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics' 126ms
+ × client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'de_novo' project is offered "'Assemble the De Novo eSTAR'", which opens 'device-510k' 5056ms
+   → Unable to find role="button" and name "Assemble the De Novo eSTAR"
+
+Ignored nodes: comments, script, style
+<section
+  aria-labelledby="pj-markets-h"
+  class="pj-sec"
+  data-testid="pj-markets"
+>
+  <div
+    class="pj-sec-h"
+  >
+    <h2
+      id="pj-markets-h"
+    >
+      Markets
+    </h2>
+    <span
+      class="pj-sec-acts"
+    >
+      <button
+        class="btn small"
+        type="button"
+      >
+        See every sequence in Submission Center
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </button>
+    </span>
+  </div>
+  <p
+    class="pj-mkt-note"
+  >
+    Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.
+  </p>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <span
+      aria-hidden="true"
+      class="c2c-empty-ic"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rocket"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+        />
+        <path
+          d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+        />
+        <path
+          d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+        />
+        <path
+          d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+        />
+      </svg>
+    </span>
+    <div
+      class="c2c-empty-t"
+    >
+      No submission recorded to this project yet
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.
+    </div>
+  </div>
+</section>
+
+Ignored nodes: comments, script, style
+<section
+  aria-labelledby="pj-markets-h"
+  class="pj-sec"
+  data-testid="pj-markets"
+>
+  <div
+    class="pj-sec-h"
+  >
+    <h2
+      id="pj-markets-h"
+    >
+      Markets
+    </h2>
+    <span
+      class="pj-sec-acts"
+    >
+      <button
+        class="btn small"
+        type="button"
+      >
+        See every sequence in Submission Center
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </button>
+    </span>
+  </div>
+  <p
+    class="pj-mkt-note"
+  >
+    Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.
+  </p>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <span
+      aria-hidden="true"
+      class="c2c-empty-ic"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rocket"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+        />
+        <path
+          d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+        />
+        <path
+          d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+        />
+        <path
+          d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+        />
+      </svg>
+    </span>
+    <div
+      class="c2c-empty-t"
+    >
+      No submission recorded to this project yet
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.
+    </div>
+  </div>
+</section>
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > reads the pathway from the recorded regulatory path when the filing type does not name one 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button 64ms
+ × client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button 5085ms
+   → expected 'MarketsSee every sequence in Submissi…' to contain '510(k) and eSTAR, where this filing i…'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-grid"
+        >
+          <div
+            class="pj-main"
+          >
+            <header
+              class="pj-top"
+            >
+              <div
+                class="pj-top-l"
+              >
+                <div
+                  class="pj-title-row"
+                >
+                  <h1
+                    class="pj-title"
+                  >
+                    Client device
+                  </h1>
+                  <p
+                    class="pj-settings-note"
+                    role="status"
+                  >
+                    Open the project's current organization and workspace to use project settings.
+                  </p>
+                </div>
+                <p
+                  class="pj-tags pj-byline"
+                >
+                  <span
+                    class="rd-chip"
+                  >
+                    De Novo
+                  </span>
+                  <span
+                    class="rd-chip"
+                  >
+                    FDA
+                  </span>
+                </p>
+                <p
+                  class="pj-objective pj-objective-s"
+                  role="note"
+                >
+                  The project's objective could not be read.
+                </p>
+              </div>
+            </header>
+            <section
+              aria-label="Ask AnA about this project"
+              class="pj-convo"
+            >
+              <div
+                class="pj-composer"
+              >
+                <textarea
+                  aria-describedby="pj-compose-d"
+                  aria-label="Ask AnA about this project"
+                  placeholder="How can I help with this project?"
+                  rows="3"
+                />
+                <span
+                  class="sr-only"
+                  id="pj-compose-d"
+                >
+                  AnA works with this project's sources, documents and submissions. A question starts a new conversation in this project.
+                </span>
+                <div
+                  class="pj-composer-row"
+                >
+                  <button
+                    aria-label="Start the conversation"
+                    class="pj-comp-send"
+                    disabled=""
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-arrow-up"
+                      fill="none"
+                      focusable="false"
+                      height="1em"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      viewBox="0 0 24 24"
+                      width="1em"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="m5 12 7-7 7 7"
+                      />
+                      <path
+                        d="M12 19V5"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                aria-label="Suggestions"
+                class="sp-starters pj-starters"
+                role="group"
+              >
+                <button
+                  class="sp-starter"
+                  type="button"
+                >
+                  What does the eSTAR still need?
+                </button>
+                <button
+                  class="sp-starter"
+                  type="button"
+                >
+                  What is due this week, and who has it?
+                </button>
+              </div>
+            </section>
+            <section
+              aria-labelledby="pj-threads-h"
+              class="pj-sec"
+            >
+              <div
+                class="pj-sec-h"
+              >
+                <h2
+                  id="pj-threads-h"
+                >
+                  [...
+ × client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a pathway with no feature (HDE) is given no door and no guessed one 5061ms
+   → expected 'MarketsPreparation only: this project…' to contain 'file on their own pathways'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-grid"
+        >
+          <div
+            class="pj-main"
+          >
+            <header
+              class="pj-top"
+            >
+              <div
+                class="pj-top-l"
+              >
+                <div
+                  class="pj-title-row"
+                >
+                  <h1
+                    class="pj-title"
+                  >
+                    Client device
+                  </h1>
+                  <p
+                    class="pj-settings-note"
+                    role="status"
+                  >
+                    Open the project's current organization and workspace to use project settings.
+                  </p>
+                </div>
+                <p
+                  class="pj-tags pj-byline"
+                >
+                  <span
+                    class="rd-chip"
+                  >
+                    hde
+                  </span>
+                  <span
+                    class="rd-chip"
+                  >
+                    FDA
+                  </span>
+                </p>
+                <p
+                  class="pj-objective pj-objective-s"
+                  role="note"
+                >
+                  The project's objective could not be read.
+                </p>
+              </div>
+            </header>
+            <section
+              aria-label="Ask AnA about this project"
+              class="pj-convo"
+            >
+              <div
+                class="pj-composer"
+              >
+                <textarea
+                  aria-describedby="pj-compose-d"
+                  aria-label="Ask AnA about this project"
+                  placeholder="How can I help with this project?"
+                  rows="3"
+                />
+                <span
+                  class="sr-only"
+                  id="pj-compose-d"
+                >
+                  AnA works with this project's sources, documents and submissions. A question starts a new conversation in this project.
+                </span>
+                <div
+                  class="pj-composer-row"
+                >
+                  <button
+                    aria-label="Start the conversation"
+                    class="pj-comp-send"
+                    disabled=""
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-arrow-up"
+                      fill="none"
+                      focusable="false"
+                      height="1em"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      viewBox="0 0 24 24"
+                      width="1em"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="m5 12 7-7 7 7"
+                      />
+                      <path
+                        d="M12 19V5"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                aria-label="Suggestions"
+                class="sp-starters pj-starters"
+                role="group"
+              >
+                <button
+                  class="sp-starter"
+                  type="button"
+                >
+                  What is due this week, and who has it?
+                </button>
+              </div>
+            </section>
+            <section
+              aria-labelledby="pj-threads-h"
+              class="pj-sec"
+            >
+              <div
+                class="pj-sec-h"
+              >
+                <h2
+                  id="pj-threads-h"
+                >
+                  Conversations
+                </h2>
+                <span
+                  class="sec-sub"
+                >
+                  Yours on this project
+                </span>
+              </...
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a device project that records no pathway is given no door 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > offers nothing before the project is read, even when the shell says it is a device project 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a drug project is offered no device door 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k' 156ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma' 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer' 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics' 21ms
+ × client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'de_novo' project is offered "'Assemble the De Novo eSTAR'", which opens 'device-510k' 70ms
+   → Unable to find an accessible element with the role "button" and name "Assemble the De Novo eSTAR"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Markets":
+  <section
+    aria-labelledby="pj-markets-h"
+    class="pj-sec"
+    data-testid="pj-markets"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Markets":
+  <h2
+    id="pj-markets-h"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "See every sequence in Submission Center":
+  <button
+    class="btn small"
+    type="button"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="pj-mkt-note"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      aria-labelledby="pj-markets-h"
+      class="pj-sec"
+      data-testid="pj-markets"
+    >
+      <div
+        class="pj-sec-h"
+      >
+        <h2
+          id="pj-markets-h"
+        >
+          Markets
+        </h2>
+        <span
+          class="pj-sec-acts"
+        >
+          <button
+            class="btn small"
+            type="button"
+          >
+            See every sequence in Submission Center
+             
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-right"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m9 18 6-6-6-6"
+              />
+            </svg>
+          </button>
+        </span>
+      </div>
+      <p
+        class="pj-mkt-note"
+      >
+        Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.
+      </p>
+      <div
+        aria-live="polite"
+        class="c2c-empty-state"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-rocket"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+            />
+            <path
+              d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+            />
+            <path
+              d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+            />
+            <path
+              d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No submission recorded to this project yet
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-510k' can be opened, and when it cannot, says so with no button 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-pma' can be opened, and when it cannot, says so with no button 10ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-cer' can be opened, and when it cannot, says so with no button 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-diagnostics' can be opened, and when it cannot, says so with no button 11ms
+ × client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-510k' can be opened, and when it cannot, says so with no button 7ms
+   → expected "vi.fn()" to be called with arguments: [ 'device-510k' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "device-510k",
++   "submission-center",
+  ]
+
+
+Number of calls: 1
+
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > reads the recorded regulatory path when the filing type names no pathway 14ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a project not yet read is given no door and no words 8ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a pathway with no feature (HDE) is given no door and no words 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a device project that records no pathway is given no door and no words 10ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a project the step does not treat as a device filing is given no door and no words 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens De Novo assembly on its own eSTAR, under its own name, never as a 510(k)
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assemble the De Novo eSTAR"
+
+Here are the accessible roles:
+
+  paragraph:
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Deliverables":
+  <h3 />
+
+  Name "Acceptance criteria":
+  <h3 />
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  <ul />
+
+  Name "":
+  <ul />
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  Name "":
+  <li />
+
+  --------------------------------------------------
+  button:
+
+  Name "Write this work’s documents on Author":
+  <button
+    class="btn ghost"
+    type="button"
+  />
+
+  Name "Prepare this work with AnA":
+  <button
+    class="btn"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<details
+  class="pj-mdx-workstream"
+  data-work-package="submission-assembly"
+>
+  <summary>
+    <span>
+      Submission assembly
+    </span>
+    <span
+      class="pj-mdx-owner"
+    >
+      Regulatory Operations / Publishing
+    </span>
+  </summary>
+  <div
+    class="pj-mdx-detail"
+  >
+    <p>
+      Assemble the evidence into each filing’s required structure and validate completeness.
+    </p>
+    <dl
+      class="pj-mdx-facts"
+    >
+      <div>
+        <dt>
+          Contributors
+        </dt>
+        <dd>
+          Regulatory Affairs · Medical Writing · Quality Assurance / Quality Systems
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Applicability
+        </dt>
+        <dd>
+          Tailor deliverables and acceptance criteria to the recorded product, pathway, claims and justified evidence needs.
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Inputs from
+        </dt>
+        <dd>
+          Bench & performance testing · Clinical evidence · Medical writing · Human factors & usability · Electrical safety & EMC · Biocompatibility & materials · Labeling · Quality assurance & document control · Manufacturing & design transfer · Risk management
+        </dd>
+      </div>
+      <div>
+        <dt>
+          Feeds
+        </dt>
+        <dd>
+          de_novo: Request assembly
+        </dd>
+      </div>
+    </dl>
+    <h3>
+      Deliverables
+    </h3>
+    <ul>
+      <li>
+        Filing content plan mapped to sections
+      </li>
+      <li>
+        Assembled submission package(s)
+      </li>
+      <li>
+        Pre-submission validation / completeness checklist
+      </li>
+    </ul>
+    <h3>
+      Acceptance criteria
+    </h3>
+    <ul>
+      <li>
+        Every required section populated from an accepted evidence package
+      </li>
+      <li>
+        Submission passes technical / eValidation checks
+      </li>
+    </ul>
+    <div
+      class="pj-mdx-actions"
+    >
+      <button
+        class="btn ghost"
+        type="button"
+      >
+        Write this work’s documents on Author
+      </button>
+      <button
+        class="btn"
+        type="button"
+      >
+        Prepare this work with AnA
+      </button>
+    </div>
+  </div>
+</details>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx:84:38
+     82|     expect(workflow.querySelector('h2')?.textContent).toBe('What this …
+     83|     const assembly = workflow.querySelector('[data-work-package="submi…
+     84|     fireEvent.click(within(assembly).getByRole('button', { name: 'Asse…
+       |                                      ^
+     85|     expect(p.onNav).toHaveBeenCalledWith('device-510k');
+     86|     expect(within(assembly).queryByRole('button', { name: 'Assemble th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > a 'de_novo' project is offered "'Assemble the De Novo eSTAR'", which opens 'device-510k'
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assemble the De Novo eSTAR"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Markets":
+  <section
+    aria-labelledby="pj-markets-h"
+    class="pj-sec"
+    data-testid="pj-markets"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Markets":
+  <h2
+    id="pj-markets-h"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "See every sequence in Submission Center":
+  <button
+    class="btn small"
+    type="button"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="pj-mkt-note"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <section
+      aria-labelledby="pj-markets-h"
+      class="pj-sec"
+      data-testid="pj-markets"
+    >
+      <div
+        class="pj-sec-h"
+      >
+        <h2
+          id="pj-markets-h"
+        >
+          Markets
+        </h2>
+        <span
+          class="pj-sec-acts"
+        >
+          <button
+            class="btn small"
+            type="button"
+          >
+            See every sequence in Submission Center
+             
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-right"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m9 18 6-6-6-6"
+              />
+            </svg>
+          </button>
+        </span>
+      </div>
+      <p
+        class="pj-mkt-note"
+      >
+        Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.
+      </p>
+      <div
+        aria-live="polite"
+        class="c2c-empty-state"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-rocket"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+            />
+            <path
+              d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+            />
+            <path
+              d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+            />
+            <path
+              d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No submission recorded to this project yet
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx:49:27
+     47|   it.each(PATHWAYS)('a $programType project is offered "$door", which …
+     48|     const { onNav } = draw({ ...PROJECT, program_type: programType, pr…
+     49|     const button = screen.getByRole('button', { name: door });
+       |                           ^
+     50|     expect(pathwayButtons()).toEqual([button]);
+     51|     fireEvent.click(button);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx > ProjectMarkets — a device project’s filing assembly > asks whether 'device-510k' can be opened, and when it cannot, says so with no button
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'device-510k' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "device-510k",
++   "submission-center",
+  ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx:58:23
+     56|   it.each(PATHWAYS)('asks whether $surface can be opened, and when it …
+     57|     const { available } = draw({ ...PROJECT, program_type: programType…
+     58|     expect(available).toHaveBeenCalledWith(surface);
+       |                       ^
+     59|     expect(screen.queryByRole('button', { name: door })).toBeNull();
+     60|     expect(pathwayButtons()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'de_novo' project is offered "'Assemble the De Novo eSTAR'", which opens 'device-510k'
+TestingLibraryElementError: Unable to find role="button" and name "Assemble the De Novo eSTAR"
+
+Ignored nodes: comments, script, style
+<section
+  aria-labelledby="pj-markets-h"
+  class="pj-sec"
+  data-testid="pj-markets"
+>
+  <div
+    class="pj-sec-h"
+  >
+    <h2
+      id="pj-markets-h"
+    >
+      Markets
+    </h2>
+    <span
+      class="pj-sec-acts"
+    >
+      <button
+        class="btn small"
+        type="button"
+      >
+        See every sequence in Submission Center
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </button>
+    </span>
+  </div>
+  <p
+    class="pj-mkt-note"
+  >
+    Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.
+  </p>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <span
+      aria-hidden="true"
+      class="c2c-empty-ic"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rocket"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+        />
+        <path
+          d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+        />
+        <path
+          d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+        />
+        <path
+          d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+        />
+      </svg>
+    </span>
+    <div
+      class="c2c-empty-t"
+    >
+      No submission recorded to this project yet
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.
+    </div>
+  </div>
+</section>
+
+Ignored nodes: comments, script, style
+<section
+  aria-labelledby="pj-markets-h"
+  class="pj-sec"
+  data-testid="pj-markets"
+>
+  <div
+    class="pj-sec-h"
+  >
+    <h2
+      id="pj-markets-h"
+    >
+      Markets
+    </h2>
+    <span
+      class="pj-sec-acts"
+    >
+      <button
+        class="btn small"
+        type="button"
+      >
+        See every sequence in Submission Center
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </button>
+    </span>
+  </div>
+  <p
+    class="pj-mkt-note"
+  >
+    Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.
+  </p>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <span
+      aria-hidden="true"
+      class="c2c-empty-ic"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rocket"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+        />
+        <path
+          d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+        />
+        <path
+          d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+        />
+        <path
+          d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+        />
+      </svg>
+    </span>
+    <div
+      class="c2c-empty-t"
+    >
+      No submission recorded to this project yet
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.
+    </div>
+  </div>
+</section>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx:125:40
+    123|     serve({ ...PROGRAM, program_type: programType, product_type: produ…
+    124|     const panel = await openSubmit();
+    125|     const button = await within(panel).findByRole('button', { name: do…
+       |                                        ^
+    126|     // One door, for the pathway the project records: no other pathway…
+    127|     expect(pathwayButtons(panel)).toEqual([button]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button
+AssertionError: expected 'MarketsSee every sequence in Submissi…' to contain '510(k) and eSTAR, where this filing i…'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-grid"
+        >
+          <div
+            class="pj-main"
+          >
+            <header
+              class="pj-top"
+            >
+              <div
+                class="pj-top-l"
+              >
+                <div
+                  class="pj-title-row"
+                >
+                  <h1
+                    class="pj-title"
+                  >
+                    Client device
+                  </h1>
+                  <p
+                    class="pj-settings-note"
+                    role="status"
+                  >
+                    Open the project's current organization and workspace to use project settings.
+                  </p>
+                </div>
+                <p
+                  class="pj-tags pj-byline"
+                >
+                  <span
+                    class="rd-chip"
+                  >
+                    De Novo
+                  </span>
+                  <span
+                    class="rd-chip"
+                  >
+                    FDA
+                  </span>
+                </p>
+                <p
+                  class="pj-objective pj-objective-s"
+                  role="note"
+                >
+                  The project's objective could not be read.
+                </p>
+              </div>
+            </header>
+            <section
+              aria-label="Ask AnA about this project"
+              class="pj-convo"
+            >
+              <div
+                class="pj-composer"
+              >
+                <textarea
+                  aria-describedby="pj-compose-d"
+                  aria-label="Ask AnA about this project"
+                  placeholder="How can I help with this project?"
+                  rows="3"
+                />
+                <span
+                  class="sr-only"
+                  id="pj-compose-d"
+                >
+                  AnA works with this project's sources, documents and submissions. A question starts a new conversation in this project.
+                </span>
+                <div
+                  class="pj-composer-row"
+                >
+                  <button
+                    aria-label="Start the conversation"
+                    class="pj-comp-send"
+                    disabled=""
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-arrow-up"
+                      fill="none"
+                      focusable="false"
+                      height="1em"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      viewBox="0 0 24 24"
+                      width="1em"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="m5 12 7-7 7 7"
+                      />
+                      <path
+                        d="M12 19V5"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                aria-label="Suggestions"
+                class="sp-starters pj-starters"
+                role="group"
+              >
+                <button
+                  class="sp-starter"
+                  type="button"
+                >
+                  What does the eSTAR still need?
+                </button>
+                <button
+                  class="sp-starter"
+                  type="button"
+                >
+                  What is due this week, and who has it?
+                </button>
+              </div>
+            </section>
+            <section
+              aria-labelledby="pj-threads-h"
+              class="pj-sec"
+            >
+              <div
+                class="pj-sec-h"
+              >
+                <h2
+                  id="pj-threads-h"
+                >
+                  [...
+
+Expected: "510(k) and eSTAR, where this filing is assembled, is not part of this release."
+Received: "MarketsSee every sequence in Submission Center Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.No submission recorded to this project yetThis filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here."
+
+ ❯ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx:145:51
+    143|     const panel = await openSubmit();
+    144|     const words = `${getSurfaceMeta(surface).label}, where this filing…
+    145|     await waitFor(() => expect(panel.textContent).toContain(words));
+       |                                                   ^
+    146|     expect(within(panel).queryByRole('button', { name: door })).toBeNu…
+    147|     expect(pathwayButtons(panel)).toEqual([]);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a pathway with no feature (HDE) is given no door and no guessed one
+AssertionError: expected 'MarketsPreparation only: this project…' to contain 'file on their own pathways'
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-inner pj"
+      >
+        <button
+          class="pj-back"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-arrow-left"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m12 19-7-7 7-7"
+            />
+            <path
+              d="M19 12H5"
+            />
+          </svg>
+           All projects
+        </button>
+        <div
+          class="pj-grid"
+        >
+          <div
+            class="pj-main"
+          >
+            <header
+              class="pj-top"
+            >
+              <div
+                class="pj-top-l"
+              >
+                <div
+                  class="pj-title-row"
+                >
+                  <h1
+                    class="pj-title"
+                  >
+                    Client device
+                  </h1>
+                  <p
+                    class="pj-settings-note"
+                    role="status"
+                  >
+                    Open the project's current organization and workspace to use project settings.
+                  </p>
+                </div>
+                <p
+                  class="pj-tags pj-byline"
+                >
+                  <span
+                    class="rd-chip"
+                  >
+                    hde
+                  </span>
+                  <span
+                    class="rd-chip"
+                  >
+                    FDA
+                  </span>
+                </p>
+                <p
+                  class="pj-objective pj-objective-s"
+                  role="note"
+                >
+                  The project's objective could not be read.
+                </p>
+              </div>
+            </header>
+            <section
+              aria-label="Ask AnA about this project"
+              class="pj-convo"
+            >
+              <div
+                class="pj-composer"
+              >
+                <textarea
+                  aria-describedby="pj-compose-d"
+                  aria-label="Ask AnA about this project"
+                  placeholder="How can I help with this project?"
+                  rows="3"
+                />
+                <span
+                  class="sr-only"
+                  id="pj-compose-d"
+                >
+                  AnA works with this project's sources, documents and submissions. A question starts a new conversation in this project.
+                </span>
+                <div
+                  class="pj-composer-row"
+                >
+                  <button
+                    aria-label="Start the conversation"
+                    class="pj-comp-send"
+                    disabled=""
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-arrow-up"
+                      fill="none"
+                      focusable="false"
+                      height="1em"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      viewBox="0 0 24 24"
+                      width="1em"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="m5 12 7-7 7 7"
+                      />
+                      <path
+                        d="M12 19V5"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                aria-label="Suggestions"
+                class="sp-starters pj-starters"
+                role="group"
+              >
+                <button
+                  class="sp-starter"
+                  type="button"
+                >
+                  What is due this week, and who has it?
+                </button>
+              </div>
+            </section>
+            <section
+              aria-labelledby="pj-threads-h"
+              class="pj-sec"
+            >
+              <div
+                class="pj-sec-h"
+              >
+                <h2
+                  id="pj-threads-h"
+                >
+                  Conversations
+                </h2>
+                <span
+                  class="sec-sub"
+                >
+                  Yours on this project
+                </span>
+              </...
+
+Expected: "file on their own pathways"
+Received: "MarketsPreparation only: this project is authored, not sequencedHumanitarian Device Exemption (HDE) is available for document preparation only. This platform does not create submission records or sequences, package this filing, or transmit it to an agency. Confirm current requirements and original forms before use."
+
+ ❯ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx:107:89
+    105|   .filter((b) => [...ASSEMBLY_DOORS, ...STRATEGY_DOORS].some((name) =>…
+    106| /** The project read has landed: the device note is drawn from it. */
+    107| const deviceNoteDrawn = (panel: HTMLElement) => waitFor(() => expect(p…
+       |                                                                                         ^
+    108|
+    109| beforeEach(() => {
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 43 passed (49)
+   Start at  21:49:13
+   Duration  33.87s (transform 3.32s, setup 618ms, import 4.45s, tests 19.49s, environment 7.35s)
+

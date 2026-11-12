@@ -30,6 +30,7 @@
 
 import * as React from 'react';
 import { isIvdFamily } from '@shared/constants/domain/product-types';
+import { docClassForPathway } from '@shared/constants/mdx';
 
 import type { SurfaceViewProps } from '../v2/surfaceViews';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
@@ -309,8 +310,11 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         // ProjectHome prefers those over the row it fetches.
         publishShellProject({ id: String(programForContext.id), title: programForContext.title, productType: programForContext.productType });
       }
-      const docType = nav === 'device-cer' || nav === 'device-diagnostics'
+      /* The filing is asked for by its governed document class, which for a
+         De Novo is not the pathway's spelling (docClassForPathway). */
+      const pathway = nav === 'device-cer' || nav === 'device-diagnostics'
         ? PATHWAY_ANCHOR[nav] ?? null : programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
+      const docType = pathway ? docClassForPathway(pathway) : null;
       if (docType && section && (section.code != null || section.label)) {
         setEditorTarget({
           docType,
