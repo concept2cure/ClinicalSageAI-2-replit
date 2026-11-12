@@ -46,9 +46,17 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     // same ICH E3 document as component:clinical_study_report (its ID still resolves), and changed no
     // other object: with that one filter undone the 446 objects hash to the previous value,
     // 0ddcbd2fd6cd3aee7faddacede59654e4108bf58ddea535f927541c69ed7971a. 446 -> 445.
+    // Re-recorded 2026-11-12 (F1, a US biotech filing identity drafts from its own lifecycle record):
+    // 17 changed and no other, none added or removed. Fourteen registry rows go from a preparation
+    // worksheet to the draftable document their record already was as a component (US_TYPE_D_MEETING,
+    // US_INTERACT, US_EXPANDED_ACCESS_{INDIVIDUAL,INTERMEDIATE,TREATMENT}, US_EUA_THERAPEUTIC,
+    // US_BLA_{ANNUAL,PEDIATRIC_ANNUAL,PMR_ANNUAL,DISTRIBUTION,PAE_REPORT}, US_BPDR,
+    // US_CBER_{MASTER_FILE,LOT_RELEASE}); US_BLA_{SUPP,CBE30,CBE0} stay worksheets and their record
+    // parts gain the record's mode and limit. Was 9c5514a3bfb7e2077ca85b75f78f9f4d70655b122136a88b3f08d7815281b3df.
+    // Per-object delta: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-12-us-identities-draft-from-record/builtin-snapshot-delta.txt.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('9c5514a3bfb7e2077ca85b75f78f9f4d70655b122136a88b3f08d7815281b3df');
+    )).digest('hex')).toBe('f4fa3d0061463a7f55f74b5fc2fd8607871cf07cc4227092636a5f2832625810');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {

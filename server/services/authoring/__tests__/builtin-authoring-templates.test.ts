@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { GLOBAL_REGISTRY, isDeviceRegistryEntry, isSharedPlanningRegistryEntry } from '../../../../shared/regulatory/global-document-registry';
 import {
-  DOCUMENT_TEMPLATES, getRegistryDocumentTemplate, getDocumentTemplate, componentTemplateIdForRegistry,
+  DOCUMENT_TEMPLATES, getRegistryDocumentTemplate, getDocumentTemplate, draftingComponentIdForRegistry,
   type DocumentTemplateStructure,
 } from '../../market-specs/document-template-library';
 import { documentComponentContext, documentComponentRegion, resolveDocumentPreparationScope } from '../../market-specs/document-preparation';
@@ -77,7 +77,7 @@ describe('one builtin authoring projection', () => {
     expect(actual.limitations.join(' ')).toContain(entry.productClass.join(', '));
     expect(actual.limitations.join(' ')).toMatch(/original forms.*datasets.*signed records.*technical messages/);
     if (!expected?.ctdSection) expect(actual.module).toBeNull();
-    const componentId = componentTemplateIdForRegistry(entry.id);
+    const componentId = draftingComponentIdForRegistry(entry.id);
     const exact = componentId && searchTemplates('').find(metadata => getDocumentTemplate(metadata.id)?.id === componentId);
     expect(actual.aiDraftable).toBe(Boolean(exact && exact.aiDraftable));
     expect(actual.kind).toBe(actual.aiDraftable ? 'narrative' : 'preparation');
