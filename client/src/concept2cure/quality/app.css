@@ -76,7 +76,8 @@
 .qms-reg-scroll { max-width: 100%; overflow-x: auto; }
 .c2c-v2 .reg-tbl.qms-reg > tbody > tr:not(:last-child) > td { border-bottom: 0; }
 .c2c-v2 .reg-tbl.qms-reg > tbody > tr:not(:last-child):not(.qms-row-acts-tr) > td { padding-bottom: 4px; }
-.c2c-v2 .reg-tbl.qms-reg > tbody > tr.qms-row-acts-tr > td { padding-top: 0; }
+/* The More line sits directly under the actions line, as the actions line sits under the facts. */
+.c2c-v2 .reg-tbl.qms-reg > tbody > tr:is(.qms-row-acts-tr, .qms-row-more-tr) > td { padding-top: 0; }
 .c2c-v2 .reg-tbl.qms-reg > tbody:hover > tr > td { background: var(--bg-050); }
 /* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
 .qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
@@ -212,7 +213,8 @@
 @media (max-width: 640px) { .qcc-facts { grid-template-columns: 1fr; gap: 2px; } .qcc-facts dd { margin-bottom: 6px; } }
 
 /* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
-.qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+/* The procedure's steps are numbered: an ordered list whose markers the base reset removes (walked 2026-11-12, w42). */
+.qcc-steps { margin: 4px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; list-style: decimal; }
 
 /* CAPA and review action items (CapaActions.tsx, ReviewActions.tsx): D0's table inside the record's own row (C13). */
 .c2c-v2 .reg-tbl.qcc-action-tbl { margin: 4px 0 0; }
@@ -256,6 +258,14 @@
 .c2c-v2 .reg-tbl.qms-reg tbody.qms-rec td:not(.qms-title) { white-space: nowrap; }
 /* C18a: a controlled document's date stays on one line (it broke at its hyphen at 1440); the lines under it wrap. */
 .c2c-v2 .reg-tbl.qms-reg .qms-when { white-space: nowrap; }
+/* A change's target date is a <time> and stays on one line too; the rest of the row wraps, since keeping the whole
+   row on one line widened the table past its section (the trunk-CI lane's measurement, COORDINATION.md 2026-11-10). */
+.c2c-v2 .reg-tbl.qms-reg tbody.qcc-change time { white-space: nowrap; }
+/* On a phone the register scrolls inside its box, so a controlled document's facts stay on one line each, as the
+   records' do (C11): a type, a version or a state broken across lines reads worse than a longer scroll. */
+@media (max-width: 640px) {
+  .c2c-v2 .reg-tbl.qms-reg tbody.qms-doc td:not(.qms-title) { white-space: nowrap; }
+}
 .c2c-v2 .reg-tbl.qms-reg .qms-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .c2c-v2 .reg-tbl.qms-reg tbody[data-more] > tr > td { background: var(--bg-050); }
 .c2c-v2 .reg-tbl.qms-reg .qms-row-more { justify-content: flex-start; border-top: 0; padding: 0; }
