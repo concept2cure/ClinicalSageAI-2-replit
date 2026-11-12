@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > slugifies study ids to folder-safe names 1ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > computes the common directory of package paths 0ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > generates a per-study stf-<study-id>.xml in each study folder, cross-linked to that study's leaves 352ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > is a no-op when there are no study leaves (bundle.stf undefined) 104ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > a study leaf the STF cannot describe refuses the package > a nonclinical report tagged "study-report" is a ValidationError naming the leaf and the right tag 71ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > a study leaf the STF cannot describe refuses the package > the right tag packages 96ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  15:52:27
+   Duration  1.68s (transform 574ms, setup 125ms, import 709ms, tests 628ms, environment 0ms)
+

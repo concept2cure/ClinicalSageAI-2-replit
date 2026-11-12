@@ -79,11 +79,13 @@ describe('list_project_documents with catalog:true', () => {
   it('lists the Vault\'s documents of the same projects with the engine\'s grade, as the screen does', async () => {
     h.listVaultForCatalog.mockResolvedValue({ total: 1, facets: { project: [], kind: [], ctd: [], folder: [] }, documents: [{
       documentId: 'd1', title: 'Protocol v3', projectName: 'Other project', projectId: OTHER, evidenceKind: 'protocol', ctdSection: '5.3.5.1',
-      folder: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'confirmed', version: '3.0', grade }] });
+      folder: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'confirmed', version: '3.0', grade,
+      dataset: { format: 'xpt', tableCount: 1, tables: [{ name: 'ADVS', standard: 'ADaM', domain: 'BDS', columns: 34, rows: 32139 }] } }] });
     const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
     expect(h.listVaultForCatalog.mock.calls[0]).toMatchObject([7, { programIds: [OPEN, OTHER] }]);
     expect(out).toMatchObject({ vaultTotal: 1, vaultDocuments: [{ documentId: 'd1', folder: 'Module 5 · Clinical', project: 'Other project', grade: { grade: 'C', score: 71 } }] });
     expect(out.message).toMatch(/2 captured file\(s\) and 1 Vault document\(s\)/);
+    expect(out.vaultDocuments[0].dataset.tables[0]).toMatchObject({ name: 'ADVS', standard: 'ADaM', rows: 32139 });
     // A failed Vault read is said; the captures are still answered.
     h.listVaultForCatalog.mockRejectedValue(new Error('down'));
     const failed = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
