@@ -575,6 +575,22 @@ if ! npm run --silent ci:client-ip-single-source 2>&1; then
 fi
 echo "   ✅ One source for the client address."
 
+# ── Every server-sent event stream has a heartbeat (MR-03 Stage 6, OPS-17) ───
+#
+# Behind CloudFront and the ALB, 60 s without a byte closes the connection, and
+# an answer waiting on a model's first token is cut mid-stream. Until 12 Nov 2026
+# ten routes opened their own streams and eight sent no heartbeat. Every stream
+# is opened by openSseStream (server/utils/sse-stream.ts).
+echo "   Checking that every event stream is opened with a heartbeat..."
+if ! npm run --silent ci:sse-heartbeat:selftest >/dev/null 2>&1 || ! npm run --silent ci:sse-heartbeat 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A server-sent event stream is opened by hand, without the heartbeat."
+  echo "   Open it with openSseStream (server/utils/sse-stream.ts)."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every event stream has a heartbeat."
+
 # ── A `sign` ledger row must come from a signature ceremony ──────────────────
 #
 # recordGovernedAction(…, command: 'sign') is read by an inspector as an

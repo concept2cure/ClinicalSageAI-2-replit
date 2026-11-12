@@ -220,6 +220,81 @@ async function createMcpCallSqlClient(principal: McpPrincipal, signal: AbortSign
   return { sqlClient, release: () => client.release() };
 }
 
+/**
+ * The connector's edge (MR-03 Stage 6 step 9, OPS-17). A tool call's answer
+ * travels through CloudFront and the ALB, which close a connection that
+ * carries nothing for 60 s. Two rules keep a call honest inside that:
+ *  - a call whose request carries `_meta.progressToken` gets a
+ *    `notifications/progress` every MCP_PROGRESS_INTERVAL_MS, which the
+ *    streamable HTTP transport writes on the call's own stream;
+ *  - a tool that writes nothing governed is answered at MCP_TOOL_DEADLINE_MS
+ *    with an error result saying it did not finish, never with a partial
+ *    result presented as complete. The work is told to stop (the call's
+ *    signal), and its database connection is released only once it has
+ *    settled. A governed tool has no deadline: it may already have written
+ *    its record, and an error would report a persisted act as failed.
+ */
+export const MCP_TOOL_DEADLINE_MS = 50_000;
+export const MCP_PROGRESS_INTERVAL_MS = 15_000;
+const DEADLINE = Symbol('mcp-tool-deadline');
+
+export function deadlineRefusal(tool: string): string {
+  return `${tool} did not finish within the connector's time limit (${MCP_TOOL_DEADLINE_MS / 1000} s); nothing partial was returned. Continue in the app, where the same work has no such limit.`;
+}
+
+type CallExtra = {
+  authInfo?: import('@modelcontextprotocol/sdk/server/auth/types.js').AuthInfo;
+  signal?: AbortSignal;
+  _meta?: { progressToken?: string | number };
+  sendNotification?: (notification: { method: 'notifications/progress'; params: { progressToken: string | number; progress: number; message?: string } }) => Promise<void>;
+};
+
+/** Progress notifications for one call, while it runs; a no-op without a token. */
+function startProgress(tool: string, extra: CallExtra, started: number): () => void {
+  const token = extra._meta?.progressToken;
+  if (token === undefined || !extra.sendNotification) return () => undefined;
+  let beat = 0;
+  const timer = setInterval(() => {
+    beat += 1;
+    extra.sendNotification!({
+      method: 'notifications/progress',
+      params: { progressToken: token, progress: beat, message: `${tool} is still working (${Math.round((Date.now() - started) / 1000)} s)` },
+    }).catch(() => undefined);
+  }, MCP_PROGRESS_INTERVAL_MS);
+  timer.unref?.();
+  return () => clearInterval(timer);
+}
+
+/**
+ * Run the tool; a tool that writes nothing governed is raced against the
+ * deadline. Past it, the work is told to stop and handed back as `abandoned`,
+ * so the caller releases the call's connection only once it settles.
+ */
+async function runWithinDeadline(
+  spec: AnyToolSpec,
+  input: Record<string, unknown>,
+  ctx: ToolRunContext,
+  stopWork: AbortController,
+): Promise<{ outcome: ToolOutcome; audited: 'ok' | 'refused' | 'failed'; abandoned: Promise<unknown> | null }> {
+  const work = spec.run(input, ctx);
+  let deadline: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const settled = spec.governed
+      ? await work
+      : await Promise.race([
+        work,
+        new Promise<typeof DEADLINE>((resolve) => { deadline = setTimeout(() => resolve(DEADLINE), MCP_TOOL_DEADLINE_MS); }),
+      ]);
+    if (settled === DEADLINE) {
+      stopWork.abort(new Error(deadlineRefusal(spec.name)));
+      return { outcome: refused(deadlineRefusal(spec.name), { deadlineMs: MCP_TOOL_DEADLINE_MS }), audited: 'failed', abandoned: work };
+    }
+    return { outcome: settled, audited: settled.kind === 'refused' ? 'refused' : 'ok', abandoned: null };
+  } finally {
+    clearTimeout(deadline);
+  }
+}
+
 export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpConfig): void {
   server.registerTool(
     spec.name,
@@ -230,7 +305,7 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
       annotations: { title: spec.title, ...spec.annotations },
       _meta: { scope: spec.scope, governed: spec.governed, implementation: spec.implementation },
     },
-    async (input: Record<string, unknown>, extra: { authInfo?: import('@modelcontextprotocol/sdk/server/auth/types.js').AuthInfo; signal?: AbortSignal }) => {
+    async (input: Record<string, unknown>, extra: CallExtra) => {
       const principal = principalOf(extra.authInfo);
       if (!principal) {
         return render(refused('No authenticated principal on this call; the bearer token did not resolve to a user and organisation.'), spec.name);
@@ -271,24 +346,30 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
               return render(refused(reason), spec.name);
             }
           }
-          const call = await createMcpCallSqlClient(principal, extra.signal);
+          // The call's signal: the client's cancellation, and the deadline's.
+          const stopWork = new AbortController();
+          const signal = extra.signal ? AbortSignal.any([extra.signal, stopWork.signal]) : stopWork.signal;
+          const call = await createMcpCallSqlClient(principal, signal);
+          let running: Promise<unknown> | null = null;
+          const stopProgress = startProgress(spec.name, extra, started);
           try {
             const ctx: ToolRunContext = {
               principal,
               config,
               sqlClient: call.sqlClient,
               ana: { organizationId: principal.organizationId, userId: principal.userId,
-                organizationUuid: principal.organizationUuid, sqlClient: call.sqlClient, signal: extra.signal },
+                organizationUuid: principal.organizationUuid, sqlClient: call.sqlClient, signal },
             };
             let outcome: ToolOutcome;
-            let audited: 'ok' | 'refused' | 'failed' = 'ok';
+            let audited: 'ok' | 'refused' | 'failed';
             try {
               extra.signal?.throwIfAborted();
-              outcome = await spec.run(input, ctx);
-              if (outcome.kind === 'refused') audited = 'refused';
+              ({ outcome, audited, abandoned: running } = await runWithinDeadline(spec, input, ctx, stopWork));
             } catch (err) {
               audited = 'failed';
               outcome = refused(`${spec.name} failed: ${errorMessage(err)}`);
+            } finally {
+              stopProgress();
             }
             const recorded = await writeAudit({
               principal,
@@ -317,7 +398,10 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
           } finally {
             // Wait for the handler to settle before resetting/releasing a
             // client that may still have a statement or transaction in flight.
-            await call.release();
+            // Past the deadline the answer has gone; the release follows the
+            // abandoned work, whenever it settles.
+            if (running) void running.catch(() => undefined).finally(() => call.release().catch(() => undefined));
+            else await call.release();
           }
         },
       );

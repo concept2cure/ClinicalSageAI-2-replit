@@ -46,6 +46,7 @@ import {
 } from '../services/shared-memory-contract.js';
 import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../services/working-memory.js';
+import { openSseStream } from '../utils/sse-stream';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -531,11 +532,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // ── STREAMING PATH (SSE) ──────────────────────────────────────────────────
     if (stream === true) {
-      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache, no-transform');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('X-Accel-Buffering', 'no');
-      res.flushHeaders();
+      // SSE headers and a heartbeat until the first token (server/utils/sse-stream.ts).
+      openSseStream(req, res);
 
       let fullContent = '';
       // No demo path exists any more, so this initialiser must not claim one.
