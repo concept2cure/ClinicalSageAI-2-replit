@@ -1,0 +1,82 @@
+// A personal rule saved in "What AnA remembers", then a question in a new conversation (sweep finding, 2026-11-09).
+// Real server, database, session and browser; the provider is a local stand-in that answers "MOCK NO TOOL".
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+const BASE = 'http://127.0.0.1:5000';
+const OUT = __dirname;
+const log = [];
+const note = (s) => { log.push(s); console.log(s); };
+async function session(email) {
+  const dl = await (await fetch(`${BASE}/api/auth/dev-login`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: BASE }, body: JSON.stringify({ email }) })).json();
+  if (!dl.accessToken) throw new Error('dev-login failed: ' + JSON.stringify(dl).slice(0, 300));
+  const sess = await (await fetch(`${BASE}/api/v1/auth/session`, { headers: { Authorization: `Bearer ${dl.accessToken}`, Origin: BASE } })).json();
+  return { token: dl.accessToken, refresh: dl.refreshToken, user: sess.user };
+}
+async function ask(p, question, shot) {
+  await p.goto(`${BASE}/concept2cure/conversation-thread`, { waitUntil: 'domcontentloaded' });
+  const fresh = p.getByRole('button', { name: /New conversation/ }).first();
+  if (await fresh.count()) await fresh.click().catch(() => undefined);
+  const composer = p.locator('textarea').first();
+  await composer.waitFor({ timeout: 120000 });
+  await composer.fill(question);
+  await composer.press('Enter');
+  const outcome = await Promise.race([
+    p.getByText(/MOCK AFTER TOOL|MOCK NO TOOL/).first().waitFor({ timeout: 60000 }).then(() => 'answered'),
+    p.getByText(/blocked by AI gateway policy|could not be opened|could not be verified|couldn.t complete/i).last().waitFor({ timeout: 60000 }).then(() => 'refused'),
+  ]).catch(() => 'timeout');
+  await p.waitForTimeout(1500);
+  const tail = (await p.locator('main').first().innerText().catch(() => p.locator('body').innerText())).replace(/\s+/g, ' ');
+  const at = tail.lastIndexOf(question.slice(0, 30));
+  note(`${shot}: ${outcome}`);
+  note(`    screen after the question: ${tail.slice(at >= 0 ? at : -500, (at >= 0 ? at : tail.length - 500) + 500)}`);
+  await p.screenshot({ path: path.join(OUT, `${shot}.png`) });
+  return outcome;
+}
+(async () => {
+  const browser = await chromium.launch();
+  try {
+    const s = await session('e2e-admin@trialsage.test');
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    const expiry = new Date(Date.now() + 23 * 3600e3).toISOString();
+    await ctx.addInitScript(([t, r, e, u]) => {
+      for (const st of [window.localStorage, window.sessionStorage]) {
+        st.setItem('trialsage_access_token', t); st.setItem('trialsage_refresh_token', r);
+        st.setItem('trialsage_token_expiry', e); st.setItem('trialsage_user', u);
+      }
+    }, [s.token, s.refresh, expiry, JSON.stringify(s.user)]);
+    const p = await ctx.newPage();
+    p.on('pageerror', (e) => note('  pageerror: ' + String(e).slice(0, 160)));
+    const refusals = [];
+    p.on('response', async (r) => { if (/ana-ri\/stream|user-profile/.test(r.url()) && r.status() >= 400) refusals.push(`${r.status()} ${r.url().replace(BASE, '')} ${(await r.text().catch(() => '')).slice(0, 300)}`); });
+    await p.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'domcontentloaded' });
+    await p.getByText('P-95 review walk').first().waitFor({ timeout: 120000 });
+    await p.getByText('P-95 review walk').first().click();
+    await p.waitForTimeout(3000);
+
+    await p.goto(`${BASE}/concept2cure/conversation-thread`, { waitUntil: 'domcontentloaded' });
+    await p.getByRole('button', { name: /What AnA remembers/ }).first().click();
+    const rules = p.getByTestId('ana-personal-rules');
+    await rules.waitFor({ timeout: 60000 });
+    await rules.getByText(/No personal rules recorded|Cite the source/).first().waitFor({ timeout: 60000 });
+    note('    rules panel before revoking: ' + (await rules.innerText()).replace(/\s+/g, ' ').slice(0, 400));
+    const revoke = rules.getByRole('button', { name: /Revoke Cite the source/ }).first();
+    if (await revoke.count()) {
+      await revoke.click();
+      await p.getByLabel('Reason for change').fill('End of the walk: the rule is revoked.');
+      await p.getByRole('button', { name: 'Revoke rule' }).click();
+      await rules.getByText(/revoked/).first().waitFor({ timeout: 60000 }).catch(() => note('    the rule did not show as revoked'));
+      await p.waitForTimeout(1500);
+      note('    rules panel after revoking: ' + (await rules.innerText()).replace(/\s+/g, ' ').slice(0, 500));
+      await p.screenshot({ path: path.join(OUT, '06-rule-revoked.png') });
+    } else note('    no Revoke button found');
+    await ask(p, 'After revoking the rule, new conversation: what should we look at next?', '07-after-revoking');
+    note('refused responses seen by the browser:\n' + (refusals.length ? refusals.map(r => '    ' + r).join('\n') : '    none'));
+  } catch (e) {
+    note('WALK ERROR: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e)));
+  } finally {
+    fs.writeFileSync(path.join(OUT, 'walk-revoke.log.txt'), log.join('\n') + '\n');
+    await browser.close();
+  }
+})();

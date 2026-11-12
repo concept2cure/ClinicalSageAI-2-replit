@@ -46,7 +46,7 @@ and sub-agent-toolset suites, 8 files and 246 tests.
 
 | # | Finding | The question |
 |---|---|---|
-| 1 | **A personal rule saved in "What AnA remembers" makes every later AnA turn for that person fail**, in any conversation. A private rule is owner-private, which is Tier 3, and it rides on every turn | May a person's own rule be sent to the outside model that serves their turn? If not, the turn should leave the rule out and say so, not fail |
+| 1 | **A personal rule saved in "What AnA remembers" makes every later AnA turn for that person fail**, in any conversation. A private rule is owner-private, which is Tier 3, and it rides on every turn | May a person's own rule be sent to the outside model that serves their turn? If not, the turn should leave the rule out and say so, not fail. Reproduced in the running app on 2026-11-12, with the choices: `../2026-11-12-personal-rule-stops-turns/` |
 | 2 | An uploaded document is CONFIDENTIAL until a person reclassifies it, so AnA on Claude will not read it | Should an upload be classified by its content at ingest, or stay CONFIDENTIAL by default? |
 | 3 | `read_vault_document` records every artifact at Tier 3, including drafts AnA wrote in the same conversation. A sub-agent's read raises the parent's tier too, so one research agent can end the parent's turn | What tier is AnA's own draft? Until decided, this read can at least refuse at the read, as `read_project_document` now does |
 | 4 | The conversation's history and what AnA remembers reach Claude unclassified since the Tier 1 decision | Promised on 2026-11-09: revisit after the demo |
