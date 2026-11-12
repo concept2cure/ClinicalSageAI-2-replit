@@ -45,6 +45,65 @@ describe('offered when the question is about using the product', () => {
       expect(asksHowToUseProduct(q), q).toBe(true);
     for (const q of ['Draft the nonclinical overview', 'What does ICH E3 require in section 12?', 'summarise the CMC risks'])
       expect(asksHowToUseProduct(q), q).toBe(false);
-    expect(HELP_SUPPORT_TOOLS.map((t) => t.name)).toEqual(['search_help_center', 'read_help_article']);
+    expect(HELP_SUPPORT_TOOLS.map((t) => t.name)).toEqual(['search_help_center', 'read_help_article', 'open_support_ticket', 'list_my_support_tickets']);
+  });
+});
+
+describe('open_support_ticket', () => {
+  it('drafts a request and links it to be sent; it says nothing was sent', async () => {
+    const { handleOpenSupportTicket } = await import('../help-support-tools');
+    const r = JSON.parse(handleOpenSupportTicket({
+      subject: 'Assign button missing', details: 'On the Plan step of IND-001 there is no Assign beside the protocol.',
+      category: 'technical', priority: 'urgent', articles: ['assign-work', 'not-an-article'],
+    }));
+    expect(r).toMatchObject({ status: 'draft', sent: false, draft: { category: 'technical', priority: 'medium', articles: ['assign-work'] } });
+    const link = new URL(r.link, 'http://x');
+    expect(link.pathname).toBe('/concept2cure/training');
+    expect(Object.fromEntries(link.searchParams)).toMatchObject({ request: 'new', subject: 'Assign button missing', category: 'technical', articles: 'assign-work' });
+    expect(r.instruction).toMatch(/Nothing has been sent/);
+  });
+
+  it('asks for what happened rather than drafting an empty request', async () => {
+    const { handleOpenSupportTicket } = await import('../help-support-tools');
+    expect(JSON.parse(handleOpenSupportTicket({ subject: 'Hi', details: '' })).status).toBe('error');
+  });
+
+  it('is classed read (it records nothing) and is in launch scope', async () => {
+    const { toolAuthorizationOf } = await import('../tool-authorization');
+    for (const name of ['open_support_ticket', 'list_my_support_tickets', 'search_help_center', 'read_help_article']) {
+      expect(toolAuthorizationOf(name, {}).class).toBe('read');
+      expect(HELP_SUPPORT_TOOLS.some((t) => t.name === name)).toBe(true);
+    }
+  });
+});
+
+describe('list_my_support_tickets', () => {
+  it('needs a signed-in member of an organisation, and reads nothing otherwise', async () => {
+    const { handleListMySupportTickets } = await import('../help-support-tools');
+    expect(JSON.parse(await handleListMySupportTickets({}, undefined)).status).toBe('error');
+  });
+});
+
+describe('a support turn', () => {
+  it('is read from the turn\'s own context, and only a true support flag makes one', async () => {
+    const { isSupportTurn, SUPPORT_TURN_BRIEF } = await import('../help-support-tools');
+    expect(isSupportTurn({ surface: 'training', support: true })).toBe(true);
+    for (const c of [null, undefined, {}, { support: 'true' }, { support: 1 }, 'support']) expect(isSupportTurn(c)).toBe(false);
+    expect(SUPPORT_TURN_BRIEF).toMatch(/open_support_ticket/);
+    expect(SUPPORT_TURN_BRIEF).toMatch(/never say it was sent/);
+  });
+});
+
+describe('opening Help & training from the conversation', () => {
+  it('hands navigate_to a call the navigation registry accepts, for a draft and for an article', async () => {
+    const { handleOpenSupportTicket, handleReadHelpArticle } = await import('../help-support-tools');
+    const { resolveNavigation } = await import('../../../../shared/navigation');
+    const draft = JSON.parse(handleOpenSupportTicket({ subject: 'Export fails', details: 'The export stops at 80 percent every time.', category: 'bug_report', priority: 'high' }));
+    expect(draft.open_draft.tool).toBe('navigate_to');
+    const r = resolveNavigation(draft.open_draft.input.target, draft.open_draft.input.params);
+    expect(r).toMatchObject({ ok: true, directive: { targetId: 'training', params: { request: 'new', subject: 'Export fails', category: 'bug_report', priority: 'high' } } });
+    const art = JSON.parse(handleReadHelpArticle({ slug: 'assign-work' }));
+    expect(resolveNavigation(art.open_article.input.target, art.open_article.input.params)).toMatchObject({ ok: true, directive: { params: { article: 'assign-work' } } });
+    expect(resolveNavigation('training', { request: 'new', priority: 'urgent' })).toMatchObject({ ok: false, code: 'invalid_param' });
   });
 });

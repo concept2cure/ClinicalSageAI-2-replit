@@ -181,3 +181,51 @@ describe('a changed Quality record in one project', () => {
       .rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
   });
 });
+
+// Walked 2026-11-12 (w41): the one editor's sources read took 7.5 to 8 s for a project with 168 sources. One scope
+// computation admitted the same project for the same person once per source it listed: 1,835 statements, 307 of them
+// the same four-statement admission. A read admits a project once; it still verifies the scope before it answers.
+describe('one read admits a project once, however many of its sources it lists', () => {
+  const admissions = () => queryTrace.filter(sql => sql.includes('FROM regulatory_programs WHERE id = $1')).length;
+  async function capture(count: number, from: number) {
+    for (let n = from; n < from + count; n++) {
+      await pg.query(`INSERT INTO cre_evidence_sources (organization_id,client_program_id,source_type,title,checksum,is_current,
+          extraction_status,extracted_text,provenance,metadata)
+        VALUES ($1,$2,'client_document',$3,$4,true,'extracted','Captured text','{}'::jsonb,'{}'::jsonb)`,
+      [ORG, PROGRAM, `Capture ${n}.pdf`, String(n).padStart(64, 'd')]);
+    }
+  }
+  const scope = () => getCurrentReadableSourceScope(q, { organizationId: ORG, userId: USER, programId: PROGRAM });
+
+  it('runs as many project admissions for eight sources as for two', async () => {
+    await capture(2, 1);
+    queryTrace = [];
+    expect((await scope()).sourceIds).toHaveLength(2);
+    const forTwo = admissions();
+    await capture(6, 3);
+    queryTrace = [];
+    expect((await scope()).sourceIds).toHaveLength(8);
+    expect(admissions()).toBe(forTwo);
+  });
+
+  it('still refuses the read when the person leaves the organization while its sources are being admitted', async () => {
+    await capture(3, 1);
+    // An admission ends with the project's sharing read. The second one is the first source's; once it has answered,
+    // the person is no longer a member, and the two sources after it are not asked about again.
+    let answered = 0;
+    const real = h.query.getMockImplementation()!;
+    h.query.mockImplementation(async (sql: string, args?: unknown[]) => {
+      const result = await real(sql, args);
+      if (sql.includes('v.visibility') && ++answered === 2) {
+        await pg.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=$2', [ORG, USER]);
+      }
+      return result;
+    });
+    try {
+      await expect(scope()).rejects.toMatchObject({ status: 403 });
+      expect(answered, 'the sharing read ran for the scope, the first source, and the check before answering').toBeGreaterThanOrEqual(2);
+    } finally {
+      await pg.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, USER]);
+    }
+  });
+});

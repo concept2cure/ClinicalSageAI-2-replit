@@ -3835,6 +3835,11 @@ export const C2C_MIGRATION_FILES = [
   // the hierarchy roll-up reported as one. Conditional on the column still having a default; changes no row; no table.
   // Its only creator is push, and shared/schema.ts drops the default in the same change (RULE 1).
   'migrations/20261110_projects_risk_level_not_defaulted.sql',
+  // Support requests (P-127, S13, 2026-11-12): the four support tables, until now applied by install-fresh only.
+  // Public with organization_id INTEGER NOT NULL, so the sweep below gives each its tenant policy;
+  // support_ticket_messages gains that column from its ticket and a same-organisation key, amended in place in the
+  // creating file (RULE 1). Every statement is guarded; no DROP.
+  'migrations/0007_support_admin.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

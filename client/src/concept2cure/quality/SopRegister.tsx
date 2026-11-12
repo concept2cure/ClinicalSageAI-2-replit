@@ -62,7 +62,7 @@ import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
 import { TrainingExpiry } from './TrainingExpiry';
 import { SopRegisterRow, RegisterTable, REGISTER_COLUMNS, type RegisterRowActions } from './SopRegisterRow';
-import { useQualityScope } from './registerContext';
+import { useOnQualityWrite, useQualityScope } from './registerContext';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -144,6 +144,9 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   /* Live read-and-understood compliance (numerator = distinct current
      acknowledgments, denominator = org roster). */
   const trainComp = useTrainingCompliance();
+  /* An approval, a retirement, an assignment or an acknowledgement changes what is due for review and who is covered:
+     both reads follow a confirmed write, as the figure line does (w41, 2026-11-12). */
+  useOnQualityWrite(() => { rev.refresh?.(); trainComp.refresh?.(); });
   const training = trainComp.rows ?? NO_TRAINING;
   const user = useAuthUser(); // server resolves every signer and acknowledging actor
   const readerScope = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
@@ -364,7 +367,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         : trainUnread && !trainFailed ? 'reading' : null} />
       <C2CToast msg={toast} />
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
-      {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
+      {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => setAssigning(null)} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
         onClose={() => setSetup(null)} onCreated={openCreated} onNavigate={onNavigate} />}
       {reviewing && <QmsRouteForm doc={reviewing} mode="send" onClose={() => setReviewing(null)} onSent={() => sent(reviewing)} />}
@@ -378,7 +381,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           setRevising(null); reg.refresh?.(); setEditingId(row.id);
         }} />}
       {reading && reading.scope === readerScope && (
-        <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} startOnSuccessor={reading.successor} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
+        <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} startOnSuccessor={reading.successor} onClose={() => setReading(null)} onAcknowledged={() => reg.refresh()} />
       )}
       {recordReview.row && (
         <RecordPeriodicReview row={recordReview.row} signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}

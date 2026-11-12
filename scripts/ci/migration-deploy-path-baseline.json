@@ -11,7 +11,6 @@
     "migrations/0007_ctd_onboarding_pipeline.sql",
     "migrations/0007_gap_analysis_results.sql",
     "migrations/0007_orchestration_phase3.sql",
-    "migrations/0007_support_admin.sql",
     "migrations/0007_tenant_isolation_fixes.sql",
     "migrations/0008_api_keys.sql",
     "migrations/0008_critical_fk_delete_policies.sql",
