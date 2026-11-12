@@ -7,6 +7,22 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { DeviceChangeMarket } from '@shared/regulatory/change-control-taxonomy';
 import type { ChangeState, ChangeType, Classification, LinkType, Relationship, RiskLevel } from './changeData';
 
+/* ── A confirmed write, told to whatever else on the screen read what it changed ──
+   Walked 2026-11-11 (w39): after a complaint was recorded, Quality's figure line still said "0 open complaints", and an
+   MDR decision recorded from a complaint left the MDR register under it empty, until the page was reloaded. Each
+   write door calls qualityWritten() once the server has confirmed; the figure line and a register beside the one
+   written to re-read (registerContext.ts useQualityWrites). */
+let confirmedWrites = 0;
+const writeListeners = new Set<() => void>();
+/** The server confirmed a Quality write. */
+export function qualityWritten(): void { confirmedWrites += 1; writeListeners.forEach((listener) => listener()); }
+/** How many Quality writes the server has confirmed in this page. */
+export const qualityWriteCount = (): number => confirmedWrites;
+export function onQualityWritten(listener: () => void): () => void {
+  writeListeners.add(listener);
+  return () => { writeListeners.delete(listener); };
+}
+
 /** Send a governed write and return the record `take` finds in the reply.
  *  `apiRequest` throws every refusal but a 401, which it returns; that is a
  *  session refusal here. */
@@ -22,6 +38,7 @@ async function send<T>(
   if (row == null) {
     throw new Error('The server did not return the record. Reload to see whether the change was recorded.');
   }
+  qualityWritten();
   return row;
 }
 
@@ -87,6 +104,11 @@ export function transitionQmsChange(
     reason: move.reason,
     ...(move.effectivenessReview ? { effectivenessReview: move.effectivenessReview } : {}),
   });
+}
+
+/** Remove a link from a change, with its reason. The server keeps it on the record as removed (MR-12 Stage 8). */
+export function unlinkQmsChange(id: number, linkId: number, reason: string): Promise<{ id: number }> {
+  return qmsWrite('DELETE', `changes/${id}/links/${linkId}`, { reason });
 }
 
 export function linkQmsChange(

@@ -99,5 +99,8 @@ describe('the portfolio line on Projects', () => {
     expect(portfolioWords({ summary: summary({ status: 'at-risk', lateToStart: 1, next: null }) as never })?.text).toBe('1 task should have started');
     expect(portfolioWords({ unreadable: true })?.text).toBe('The plan could not be read.');
     expect(portfolioWords({ unavailable: true })).toBeNull();
+    // Hours laid end to end are a floor: "on schedule" is said against minimum dates, never as a forecast.
+    expect(portfolioWords({ durations: 'hours-only', summary: summary({}) as never })?.text).toBe('On schedule against minimum dates · Pre-IND Engagement by Jan 12, 2027');
+    expect(portfolioWords({ durations: 'mixed', summary: summary({}) as never })?.text).toBe('On schedule · Pre-IND Engagement by Jan 12, 2027');
   });
 });

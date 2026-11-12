@@ -1,0 +1,26 @@
+Access checks in the running app, 2026-11-11. Server as the runtime role app_service (NOSUPERUSER, NOBYPASSRLS), RLS_ENFORCE=on, launch gate enforcing.
+Project WALK-IND-501 (5a9e8439-be62-4802-a2f0-f9e7e294bc03) belongs to organisation 2.
+
+== A member of ANOTHER organisation (other.org@example.com, organisation 14) ==
+GET  projects list:            {"data":[],"meta":{"count":0,"limit":100,"offset":0,"hasMore
+GET  plan (by-project):        {"error":"Project not found."} [404]
+GET  portfolio lines (batch):  {"data":{"asOf":"2026-11-11","lines":{"5a9e8439-be62-4802-a2f0-f9e7e294bc03":{"unavailable":true}}}} [200]
+PATCH task status:             {"error":"Project not found."} [404]
+GET  objective and strategy:   {"success":false,"error":"PROJECT_NOT_FOUND","message":"Project not found."} [404]
+PUT  objective and strategy:   {"success":false,"error":"PROJECT_NOT_FOUND","message":"Project not found."} [404]
+PATCH task due date:           {"success":false,"error":"Task not found.","code":"TASK_NOT_FOUND"} [404]
+POST assign a task:            {"success":false,"code":"ASSIGNEE_NOT_MEMBER","error":"The assignee is not a member of this organization. Nothing was created."} [400]
+
+== A VIEWER in the same organisation (viewer@example.com) ==
+GET  projects list:            {"data":[{"id":"5a9e8439-be62-4802-a2f0-f9e7e294bc03","title
+GET  plan (by-project):        {"data":{"programId":"5a9e8439-be62-4802-a2f0-f9e7e294bc03","type":"IN
+GET  portfolio lines (batch):  {"data":{"asOf":"2026-11-11","lines":{"5a9e8439-be62-4802-a2f0-f9e7e294bc03":{"type":"IND","filing":"ind","tar
+PATCH task status:             {"error":{"code":"PROJECT_PERMISSION_DENIED","message":"Current project permissions do not permit this operation."}} [403]
+GET  objective and strategy:   {"success":true,"data":{"charterId":1,"current":{"content":{"objective":"Study may proceed
+PUT  objective and strategy:   {"success":false,"error":"PROJECT_PERMISSION_DENIED","message":"Current project permissions do not permit this operation."} [403]
+PATCH task due date:           {"success":false,"error":"Current task and project permissions do not allow changing this task's due date.","code":"TASK_ASSIGNMENT_DENIED"} [403]
+POST assign a task:            {"error":"Insufficient permissions"} [403]
+
+== State afterwards, read as the owner (nothing changed) ==
+objective version 6 - Study may proceed on the IND for WALK-501, with the first-in
+task due 2027-06-03 17:00:00

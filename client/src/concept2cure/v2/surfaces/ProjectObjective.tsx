@@ -83,11 +83,18 @@ function ObjectiveView({ record }: { record: ObjectiveRecord }) {
   );
 }
 
+const OBJECTIVE_SUBMIT: Record<string, string> = { true: 'Record strategy', false: 'Record objective' };
+function objectiveFormTitle(recorded: boolean, forStrategy: boolean): string {
+  if (forStrategy) return "Record the project's regulatory strategy";
+  return recorded ? 'Record a new version of the objective' : "Record the project's objective";
+}
 const strategyOf = (current: ObjectiveRecord['current']): string => current?.content.strategy ?? '';
 
 /** The governed form that records a version of the objective, with its reason. */
-function ObjectiveForm({ current, onCancel, onSubmit }: {
+function ObjectiveForm({ current, onCancel, onSubmit, forStrategy = false }: {
   current: ObjectiveRecord['current'];
+  /** Opened from the Plan step's strategy: the same record and form, named for what the person came to state. */
+  forStrategy?: boolean;
   onCancel: () => void;
   onSubmit: (v: Record<string, string>) => void;
 }) {
@@ -96,10 +103,10 @@ function ObjectiveForm({ current, onCancel, onSubmit }: {
     <C2CForm
       config={{
         eyebrow: 'Project · objective',
-        title: current ? 'Record a new version of the objective' : "Record the project's objective",
+        title: objectiveFormTitle(Boolean(current), forStrategy),
         sub: 'What the project sets out to achieve, as its source states it. Every version is kept with its reason.',
         governed: 'Recorded with your reason in the audit trail.',
-        submitLabel: 'Record objective',
+        submitLabel: OBJECTIVE_SUBMIT[String(forStrategy)],
         fields: [
           { key: 'objective', label: 'Objective', type: 'textarea', required: true, default: current?.content.objective ?? '' },
           { key: 'successCriteria', label: 'Success criteria (optional)', type: 'textarea', default: current?.content.successCriteria ?? '',
@@ -207,7 +214,7 @@ export function PlanStrategy({ programId, canEdit }: { programId: string; canEdi
           ? 'No regulatory strategy is recorded yet: how this project will reach its objective.'
           : 'No objective or regulatory strategy is recorded yet. The objective is stated at the top of this page; the strategy is recorded with it.'}</p>}
       {strategy && current && <p className="pj-desc pj-fact-none">Recorded with the objective, version {current.version}, {dayOf(current.updatedAt)}.</p>}
-      {editing && <ObjectiveForm current={current} onCancel={() => setEditing(false)} onSubmit={(v) => void save(v)} />}
+      {editing && <ObjectiveForm forStrategy current={current} onCancel={() => setEditing(false)} onSubmit={(v) => void save(v)} />}
       <C2CToast msg={toast} />
     </section>
   );

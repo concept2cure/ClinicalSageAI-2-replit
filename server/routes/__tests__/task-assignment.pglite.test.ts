@@ -215,7 +215,10 @@ describe("a task's due date is changed with a reason, on the ledger", () => {
   });
 
   it('refuses a project reader, another client scope and another organisation, changing nothing', async () => {
-    expect((await request(app(6)).patch(taskPath).send(reschedule())).status).toBe(403);
+    const reader = await request(app(6)).patch(taskPath).send(reschedule());
+    expect(reader.status).toBe(403);
+    // Said in this change's words, not a reassignment's.
+    expect(reader.body.error).toBe("Current task and project permissions do not allow changing this task's due date.");
     expect((await request(app(5, 'admin', 72)).patch(taskPath).send(reschedule())).status).toBe(403);
     expect((await request(app(9)).patch(taskPath).send(reschedule())).status).toBeGreaterThanOrEqual(403);
     expect(await due()).toBeNull();

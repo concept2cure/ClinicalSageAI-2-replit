@@ -20,7 +20,7 @@ import { DEVICE_CHANGE_MARKETS, type DeviceChangeMarket } from '@shared/regulato
 import { EmptyState } from '../v2/dataConnect';
 import {
   IMPACT_DECISION_LABEL, IMPACT_MARKET_LABEL, LINK_TYPE_LABEL, RELATIONSHIP_LABEL, RISK_LABEL, STATE_LABEL, formatDate,
-  type ChangeControl as ChangeControlRow, type ImpactDetermination, type KeptDetermination, type RegulatoryImpact,
+  type ChangeControl as ChangeControlRow, type ChangeLink, type ImpactDetermination, type KeptDetermination, type RegulatoryImpact,
 } from './changeData';
 
 const NOT_RECORDED = 'Not recorded yet.';
@@ -148,10 +148,12 @@ function ChangeRegulatoryImpact({ change: c, onAssess }: { change: ChangeControl
   );
 }
 
-export function ChangeRecordDetail({ change: c, onAsk, onAssessImpact }: {
+export function ChangeRecordDetail({ change: c, onAsk, onAssessImpact, onUnlink }: {
   change: ChangeControlRow; onAsk: (q: string) => void;
   /** Open the determination's form for this change (P-122). Offered only where the server says it applies. */
   onAssessImpact?: () => void;
+  /** Remove a link, with its reason. Absent where the change takes no link change (closed, cancelled, rejected). */
+  onUnlink?: (link: ChangeLink) => void;
 }) {
   const links = c.links ?? [];
   return (
@@ -160,7 +162,8 @@ export function ChangeRecordDetail({ change: c, onAsk, onAssessImpact }: {
       <ChangeRegulatoryImpact change={c} onAssess={onAssessImpact} />
       <h3 className="qcc-detail-title">Linked records</h3>
       {links.length === 0 ? (
-        <EmptyState title="No linked records yet." hint="To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)." />
+        <EmptyState title={onUnlink ? 'No linked records yet.' : 'No linked records.'}
+          hint={onUnlink ? 'To keep the log traceable, link the deviation, CAPA or validation protocol this change touches, with Link a record.' : undefined} />
       ) : (
         <ul className="qcc-links">
           {links.map((l) => (
@@ -178,6 +181,14 @@ export function ChangeRecordDetail({ change: c, onAsk, onAssessImpact }: {
               </button>
               <span className="qcc-link-rel">{RELATIONSHIP_LABEL[l.relationship]}</span>
               <span className="qcc-link-type">{LINK_TYPE_LABEL[l.linkType]}</span>
+              {onUnlink && (
+                <button type="button" className="btn ghost small" aria-label={`Remove ${l.linkedRef} from ${c.changeNumber}`}
+                  title="Remove this link, with a reason. It is kept on the record as removed." onClick={() => onUnlink(l)}>
+                  Remove
+                </button>
+              )}
+              {/* Why it was linked, as recorded with the link (required past proposal since 2026-11-10). */}
+              {l.note && <span className="qcc-link-note">{l.note}</span>}
             </li>
           ))}
         </ul>

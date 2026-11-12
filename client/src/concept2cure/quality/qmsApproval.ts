@@ -21,6 +21,7 @@
  * @module client/src/concept2cure/quality/qmsApproval
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import { stableStringify } from '@shared/canonical-json';
 import type { C2CFormConfig } from '../v2/C2CForm';
 
@@ -152,6 +153,7 @@ export async function postQmsApproval(
   if (!sig?.signedAt) {
     throw new Error('The server did not return the signature record. Reload the register to see whether the approval was recorded.');
   }
+  qualityWritten();
   return {
     meaning: SIGNED_MEANING[target.kind].id,
     reason: input.reason,
@@ -253,6 +255,7 @@ async function sendSignedAct(
     throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
   if (!json?.signedAt) throw new Error(unconfirmed);
+  qualityWritten();
   return { meaning: input.meaning, reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
 const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';

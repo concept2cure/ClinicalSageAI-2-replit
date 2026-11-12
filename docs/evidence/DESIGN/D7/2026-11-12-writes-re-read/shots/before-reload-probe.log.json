@@ -1,0 +1,48 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "after-reload",
+      "figures": "1 document in force · 0 due for review within 120 days · 10 open changes · 101 open CAPAs · 0 nonconformances awaiting disposition · 1 open complaint · 0 MDR reports overdue · 1 critical supplier not approved · 1 open internal audit · 0 lapsed acknowledgements",
+      "registers": [
+        "Open: 1 (0 closed) · Serious injury or death, open: 0 · Reportability not determined: 0",
+        "Open: 1 (0 closed) · Overdue, not filed: 0 · Filed: 0"
+      ],
+      "mdrRows": [
+        [
+          "MDR-2026-0001",
+          "Walk 39: gasket seal failed in use, device stopped",
+          "FDA",
+          "FDA 30-day",
+          "2026-11-10",
+          "2026-12-10",
+          "Open"
+        ]
+      ]
+    },
+    {
+      "name": "api",
+      "mdrStatus": 200,
+      "mdrCount": 1,
+      "mdrKeys": [
+        "rows",
+        "count"
+      ],
+      "triageStatus": 200,
+      "triageKeys": [
+        "items",
+        "count"
+      ],
+      "triageKinds": {
+        "mdr": 1,
+        "capa": 101,
+        "complaint": 1
+      }
+    },
+    {
+      "name": "probe-complaints",
+      "ok": true
+    }
+  ]
+}

@@ -260,6 +260,10 @@ export const RISK_LABEL: Record<RiskLevel, string> = { low: 'Low', medium: 'Medi
  *  (changeControl.service.ts). From approval on, it is what the approval signed. */
 export const ASSESSABLE_STATES: readonly ChangeState[] = ['proposed', 'under_assessment'];
 
+/** Whether a link can still be added to or removed from a change: the server's rule (changeControl.service.ts addLink,
+ *  removeLink), every state but closed, cancelled and rejected. */
+export const takesLinks = (c: { status: ChangeState }): boolean => !['closed', 'cancelled', 'rejected'].includes(c.status);
+
 export const CLASSIFICATION_LABEL: Record<Classification, string> = {
   minor: 'Minor',
   major: 'Major',
