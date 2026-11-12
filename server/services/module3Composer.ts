@@ -24,6 +24,7 @@ import {
   type UnassignedObservation,
 } from './cmc/recorded-stability';
 import { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } from './cmc/recorded-capability';
+import { recordedResultVerdict } from './cmc/batch-release-evidence';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -906,27 +907,13 @@ function qcResultVerdict(p: Record<string, any>): 'within' | 'outside' | 'not-co
      `testResults: { value, unit, observation }` object and a `specifications:
      { acceptanceCriteria }` object — not the flat keys. Reading only the flat
      ones made every real record not-comparable, which is a silent no-op
-     dressed as a refusal. */
-  const results = p.testResults;
-  const value = parseNumeric(
-    results && typeof results === 'object' && !Array.isArray(results)
-      ? (results as Record<string, unknown>).value
-      : results ?? p.resultValue ?? p.result ?? p.testResult,
+     dressed as a refusal. The comparison itself is the one batch release
+     uses (2026-11-10, GA-DEMO-02): a release and the dossier cannot disagree
+     about whether a recorded result meets its criterion. */
+  return recordedResultVerdict(
+    p.testResults ?? p.resultValue ?? p.result ?? p.testResult,
+    [p.specifications ?? p.specification, p.acceptanceCriteria, p.specificationLimit],
   );
-  if (value === null) return 'not-comparable';
-  const specs = p.specifications ?? p.specification;
-  const criterion = parseAcceptanceCriterion([
-    specs && typeof specs === 'object' && !Array.isArray(specs)
-      ? (specs as Record<string, unknown>).acceptanceCriteria
-      : specs,
-    p.acceptanceCriteria,
-    p.specificationLimit,
-  ]);
-  if (!criterion) return 'not-comparable';
-  const belowLower = criterion.direction === 'decreasing' && value < criterion.limit;
-  const aboveUpper = criterion.direction === 'increasing' && value > criterion.limit;
-  const aboveRange = criterion.twoSided && criterion.upperLimit !== null && value > criterion.upperLimit;
-  return belowLower || aboveUpper || aboveRange ? 'outside' : 'within';
 }
 
 /** A sentence about the recorded results, or '' when none were recorded. */
@@ -3139,17 +3126,18 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     };
   },
 
+  /* GA-DEMO-03 (2026-11-10): §3.1 and §3.3 read `name` across the substance
+     AND product records with val(), which takes the first — so whenever the
+     product arrived first, §3.1 said "The drug substance is C2C-201 tablets".
+     Each name is read from its own record now. */
   '3.1': (m) => {
-    /* The substance's own name. Both the substance and the product record
-       carry `name`, and a first match across every source named the product
-       as the substance ("The drug substance is BX-733 5 mg film-coated
-       tablet", 2026-11-12). */
     const name = val(m.filter((s) => s.sourceType === 'drug_substance'), 'name');
-    const form = val(m, 'dosageFormDescription');
+    const productName = val(m.filter((s) => s.sourceType === 'drug_product'), 'name');
+    const form = val(m.filter((s) => s.sourceType === 'drug_product'), 'dosageFormDescription');
     return {
       narrative: `This section provides a table of contents and introductory overview for Module 3 — Quality. ` +
         (name ? `The drug substance is ${name}. ` : '') +
-        (form ? `The drug product is formulated as a ${form}. ` : '') +
+        (form ? `The drug product${productName ? `, ${productName},` : ''} is formulated as a ${form}. ` : '') +
         `Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.`,
       tables: [{
         title: 'Module 3 — Table of Contents',
@@ -3179,8 +3167,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   },
 
   '3.3': (m) => {
-    const name = val(m, 'name');
-    const form = val(m, 'dosageFormDescription');
+    const name = val(m.filter((s) => s.sourceType === 'drug_substance'), 'name');
+    const form = val(m.filter((s) => s.sourceType === 'drug_product'), 'dosageFormDescription');
     /* Primacy is a RECORDED type, never the order sources arrived in. Reading
        one `referenceStandardDescription` with val() named whichever standard
        happened to be first "the primary reference standard" — so a working

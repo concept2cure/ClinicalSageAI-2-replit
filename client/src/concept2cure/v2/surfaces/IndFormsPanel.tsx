@@ -150,6 +150,18 @@ function isIndProgram(program: ProgramFacts | null): boolean {
   return !program || (program.programType ?? '').trim().toUpperCase() === 'IND';
 }
 
+/* GA-D7-12 (2026-11-10): a manifest named a person's own e-mail address as the
+   template's reviewer, and this line showed it to everyone who opened Forms and
+   letters. An address is never shown; a reviewer recorded as a role reads as
+   that role. Reviewed and not reviewed stay distinct (D3). */
+const EMAIL_LIKE = /[^\s@]+@[^\s@]+/;
+export function reviewerLine(reviewedBy: string | null | undefined): string {
+  const who = typeof reviewedBy === 'string' ? reviewedBy.trim() : '';
+  if (!who) return 'This asset has no named reviewer yet.';
+  if (EMAIL_LIKE.test(who)) return 'Asset reviewed by a named reviewer on record.';
+  return `Asset reviewed by ${who}.`;
+}
+
 export function IndFormsPanel({ note }: { note: FireToast }) {
   const project = useShellProject();
   const session = useSubmissionReadSession();
@@ -530,9 +542,7 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
                     )}
                     {plan.officialTemplate && (
                       <div style={{ marginTop: 2 }}>
-                        {plan.reviewedBy
-                          ? `Asset reviewed by ${plan.reviewedBy}.`
-                          : 'This asset has no named reviewer yet.'}
+                        {reviewerLine(plan.reviewedBy)}
                       </div>
                     )}
                   </div>

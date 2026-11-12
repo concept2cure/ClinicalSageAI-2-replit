@@ -1,0 +1,4 @@
+BEFORE (trunk code):
+release rule on the frozen 2.4 (Drizzle transaction, app_service, RLS on): refused 409 INDEPENDENT_CHECK_REQUIRED; sections 7
+AFTER (lane fix):
+release rule on the frozen 2.4 (Drizzle transaction, app_service, RLS on): accepted; sections 7

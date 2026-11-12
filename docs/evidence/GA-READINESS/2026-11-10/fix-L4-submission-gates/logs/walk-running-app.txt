@@ -1,0 +1,19 @@
+desktop placed lines: m1.14.4.1 — Investigator's Brochure -- Placed, not yet approved / m2.3 — Quality Overall Summary -- Placed, not yet approved / m2.6.6 — Toxicology Written Summary -- Placed, not yet approved
+desktop IB line: m1.14.4.1 — Investigator's Brochure -- Placed, not yet approved
+desktop overflowX 0
+desktop header Validation findings | 42 | Triage findings | S
+desktop ruleSetRow Info	—	These findings come from Compile's placement and package checks: where each document is placed in the sequence and what the package must name. Submission readiness, in Submit, checks the same sequence against a separate rule set, so its count of errors can differ from this one. Its verdict is the one that decides dispatch.	Open Submission readiness in Submit to see the dispatch verdict for 
+desktop overflowX 0
+{"http":[],"console":[],"pageErrors":[]}
+mobile placed lines: m1.14.4.1 — Investigator's Brochure -- Placed, not yet approved / m2.3 — Quality Overall Summary -- Placed, not yet approved / m2.6.6 — Toxicology Written Summary -- Placed, not yet approved
+mobile IB line: m1.14.4.1 — Investigator's Brochure -- Placed, not yet approved
+mobile overflowX 0
+mobile header 
+mobile ruleSetRow NONE
+mobile overflowX 0
+{"http":[],"console":[],"pageErrors":[]}
+btn 1
+mobile header Validation findings | 42 | Triage findings | S
+mobile ruleSetRow Info	—	These findings come from Compile's placement and package checks: where each document is placed in the sequence and what the package must name. Submission readiness, in Submit, checks the same sequence against a separate rule set, so its count of errors can differ from this one. Its verdict is the one that decides dispatch.	Open Submission readiness in Submit to see the dispatch verdict for 
+mobile overflowX 0
+{"http":[],"console":[],"pageErrors":[]}

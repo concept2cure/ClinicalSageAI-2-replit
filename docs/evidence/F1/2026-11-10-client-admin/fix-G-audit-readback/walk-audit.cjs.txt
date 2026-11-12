@@ -1,0 +1,69 @@
+// G-audit-readback: the audit trail read in the running app (5220), as the organisation's administrator.
+// Passwords are read from the walkers' mode-600 files; nothing secret is printed or saved.
+const c = require('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/cadmin/walk2/common.cjs');
+const fs = require('fs'), path = require('path');
+const SC = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/cadmin';
+const EV = path.join(c.REPO, 'docs/evidence/F1/2026-11-10-client-admin/fix-G-audit-readback');
+const who = process.argv[3] || 'walk2';
+const ACC = who === 'walk2'
+  ? { email: 'walk2.owner@example.test', pw: fs.readFileSync(`${SC}/walk2/.walk_pw`, 'utf8').trim() }
+  : { email: 'avery.lind@northgate-bio.example.test', pw: fs.readFileSync(`${SC}/walk1/.walk_pw`, 'utf8').trim() };
+const out = [];
+const note = (s) => { out.push(s); console.log(s); };
+const shot = async (page, name, full = false) => { await page.screenshot({ path: path.join(EV, name), fullPage: full }); note(`shot ${name}`); };
+const text = (page) => page.locator('main').first().innerText({ timeout: 8000 }).then((t) => t.replace(/\n{2,}/g, '\n')).catch(() => '');
+
+(async () => {
+  const browser = await c.chromium.launch();
+  for (const vp of (process.argv[4] || 'desktop,phone').split(',')) {
+    const ctx = await browser.newContext({ viewport: c.VIEWPORTS[vp], deviceScaleFactor: 2, acceptDownloads: true });
+    const page = await ctx.newPage();
+    page.on('console', (m) => { if (m.type() === 'error') note(`console error: ${m.text().slice(0, 200)}`); });
+    await c.signIn(page, ACC.email, ACC.pw);
+    const me = await c.api(page, 'GET', '/api/users/me');
+    note(`${vp}: signed in, organisation ${me.body?.organizationId ?? me.body?.user?.organizationId ?? '?'}`);
+    const chainApi = await c.api(page, 'GET', '/api/part11/audit-trail/chain-integrity');
+    note(`${vp}: chain-integrity ${chainApi.status} ${JSON.stringify({ s: chainApi.body?.data?.chainStatus, total: chainApi.body?.data?.totalEntries, verified: chainApi.body?.data?.verifiedEntries, broken: chainApi.body?.data?.brokenLinks })}`);
+    await page.goto(`${c.BASE}/concept2cure/audit-trail`, { waitUntil: 'networkidle' }); await c.sleep(3000);
+    const head = (await text(page)).slice(0, 700).replace(/\n/g, ' | ');
+    note(`${vp}: header: ${head}`);
+    if (vp === 'desktop' && who === 'walk2') {
+      // One more signed export: the chain must still verify afterwards.
+      const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.getByRole('button', { name: /Export signed bundle/ }).click()]);
+      const file = path.join(SC, '..', 'lanes-work', 'G-audit-readback', 'export-download.json');
+      await dl.saveAs(file);
+      const body = fs.readFileSync(file, 'utf8');
+      // The bundle carries the data as a JSON string inside JSON, so a quote inside it is escaped.
+      for (const w of ['sessionTimeoutMinutes', '\\"before\\"', 'requirePdfA', 'seatsPurchased', 'change_summary', 'target_name']) note(`export contains ${w}: ${body.split(w).length - 1} times`);
+      fs.unlinkSync(file);
+      await page.reload({ waitUntil: 'networkidle' }); await c.sleep(3000);
+      const after = await c.api(page, 'GET', '/api/part11/audit-trail/chain-integrity');
+      note(`after export: chain-integrity ${JSON.stringify({ s: after.body?.data?.chainStatus, total: after.body?.data?.totalEntries, verified: after.body?.data?.verifiedEntries, broken: after.body?.data?.brokenLinks })}`);
+      const banner = (await text(page)).match(/Audit-event chain[^|\n]*\n?[^\n]*/i);
+      note(`after export banner: ${banner ? banner[0].replace(/\n/g, ' | ') : '(none found)'}`);
+      await shot(page, `audit-trail-${vp}-chain-intact.png`);
+    }
+    const search = page.getByLabel('Search audit trail entries');
+    const term = who === 'walk2' ? 'Idle sign-out' : 'Priya Raman';
+    await search.fill(term); await c.sleep(800);
+    const rows = await page.locator('.ctable .ct-row').count();
+    note(`${vp}: search "${term}": ${rows} rows`);
+    if (rows > 0) {
+      await page.locator('.ctable .ct-row').first().click(); await c.sleep(800);
+      const detail = await page.locator('text=Entry detail').first().locator('xpath=../..').innerText().catch(() => '');
+      note(`${vp}: detail: ${detail.replace(/SHA-256: [0-9a-f]+/g, 'SHA-256: <hash>').replace(/\n/g, ' | ').slice(0, 900)}`);
+      await page.locator('text=Entry detail').first().scrollIntoViewIfNeeded().catch(() => {});
+      await shot(page, `audit-trail-${who}-${vp}-${who === 'walk2' ? 'settings' : 'role'}-change.png`);
+    }
+    if (who === 'walk2') {
+      for (const t of ['PDF/A', 'API key revoked', 'Purchased seats', 'Client type']) {
+        await search.fill(t); await c.sleep(600);
+        const first = await page.locator('.ctable .ct-row').first().innerText().catch(() => '(no row)');
+        note(`${vp}: search "${t}": ${await page.locator('.ctable .ct-row').count()} rows; first: ${first.replace(/\n/g, ' | ').slice(0, 300)}`);
+      }
+    }
+    await ctx.close();
+  }
+  await browser.close();
+  fs.writeFileSync(path.join(EV, `walk-${who}.txt`), out.join('\n') + '\n');
+})().catch((e) => { console.error('ERR', e.message); process.exit(1); });

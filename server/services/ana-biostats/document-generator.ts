@@ -45,6 +45,7 @@ import {
   vocabPhrase,
 } from '../../../shared/biostat-vocabulary';
 import { canonicalPhase } from './input-normalizer';
+import { EFFECT_HOLDS_NOTE, SENSITIVITY_NOT_ASSESSED_NOTE, SENSITIVITY_POWER_THRESHOLD } from './judgment-engine';
 import { phaseNumbers } from '../../../shared/clinical-phase';
 
 const ENGINE_VERSION = '1.0.0';
@@ -78,6 +79,48 @@ function phaseLine(raw: unknown): string {
   if (!canonical) return written;
   if (new Set(phaseNumbers(written)).size > 1) return `${written} (judged against Phase ${canonical} expectations)`;
   return `Phase ${canonical}`;
+}
+
+/* Sensitivity points (GA-DEMO-05, 2026-11-10; repaired 2026-11-12): the
+   judgment engine recomputes each breakpoint as the value at which power falls
+   below 80%. The document names that threshold and prints each figure rounded,
+   so a floating-point tail (0.22499999999999998) never reaches a governed
+   document. Whether the design is already under 80% is read from the engine's
+   own power, never from a margin rounded to 0: a design sized at exactly 80%
+   is at the threshold, not below it. */
+function figure(value: number): string {
+  if (!Number.isFinite(value)) return 'not assessed';
+  return String(Math.round((value + Number.EPSILON) * 1e4) / 1e4);
+}
+
+type SensitivityPoint = JudgmentResult['fragility']['sensitiveParameters'][number];
+
+function sensitivityPointLine(sp: SensitivityPoint, power: number): string {
+  if (power < SENSITIVITY_POWER_THRESHOLD) {
+    return `current ${figure(sp.currentValue)}; the design is already below 80% power at this value`;
+  }
+  if (sp.percentMargin <= 0) {
+    return `current ${figure(sp.currentValue)}, breakpoint ${figure(sp.breakpointValue)}; the design is at the 80% power threshold, with no margin`;
+  }
+  return `current ${figure(sp.currentValue)}, breakpoint ${figure(sp.breakpointValue)}; ${figure(sp.percentMargin)}% change before the design falls below 80% power`;
+}
+
+/** The judgment engine's notes for points it could not claim, as they appear in its narrative. */
+function sensitivityNotes(judgment: JudgmentResult): string[] {
+  return [EFFECT_HOLDS_NOTE, SENSITIVITY_NOT_ASSESSED_NOTE].filter(n => judgment.fragility.narrative.includes(n));
+}
+
+/** One bullet per recomputed point, then one per point that could not be claimed. */
+function sensitivitySection(heading: string, judgment: JudgmentResult, comp: ComputationResult): string {
+  const notes = sensitivityNotes(judgment);
+  const points = judgment.fragility.sensitiveParameters;
+  if (points.length === 0 && notes.length === 0) return '';
+  let content = `### ${heading}\n\n`;
+  for (const sp of points) {
+    content += `- **${parameterLabel(sp.parameter)}**: ${sensitivityPointLine(sp, comp.power)}\n`;
+  }
+  for (const note of notes) content += `- ${note}\n`;
+  return `${content}\n`;
 }
 
 export class DocumentGenerator {
@@ -239,13 +282,7 @@ export class DocumentGenerator {
     content += `- **Fragility**: ${fragLabel} (index: ${judgment.fragility.fragilityIndex})\n`;
     content += `- **Confidence Level**: ${capitalized(judgment.confidence.level)} (${judgment.confidence.score}/100)\n\n`;
 
-    if (judgment.fragility.sensitiveParameters.length > 0) {
-      content += `### Sensitivity Points\n\n`;
-      for (const sp of judgment.fragility.sensitiveParameters) {
-        content += `- **${parameterLabel(sp.parameter)}**: current ${sp.currentValue}, breakpoint ${sp.breakpointValue} (${sp.percentMargin}% margin)\n`;
-      }
-      content += `\n`;
-    }
+    content += sensitivitySection('Sensitivity Points', judgment, comp);
 
     // Limitations
     if (judgment.confidence.limitations.length > 0) {
@@ -360,7 +397,7 @@ export class DocumentGenerator {
     content += `|-----------|-------|--------|-------------|------------|\n`;
     for (const a of comp.assumptions) {
       const sp = judgment.fragility.sensitiveParameters.find(p => p.parameter === a.parameter);
-      content += `| ${parameterLabel(a.parameter)} | ${a.value} | ${sourceLabel(a.source)} | ${capitalized(a.sensitivity)} | ${sp ? sp.breakpointValue : 'N/A'} |\n`;
+      content += `| ${parameterLabel(a.parameter)} | ${a.value} | ${sourceLabel(a.source)} | ${capitalized(a.sensitivity)} | ${sp ? figure(sp.breakpointValue) : 'N/A'} |\n`;
     }
     content += `\n`;
 
@@ -370,7 +407,7 @@ export class DocumentGenerator {
     if (judgment.fragility.sensitiveParameters.length > 0) {
       content += `### Critical Parameters\n\n`;
       for (const sp of judgment.fragility.sensitiveParameters) {
-        content += `- **${parameterLabel(sp.parameter)}**: ${sp.percentMargin}% margin before power drops below threshold (current: ${sp.currentValue}, breakpoint: ${sp.breakpointValue})\n`;
+        content += `- **${parameterLabel(sp.parameter)}**: ${sensitivityPointLine(sp, comp.power)}\n`;
       }
       content += `\n`;
     }

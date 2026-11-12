@@ -1,0 +1,329 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > validates and normalizes a complete pharma input 3ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > rejects missing required fields 4ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on unusual alpha 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on low power target 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > warns on high attrition rate 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > prefills default values 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > requires NI margin for non-inferiority studies 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 1: Input Normalization > requires sensitivity/specificity for diagnostic accuracy studies 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes reproducible sample size for continuous superiority 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes sample size for binary endpoints 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes sample size for survival endpoints 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes diagnostic accuracy metrics 47ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > adjusts sample size for attrition 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > generates scenario comparisons 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > computes non-inferiority design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > compares two scenarios correctly 2ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > larger effect size requires fewer subjects 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: Deterministic Computation > higher power requires more subjects 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > judges a well-powered study with estimand as adequate 14ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > flags an underpowered study 13ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > assesses fragility correctly 12ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > assesses endpoint-method fit 13ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > generates role-specific explanations 18ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > recommends escalation for critical issues 21ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 3: Judgment Engine > provides confidence assessment 12ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for biotech/pharma track 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for medical device track 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > adapts for diagnostics/IVD track 117ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 4: Domain Track Adaptation > produces different adaptations for different tracks 124ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for FDA 13ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for EMA 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for PMDA 10ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > customizes for MHRA 10ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 5: Regulatory Customization > produces different content for FDA vs EMA 21ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates a sample size rationale document 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates a statistical risk memo 10ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > generates an SAP section draft 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > preserves provenance in generated documents 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > includes regulatory notes when body is specified 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: Document Generation > project-binds generated documents 10ms
+stdout | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-11-10T12:18:40.910Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:18:40.912Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-11-10T12:18:40.912Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+[database] Database connection successful
+
+stderr | tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow
+{
+  "timestamp": "2026-11-10T12:18:40.944Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "insert into \"concept2cure_artifacts\" (\"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"conte...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full sample size rationale workflow 1787ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes full statistical risk review workflow 12ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes device track workflow 3ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > executes diagnostic track workflow 114ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > handles invalid input gracefully 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > quick compute returns results without document 11ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 8-9: Orchestrator End-to-End > quick compute handles validation failure 0ms
+ ✓ tests/services/ana-biostats.test.ts > Scenario Comparison Workflow > compares two pharma scenarios 24ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles missing effect size 0ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles zero effect size in computation 1ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > handles very small alpha 2ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > exposes confidence limitations 18ms
+ ✓ tests/services/ana-biostats.test.ts > Failure Behavior > does not produce silent failures 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 1: Phase III NSCLC superiority — exact numeric reproduction 2ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 2: Device non-inferiority — exact numeric reproduction 0ms
+ ✓ tests/services/ana-biostats.test.ts > Deterministic Reproducibility > Scenario 3: Diagnostic accuracy — exact numeric reproduction 71ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > computes Bonferroni adjustment for 3 endpoints 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > computes Holm step-down adjustment 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Multiplicity Computation > returns no adjustment for single endpoint 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Crossover Computation > computes crossover sample size with efficiency gain 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Crossover Computation > higher correlation yields smaller crossover N 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > computes missing data impact for complete case 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > MMRM preserves more power than complete case 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Missing Data Impact > higher missing rate increases bias risk 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Agreement/Kappa Computation > refuses kappa sizing rather than producing a figure without a published method 0ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: AUC Computation > computes AUC comparison sample size 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags missing multiplicity correction in Phase III 10ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > accepts single endpoint without multiplicity 11ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags missing estimand in Phase III pharma 11ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > accepts estimand for device track without penalty 1ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags high missing data rate 13ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags LOCF as not recommended 13ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: New Judgment Dimensions > flags placebo in non-inferiority as contradictory 2ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes multiplicity result in enhanced workflow 13ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes missing data impact when specified 14ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: Orchestrator with New Capabilities > includes 10 judgment dimensions in enhanced output 14ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes multiplicity adjustment when specified 14ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes missing data handling when specified 13ms
+ ✓ tests/services/ana-biostats.test.ts > Enhanced: SAP Document Content > SAP section includes estimand framework when specified 13ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > has exactly 5 SME agents defined 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > all agents have required fields 1ms
+ ✓ tests/services/ana-biostats.test.ts > SME Agent Definitions > each agent has unique ID 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes sample size request to trial_design_power 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes device/diagnostics to device_diagnostics_performance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes SAP workflow to sap_analysis_strategy 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes regulatory submission to regulatory_submission 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > routes adaptive design to adaptive_sensitivity 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > returns secondary SMEs when multiple match 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Router: Correct Specialist Selection > provides routing rationale 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > trial_design_power provides design-specific guidance 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > sap_analysis_strategy provides SAP-specific guidance when estimand missing 13ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > regulatory_submission provides body-specific guidance 12ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > device_diagnostics_performance provides diagnostic-specific guidance 121ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > adaptive_sensitivity provides fragility-focused guidance 12ms
+ ✓ tests/services/ana-biostats.test.ts > SME Enhancement: Distinct Specialist Behavior > different SMEs produce different enhancements for same input 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > orchestrator includes SME routing in workflow response 10ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > orchestrator includes SME enhancement in workflow response 10ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > SME guidance merges into anaInterpretation 10ms
+ ✓ tests/services/ana-biostats.test.ts > SME in Orchestrator: End-to-End > device track routes to device specialist in full workflow 109ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > falls back to trial_design_power when no strong match 0ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > SME enhancement does not crash on minimal input 11ms
+ ✓ tests/services/ana-biostats.test.ts > SME Fallback & Failure Behavior > escalation notes appear when conditions are met 13ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority design sized for 90% reports 90%, not the superiority power of δ 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > holds for a positive true difference and an unequal allocation 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > an equivalence design sized for 80% reports 80% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > the judgment does not call a correctly sized non-inferiority design underpowered 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > a non-inferiority trial against placebo is still flagged — for its comparator, not its power 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > missing-data power loss is measured against the same test, not collapsed to the superiority power 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: achieved power is the power of the sized test (BS8) > superiority is unchanged: sized for 80%, reports 80% 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > sizes d = 0.5 at 64 per group (80% power, two-sided 0.05), not 16 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > N depends on the effect size: d = 0.3 needs more subjects than d = 0.5 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a continuous effect with no variance is standardised (BS4) > discloses the standardisation as a default assumption 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous superiority: Base case N and power equal the design 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous non-inferiority: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous equivalence: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > binary superiority, 2:1: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > time to event: Base case N and power equal the design 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > no scenario carries a missing or non-finite N 1ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > superiority sized for 80% reports a computed power at or just above 80%, not the target echoed 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > non-inferiority sized for 90% reports ~90% 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > each scenario reports the power computed for its own N, not one echoed target 0ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "Analyses followed the pre-specified SAP" as fact 20ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "analyzed on the ITT population" as fact 21ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tipping-point sensitivity analyses" as fact 22ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "tested within a pre-specified hierarchy" as fact 26ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > does not state "handled per the pre-specified SAP approach" as fact 23ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > marks what the sponsor must confirm, in the placeholder the CSR completeness check detects 942ms
+ ✓ tests/services/ana-biostats.test.ts > Layer 6: the CSR methods section does not assert conduct it cannot know (BS12) > still states what the plan and the engine do establish 10ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — a complete design > maps every statistical field the engine needs, with no blocking gap 5ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — a complete design > is accepted and sized by the real computation and judgment engines 35ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses to size a design with no effect size (input null, blocking gap named) 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a time-to-event design with no event rate 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a non-inferiority frame with no margin, and carries the margin when set 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a design with no primary endpoint 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > reports every engine default it applied rather than applying it silently 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > translates a one-sided alpha to the engine's two-sided boundary and says so 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > sizes a binary endpoint from the control rate plus the effect 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > maps product type and regions to the engine vocabularies 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > reports an IVD design as blocked on the accuracy targets the design does not record 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > writes the computed N, power and assumptions onto the design with a provenance stamp, preserving prior evidence 3ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > re-applying from the patched design is idempotent: N and target power stay put (BS-M1) 2ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > the patched design still projects a SAP whose sample-size section is rendered, not missing 3ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > scores a complete design high and reports its headline numbers 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > scores an empty plan low and names the fix for every failed check 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > only counts checks that apply (no margin check on a superiority design, one on non-inferiority) 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > plannedSizeOf — one rule for the N written and the N read back > takes the attrition-adjusted total when the engine adjusted, else the total 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > plannedSizeOf — one rule for the N written and the N read back > reads nothing from a stored output that carries no size 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > an adequate, robust, proceed judgment with no filing raises no tasks 2ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > an inadequate verdict raises a critical, critical-path revision task 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > escalate raises a review task naming the reasons 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > fragility and a weak method fit each raise their own task 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > a blocking gap becomes a design-completion task even when nothing could be judged 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > a non-inferiority frame and planned interims raise their obligations 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > the filing checklist proposes only required/expected deliverables not already persisted 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > critical and major gate findings become tasks keyed by their code; minors do not 0ms
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > is deterministic and de-duplicated across re-runs 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > produces one row per element, in the review order, each traceable to codes 40ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > a clean design reads low across the board with a low challenge likelihood 14ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > routes each gate code to its element 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > LOCF without sensitivity analyses is a high-risk missing-data row with the fix named 12ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > interims with no spending function make the verdict high and name the element 12ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > a design the engine cannot size is a high-risk sample-size row naming the blocking gap 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > the engine judgment can only raise sample-size risk, never lower a gate finding 2ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > worked figure: d = 0.4 at 90% power has about a 13.6% margin, not 5% 33ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous superiority: the engine needs about the current evaluable N for 80% {} power at the breakpoint 18ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous at 80% power: the engine needs about the current evaluable N for 80% { powerTarget: 0.8 } power at the breakpoint 12ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > binary from rates: the engine needs about the current evaluable N for 80% { endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15 } power at the breakpoint 5ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > time to event: the engine needs about the current evaluable N for 80% { endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 } power at the breakpoint 3ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > worked figure: 10% dropout on N enrolled for 90% power tolerates about 33% 19ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > a 15% dropout rate prints no floating-point tail 16ms
+ ✓ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > the governed document prints the recomputed points > sample size rationale and assumption note carry rounded breakpoints and name the 80% threshold 17ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > III reads as III 2ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase III reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase 3 reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > 3 reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > phase_3 reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > IIIb reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > II reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase II reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase 2 reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > 2 reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > 2b reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase IIa reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > I reads as I 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase 1 reads as I 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase I (first-in-human) reads as I 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > IV reads as IV 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase 4 reads as IV 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > 2/3 reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > Phase II/III reads as III 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > 1/2 reads as II 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > undefined reads as no phase, never a guessed one 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > null reads as no phase, never a guessed one 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written >  reads as no phase, never a guessed one 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written >    reads as no phase, never a guessed one 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > N/A reads as no phase, never a guessed one 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > canonicalPhase — one reading of a phase as written > pilot reads as no phase, never a guessed one 0ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the judgment engine judges "Phase II" and "II" identically > Phase II judges as II does, dimension by dimension 45ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the judgment engine judges "Phase II" and "II" identically > Phase 2 judges as II does, dimension by dimension 30ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the judgment engine judges "Phase II" and "II" identically > 2 judges as II does, dimension by dimension 25ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the judgment engine judges "Phase II" and "II" identically > Phase III judges as III does, dimension by dimension 29ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the judgment engine judges "Phase II" and "II" identically > Phase 3 judges as III does, dimension by dimension 29ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the judgment engine judges "Phase II" and "II" identically > 3 judges as III does, dimension by dimension 31ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > a missing estimand on a confirmatory design is never ADEQUATE > phase Phase III with no estimand is inadequate on estimand clarity 11ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > a missing estimand on a confirmatory design is never ADEQUATE > phase Phase 3 with no estimand is inadequate on estimand clarity 12ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > a missing estimand on a confirmatory design is never ADEQUATE > phase 3 with no estimand is inadequate on estimand clarity 10ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > a missing estimand on a confirmatory design is never ADEQUATE > phase III with no estimand is inadequate on estimand clarity 11ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > a missing estimand on a confirmatory design is never ADEQUATE > phase 2/3 with no estimand is inadequate on estimand clarity 11ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > a missing estimand on a confirmatory design is never ADEQUATE > a Phase I design with no estimand is only a recommendation, as before 10ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the other phase rules fire on the written phase too > Phase III with power under 80% is inadequate on power, written either way 2ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the other phase rules fire on the written phase too > the domain adapter adds the confirmatory considerations for "Phase 3" 10ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the governed document keeps the phase as written > prints "Phase III" for "3", and never restates a Phase 2/3 study as Phase III 22ms
+ ✓ server/services/ana-biostats/__tests__/phase-rules-read-the-phase-as-written.test.ts > the governed document keeps the phase as written > prints vocabulary values as words, not engine keys 11ms
+stdout | server/services/ana-ri/__tests__/biostat-command-input.test.ts
+{
+  "timestamp": "2026-11-10T12:18:46.476Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:18:46.478Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/biostat-command-input.test.ts
+{
+  "timestamp": "2026-11-10T12:18:46.478Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/biostat-command-input.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/biostat-command-input.test.ts
+{
+  "timestamp": "2026-11-10T12:18:47.225Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/biostat-command-input.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > reports that the SAP was not stored when the artifact write fails
+{
+  "timestamp": "2026-11-10T12:18:57.846Z",
+  "level": "error",
+  "message": "[workflow-integrator] Artifact creation failed",
+  "context": {
+    "err": "db.insert is not a function"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > refuses when no effect size is given, instead of sizing on an invented 0.5 5ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > reads the dropoutRate its catalog entry advertises 22ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > passes the variance through, so the effect size is not silently divided by itself 4ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > refuses when no effect size is given, instead of reporting "SAP generated" 57ms
+stderr | server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > names the stored artifact when the write succeeds
+{
+  "timestamp": "2026-11-10T12:18:57.902Z",
+  "level": "error",
+  "message": "[workflow-integrator] Artifact creation failed",
+  "context": {
+    "err": "db.insert is not a function"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > reports that the SAP was not stored when the artifact write fails 77ms
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > names the stored artifact when the write succeeds 50ms
+ ✓ server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts > WorkflowIntegrator.attachToDossier > maps through the canonical governed operation — tenant-scoped, with a reason, and never writing the row itself 6ms
+ ✓ server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts > WorkflowIntegrator.attachToDossier > SAYS a previously assembled bundle was cleared, rather than reporting a bare attachment 2ms
+ ✓ server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts > WorkflowIntegrator.attachToDossier > SAYS a lost audit row, and reports a refusal as a refusal 3ms
+
+ Test Files  8 passed (8)
+      Tests  222 passed (222)
+   Start at  12:18:37
+   Duration  20.86s (transform 11.00s, setup 268ms, import 13.74s, tests 4.99s, environment 1ms)
+
