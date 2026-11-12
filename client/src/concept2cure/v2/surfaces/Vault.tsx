@@ -282,8 +282,12 @@ function vaultDocFilingReference(
 ): VaultFilingReference | undefined {
   for (const node of nodes) {
     if (isVaultDoc(node)) {
-      if (node.id === leafId) return inherited;
-      continue;
+      if (node.id !== leafId) continue;
+      /* An authored section in the filing binder's heading (P-123 item 8) names its filing itself: no folder above it
+         is the filing's. Its identity is checked as a folder's would be. */
+      return Object.prototype.hasOwnProperty.call(node, 'filingDocumentId')
+        ? { family: typeof node.filingFamily === 'string' ? node.filingFamily.trim() || null : null, filingDocumentId: node.filingDocumentId }
+        : inherited;
     }
     const explicit = Object.prototype.hasOwnProperty.call(node, 'filingDocumentId');
     const carried = explicit || node.id.startsWith('vaultdoc-')
