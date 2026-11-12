@@ -2,10 +2,13 @@ import { createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll,beforeEach,afterAll,describe,it,expect,vi } from 'vitest';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
-const h=vi.hoisted(()=>({bytes:Buffer.from('Verified retained instruction: preserve the original record and document every correction.'),gets:0}));
+const h=vi.hoisted(()=>({bytes:Buffer.from('Verified retained instruction: preserve the original record and document every correction.'),gets:0,
+  /* The filing receipt (LX-10) has its own suite (authoring-vault-filing-receipt.pglite.test.ts); here it is what it answers. */
+  receipt:vi.fn(async(..._args:unknown[]):Promise<unknown>=>({status:'not-recorded'}))}));
 vi.mock('../../../db',()=>({db:{},pool:{query:()=>{throw new Error('Global DB forbidden');}}}));
 vi.mock('../../auditService',()=>({default:{logAction:vi.fn()},writeChainedAuditRow:vi.fn()}));
 vi.mock('../../storage',()=>({getStorageProviderFor:()=>({get:async()=>{h.gets++;return {bytes:Buffer.from(h.bytes)};}})}));
+vi.mock('../../authoring/authoring-vault-filing-receipt',()=>({readAuthoringVaultFilingReceipt:(...a:unknown[])=>h.receipt(...a)}));
 import {readSubmissionLeafSourceEvidence,requireSubmissionLeafSourceEvidenceStillCurrent} from '../submission-leaf-source-evidence';
 import {assembleAuthoredSections} from '../../ana/authoring-canonical-bridge';
 // 2026-10-15: this imported `shared/types/database`, which exists only as a .d.ts, so
@@ -195,5 +198,88 @@ describe('retained sealed-copy and Vault source boundaries',()=>{
     const result=await read([leaf({documentTable:'vault_documents',documentId:null,documentUuid:V,documentContentSha256:hash(h.bytes)})]);
     h.bytes=Buffer.from('Changed retained provider bytes after initial admission.');
     await expect(requireSubmissionLeafSourceEvidenceStillCurrent(q,result.admission)).rejects.toMatchObject({status:503,code:'SUBMISSION_SOURCE_READ_CHANGED'});
+  });
+});
+
+/* Walked 2026-11-12: in the Builder every Module 3 leaf read "Source evidence not yet determined — The retained
+   source has no verified project relationship". A placed Module 3 section is filed as a coauthor_documents copy
+   (place-module3-into-submission.ts) that records its CMC project and section key; the reader looked only for an
+   Authoring document behind a filing copy, and a CMC section has none. */
+describe('a placed Module 3 section’s filing copy', () => {
+  const md = '## 3.2.S.4 Control of Drug Substance\n\nThe drug substance is released against the specification in Table 1. '
+    + 'Acceptance criteria are justified by results from three registration batches manufactured at commercial scale.';
+  const snapshot = (id: number, cmcProjectId: string, sectionKey: string, marker = 'cmc-module3-os') =>
+    pg.query('INSERT INTO coauthor_documents(id,organization_id,content,status,metadata,title) VALUES($1,7,$2,$3,$4,$5)',
+      [id, md, 'approved', JSON.stringify({ placedFrom: marker, cmcProjectId, sectionKey }), '3.2.S.4 Control of Drug Substance']);
+  const m3leaf = (id: number) => leaf({ documentTable: 'coauthor_documents', documentId: id, documentUuid: null, documentContentSha256: hash(md), documentType: 'cmc_module3_section' });
+  beforeAll(async () => {
+    await pg.exec(`CREATE TABLE IF NOT EXISTS cmc_module3_sections(organization_id int,project_id text,section_key text,approval_state text,stale boolean NOT NULL DEFAULT false);`);
+  });
+  beforeEach(async () => {
+    await pg.exec(`TRUNCATE cmc_module3_sections; INSERT INTO cmc_module3_sections VALUES(7,'${P}','3.2.S.4','approved',false),(7,'${S}','3.2.S.5','approved',false);`);
+  });
+
+  it('is traced to the CMC project and section it records, and its pinned text resolves', async () => {
+    await snapshot(301, P, '3.2.S.4');
+    const result = await read([m3leaf(301)]);
+    expect(result.leaves[0].contentEvidence).toMatchObject({ content: 'substantive', pin: 'match', lifecycle: 'finalized' });
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'resolved', reason: null });
+  });
+
+  it('a copy naming another project is refused, never read for this one', async () => {
+    await snapshot(302, S, '3.2.S.5');
+    await expect(read([m3leaf(302)])).rejects.toMatchObject({ status: 404, code: 'SUBMISSION_SOURCE_SCOPE_MISMATCH' });
+  });
+
+  it('a copy whose section the project does not hold stays undetermined', async () => {
+    await snapshot(303, P, '3.2.P.8');
+    const result = await read([m3leaf(303)]);
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'undetermined', reason: 'The retained source has no verified project relationship.' });
+  });
+
+  it('control: a filing copy without the placement marker still needs its Authoring document', async () => {
+    await snapshot(304, P, '3.2.S.4', 'something-else');
+    const result = await read([m3leaf(304)]);
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'undetermined', reason: 'The retained source has no verified project relationship.' });
+  });
+});
+
+/* Walked 2026-11-12: the Vault leaf of a sealed, filed document read "The retained bytes were verified; substantive
+   source text is not established" — its file is a PDF. The filing recorded which sealed version the PDF was rendered
+   from (LX-10, a chained receipt), and the sealed record holds the text. */
+describe('a Vault PDF filed from a sealed Authoring document', () => {
+  const sections = [{ id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', code: '2.7.1.2', title: 'Summary of results', content: body, order_index: 0 }];
+  const frozen = JSON.stringify({ document: { title: '2.7 Clinical Summary' }, sections });
+  const pdf = Buffer.from('%PDF-1.7\n% rendition of the sealed document\n');
+  const recorded = (contentHash: string) => ({ status: 'recorded', vaultDocumentId: V, programId: P, artifactSha256: hash(pdf),
+    source: { store: 'authoring_documents', nativeId: A, version: 'approved', sectionsSha256: null, sealedVersion: { version: 'approved', contentHash } },
+    receipt: { id: 'r1', exportCorrelationId: null, occurredAt: '2026-11-12T00:15:00Z', chain: 'linked', seal: 'valid' } });
+  const pdfLeaf = () => leaf({ documentTable: 'vault_documents', documentId: null, documentUuid: V, documentContentSha256: hash(pdf) });
+  beforeEach(async () => {
+    h.bytes = pdf;
+    h.receipt.mockReset();
+    h.receipt.mockImplementation(async () => ({ status: 'not-recorded' }));
+    await pg.query('INSERT INTO vault.documents(id,organization_id,program_id,storage_version_id,storage_provider,content_hash,mime_type) VALUES($1,7,$2,$3,$4,$5,$6)', [V, P, 'retained-pdf', 'local', hash(pdf), 'application/pdf']);
+    await pg.query('INSERT INTO canonical_documents VALUES($1,7,$2,$3,$4,now())', [A, JSON.stringify({ vault_documents: { nativeId: V } }), 'approved', hash(pdf)]);
+    await pg.query('INSERT INTO authoring_documents VALUES($1,7,$2,$3,$4)', [A, P, 'APPROVED', '5']);
+    await pg.query('INSERT INTO frozen_documents(document_id,tenant_id,version,frozen_content,content_hash) VALUES($1,7,$2,$3,$4)', [A, 'approved', frozen, hash(frozen)]);
+  });
+
+  it('its text is established from the sealed record the receipt names', async () => {
+    h.receipt.mockImplementation(async () => recorded(hash(frozen)));
+    const result = await read([pdfLeaf()]);
+    expect(result.leaves[0].contentEvidence).toMatchObject({ content: 'substantive', pin: 'match', lifecycle: 'finalized' });
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'resolved', reason: null });
+  });
+
+  it('a receipt naming a seal the record does not hold leaves it not established', async () => {
+    h.receipt.mockImplementation(async () => recorded('0'.repeat(64)));
+    const result = await read([pdfLeaf()]);
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'undetermined', reason: 'The retained bytes were verified; substantive source text is not established.' });
+  });
+
+  it('control: a PDF with no filing receipt stays not established', async () => {
+    const result = await read([pdfLeaf()]);
+    expect(result.sourceDocuments[0]).toMatchObject({ status: 'undetermined', reason: 'The retained bytes were verified; substantive source text is not established.' });
   });
 });

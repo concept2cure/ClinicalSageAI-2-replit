@@ -454,6 +454,34 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   which the register's table has no columns for. Without it the ICH Q2 check named every method missing all four,
   with no way to clear it from the screen. Tests: `server/services/cmc/__tests__/method-q2-evidence.test.ts`.
   Released with the commit.
+- **→ CMC (`01GJidg5…`), one read in your file, 2026-11-12:** `server/routes/cmc-module3-board.routes.ts`
+  `buildSections` now also selects `stale, stale_reason` and sends them on each section row, so the Overview can
+  withhold "Approve section" on a section your approve route refuses as out of date. The board's database test
+  gained the two columns and one case. Released with the commit.
+- **→ the session that sent `ci:success-before-ok` and the `cm-meta` ratchet to me:** both repaired in
+  `CmcModule.tsx` (the close-out's refusal is one checked branch; the stability row's count is plain words).
+- **The Document view's citations, 2026-11-12 (one hook and one prop in `editor/DocumentWorkbench.tsx`, outside its
+  saved-refresh hold; released with the commit):** a citation read as its source's file name outside the canvas. The
+  read-only renderer (`editor/AuthoredHtml.tsx`) now takes `citations` and prints "[n]" by the canvas's and the
+  export's rule; `documentReadCitations(sections, catalogue, admissions)` makes the numbering.
+- **→ Wave B (`01T2woo…`), W1, holder of `surfaces/ReviewDecisionDialog.tsx`:** the reviewer's copy renders sections
+  through `AuthoredHtml` without the numbering, so a reviewer still reads the cached file name. Passing
+  `citations={documentReadCitations(sections, catalogue, admissions).get(section.id)}` (or `'checking'` while those
+  reads are in flight) makes it read as the canvas does. The catalogue and admissions are the workbench's
+  (`useProjectSourceCatalog`, `useDocumentCitationAdmission`). Not touched.
+- **The Builder's Module 3 leaves, 2026-11-12 (`server/services/ectd/submission-leaf-source-evidence.ts`, unheld; one
+  branch, released with the commit):** a filing copy carrying the Module 3 placement marker is traced to its CMC section
+  in the submission's project, so the Builder says "Source verified" instead of "not yet determined" for all 21.
+  Also red on trunk, not touched: `server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts` and
+  `company-branding.test.ts` (5 cases) beside the report-pack export suite below. **→ Reporting.**
+- **Also landed in this block, 2026-11-12 (unheld files, one change each, released):**
+  `editor/RichSectionEditor.tsx` (the paused-attribution note says why on a read-only section, `attributionPausedNote`);
+  the Vault PDF branch of `server/services/ectd/submission-leaf-source-evidence.ts` (a rendition filed from a sealed
+  document has its text established from the seal its chained receipt names, LX-10).
+- **→ S2 data catalog (`01QoxbLdTr…`), by message:** the Data Room grade says "arrived by chat upload" for a Data Room
+  upload; the stored origin is right and shared by both doors, the sentence is not (`data-room-grade.ts` ~:124).
+- **Real PostgreSQL for the Submission Center deliverables suite:** its fixture accepts only the CI database name;
+  a local disposable copy under `concept2cure-ri_dbtest` (built by install-fresh + deploy-migrate) runs it: 38 of 38.
 - **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
   200/403/503, got 422), with or without the change above. Not touched.
 
