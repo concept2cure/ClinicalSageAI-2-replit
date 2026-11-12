@@ -30,13 +30,75 @@ import {
 } from './filingTarget';
 
 interface PlacementOutcome {
-  placements: Array<{ sectionKey: string; leafSectionCode: string; leafId: number; title: string; updatedInPlace?: boolean }>;
+  /** `unchanged`: the section's leaf already files exactly this text, and nothing was written for it. */
+  placements: Array<{ sectionKey: string; leafSectionCode: string; leafId: number; title: string; updatedInPlace?: boolean; unchanged?: boolean }>;
   skipped: Array<{ sectionKey: string; reason: string }>;
 }
 
 type Verdict = { ok: true; outcome: PlacementOutcome } | { ok: false; message: string } | null;
 
-function VerdictCard({ verdict }: { verdict: Exclude<Verdict, null> }) {
+const sections = (n: number) => `${n} ${n === 1 ? 'section' : 'sections'}`;
+
+/**
+ * What a placement did, in words. A section the server left untouched is
+ * never called "placed": until 2026-11-12 a repeat read "21 sections placed
+ * into the submission (21 updated in place)".
+ */
+type PlacedRow = PlacementOutcome['placements'][number];
+const codes = (rows: PlacedRow[]) => rows.map((p) => p.leafSectionCode).join(', ');
+const labelled = (label: string, rows: PlacedRow[]) => (rows.length > 0 ? `${label}: ${codes(rows)}` : '');
+const counted = (rows: PlacedRow[], verb: string) => (rows.length > 0 ? `${sections(rows.length)} ${verb}` : '');
+
+/** "All 21 sections in sequence 0001 are unchanged." */
+function unchangedSentence(n: number, where: string): string {
+  const all = n === 1 ? 'The section' : n === 2 ? 'Both sections' : `All ${n} sections`;
+  return `${all} in ${where} ${n === 1 ? 'is' : 'are'} unchanged.`;
+}
+
+export function placementWords(outcome: PlacementOutcome, sequenceNumber?: string): { title: string; detail: string } {
+  const { placements, skipped } = outcome;
+  const where = sequenceNumber ? `sequence ${sequenceNumber}` : 'this sequence';
+  const unchanged = placements.filter((p) => p.unchanged);
+  const refiled = placements.filter((p) => !p.unchanged && p.updatedInPlace);
+  const fresh = placements.filter((p) => !p.unchanged && !p.updatedInPlace);
+  const skippedWords = skipped.length > 0 ? ` · skipped: ${skipped.map((x) => `§${x.sectionKey} (${x.reason})`).join('; ')}` : '';
+  if (placements.length > 0 && unchanged.length === placements.length) {
+    return { title: 'Already placed. Nothing was written.', detail: unchangedSentence(placements.length, where) + skippedWords };
+  }
+  if (unchanged.length + refiled.length === 0) {
+    const suffix = sequenceNumber ? ` · ${where}` : '';
+    return { title: `${sections(fresh.length)} placed into the submission`, detail: (codes(fresh) || '—') + suffix + skippedWords };
+  }
+  const tail = unchanged.length > 0 ? `${unchanged.length} unchanged` : '';
+  const title = [counted(fresh, 'placed'), counted(refiled, 'filed again'), tail].filter(Boolean).join('; ');
+  const detail = [labelled('Placed', fresh), labelled('Filed again', refiled)].filter(Boolean).join(' · ');
+  return { title: title + (sequenceNumber ? `, in ${where}` : ''), detail: detail + skippedWords };
+}
+
+/* The last placement of each project in this page session. The board re-reads
+   readiness after a placement and mounts this control afresh, with nothing
+   chosen, which lost the verdict: a person who had just placed 21 sections
+   saw an empty form and no word of what happened. The verdict is kept here
+   with the sequence it was made into, and shown again until another sequence
+   is chosen or another placement is made. */
+type Shown = Exclude<Verdict, null> & { sequenceNumber?: string };
+const lastPlacement = new Map<string, { sequenceId: number; verdict: Shown }>();
+export function rememberPlacement(projectId: string, sequence: { id: number; sequenceNumber?: string }, verdict: Exclude<Verdict, null>): Shown {
+  const shown: Shown = { ...verdict, sequenceNumber: sequence.sequenceNumber };
+  lastPlacement.set(projectId, { sequenceId: sequence.id, verdict: shown });
+  return shown;
+}
+/** The remembered verdict, unless a different sequence is now chosen. */
+export function recallPlacement(projectId: string, chosenSequenceId: number | null | undefined): Shown | null {
+  const last = lastPlacement.get(projectId);
+  if (!last) return null;
+  return chosenSequenceId == null || chosenSequenceId === last.sequenceId ? last.verdict : null;
+}
+export function forgetPlacement(projectId: string): void {
+  lastPlacement.delete(projectId);
+}
+
+function VerdictCard({ verdict }: { verdict: Shown }) {
   if (!verdict.ok) {
     return (
       <div className="pj-con cm-gate-verdict" style={{ marginTop: 10 }}>
@@ -48,27 +110,20 @@ function VerdictCard({ verdict }: { verdict: Exclude<Verdict, null> }) {
       </div>
     );
   }
-  const { placements, skipped } = verdict.outcome;
-  const updated = placements.filter((p) => p.updatedInPlace).length;
+  const words = placementWords(verdict.outcome, verdict.sequenceNumber);
   return (
-    <div className="pj-con cm-gate-verdict is-ok" style={{ marginTop: 10 }}>
+    <div className="pj-con cm-gate-verdict is-ok" style={{ marginTop: 10 }} role="status">
       <span className="ico">{I.shieldCheck}</span>
       <div>
-        <div className="pj-con-t">
-          {placements.length} {placements.length === 1 ? 'section' : 'sections'} placed into the submission
-          {updated > 0 ? ` (${updated} updated in place)` : ''}
-        </div>
-        <div className="pj-con-d">
-          {placements.map((p) => p.leafSectionCode).join(', ') || '—'}
-          {skipped.length > 0 && <> · skipped: {skipped.map((s) => `§${s.sectionKey} (${s.reason})`).join('; ')}</>}
-        </div>
+        <div className="pj-con-t">{words.title}</div>
+        <div className="pj-con-d">{words.detail}</div>
       </div>
     </div>
   );
 }
 
 export function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPlaced: () => void }) {
-  const [verdict, setVerdict] = React.useState<Verdict>(null);
+  const [verdict, setVerdict] = React.useState<Shown | null>(null);
   const target = useFilingTarget(() => setVerdict(null), projectId);
   const [reason, setReason] = React.useState('');
   const [busy, setBusy] = React.useState(false);
@@ -80,6 +135,9 @@ export function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
+  /* What is on screen: this mount's own verdict, else the one the last
+     placement into the chosen sequence left (see lastPlacement). */
+  const shown = verdict ?? recallPlacement(projectId, target.seq?.id);
   const reasonOk = placementReasonOk(reason);
   const canPlace = Boolean(target.subId != null && target.seq && reasonOk && !busy);
 
@@ -87,6 +145,7 @@ export function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string
     if (!canPlace || target.subId == null || !target.seq) return;
     setBusy(true);
     setVerdict(null);
+    forgetPlacement(projectId);
     try {
       const res = await apiRequest('POST', '/api/cmc/module3-os/place-into-submission/' + encodeURIComponent(projectId), {
         submissionId: target.subId,
@@ -99,7 +158,8 @@ export function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string
         return;
       }
       const data = (json as { data?: PlacementOutcome })?.data;
-      setVerdict({ ok: true, outcome: { placements: data?.placements ?? [], skipped: data?.skipped ?? [] } });
+      const placed: Exclude<Verdict, null> = { ok: true, outcome: { placements: data?.placements ?? [], skipped: data?.skipped ?? [] } };
+      setVerdict(rememberPlacement(projectId, target.seq, placed));
       onPlaced();
     } catch (e) {
       setVerdict({ ok: false, message: e instanceof Error ? e.message : String(e) });
@@ -135,7 +195,7 @@ export function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string
       >
         {I.fileDown} {busy ? 'Placing…' : 'Place into the submission'}
       </button>
-      {verdict && <VerdictCard verdict={verdict} />}
+      {shown && <VerdictCard verdict={shown} />}
     </div>
   );
 }

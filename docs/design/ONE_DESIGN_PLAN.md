@@ -1799,6 +1799,15 @@ screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-u
   are in COORDINATION.
 - **For the founder:** whether the independent checks are required before a review approval (the reviewer's screen
   calls them optional; once run they block); a document edited during review cannot be signed or re-requested.
+- **Screen repairs made from the walk, each used in the running app** (`feea54cae6`, `e523113df9`): a person can
+  record the drug product's proposed shelf life, at registration or on a running study, without closing the study
+  out; a refused close-out says the edit was saved; a signed batch rejection (or release) shows on its row; a
+  placement says what it wrote and keeps saying it; the Vault's version line names the sealed version its file was
+  rendered from. The real-PostgreSQL suites around the Vault, CMC evidence and signing were run on a disposable,
+  deploy-shaped database: 13 files, 188 of 188.
+- **Next, found in the same walk:** a signer whose password or authenticator code is not accepted is told "HTTP 401"
+  or "Sign in again". The sentences exist on the server (`governed-signature-ceremony.ts` `REAUTH_MESSAGE`) and nine
+  routes that verify a signer do not send them. The repair is to send them, not to write them again.
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
