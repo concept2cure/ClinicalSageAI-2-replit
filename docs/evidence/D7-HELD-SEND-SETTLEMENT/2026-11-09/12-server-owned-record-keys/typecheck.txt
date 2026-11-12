@@ -1,0 +1,5 @@
+$ TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental   (2026-11-09T20:30:48Z)
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+exit=0

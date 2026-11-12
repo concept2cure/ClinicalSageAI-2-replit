@@ -1,0 +1,8 @@
+MUTATION C3M01-release-reopened-after-resend in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T19:26:04.084073Z): replaced [  if (where) return null;
+] with [  if (where || true) return null;
+]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > a release whose sequence was sent again is not re-opened by an act: FDA may hold two copies 372ms
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > judged again under the lock: a sequence sent again after the first read is refused, the signature void 94ms
+      Tests  2 failed | 10 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711 (expected 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711)

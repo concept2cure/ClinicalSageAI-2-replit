@@ -1,0 +1,11 @@
+MUTATION C2M15-restored-join-null-unsafe in server/services/ectd/prior-sequence-loader.ts (on the final code and tests, 2026-11-09T21:17:40.622989Z): replaced [              AND lower(t.metadata -> 'restoredBinding' ->> 'attemptId') IS NOT DISTINCT FROM f.transmit_attempt_id::text] with [              AND lower(t.metadata -> 'restoredBinding' ->> 'attemptId') = f.transmit_attempt_id::text]; tests/db/ectd-filed-state-view.dbtest.ts -t 'P-99 C2', on PostgreSQL as app_service with RLS_ENFORCE=on
+ × tests/db/ectd-filed-state-view.dbtest.ts > a send put on record after it was sent (P-99 C2) > a send whose gateway wrote no binding, read back and bound from its chained record, is read as sent, and says when 3334ms
+   → expected [ { sequenceNumber: '0000', …(3) } ] to deeply equal [ { sequenceNumber: '0000', …(4) } ]
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a send put on record after it was sent (P-99 C2) > T11 the act, through its routes as the runtime role under RLS, finds the send and its bytes and records what it carried 6177ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a send put on record after it was sent (P-99 C2) > a restored binding in another organisation naming the same sequence id is never read 19ms
+      Tests  1 failed | 2 passed | 8 skipped (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { sequenceNumber: '0000', …(3) } ] to deeply equal [ { sequenceNumber: '0000', …(4) } ]
+- Expected
++ Received
+restored sha256 13277e8ad7463859051ede62e61e5dde007c63abb9f0bcb2b00054c1defa8df8 (expected 13277e8ad7463859051ede62e61e5dde007c63abb9f0bcb2b00054c1defa8df8)

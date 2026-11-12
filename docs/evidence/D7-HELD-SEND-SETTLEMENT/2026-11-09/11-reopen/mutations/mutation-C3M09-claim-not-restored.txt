@@ -1,0 +1,5 @@
+MUTATION C3M09-claim-not-restored in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T19:27:19.691429Z): replaced [    ? { text: `UPDATE ectd_sequences SET dispatch_status = 'sent', transmit_signature_action_id = $3, transmit_attempt_id = $4::uuid, updated_at = NOW()] with [    ? { text: `UPDATE ectd_sequences SET dispatch_status = 'sent', updated_at = NOW()]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > a release FDA received: the sequence is sent with its claim restored, the transmittal received with FDA's receipt 482ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb (expected 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb)

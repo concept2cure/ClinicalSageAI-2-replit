@@ -1,0 +1,10 @@
+# P-92 §10.5 B red, 2026-11-09T17:46:34Z, at 621a046eb4, before the change: sequence-retirement.pglite.test.ts, the new describe only
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > the act refuses it in those words, and the precheck says the same before anyone signs 36ms
+   → expected { step: 'retire', cleared: true, …(2) } to match object { Object (step, cleared, ...) }
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > a release with no receipt kept is still not a bound production send, so it is retired 57ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > a release with a kept entry not verified is still not a bound production send, so it is retired 42ms
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > names the reason when a later sequence is the one FDA's receipt keeps 41ms
+   → expected SubmissionError: Sequence 0001, numbered … { code: '…' } to match object { Object (code, message) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed | 26 skipped (30)

@@ -1,0 +1,6 @@
+MUTATION K4-as2ReceiptHistory-not-stamped in server/services/submission-gateways/index.ts (on the final code and tests, 2026-11-09T20:30:35.983042Z): replaced [          as2ReceiptHistory: undefined,
+] with []
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply a signed act’s record either: P-92’s keys never reach the row, bound or unbound 21ms
+      Tests  1 failed | 5 skipped (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 669934863463aaf9092fbc1cec34b9e930743f4b27be81b60f15e8c193aacc2b (expected 669934863463aaf9092fbc1cec34b9e930743f4b27be81b60f15e8c193aacc2b)
