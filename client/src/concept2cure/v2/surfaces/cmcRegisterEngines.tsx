@@ -29,7 +29,7 @@ type Assessment = { side: 'drug_substance' | 'drug_product' } & (
   | { ok: false; code: string; message: string; routeTo?: string }
   | { ok: true; basis: 'ICH Q3A(R2)/Q3B(R2)'; disposition: string; thresholds: { reporting: Threshold; identification: Threshold; qualification: Threshold }; outstanding: string[] }
   | { ok: true; basis: 'ICH Q3C(R8)'; solventClass: number; limitPpm: number; withinLimit: boolean; disposition: string; outstanding: string[] }
-  | { ok: true; basis: 'ICH Q3D(R2)'; elementClass: string; pdeMicrogramsPerDay: number; observedMicrogramsPerDay: number; withinLimit: boolean; route: string; outstanding: string[] }
+  | { ok: true; basis: 'ICH Q3D(R2)'; elementClass: string; pdeMicrogramsPerDay: number; observedMicrogramsPerDay: number; exposureBasis?: string; withinLimit: boolean; route: string; outstanding: string[] }
   | { ok: true; basis: 'ICH M7(R2)'; impurityClass: number; className: string; controlApproach: string; acceptableIntakeUgPerDay: number | null; concentrationLimitPpm: number | null; withinLimit: boolean | null; disposition: string; outstanding: string[] }
 );
 export interface ImpurityAssessmentRow { id: number; impurityName: string; assessments: Assessment[] }
@@ -59,7 +59,11 @@ function q3c(a: Of<'ICH Q3C(R8)'>): Verdict {
 function q3d(a: Of<'ICH Q3D(R2)'>): Verdict {
   return {
     tone: a.withinLimit ? 'ok' : 'err',
-    text: `Q3D ${a.elementClass}: ${num(a.observedMicrogramsPerDay)} of ${num(a.pdeMicrogramsPerDay)} µg/day ${a.route} PDE · ${a.withinLimit ? 'within' : 'above'}`,
+    /* A derived exposure (ppm × the recorded daily dose) is ONE material's
+       contribution; the PDE is the whole product's. Said with the figure, so
+       "within" is not read as the product's verdict. */
+    text: `Q3D ${a.elementClass}: ${num(a.observedMicrogramsPerDay)} of ${num(a.pdeMicrogramsPerDay)} µg/day ${a.route} PDE · ${a.withinLimit ? 'within' : 'above'}` +
+      (a.exposureBasis ? ' · this material’s contribution, from its concentration and daily dose' : ''),
   };
 }
 function m7(a: Of<'ICH M7(R2)'>): Verdict {

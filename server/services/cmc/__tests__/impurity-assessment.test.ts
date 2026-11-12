@@ -392,3 +392,85 @@ describe('review: isAssessableImpurity is the engine, not a proxy for it', () =>
     expect(isAssessableImpurity(good, 'drug_substance')).toBe(true);
   });
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * ICH Q3D: a concentration with the daily dose beside it IS a daily exposure.
+ *
+ * Seen in the running app on 2026-11-12, on the demo programme's own Palladium
+ * row: 3 ppm, maximum daily dose 15 mg, oral — "Not assessed: … a level recorded
+ * in "ppm" cannot be compared to it without the product's daily dose." The
+ * daily dose was on the same row. Elemental results are routinely reported in
+ * ppm (µg/g), and Q3D §7 converts exactly this way: concentration (µg/g) ×
+ * daily amount (g/day) = µg/day. The engine took only a µg/day figure and, on
+ * any other unit, named a missing dose without looking for one.
+ * ────────────────────────────────────────────────────────────────────────────*/
+describe('ICH Q3D — a level recorded as a concentration, with the daily dose', () => {
+  const pd = (over: Record<string, unknown> = {}) => assessRecordedImpurity({
+    impurityName: 'Palladium', impurityType: 'elemental', observedLevel: '3', levelUnit: 'ppm',
+    maximumDailyDose: '15 mg', routeOfAdministration: 'oral', ...over,
+  });
+
+  it('converts ppm × daily dose to µg/day and compares it to the PDE', () => {
+    const a = pd();
+    expect(a.ok).toBe(true);
+    if (!(a.ok && a.basis === 'ICH Q3D(R2)')) throw new Error('expected a Q3D assessment');
+    // 3 µg/g × 0.015 g/day
+    expect(a.observedMicrogramsPerDay).toBeCloseTo(0.045, 6);
+    expect(a.pdeMicrogramsPerDay).toBe(100);
+    expect(a.withinLimit).toBe(true);
+    expect(a.observedAsRecorded).toBe('3 ppm');
+  });
+
+  it('says how the exposure was derived, and that it is this material’s contribution', () => {
+    const a = pd();
+    if (!(a.ok && a.basis === 'ICH Q3D(R2)')) throw new Error('expected a Q3D assessment');
+    expect(a.exposureBasis).toMatch(/3 ppm at a maximum daily dose of 15 mg/);
+    expect(a.exposureBasis).toMatch(/0\.045 µg\/day/);
+    /* The PDE is for the whole drug product. One component within it is not
+       the product within it, and the verdict must not read as if it were. */
+    expect(a.exposureBasis).toMatch(/every component/i);
+  });
+
+  it('reads ppb and % the same way, and a gram-scale dose', () => {
+    const ppb = pd({ observedLevel: '500', levelUnit: 'ppb', maximumDailyDose: '2 g' });
+    if (!(ppb.ok && ppb.basis === 'ICH Q3D(R2)')) throw new Error('expected a Q3D assessment');
+    expect(ppb.observedMicrogramsPerDay).toBeCloseTo(1, 6); // 0.5 µg/g × 2 g/day
+  });
+
+  it('finds an exceedance through the conversion', () => {
+    // Cadmium, oral PDE 5 µg/day: 10 ppm × 1 g/day = 10 µg/day.
+    const a = pd({ impurityName: 'Cd', observedLevel: '10', maximumDailyDose: '1 g' });
+    if (!(a.ok && a.basis === 'ICH Q3D(R2)')) throw new Error('expected a Q3D assessment');
+    expect(a.withinLimit).toBe(false);
+    expect(a.outstanding.join(' ')).toMatch(/above the ICH Q3D/);
+    expect(a.outstanding.join(' ')).toMatch(/10 µg\/day/);
+  });
+
+  it('refuses a concentration with NO daily dose, and says that is what is missing', () => {
+    const a = pd({ maximumDailyDose: undefined });
+    expect(a.ok).toBe(false);
+    if (a.ok) return;
+    expect(a.code).toBe('MDD_MISSING');
+    expect(a.message).toMatch(/No maximum daily dose is recorded/);
+    expect(a.message).toMatch(/ppm/);
+  });
+
+  it('refuses a dose it cannot read rather than guessing one', () => {
+    const a = pd({ maximumDailyDose: '2 mg/kg' });
+    expect(a.ok).toBe(false);
+    if (!a.ok) expect(a.code).toBe('MDD_UNPARSEABLE');
+  });
+
+  it('leaves a µg/day record exactly as it was: no derivation note, no dose needed', () => {
+    const a = pd({ observedLevel: '4', levelUnit: 'µg/day', maximumDailyDose: undefined });
+    if (!(a.ok && a.basis === 'ICH Q3D(R2)')) throw new Error('expected a Q3D assessment');
+    expect(a.observedMicrogramsPerDay).toBe(4);
+    expect(a.exposureBasis).toBeUndefined();
+  });
+
+  it('still refuses a unit that states neither an exposure nor a concentration', () => {
+    const a = pd({ levelUnit: 'mg' });
+    expect(a.ok).toBe(false);
+    if (!a.ok) expect(a.code).toBe('LEVEL_UNIT_NOT_CONVERTIBLE');
+  });
+});
