@@ -10,6 +10,7 @@ import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { useNavEntitlements } from '../navEntitlements';
 import { AdminSettingsTab, IdentityConsoleDoor, type AdminSettingRow } from './AdminSettings';
 import type { OrganizationProfileContext } from './OrganizationProfileCard';
 import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
@@ -136,6 +137,7 @@ function withConfiguration(view: AnaView, tab: string, configuration: Organizati
 }
 
 export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
+  const { platformAdmin } = useNavEntitlements();
   /* Fixture-free read: adopt the org's REAL admin estate from GET
      /api/mdx/admin (org-scoped, org-admin gated). A failed fetch (network,
      401/403, 500) is an honest error; a successful load with no members is an
@@ -638,7 +640,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
 
-          {tab === 'sso' && <IdentityConsoleDoor onNav={onNav} />}
+          {tab === 'sso' && <IdentityConsoleDoor onNav={onNav} platformAdmin={platformAdmin} />}
 
           {tab === 'apikeys' && (
             <section className="section">
