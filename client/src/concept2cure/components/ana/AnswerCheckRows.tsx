@@ -46,6 +46,10 @@ const CLAIM_WORD: Record<string, string> = {
   fda_anda: 'submission number',
   cfr: 'regulation',
   ich: 'guideline',
+  eu_law: 'regulation',
+  standard: 'standard',
+  eu_guidance: 'guidance',
+  ema_ref: 'guideline',
   quote: 'quote',
   figure: 'figure',
 };

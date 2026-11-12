@@ -74,11 +74,13 @@ vi.mock('../../part11/signature-persistence', async (original) => ({
 }));
 // The seam under test. See the header on why this is stubbed rather than driven
 // against a real filing store.
-vi.mock('../../c2c/filing-section-target', () => ({
+vi.mock('../../c2c/filing-section-target', async (original) => ({
+  ...await original<typeof import('../../c2c/filing-section-target')>(),
   filingAgreesWithEditing: (...args: unknown[]) => h.agreement(...args),
 }));
 
 import { createControlledQmsDocument, updateControlledQmsDocument } from '../controlled-document-service';
+import { qmsAuthoringWriteRefusal } from '../controlled-document-content';
 import { approveQmsDocumentSigned } from '../document-approval-signature';
 import type { CreateContext } from '../../authoring/authoring-documents';
 import { installQmsProgramAccessHarness } from './qms-authoring-harness';
@@ -205,6 +207,59 @@ describe('a QMS approval consults the filing before it seals', () => {
     // naming only the key sends the approver looking for a section that does
     // not exist. Same rule as the authoring router's refusal.
     expect(String(err.message)).toContain('2.5.1');
+  });
+
+  it('names a remedy that can be taken while the document is under review', async () => {
+    /* Corrected 2026-11-12. The refusal said "open that section, make any edit
+       and save, which rewrites the filed copy. Then approve again." A
+       controlled document under review refuses every authoring write, and the
+       re-file with it (the next case), so that could never be done — the
+       sentence was wrong on the day it shipped. What works is the Quality
+       register's own Return for revision, then the editor's Re-file saved
+       text, then review and approval again. */
+    const row = await approvable();
+    h.agreement.mockResolvedValue(DIVERGED);
+    await db.exec('BEGIN');
+    const err = await approveQmsDocumentSigned(client(), { ...APPROVE, documentId: row.id }).catch((e) => e);
+    await db.exec('ROLLBACK');
+    const message = String(err.message);
+    expect(message).not.toMatch(/make any edit and save/i);
+    expect(message).toMatch(/return it for revision/i);
+    expect(message).toMatch(/Re-file saved text/);
+    // In the order they have to happen: return, re-file, review, approve.
+    const at = (words: RegExp) => message.search(words);
+    expect(at(/return it for revision/i)).toBeLessThan(at(/Re-file saved text/));
+    expect(at(/Re-file saved text/)).toBeLessThan(at(/send the document for review/i));
+    expect(at(/send the document for review/i)).toBeLessThan(at(/approve again/i));
+    expect(message).toMatch(/Nothing was signed\.$/);
+  });
+
+  it('the remedy the old sentence named is refused under review, and admitted once the document is returned', async () => {
+    const row = await approvable(); // under review
+    expect(await qmsAuthoringWriteRefusal(ctx.pool, 9, row.authoring_document_id)).toMatchObject({ code: 'QMS_DOCUMENT_CONTROLLED' });
+    // What Return for revision does to the register entry (returnQmsDocument,
+    // qms-review-route.ts: from 'in_review' to 'draft').
+    await db.query(`UPDATE qms_documents SET status = 'draft' WHERE id = $1`, [row.id]);
+    expect(await qmsAuthoringWriteRefusal(ctx.pool, 9, row.authoring_document_id)).toBeNull();
+  });
+
+  it('names several sections once each, by the shared rule', async () => {
+    const row = await approvable();
+    h.agreement.mockResolvedValue({
+      documentId: 'c2c-1',
+      diverged: [
+        { key: '2.5', filed: 'different', section: { id: 's1', code: '2.5.1' } },
+        { key: '2.5', filed: 'different', section: { id: 's1b', code: '2.5.1' } },
+        { key: '3.2.S', filed: 'different', section: { id: 's2', code: '3.2.S' } },
+      ],
+    });
+    await db.exec('BEGIN');
+    const err = await approveQmsDocumentSigned(client(), { ...APPROVE, documentId: row.id }).catch((e) => e);
+    await db.exec('ROLLBACK');
+    const message = String(err.message);
+    expect(message).toContain('sections 2.5.1 (filed at 2.5), 3.2.S ');
+    expect(message.match(/2\.5\.1 \(filed at 2\.5\)/g)).toHaveLength(1);
+    expect(message).toMatch(/those sections/);
   });
 
   it('approves an unbound controlled document — the usual case — without complaint', async () => {

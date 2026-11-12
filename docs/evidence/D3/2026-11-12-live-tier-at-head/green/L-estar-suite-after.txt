@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-11-12T21:52:13.688Z","pid":1027,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T21:52:13.689Z","pid":1027,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T21:52:13.689Z","pid":1027,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device
+[database] Database connection successful
+
+stderr | tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device 6771ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty 127ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D6 risk management turns on the kind of 510(k), and does not block 121ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > performance testing is one requirement: animal testing on file, so bench testing does not block 140ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > a section no mapper slot takes keeps its pack's flag: A2 and B3 stay required 108ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > follows the device: once the project answers that it is not sterile, D4 is not applicable 148ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > every section: the Library's mark and blocker are the mapper's answer 126ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section no mapper slot takes keeps its pack's flag: B2, C2 and C4 stay required 101ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section that turns on an unanswered question is not decided, never optional, and names the question 103ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > pma:fda fda-pma-21cfr814-20-v1.1 104ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > mdr:ema eu-mdr-2017-745-annex-ii-v1.0 107ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > ivdr:ema eu-ivdr-2017-746-annex-ii-v1.0 100ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  21:52:04
+   Duration  17.09s (transform 3.14s, setup 76ms, import 431ms, tests 12.15s, environment 0ms)
+

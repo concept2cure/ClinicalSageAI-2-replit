@@ -1,0 +1,53 @@
+Mutant run — the answer check's citation forms (GRD-CITES)
+Targets: server/services/ana/answer-check-citations.ts, server/services/ana/answer-grounding.ts
+Suite:   tests/services/answer-check-citation-forms.test.ts
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run <suite>
+
+FINAL RUN, on the code as committed:
+
+E01 the extractors are not wired into the check                          KILLED  Tests  32 failed | 5 passed (37)
+E02 MDR and IVDR numbers swapped                                         KILLED  Tests  6 failed | 31 passed (37)
+E03 a coarser number credits a finer one (61 holds 610)                  KILLED  Tests  1 failed | 36 passed (37)
+E04 a finer provision no longer holds the one it is in                   KILLED  Tests  1 failed | 36 passed (37)
+E05 a provision is credited whatever act it belongs to                   KILLED  Tests  1 failed | 36 passed (37)
+E06 an answer is read by nearness, like a source                         KILLED  Tests  1 failed | 36 passed (37)
+E07 a source is read by the words only, never by nearness                KILLED  Tests  2 failed | 35 passed (37)
+E08 an act cited by number is credited by its short name                 KILLED  Tests  1 failed | 36 passed (37)
+E09 the act that follows is not read ("Article 56 of the IVDR")          KILLED  Tests  1 failed | 36 passed (37)
+E10 the act right before is not read ("MDR Article 61")                  KILLED  Tests  17 failed | 20 passed (37)
+E11 a provision listed after another gets no act                         KILLED  Tests  1 failed | 36 passed (37)
+E12 a plural head lists nothing ("Articles 61 and 62")                   KILLED  Tests  1 failed | 36 passed (37)
+E13 an act named both ways is two acts                                   KILLED  Tests  1 failed | 36 passed (37)
+E14 a provision of an act is also the act cited bare                     KILLED  Tests  4 failed | 33 passed (37)
+E15 a standard edition is not read                                       KILLED  Tests  1 failed | 36 passed (37)
+E16 a part is credited by a longer part (60601-1 by 60601-1-2)           KILLED  Tests  1 failed | 36 passed (37)
+E17 a bare number credits a standard                                     KILLED  Tests  1 failed | 36 passed (37)
+E18 a bare "EN" and four digits is a standard                            KILLED  Tests  1 failed | 36 passed (37)
+E19 a revision is not read                                               KILLED  Tests  1 failed | 36 passed (37)
+E20 MEDDEV 2.7/1 and 2.7.1 are two documents                             KILLED  Tests  1 failed | 36 passed (37)
+E21 a guidance number is credited by a longer one (2020-1 by 2020-16)    KILLED  Tests  1 failed | 36 passed (37)
+E22 a two-digit EMA year is read as the wrong century                    KILLED  Tests  1 failed | 36 passed (37)
+E23 an EMA reference is credited by any number                           KILLED  Tests  1 failed | 36 passed (37)
+E24 an EMA reference is credited by any year                             KILLED  Tests  1 failed | 36 passed (37)
+E25 the engine version is not bumped                                     KILLED  Tests  1 failed | 36 passed (37)
+E26 an annex numeral is credited by one that starts with it (XI by XIV)  KILLED  Tests  1 failed | 36 passed (37)
+E27 "asked for" needs the act too, so an article asked for alone is not asked for KILLED  Tests  1 failed | 36 passed (37)
+E28 a standard asked for by its bare number is not asked for             KILLED  Tests  1 failed | 36 passed (37)
+E29 a guidance document is never asked for                               KILLED  Tests  1 failed | 36 passed (37)
+E30 an EMA reference is never asked for                                  KILLED  Tests  1 failed | 36 passed (37)
+E31 the official title is not part of the act                            KILLED  Tests  1 failed | 36 passed (37)
+E32 the check ignores what was asked for, and uses "held" for both       KILLED  Tests  3 failed | 34 passed (37)
+E33 an act cited bare is never asked for                                 KILLED  Tests  1 failed | 36 passed (37)
+
+killed 33/33
+
+FIRST RUN (26 mutants, before two cases were added) — the survivors:
+E24 an EMA reference is credited by any year                             SURVIVED  Tests  31 passed (31)
+E26 an annex numeral is credited by one that starts with it (XI by XIV)  SURVIVED  Tests  31 passed (31)
+killed 24/26
+
+MIDDLE RUN (33 mutants, after the asked-for rule) — not killed:
+E11 … ANCHOR-MISS (count=0) — NOT applied     [its target line had been rewritten; re-anchored]
+E33 an act cited bare is never asked for … SURVIVED  Tests  36 passed (36)     [no such case existed; one was added]
+
+Every mutated file was restored after each mutant; the tree was checked afterwards.

@@ -9,7 +9,10 @@
  *
  *   identifiers  trial (NCT, ISRCTN, EudraCT), literature (PMID, DOI) and FDA
  *                submission numbers (510(k), PMA, De Novo, NDA, BLA, ANDA)
- *   regulations  CFR sections and ICH codes
+ *   regulations  CFR sections and ICH codes; EU regulations and directives
+ *                with their articles and annexes; ISO, IEC and EN standards;
+ *                MDCG and MEDDEV documents; EMA document references
+ *                (answer-check-citations.ts)
  *   quotes       quoted source text
  *   figures      percentages, p-values, ratios, intervals, n, counts, doses,
  *                durations (answer-check-figures.ts)
@@ -65,10 +68,15 @@ import {
   asciiDashes,
   type InputRead,
 } from './answer-check-sources';
+import { citationClaims, type CitationKind } from './answer-check-citations';
 import { isGovernedContentWriteTool } from './governed-write-tools';
 
-/** The engine that produced a check, recorded with it. Bump on any change to what it finds. */
-export const ANSWER_CHECK_VERSION = 'answer-check/2';
+/**
+ * The engine that produced a check, recorded with it. Bump on any change to what it finds.
+ * /3 (2026-11-12) reads EU law, standards, EU guidance and EMA references, so
+ * an answer /2 called free of specific claims may hold several.
+ */
+export const ANSWER_CHECK_VERSION = 'answer-check/3';
 
 export interface UnsupportedClaim {
   kind:
@@ -89,6 +97,9 @@ export interface UnsupportedClaim {
     // Regulations: a CFR section, an ICH guideline code
     | 'cfr'
     | 'ich'
+    // An EU regulation or directive, a standard, an MDCG or MEDDEV document, an
+    // EMA document reference (answer-check-citations.ts)
+    | CitationKind
     // Quoted source text
     | 'quote'
     // A figure: a percentage, p-value, ratio, interval, n, count, dose or duration
@@ -544,6 +555,7 @@ function checkTextClaims(
     const code = (im[1] ?? im[2]).replace(/\s+/g, '').toUpperCase();
     settle('ich', code, im[0].replace(TRAILING_PUNCT_RE, '').trim(), (t) => containsIchCode(t.upper, code));
   }
+  for (const c of citationClaims(answer)) settle(c.kind, c.key, c.text, (t) => c.heldBy(t.upper), (t) => c.askedBy(t.upper));
   QUOTE_RE.lastIndex = 0;
   let qm: RegExpExecArray | null;
   while ((qm = QUOTE_RE.exec(answer)) !== null) {
