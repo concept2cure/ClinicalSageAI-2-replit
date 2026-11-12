@@ -27,6 +27,7 @@ import type {
   DocumentMetadata,
   StatisticalDocumentType,
 } from './types';
+import { MAX_INTERIM_LOOKS, interimAlphaSpendingSection, interimBoundaries } from './interim-boundaries';
 import {
   ACTION_LABELS,
   AGENCY_LABELS,
@@ -818,18 +819,29 @@ export class DocumentGenerator {
     _domain: DomainAdaptation,
     regulatory?: RegulatoryCustomization
   ): string {
-    const k = input.interimAnalyses && input.interimAnalyses > 0 ? input.interimAnalyses : 1;
+    /* A design that records no interim analysis is told so, and the plan is
+       then drawn for one. It used to read "This plan governs 1 planned interim
+       analysis" for a design that planned none. */
+    const recorded = input.interimAnalyses && input.interimAnalyses > 0 ? input.interimAnalyses : 0;
+    const k = recorded || 1;
+    /* The count arrives unvalidated: timing is listed, and boundaries solved,
+       for a whole number of looks the plan can state. */
+    const listable = Number.isInteger(k) && k <= MAX_INTERIM_LOOKS;
     const n = comp.adjustedTotal ?? comp.sampleSize.total;
+    const phrase = studyPhrase(input.studyType);
+    // "an equivalence study", "an adaptive study": it read "a equivalence study".
+    const study = `${/^[aeiou]/i.test(phrase) ? 'an' : 'a'} ${phrase} study (target N = ${n}, ${(comp.power * 100).toFixed(0)}% power at α = ${input.alpha})`;
     let c = `# Interim Analysis Plan\n\n`;
-    c += `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for a ${studyPhrase(input.studyType)} study (target N = ${n}, ${(comp.power * 100).toFixed(0)}% power at α = ${input.alpha}). It controls the overall Type I error and defines stopping rules.\n\n`;
-    c += `## 2. Timing\n\nInterim ${k === 1 ? 'analysis is' : 'analyses are'} planned at approximately ${Array.from({ length: k }, (_, i) => `${Math.round(((i + 1) / (k + 1)) * 100)}%`).join(', ')} of planned information (events/completers).\n\n`;
-    c += `## 3. Alpha Spending\n\nA group-sequential design with an O'Brien–Fleming-type alpha-spending function is recommended to preserve a conservative early boundary and a near-nominal final boundary. The cumulative spend at the final analysis equals the study-wide α = ${input.alpha}.\n\n| Look | Information fraction | Indicative two-sided boundary (Z) |\n|---|---|---|\n`;
-    for (let i = 1; i <= k; i++) {
-      const frac = (i / (k + 1));
-      const z = (2.96 - 0.6 * frac).toFixed(2); // indicative, conservative-early → near-final
-      c += `| ${i} | ${(frac * 100).toFixed(0)}% | ±${z} |\n`;
-    }
-    c += `| Final | 100% | ±${(1.97).toFixed(2)} |\n\n*Boundaries are indicative; compute exact boundaries with the chosen spending function (e.g. Lan–DeMets) at finalization.*\n\n`;
+    c += recorded
+      ? `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for ${study}. It controls the overall Type I error and defines stopping rules.\n\n`
+      : `## 1. Purpose\n\nThe design records no interim analysis. This plan is drawn for one interim analysis of ${study}, so that one can be pre-specified; record the number of interim analyses on the design to change it. It controls the overall Type I error and defines stopping rules.\n\n`;
+    c += listable
+      ? `## 2. Timing\n\nInterim ${k === 1 ? 'analysis is' : 'analyses are'} planned at approximately ${Array.from({ length: k }, (_, i) => `${Math.round(((i + 1) / (k + 1)) * 100)}%`).join(', ')} of planned information (events/completers).\n\n`
+      : `## 2. Timing\n\nThe design records ${k} interim analyses. Timing is listed for a whole number of up to ${MAX_INTERIM_LOOKS}.\n\n`;
+    /* Section 3 is the engine's: the exact Lan–DeMets O'Brien–Fleming boundaries
+       for these looks, or the reason this design gets none (interim-boundaries.ts).
+       Until 2026-11-12 it printed ±(2.96 − 0.6·t) and a fixed ±1.97. */
+    c += interimAlphaSpendingSection(input, interimBoundaries(input, comp, k));
     c += `## 4. Stopping Rules\n\n- **Efficacy**: cross the upper boundary at an interim look.\n- **Futility**: non-binding futility boundary (e.g. conditional power < 20%).\n- **Safety**: per DSMB charter, independent of efficacy boundaries.\n\n`;
     c += `## 5. Governance\n\nInterim analyses are performed by an unblinded independent statistician and reviewed by the DSMB (see DSMB Charter). The sponsor remains blinded.${regulatory ? ` ${regulatory.body} expects pre-specification of all boundaries before the first look.` : ''}\n\n`;
     c += this.provenanceFooter();
