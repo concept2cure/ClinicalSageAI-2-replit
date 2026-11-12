@@ -631,7 +631,9 @@ describe('the real registry with the IND tools in Submission Center, agency ques
     // A mount root admits every handler mounted under it, called or not.
     expect(prefixes.filter((p) => p === '/api/ind-lifecycle')).toEqual([]);
     const calls = callsOf('ind-checklist');
-    const uncalled = prefixes.filter((pre) => !calls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    // A claim may name a `:param` segment (api-prefix-map.ts, P-122); the walker writes an interpolated one as `:p`.
+    const seg = (p: string) => p.replace(/\/:[A-Za-z_]\w*/g, '/:p');
+    const uncalled = prefixes.filter((pre) => !calls.some(([p]) => seg(p) === seg(pre) || seg(p).startsWith(`${seg(pre)}/`)));
     expect(uncalled, `ind-checklist apiPrefixes no screen of it calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
   });
 
