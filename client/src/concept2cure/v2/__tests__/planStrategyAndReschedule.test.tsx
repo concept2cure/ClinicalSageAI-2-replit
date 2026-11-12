@@ -129,6 +129,15 @@ describe("Use the schedule's date", () => {
     expect(onMoved).not.toHaveBeenCalled();
   });
 
+  it('never shows a refusal\'s code as its words', async () => {
+    // A refusal that sends only a code (the launch gate, an access check) has no sentence to show.
+    apiRequest.mockImplementation(async () => ok({ success: false, error: 'FORBIDDEN' }, 403));
+    const onMoved = mount();
+    await confirm();
+    expect((await screen.findByRole('alert')).textContent).toBe('The due date was not changed: the server refused it (HTTP 403).');
+    expect(onMoved).not.toHaveBeenCalled();
+  });
+
   it('reads the task again when the save could not be confirmed', async () => {
     apiRequest.mockImplementation(async () => ok({ success: false, error: 'OUTCOME_UNKNOWN' }, 500));
     const onMoved = mount();
