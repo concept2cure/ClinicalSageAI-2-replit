@@ -95,6 +95,7 @@ Steps 1 to 3 were done through the product API. Step 4 was done in the browser. 
 
 - **The structured record behind `/api/protocol-consent` is not converged.** Its seven routes have no caller. Under
   "one record", it should be retired or reached, and that is a founder decision (P-122 asks one for any removal).
-- **The Check still lists the ClinicalTrials.gov statement as not complete** on a form approved as not an applicable
-  clinical trial. The approval records the statement; the Check does not read the trail.
+- *(Corrected the same day.)* This note said the Check would still list the ClinicalTrials.gov statement as not complete
+  on a form approved as not an applicable clinical trial. It cannot: an approved document refuses the Check
+  (409 `AUTHORING_DOCUMENT_IMMUTABLE`, seen in the running app on this walk's document).
 - **The when-appropriate elements (50.25(b)) are not checked one by one.**
