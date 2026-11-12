@@ -16,14 +16,16 @@ beforeEach(() => resolveSignerOrgRole.mockClear());
 
 // The deployed trial master file store, doubled (eTMF convergence E4 step 2): what readTrialTmf and listTmfArtifacts
 // answer for a study. Each answer is the real assessment (tmf-completeness.ts) over the filings below.
-const store = vi.hoisted(() => ({ readTrialTmf: vi.fn(), listTmfArtifacts: vi.fn() }));
+const store = vi.hoisted(() => ({ readTrialTmf: vi.fn(), listTmfArtifacts: vi.fn(), recordTmfArtifactFiling: vi.fn() }));
 vi.mock('../../etmf/tmf-artifact-persistence.js', async (original) => ({ ...(await original<object>()), ...store }));
 
 import { getToolHandler } from '../AnaToolExecutor';
 import { assessTmfCompleteness } from '../../etmf/tmf-completeness';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
-const TOOLS = ['create_tmf', 'classify_tmf_artifact', 'review_tmf_completeness', 'get_tmf_view'];
+// create_tmf, seed_tmf, update_tmf_artifact_status and review_tmf_completeness retired on 2026-11-12 (E4 step 3):
+// tmf-tools-retired.test.ts.
+const TOOLS = ['classify_tmf_artifact', 'get_tmf_view'];
 
 describe('eTMF AnA tools — registration', () => {
   it.each(TOOLS)('%s is registered and defined', (name) => {
@@ -33,10 +35,9 @@ describe('eTMF AnA tools — registration', () => {
 });
 
 describe('eTMF AnA tools — context + input guards', () => {
-  it('create_tmf refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_tmf')!({ title: 'X' }, { humanConfirmed: true } as any));
-    // 2026-09-28: the registry now refuses a confirm-class call with no identified
-    // member before the handler (and its own tenant + user guard) runs.
+  it('a confirm-class call with no identified member is refused before its handler runs', async () => {
+    const out = JSON.parse(await getToolHandler('classify_tmf_artifact')!({ tmf_file_id: 1, artifact_name: 'Protocol' }, { humanConfirmed: true } as any));
+    // 2026-09-28: the registry refuses a confirm-class call with no identified member before the handler runs.
     expect(out.error).toMatch(/needs an identified member of the organization/);
     expect(out.error).toMatch(/Nothing was changed/);
     expect(resolveSignerOrgRole).not.toHaveBeenCalled();
@@ -45,11 +46,9 @@ describe('eTMF AnA tools — context + input guards', () => {
     const out = JSON.parse(await getToolHandler('classify_tmf_artifact')!({ tmf_file_id: 1 }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/artifact_name are required/);
   });
-  it('review_tmf_completeness reads only for an identified person, and only a named study', async () => {
-    const noOne = JSON.parse(await getToolHandler('review_tmf_completeness')!({ study_id: 'S-1' }, { organizationId: 1 } as any));
+  it('get_tmf_view reads only for an identified person', async () => {
+    const noOne = JSON.parse(await getToolHandler('get_tmf_view')!({ study_id: 'S-1' }, { organizationId: 1 } as any));
     expect(noOne.code).toBe('PROJECT_ACTOR_REQUIRED');
-    const noStudy = JSON.parse(await getToolHandler('review_tmf_completeness')!({ tmf_file_id: 3 }, { organizationId: 1, userId: 5 } as any));
-    expect(noStudy.code).toBe('TMF_STUDY_ID_REQUIRED');
     expect(store.readTrialTmf).not.toHaveBeenCalled();
   });
 });
@@ -89,13 +88,63 @@ describe('AnA reads a study\'s trial master file from the deployed store', () =>
     expect(store.readTrialTmf).not.toHaveBeenCalled();
   });
 
-  it('review_tmf_completeness answers the same readiness, and a study the person cannot open is the store\'s own refusal', async () => {
-    const out = JSON.parse(await getToolHandler('review_tmf_completeness')!({ study_id: 'S-1', scope: 'all' }, ctx));
+  it('reads the scope asked for, and a study the person cannot open is the store\'s own refusal', async () => {
+    await getToolHandler('get_tmf_view')!({ study_id: 'S-1', scope: 'all' }, ctx);
     expect(store.readTrialTmf).toHaveBeenCalledWith('S-1', { organizationId: 1, userId: 5 }, 'all');
-    expect(out).toMatchObject({ ok: true, readiness: 'not ready' });
     const { TmfArtifactError } = await import('../../etmf/tmf-study-access');
     store.readTrialTmf.mockRejectedValueOnce(new TmfArtifactError('STUDY_NOT_FOUND', 'No study with this id is in a project you can open. Nothing was read or changed.'));
-    const refused = JSON.parse(await getToolHandler('review_tmf_completeness')!({ study_id: 'S-9' }, ctx));
+    const refused = JSON.parse(await getToolHandler('get_tmf_view')!({ study_id: 'S-9' }, ctx));
     expect(refused).toEqual({ error: 'No study with this id is in a project you can open. Nothing was read or changed.', code: 'STUDY_NOT_FOUND' });
+  });
+});
+
+/* E4 step 3, L-1 (2026-11-12; P-124 item 5): classify_tmf_artifact files a record of a study's trial master file through
+   the deployed store (recordTmfArtifactFiling), with the person's confirmation and reason. It wrote the retired
+   store's tmf_artifacts with a typed status. The store's own filing (study admission, Vault write role, reason floor,
+   chained audit row in one transaction) is proven on PostgreSQL in tests/db/etmf-governed-filing.dbtest.ts. */
+describe('classify_tmf_artifact files through the deployed store', () => {
+  const confirmed = { organizationId: 1, userId: 5, humanConfirmed: true } as any;
+  const WHY = 'Signed protocol received from the sponsor.';
+  const call = async (input: Record<string, unknown>) => JSON.parse(await getToolHandler('classify_tmf_artifact')!(input, confirmed));
+  beforeEach(() => {
+    store.recordTmfArtifactFiling.mockReset().mockImplementation(async (i: any) => ({ id: 'f-1', documentRef: i.documentRef }));
+  });
+
+  it('files the record the name is, for the study, against the Vault document, with the person\'s reason', async () => {
+    const out = await call({ study_id: 'S-1', artifact_name: 'Protocol and amendments', document_id: 'd1', reason: WHY });
+    expect(store.recordTmfArtifactFiling).toHaveBeenCalledWith(
+      { trialId: 'S-1', artifactCode: 'protocol', documentRef: 'vault://d1', reason: WHY }, { organizationId: 1, userId: 5 });
+    expect(out).toMatchObject({ ok: true, filingId: 'f-1', artifactCode: 'protocol', zone: 2 });
+    expect(out.message).toMatch(/^Filed Protocol and amendments \(zone 2\) for study S-1 against Vault document d1\./);
+  });
+
+  it('a record noted with no document is said not to count as filed', async () => {
+    const out = await call({ study_id: 'S-1', artifact_name: 'protocol', reason: WHY });
+    expect(store.recordTmfArtifactFiling.mock.calls[0][0]).toMatchObject({ documentRef: null });
+    expect(out.message).toMatch(/with no document: it does not count as filed/);
+  });
+
+  it.each([
+    ['holiday-photos-notes', /matches no record of the DIA TMF Reference Model/],
+    ['Monitoring visit report site 04', /belongs in zone \d+ \(.+\) but is not one of its records|matches no record|names records of two zones/],
+  ])('"%s" is no record of the reference model: refused, nothing filed, AnA asks which record', async (name, why) => {
+    const out = await call({ study_id: 'S-1', artifact_name: name, reason: WHY });
+    expect(out.code).toBe('TMF_RECORD_NOT_NAMED');
+    expect(out.error).toMatch(why);
+    expect(out.error).toMatch(/Ask the user which record it is/);
+    expect(store.recordTmfArtifactFiling).not.toHaveBeenCalled();
+  });
+
+  it('without the person\'s reason nothing is filed', async () => {
+    const out = await call({ study_id: 'S-1', artifact_name: 'protocol' });
+    expect(out.error).toBeTruthy();
+    expect(store.recordTmfArtifactFiling).not.toHaveBeenCalled();
+  });
+
+  it('a refusal of the store is passed on with its code', async () => {
+    const { TmfArtifactError } = await import('../../etmf/tmf-study-access');
+    store.recordTmfArtifactFiling.mockRejectedValueOnce(new TmfArtifactError('DOCUMENT_NOT_IN_PROJECT', "That Vault document is not held in this study's project."));
+    const out = await call({ study_id: 'S-1', artifact_name: 'protocol', document_id: 'd9', reason: WHY });
+    expect(out).toEqual({ error: "That Vault document is not held in this study's project.", code: 'DOCUMENT_NOT_IN_PROJECT' });
   });
 });

@@ -18,8 +18,8 @@ import { STATED_REASON_INPUT } from './stated-reason-input';
 // platform holds: vault artifacts (concept2cure_artifacts + versions),
 // governed C2C documents (c2c_documents + sections), and the eTMF index.
 // All read-only, all tenant-scoped via ToolContext.organizationId. These
-// complement the existing write tools (create_tmf, classify_tmf_artifact,
-// section drafting) and the upload-file readers (search_large_document).
+// complement the existing write tools (classify_tmf_artifact, section
+// drafting) and the upload-file readers (search_large_document).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const LIST_VAULT_DOCUMENTS: AnaTool = {
@@ -230,41 +230,6 @@ export const COMPARE_VAULT_VERSIONS: AnaTool = {
       version_b: { type: 'number', description: 'Newer version number.' },
     },
     required: ['artifact_id', 'version_a', 'version_b'],
-  },
-};
-
-export const SEED_TMF: AnaTool = {
-  name: 'seed_tmf',
-  description:
-    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R3) Appendix C essential records). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_file_id: { type: 'number', description: 'The TMF file id (from create_tmf or get_tmf_view).' },
-      scope: { type: 'string', enum: ['essential', 'all'], description: "Seed scope. Default 'all'." },
-      reason: STATED_REASON_INPUT,
-    },
-    required: ['tmf_file_id', 'reason'],
-  },
-};
-
-export const UPDATE_TMF_ARTIFACT_STATUS: AnaTool = {
-  name: 'update_tmf_artifact_status',
-  description:
-    "Move a TMF artifact through its lifecycle: expected → received → in_review → final (or missing / not_applicable). Use after documents arrive or pass QC so the completeness gap-check reflects reality. GOVERNED: reason required, audited, tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_artifact_id: { type: 'number', description: 'The TMF artifact id (from get_tmf_view / classify_tmf_artifact).' },
-      status: {
-        type: 'string',
-        enum: ['expected', 'received', 'in_review', 'final', 'missing', 'not_applicable'],
-        description: 'The new lifecycle status.',
-      },
-      document_date: { type: 'string', description: 'Optional document date (YYYY-MM-DD).' },
-      reason: STATED_REASON_INPUT,
-    },
-    required: ['tmf_artifact_id', 'status', 'reason'],
   },
 };
 

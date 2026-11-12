@@ -2152,10 +2152,9 @@
    }
   },
   "classify_tmf_artifact": {
-   "class": "conditional",
-   "writes": "INSERT tmf_artifacts + governed-action row (status unvalidated)",
-   "site": "AnaToolExecutor.ts registerToolHandler('classify_tmf_artifact')",
-   "rule": "input.status === final -> refuse; else confirm"
+   "class": "confirm",
+   "writes": "INSERT or UPDATE tmf_artifact_filings + chained audit row (recordTmfArtifactFiling)",
+   "site": "AnaToolExecutor.ts registerToolHandler('classify_tmf_artifact')"
   },
   "classify_tox_findings": {
    "class": "read",
@@ -2731,11 +2730,6 @@
     "object": "a software lifecycle record",
     "source": "project"
    }
-  },
-  "create_tmf": {
-   "class": "confirm",
-   "writes": "INSERT tmf_files + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_tmf')"
   },
   "create_udi_record": {
    "class": "confirm",
@@ -6320,11 +6314,6 @@
     "source": "authoring"
    }
   },
-  "review_tmf_completeness": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('review_tmf_completeness')"
-  },
   "review_training_gate": {
    "class": "read",
    "writes": "none",
@@ -6958,16 +6947,6 @@
     ]
    }
   },
-  "seed_tmf": {
-   "class": "confirm",
-   "writes": "INSERT tmf_artifacts + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('seed_tmf')",
-   "present": {
-    "verb": "create",
-    "object": "the Trial Master File structure",
-    "source": "project"
-   }
-  },
   "select_505_pathway": {
    "class": "read",
    "writes": "none",
@@ -7499,12 +7478,6 @@
    "class": "confirm",
    "writes": "UPDATE research_agreements + audit (executed refused by service)",
    "site": "AnaToolExecutor.ts registerToolHandler('update_research_agreement')"
-  },
-  "update_tmf_artifact_status": {
-   "class": "conditional",
-   "writes": "UPDATE tmf_artifacts + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('update_tmf_artifact_status')",
-   "rule": "input.status === 'final' -> refuse (TMF QC finalization); else confirm"
   },
   "update_vault_document": {
    "class": "confirm",
