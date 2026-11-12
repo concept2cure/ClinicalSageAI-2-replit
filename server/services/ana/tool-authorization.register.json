@@ -7149,7 +7149,12 @@
   "simulate_study_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('simulate_study_design')"
+   "site": "AnaToolExecutor.ts registerToolHandler('simulate_study_design')",
+   "present": {
+    "verb": "simulate",
+    "object": "the study design",
+    "source": "engine"
+   }
   },
   "size_diagnostic_study": {
    "class": "read",
