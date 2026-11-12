@@ -370,3 +370,97 @@ export async function releasedSendReceivedRefusal(q: Queryable, organizationId: 
   const when = typeof s.sentAt === 'string' && Number.isFinite(Date.parse(s.sentAt)) ? ` of ${heldSendWhen(s.sentAt)}` : '';
   return `FDA's signed receipt shows it already received ${n}'s send${when}, which was released as not received. ${n[0].toUpperCase()}${n.slice(1)} is not sent again. Nothing was signed or sent.`;
 }
+
+// ── P-92 C3: a settlement FDA's verified answer contradicts, re-opened on that answer (design §10.5 E (i)) ───────
+
+/** FDA's verified answer kept beside a settlement (keepContradictingReceipt). */
+export interface KeptAnswer {
+  sha256: string; status: 'received' | 'rejected'; contradicts: 'received' | 'not-received';
+  bodyBase64: string | null; contentType: string | null; receivedAt: string | null; submittedBy: number | null;
+}
+export interface ReopenSequence { id: number; sequenceNumber: string; status: string | null; dispatchStatus: string | null; transmitAttemptId: string | null }
+export interface ReopenFacts {
+  sequence: ReopenSequence;
+  /** The settled transmittal of this sequence with an answer of FDA's against it not yet re-opened; null when none. */
+  settled: { id: number; status: string; submittedAt: string; settlement: Record<string, any>; binding: DispatchBinding; answer: KeptAnswer } | null;
+  /** A settlement of this sequence already re-opened on FDA's answer. */
+  reopened: boolean;
+}
+
+function keptAnswerOf(m: Record<string, any>): KeptAnswer | null {
+  const outcome = m.heldSendSettlement?.outcome;
+  const e = (Array.isArray(m.as2ReceiptHistory) ? m.as2ReceiptHistory : []).find((x: any) => x?.verified === true && x.contradicts && x.contradicts === outcome);
+  if (!e || typeof e.sha256 !== 'string') return null;
+  return { sha256: e.sha256, status: e.status, contradicts: e.contradicts, bodyBase64: e.bodyBase64 ?? null, contentType: e.contentType ?? null,
+    receivedAt: e.receivedAt ?? null, submittedBy: typeof e.submittedBy === 'number' ? e.submittedBy : null };
+}
+
+/** The sequence's settled transmittal with FDA's contradicting answer, read (and locked, under the act) by the binding. Two throw. */
+export async function readReopenFacts(q: Queryable, organizationId: number, seq: ReopenSequence, opts: { lock?: boolean } = {}): Promise<ReopenFacts> {
+  const params = [organizationId, String(seq.id)];
+  const { rows } = opts.lock
+    ? await q.query(`SELECT id, status, metadata, bundle_sha256, submitted_at FROM submission_transmittals WHERE organization_id = $1 AND region = 'fda'
+        AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND metadata ? 'heldSendSettlement' ORDER BY id FOR UPDATE`, params)
+    : await q.query(`SELECT id, status, metadata, bundle_sha256, submitted_at FROM submission_transmittals WHERE organization_id = $1 AND region = 'fda'
+        AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND metadata ? 'heldSendSettlement' ORDER BY id`, params);
+  const reopened = rows.some((r) => r.metadata?.heldSendSettlement?.reopenedBy);
+  const open = rows.filter((r) => !r.metadata?.heldSendSettlement?.reopenedBy && keptAnswerOf(r.metadata ?? {}));
+  if (open.length > 1) throw new Error(`Two settled transmissions of sequence ${seq.sequenceNumber} carry an answer of FDA's against them`);
+  const r = open[0];
+  const binding = r ? dispatchBindingOf(r as ReceiptTransmittal, organizationId) : null;
+  if (!r || !binding) return { sequence: seq, settled: null, reopened };
+  return { sequence: seq, reopened, settled: { id: Number(r.id), status: String(r.status), submittedAt: new Date(r.submitted_at).toISOString(),
+    settlement: r.metadata.heldSendSettlement, binding, answer: keptAnswerOf(r.metadata) as KeptAnswer } };
+}
+
+/** Why there is nothing to re-open now, in words, or null. */
+export function reopenBlocker(f: ReopenFacts): string | null {
+  const n = f.sequence.sequenceNumber;
+  if (!f.settled) {
+    return f.reopened ? `Sequence ${n}'s settlement is already re-opened on FDA's answer. Nothing was changed.`
+      : `Nothing FDA has answered contradicts a settlement of sequence ${n}, so there is nothing to re-open. Nothing was changed.`;
+  }
+  const s = f.sequence;
+  const released = f.settled.answer.contradicts === 'not-received';
+  const where = released
+    ? s.status === 'dispatched' && s.dispatchStatus === 'pending' && !s.transmitAttemptId
+    : ['sent', 'acknowledged'].includes(String(s.dispatchStatus)) && String(s.transmitAttemptId ?? '').toLowerCase() === f.settled.binding.attemptId.toLowerCase();
+  if (where) return null;
+  return `Sequence ${n} is no longer where its ${released ? 'release' : 'settlement'} left it: it was sent again, or its record changed since. ` +
+    `FDA may hold two copies of it. This is for a person and FDA, not an act: follow the runbook's escalation. Nothing was changed.`;
+}
+
+/** The statement the signer signs, one source, by arm. */
+export function reopenStatement(f: ReopenFacts): string {
+  const t = f.settled as NonNullable<ReopenFacts['settled']>;
+  const n = f.sequence.sequenceNumber;
+  const kept = t.answer.receivedAt ? heldSendWhen(t.answer.receivedAt).replace(/ at .*$/, '') : 'an unrecorded day';
+  const settledOn = heldSendWhen(String(t.settlement.settledAt ?? t.submittedAt)).replace(/ at .*$/, '');
+  if (t.answer.contradicts === 'not-received') {
+    return `FDA's signed receipt for the send of sequence ${n} on ${heldSendWhen(t.submittedAt)}, kept on ${kept}, shows that FDA received it. ` +
+      `The release of ${settledOn} is re-opened on FDA's answer. Sequence ${n} is recorded as received by FDA: it is on file with FDA and is not sent again. ` +
+      'The release stays on the record beside FDA\'s answer.';
+  }
+  return `FDA's signed answer for the send of sequence ${n} on ${heldSendWhen(t.submittedAt)}, kept on ${kept}, refuses it. ` +
+    `The record of ${settledOn} that FDA received it is re-opened on FDA's answer. Sequence ${n} is recorded as rejected by FDA, and it can be sent again under a new signature. ` +
+    'The settlement stays on the record beside FDA\'s answer.';
+}
+
+/** Apply FDA's answer to the transmittal as the receipt path would have, and mark the settlement re-opened, once. */
+export async function markHeldSendReopened(q: Queryable, p: { organizationId: number; transmittalId: number; answer: KeptAnswer; reopenedBy: Record<string, unknown> }): Promise<void> {
+  const receipt = { sha256: p.answer.sha256, bodyBase64: p.answer.bodyBase64, contentType: p.answer.contentType, receivedAt: p.answer.receivedAt,
+    verified: true, submittedBy: p.answer.submittedBy, source: 'agency-signed-upload', status: p.answer.status };
+  // FDA's MDN as the receipt path keeps it, a receipt or a refusal alike (ingestFdaAs2Receipt writes mdn_raw for both).
+  const mdn = p.answer.bodyBase64 ? Buffer.from(p.answer.bodyBase64, 'base64').toString('utf8') : null;
+  const r = await q.query(
+    `UPDATE submission_transmittals
+        SET status = $3::text,
+            metadata = jsonb_set(metadata || jsonb_build_object('as2Receipt', $4::jsonb), '{heldSendSettlement,reopenedBy}', $5::jsonb),
+            mdn_raw = COALESCE($6::text, mdn_raw),
+            ack_received_at = CASE WHEN $3::text = 'received' THEN COALESCE(ack_received_at, $7::timestamptz) ELSE ack_received_at END,
+            updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND NOT (metadata->'heldSendSettlement' ? 'reopenedBy')`,
+    [p.transmittalId, p.organizationId, p.answer.status, JSON.stringify(receipt), JSON.stringify(p.reopenedBy), mdn, p.answer.receivedAt],
+  );
+  if ((r.rowCount ?? r.rows?.length ?? 0) === 0) throw new Error('The re-opening could not be written to its transmission; nothing was recorded.');
+}

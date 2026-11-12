@@ -1,0 +1,5 @@
+MUTATION C3M16-statement-not-asked-again in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T19:18:21.158622Z): replaced [const STATED_KINDS: ReadonlySet<GovernedKind> = new Set<GovernedKind>(['held-send-settlement', 'technical-rejection', 'held-send-reopen']);] with [const STATED_KINDS: ReadonlySet<GovernedKind> = new Set<GovernedKind>(['held-send-settlement', 'technical-rejection']);]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R2 — the one signature, Responsibility only, the statement word for word > a statement that changed after the dialog opened is not signed 5471ms
+      Tests  1 failed | 8 skipped (9)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7a0fa27c9e19b4dbdd71a8483df14de17bf0960691be82657e99dba2c15b57f1 (expected 7a0fa27c9e19b4dbdd71a8483df14de17bf0960691be82657e99dba2c15b57f1)

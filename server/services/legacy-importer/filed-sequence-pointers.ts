@@ -28,6 +28,8 @@
 import * as path from 'path';
 import { fdaApplicationPrefix } from '../ectd/controlled-vocab';
 import type { FiledSequence, FiledSequenceLeaf } from './filed-sequence-reader';
+import type { PriorLeaf } from '../ectd/lifecycle-operator';
+import { MODIFIED_FILE } from '../ectd/prior-sequence-loader';
 
 /** A sequence's backbone, from the sequence root. */
 const BACKBONE_PATH = /^(index\.xml|m1\/[a-z]{2}\/[a-z]{2}-regional\.xml)$/;
@@ -186,3 +188,46 @@ export function refuseAmbiguousIdentity(s: FiledSequence): void {
   s.leaves = s.leaves.filter((l) => !ambiguous.has(l));
 }
 
+
+/**
+ * P-99 C2: bind what one read-back sequence points at outside its package against the recorded filed state, the
+ * fold's prior leaves with their sequence numbers (`loadLatestPriorManifestBySubmission`). The reader binds pointers
+ * between the sequences an archive holds (bindPointers); a sent package holds one sequence, so every act on an earlier
+ * one is in `outsideArchive`, and only the filed state can say what it names.
+ *   - A modified-file pointer must name exactly one leaf on file, by sequence, backbone and ID (MODIFIED_FILE, the
+ *     fold's own rule). A withdrawal then takes that leaf's section, file name and md5, as bindPointers does.
+ *   - A reused file must name a leaf on file with that path and that md5.
+ * Binds in place and clears what it bound from `outsideArchive`. Returns why each leaf left could not be bound, by
+ * its ID; nothing unbound is ever recorded.
+ */
+export function bindToFiledState(s: FiledSequence, priorLeaves: PriorLeaf[]): string[] {
+  const pending = new Set(s.outsideArchive);
+  const refusals: string[] = [];
+  for (const l of s.leaves) {
+    if (!pending.has(l.leafId)) continue;
+    const why = bindOneToFiledState(l, priorLeaves);
+    if (why) refusals.push(`${l.backbone}: leaf ${l.leafId} ${why}`);
+    else pending.delete(l.leafId);
+  }
+  s.outsideArchive = s.outsideArchive.filter((id) => pending.has(id));
+  return refusals;
+}
+
+function bindOneToFiledState(l: FiledSequenceLeaf, priorLeaves: PriorLeaf[]): string | null {
+  if (l.modifiedFile) {
+    const m = MODIFIED_FILE.exec(l.modifiedFile);
+    if (!m) return `points at ${l.modifiedFile}, which names no filed leaf`;
+    const [, sequence, backbone, leafId] = m;
+    const named = priorLeaves.filter((p) => p.sequenceNumber === sequence && p.backbone === backbone && p.leafId === leafId);
+    if (named.length === 0) return `names no leaf on file in sequence ${sequence} (${backbone}#${leafId})`;
+    if (named.length > 1) return `names ${named.length} leaves on file in sequence ${sequence} (${backbone}#${leafId}), not one`;
+    if (l.operation === 'delete') Object.assign(l, { ctdSection: named[0].ctdSection, fileName: named[0].fileName, md5: named[0].md5 });
+    return null;
+  }
+  const reused = /^(?:\.\.\/)+(\d{4})\/(.+)$/.exec(l.href);
+  if (!reused) return `reuses ${l.href}, which names no file of a filed sequence`;
+  const [, sequence, inner] = reused;
+  const named = priorLeaves.filter((p) => p.sequenceNumber === sequence && p.href === inner);
+  if (named.length !== 1) return `reuses ${l.href}, which ${named.length ? 'more than one leaf' : 'no leaf'} on file in sequence ${sequence} filed`;
+  return named[0].md5 === l.md5 ? null : `reuses ${l.href} with a checksum that is not the checksum filed for it`;
+}

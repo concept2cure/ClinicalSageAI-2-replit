@@ -1,0 +1,1506 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > calls the pathway and its package De Novo 5050ms
+   → expected '510(k) pathway · Lumina retinal scann…' to be 'De Novo pathway · Lumina retinal scan…' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > claims no predicate and no substantial equivalence: similar devices, and how this one differs 5018ms
+   → expected '510(k) pathway · Lumina retinal scann…' to match /^De Novo pathway/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > shows the De Novo stages in place of the two that are a 510(k)'s, and keeps the count 5020ms
+   → expected '510(k) pathway · Lumina retinal scann…' to match /^De Novo pathway/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > opens the section that says why a De Novo is appropriate, not an SE discussion 5017ms
+   → expected '510(k) pathway · Lumina retinal scann…' to match /^De Novo pathway/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a 510(k) project, says what it said > keeps its pathway, package, panels and stages 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > calls the pathway and its package De Novo
+AssertionError: expected '510(k) pathway · Lumina retinal scann…' to be 'De Novo pathway · Lumina retinal scan…' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+
+Expected: "De Novo pathway · Lumina retinal scanner"
+Received: "510(k) pathway · Lumina retinal scanner"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx:75:50
+     73|   it('calls the pathway and its package De Novo', async () => {
+     74|     const { container } = mount(DE_NOVO);
+     75|     await waitFor(() => expect(title(container)).toBe('De Novo pathway…
+       |                                                  ^
+     76|     expect(buttons(container)).toContain('Export De Novo package');
+     77|     expect(buttons(container)).not.toContain('Export 510(k) package');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > claims no predicate and no substantial equivalence: similar devices, and how this one differs
+AssertionError: expected '510(k) pathway · Lumina retinal scann…' to match /^De Novo pathway/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+
+- Expected:
+/^De Novo pathway/
+
++ Received:
+"510(k) pathway · Lumina retinal scanner"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx:82:50
+     80|   it('claims no predicate and no substantial equivalence: similar devi…
+     81|     const { container } = mount(DE_NOVO);
+     82|     await waitFor(() => expect(title(container)).toMatch(/^De Novo pat…
+       |                                                  ^
+     83|     expect(panelTitles(container)).toEqual(expect.arrayContaining(['Si…
+     84|     expect(panelTitles(container)).not.toContain('Predicate search · K…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > shows the De Novo stages in place of the two that are a 510(k)'s, and keeps the count
+AssertionError: expected '510(k) pathway · Lumina retinal scann…' to match /^De Novo pathway/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+
+- Expected:
+/^De Novo pathway/
+
++ Received:
+"510(k) pathway · Lumina retinal scanner"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx:92:50
+     90|   it('shows the De Novo stages in place of the two that are a 510(k)\'…
+     91|     const { container } = mount(DE_NOVO);
+     92|     await waitFor(() => expect(title(container)).toMatch(/^De Novo pat…
+       |                                                  ^
+     93|     expect(stages(container)).toEqual([
+     94|       'Intake', 'Classify', 'Similar-device search', 'Performance test…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > opens the section that says why a De Novo is appropriate, not an SE discussion
+AssertionError: expected '510(k) pathway · Lumina retinal scann…' to match /^De Novo pathway/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                Lumina retinal scanner
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    Lumina retinal scanner
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 1 of 7 — Intake · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >[...
+
+- Expected:
+/^De Novo pathway/
+
++ Received:
+"510(k) pathway · Lumina retinal scanner"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx:101:50
+     99|   it('opens the section that says why a De Novo is appropriate, not an…
+    100|     const { container, onNav } = mount(DE_NOVO);
+    101|     await waitFor(() => expect(title(container)).toMatch(/^De Novo pat…
+       |                                                  ^
+    102|     const open = Array.from(container.querySelectorAll('button')).find…
+    103|     expect(open, 'the editor button names the De Novo section').toBeDe…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  21:51:08
+   Duration  23.46s (transform 2.12s, setup 185ms, import 2.49s, tests 20.16s, environment 482ms)
+

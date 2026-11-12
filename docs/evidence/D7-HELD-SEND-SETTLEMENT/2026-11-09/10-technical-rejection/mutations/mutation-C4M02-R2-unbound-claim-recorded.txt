@@ -1,0 +1,7 @@
+MUTATION C4M02-R2-unbound-claim-recorded in server/services/ectd/filed-sequence-rejection.ts (on the final code and tests, 2026-11-09T18:27:30.109738Z): replaced [  if (!f.sequence.transmitSignatureActionId || !f.sequence.transmitAttemptId) {
+    return `Sequence ${n}'s send was recorded before] with [  if (false) {
+    return `Sequence ${n}'s send was recorded before]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a send with no claim, before anyone signs, in words 315ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3 (expected 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3)

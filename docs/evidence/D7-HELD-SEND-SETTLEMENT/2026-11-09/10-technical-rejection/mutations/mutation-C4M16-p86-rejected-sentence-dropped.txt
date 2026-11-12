@@ -1,0 +1,5 @@
+MUTATION C4M16-p86-rejected-sentence-dropped in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T18:29:46.288946Z): replaced [  if (f.dispatchStatus === 'rejected') {] with [  if (f.dispatchStatus === ('never' as string)) {]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 C4 with P-86: a sequence FDA rejected is not retired, in words > refuses it naming the rejection, and the precheck says the same 37ms
+      Tests  1 failed | 30 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 78998c171fe51e02a4e14d9234257d1070880510f5cdd37aabaa78b496b3b945 (expected 78998c171fe51e02a4e14d9234257d1070880510f5cdd37aabaa78b496b3b945)

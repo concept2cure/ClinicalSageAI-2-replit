@@ -1,0 +1,49 @@
+# ESLint — changed files, working tree vs HEAD (HEAD content linted via --stdin with the same filename) — 2026-11-09T20:41:39Z
+file                                                                             HEAD err/warn  now err/warn  
+server/routes/c2c/projects.ts                                                    0 3            0 3           
+client/src/concept2cure/v2/surfaces/Projects.tsx                                 0 7            0 6           
+server/routes/c2c/__tests__/projects-create-market-offer.test.ts                 0 0            0 0           
+client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts                    0 0            0 0           
+client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx               0 0            0 0           
+shared/constants/domain/filing-application-type.ts                               (new file)     0 1           
+shared/constants/domain/__tests__/filing-application-type.test.ts                (new file)     0 0           
+
+$ npx eslint <changed files> (full output, working tree)
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Projects.tsx
+   251:1   warning  Function 'NewProjectWizardSession' has too many lines (692). Maximum allowed is 100  max-lines-per-function
+   251:1   warning  Function 'NewProjectWizardSession' has a complexity of 135. Maximum allowed is 15    complexity
+   432:29  warning  Async arrow function has a complexity of 40. Maximum allowed is 15                   complexity
+   701:1   warning  File has too many lines (1270). Maximum allowed is 500                               max-lines
+  1233:8   warning  Function 'Projects' has too many lines (345). Maximum allowed is 100                 max-lines-per-function
+  1324:33  warning  Arrow function has a complexity of 27. Maximum allowed is 15                         complexity
+
+/home/user/ClinicalSageAI-2-replit/server/routes/c2c/projects.ts
+  811:54  warning  Async arrow function has too many lines (320). Maximum allowed is 100  max-lines-per-function
+  811:54  warning  Async arrow function has a complexity of 121. Maximum allowed is 15    complexity
+  842:1   warning  File has too many lines (1552). Maximum allowed is 500                 max-lines
+
+/home/user/ClinicalSageAI-2-replit/shared/constants/domain/filing-application-type.ts
+  37:8  warning  Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15  complexity
+
+✖ 10 problems (0 errors, 10 warnings)
+
+exit 0
+
+$ git show HEAD:<file> | npx eslint --stdin (the HEAD warnings, for the moved and grown entries)
+## HEAD:client/src/concept2cure/v2/surfaces/Projects.tsx
+   122:8   warning  Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15              complexity
+   327:1   warning  Function 'NewProjectWizardSession' has too many lines (692). Maximum allowed is 100  max-lines-per-function
+   327:1   warning  Function 'NewProjectWizardSession' has a complexity of 135. Maximum allowed is 15    complexity
+   508:29  warning  Async arrow function has a complexity of 40. Maximum allowed is 15                   complexity
+   733:1   warning  File has too many lines (1312). Maximum allowed is 500                               max-lines
+  1309:8   warning  Function 'Projects' has too many lines (345). Maximum allowed is 100                 max-lines-per-function
+  1400:33  warning  Arrow function has a complexity of 27. Maximum allowed is 15                         complexity
+✖ 7 problems (0 errors, 7 warnings)
+## HEAD:server/routes/c2c/projects.ts
+  782:54  warning  Async arrow function has too many lines (318). Maximum allowed is 100  max-lines-per-function
+  782:54  warning  Async arrow function has a complexity of 119. Maximum allowed is 15    complexity
+  834:1   warning  File has too many lines (1538). Maximum allowed is 500                 max-lines
+✖ 3 problems (0 errors, 3 warnings)
+
+Net: 0 new warnings. Projects.tsx 7 -> 6 and filing-application-type.ts 0 -> 1 are the same warning (programTypeFor complexity 43) moving with the function, unchanged. projects.ts stays at 3: the POST handler's existing warnings grow by the new check (lines 318 -> 320, complexity 119 -> 121) and the file's existing max-lines warning by the helper (1538 -> 1552); no new rule fires.

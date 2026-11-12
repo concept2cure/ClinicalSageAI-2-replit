@@ -57,20 +57,27 @@ async function approveSop({ api, run }, key, doc, signer) {
   return `effective; signature ${meta.signature?.id} (${meta.signature?.meaning}) by ${signer.email}`;
 }
 
-async function ensureChangeControl({ api, run }, sops, vaultDocs) {
+/** The NP-100 software release change control's create body. */
+export function mdxChangeBody(sops, programId) {
+  /* On its program, so the Quality evidence capture reads it as NP-100's, not organization-wide. */
+  return {
+    ...(programId ? { programId } : {}),
+    changeNumber: CHANGE_NUMBER,
+    title: T('NP-100 software v2.3.0 — parechovirus channel mapping and thermal profile'),
+    description: 'Release of NP-100 Analyzer software v2.3.0 introducing the redesigned human-parechovirus assay channel mapping and the updated 68-minute thermal profile used in the analytical and clinical studies.',
+    changeType: 'computer_system', classification: 'major', riskLevel: 'medium',
+    reason: 'Design output change after design freeze; affects result calling (IEC 62304 class C item) and therefore requires impact analysis under SOP-104.',
+    impactAssessment: 'Risk file: hazards H-031 (false negative parechovirus) and H-044 (thermal drift) re-evaluated; residual risk unchanged. Threat model: no new interface. SBOM: unchanged. Regulatory: change included in the original 510(k); no separate submission decision required. Verification: full regression (1,912 unit tests) and 240-run system validation.',
+    implementationPlan: 'Release candidate built from tag v2.3.0; verification evidence attached to the DHF; deployment to study analyzers under controlled update; production release gated on Quality and Regulatory approval.',
+    targetImplementationDate: inDays(30), qmsDocumentId: sops.sop104.id, metadata: { provenance: PROVENANCE, demoPack: PACK },
+  };
+}
+
+async function ensureChangeControl({ api, run, programId }, sops, vaultDocs) {
   let change = (must(await api('GET', '/api/mdx/qms/changes'), 200, 'list changes').data ?? []).find((c) => c.change_number === CHANGE_NUMBER) || null;
   const created = !change;
   if (!change) {
-    change = must(await api('POST', '/api/mdx/qms/changes', {
-      changeNumber: CHANGE_NUMBER,
-      title: T('NP-100 software v2.3.0 — parechovirus channel mapping and thermal profile'),
-      description: 'Release of NP-100 Analyzer software v2.3.0 introducing the redesigned human-parechovirus assay channel mapping and the updated 68-minute thermal profile used in the analytical and clinical studies.',
-      changeType: 'computer_system', classification: 'major', riskLevel: 'medium',
-      reason: 'Design output change after design freeze; affects result calling (IEC 62304 class C item) and therefore requires impact analysis under SOP-104.',
-      impactAssessment: 'Risk file: hazards H-031 (false negative parechovirus) and H-044 (thermal drift) re-evaluated; residual risk unchanged. Threat model: no new interface. SBOM: unchanged. Regulatory: change included in the original 510(k); no separate submission decision required. Verification: full regression (1,912 unit tests) and 240-run system validation.',
-      implementationPlan: 'Release candidate built from tag v2.3.0; verification evidence attached to the DHF; deployment to study analyzers under controlled update; production release gated on Quality and Regulatory approval.',
-      targetImplementationDate: inDays(30), qmsDocumentId: sops.sop104.id, metadata: { provenance: PROVENANCE, demoPack: PACK },
-    }), 201, 'create change').data;
+    change = must(await api('POST', '/api/mdx/qms/changes', mdxChangeBody(sops, programId)), 201, 'create change').data;
   }
   const links = must(await api('GET', `/api/mdx/qms/changes/${change.id}/links`), 200, 'list links').data ?? [];
   const wanted = [

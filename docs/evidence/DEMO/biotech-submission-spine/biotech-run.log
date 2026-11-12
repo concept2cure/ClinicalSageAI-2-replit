@@ -1,0 +1,54 @@
+Signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: biotech ===
+  • Projects: program C2C-101 (IND) … ok — found 6065271c-d4b0-4936-aad1-02855423a738 (C2C-101)
+  • Vault: Investigator's Brochure C2C-101 v3.0 … ok — found 75d6cf26-b705-4aea-9d18-cbd03f163b91 → module-1 (2 pages, 7296 bytes)
+  • Vault: Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled … ok — found e7ae5774-0678-4423-86fc-5f7dbd3e0c57 → module-5 (2 pages, 9196 bytes)
+  • Vault: Statistical Analysis Plan C2C-101-201 v1.0 … ok — found dc4f5bfc-3c10-4e25-92ba-5c6202e17120 → module-5 (2 pages, 6891 bytes)
+  • Vault: CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 … ok — found be0f7621-7c77-429c-be6d-6ac73da3ed6d → module-2 (2 pages, 6467 bytes)
+  • Vault: Nonclinical Toxicology Summary — C2C-101 … ok — found 98c0b490-17da-4595-80ea-a6153c057363 → module-2 (2 pages, 5781 bytes)
+  • Vault: Pre-IND Meeting Minutes — C2C-101 (Type B) … ok — found 84155fd7-0758-444c-a7a5-f39d60cb05ce → module-1 (2 pages, 5599 bytes)
+  • Vault: read model lists the filed documents … ok — documentCount=21, unfiled=12, standard=biotech
+  • Authoring: Protocol Synopsis C2C-101-201 … ok — found d49749de-add0-4380-935f-a111e2d04b25; sections 6 (0 added)
+  • Authoring: comments on Protocol Synopsis C2C-101-201 … ok — 87b4bad1:resolved, 661598af:resolved
+  • Authoring: review request on Protocol Synopsis C2C-101-201 … ok — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: freeze Protocol Synopsis C2C-101-201 v1.0 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: e-signature by the second signer on Protocol Synopsis C2C-101-201 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: Module 2.5 Clinical Overview — C2C-101 … ok — found 79793c98-005d-45bc-8261-0cd0d2208ec7; sections 6 (0 added)
+  • Authoring: review request on Module 2.5 Clinical Overview — C2C-101 … ok — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — found bdd5a24e-10d7-4dd1-aba6-e65a6c069758; sections 4 (0 added)
+  • Authoring: comments on IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — a3d380b8:open
+  • Protocol development: C2C-101-201 document … ok — found #1
+  • Protocol development: section content … ok — 10 sections (0 written)
+  • Protocol development: objectives, eligibility, visits, team … ok — added objectives 0, criteria 0, visits 0, team 0
+  • Protocol development: schedule of assessments matrix … ok — 10 assessments × 9 visits, 51 cells (0 rows, 0 cells added)
+  • Protocol development: risk register … ok — 6 risks (0 added)
+  • Protocol development: milestones … ok — 5 milestones (0 added)
+  • Protocol development: amendment 1 … ok — #1 Amendment 1 — add Week 2 PK sampling and align stratification wording
+  • Protocol development: version snapshot … ok — found 1 version(s)
+  • Protocol development: GET /api/protocol-dev returns it … ok — #1: objectives 6, risks 6, milestones 5, amendments 1
+  • Biostatistics: study design "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis" … ok — updated sd_66e9ac5708d74cec82b6d350a180f947
+  • Submission Center: the program's canonical submission (IND) … ok — #1 "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #1 status assembling
+  • Submission Center: place the vault documents as eCTD leaves … ok — 7 leaves (0 placed)
+  • Submission Center: sequence moves draft → assembling … ok — already assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=7; shadowCriticals=0; blockers=4
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (7 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — 1 prior run(s), none completed (failed)
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 4; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • QMS: SOP-001 Document Control … ok — found #1 C2C-SOP-001 → draft
+  • QMS: SOP-002 Change Control … ok — found #2 C2C-SOP-002 → draft
+  • QMS: SOP-003 Deviation Management … ok — found #3 C2C-SOP-003 → draft — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • QMS: SOP-004 Training … ok — found #4 C2C-SOP-004 → draft
+  • QMS: change-control record C2C-CC-001 … ok — #1 C2C-CC-001 (proposed)
+  • QMS: deviation record … ok — not supported by the QMS API (recorded as a finding)
+  • QMS: inspect personal acknowledgement readiness on SOP-001 … ok — Only an effective controlled document can be acknowledged.
+  • CMC / Module 3: drug substance and drug product on C2C-101 … ok — 2 created of 2
+  • CMC / Module 3: analytical methods on C2C-101 … ok — 5 created of 5; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on C2C-101 … ok — 0 created of 5
+  • CMC / Module 3: stability programme on C2C-101 … ok — 0 created of 2
+  • CMC / Module 3: batch records on C2C-101 … ok — 0 created of 3
+  • Projects: program C2C-201 (IND) … FAILED
+✗ biotech: create program: HTTP 409 {"error":"PROJECT_RECORD_UNAVAILABLE","reason":"AMBIGUOUS_CLIENT_WORKSPACE","message":"Choose a client workspace before creating this project. Nothing was saved.","correlationId":"9923bb0109468df9efc36f248627b561"}

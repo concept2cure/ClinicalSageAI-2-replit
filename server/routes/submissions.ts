@@ -422,34 +422,87 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
 // model writes any of it. `?applicationType=` is required; `?market=` (an
 // agency, a region code or a submission region) narrows to one market, and
 // without it every region the platform names is returned.
+//
+// 2026-11-09 (S12 biotech sweep): `applicationType` may also be a
+// comma-separated list of at most 100 types, each one the platform knows
+// (VALID_PROGRAM_TYPES, the types project creation accepts), answered by type
+// as { applicationTypes, asOf, byType: { [type]: markets[] } } from the one
+// pack read readMarketSupport already made for a list of inputs. `market` may
+// likewise list up to 32 markets; each listed type is stated at each. The New
+// project picker asked once per type and again per unnamed (type, agency),
+// ~87 parallel reads per open, enough to rate-limit the whole app. A single
+// type keeps its answer exactly as before: { applicationType, asOf, markets }.
 // Registered before '/:id' so the literal path is not shadowed.
+const MARKET_SUPPORT_MAX_TYPES = 100;
+const MARKET_SUPPORT_MAX_MARKETS = 32;
+/* The product is capped too (L9's ask, 2026-11-09): every type the platform knows at every region it names is
+   64 × 12 = 768 inputs (the picker's first read), computed in ~12 ms after the one pack read; 1,600 leaves room for
+   the catalog to grow and refuses anything larger in words. */
+const MARKET_SUPPORT_MAX_INPUTS = 1600;
+/** Each listed type's answers, keyed by the answer's own type and market, never by position alone. Null when the
+ *  answers are not exactly one per input in input order: a misaligned list would state one type's market support
+ *  under another type, so it is refused rather than reshaped. */
+export function marketSupportByType<T extends { applicationType: string; market: string }>(
+  inputs: Array<{ applicationType: string; market: string }>, out: T[],
+): Record<string, T[]> | null {
+  if (out.length !== inputs.length) return null;
+  const byType: Record<string, T[]> = {};
+  for (let i = 0; i < inputs.length; i += 1) {
+    const row = out[i];
+    if (!row || row.applicationType !== inputs[i].applicationType || row.market !== inputs[i].market) return null;
+    (byType[row.applicationType] ??= []).push(row);
+  }
+  return byType;
+}
+/** The types and markets a market-support request asks about, each list without repeats; null when malformed. */
+function marketSupportQuery(query: Request['query']): { applicationType: string; isList: boolean; types: string[]; asked: string[] } | null {
+  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
+  const parts = (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean);
+  const applicationType = first(query.applicationType);
+  const market = first(query.market);
+  const isList = applicationType.includes(',');
+  const typeParts = isList ? parts(applicationType) : [applicationType];
+  const marketParts = market.includes(',') ? parts(market) : [market].filter(Boolean);
+  if (!applicationType || !typeParts.length || typeParts.length > MARKET_SUPPORT_MAX_TYPES
+    || marketParts.length > MARKET_SUPPORT_MAX_MARKETS || [...typeParts, ...marketParts].some((v) => v.length > 64)) return null;
+  return { applicationType, isList, types: [...new Set(typeParts)], asked: [...new Set(marketParts)] };
+}
 router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
-  const applicationType = first(req.query.applicationType);
-  const market = first(req.query.market);
-  if (!applicationType || applicationType.length > 64 || market.length > 64) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
+  const query = marketSupportQuery(req.query);
+  if (!query) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `applicationType is required: one type, or a comma-separated list of at most ${MARKET_SUPPORT_MAX_TYPES}, each at most 64 characters; market, when given, is one market or a list of at most ${MARKET_SUPPORT_MAX_MARKETS}, each at most 64.` } });
   }
+  const { applicationType, isList, types, asked } = query;
   try {
-    const [{ readMarketSupport }, { REGION_IDENTITY }] = await Promise.all([
+    const [{ readMarketSupport }, { REGION_IDENTITY }, { VALID_PROGRAM_TYPES }] = await Promise.all([
       import('../services/regulatory/market-support.js'),
       import('../../shared/regulatory/region-identity.js'),
+      import('./c2c/project-intake.js'),
     ]);
-    const markets = market ? [market] : Object.keys(REGION_IDENTITY);
+    const unknown = isList ? types.filter((t) => !VALID_PROGRAM_TYPES.has(t)) : [];
+    if (unknown.length) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: `Unknown application type${unknown.length === 1 ? '' : 's'}: ${unknown.slice(0, 5).join(', ')}${unknown.length > 5 ? ', …' : ''}.` } });
+    }
+    const markets = asked.length ? asked : Object.keys(REGION_IDENTITY);
+    if (types.length * markets.length > MARKET_SUPPORT_MAX_INPUTS) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: `This asks about ${types.length * markets.length} type and market pairs; at most ${MARKET_SUPPORT_MAX_INPUTS} can be read at once. Ask fewer types or name the markets.` } });
+    }
     const asOf = new Date().toISOString().slice(0, 10);
     /* The request's own pinned connection, not the shared pool
        (ci:requestdb-coverage). readMarketSupport reads the platform's active
        rule packs — reference data, not this tenant's rows — but it reads them
        on the caller's request scope like every other read in this router, so
        the route holds no second path to the database. */
-    const out = await readMarketSupport(
-      requestPgClient(req),
-      markets.map((m) => ({ applicationType, market: m })),
-      asOf,
-    );
-    res.json({ applicationType, asOf, markets: out });
+    const inputs = types.flatMap((t) => markets.map((m) => ({ applicationType: t, market: m })));
+    const out = await readMarketSupport(requestPgClient(req), inputs, asOf);
+    if (!isList) return res.json({ applicationType, asOf, markets: out });
+    const byType = marketSupportByType(inputs, out);
+    if (!byType) {
+      return res.status(500).json({ error: { code: 'MARKET_SUPPORT_MISALIGNED', message: 'Market support did not answer one row per type and market asked, so none is stated.' } });
+    }
+    res.json({ applicationTypes: types, asOf, byType });
   } catch (err) {
     fail(res, err);
   }
@@ -1565,6 +1618,73 @@ router.post('/sequences/:seqId/held-send/settle', limiter, requireRole(AUTHOR), 
   }
 });
 
+// A sent sequence's send put on record, read back from the package the platform kept (P-99 C2). Ask POST
+// governed-precheck { step: 'sent-record' } for what would be recorded; then pass the reason and the read-back's
+// manifestSha256 here. Unsigned: the content is the kept bytes', and the person binds what they read. 409
+// SENT_RECORD_NOT_RESTORABLE with what keeps it; 403 FORBIDDEN. No AnA tool reaches it.
+const sentRecordRederiveSchema = z.object({ reason: z.string().trim().min(1).max(2000), manifestSha256: z.string().regex(/^[0-9a-f]{64}$/) });
+router.post('/sequences/:seqId/sent-record/rederive', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = sentRecordRederiveSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { rederiveSentRecord } = await import('../services/submission-service/submission-service');
+    res.json(await rederiveSentRecord(seqId, ctx, { reason: parsed.data.reason, manifestSha256: parsed.data.manifestSha256 }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// A settlement FDA's verified answer contradicts, re-opened on that answer (P-92 C3,
+// P-108 1(c)). Ask POST governed-precheck { step: 'held-send-reopen' } for the
+// statement; sign ectd-sequence:<seqId> with intent 'held-send-reopen', the
+// meaning responsibility, the settlement's signature, FDA's answer and the
+// statement, with the reason; then pass its actionId here. 409
+// HELD_SEND_NOT_REOPENABLE with what keeps it; 403 GOVERNED_REQUIRED or
+// FORBIDDEN; a refused act voids its signature. No AnA tool reaches it.
+const heldSendReopenSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/held-send/reopen', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = heldSendReopenSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { recordHeldSendReopen } = await import('../services/submission-service/submission-service');
+    res.json(await recordHeldSendReopen({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// FDA's failed Ack3 for a sequence recorded as received (P-92 C4, P-108 1(a)).
+// Ask POST governed-precheck { step: 'technical-rejection', evidenceDocumentId }
+// for the statement; sign ectd-sequence:<seqId> with intent
+// 'technical-rejection', the meaning responsibility, the transmittal, the
+// attempt, FDA's Ack3 from the project's Vault and the statement, with the
+// reason; then pass its actionId here. The sequence becomes 'rejected'. 409
+// TECHNICAL_REJECTION_NOT_RECORDABLE with what keeps it; 403 GOVERNED_REQUIRED
+// or FORBIDDEN; a refused act voids its signature. No AnA tool reaches it.
+const technicalRejectionSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/technical-rejection', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = technicalRejectionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { recordTechnicalRejection } = await import('../services/submission-service/submission-service');
+    res.json(await recordTechnicalRejection({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Closing a critical Shadow Review finding (P-35, decided 2026-10-15) ─────
 // Each open critical finding is closed on its own: 'accepted' (risk accepted)
 // or 'fixed' (offered only when a completed Shadow Review ran after the
@@ -2201,7 +2321,14 @@ const governedPrecheckSchema = z
     // 'held-send-settlement' (P-92): whether a held FDA send may be settled,
     // which way, on which evidence, and the statement the signature carries;
     // its own rule answers it too.
-    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement']),
+    // 'technical-rejection' (P-92 C4): whether FDA's failed Ack3 may be recorded
+    // on the sequence, by this person, on which Vault document, and the
+    // statement the signature carries; its own rule answers it.
+    // 'held-send-reopen' (P-92 C3): whether a settlement FDA's verified answer
+    // contradicts may be re-opened, by this person, and the statement signed.
+    // 'sent-record' (P-99 C2): whether a sent sequence's send can be put on
+    // record, how, and what would be recorded.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement', 'technical-rejection', 'held-send-reopen', 'sent-record']),
     environment: z.enum(['staging', 'production']).optional(),
     // Transmit: the number the person typed, judged against the program record
     // before anyone signs (P-23), by the rule transmit itself applies.
@@ -2218,7 +2345,7 @@ const governedPrecheckSchema = z
     message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",
     path: ['findingId'],
   })
-  .refine((b) => (b.evidenceDocumentId === undefined && b.evidenceKind === undefined) || b.outcome !== undefined, {
+  .refine((b) => (b.evidenceDocumentId === undefined && b.evidenceKind === undefined) || b.outcome !== undefined || b.step === 'technical-rejection', {
     message: 'A document or a kind of evidence is asked about only with an outcome.',
     path: ['outcome'],
   })
@@ -2234,8 +2361,14 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement } = await import('../services/submission-service/submission-service');
+    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement, precheckTechnicalRejection, precheckHeldSendReopen, precheckSentRecord } = await import('../services/submission-service/submission-service');
     if (parsed.data.step === 'retire') return res.json(await precheckSequenceRetirement(seqId, ctx));
+    if (parsed.data.step === 'sent-record') return res.json(await precheckSentRecord(seqId, ctx));
+    if (parsed.data.step === 'held-send-reopen') return res.json(await precheckHeldSendReopen(seqId, ctx));
+    if (parsed.data.step === 'technical-rejection') {
+      const { evidenceDocumentId } = parsed.data;
+      return res.json(await precheckTechnicalRejection(seqId, ctx, evidenceDocumentId ? { evidenceDocumentId } : {}));
+    }
     if (parsed.data.step === 'held-send-settlement') {
       const { outcome, evidenceKind, evidenceDocumentId } = parsed.data;
       return res.json(await precheckHeldSendSettlement(seqId, ctx, {

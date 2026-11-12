@@ -150,6 +150,17 @@ describe('On file at the agency: where each sequence’s record of what it put o
     expect(cardText()).not.toContain('leaf manifest');
   });
 
+  // P-99 C2: a sequence whose send was put on record after the send, read back from the package it sent, says so and when.
+  it('names a sequence whose record was read back from the package it sent, and when', async () => {
+    apiRequest.mockResolvedValue(ok({ ...RECORDED, sequences: RECORDED.sequences.map((s: { sequenceNumber: string }) =>
+      (s.sequenceNumber === '0000' ? { ...s, restored: { how: 'read-back', on: '2026-11-04T09:00:00.000Z' } } : s)) }));
+    card();
+    await screen.findByRole('table', { name: /Module 3/ });
+    expect(cardText()).toContain('2 documents are on file, read from what each sequence sent. '
+      + 'Sequence 0000 is read from what it sent (read back from the package it sent, on 4 November 2026).');
+    expect(cardText()).not.toContain('compiles');
+  });
+
   it('names a sequence read from its compiles, sent before the platform kept what each send carried', async () => {
     apiRequest.mockResolvedValue(ok(withBasis('compiles', 'transmit')));
     card();

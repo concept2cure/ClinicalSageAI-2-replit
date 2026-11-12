@@ -1,0 +1,6 @@
+MUTATION C3M05-any-answer in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T19:26:42.098402Z): replaced [    if (payload?.receiptSha256 !== facts.settled?.answer.sha256) return "it names another of FDA's answers";
+] with []
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > Gate 1 refuses a signature with another FDA answer, and voids it 388ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb (expected 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb)

@@ -1,0 +1,38 @@
+{
+ "bad": [
+  "503 /api/predicate-intelligence/se-matrix?program_id=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+  "503 /api/predicate-intelligence/candidates?program_id=2a61cb26-b021-4fff-9e36-8923c3c7c2db"
+ ],
+ "planTitle": "What this filing needs, who does it, and by when. See the work this filing needs",
+ "doors": [
+  "Prepare a Pre-Sub for FDA"
+ ],
+ "titles": [
+  "510(k) pathway · Lumina retinal scanner",
+  "Device profile",
+  "Predicate search · K-numbers",
+  "Substantial equivalence matrix",
+  "eSTAR sections",
+  "Official eSTAR · De Novo · nIVD eSTAR",
+  "Fields the template carries",
+  "eSTAR filing readiness",
+  "Correspondent and declaration",
+  "Assess a submission",
+  "Tracked submissions"
+ ],
+ "buttons": [
+  "WorkspacePredicate · SE · eSTAR",
+  "Open §11 in editor",
+  "Export 510(k) package",
+  "§C1Reason De Novo is appropriate (no legally marketed predicate)empty",
+  "Generate official eSTAR (PDF)"
+ ],
+ "says510k": [
+  "510(k) and eSTAR",
+  "510(k) pathway · Lumina retinal scanner",
+  "Export 510(k) package",
+  "Serves the 510(k) substantial-equivalence discussion",
+  "510(k) Premarket Notification",
+  "Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+ ]
+}

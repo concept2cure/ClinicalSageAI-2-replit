@@ -1,0 +1,15 @@
+{
+ "api": [
+  "POST 201 /api/authoring/docs"
+ ],
+ "copyOffered": 1,
+ "editorUrl": "/concept2cure/document-authoring?program=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+ "miss": [
+  "Couldn’t open “Reason De Novo is appropriate (no legally marketed predicate)” (section C1) — The requested section is not in the accessible working copies bound to this filing. Nothing else was selected."
+ ],
+ "sectionHeading": [
+  "Reason De Novo is appropriate (no legally marketed predicate)",
+  "Couldn’t open “Reason De Novo is appropriate (no legally marketed predicate)” (section C1) — The requested section is not in the accessible working copies bound to this filing. Nothing else was selected."
+ ],
+ "editable": 0
+}

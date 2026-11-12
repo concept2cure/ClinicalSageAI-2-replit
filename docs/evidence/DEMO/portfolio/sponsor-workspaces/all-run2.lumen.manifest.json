@@ -1,0 +1,356 @@
+{
+  "pack": "lumen",
+  "prefix": "[Demo · Lumen]",
+  "outcome": "seeded_unqualified",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T19:53:05.443Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 154,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {},
+      "found": {
+        "client-workspace": 1,
+        "program": 4,
+        "vault-document": 5,
+        "task": 29,
+        "study-design": 1,
+        "objective": 1,
+        "cmc-drug-substance": 1,
+        "cmc-drug-product": 1,
+        "cmc-method": 5,
+        "cmc-spec": 5,
+        "cmc-stability": 2,
+        "cmc-batch": 3,
+        "plan-document": 4,
+        "data-room-source": 2,
+        "agency-communication": 2,
+        "qms-document": 3,
+        "deviation": 4,
+        "supplier": 5,
+        "nonconformance": 3,
+        "internal-audit": 4,
+        "capa": 4,
+        "capa-action": 6,
+        "qms-change": 1,
+        "qms-change-link": 3,
+        "management-review": 2,
+        "review-action": 4,
+        "rbm-assessment": 1,
+        "rbm-ctq-factor": 4,
+        "rbm-kri": 8,
+        "rbm-qtl": 3,
+        "rbm-extract": 13,
+        "rbm-cohort-score": 1,
+        "rbm-plan": 1,
+        "rbm-signal": 6,
+        "rbm-action": 6,
+        "sequence": 1,
+        "report-run": 4
+      }
+    },
+    "client": {
+      "name": "Lumen Bioscience (demo — not affiliated)",
+      "slug": "lumen-bioscience-demo",
+      "id": 3
+    },
+    "projects": {
+      "LMN-201": {
+        "code": "LMN-201",
+        "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "id": "980ee422-6b16-4ff0-84f2-4b0531c791de"
+      },
+      "LMN-801": {
+        "code": "LMN-801",
+        "title": "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "id": "d4d5d068-7dce-4c1f-bf91-21fa030c68aa"
+      },
+      "LMN-301": {
+        "code": "LMN-301",
+        "title": "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)",
+        "id": "d6f982cf-7e74-4ba9-9be2-dc1ba8909108"
+      },
+      "LMN-401": {
+        "code": "LMN-401",
+        "title": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+        "id": "c3427883-a2e9-4652-9e72-8420268add33"
+      }
+    },
+    "approvalLetter": {
+      "title": "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt",
+      "sourceId": 170,
+      "eventId": "ace_1794176553545_a81efd58",
+      "proposals": {
+        "questions": 0,
+        "commitments": [
+          "4710-1",
+          "4710-2",
+          "4710-3",
+          "4710-4"
+        ],
+        "commitmentsRecorded": 0
+      }
+    },
+    "informationRequest": {
+      "title": "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt",
+      "sourceId": 171,
+      "eventId": "ace_1794176555896_064f2f57",
+      "proposals": {
+        "questions": 3,
+        "commitments": [],
+        "commitmentsRecorded": 0
+      }
+    },
+    "lumenQms": {
+      "sops": {
+        "deviation": {
+          "id": 9,
+          "docNumber": "LMN-SOP-201",
+          "title": "[Demo · Lumen] SOP-201 Clinical Protocol Deviation Management",
+          "status": "draft — approval not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+        },
+        "coldchain": {
+          "id": 10,
+          "docNumber": "LMN-SOP-202",
+          "title": "[Demo · Lumen] SOP-202 Investigational Product Cold-Chain Shipment and Excursions",
+          "status": "draft — approval not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+        },
+        "tmf": {
+          "id": 11,
+          "docNumber": "LMN-SOP-203",
+          "title": "[Demo · Lumen] SOP-203 Trial Master File Management in the Vault",
+          "status": "draft"
+        }
+      },
+      "deviations": {
+        "visit": {
+          "id": 1,
+          "number": "LMN-DEV-2026-014",
+          "title": "[Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+          "status": "pending_approval"
+        },
+        "sae": {
+          "id": 2,
+          "number": "LMN-DEV-2026-015",
+          "title": "[Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+          "status": "under_investigation"
+        },
+        "consent": {
+          "id": 3,
+          "number": "LMN-DEV-2026-016",
+          "title": "[Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+          "status": "open"
+        },
+        "irt": {
+          "id": 4,
+          "number": "LMN-DEV-2026-017",
+          "title": "[Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+          "status": "pending_approval"
+        }
+      },
+      "suppliers": {
+        "cro": {
+          "id": 1,
+          "code": "LMN-SUP-001",
+          "name": "[Demo · Lumen] Larkmere Clinical Research",
+          "standing": "pending"
+        },
+        "lab": {
+          "id": 2,
+          "code": "LMN-SUP-002",
+          "name": "[Demo · Lumen] Thistlegate Central Laboratory",
+          "standing": "pending"
+        },
+        "cdmo": {
+          "id": 3,
+          "code": "LMN-SUP-003",
+          "name": "[Demo · Lumen] Corvane Biologics",
+          "standing": "pending"
+        },
+        "courier": {
+          "id": 4,
+          "code": "LMN-SUP-004",
+          "name": "[Demo · Lumen] Glacierpath Logistics",
+          "standing": "pending"
+        },
+        "irt": {
+          "id": 5,
+          "code": "LMN-SUP-005",
+          "name": "[Demo · Lumen] Quorvex IRT Systems",
+          "standing": "pending"
+        }
+      },
+      "nonconformances": {
+        "temp": {
+          "id": 1,
+          "number": "LMN-NC-2026-009",
+          "disposition": "pending"
+        },
+        "label": {
+          "id": 2,
+          "number": "LMN-NC-2026-007",
+          "disposition": "pending"
+        },
+        "water": {
+          "id": 3,
+          "number": "LMN-NC-2026-008",
+          "disposition": "pending"
+        }
+      },
+      "audits": {
+        "tmf": {
+          "id": 1,
+          "number": "LMN-IA-2026-03",
+          "status": "closed"
+        },
+        "supply": {
+          "id": 2,
+          "number": "LMN-IA-2026-04",
+          "status": "in_progress"
+        },
+        "safety": {
+          "id": 3,
+          "number": "LMN-IA-2026-05",
+          "status": "planned"
+        },
+        "csv": {
+          "id": 4,
+          "number": "LMN-IA-2027-01",
+          "status": "planned"
+        }
+      },
+      "capas": {
+        "visit": {
+          "id": "e311f000-cbb7-477f-8113-4fa6f7d56612",
+          "code": "CAPA-2026-0001",
+          "title": "[Demo · Lumen] Visit-window control at investigator sites (from LMN-DEV-2026-014)",
+          "state": "action_planned"
+        },
+        "tmf": {
+          "id": "8117641b-dbf1-4c34-978b-e66a1c2984dc",
+          "code": "CAPA-2026-0002",
+          "title": "[Demo · Lumen] TMF filing timeliness and Vault metadata completeness (from LMN-IA-2026-03)",
+          "state": "investigation"
+        },
+        "ship": {
+          "id": "9c16bb75-3e40-4e9b-86bf-0dd54412ba10",
+          "code": "CAPA-2026-0003",
+          "title": "[Demo · Lumen] Cold-chain shipper qualification for 2–8 °C lanes (from LMN-NC-2026-009)",
+          "state": "open"
+        },
+        "kits": {
+          "id": "2e2d088a-a97b-49f3-ba63-1a4e34dcff3b",
+          "code": "CAPA-2026-0004",
+          "title": "[Demo · Lumen] Central-lab sample kit expiry tracking at sites",
+          "state": "closed_effective"
+        }
+      },
+      "change": {
+        "id": 3,
+        "changeNumber": "LMN-CC-2026-021",
+        "status": "under_assessment",
+        "links": [
+          "LMN-SOP-201",
+          "LMN-DEV-2026-014",
+          "CAPA-2026-0001"
+        ]
+      },
+      "reviews": {
+        "q3": {
+          "id": 1,
+          "period": "Lumen 2026-Q3",
+          "open": 2,
+          "closed": 1
+        },
+        "q2": {
+          "id": 2,
+          "period": "Lumen 2026-Q2",
+          "open": 0,
+          "closed": 1
+        }
+      },
+      "training": "No Lumen SOP is in force, so none can carry read-and-understood training (GET /api/mdx/qms/training/compliance lists documents in force only)."
+    },
+    "rbm": {
+      "overallRisk": "high",
+      "ctq": 12,
+      "kris": {
+        "total": 8,
+        "red": 1,
+        "amber": 2,
+        "notEvaluated": 0
+      },
+      "qtls": {
+        "total": 3,
+        "breached": 0,
+        "approaching": 1,
+        "notEvaluated": 0
+      },
+      "signals": {
+        "total": 6,
+        "open": 5,
+        "high": 2
+      },
+      "patients": {
+        "scored": 12,
+        "flagged": 1,
+        "review": 1
+      },
+      "sites": {
+        "total": 0,
+        "enhanced": 0
+      },
+      "plan": {
+        "id": 1,
+        "status": "draft"
+      },
+      "actions": 8,
+      "attention": 9,
+      "sources": [
+        "ctms 3d",
+        "edc 3d"
+      ]
+    },
+    "summary": {
+      "created": 0,
+      "found": 153
+    }
+  },
+  "notes": [
+    "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.",
+    "Tasks on LMN-201: Mo Monitor, Rhea Reviewer, Sam Statistician, Quinn Quality, Ava Approver, Cal CMC, Ana Author not on this organisation's roster; their tasks stay with the person seeding.",
+    "Tasks on LMN-801: Ana Author, Ava Approver, Cal CMC not on this organisation's roster; their tasks stay with the person seeding.",
+    "Tasks on LMN-301: Sam Statistician, Ana Author, Rhea Reviewer not on this organisation's roster; their tasks stay with the person seeding.",
+    "Tasks on LMN-401: Ava Approver, Rhea Reviewer not on this organisation's roster; their tasks stay with the person seeding.",
+    "The LMN-201 approval letter (BLA 761901) is FICTIONAL: not issued by FDA, LMN-201 is not approved, and no Lumen Bioscience authorization is represented. It is addressed to the demonstration's fictional sponsor.",
+    "Lumen QMS: approval of LMN-SOP-201: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: approval of LMN-SOP-202: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: close of LMN-DEV-2026-014: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: approved standing of LMN-SUP-001: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: approved standing of LMN-SUP-002: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: approved standing of LMN-SUP-003: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: conditional standing of LMN-SUP-004: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: disposition of LMN-NC-2026-007: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: disposition of LMN-NC-2026-008: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: approval of LMN-CC-2026-021: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Lumen QMS: No Lumen SOP is in force, so none can carry read-and-understood training (GET /api/mdx/qms/training/compliance lists documents in force only).",
+    "RBM: Site risk and Site oversight stay empty, and \"Run central monitoring\" finds no outliers, because the site-risk snapshot is derived only from Site Intelligence (site_intel.sites) and no mounted route writes it. Site numbers appear in signals, subject ids and action descriptions instead."
+  ],
+  "finishedAt": "2026-11-09T19:53:29.447Z"
+}

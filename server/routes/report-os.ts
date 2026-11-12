@@ -159,13 +159,30 @@ router.use(requireEditorAccessForWrites);
  * (ledger L184). Zod strips unknown keys, so a client that still sends either
  * field is ignored rather than refused.
  */
+/** A group's name as it is stored: trimmed, never empty (a name of spaces was admitted). */
+const programGroupName = z.string().trim().min(1).max(200);
 const createProgramGroupSchema = z.object({
   clientWorkspaceId: z.number().int().positive().optional(),
-  name: z.string().min(1),
-  description: z.string().optional(),
+  name: programGroupName,
+  description: z.string().max(2000).optional(),
   projectIds: z.array(z.number().int().positive()).min(1),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
+
+/**
+ * A change to a group. PATCH took its body unvalidated until 2026-11-12:
+ * `{ status: 'nonsense', name: '' }` answered 200 and left a group with no name
+ * and a status no reader lists, so it vanished from the default list (probed in
+ * the running app, docs/evidence/DESIGN/P-122/reporting/2026-11-12-project-groups/).
+ * Every field is optional, at least one must be present, and nothing else is admitted.
+ */
+const updateProgramGroupSchema = z.object({
+  name: programGroupName.optional(),
+  description: z.string().max(2000).nullable().optional(),
+  status: z.enum(['active', 'archived']).optional(),
+  projectIds: z.array(z.number().int().positive()).min(1).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+}).strict().refine(change => Object.keys(change).length > 0, { message: 'Name at least one change.' });
 
 const createProgramSnapshotSchema = z.object({
   snapshotLabel: z.string().optional(),
@@ -436,12 +453,18 @@ type ReportAuditAction =
   | 'report_os.bundle_exported'
   | 'report_os.bundle_created'
   | 'report_os.delivery_sent'
-  | 'report_os.delivery_exported';
+  | 'report_os.delivery_exported'
+  /* A project group names the projects a board report or a schedule covers. Creating it,
+     changing it and recording a snapshot of its members joined the events on 2026-11-12:
+     until then they wrote no row, on no transaction. */
+  | 'report_os.program_group_created'
+  | 'report_os.program_group_updated'
+  | 'report_os.program_group_snapshot_recorded';
 
 interface ReportAuditEvent {
   organizationId: number;
   action: ReportAuditAction;
-  resourceType: 'report_run' | 'report_bundle' | 'report_delivery';
+  resourceType: 'report_run' | 'report_bundle' | 'report_delivery' | 'report_program_group';
   resourceId: string;
   details: Record<string, unknown>;
 }
@@ -832,9 +855,12 @@ function resolveProjectIdForRun(run: {
 type ReportDb = Pick<NodePgDatabase<typeof schema>, 'select' | 'insert'>;
 
 /** Drizzle on `client`, so a helper's writes join the open transaction. */
-function onTransaction(client: PoolClient): ReportDb {
+function onTransaction(client: PoolClient): NodePgDatabase<typeof schema> {
   return drizzle(client, { schema });
 }
+
+/** Ends a group's transaction without a write: the group is not this organization's. Rolled back, never committed. */
+class ProgramGroupNotFound extends Error {}
 
 async function ensureProjectProfileId(
   organizationId: number,
@@ -1436,29 +1462,38 @@ router.post('/program-groups', async (req: Request, res: Response) => {
     const accessible = new Set(await accessibleProjectIds(req, orgId));
     if (!uniqueProjectIds.every(id => accessible.has(id))) return res.status(404).json({ error: 'One or more projects was not found' });
 
-    const [group] = await db
-      .insert(reportProgramGroups)
-      .values({
-        organizationId: orgId,
-        clientWorkspaceId,
-        name,
-        description,
-        createdBy,
-        updatedBy: createdBy,
-        metadata,
-      })
-      .returning();
-
-    if (uniqueProjectIds.length > 0) {
-      await db.insert(reportProgramGroupProjects).values(
+    // The group, its members and its chained audit row land together or not at all.
+    const group = await inTenantTransaction(orgId, async client => {
+      const tx = onTransaction(client);
+      const [created] = await tx
+        .insert(reportProgramGroups)
+        .values({
+          organizationId: orgId,
+          clientWorkspaceId,
+          name,
+          description,
+          createdBy,
+          updatedBy: createdBy,
+          metadata,
+        })
+        .returning();
+      await tx.insert(reportProgramGroupProjects).values(
         uniqueProjectIds.map(projectId => ({
           organizationId: orgId,
-          programGroupId: group.id,
+          programGroupId: created.id,
           projectId,
           addedBy: createdBy,
         }))
       );
-    }
+      await writeReportEvent(client, req, {
+        organizationId: orgId,
+        action: 'report_os.program_group_created',
+        resourceType: 'report_program_group',
+        resourceId: String(created.id),
+        details: { name, description: description ?? null, projectIds: uniqueProjectIds },
+      });
+      return created;
+    });
 
     return res.status(201).json({ data: group });
   } catch (error: any) {
@@ -1471,15 +1506,18 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
     const orgId = requireSessionOrg(req, res);
     if (orgId == null) return;
     const id = Number(req.params.id);
-    const { name, description, status, projectIds, metadata } = req.body;
+    if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid program group id' });
+    const parsed = updateProgramGroupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+    const { name, description, status, projectIds, metadata } = parsed.data;
     const updatedBy = getUserId(req);
     if (!(await canReadReportScope(req, orgId, { scopeType: 'program', scopeId: String(id) }))) return res.status(404).json({ error: 'Program group not found' });
 
     let uniqueProjectIds: number[] | undefined;
-    if (Array.isArray(projectIds)) {
-      uniqueProjectIds = [
-        ...new Set(projectIds.map((v: any) => Number(v)).filter(Number.isFinite)),
-      ];
+    if (projectIds) {
+      uniqueProjectIds = [...new Set(projectIds)];
       const owned = await projectsInOrg(orgId, uniqueProjectIds);
       if (owned.size !== uniqueProjectIds.length) {
         return res
@@ -1492,40 +1530,54 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
 
     // Scoped to the caller's org: another tenant's group id matches nothing and
     // answers 404 below, before its membership is touched.
-    const [updated] = await db
-      .update(reportProgramGroups)
-      .set({
-        ...(name !== undefined ? { name } : {}),
-        ...(description !== undefined ? { description } : {}),
-        ...(status !== undefined ? { status } : {}),
-        ...(metadata !== undefined ? { metadata } : {}),
-        ...(status === 'archived' ? { archivedAt: new Date() } : {}),
-        updatedBy,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(reportProgramGroups.id, id), eq(reportProgramGroups.organizationId, orgId)))
-      .returning();
+    // The change, the replaced members and the chained audit row land together or not at all.
+    const members = uniqueProjectIds;
+    const updated = await inTenantTransaction(orgId, async client => {
+      const tx = onTransaction(client);
+      const [row] = await tx
+        .update(reportProgramGroups)
+        .set({
+          ...(name !== undefined ? { name } : {}),
+          ...(description !== undefined ? { description } : {}),
+          ...(status !== undefined ? { status } : {}),
+          ...(metadata !== undefined ? { metadata } : {}),
+          ...(status === 'archived' ? { archivedAt: new Date() } : {}),
+          ...(status === 'active' ? { archivedAt: null } : {}),
+          updatedBy,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(reportProgramGroups.id, id), eq(reportProgramGroups.organizationId, orgId)))
+        .returning();
+      if (!row) throw new ProgramGroupNotFound();
 
-    if (!updated) return res.status(404).json({ error: 'Program group not found' });
-
-    if (uniqueProjectIds) {
-      await db
-        .delete(reportProgramGroupProjects)
-        .where(and(eq(reportProgramGroupProjects.programGroupId, id), eq(reportProgramGroupProjects.organizationId, orgId)));
-      if (uniqueProjectIds.length > 0) {
-        await db.insert(reportProgramGroupProjects).values(
-          uniqueProjectIds.map(projectId => ({
-            organizationId: orgId,
-            programGroupId: id,
-            projectId,
-            addedBy: updatedBy,
-          }))
+      let previousProjectIds: number[] | undefined;
+      if (members) {
+        const membership = and(eq(reportProgramGroupProjects.programGroupId, id), eq(reportProgramGroupProjects.organizationId, orgId));
+        const before = await tx.select({ projectId: reportProgramGroupProjects.projectId }).from(reportProgramGroupProjects).where(membership);
+        previousProjectIds = before.map(member => member.projectId).sort((a, b) => a - b);
+        await tx.delete(reportProgramGroupProjects).where(membership);
+        await tx.insert(reportProgramGroupProjects).values(
+          members.map(projectId => ({ organizationId: orgId, programGroupId: id, projectId, addedBy: updatedBy }))
         );
       }
-    }
+      await writeReportEvent(client, req, {
+        organizationId: orgId,
+        action: 'report_os.program_group_updated',
+        resourceType: 'report_program_group',
+        resourceId: String(id),
+        details: {
+          ...(name !== undefined ? { name } : {}),
+          ...(description !== undefined ? { description } : {}),
+          ...(status !== undefined ? { status } : {}),
+          ...(members ? { projectIds: [...members].sort((a, b) => a - b), previousProjectIds } : {}),
+        },
+      });
+      return row;
+    });
 
     return res.json({ data: updated });
   } catch (error: any) {
+    if (error instanceof ProgramGroupNotFound) return res.status(404).json({ error: 'Program group not found' });
     return serverError(res, logger, 'updating program groups', error);
   }
 });
@@ -1600,18 +1652,29 @@ router.post('/program-groups/:id/snapshots', async (req: Request, res: Response)
     const projectIds = memberships.map(m => m.projectId).sort((a, b) => a - b);
     const projectSetHash = createHash('sha256').update(JSON.stringify(projectIds)).digest('hex');
 
-    const [snapshot] = await db
-      .insert(reportProgramGroupSnapshots)
-      .values({
-        programGroupId: id,
+    // The snapshot and its chained audit row land together or not at all.
+    const snapshot = await inTenantTransaction(orgId, async client => {
+      const [recorded] = await onTransaction(client)
+        .insert(reportProgramGroupSnapshots)
+        .values({
+          programGroupId: id,
+          organizationId: orgId,
+          snapshotLabel,
+          snapshotReason,
+          projectIds,
+          projectSetHash,
+          createdBy,
+        })
+        .returning();
+      await writeReportEvent(client, req, {
         organizationId: orgId,
-        snapshotLabel,
-        snapshotReason,
-        projectIds,
-        projectSetHash,
-        createdBy,
-      })
-      .returning();
+        action: 'report_os.program_group_snapshot_recorded',
+        resourceType: 'report_program_group',
+        resourceId: String(id),
+        details: { snapshotId: recorded.id, snapshotLabel: snapshotLabel ?? null, snapshotReason: snapshotReason ?? null, projectIds, projectSetHash },
+      });
+      return recorded;
+    });
 
     return res.status(201).json({ data: snapshot });
   } catch (error: any) {

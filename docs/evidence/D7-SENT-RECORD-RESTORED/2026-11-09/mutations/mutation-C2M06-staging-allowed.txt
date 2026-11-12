@@ -1,0 +1,13 @@
+MUTATION C2M06-staging-allowed in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T21:16:14.554666Z): replaced [  if (m.environment !== 'production') return `Sequence ${n} was sent] with [  if (false) return `Sequence ${n} was sent]
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses not filed, before anything is recorded 213ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses already on record, before anything is recorded 131ms
+ × server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses a test send, before anything is recorded 1127ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses a copy that is not the package sent, before anything is recorded 115ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses an intact copy of another package, before anything is recorded 98ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses a copy missing from storage, before anything is recorded 93ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses a sequence whose earlier sequence is not on record, naming it 169ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses a package that is not this sequence, with the reader’s reasons 102ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T8 refuses a person without governed write access 97ms
+      Tests  1 failed | 8 passed | 6 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990 (expected fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990)

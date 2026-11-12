@@ -1,0 +1,7 @@
+MUTATION C3M03-statement-not-compared in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T19:26:23.012500Z): replaced [  if (signed?.statement !== statement) {
+    throw new SubmissionError('GOVERNED_REQUIRED', `The signature does not re-open this settlement] with [  if (false) {
+    throw new SubmissionError('GOVERNED_REQUIRED', `The signature does not re-open this settlement]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > the statement is compared word for word: one character changed is refused 380ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb (expected 022ce785b0e199ffab12f2e09c75627ada029c143a7766922398bc56ff0d50cb)

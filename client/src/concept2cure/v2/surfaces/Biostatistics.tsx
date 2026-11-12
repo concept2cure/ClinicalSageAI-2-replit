@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
-import { useLiveRows, EmptyState, ProjectBack } from '../dataConnect';
+import { useLiveRows, useLiveData, EmptyState, ProjectBack } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -17,6 +17,13 @@ import { authService } from '@/services/portal/authService';
 import { stableStringify } from '@shared/canonical-json';
 import { setEditorTarget } from '../editorTarget';
 import { isDeviceFamily } from '@shared/constants/domain/product-types';
+import {
+  PRIMARY_INDUSTRIES,
+  governedToPicker,
+  type ClientTypeOption,
+  type MdxSpecialization,
+  type PrimaryIndustry,
+} from '../../mdx/lib/industryProfileMapping';
 import {
   AGENCY_LABELS,
   ENDPOINT_TYPE_LABELS,
@@ -365,9 +372,51 @@ function vf(v: string): number | undefined { return v === undefined || v === nul
 
 /** The worked example a project with no recorded design opens on: diagnostic
  *  accuracy for a device or diagnostic project, the survival example otherwise.
- *  (2026-10-31: an IVD project opened on an oncology survival preset.) */
-function defaultPresetFor(project: ShellProject | null): string {
-  return isDeviceFamily(project?.productType) ? 'ivd' : 'survival';
+ *  (2026-10-31: an IVD project opened on an oncology survival preset.)
+ *
+ *  2026-11-12: with NO project open — which is how the rail opens this work
+ *  area (P-107) — `project` is null, so `isDeviceFamily(undefined)` was false
+ *  and EVERY organisation opened on the Phase III oncology example, a device or
+ *  diagnostics tenant included. In that case the organisation's own recorded
+ *  industry decides it: `organization_industry_profiles.primary_industry`, read
+ *  through the existing GET /api/mdx/industry-profile and translated by the
+ *  module that owns that vocabulary (mdx/lib/industryProfileMapping) rather
+ *  than by a second copy of the mapping here. A device or diagnostics industry
+ *  opens on the same example a device or diagnostics PROJECT does, so there is
+ *  one rule and not two. Every other recorded industry — CRO, regulatory
+ *  consulting, academic, biotech/pharma — and an organisation that has recorded
+ *  no industry at all keep the general example: an absent profile is never read
+ *  as a statement about the tenant, and the note above the artifact calls the
+ *  example what it is — a worked example, not their study. */
+function defaultPresetFor(project: ShellProject | null, orgClientType?: ClientTypeOption | null): string {
+  if (isDeviceFamily(project?.productType)) return 'ivd';
+  if (!project && (orgClientType === 'medtech' || orgClientType === 'diagnostics')) return 'ivd';
+  return 'survival';
+}
+
+/** The organisation's recorded client type, as the governed industry profile
+ *  states it. Read ONLY when no project is open: a project's own product type
+ *  already decides the example and is in hand, so a project visit makes no
+ *  extra request. `clientType` is null while the read is in flight, when the
+ *  organisation has recorded no profile (the route answers `null`, honestly),
+ *  and when the read fails — nothing about the tenant is inferred from any of
+ *  the three. `pending` is true only while that read is in flight, so the
+ *  engine is not asked to size the general example a moment before the
+ *  organisation's own replaces it; the read has a deadline, so it ends. */
+function useRecordedClientType(projectOpen: boolean): { clientType: ClientTypeOption | null; pending: boolean } {
+  const path = projectOpen ? null : '/api/mdx/industry-profile';
+  const read = useLiveData<{ primaryIndustry?: unknown; mdxSpecialization?: unknown }>(path, [path]);
+  const pending = Boolean(path) && read.loading;
+  const primary = read.data?.primaryIndustry;
+  if (typeof primary !== 'string' || !(PRIMARY_INDUSTRIES as readonly string[]).includes(primary)) {
+    return { clientType: null, pending };
+  }
+  const spec = read.data?.mdxSpecialization;
+  const clientType = governedToPicker(
+    primary as PrimaryIndustry,
+    typeof spec === 'string' ? (spec as MdxSpecialization) : null,
+  );
+  return { clientType, pending };
 }
 
 /* ── Working documents saved from this page, this session ───────────────────
@@ -545,6 +594,8 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
      design (with its honest gaps); the numbers on screen are the engine's
      answer for that design, exactly as for a preset. */
   const program = readShellProject();
+  /* Only consulted when no project is open; see defaultPresetFor. */
+  const recordedClient = useRecordedClientType(Boolean(program));
   const [designReload, setDesignReload] = useState(0);
   const designs = useBridgeDesigns(designReload);
   const [selectedStudyId, setSelectedStudyId] = useState<string | null>(() => consumeNavParams('biostatistics')?.studyId ?? null);
@@ -600,11 +651,16 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
      size, the read failed, or the person chose one. */
   const designPending = (!!program && (designs.loading || (designs.rows.length > 0 && !selectedStudyId)))
     || (!!selectedStudyId && !bridge.assessment && !bridge.error);
-  const holdForDesign = !personChose && preset !== 'design' && designPending;
+  /* The same holds with no project open while the organisation's recorded
+     industry is being read: a diagnostics organisation is not shown the
+     oncology example's verdict for the moment before its own example arrives. */
+  const holdForDesign = !personChose && preset !== 'design' && (designPending || recordedClient.pending);
   /* Project home publishes the project's product type once its read model
      loads, which can be after this page mounted: follow it until the person
-     chooses, so a device or diagnostic project is not left on the survival example. */
-  const wantedExample = defaultPresetFor(program);
+     chooses, so a device or diagnostic project is not left on the survival example.
+     With no project open the organisation's recorded industry arrives the same
+     way — after mount, from its own read — and is followed by the same effect. */
+  const wantedExample = defaultPresetFor(program, recordedClient.clientType);
   useEffect(() => {
     if (personChose || edited || preset === 'design' || preset === wantedExample) return;
     setPreset(wantedExample);
@@ -1122,8 +1178,17 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
             and one place is one place to miss. */}
         {isExample && (
           <p className="bs-example-note" role="note">
-            Worked example{edited ? ' (modified)' : ''} — {exampleName}, not your study. Choose your project’s study
-            design on the left and the engine sizes your own.
+            Worked example{edited ? ' (modified)' : ''} — {exampleName}, not your study.{' '}
+            {/* The list is named by its heading, not by where it sits: at phone
+                width it is BELOW the document (`.bs-main{ order:-1 }`), so "on
+                the left" was true only on a wide screen. With no project open
+                there is no "your project's design" to choose either — the list
+                is every design this organisation has recorded. (2026-11-12: it
+                told a project-less visitor, on a phone, to pick their project's
+                design on the left.) */}
+            {program
+              ? <>Choose your project’s design under Study design and the engine sizes your own.</>
+              : <>Choose a design under Study design, or open a project, and the engine sizes your own.</>}
           </p>
         )}
         <section className="bs-doc" aria-label={docDef?.label}>

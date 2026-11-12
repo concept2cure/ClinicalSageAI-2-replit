@@ -1,0 +1,901 @@
+{
+  "pack": "portfolio",
+  "prefix": "[Demo · Portfolio]",
+  "outcome": "seeded_unqualified",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T19:13:32.831Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 135,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {
+        "project": 6,
+        "vault-document": 12,
+        "authoring-document": 6,
+        "task": 18,
+        "csr-section-text": 39,
+        "authoring-comment": 2,
+        "authoring-comment-resolution": 2,
+        "sequence": 2,
+        "data-room-source": 1,
+        "agency-communication": 1
+      },
+      "found": {
+        "client-workspace": 4,
+        "project": 2,
+        "vault-document": 4,
+        "authoring-document": 2,
+        "task": 6,
+        "csr-section-text": 11,
+        "authoring-comment": 4
+      }
+    },
+    "companies": [
+      {
+        "key": "varnhollow",
+        "name": "Varnhollow Oncology (fictional)",
+        "profile": "Clinical-stage oncology company developing VNH-310, a fictional humanized IgG1 monoclonal antibody for previously treated non-small cell lung cancer."
+      },
+      {
+        "key": "petrelline",
+        "name": "Petrelline Rare Therapeutics (fictional)",
+        "profile": "Rare-disease biologics company developing PTR-022, a fictional recombinant enzyme replacement therapy for late-onset Pompe disease."
+      },
+      {
+        "key": "quillmont",
+        "name": "Quillmont Immunology (fictional)",
+        "profile": "Immunology company developing QLM-118, a fictional oral small-molecule selective kinase inhibitor for ulcerative colitis."
+      },
+      {
+        "key": "halcyra",
+        "name": "Halcyra Vaccines (fictional)",
+        "profile": "Vaccine company developing HLY-09, a fictional adjuvanted recombinant RSV prefusion F protein vaccine for adults aged 60 and over."
+      }
+    ],
+    "clientWorkspaces": [
+      {
+        "key": "varnhollow",
+        "id": 53496,
+        "name": "Varnhollow Oncology (fictional demo)",
+        "slug": "varnhollow-oncology-portfolio-demo",
+        "created": false
+      },
+      {
+        "key": "petrelline",
+        "id": 53497,
+        "name": "Petrelline Rare Therapeutics (fictional demo)",
+        "slug": "petrelline-rare-therapeutics-portfolio-demo",
+        "created": false
+      },
+      {
+        "key": "quillmont",
+        "id": 53498,
+        "name": "Quillmont Immunology (fictional demo)",
+        "slug": "quillmont-immunology-portfolio-demo",
+        "created": false
+      },
+      {
+        "key": "halcyra",
+        "id": 53499,
+        "name": "Halcyra Vaccines (fictional demo)",
+        "slug": "halcyra-vaccines-portfolio-demo",
+        "created": false
+      }
+    ],
+    "project.a.vnh310-301": {
+      "stage": "a",
+      "stageLabel": "Planning — protocol and SAP in the Vault, CSR shell created",
+      "company": "Varnhollow Oncology (fictional)",
+      "protocolNumber": "VNH-310-301",
+      "clientWorkspace": {
+        "id": 53496,
+        "name": "Varnhollow Oncology (fictional demo)"
+      },
+      "projectId": "7a266309-5fc1-4c18-8438-8619b1b5e805",
+      "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "4406a56c-7416-4327-9ce5-6f7f47786e34",
+        "sha256": "a891d6baa41d8602b3946c3a8cb7b75dbf739f283074e0bb3c003e988e4e4b6f",
+        "sameBytes": true,
+        "action": "found"
+      },
+      "sap": {
+        "id": "1e03436e-bdb1-44f6-af11-132f526a119c",
+        "sha256": "17335034994a24bc53eff9f01dc2dea2b81803d3603e8fa766e43db0fdb18ab5",
+        "sameBytes": true,
+        "action": "found"
+      },
+      "csrDocument": {
+        "id": "663b06c1-c3e9-4128-b571-eac7183b56e5",
+        "title": "[Demo · Portfolio] VNH-310-301 Clinical Study Report (ICH E3) — Varnhollow Oncology (fictional)",
+        "status": "draft",
+        "canEdit": true
+      }
+    },
+    "project.b.ptr022-301": {
+      "stage": "b",
+      "stageLabel": "Study conduct — enrolling; study design recorded, CSR shell waiting",
+      "company": "Petrelline Rare Therapeutics (fictional)",
+      "protocolNumber": "PTR-022-301",
+      "clientWorkspace": {
+        "id": 53497,
+        "name": "Petrelline Rare Therapeutics (fictional demo)"
+      },
+      "projectId": "62f11671-1d20-49d6-b745-1ad081e2a4b6",
+      "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "76e2939f-8d14-44ad-9a8a-658df1151190",
+        "sha256": "835bfea8b7fb1d3d8a309ed91a93539d3e2b45182b819b1ec836d98e72e38b71",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "studyDesign": {
+        "title": "[Demo · Portfolio] PTR-022-301 — Phase 3 study design (fictional)",
+        "action": "refused",
+        "boundTo": {
+          "studyId": "sd_70de6919e18e4ef489868f919d94baff",
+          "programId": "3a0d3318-03dd-4497-9a34-761440301c81"
+        }
+      },
+      "csrDocument": {
+        "id": "cda167cc-f2b8-4ebb-b13c-240f60e4b16b",
+        "title": "[Demo · Portfolio] PTR-022-301 Clinical Study Report (ICH E3) — Petrelline Rare Therapeutics (fictional)",
+        "status": "draft",
+        "canEdit": true
+      }
+    },
+    "project.c.qlm118-202": {
+      "stage": "c",
+      "stageLabel": "Database lock — clinical source in the data room, CSR not yet drafted",
+      "company": "Quillmont Immunology (fictional)",
+      "protocolNumber": "QLM-118-202",
+      "clientWorkspace": {
+        "id": 53498,
+        "name": "Quillmont Immunology (fictional demo)"
+      },
+      "projectId": "61dc7ed7-279a-4de8-942d-4e44e34ee342",
+      "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "cbe0c09d-aefe-4cb4-b129-19ab017295d5",
+        "sha256": "58b9f447e63acb3c653ccd2870d30119cf8c25baf053ff89fd1232678b42256c",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sap": {
+        "id": "3d91fa72-02ce-4b13-9c5f-ce8ff0f7c7f6",
+        "sha256": "2b311fb73088320311bbfef44680134157ca08edcf5079ded90a5b2eee69fec7",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "source": {
+        "id": "6e7e8283-0521-441d-8992-e760f4d7c1e5",
+        "sha256": "e9bf26f5cba8cb6a0c9ef7ce26556961e6273442be4c09c43b2185caec8e61a8",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 8
+      },
+      "csrDocument": {
+        "id": "9b28099c-b197-48ca-b93d-7edc14bb4667",
+        "title": "[Demo · Portfolio] QLM-118-202 Clinical Study Report (ICH E3) — Quillmont Immunology (fictional)",
+        "status": "draft",
+        "canEdit": true
+      }
+    },
+    "project.d.hly09-201": {
+      "stage": "d",
+      "stageLabel": "Drafting — narrative sections being written in the one editor",
+      "company": "Halcyra Vaccines (fictional)",
+      "protocolNumber": "HLY-09-201",
+      "clientWorkspace": {
+        "id": 53499,
+        "name": "Halcyra Vaccines (fictional demo)"
+      },
+      "projectId": "d67b4cc4-6484-4a91-ac01-1d8717e66cf1",
+      "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "95d075af-079c-4bee-9f20-968fd0509f37",
+        "sha256": "3f0c54dd5c02ac622a2a9cf97dd67028a4bdb38b40c304826f089903ef3649ec",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "source": {
+        "id": "3a9bceb4-0c52-45af-8877-4192fefac10a",
+        "sha256": "cfcdef76ddf1cc1a5d061c5239520a3b64f6afb88578f1b11c606871b6a62424",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 8
+      },
+      "csrDocument": {
+        "id": "a9bee813-392a-4ece-a732-8fa9f803de69",
+        "title": "[Demo · Portfolio] HLY-09-201 Clinical Study Report (ICH E3) — Halcyra Vaccines (fictional)",
+        "status": "draft",
+        "canEdit": true
+      },
+      "narrative": {
+        "headings": [
+          "titlePage",
+          "synopsis",
+          "introduction",
+          "objectives",
+          "plan",
+          "subjects"
+        ],
+        "written": 6,
+        "missing": [],
+        "sections": {
+          "titlePage": "1",
+          "synopsis": "2",
+          "introduction": "7",
+          "objectives": "8",
+          "plan": "9",
+          "subjects": "10",
+          "efficacy": "11",
+          "safety": "12",
+          "discussion": "13",
+          "ethics": "5",
+          "investigators": "6"
+        }
+      }
+    },
+    "project.e.vnh310-201": {
+      "stage": "e",
+      "stageLabel": "In review — all narrative written, reviewer comments open",
+      "company": "Varnhollow Oncology (fictional)",
+      "protocolNumber": "VNH-310-201",
+      "clientWorkspace": {
+        "id": 53496,
+        "name": "Varnhollow Oncology (fictional demo)"
+      },
+      "projectId": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+      "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "be03a93a-3c31-401b-a3a8-61b646c399e9",
+        "sha256": "36f4c2a909690cd2abd7c5bf186a02c9b8a491f54d2834702e472eaf4d336b6e",
+        "sameBytes": true,
+        "action": "found"
+      },
+      "source": {
+        "id": "1f6ce6ec-86e1-465a-94f3-2b5d7aeb6e70",
+        "sha256": "772226c9d72a675a305cc8b6709de07400bf529c1c3bab5a3d3f7ffaf19c374b",
+        "sameBytes": true,
+        "action": "found"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 8
+      },
+      "csrDocument": {
+        "id": "0a43e9e9-b55a-45f3-aa46-d8f62b0373b8",
+        "title": "[Demo · Portfolio] VNH-310-201 Clinical Study Report (ICH E3) — Varnhollow Oncology (fictional)",
+        "status": "draft",
+        "canEdit": true
+      },
+      "narrative": {
+        "headings": [
+          "titlePage",
+          "synopsis",
+          "introduction",
+          "objectives",
+          "plan",
+          "subjects",
+          "efficacy",
+          "safety",
+          "discussion",
+          "ethics",
+          "investigators"
+        ],
+        "written": 0,
+        "missing": [],
+        "sections": {
+          "titlePage": "1",
+          "synopsis": "2",
+          "introduction": "7",
+          "objectives": "8",
+          "plan": "9",
+          "subjects": "10",
+          "efficacy": "11",
+          "safety": "12",
+          "discussion": "13",
+          "ethics": "5",
+          "investigators": "6"
+        }
+      },
+      "comments": [
+        {
+          "id": "761a7d9c-fc9c-4c4d-8657-79ba3ca0d2de",
+          "heading": "efficacy",
+          "status": "open"
+        },
+        {
+          "id": "81eb63c2-aec0-4795-92d2-a873d5f605b3",
+          "heading": "safety",
+          "status": "open"
+        },
+        {
+          "id": "a0034553-9e8a-4a27-892e-243ff9eda887",
+          "heading": "discussion",
+          "status": "open"
+        },
+        {
+          "id": "2e4c0197-8e33-41d2-aa27-57ccda0c3e0d",
+          "heading": "synopsis",
+          "status": "resolved"
+        }
+      ]
+    },
+    "project.f.ptr022-102": {
+      "stage": "f",
+      "stageLabel": "Drafting complete — comments resolved, awaiting signature",
+      "company": "Petrelline Rare Therapeutics (fictional)",
+      "protocolNumber": "PTR-022-102",
+      "clientWorkspace": {
+        "id": 53497,
+        "name": "Petrelline Rare Therapeutics (fictional demo)"
+      },
+      "projectId": "92907d1f-3b68-418f-873c-9065a8186c2b",
+      "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+      "programType": "csr",
+      "protocol": {
+        "id": "097da766-7585-4e6c-878d-c089de52b41d",
+        "sha256": "634cd59d32e8b0f5d024b14cdcef54b83a8532b3fde3e49132b3ef86d47201e7",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "source": {
+        "id": "e863a936-7b75-4060-9b9f-09a77f0a129c",
+        "sha256": "2b9a1358dde42bfd9c89e965d2bfe940446d14106eb8e9a3da76237779e9c6b4",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 8
+      },
+      "csrDocument": {
+        "id": "c6dd745e-2588-4081-b29d-b29d5ab88fdf",
+        "title": "[Demo · Portfolio] PTR-022-102 Clinical Study Report (ICH E3) — Petrelline Rare Therapeutics (fictional)",
+        "status": "draft",
+        "canEdit": true
+      },
+      "narrative": {
+        "headings": [
+          "titlePage",
+          "synopsis",
+          "introduction",
+          "objectives",
+          "plan",
+          "subjects",
+          "efficacy",
+          "safety",
+          "discussion",
+          "ethics",
+          "investigators"
+        ],
+        "written": 11,
+        "missing": [],
+        "sections": {
+          "titlePage": "1",
+          "synopsis": "2",
+          "introduction": "7",
+          "objectives": "8",
+          "plan": "9",
+          "subjects": "10",
+          "efficacy": "11",
+          "safety": "12",
+          "discussion": "13",
+          "ethics": "5",
+          "investigators": "6"
+        }
+      },
+      "comments": [
+        {
+          "id": "d21db0d1-8370-4141-aea7-c400ac027e3e",
+          "heading": "safety",
+          "status": "resolved"
+        },
+        {
+          "id": "77afad71-2e6c-4b63-a9b4-6485d2f14a27",
+          "heading": "efficacy",
+          "status": "resolved"
+        }
+      ],
+      "signature": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+    },
+    "project.g.qlm118-101": {
+      "stage": "g",
+      "stageLabel": "Ready to file — IND sequence 0000 open; filing the CSR to 5.3.5.1 waits for its scientific-review receipt",
+      "company": "Quillmont Immunology (fictional)",
+      "protocolNumber": "QLM-118-101",
+      "clientWorkspace": {
+        "id": 53498,
+        "name": "Quillmont Immunology (fictional demo)"
+      },
+      "projectId": "452c2405-5393-4c8a-81aa-15c1530a81b5",
+      "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+      "programType": "ind",
+      "protocol": {
+        "id": "3fbcfbd2-00c6-4e14-8104-6b6e74aa0d05",
+        "sha256": "f9fd350879a60e8110d6b4c83452d277baa521b9d494b98de2e5ca93e51c044a",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "source": {
+        "id": "b013614b-50df-4a96-82c0-aeb1b3510ad1",
+        "sha256": "63bb9a5c08e55a2ea0064467dedccc682341fe89b19fdb7c56aaa59ddec8406a",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 9
+      },
+      "csrDocument": {
+        "id": "4d9c9bb6-0bc5-49ff-a0a3-c42e5221a43a",
+        "title": "[Demo · Portfolio] QLM-118-101 Clinical Study Report (ICH E3) — Quillmont Immunology (fictional)",
+        "status": "draft",
+        "canEdit": true
+      },
+      "narrative": {
+        "headings": [
+          "titlePage",
+          "synopsis",
+          "introduction",
+          "objectives",
+          "plan",
+          "subjects",
+          "efficacy",
+          "safety",
+          "discussion",
+          "ethics",
+          "investigators"
+        ],
+        "written": 11,
+        "missing": [],
+        "sections": {
+          "titlePage": "1",
+          "synopsis": "2",
+          "introduction": "7",
+          "objectives": "8",
+          "plan": "9",
+          "subjects": "10",
+          "efficacy": "11",
+          "safety": "12",
+          "discussion": "13",
+          "ethics": "5",
+          "investigators": "6"
+        }
+      },
+      "placement": {
+        "action": "not executed",
+        "reason": "file the CSR to the Vault: HTTP 409 {\"success\":false,\"error\":{\"code\":\"CSR_SCIENTIFIC_REVIEW_REQUIRED\",\"message\":\"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.\"}}"
+      }
+    },
+    "project.h.hly09-101": {
+      "stage": "h",
+      "stageLabel": "Information-request scenario (fictional) — rehearsing an agency information request on the HLY-09-101 CSR; the CSR is not placed in IND sequence 0000",
+      "company": "Halcyra Vaccines (fictional)",
+      "protocolNumber": "HLY-09-101",
+      "clientWorkspace": {
+        "id": 53499,
+        "name": "Halcyra Vaccines (fictional demo)"
+      },
+      "projectId": "66b59a65-359b-4858-9e6a-80d3eb084653",
+      "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+      "programType": "ind",
+      "protocol": {
+        "id": "ac156fda-77d4-4927-a92c-64217ea975bf",
+        "sha256": "c23b618435b5381300c69482f41be5be167d7e4fc67b5c48d79f3c3712e9586d",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "source": {
+        "id": "4d7a9981-c404-4f82-912e-986cc00bbad9",
+        "sha256": "d53ce05f70d5a05daa2892230ac7bd3c2983ae3405fcf6217c68a0e35d49b61d",
+        "sameBytes": true,
+        "action": "uploaded",
+        "approval": "not assumed"
+      },
+      "sourcePreview": {
+        "approved": false,
+        "tables": 9
+      },
+      "csrDocument": {
+        "id": "b1cdc5ec-3640-45fe-8729-f98839f96d8c",
+        "title": "[Demo · Portfolio] HLY-09-101 Clinical Study Report (ICH E3) — Halcyra Vaccines (fictional)",
+        "status": "draft",
+        "canEdit": true
+      },
+      "narrative": {
+        "headings": [
+          "titlePage",
+          "synopsis",
+          "introduction",
+          "objectives",
+          "plan",
+          "subjects",
+          "efficacy",
+          "safety",
+          "discussion",
+          "ethics",
+          "investigators"
+        ],
+        "written": 11,
+        "missing": [],
+        "sections": {
+          "titlePage": "1",
+          "synopsis": "2",
+          "introduction": "7",
+          "objectives": "8",
+          "plan": "9",
+          "subjects": "10",
+          "efficacy": "11",
+          "safety": "12",
+          "discussion": "13",
+          "ethics": "5",
+          "investigators": "6"
+        }
+      },
+      "placement": {
+        "action": "not executed",
+        "reason": "file the CSR to the Vault: HTTP 409 {\"success\":false,\"error\":{\"code\":\"CSR_SCIENTIFIC_REVIEW_REQUIRED\",\"message\":\"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.\"}}"
+      },
+      "agencyLetter": {
+        "title": "[Demo - Portfolio] FDA information request (fictional) - IND HLY-09 - CSR HLY-09-101.txt",
+        "sourceId": 646,
+        "eventId": "ace_1794251674943_70be0a52",
+        "proposals": {
+          "questions": 3,
+          "commitments": [],
+          "commitmentsRecorded": 0
+        }
+      },
+      "dataRoom": {
+        "total": 22,
+        "otherThanLetter": 21,
+        "titles": [
+          "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+          "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "Supplier: [Demo · Lumen] Corvane Biologics",
+          "Supplier: [Demo · Lumen] Thistlegate Central Laboratory",
+          "Supplier: [Demo · Lumen] Larkmere Clinical Research",
+          "Management review: Lumen 2026-Q2",
+          "Management review: Lumen 2026-Q3",
+          "Internal audit: LMN-IA-2027-01",
+          "Internal audit: LMN-IA-2026-05",
+          "Internal audit: LMN-IA-2026-04",
+          "Internal audit: LMN-IA-2026-03",
+          "Quality record relationship: 4",
+          "Quality record relationship: 3",
+          "Quality record relationship: 2",
+          "Quality record relationship: 1",
+          "Change control: [Demo · MDX] NP-100 software v2.3.0 — parechovirus channel mapping and thermal profile",
+          "Change control: [Demo · Biotech] Add Week 2 PK sampling to Protocol C2C-101-201 (Amendment 1)",
+          "GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+          "GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+          "GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+          "GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)"
+        ]
+      }
+    },
+    "knownProductBehaviour": [
+      {
+        "where": "stage h project (Halcyra HLY-09-101), Records > Data Room sources",
+        "what": "Uploading the fictional letter to the data room triggers the product's quality-evidence capture (server/services/qms/project-evidence.ts). While the project sat in the organisation's own workspace it attached 21 quality records from other demo packs (Lumen deviations, audits, reviews, suppliers; a C2C-101 and an MDX NP-100 change control).",
+        "observedThisRun": {
+          "total": 22,
+          "otherThanLetter": 21,
+          "titles": [
+            "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+            "Supplier: [Demo · Lumen] Glacierpath Logistics",
+            "Supplier: [Demo · Lumen] Corvane Biologics",
+            "Supplier: [Demo · Lumen] Thistlegate Central Laboratory",
+            "Supplier: [Demo · Lumen] Larkmere Clinical Research",
+            "Management review: Lumen 2026-Q2",
+            "Management review: Lumen 2026-Q3",
+            "Internal audit: LMN-IA-2027-01",
+            "Internal audit: LMN-IA-2026-05",
+            "Internal audit: LMN-IA-2026-04",
+            "Internal audit: LMN-IA-2026-03",
+            "Quality record relationship: 4",
+            "Quality record relationship: 3",
+            "Quality record relationship: 2",
+            "Quality record relationship: 1",
+            "Change control: [Demo · MDX] NP-100 software v2.3.0 — parechovirus channel mapping and thermal profile",
+            "Change control: [Demo · Biotech] Add Week 2 PK sampling to Protocol C2C-101-201 (Amendment 1)",
+            "GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+            "GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+            "GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+            "GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)"
+          ]
+        },
+        "action": "Reported to the product owner. Not hidden by the pack; observedThisRun is the data room as this run read it back."
+      }
+    ],
+    "notExecuted": [
+      {
+        "project": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+        "step": "enrolment register",
+        "reason": "not executed — no enrolment register has a mounted writer; enrolment is shown through the project's tasks"
+      },
+      {
+        "project": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+        "step": "formal review request",
+        "reason": "not executed — a formal review request needs a second organisation member as reviewer; the server refuses the author as their own reviewer (REVIEWER_IS_AUTHOR)"
+      },
+      {
+        "project": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] PTR-022-102 Clinical Study Report (ICH E3) — Petrelline Rare Therapeutics (fictional)",
+        "step": "CSR freeze and e-signature",
+        "reason": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+      },
+      {
+        "project": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+        "step": "CSR placement at m5.3.5.1",
+        "reason": "not executed — the server refused: file the CSR to the Vault: HTTP 409 {\"success\":false,\"error\":{\"code\":\"CSR_SCIENTIFIC_REVIEW_REQUIRED\",\"message\":\"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.\"}}"
+      },
+      {
+        "project": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+        "step": "eCTD compile and dispatch",
+        "reason": "not executed — the eCTD compile, validation and dispatch are the person's governed actions in Submission Center; no agency acknowledgement is invented"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "step": "study-source approval and freeze",
+        "reason": "not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "step": "build from the study's data / AnA drafting",
+        "reason": "not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "step": "CSR placement at m5.3.5.1",
+        "reason": "not executed — the server refused: file the CSR to the Vault: HTTP 409 {\"success\":false,\"error\":{\"code\":\"CSR_SCIENTIFIC_REVIEW_REQUIRED\",\"message\":\"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.\"}}"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "step": "eCTD compile and dispatch",
+        "reason": "not executed — the eCTD compile, validation and dispatch are the person's governed actions in Submission Center; no agency acknowledgement is invented"
+      },
+      {
+        "project": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+        "step": "approval of the response to the information request",
+        "reason": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+      }
+    ],
+    "refused": [
+      {
+        "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+        "projectId": "62f11671-1d20-49d6-b745-1ad081e2a4b6",
+        "step": "study design",
+        "reason": "refused — study design sd_70de6919e18e4ef489868f919d94baff \"[Demo · Portfolio] PTR-022-301 — Phase 3 study design (fictional)\" is bound to project 3a0d3318-03dd-4497-9a34-761440301c81, not 62f11671-1d20-49d6-b745-1ad081e2a4b6. The product does not move a design between projects (PROGRAM_MISMATCH) and the pack does not ask it to; Biostatistics shows no design for this project until that one is renamed or a person records a new one."
+      }
+    ],
+    "summary": {
+      "created": 89,
+      "found": 33,
+      "notExecuted": 20,
+      "refused": 1,
+      "workspaces": [
+        {
+          "key": "varnhollow",
+          "id": 53496,
+          "name": "Varnhollow Oncology (fictional demo)",
+          "projects": [
+            {
+              "stage": "a",
+              "id": "7a266309-5fc1-4c18-8438-8619b1b5e805",
+              "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC"
+            },
+            {
+              "stage": "e",
+              "id": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+              "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC"
+            }
+          ]
+        },
+        {
+          "key": "petrelline",
+          "id": 53497,
+          "name": "Petrelline Rare Therapeutics (fictional demo)",
+          "projects": [
+            {
+              "stage": "b",
+              "id": "62f11671-1d20-49d6-b745-1ad081e2a4b6",
+              "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC"
+            },
+            {
+              "stage": "f",
+              "id": "92907d1f-3b68-418f-873c-9065a8186c2b",
+              "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC"
+            }
+          ]
+        },
+        {
+          "key": "quillmont",
+          "id": 53498,
+          "name": "Quillmont Immunology (fictional demo)",
+          "projects": [
+            {
+              "stage": "c",
+              "id": "61dc7ed7-279a-4de8-942d-4e44e34ee342",
+              "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC"
+            },
+            {
+              "stage": "g",
+              "id": "452c2405-5393-4c8a-81aa-15c1530a81b5",
+              "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC"
+            }
+          ]
+        },
+        {
+          "key": "halcyra",
+          "id": 53499,
+          "name": "Halcyra Vaccines (fictional demo)",
+          "projects": [
+            {
+              "stage": "d",
+              "id": "d67b4cc4-6484-4a91-ac01-1d8717e66cf1",
+              "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC"
+            },
+            {
+              "stage": "h",
+              "id": "66b59a65-359b-4858-9e6a-80d3eb084653",
+              "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC"
+            }
+          ]
+        }
+      ],
+      "projects": [
+        {
+          "stage": "a",
+          "id": "7a266309-5fc1-4c18-8438-8619b1b5e805",
+          "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC",
+          "clientWorkspaceId": 53496,
+          "csrDocumentId": "663b06c1-c3e9-4128-b571-eac7183b56e5"
+        },
+        {
+          "stage": "b",
+          "id": "62f11671-1d20-49d6-b745-1ad081e2a4b6",
+          "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC",
+          "clientWorkspaceId": 53497,
+          "csrDocumentId": "cda167cc-f2b8-4ebb-b13c-240f60e4b16b"
+        },
+        {
+          "stage": "c",
+          "id": "61dc7ed7-279a-4de8-942d-4e44e34ee342",
+          "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC",
+          "clientWorkspaceId": 53498,
+          "csrDocumentId": "9b28099c-b197-48ca-b93d-7edc14bb4667"
+        },
+        {
+          "stage": "d",
+          "id": "d67b4cc4-6484-4a91-ac01-1d8717e66cf1",
+          "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC",
+          "clientWorkspaceId": 53499,
+          "csrDocumentId": "a9bee813-392a-4ece-a732-8fa9f803de69"
+        },
+        {
+          "stage": "e",
+          "id": "8835514e-ff8c-4b1c-9a23-c0049189780f",
+          "title": "[Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC",
+          "clientWorkspaceId": 53496,
+          "csrDocumentId": "0a43e9e9-b55a-45f3-aa46-d8f62b0373b8"
+        },
+        {
+          "stage": "f",
+          "id": "92907d1f-3b68-418f-873c-9065a8186c2b",
+          "title": "[Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC",
+          "clientWorkspaceId": 53497,
+          "csrDocumentId": "c6dd745e-2588-4081-b29d-b29d5ab88fdf"
+        },
+        {
+          "stage": "g",
+          "id": "452c2405-5393-4c8a-81aa-15c1530a81b5",
+          "title": "[Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC",
+          "clientWorkspaceId": 53498,
+          "csrDocumentId": "4d9c9bb6-0bc5-49ff-a0a3-c42e5221a43a"
+        },
+        {
+          "stage": "h",
+          "id": "66b59a65-359b-4858-9e6a-80d3eb084653",
+          "title": "[Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC",
+          "clientWorkspaceId": 53499,
+          "csrDocumentId": "b1cdc5ec-3640-45fe-8729-f98839f96d8c"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "FICTIONAL CSR portfolio: 4 invented sponsor companies, each its own client workspace (\"(fictional demo)\"), 8 CSR projects at stages a–h. SYNTHETIC demonstration data, fictional sponsor; not clinical evidence. No workspace is marked the organisation's default and no organisation setting is changed."
+  ],
+  "finishedAt": "2026-11-09T19:14:38.784Z"
+}

@@ -1,0 +1,10 @@
+ESLint, every new file (expect 0), 2026-11-09T21:22:39Z
+client/src/concept2cure/v2/__tests__/dispatchSentRecord.test.tsx: 0 {}
+server/routes/__tests__/submissions-sent-record.test.ts: 0 {}
+server/services/ana/__tests__/ana-cannot-restore-sent-record.test.ts: 0 {}
+server/services/submission-gateways/__tests__/sent-record-rederive.test.ts: 0 {}
+server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts: 0 {}
+
+check-pushed-lint-warnings --since HEAD (changed files at or under their counts):
+[ci:eslint-warning-ratchet] --since 621a046eb4f5adc112effa76d386b495a7d902bf (621a046eb) -- 32 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 621a046eb4f5adc112effa76d386b495a7d902bf.
