@@ -239,6 +239,22 @@ run "renders_the_boot_contract" {
     error_message = "SETUP_TOKEN must reach the API from the setup_token secret, never as a plain variable."
   }
 
+  # In production /readyz answers { ready } alone; which dependency is down goes
+  # to a caller presenting READYZ_TOKEN, or to one inside the task
+  # (server/startup/readyz.ts; MR-03 Stage 7, OPS-22). Generated here, held in
+  # Secrets Manager, given to the API alone, and never a plain value. The
+  # deploy's smoke test presents the same value from the GitHub environment's
+  # READYZ_TOKEN secret (outputs.tf, readyz_detail). Until 2026-11-11 nothing
+  # set it, so a failed smoke test could say only that the deployment was not
+  # ready, never why.
+  assert {
+    condition = (
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "READYZ_TOKEN"]) == lookup(module.secrets.secret_arns, "readyz_token", "no readyz_token secret") &&
+      length([for e in module.ecs.api_container.environment : e.name if e.name == "READYZ_TOKEN"]) == 0
+    )
+    error_message = "READYZ_TOKEN must reach the API from the readyz_token secret, never as a plain variable."
+  }
+
   # Every upload is scanned before it is stored, and production refuses one the
   # scanner did not see (server/middleware/uploadSafety.ts: 503
   # FILE_SCAN_UNAVAILABLE). Until 2026-10-01 nothing here set CLAMAV_HOST, so a
@@ -811,13 +827,14 @@ run "the_one_off_database_task_alone_holds_it" {
     error_message = "The database task's environment must be the API container's."
   }
   # Everything the API boots with, so the readiness contract can be verified as
-  # the runtime role; the setup token is the API's alone.
+  # the runtime role; the setup token and the readiness token are the API's
+  # alone (only the API serves /api/setup and /readyz).
   assert {
     condition = (
-      length(setsubtract(toset([for s in module.ecs.api_container.secrets : s.name if s.name != "SETUP_TOKEN"]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0 &&
-      !contains([for s in module.ecs.migrate_container.secrets : s.name], "SETUP_TOKEN")
+      length(setsubtract(toset([for s in module.ecs.api_container.secrets : s.name if !contains(["SETUP_TOKEN", "READYZ_TOKEN"], s.name)]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0 &&
+      length(setintersection(toset(["SETUP_TOKEN", "READYZ_TOKEN"]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0
     )
-    error_message = "The database task must carry every API secret but SETUP_TOKEN."
+    error_message = "The database task must carry every API secret but SETUP_TOKEN and READYZ_TOKEN, and neither of those."
   }
   # One container that serves nothing: no scanner, port or health check, and a
   # command that migrates. Started as it is, it never boots the server.

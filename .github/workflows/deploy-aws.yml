@@ -952,7 +952,8 @@ jobs:
       # derives from the revision checked here, pinned by ARN as the API's is.
       # Checked, by name and source, never by value:
       #   - one container, carrying DATABASE_URL and APP_SERVICE_DB_PASSWORD;
-      #   - every secret of the checked API revision but SETUP_TOKEN, from the
+      #   - every secret of the checked API revision but the two only the API
+      #     serves (SETUP_TOKEN, READYZ_TOKEN), from the
       #     same source, and the same environment, value for value: deploy-migrate
       #     verifies the readiness contract as the runtime role, under the
       #     posture the services boot with (DB_AUDIT_REQUIRED, RLS_ENFORCE);
@@ -988,7 +989,7 @@ jobs:
             --slurpfile m /tmp/migrate-td-preflight.json --slurpfile a /tmp/api-td-checked.json '
             ($m[0].containerDefinitions[0].secrets // [] | map({(.name): .valueFrom}) | add // {}) as $ms
             | $a[0].containerDefinitions[] | select(.name == $c) | (.secrets // [])[]
-            | select(.name != "SETUP_TOKEN" and $ms[.name] != .valueFrom) | .name
+            | select((.name | IN("SETUP_TOKEN", "READYZ_TOKEN") | not) and $ms[.name] != .valueFrom) | .name
           ' | tr '\n' ' ')
           if [[ -n "${SOURCE_DIFFERS// /}" ]]; then
             echo "::error::$ECS_MIGRATE_TASK_FAMILY does not carry these API secrets from the same source: ${SOURCE_DIFFERS% }. The migration would verify the readiness contract against something other than what the services boot with."
@@ -1345,6 +1346,11 @@ jobs:
     environment: ${{ needs.resolve.outputs.target }}
     env:
       CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+      # The environment's secret READYZ_TOKEN: the value of the stack's
+      # readyz_token secret (terraform output readyz_detail says how to read
+      # it). Optional. Unset, the verdict is checked the same and the step
+      # prints no per-dependency detail.
+      READYZ_TOKEN: ${{ secrets.READYZ_TOKEN }}
 
     steps:
       - name: The target's names (.github/deploy-targets.json, via resolve)
@@ -1367,6 +1373,14 @@ jobs:
       # A 200 is not proof on its own: CloudFront used to answer unknown paths
       # with 200 and the app's index.html. The body must be /readyz's verdict.
       # The deploy role needs cloudfront:GetDistribution for the alias lookup.
+      #
+      # In production /readyz answers { ready } alone to the public; which
+      # dependency is down goes to a caller presenting READYZ_TOKEN
+      # (server/startup/readyz.ts; MR-03 Stage 7, OPS-22). With the secret set,
+      # a failed deploy says why here, instead of in CloudWatch after the
+      # rollback. The token goes to curl in a file, never on a command line,
+      # and decides nothing: the status and `ready` are the same for every
+      # caller (tests/ci/deploy-smoke-readyz-detail.contract.test.ts).
       - name: Readiness through the public URL
         run: |
           set -euo pipefail
@@ -1381,13 +1395,29 @@ jobs:
             exit 1
           fi
 
+          DETAIL=()
+          if [ -n "${READYZ_TOKEN:-}" ]; then
+            ( umask 077; printf 'x-readyz-token: %s\n' "$READYZ_TOKEN" > "$RUNNER_TEMP/readyz-header" )
+            DETAIL=(--header "@$RUNNER_TEMP/readyz-header")
+          else
+            echo "::notice::READYZ_TOKEN is not set in this environment, so /readyz's per-dependency detail is not shown; the verdict is checked the same. terraform output readyz_detail says how to set it."
+          fi
+          # Presented and unanswered: the secret is not the deployment's token
+          # (rotated in Terraform, not here). Said once, on the last body read.
+          stale_token() {
+            if [ "${#DETAIL[@]}" -gt 0 ] && jq -e 'type == "object" and has("ready") and (has("dependencies") | not)' readyz.json >/dev/null 2>&1; then
+              echo "::warning::READYZ_TOKEN was presented and /readyz returned no detail: the GitHub secret is not the deployment's readyz_token. Set it again from terraform output readyz_detail."
+            fi
+          }
+
           for attempt in 1 2 3 4 5; do
             rm -f readyz.json
             STATUS=$(curl --silent --show-error --max-time 30 --output readyz.json \
-              --write-out '%{http_code}' "https://$HOST/readyz" || true)
+              ${DETAIL[@]+"${DETAIL[@]}"} --write-out '%{http_code}' "https://$HOST/readyz" || true)
             if [ "$STATUS" = "200" ] && jq -e '.ready == true' readyz.json >/dev/null 2>&1; then
               echo "✅ https://$HOST/readyz reports ready"
-              jq '.dependencies' readyz.json
+              jq '.dependencies // "per-dependency detail not shown"' readyz.json
+              stale_token
               exit 0
             fi
             echo "Attempt $attempt: HTTP $STATUS"
@@ -1395,6 +1425,7 @@ jobs:
             echo
             if [ "$attempt" -lt 5 ]; then sleep 15; fi
           done
+          stale_token
           echo "::error::https://$HOST/readyz did not report ready."
           exit 1
 
