@@ -2,14 +2,16 @@
  * P0-12's last gap: AnA's tools that change records without being commands.
  *
  * Every platform command that writes has been a proposal since P0-12 part 2 —
- * AnA asks, a person confirms. Five tools write through their own handlers
+ * AnA asks, a person confirms. These tools write through their own handlers
  * instead, so that partition never reached them and AnA ran them unasked:
  *
  *   save_document_to_vault     a new governed artifact and its first version
  *   update_vault_document      a new version of an existing artifact
  *   file_chat_upload_to_vault  a document filed into the project Vault
- *   seed_tmf                   the trial master file's reference model
  *   save_report_definition     a saved report the organisation will use
+ *
+ * A fifth, seed_tmf, retired on 2026-11-12 with the trial master file store it
+ * wrote (eTMF convergence E4 step 3; tmf-tools-retired.test.ts).
  *
  * They get the same confirm tier, enforced in two places that between them
  * cover every path: the tool gate, which lets the live chat stream hold the turn
@@ -37,30 +39,28 @@ import { classifyToolCall } from '../governed-tool-gate.js';
 import { toolAuthorizationOf } from '../tool-authorization.js';
 import { getToolHandler } from '../AnaToolExecutor.js';
 
-const FIVE = [
+const DIRECT_MUTATORS = [
   'save_document_to_vault',
   'update_vault_document',
   'file_chat_upload_to_vault',
-  'seed_tmf',
   'save_report_definition',
 ] as const;
 
 describe('the tool gate puts each one to a person', () => {
   it('each is a confirm-tier write in the tool register (P1-34 folded the list of five into it)', () => {
-    for (const tool of FIVE) expect(toolAuthorizationOf(tool, {}).class, tool).toBe('confirm');
+    for (const tool of DIRECT_MUTATORS) expect(toolAuthorizationOf(tool, {}).class, tool).toBe('confirm');
   });
 
   /* Each is put to a person. The three that record the person's reason for
      change (REASON_REQUIRED_TOOLS) are put at the reason tier: the person types
      the reason, or adopts AnA's wording, at confirmation (D5, 2026-09-29). */
-  const TIER: Record<(typeof FIVE)[number], 'confirm' | 'reason'> = {
+  const TIER: Record<(typeof DIRECT_MUTATORS)[number], 'confirm' | 'reason'> = {
     save_document_to_vault: 'reason',
     update_vault_document: 'reason',
     file_chat_upload_to_vault: 'confirm',
-    seed_tmf: 'reason',
     save_report_definition: 'confirm',
   };
-  it.each(FIVE)('%s is proposed to a person, carrying what it would do', tool => {
+  it.each(DIRECT_MUTATORS)('%s is proposed to a person, carrying what it would do', tool => {
     const input = { title: 'Stability summary', reason: 'Filing the 24-month data' };
     expect(classifyToolCall({ name: tool, input })).toEqual({
       kind: 'NEEDS_APPROVAL',
@@ -71,10 +71,10 @@ describe('the tool gate puts each one to a person', () => {
   });
 
   it('an unreadable call is refused, not proposed', () => {
-    expect(classifyToolCall({ name: 'seed_tmf', input: {}, inputParseError: 'truncated' }).kind).toBe(
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: {}, inputParseError: 'truncated' }).kind).toBe(
       'UNDECIDABLE',
     );
-    expect(classifyToolCall({ name: 'seed_tmf', input: null }).kind).toBe('UNDECIDABLE');
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: null }).kind).toBe('UNDECIDABLE');
   });
 
   it('a read-only neighbour is not', () => {

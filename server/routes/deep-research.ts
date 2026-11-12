@@ -35,6 +35,7 @@ import { authedUserId } from '../utils/authedActor';
 import { createScopedLogger } from '../utils/logger';
 import { requestConnectable, requestPgClient } from '../db/requestDb';
 import { verifyReauth } from './c2c/actions';
+import { openSseStream } from '../utils/sse-stream';
 
 const logger = createScopedLogger('deep-research');
 
@@ -168,11 +169,9 @@ router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
   // without an organisation there is no job to stream (D3, 2026-10-11).
   if (!streamOrgId) return res.status(400).json({ error: 'Organization context required' });
 
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  });
+  // SSE headers, and a heartbeat between progress events, which a research
+  // job can leave minutes apart (server/utils/sse-stream.ts).
+  openSseStream(req, res);
 
   // Send initial status (org-scoped: a foreign-tenant job id reads as not found)
   try {

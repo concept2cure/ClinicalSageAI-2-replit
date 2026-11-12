@@ -279,8 +279,9 @@ describe('honest states', () => {
   });
 
   /* Found in the running app (2026-11-12): with the connection down the drawer read "Not recorded — Failed to
-     fetch". That is the browser's own throw (a TypeError), not a sentence anyone wrote. */
-  it('a call that never reached the server says so in plain words, not in the browser\'s', async () => {
+     fetch". That is the browser's own throw (a TypeError), not a sentence anyone wrote. Nor is it proof that nothing
+     was recorded: a connection can drop after the server took the write, so the line says to check (qmsWrites.ts). */
+  it('a call the server did not confirm says so in plain words, not in the browser\'s', async () => {
     H.apiRequest.mockRejectedValue(new TypeError('Failed to fetch'));
     renderLog(row(DEVICE));
     fireEvent.click(within(detail()).getByRole('button', { name: 'Assess the regulatory impact' }));
@@ -288,7 +289,7 @@ describe('honest states', () => {
     for (const q of DEVICE_CHANGE_QUESTIONS.us) answer(d, q.question, 'No');
     fireEvent.click(within(d).getByRole('button', { name: /Run the assessment/ }));
     await waitFor(() => expect(within(drawer()).getByRole('status').textContent).toBe(
-      'Not recorded — the server could not be reached, so nothing was sent. Check your connection and try again.'));
+      'Not confirmed — the server could not be reached. Check your connection, then reload to see whether it was recorded before trying again.'));
     expect(drawer().textContent).not.toContain('Failed to fetch');
     expect(H.refresh).not.toHaveBeenCalled();
     expect(within(detail()).getByTestId('change-impact').textContent).toContain('Not assessed yet.');

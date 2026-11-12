@@ -1,0 +1,2 @@
+✓ sse-heartbeat: every server-sent event stream in server/ is opened by server/utils/sse-stream.ts
+exit 0

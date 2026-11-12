@@ -1474,48 +1474,21 @@ export const REVIEW_LIFECYCLE_CALENDAR: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
-export const CREATE_TMF: AnaTool = {
-  name: 'create_tmf',
-  description:
-    "Open a Trial Master File (eTMF) for a study, organized to the DIA TMF Reference Model. Returns the TMF id for adding artifacts. Governed + audited, org-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      title: { type: 'string' },
-      study_id: { type: 'number', description: 'Optional clinical_studies.id.' },
-      reason: STATED_REASON_INPUT,
-    },
-    required: ['title'],
-  },
-};
-
 // 2026-10-15: said a zone-less artifact "is AUTO-CLASSIFIED"; an unmatched name is refused (etmf-logic).
+// 2026-11-12 (eTMF convergence E4 step 3, L-1; P-124 item 5): files through the deployed store, for a study.
 export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
   name: 'classify_tmf_artifact',
   description:
-    "File a TMF artifact into a DIA TMF Reference Model zone. When no zone is given, the name is matched against deterministic zone keywords; a name that matches no zone keyword is unclassified and is not filed (the tool refuses, naming the missing zone): ask the user which zone (1-11) it belongs in and pass it. Set status (expected/received/in_review/final/missing/not_applicable). Returns the artifact id and the assigned zone. Governed + audited, org-scoped.",
+    "File a record of a study's Trial Master File (GOVERNED: the person confirms, with their reason). The record is named by its DIA TMF Reference Model name or code (\"Protocol and amendments\", \"protocol\"); a name that matches no record of the reference model, or matches no zone keyword, is unclassified and is not filed: ask the user which record it is (get_tmf_view lists a study's records). Pass document_id, the Vault document filed against it; without one the record is noted with no document and does not count as filed. study_id is the study's own id, as get_tmf_view lists it. A filed record's state is its document's review stage; no status is set here. Returns the filing and its zone.",
   input_schema: {
     type: 'object',
     properties: {
-      tmf_file_id: { type: 'number' },
-      artifact_name: { type: 'string' },
-      zone: { type: 'number', description: 'DIA RM zone 1-11; omit to classify by name (an unmatched name is refused).' },
-      status: { type: 'string', enum: ['expected','received','in_review','final','missing','not_applicable'] },
-      document_date: { type: 'string' },
+      study_id: { type: 'string', description: "The study's own id, as get_tmf_view lists it." },
+      artifact_name: { type: 'string', description: "The record's reference-model name or code. An unmatched name is refused." },
+      document_id: { type: 'string', description: "The Vault document filed against the record: a document of the study's own project." },
       reason: STATED_REASON_INPUT,
     },
-    required: ['tmf_file_id', 'artifact_name'],
-  },
-};
-
-export const REVIEW_TMF_COMPLETENESS: AnaTool = {
-  name: 'review_tmf_completeness',
-  description:
-    "Run the deterministic TMF completeness gap-check on a TMF (read-only): completeness %, per-zone coverage, the list of required artifacts not yet final, and an inspection-readiness verdict. Use to tell the user where the TMF has gaps before an inspection.",
-  input_schema: {
-    type: 'object',
-    properties: { tmf_file_id: { type: 'number' } },
-    required: ['tmf_file_id'],
+    required: ['study_id', 'artifact_name'],
   },
 };
 

@@ -332,7 +332,7 @@ router.post('/disclosures/:id/certify', async (req, res) => {
 
   // Re-authenticate even with an active session (21 CFR 11 signing).
   const reauth = await verifyReauth(userId, parsed.data.reauth);
-  if (!reauth.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: reauth.error ?? 'Re-authentication required.' } });
+  if (!reauth.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: reauth.message } });
 
   const client = await pool.connect();
   try {

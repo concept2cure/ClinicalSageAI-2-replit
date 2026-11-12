@@ -51,6 +51,30 @@ by E1; the clone is shallow).
 | 14, should fix | Store B's refusal said a two-zone name "matches no zone keyword". | It says the name points to more than one zone. The tool description is left to slice E4, which rewrites or retires that tool. |
 | 15, note | Form FDA 1572 with "IRB" in its name was zone 4 to the classifier and z05 to the Vault. Three keywords were also catalog names and could never fire as keywords. `essentialDocument()` did not check a tie. | The investigator's-forms rule is first. The three keywords are removed. A tie to a catalog artifact is checked where the document is made. |
 
+### What the confirmation of the pushed fix found (2026-11-12)
+
+The second version went to trunk as `06d8036f89`. Two more reviewers then tried to show its claims false
+(workflow `wf_588011c1-3a9`). One compared the code before E1, E1 and the fix on 20,509 generated names and 49,778
+random ones, and Vault filing on 953 pairs of file name and title. The other planted copies against the guard and
+compared the library's plan with the previous one over 540 inputs (no difference outside the four fields changed).
+
+| # | Finding in the fix as pushed | Fix |
+|---|---|---|
+| 16, must fix | **"Sample ICF - Site 101.pdf" went to Site Management.** The longer keyword "sample icf" took "icf" out of the count, and with it the IRB / IEC rule's early place, so whichever rule lay between decided: "Sample ICF v2 - CRO review.pdf" to Third Parties, "Sample CRF - central lab pages.pdf" to Testing. 216 of 20,509 generated names, 902 of 49,778 random ones. The evidence above called these "only the intended moves"; they were not. | A longer keyword keeps the place of the shorter one it takes. Beside one keyword of every other rule, "sample icf" and "sample crf" now answer as "icf" and "crf" did, in zone 2. |
+| 17, must fix | **The site's receipt of the brochure was filed with the brochure**, with no review asked. The code before E1 filed it with the site; the first fix refused it; the second treated "site" as whose-document and gave zone 2, and its test pinned that. | A word that says a document is about a record (receipt, acknowledgement, acceptance, signature page, cover letter, transmittal) is a second signal beside a catalog name: the name is refused, with `conflict`. Such a word names no zone itself. |
+| 18, should fix | **Word order decided.** "Form FDA 3455 Financial Disclosure" was filed and "Financial Disclosure Form FDA 3455" was refused, because the catalog name made "FDA" a second signal. | A catalog name stands where its own keyword stands: "financial disclosure" is the first rule, so the form keeps zone 5 against "fda". A catalog name with no keyword of its own, or one in a later rule than the keyword beside it, is still refused. |
+| 19, should fix | **A title unseated the file name.** Of 332 names that file alone, 113 were refused because of an unrelated title; 75 of those titles held only a site, CRO, vendor or protocol. | When the file name or the title names a record, a reading that only says whose document it is does not count against it. When neither names one, the two are read together, as before, the earliest rule deciding. |
+| 20, should fix | **The guard's library tests accepted 39 wrong placements**: a document with no tie that the classifier says nothing about could sit in any zone, the two read from search summaries among them. | The whole table of 25 documents is pinned, zone and tie, so a move is a visible edit. The one recorded disagreement is pinned by both its numbers. |
+| 21, should fix | **Nothing tested which files the guard reads.** With its file filter broken to read nothing, every check stayed green. | It asserts that it reads the catalog, the classifier, the library, a client screen, a script and a JSON file, more than 3,000 files, no test or document, and that it finds every catalog literal in the catalog itself. |
+| 22, should fix | **The zone-list check missed most ways a list is written**, among them the bracketed `satisfies` form this change itself uses, and refused an empty accumulator. | It reads a constant or property of a TMF-zone name given a literal that holds a string, through brackets, `Object.freeze`, a `Map` or a `Set`, a type spread over lines, an enum and a string union; it has a reasoned allow-list. Eleven forms are refused in the self-test and five legitimate ones pass. Still beyond it, and said so in its comment: a class member called `zones`, a function that returns the list, a nested JSON key. |
+| 23, note | A regular expression such as `/\/*$/` opened a comment for the copy scan. An elided article hid a keyword ("l'IRB"). The two refusals were shared objects a caller could change. The device document was tied to one catalog artifact though it names three kinds of record. | Regular-expression literals are read before comments. The part after an elided article is the keyword. The refusals are frozen. The device document keeps zone 3 as a stated exception with no tie, and joins the placements for QA. |
+
+Not changed, and recorded: a catalog name beside a keyword that says what else the document is stays refused even
+where a person would find the answer plain ("SAE reports to IRB.pdf", "IND 123456 Monitoring Plan v2.pdf": 14 of
+the reviewer's 174 realistic names). The keyword "1572" disappears when the rest of a name is exactly a catalog
+name, because digits are read as a version ("IRB/IEC approval 1572.pdf" is the approval). The copy scan matches
+exact, quoted literals: a re-cased or numbered list ("01 Trial Management"), or one inside a prompt string, passes.
+
 ## Where each essential document is filed, and on what basis
 
 No placement below is new regulatory content invented in this change. Three rules, in this order:
@@ -58,8 +82,8 @@ No placement below is new regulatory content invented in this change. Three rule
 1. The document is a catalog artifact: it takes that artifact's zone (pinned by the drift guard).
 2. Otherwise it keeps the group the library already gave it, where that group is one zone of the model: Trial
    Management → 1, Central & Site Management → 5, Ethics → 4, IP & Trial Information → 6, Safety → 7.
-3. Three exceptions, each with its basis in the last column: monitoring visit reports, source documents and the
-   clinical study report.
+3. Four exceptions, each with its basis in the last column: monitoring visit reports, source documents, the
+   clinical study report and the device trial's IDE document.
 
 | Document | Was | Zone | Basis |
 |---|---|---|---|
@@ -83,11 +107,11 @@ No placement below is new regulatory content invented in this change. Three rule
 | ED-DB-LOCK | Statistics / Data | 10 | catalog `database_lock` |
 | ED-SOURCE | Site (ISF) | 5 | exception: "Site (ISF)" is not a zone; the TMF Reference Model lists Source Data as a site-level Site Management record (05.04.11) |
 | ED-CSR | Statistics / Data | 2 | exception: "Statistics / Data" is two zones; the CDISC TMF terminology places the Clinical Study Report in the Central Trial Documents zone |
-| ED-DEVICE-IDE (device trials) | IP & Trial Information | 3 | catalog `regulatory_submission`: the IDE application and its approval |
+| ED-DEVICE-IDE (device trials) | IP & Trial Information | 3 | exception: the IDE application and its approval are regulatory records; it also names malfunction reports and device accountability, so it is tied to no one catalog artifact |
 
 **Not confirmed against the model itself.** `tmfrefmodel.com` and `evs.nci.nih.gov` are outside this container's
 network policy. The last two placements were read on 2026-11-10 through search summaries of those two sites, not from
-the model's spreadsheet. QA should confirm ED-SOURCE and ED-CSR against it before the eTMF's OQ.
+the model's spreadsheet. QA should confirm ED-SOURCE, ED-CSR and ED-DEVICE-IDE against it before the eTMF's OQ.
 
 ## Red first
 
@@ -104,6 +128,15 @@ the model's spreadsheet. QA should confirm ED-SOURCE and ED-CSR against it befor
   financial disclosure and randomisation, the 1572 with "IRB" in its name, a name and title that disagree).
 - The guard's self-test: with the three-copies rule taken out, "three copies that would hide each other" fails. With
   the old line-based comment filter put back, two cases fail.
+
+**Round 3, on the fix as pushed (`06d8036f89`).**
+
+- The classifier test file as it now stands: 8 of 36 cases failed (the place of "sample icf", the about-words, the
+  standing of a catalog name, elision, the frozen refusals, the two Vault cases with a title).
+- The pinned table: with the clinical study report moved to zone 9, "every document sits where the table says"
+  fails. Before the table, no test did.
+- The new guard cases (the zone-list forms, a copy after a regular expression) were each shown missed on the pushed
+  guard by the reviewer, who planted them against its functions.
 
 **The guard was also seen refusing a real planted file** (`git add -N` on a six-artifact copy with a `tmfZones` list
 under `server/services/etmf/`): both scans named it. The file was removed.
@@ -134,6 +167,11 @@ file page; the merge had no conflict):
   document-placement tools, authoring's file-to-Vault): 64 files, 1,047 tests.
 - All pass. The typecheck and the pre-push gates ran at push.
 
+**After the third round** (on trunk at `55e60b4e82`): every test that names a changed module, the whole of
+`server/services/vault/__tests__`, the eTMF route test and the eTMF and GCP suites: 104 files, 1,592 tests, 1,591
+pass. The one failure is trunk's and not this change's: `vault-document-filter.test.ts` ("no other server module
+that reads vault.documents builds its own metadata predicate") fails the same way with this change stashed.
+
 ## The review of this fix
 
 Two reviewers on 2026-11-11, read-only, each with its own probes (workflow `wf_a15f6cea-827`):
@@ -154,8 +192,9 @@ through a third independent review.
 
 These are recommendations, not decisions. None is built here.
 
-- **Six placements for QA to confirm against the reference model's spreadsheet**, before the eTMF's OQ. Two were
-  read through search summaries: source documents (zone 5) and the clinical study report (zone 2). Four keep the
+- **Seven placements for QA to confirm against the reference model's spreadsheet**, before the eTMF's OQ. Two were
+  read through search summaries: source documents (zone 5) and the clinical study report (zone 2). One is the device
+  trial's IDE document (zone 3). Four keep the
   library's own group and were doubted by a reviewer from memory of the model: protocol deviations (zone 1 here; the
   model has them under Site Management, zone 5), the approved consent form and subject information (zone 4 here;
   the catalog's own consent form is zone 2), signed consent forms (zone 4 here; site-level, zone 5), and the

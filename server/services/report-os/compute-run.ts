@@ -194,7 +194,9 @@ export async function computeRunForType(input: ComputeRunInput): Promise<Compute
     try {
       return recordAccessProjects({ computed: await computeDomainRun(typeId, organizationId, scopeType, scopeId, { clientWorkspaceId: input.clientWorkspaceId, ...(input.recordContext ? { recordContext: input.recordContext } : {}) }) }, input);
     } catch (error) {
-      if (error instanceof Error && error.name === 'LifecycleCalendarUnavailable') throw new ReportTypeNotComputed(error.message);
+      if (error instanceof Error && (error.name === 'LifecycleCalendarUnavailable' || error.name === 'TrialMasterFilePackUnavailable')) {
+        throw new ReportTypeNotComputed(error.message);
+      }
       throw error;
     }
   }

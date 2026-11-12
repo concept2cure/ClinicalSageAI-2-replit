@@ -17,6 +17,8 @@
 // enough: ESM evaluates every static import before this module's body. So this
 // is the first import, and .env.local beats .env — see the module.
 import './config/load-env-files';
+// The product's wording for a value that was not sent ("Required"), before any route parses a request.
+import '../shared/zod-messages';
 
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before
 // anything that opens a DB connection or HTTP client.

@@ -1,0 +1,16 @@
+head 21c6837180 2026-11-12T05:09:21Z
+gcc rc=0 3s
+smoke rc=0 1s
+provision rc=0 18s
+dbtests rc=1 998s
+integ rc=0 3s
+gcc1 rc=0 3s
+shard1 rc=1 1463s
+gcc2 rc=0 4s
+shard2 rc=1 1420s
+gcc3 rc=0 4s
+shard3 rc=1 1671s
+gcc4 rc=0 3s
+shard4 rc=1 1490s
+merge rc=1
+DONE

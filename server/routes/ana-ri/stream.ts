@@ -1,4 +1,5 @@
 import { requestsReadOnly, readOnlyToolRefusal, READ_ONLY_INSTRUCTION } from '../../services/ana/read-only-turn.js';
+import { openSseStream } from '../../utils/sse-stream';
 /**
  * POST /api/ana-ri/stream — SSE streaming AnA RI chat.
  *
@@ -163,7 +164,7 @@ import { TurnTimeline } from '../../services/ana/turn-timeline-emitter.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn, SELF_DRIVE_TOOLS, CANVAS_DOCUMENT_TOOLS } from '../../services/ana/tool-selection.js';
-import { HELP_CENTER_TOOL_NAMES, asksHowToUseProduct } from '../../services/ana/help-support-tools.js';
+import { HELP_CENTER_TOOL_NAMES, SUPPORT_TURN_BRIEF, asksHowToUseProduct, isSupportTurn } from '../../services/ana/help-support-tools.js';
 import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/history-window.js';
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
@@ -246,6 +247,7 @@ import { detachWarning, isWatchedNow } from '@shared/ana/run-detach';
 import { sessionEndCauseWarning, stopCause, type SessionEndDetail } from '@shared/ana/stop-lines';
 import { runWithTenantScope } from '../../db/tenantStore.js';
 import { extractBearerToken } from '../../middleware/auth.js';
+import { markExpectedUnavailable } from '../../middleware/circuitBreaker';
 import { readsEveryRecord } from './record-access.js';
 import {
   MAX_PAUSE_MS,
@@ -1037,6 +1039,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const gw = ensureGateway();
       const deterministicMode = gw?.isDeterministic?.() || false;
       if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
+        // A configured state, not a failure of the provider: the breaker does not count it (GA-DEMO-04).
+        markExpectedUnavailable(res);
         return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
       }
 
@@ -1050,13 +1054,24 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
 
       // Pre-stream validation is done. Open SSE now so the client sees progress
       // during context assembly (orchestration + intelligence/memory/enrichment).
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'X-Content-Type-Options': 'nosniff',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      });
+      //
+      // Keepalive. Long-running orchestration / context assembly (and the
+      // AI's first-token latency on large prompts) can leave the socket silent
+      // for >30s, which trips proxy idle timeouts (CloudFront and the ALB at
+      // 60 s, the Vite dev proxy, dev tunnels) and surfaces to the client as a
+      // "Stream Idle Timeout" error before any real token arrives. The helper
+      // writes a 15 s SSE-comment heartbeat, through writeFrame like every
+      // other frame, which the client's `data:` parser ignores. It stops when
+      // the response finishes or its connection closes, never on the request's
+      // own `close`, which fires once a POST body is read
+      // (server/utils/sse-stream.ts).
+      //
+      // The run's heartbeat does not ride this keepalive (AnA detach DT1,
+      // §2.3): one process-wide interval in run-control.ts (beatOwnedRuns)
+      // beats every run this process owns, at the same 15 s, through every
+      // phase of the turn and with or without a socket. This ping is for the
+      // proxies and touches no row.
+      const stopKeepalive = openSseStream(req, res, { write: writeFrame }).stopHeartbeat;
 
       if (injectionGuard.auditTrail && (!injectionGuard.auditTrail.persisted || !injectionGuard.auditTrail.chained)) {
         // nosemgrep: javascript.express.security.audit.xss.direct-response-write.direct-response-write -- SSE with nosniff; the entire payload is JSON encoded, escaping frame delimiters and never interpreted as HTML.
@@ -1068,35 +1083,6 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
           meta: { auditTrail: injectionGuard.auditTrail },
         })}\n\n`);
       }
-
-      // Keepalive ping. Long-running orchestration / context assembly (and the
-      // AI's first-token latency on large prompts) can leave the socket silent
-      // for >30s, which trips proxy idle timeouts (Vite dev proxy, nginx 60s,
-      // Cloudflare 100s, dev tunnels, etc.) and surfaces to the client as a
-      // "Stream Idle Timeout" error before any real token arrives. A 15s
-      // SSE-comment heartbeat keeps every intermediary alive without
-      // disturbing the client's `data:` frame parser. Cleared in the same
-      // teardown branches as the abort handler below.
-      const STREAM_KEEPALIVE_MS = 15_000;
-      const streamKeepalive = setInterval(() => {
-        try {
-          writeFrame(': heartbeat\n\n');
-        } catch {
-          clearInterval(streamKeepalive);
-        }
-        // The run's heartbeat no longer rides this keepalive (AnA detach DT1,
-        // §2.3): the keepalive is cleared when the socket closes, so a run's
-        // beat depended on a page staying open. One process-wide interval in
-        // run-control.ts (beatOwnedRuns) beats every run this process owns,
-        // at the same 15 s, through every phase of the turn and with or
-        // without a socket. This ping stays for the proxies and touches no row.
-      }, STREAM_KEEPALIVE_MS);
-      const stopKeepalive = () => clearInterval(streamKeepalive);
-      res.on('close', stopKeepalive);
-      res.on('finish', stopKeepalive);
-      // IncomingMessage also closes when its body is fully received. A normal
-      // request completion must not clear the response's in-flight heartbeat.
-      req.on('close', () => { if (req.aborted) stopKeepalive(); });
 
       // Open a durable control record for this turn (pause / steer / cancel).
       // The client uses the emitted runId to call
@@ -1767,6 +1753,10 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const streamRouteBlock = buildRouteContextBlock(req.body.context);
       if (streamRouteBlock) {
         orchestration.systemPrompt += `\n\n## Current UI Route\n${streamRouteBlock}`;
+      }
+      // Asked as Concept2Cure support (Get help, Help & training's Ask support; P-127 §3.3).
+      if (isSupportTurn(req.body.module_context)) {
+        orchestration.systemPrompt += `\n\n${SUPPORT_TURN_BRIEF}`;
       }
 
       if (authoringContextBlock) {
@@ -2597,8 +2587,9 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             // A document she drafts reaches the canvas this route renders only
             // through draft_authoring_document (tool-selection.ts).
             ...CANVAS_DOCUMENT_TOOLS,
-            // A question about using Concept2Cure is answered from the Help Center (P-127), whatever its wording scores.
-            ...(asksHowToUseProduct(typeof message === 'string' ? message : '') ? HELP_CENTER_TOOL_NAMES : []),
+            // A question about using Concept2Cure, or any turn asked as support, is answered from the Help Center (P-127),
+            // whatever its wording scores.
+            ...(asksHowToUseProduct(typeof message === 'string' ? message : '') || isSupportTurn(req.body.module_context) ? HELP_CENTER_TOOL_NAMES : []),
             // Delegation survives relevance trimming on a turn that may use it.
             ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
             // The engines a loaded skill's method names: a method that tells

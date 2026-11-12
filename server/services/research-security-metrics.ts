@@ -1,7 +1,7 @@
 /**
  * Research-security / COI metrics (add-on, NSPM-33 / NOT-OD-26-017) — in-memory
  * counters surfaced via the central /api/metrics endpoint. Mirrors the suite's
- * metrics convention (see etmf-metrics.ts).
+ * metrics convention (see lifecycle-metrics.ts).
  *
  * @module server/services/research-security-metrics
  */

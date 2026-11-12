@@ -1,0 +1,35 @@
+# The Vault version line: where its file was rendered from. Red first, 2026-11-12.
+# The new tests against the code at HEAD (feea54cae6): VaultVersions.tsx and authoring-vault-filing-receipt.ts as committed.
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultRenderedFrom.test.ts server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > what the Vault shows of where a version was rendered from > a sealed filing: the Authoring document and the seal it rendered 11ms
+   → renderedFromOf is not a function
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > what the Vault shows of where a version was rendered from > a sealed filing whose seal did not hold: the reason, and no seal 8ms
+   → renderedFromOf is not a function
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > what the Vault shows of where a version was rendered from > a working draft, or a receipt recorded before the seal was named: the Au
+   → renderedFromOf is not a function
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > what the Vault shows of where a version was rendered from > a version with no filing receipt (a native upload) shows nothing 4ms
+   → renderedFromOf is not a function
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > what the Vault shows of where a version was rendered from > a receipt that does not verify is said to be unverified, never shown as 
+   → renderedFromOf is not a function
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > what the Vault shows of where a version was rendered from > a receipt that could not be read is said to be unread 2ms
+   → renderedFromOf is not a function
+ × client/src/concept2cure/v2/__tests__/vaultRenderedFrom.test.ts > renderedFromText > a sealed filing names the sealed version and the start of its hash 3ms
+   → renderedFromText is not a function
+ × client/src/concept2cure/v2/__tests__/vaultRenderedFrom.test.ts > renderedFromText > a seal that did not hold is said in words, never as its stored code 1ms
+   → renderedFromText is not a function
+ × client/src/concept2cure/v2/__tests__/vaultRenderedFrom.test.ts > renderedFromText > a working draft or an older filing says only that it was filed from Authoring 1ms
+   → renderedFromText is not a function
+ × client/src/concept2cure/v2/__tests__/vaultRenderedFrom.test.ts > renderedFromText > a native upload says nothing; an unverified or unread record says so 1ms
+   → renderedFromText is not a function
+ Test Files  2 failed (2)
+      Tests  10 failed | 35 passed (45)
+
+# The same tests with the change.
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultRenderedFrom.test.ts server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts
+ Test Files  2 passed (2)
+      Tests  45 passed (45)
+
+# The Vault's own client suites around the version line.
+$ npx vitest run client/src/concept2cure/v2/__tests__/vault*
+ Test Files  70 passed (70)
+      Tests  790 passed (790)

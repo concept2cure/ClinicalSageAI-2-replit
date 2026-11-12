@@ -21,8 +21,6 @@
  *     and filing frameworks; ids unique; legacy filter ids preserved
  *   - the service-org rule: product owners map to their segment, CROs and
  *     other service orgs get the cross-sponsor TMF view
- *   - the eTMF seed skeleton: pure derivation from the reference model,
- *     essential-drives-completeness invariant
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -49,7 +47,7 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy';
 import { TMF_ZONES, classifyArtifact, zoneName } from '../etmf/etmf-logic';
-import { TMF_REFERENCE_MODEL, getTmfReferenceModel, seedArtifacts } from '../etmf/tmf-completeness';
+import { TMF_REFERENCE_MODEL, getTmfReferenceModel } from '../etmf/tmf-completeness';
 import { planEssentialDocuments } from '../gcp-operations/gcp-operations-knowledge';
 import * as GCP_REFERENCE from '../gcp-operations/gcp-operations-reference';
 
@@ -100,10 +98,17 @@ function sourceFiles(): string[] {
  * comment, so the slash-star inside a route glob ('server/routes/*.ts') does
  * not open one. (2026-10-30: a block-comment pattern, which that glob fooled.
  * 2026-11-10: whole comment lines, which dropped a row written after an inline
- * comment and kept a block comment whose lines do not start with a star.)
+ * comment and kept a block comment whose lines do not start with a star.
+ * 2026-11-12: a regular expression such as /\/*$/ opened a comment.)
+ * Still beyond it: a slash-star in JSX text, which no file has today.
  */
 const withoutComments = (src: string) =>
-  src.replace(/("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\[\s\S])*`)|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, (_m, str) => str ?? '');
+  src.replace(
+    // A regular-expression literal (after an operator, an opening bracket or a line start), then a string, are kept;
+    // then a block comment and a line comment are dropped.
+    /((?<=(?:^|[(,=:[!&|?{};\n])[ \t]*)\/(?![*/])(?:[^/\\\n[]|\\.|\[(?:[^\]\\\n]|\\.)*\])+\/[a-z]*|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\[\s\S])*`)|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,
+    (_m, kept) => kept ?? '',
+  );
 
 const escapeRe = (t: string) => t.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 
@@ -187,20 +192,41 @@ function catalogCopies(): { copies: string[]; excused: string[] } {
   return { copies: copies.sort(), excused };
 }
 
+/** Files that may write out a TMF zone list, each with the reason; checked like the allow-list above. */
+const ALLOWED_TO_DECLARE_A_ZONE_LIST: Record<string, string> = {};
+
 /**
- * Files that write out a TMF zone list under a TMF-zone name: an identifier
- * that holds "tmf" and then "zones", or "zone" and a list word (TMF_ZONES,
- * tmfZones, TMF_ZONE_NAMES, TMF_ZONE_LIST), given an array or object literal;
- * or such a key in JSON. A list derived from the catalog (`TMF_REFERENCE_MODEL
- * .map(...)`) is not one, and neither is the singular field `tmfZone`. A zone
- * list under an unrelated name is beyond this check; the name scan above
- * catches one that uses the catalog's zone names.
+ * Files that write out a TMF zone list under a TMF-zone name. The name: an
+ * identifier that holds "tmf" and then "zone" (TMF_ZONES, tmfZones,
+ * TMF_ZONE_NAMES, TmfZoneName) or "zones" and then "tmf", or the catalog's own
+ * export names. The list: a constant or a property given an array or object
+ * literal that holds a string, bare or inside a bracket, Object.freeze, a Map
+ * or a Set; an enum or a string-union type of that name; or such a key in JSON.
+ * Not one: a list derived from the catalog (`TMF_REFERENCE_MODEL.map(...)`), an
+ * empty accumulator, a spread, and the field `tmfZone` given a number or passed
+ * as a prop. Beyond this check, by its nature: a zone list under an unrelated
+ * name, a class member called `zones`, a function that returns the list. The
+ * name scan catches those when they use the catalog's zone names.
  */
-function zoneListDeclarations(): string[] {
-  const name = String.raw`\w*tmf\w*zone(?:s\w*|_?(?:names?|list|map|model|catalog|index|labels?)\w*)`;
-  const inCode = new RegExp(String.raw`\b${name}\b\s*(?::[^=\n]+)?=\s*(?:Object\.freeze\(\s*)?(?:new (?:Map|Set)\(\s*)?[\[{]`, 'i');
-  const inJson = new RegExp(String.raw`"${name}"\s*:\s*[\[{]`, 'i');
-  return sourceFiles().filter(f => f !== CATALOG_FILE && (f.endsWith('.json') ? inJson : inCode).test(scanned(f))).sort();
+function zoneListDeclarations(): { declaring: string[]; excused: string[] } {
+  const name = String.raw`(?:\w*tmf\w*zone\w*|\w*zones?\w*tmf\w*|TMF_REFERENCE_MODEL|TMF_STRUCTURE)`;
+  const literal = String.raw`(?:\(\s*|Object\.freeze\(\s*|deepFreeze\(\s*|z\.enum\(\s*|new (?:Map|Set)(?:<[^>]*>)?\(\s*)*[\[{][^\]}]*?['"\x60]`;
+  const annotation = String.raw`(?::[^=;(){}]*(?:\{[^{}]*\}[^=;(){}]*)*)?`;
+  const inCode = [
+    new RegExp(String.raw`\b${name}\b\s*${annotation}=\s*${literal}`, 'i'),
+    new RegExp(String.raw`\b${name}\b\s*:\s*${literal}`, 'i'),
+    new RegExp(String.raw`\b(?:enum|type)\s+${name}\b[^=;{]*[={][^;}]*?['"\x60]`, 'i'),
+  ];
+  const inJson = [new RegExp(String.raw`"${name}"\s*:\s*[\[{][^\]}]*?"`, 'i')];
+  const declaring: string[] = [];
+  const excused: string[] = [];
+  for (const f of sourceFiles()) {
+    if (f === CATALOG_FILE) continue;
+    const text = scanned(f);
+    if (!(f.endsWith('.json') ? inJson : inCode).some(re => re.test(text))) continue;
+    (f in ALLOWED_TO_DECLARE_A_ZONE_LIST ? excused : declaring).push(f);
+  }
+  return { declaring: declaring.sort(), excused };
 }
 
 /** Runs `check` with `files` (name → content) present as source files, in a throwaway folder that is then removed. */
@@ -250,6 +276,21 @@ describe('one TMF reference model (drift guard)', () => {
     expect(files.filter(f => !fromShared.test(read(f))), `files that do not import ${CATALOG_FILE}`).toEqual([]);
   });
 
+  /* If the scan read nothing, every check below would pass. So: it reads the
+     files it must, a few thousand of them, and it would refuse the catalog
+     itself were the catalog not the one file it leaves out. */
+  it('the scan reads the source it is meant to', () => {
+    const files = sourceFiles();
+    for (const f of [CATALOG_FILE, 'server/services/etmf/etmf-logic.ts', 'server/services/gcp-operations/gcp-operations-reference.ts',
+      'client/src/concept2cure/v2/surfaces/Etmf.tsx', 'scripts/db/migration-set.mjs', 'package.json']) {
+      expect(files, `the scan reads ${f}`).toContain(f);
+    }
+    expect(files.length).toBeGreaterThan(3000);
+    expect(files.filter(f => TEST_FILE.test(f) || f.startsWith('docs/')), 'tests and documents are not scanned').toEqual([]);
+    const catalog = TMF_REFERENCE_MODEL.flatMap(z => [z.name, ...z.artifacts.flatMap(a => [a.name, a.code])]);
+    expect(literalsByFile(catalog).get(CATALOG_FILE)?.size, 'catalog literals the scan finds in the catalog file').toBe(new Set(catalog).size);
+  }, 120_000);
+
   it('no second catalog exists in any tracked source file', () => {
     const { copies, excused } = catalogCopies();
     expect(copies).toEqual([]);
@@ -260,7 +301,10 @@ describe('one TMF reference model (drift guard)', () => {
   }, 120_000);
 
   it('no source file writes out a TMF zone list', () => {
-    expect(zoneListDeclarations()).toEqual([]);
+    const { declaring, excused } = zoneListDeclarations();
+    expect(declaring).toEqual([]);
+    expect(Object.keys(ALLOWED_TO_DECLARE_A_ZONE_LIST).filter(f => !excused.includes(f)), 'allow-list entries that excuse nothing').toEqual([]);
+    expect(Object.entries(ALLOWED_TO_DECLARE_A_ZONE_LIST).filter(([, why]) => why.trim().length < 20).map(([f]) => f), 'allow-list entries with no reason').toEqual([]);
   }, 120_000);
 });
 
@@ -287,7 +331,9 @@ describe('the drift guard catches what it is for', () => {
       'after-a-glob.ts': `const SOURCES = ['server/routes/*.ts'];\nexport const NAMES = [${artifacts.slice(20, 30).map(a => JSON.stringify(a.name)).join(', ')}];\n/** a later comment */\n`,
       'names-only.ts': `export const NAMES = [\n${artifacts.slice(0, 12).map(a => `  ${JSON.stringify(a.name)},`).join('\n')}\n];\n`,
       'inline-comments.ts': `export const ROWS = [\n${artifacts.slice(0, 12).map(a => `  /* zone */ { code: '${a.code}', name: ${JSON.stringify(a.name)} },`).join('\n')}\n];\n`,
-    }, rel => ({ got: catalogCopies().copies, want: ['after-a-glob.ts', 'inline-comments.ts', 'names-only.ts'].map(rel).sort() }));
+      'after-a-regex.ts': `const trim = (s: string) => s.replace(/\\/*$/, '');\nexport const NAMES = [${artifacts.slice(10, 20).map(a => JSON.stringify(a.name)).join(', ')}];\n/** a later comment */\n`,
+      'after-a-quote-regex.ts': `const bare = (s: string) => s.replace(/'/g, ''), GLOBS = ['server/routes/*.ts'];\nexport const NAMES = [${artifacts.slice(10, 20).map(a => JSON.stringify(a.name)).join(', ')}];\n/** a later comment */\n`,
+    }, rel => ({ got: catalogCopies().copies, want: ['after-a-glob.ts', 'after-a-quote-regex.ts', 'after-a-regex.ts', 'inline-comments.ts', 'names-only.ts'].map(rel).sort() }));
     expect(flagged.got).toEqual(flagged.want);
   }, 120_000);
 
@@ -301,15 +347,35 @@ describe('the drift guard catches what it is for', () => {
     expect(flagged).toEqual([]);
   }, 120_000);
 
-  it('a zone list under a TMF-zone name is refused, in code and in JSON; a field and a derived list are not', () => {
+  it('a zone list under a TMF-zone name is refused, however it is written', () => {
     const flagged = withProbeFiles({
       'zone-names.ts': `export const TMF_ZONE_NAMES = ['Trial Management', 'Ethics', 'Safety'];\n`,
       'zones-typed.ts': `export const tmfZones: Array<{ zone: string }> = [{ zone: 'Ethics' }];\n`,
+      'zones-typed-over-lines.ts': `export const TMF_ZONES:\n  ReadonlyArray<{\n    zone: string;\n    description: string;\n  }>\n  = [\n  { zone: 'Ethics', description: 'x' },\n];\n`,
+      'zones-satisfies.ts': `export const TMF_ZONES = ([\n  { zone: 'Ethics' },\n] satisfies Array<{ zone: string }>);\n`,
+      'zones-frozen.ts': `export const TmfZones = Object.freeze(['Ethics', 'Safety']);\nexport const tmfZoneLabels = new Map<number, string>([[1, 'Ethics']]);\n`,
+      'zones-property.ts': `export default { tmfZones: ['Ethics', 'Safety'] };\n`,
+      'zones-enum.ts': `export enum TmfZones { Ethics = 'Ethics', Safety = 'Safety' }\n`,
+      'zones-union.ts': `export type TmfZoneName = 'Ethics' | 'Safety';\n`,
+      'zones-other-order.ts': `const ZONES_TMF = ['Ethics', 'Safety'];\nexport default ZONES_TMF;\n`,
+      'catalog-names.ts': `export const TMF_STRUCTURE = [{ zone: 'Ethics' }];\nexport const TMF_REFERENCE_MODEL = [{ number: 1, name: 'Ethics', artifacts: [] }];\n`,
       'zones.json': JSON.stringify({ tmfZones: ['Ethics', 'Safety'] }),
-      'field.tsx': `const tmfZone = d.tmfZone;\nexport const Row = () => <Cell tmfZone={d.tmfZone} />;\nfunction label(tmfZone = 2) { return tmfZone; }\n`,
-      'derived.ts': `export const TMF_ZONES = TMF_REFERENCE_MODEL.map((z) => ({ zone: z.number, name: z.name }));\nconst TMF_ZONE_ID = new Map(TMF_ZONE_REFS.map(z => [z.zone, z.id]));\n`,
-    }, rel => ({ got: zoneListDeclarations(), want: ['zone-names.ts', 'zones-typed.ts', 'zones.json'].map(rel).sort() }));
+    }, rel => ({ got: zoneListDeclarations().declaring, want: [
+      'catalog-names.ts', 'zone-names.ts', 'zones-enum.ts', 'zones-frozen.ts', 'zones-other-order.ts', 'zones-property.ts',
+      'zones-satisfies.ts', 'zones-typed-over-lines.ts', 'zones-typed.ts', 'zones-union.ts', 'zones.json',
+    ].map(rel).sort() }));
     expect(flagged.got).toEqual(flagged.want);
+  }, 120_000);
+
+  it('a field, a prop, an empty accumulator, a spread and a derived list are not zone lists', () => {
+    const flagged = withProbeFiles({
+      'field.tsx': `const tmfZone = d.tmfZone;\nexport const Row = () => <Cell tmfZone={d.tmfZone} />;\nfunction label(tmfZone = 2) { return tmfZone; }\nexport const doc = { tmfZone: 5, tmfZoneName: zone.name, heldBy: ['sponsor'] };\n`,
+      'accumulator.ts': `const tmfZones: number[] = [];\nconst seenTmfZones = new Set<number>();\nexport const all = [...tmfZones, ...seenTmfZones];\n`,
+      'spread.ts': `export const tmfZones = [...TMF_ZONE_REFS];\nfunction f(tmfZones: string[]) { const out = ['a']; return out.concat(tmfZones); }\n`,
+      'derived.ts': `export const TMF_ZONES: Array<{ zone: number; name: string }> = TMF_REFERENCE_MODEL.map((z) => ({ zone: z.number, name: z.name }));\nconst TMF_ZONE_ID = new Map(TMF_ZONE_REFS.map(z => [z.zone, z.id]));\n`,
+      'type-only.ts': `export interface Plan { tmfZones: Array<{ zone: number; name: string }>; tmfZone: number }\n`,
+    }, () => zoneListDeclarations().declaring);
+    expect(flagged).toEqual([]);
   }, 120_000);
 });
 
@@ -324,11 +390,46 @@ describe('the essential-documents library sits in the catalog (drift guard)', ()
     expect(wrong).toEqual([]);
   });
 
-  it('a document that is a catalog artifact sits in that artifact\'s zone, the device document included', () => {
+  /* The whole table, so that any move or re-tie is a visible edit here. Without
+     it 39 single wrong placements passed every test of this block (the
+     confirmation of 2026-11-12): a document with no tie that the classifier says
+     nothing about could sit in any zone. The basis of each row is in the
+     header of gcp-operations-reference.ts. */
+  it('every document sits where the table says, with the tie the table says', () => {
+    const PLACED: Record<string, [zone: number, catalogArtifact: string | null]> = {
+      'ED-IB': [2, 'investigators_brochure'],
+      'ED-PROTOCOL': [2, 'protocol'],
+      'ED-CONSENT': [4, null],
+      'ED-IRB-APPROVAL': [4, 'irb_approval'],
+      'ED-1572': [5, null],
+      'ED-CV': [5, 'investigator_cv'],
+      'ED-FINANCIAL': [5, 'financial_disclosure'],
+      'ED-LAB-CERT': [8, 'lab_certification'],
+      'ED-IP-RELEASE': [6, null],
+      'ED-RANDOM': [11, 'randomization_plan'],
+      'ED-IB-UPDATE': [2, 'investigators_brochure'],
+      'ED-IRB-CONTINUING': [4, null],
+      'ED-CONSENT-SIGNED': [4, null],
+      'ED-SOURCE': [5, null],
+      'ED-SAE': [7, 'sae_reports'],
+      'ED-MONITORING': [5, null],
+      'ED-DELEGATION': [5, 'site_signature_sheet'],
+      'ED-IP-ACCOUNT': [6, 'ip_accountability'],
+      'ED-DEVIATION': [1, null],
+      'ED-IP-RECON': [6, 'ip_destruction'],
+      'ED-CLOSEOUT': [1, null],
+      'ED-FINAL-IRB': [4, null],
+      'ED-DB-LOCK': [10, 'database_lock'],
+      'ED-CSR': [2, null],
+      'ED-DEVICE-IDE': [3, null],
+    };
     const plan = planEssentialDocuments({ usesInvestigationalDevice: true }).documents;
-    const tied = plan.filter(d => d.catalogArtifact);
+    expect(Object.fromEntries(plan.map(d => [d.id, [d.tmfZone, d.catalogArtifact ?? null]]))).toEqual(PLACED);
+  });
+
+  it('a document that is a catalog artifact sits in that artifact\'s zone', () => {
+    const tied = planEssentialDocuments({ usesInvestigationalDevice: true }).documents.filter(d => d.catalogArtifact);
     expect(tied.length, 'documents tied to a catalog artifact').toBeGreaterThanOrEqual(10);
-    expect(tied.some(d => d.id === 'ED-DEVICE-IDE'), 'the device document is tied').toBe(true);
     const wrong = tied.flatMap((d) => {
       const found = SHARED_CATALOG.tmfArtifactByCode(d.catalogArtifact as string);
       if (!found) return [`${d.id}: catalogArtifact "${d.catalogArtifact}" is not a catalog code`];
@@ -363,17 +464,19 @@ describe('the essential-documents library sits in the catalog (drift guard)', ()
      deviation log. The one left is recorded with its reason, and must still be
      true to stay recorded. */
   it('the classifier files a library document where AnA\'s plan says, or nowhere', () => {
-    const KNOWN: Record<string, string> = {
-      'ED-DEVIATION':
-        'The keyword "protocol" reads a protocol-deviation log as a protocol document (zone 2). The library keeps its own group (zone 1). '
-        + 'The reference model, as two readers recall it, has protocol deviations under Site Management (zone 5). Not settled from memory: QA decides.',
+    const KNOWN: Record<string, { plan: number; classifier: number; why: string }> = {
+      'ED-DEVIATION': {
+        plan: 1,
+        classifier: 2,
+        why: 'The keyword "protocol" reads a protocol-deviation log as a protocol document (zone 2). The library keeps its own group (zone 1). '
+          + 'The reference model, as two readers recall it, has protocol deviations under Site Management (zone 5). Not settled from memory: QA decides.',
+      },
     };
-    const disagree = planEssentialDocuments({ usesInvestigationalDevice: true }).documents.flatMap((d) => {
+    const disagree = Object.fromEntries(planEssentialDocuments({ usesInvestigationalDevice: true }).documents.flatMap((d) => {
       const zone = classifyArtifact(d.name).zone;
-      return zone === null || zone === d.tmfZone ? [] : [{ id: d.id, said: `${d.id} "${d.name}": plan zone ${d.tmfZone}, classifier zone ${zone}` }];
-    });
-    expect(disagree.filter(x => !(x.id in KNOWN)).map(x => x.said)).toEqual([]);
-    expect(Object.keys(KNOWN).filter(id => !disagree.some(x => x.id === id)), 'recorded disagreements that no longer exist').toEqual([]);
+      return zone === null || zone === d.tmfZone ? [] : [[d.id, { plan: d.tmfZone, classifier: zone }]];
+    }));
+    expect(disagree).toEqual(Object.fromEntries(Object.entries(KNOWN).map(([id, k]) => [id, { plan: k.plan, classifier: k.classifier }])));
   });
 });
 
@@ -463,38 +566,5 @@ describe('vaultViewForOrganization (service-org rule)', () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// eTMF seed skeleton
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('seedArtifacts (eTMF expected-document skeleton)', () => {
-  it("'all' scope seeds every reference-model artifact across all 11 zones", () => {
-    const seeds = seedArtifacts('all');
-    const catalogSize = TMF_REFERENCE_MODEL.reduce((n, z) => n + z.artifacts.length, 0);
-    expect(seeds).toHaveLength(catalogSize);
-    expect(new Set(seeds.map(s => s.zone))).toEqual(new Set(TMF_REFERENCE_MODEL.map(z => z.number)));
-  });
-
-  it("'essential' scope seeds only essential documents, all completeness-required", () => {
-    const seeds = seedArtifacts('essential');
-    const essentialCount = TMF_REFERENCE_MODEL.reduce(
-      (n, z) => n + z.artifacts.filter(a => a.essential).length, 0,
-    );
-    expect(seeds).toHaveLength(essentialCount);
-    expect(seeds.every(s => s.completenessRequired)).toBe(true);
-  });
-
-  it('completeness_required mirrors essential — optional artifacts never dilute readiness', () => {
-    const byCode = new Map(seedArtifacts('all').map(s => [s.code, s]));
-    for (const zone of TMF_REFERENCE_MODEL) {
-      for (const a of zone.artifacts) {
-        expect(byCode.get(a.code)?.completenessRequired, a.code).toBe(a.essential);
-      }
-    }
-  });
-
-  it('seed codes are unique (idempotency key sanity)', () => {
-    const codes = seedArtifacts('all').map(s => s.code);
-    expect(new Set(codes).size).toBe(codes.length);
-  });
-});
+// The eTMF seed skeleton (seedArtifacts) and its four cases went on 2026-11-12 with the retired store it seeded (eTMF
+// convergence E4 step 5). A study's expected records are the reference model's, read by assessTmfCompleteness.

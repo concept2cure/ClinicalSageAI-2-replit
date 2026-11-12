@@ -61,9 +61,47 @@ export class LearningContributionSettingRefusedError extends Error {
   constructor() { super('Manage aggregate-learning contributions through the governed AI data-use controls.'); this.name = 'LearningContributionSettingRefusedError'; }
 }
 
-/** Generic settings reads cannot expose project-scoped libraries or derivative custody. */
-export function generalSettingsView(value: unknown): Settings {
-  return Object.fromEntries(Object.entries(asSettings(value)).filter(([key]) => !['companyDocuments', 'derivativeCustody', 'learningContributionPolicy'].includes(key)));
+/** A setting whose stored value is a credential: an API key, a secret, a token, a password, a webhook URL. */
+const CREDENTIAL_KEY = /(api[-_]?key|secret|token|password|passphrase|webhook|private[-_]?key|credential)/i;
+
+/**
+ * A copy of `value` with every stored credential withheld. The field stays, empty, beside `<field>Configured: true`,
+ * so a reader learns that one is stored and never what it is. Only a stored string is a credential: a policy object
+ * under a matching name (`passwordPolicy`) is read as it is.
+ */
+function withoutStoredCredentials(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(withoutStoredCredentials);
+  if (!value || typeof value !== 'object') return value;
+  const out: Record<string, unknown> = {};
+  for (const [key, held] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof held === 'string' && CREDENTIAL_KEY.test(key)) {
+      out[key] = '';
+      if (held.trim()) out[`${key}Configured`] = true;
+    } else out[key] = withoutStoredCredentials(held);
+  }
+  return out;
+}
+
+/** What only an organization's administrators read: its integrations and the network addresses it admits. */
+const ADMINISTRATOR_ONLY_SECURITY = ['ipWhitelist', 'ipRestrictions'];
+
+/**
+ * Generic settings reads cannot expose project-scoped libraries or derivative custody, and never a stored
+ * credential (role walk, 2026-11-12: GET /api/organizations/:id/settings returned `integrations.docusign.apiKey`
+ * and `integrations.slack.webhookUrl` as stored, to every member and viewer). A reader who is not an administrator
+ * also gets no `integrations` section and no network allowlist; the session and review policies their screens
+ * read stay.
+ */
+export function generalSettingsView(value: unknown, reader: { administrator: boolean } = { administrator: true }): Settings {
+  const view = withoutStoredCredentials(Object.fromEntries(Object.entries(asSettings(value))
+    .filter(([key]) => !['companyDocuments', 'derivativeCustody', 'learningContributionPolicy'].includes(key)))) as Settings;
+  if (reader.administrator) return view;
+  const rest: Settings = Object.fromEntries(Object.entries(view).filter(([key]) => key !== 'integrations'));
+  if (rest.security && typeof rest.security === 'object' && !Array.isArray(rest.security)) {
+    rest.security = Object.fromEntries(Object.entries(rest.security as Record<string, unknown>)
+      .filter(([key]) => !ADMINISTRATOR_ONLY_SECURITY.includes(key)));
+  }
+  return rest;
 }
 
 export class CompanyDocumentsSettingRefusedError extends Error {

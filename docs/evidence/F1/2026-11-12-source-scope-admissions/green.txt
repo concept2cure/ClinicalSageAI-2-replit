@@ -1,0 +1,8 @@
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-read-scope-parent-once.test.ts > a source scope evaluation > refuses every source of a refused project, and still admits the other project's 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-read-scope-parent-once.test.ts > a source scope evaluation > still checks each source's own recorded workspace against the project's 1ms
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  04:26:10
+   Duration  6.78s (transform 1.19s, setup 120ms, import 2.80s, tests 3.24s, environment 0ms)
+

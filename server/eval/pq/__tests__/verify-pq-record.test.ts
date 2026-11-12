@@ -245,3 +245,42 @@ describe('canonical evidence integrity and verdict recomputation', () => {
     }
   });
 });
+
+describe('a record made for a named use is verified on what that use needs (P-118)', () => {
+  const SOURCE_USE = 'source-based-drafting';
+  const CSR_USE = 'evidence-bound-csr-drafting';
+  const forUse = (use: string, intendedUses: string[] = [use]) => {
+    const f = fixture();
+    Object.assign(f.record, { use, intendedUses });
+    return f;
+  };
+
+  it('accepts a source-based run, judged on generation, extraction and retrieval, that carries exactly that use', () => {
+    expect(verify(forUse(SOURCE_USE))).toEqual([]);
+  });
+
+  it('refuses a record whose intended uses are not exactly the use it was made for: a narrow pass is never carried as a wider one', () => {
+    for (const uses of [['document_drafting'], [SOURCE_USE, 'document_drafting'], []]) {
+      expect(verify(forUse(SOURCE_USE, uses)).join(' ')).toMatch(/must carry exactly that use/);
+    }
+  });
+
+  it('refuses a use the canonical protocol does not declare', () => {
+    expect(verify(forUse('anything-else')).join(' ')).toMatch(/declares no use "anything-else"/);
+  });
+
+  it('cannot verify a pass that rests on CSR drafting yet: that record has no canonical evidence check', () => {
+    const f = forUse(CSR_USE);
+    const protocol = JSON.parse(f.evidence.protocolText);
+    protocol.components.csrDrafting = { required: true, executable: true, criteriaSource: 'fixture',
+      criteria: { minHeadingsAttemptedShare: 1, minAcceptedDraftShare: 0.85, maxUnclaimedFiguresInAcceptedText: 0, maxForbiddenHits: 0 } };
+    f.evidence.protocolText = JSON.stringify(protocol);
+    Object.assign(f.record, { protocolSha256: hash(f.evidence.protocolText), csrDrafting: {
+      study: { studyId: 'CDISCPILOT01', sourceSha256: 'a'.repeat(64) }, plannedHeadings: ['9.1'],
+      headings: [{ sectionNumber: '9.1', servedModel: entry.pinnedVersion, servedModelVerified: true, firstDraft: 'accepted', unclaimedFigures: 0, forbiddenHits: 0 }] } });
+    // The verdict itself would pass this record. The registry claim still cannot be verified on it.
+    expect(rules.computeVerdict(protocol, f.record.generation as never, f.record.extraction as never, f.record.rag as never,
+      { use: CSR_USE, csrDrafting: (f.record as { csrDrafting?: never }).csrDrafting }).verdict).toBe('PASS');
+    expect(verify(f).join(' ')).toMatch(/CSR drafting record has no canonical evidence check yet/);
+  });
+});

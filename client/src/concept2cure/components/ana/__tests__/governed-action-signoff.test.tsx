@@ -226,8 +226,8 @@ describe('GovernedActionSignoff', () => {
  * adopts it. What they submit is what the tool records.
  */
 const toolWithReason: PendingSignoff = {
-  command: 'seed_tmf',
-  params: { study_id: 12, reason: 'Seeding the TMF for the Phase 1 study', index: 'SOP-114' },
+  command: 'log_inspection_finding',
+  params: { study_id: 12, reason: 'Recording the inspection finding for the Phase 1 study', index: 'SOP-114' },
   signatureRequired: false,
   tier: 'reason',
   runId: 'run-1',
@@ -247,12 +247,12 @@ describe('GovernedActionSignoff — a proposed reason', () => {
     render(<GovernedActionSignoff signoff={toolWithReason} onResolved={() => {}} onCancel={() => {}} />);
     const field = screen.getByLabelText('Reason for change') as HTMLTextAreaElement;
     expect(field.value).toBe('');
-    expect(screen.getByTestId('signoff-proposed-reason').textContent).toContain('Seeding the TMF for the Phase 1 study');
+    expect(screen.getByTestId('signoff-proposed-reason').textContent).toContain('Recording the inspection finding for the Phase 1 study');
     const summary = screen.getByLabelText('What AnA proposed');
-    expect(summary.textContent).toContain('seed_tmf');
+    expect(summary.textContent).toContain('log_inspection_finding');
     expect(summary.textContent).toContain('SOP-114');
     // The reason is asked for on its own, not summarised as a parameter.
-    expect(summary.textContent).not.toContain('Seeding the TMF');
+    expect(summary.textContent).not.toContain('Recording the inspection finding');
     expect((screen.getByRole('button', { name: 'Confirm and run' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -260,12 +260,12 @@ describe('GovernedActionSignoff — a proposed reason', () => {
     const onResolved = vi.fn();
     render(<GovernedActionSignoff signoff={toolWithReason} onResolved={onResolved} onCancel={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Use AnA’s wording' }));
-    expect((screen.getByLabelText('Reason for change') as HTMLTextAreaElement).value).toBe('Seeding the TMF for the Phase 1 study');
+    expect((screen.getByLabelText('Reason for change') as HTMLTextAreaElement).value).toBe('Recording the inspection finding for the Phase 1 study');
     fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
     await waitFor(() => expect(onResolved).toHaveBeenCalled());
     // The run is read first (§5.6, AnA detach DT2); the sign-off is the governed-action call.
     const body = JSON.parse((global.fetch as any).mock.calls.find(([u]: [string]) => String(u).includes('/governed-action'))[1].body);
-    expect(body).toMatchObject({ command: 'seed_tmf', reasonForChange: 'Seeding the TMF for the Phase 1 study', runId: 'run-1', toolUseId: 'tu-7' });
+    expect(body).toMatchObject({ command: 'log_inspection_finding', reasonForChange: 'Recording the inspection finding for the Phase 1 study', runId: 'run-1', toolUseId: 'tu-7' });
   });
 
   it('the person\'s own words are sent when they write them', async () => {

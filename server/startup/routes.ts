@@ -73,6 +73,9 @@ export function createAiCircuitBreaker(): CircuitBreakerMiddleware {
     failureThreshold: 10,
     resetTimeout: 30_000,
     maxTimeout: 60_000, // AI calls can be slow
+    // Reads on /api/ana-ri call no model. Refusing them while the provider is
+    // down took the person's conversations away (GA-DEMO-04).
+    passReads: true,
   });
 }
 

@@ -1,0 +1,13 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx   (the record as it stood: Vault.tsx at 55e60b4e82; the new form file is present so the suite loads)
+ × client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > is offered when the Vault read says this reader may place one, and records the hold through the governed route 526
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > is not offered to a reader the server does not allow, or when the server does not say 436ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > says what the server said when it refuses, and keeps what was typed 5125ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > does not report a hold the server did not confirm 5131ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > the hold form’s bounds are the route’s > asks for a reference of 1 to 200 characters and a reason of 3 to 2,000 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+
+# The server half, before: the suite cannot load, because the hold routes exported no rule to ask.
+# server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts imports mayManageLegalHolds from server/routes/vault-legal-holds.ts,
+# which at 55e60b4e82 exports no such function: 0 match(es).

@@ -1,0 +1,56 @@
+# A refused signature says why. 2026-11-12.
+
+# A refused signature says why. Red first, 2026-11-12: the new assertions on the code at HEAD (7a2c006348).
+$ npx vitest run server/routes/c2c/__tests__/reauth-second-factor.test.ts server/routes/c2c/__tests__/document-lock-ceremony.test.ts server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts server/api/cmc/__tests__/cmc-sign-signature-row.test.ts client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts
+ × server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > section approve fails closed with 401 when re-authentication fails — before any DB write 25ms
+ × server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section whose own compiled record is incomplete — 409, rolled back, nothing written 7ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 6ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 3ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 2ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 2ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 2ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > an account taken out of use (VSR-001 F-28) > cannot sign a governed action, with the right password and code 31ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > cannot sign with the password alone 8ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused with a wrong code 6ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read 8ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > is refused when it presents a code that does not verify — callers record a present code as verified 5ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is required 3ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > must verify 5ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is refused the same way when the signer has no stored password 2ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > in production, a signer with no authenticator (ADR-0014 P1-2b) > is refused REAUTH_AUTHENTICATOR_REQUIRED, with the right password 5ms
+ × server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a lock without credentials, and nothing is written 836ms
+ × server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/c2c/documents/:id/lock — the high-risk gate > refuses a wrong password, counts it, and writes nothing 7ms
+ × client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused signature on a CMC register > reads the server’s sentence, not the status, and ends each sentence once 6ms
+ × client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused signature on a CMC register > never shows the code when the server sent no sentence 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed (5)
+      Tests  21 failed | 67 passed (88)
+
+# The screen's own cases (cmcRefusal added after the run above), on the committed cmcShared.tsx:
+ × client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused signature on a CMC register > reads the server’s sentence, not the status, and ends each sentence once 5ms
+ × client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused signature on a CMC register > never shows the code when the server sent no sentence 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused signature on a CMC register > control: a refusal that saved nothing still says so 0ms
+ × client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused section approval on the Overview > is the server’s sentence after the lead, with no second "nothing" sentence 1ms
+ × client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts > a refused section approval on the Overview > control: a refusal for another reason still says nothing was persisted 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+
+# With the change: the same files, plus the two stand-ins for verifyReauth in other lanes' tests.
+$ npx vitest run server/routes/c2c/__tests__/reauth-second-factor.test.ts server/routes/c2c/__tests__/document-lock-ceremony.test.ts server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts server/api/cmc/__tests__/cmc-sign-signature-row.test.ts client/src/concept2cure/v2/__tests__/cmcSignatureRefusal.test.ts server/routes/__tests__/protocol-signatures.routes.test.ts server/routes/__tests__/report-os-finalize-signature.test.ts
+ × server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section whose own compiled record is incomplete — 409, rolled back, nothing written 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 142 passed (143)
+
+# The one red case is already red on trunk without this change (handed to CMC on 2026-11-12):
+# module3OperatingSystemRoutes.test.ts 'refuses to approve a section whose own compiled record is incomplete'.
+
+# Wider: every suite that names verifyReauth, the signing ceremony, the re-verifier or one of the nine routes, and the CMC client suites (222 files):
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 217 passed (221)
+      Tests  17 failed | 3504 passed (3521)
+# Its failures before the two stand-ins were updated: those two cases; the incomplete-record case above; and 14 in
+# server/routes/__tests__/report-os-report-pack-export.test.ts (expected 200, got 422), which fail identically on trunk
+# without this change (checked by stashing it). Not this change's; handed to Reporting in COORDINATION.

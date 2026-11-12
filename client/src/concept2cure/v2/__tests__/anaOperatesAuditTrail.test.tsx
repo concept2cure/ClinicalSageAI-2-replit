@@ -29,7 +29,7 @@ import { Apps, AuditTrail } from '../surfaces/AdminSurfaces';
 import { __resetSurfaceActionBus, applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
-const LEDGER = '/api/audit-trail/ledger';
+const LEDGER = '/api/audit-trail/ledger?limit=1000';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data }) }) as Response;
 const serverError = () => ({ ok: false, status: 500, json: async () => ({ success: false }) }) as Response;
 

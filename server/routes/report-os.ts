@@ -1764,7 +1764,8 @@ router.post('/runs', async (req: Request, res: Response) => {
         scopeType,
         scopeId,
         clientWorkspaceId,
-        ...(['lifecycle.obligation_calendar', 'compliance.audit_assurance_pack'].includes(reportTypeId) ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
+        // Computed as the person who runs it; the same list is in scheduling/generate-deliver.ts.
+        ...(['lifecycle.obligation_calendar', 'compliance.audit_assurance_pack', 'etmf.completeness_pack'].includes(reportTypeId) ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
         declared: {
           label: type[0].label,
           region: typeof governance.region === 'string' ? governance.region : null,
