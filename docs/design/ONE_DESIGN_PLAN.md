@@ -2511,8 +2511,8 @@ database with trunk's own `.devcontainer` scripts, then clicked through as Ana A
 | `70ec16da36` (the CSR walk session, from this run's finding) | A fresh Codespace's CSR study preparation finishes. |
 
 - **Coverage:** runs A (projects and authoring, 120 clicks) and C (work areas and administration, 265 clicks) finished
-  with nothing further. B (Communication, Vault, Submission Center, Tasks) and D (the Lumen account) are recorded in
-  the evidence README as they end. The crawler resumes from its log and restarts its browser every 60 clicks.
+  with nothing further. B, D and E: see the next entry. The crawler resumes from its log and restarts its browser
+  every 20 clicks.
 - **Found and handed on:** every sign-in mints the token's organisation and user ids as strings (platform owner); a
   page open reads the session six times and the project five (shell owner); `lumen-vault`'s 24 review, approval and
   seal steps want a third person in the development organisation (the Codespace session, DATA).
@@ -2521,6 +2521,33 @@ database with trunk's own `.devcontainer` scripts, then clicked through as Ana A
 - **GA readiness** (`scripts/ops/ga-readiness-report.mjs`, 8 of 42 ready, 18 blockers): none is code in this lane.
   They are production secrets, SMTP for the sign-in code, the PQ protocol's approval and run, a production restore
   rehearsal and the AWS apply (rows D1, D5, D6, D9, D10).
+
+**2026-11-10 to 2026-11-12, launch row D2: the click-through's later findings, and the screens as a release serves
+them** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`, findings M to Q, and
+`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-11-release-gate/README.md`, finding R).
+
+| Commit | What it does |
+|---|---|
+| `73ebee2233`, `68db67431e`, `0768226bb8`, `a8eeed8bd3` | "Download an inspection copy" works on the demo projects: each carries its open IND's applicant identity, and its study documents are placed with their study id and file tag. One implementation in the demo packs (DATA's and this lane's were merged). |
+| `1a60f41481` | A package the packager refuses for a filing reason answers 422 with its findings, not 500 "eCTD operation failed". |
+| `a19a92eab7` | Compliance reports' "Run attestation" works in a Codespace (it mints its own signing key); where an installation has no key the panel says so and offers no retry. |
+| `273d33e131` | A document opened from a seal, or a version viewed in the Vault, is brought into view. It was framed below the seal's list, so the click looked as if it had done nothing. |
+| `137af324e3` | Browsing the Vault, the project page and Quality no longer uses up the 20-a-minute document limit. Three reads a screen makes as it opens were counted in it, and after about a minute of clicking the catalog record and Download answered 429. Measured at a person's pace; the limits are the same in a release. |
+| `3ac31fe6fb`, `3b030ecea2` | The click-through crawler skips controls that mint a new control each time, and opens a collapsed section before it clicks inside it. |
+
+- **Coverage, final:** A and C finished. B (1,343 clicks), D (906) and E (308) were stopped when the sandbox's memory
+  was needed for a push's typecheck, with finding Q and nothing else new.
+- **The release's gate** (`LAUNCH_SCOPE_ENFORCE=on`, unattributed paths refused): all 134 screens and tabs the
+  click-through reached as Ana Author open with it on, none refused. The doors to the two screens outside the release
+  that launch screens lead to (the trial master file, the source tracer) are not shown, and a direct link says "not in
+  this release". Every server route was given the gate's verdict and searched for in the client as a relative path
+  through a base constant, which is the static gate's blind spot: nothing found.
+- **Not yet run:** the launch screens on the built client under the content security policy a release enforces
+  (`cspwalk.cjs` in the evidence folder); the Lumen account's screens with the gate on.
+- **For R1 and RBM's screens:** three RBM routes are built and no screen calls them (the load history, the scored
+  patient profiles list, site oversight); a release refuses them, because no launch surface claims their prefix.
+- **2026-11-12, the manager of the GA run** (the founder: "You are the manager of this goal"): thirteen sessions push
+  to the one branch, so each has an hourly push slot (`.design/claude-convergence/COORDINATION.md`, "The GA run").
 
 **Open for the founder:**
 - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
