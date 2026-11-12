@@ -1,0 +1,16 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a PDF is offered View beside Download, and opens in a reading drawer through the audited route 509ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a Word document is offered View as PDF, which asks for its rendition and says what it is 277ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a file that is neither is offered no view 248ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > bytes that are not a PDF are downloaded, no drawer opens, and the record says why 290ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRecordView.test.tsx > reading a document from its record > a refusal says what the Vault said, in the record 243ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/vault   (every Vault client suite, vaultVersionViewer.test.tsx among them)
+ Test Files  70 passed (70)
+      Tests  791 passed (791)
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+ci:undefined-css-classes, ci:surface-text-ramp, ci:check-css-selector-shadowing, ci:class-vocabulary, ci:unreferenced-modules, ci:launch-scope-api: pass
