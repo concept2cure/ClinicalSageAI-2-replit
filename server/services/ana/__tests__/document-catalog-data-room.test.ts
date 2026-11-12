@@ -49,6 +49,23 @@ describe('list_project_documents with catalog:true', () => {
     expect(out).toMatchObject({ ok: true, scope: { catalog: true, projects: 2 }, total: 2 });
   });
 
+  /* list_project_documents is one of the tools a sub-agent is offered, and no input of such a tool may be named for
+     a path, a directory or a folder (sub-agent-toolset.test.ts). The narrowing was named `folder` (2026-11-10), which
+     kept that rule red on trunk. It is `filed_in`, and reaches the catalog as the catalog's own `folder`. */
+  it('narrows to a proposed Vault folder through filed_in, and takes no input named folder', async () => {
+    await listDataCatalogForAna({ catalog: true, filed_in: 'module-5' }, scope);
+    expect(h.searchDataRoom.mock.calls[0][1]).toMatchObject({ folder: 'module-5' });
+    h.searchDataRoom.mockClear();
+    await listDataCatalogForAna({ catalog: true, folder: 'module-4' }, scope);
+    expect(h.searchDataRoom.mock.calls[0][1].folder ?? null).toBeNull();
+  });
+
+  it('refuses a filed_in that is not a Vault folder, as the catalog does', async () => {
+    const out = JSON.parse(await listDataCatalogForAna({ catalog: true, filed_in: '../etc' }, scope));
+    expect(out).toMatchObject({ ok: false, code: 'INVALID_CATALOG_QUERY' });
+    expect(h.searchDataRoom).not.toHaveBeenCalled();
+  });
+
   it('reports the engine\'s grade and basis, which captures this project uses, and which it can file', async () => {
     const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
     expect(out.items[0]).toMatchObject({ sourceId: 1, grade: { grade: 'C', score: 71, basis: ['currency 15/15: Current: no later capture replaced it.'] },

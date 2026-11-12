@@ -236,8 +236,10 @@ export function PostmarketSurface({
       </div>
 
 
+      {/* D8 slice 1a (P-128): a figure takes a status colour only when it means it. An MDR due within 72 hours is
+          an error and an open CAPA a warning; 0, and a read that has not answered, are neither. */}
       <div className="metrics-row metrics-compact">
-        <div className="metric-card" data-tone="err">
+        <div className="metric-card" data-tone={mdrDue ? 'err' : undefined}>
           <div className="metric-label">MDRs due ≤72h</div>
           <div className="metric-val" data-testid="pm-mdr-due">{mdrDue ?? '—'}</div>
           {/* GA-DEMO-08 (2026-11-10): the triage read leaves out filed, acknowledged
@@ -245,7 +247,7 @@ export function PostmarketSurface({
               carried is gone. */}
           <div className="metric-meta">FDA 5-day · 30-day · EU 15-day</div>
         </div>
-        <div className="metric-card" data-tone="warn">
+        <div className="metric-card" data-tone={openCapas && openCapas.length > 0 ? 'warn' : undefined}>
           <div className="metric-label">CAPAs open</div>
           <div className="metric-val" data-testid="pm-capas">{openCapas ? openCapas.length : '—'}</div>
           <div className="metric-meta">
