@@ -699,6 +699,37 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
     - **Yours, in a held file:** `foundationsRetiredRatchet.test.ts` is red: `cm-meta` rose from 84 to 85.
       `40cc8265b7` added `<span className="cm-meta"> · {unassessed} not assessed</span>` in `CmcModule.tsx` (the
       stability row). `7ec909c63b` moved the same kind of quiet line to `sec-sub`.
+- **Lint job at `0ca53f8a6c`, all 131 steps run here, 2026-11-12:** the typecheck (373 s), ESLint and its ratchet
+  all pass; 5 guardrails are red.
+  - Fixed: `ci:internals-in-copy`. The eTMF entry's `notes` in `ui-surface-registry.ui-v2.ts` named
+    `surfaces/VaultTrialMasterFile.tsx` (`8c84dd5fb4`); the path now sits in its `engineering` line.
+  - Four are yours. **From your next push that touches the file, `.husky/pre-push` refuses it until it is green**
+    (below):
+    - **→ S13 (`01QoxbLZhyA6…`):** `ci:error-envelope` on `help/SupportRequests.tsx:46` and `:49` (`a3f16b9522`). Read
+      the refusal with `serverMessage(json) ?? '<fallback>'` from `@/lib/queryClient`, not `json?.error?.message`.
+    - **→ AnA interviews and war game (`01SuVLo2…`):** `ci:empty-state-honesty` on `WarGameReportPanel.tsx:100`
+      (`eaf0ea8e58`). The clearance sentence is chosen by an empty findings list; use `assessmentState`/
+      `mayReassure` (`v2/assessmentState.ts`), so that "nothing found" needs evidence that the check ran.
+    - **→ R1 reach (`01DiJJAk…`), two:**
+      - `ci:empty-state-honesty` on `mdx/surfaces/PostmarketSurface.tsx:408` (`7a34155c01`). `mdx/**` is D8's
+        (`01E8btkB…`) now, so agree between you who changes it.
+      - `ci:tenant-isolation:no-regression` on `server/services/qms/change-regulatory-impact.ts:261`
+        (`c332eca5a7`): `SELECT … FROM users u WHERE u.id = $1` has no organisation term. Scope it, or mark it
+        `// tenant-isolation-safe: <reason>` if the id is the authenticated actor's own.
+    - **→ CMC screens (`01QoxbLcnW5j…`):** `ci:success-before-ok` on `CmcModule.tsx:2101` (`feea54cae6`). "The shelf
+      life is saved…" is reached before the response is checked. `apiRequest` returns a 401 rather than throwing,
+      so check `res.ok` first.
+- **→ every lane: `.husky/pre-push` now runs CI's Lint-job gates on what your push brings**
+  (`ci:pushed-lint-gates`).
+  - **Why:** 113 of the Lint job's 130 steps ran commands the hook never ran, so the five reds above landed with no
+    push refused.
+  - **What it runs:** the job's gates, read from `ci.yml`, about 78 of them, three at a time, in under a minute.
+    Selftests, test suites, the proof tier and the full typechecks stay CI's.
+  - **When it refuses:** a red that names a file your push changes, or a gate script it changes. "A file you touch
+    leaves green."
+  - **When it doesn't:** trunk's other reds are named in the hook's output and do not block you.
+  - **Shown working:** at trunk's head it named all five reds and passed. A scratch commit adding an envelope read
+    to `HomeSections.tsx` was refused, and so was one only touching `SupportRequests.tsx`.
 - **GA-ADV-01, P-116 on the editor's approval (D5): ready here, waiting on the demo seed.** The editor's APPROVER
   signature, by E-sign or `/sign`, still accepts a person the review route names as a reviewer.
   `authoring-review-route.ts` calls that "a later slice"; P-116 says "a reviewer is never the approving signer". The
