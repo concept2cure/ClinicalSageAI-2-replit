@@ -957,6 +957,31 @@ sweep) and `docs/evidence/SPINE/S4/2026-11-12-draft-model-recorded/`.
 - **Phase 0 is unchanged: acceptance pending.** The two S4 test-only items of 2026-11-09 are still open. The ten spike
   suites were rerun on `a9b5af1873`: 266 of 266.
 
+#### S4 — Anna runtime Phase 0: the two S4 test-only items of 2026-11-09 (2026-11-12, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-12-spike-check-1-joined/` and
+`docs/evidence/SPINE/S4/2026-11-12-spike-check-2-canary-whole-turn/`.
+
+- **Check 1, joined** (`26ed5c6a78`). One case, one database, one run: a drafter and a verifier as distinct
+  workers; the real comparison rejects a figure its source contradicts; the parent rejects, then accepts a corrected
+  draft only as a proposal, which writes no document; a child is refused the merge even with a confirmation; the
+  person merges exactly the accepted text; the release gate holds it; after a person's replacement and the
+  saved-document checks it is filed by the hash of its bytes; and the decisions are rebuilt from the audit alone.
+  Shown failing three ways. **Not joined: a signature.** The filed record is a released draft, not a sealed one.
+- **Check 2, the key across whole turns.** In the running app, with the server's provider key set to a random
+  marker, six turns ran four tools and a sub-agent. All 13 provider calls carried the key in its header. It was in
+  no request body, nothing the browser exchanged, no row of the database and no line of the server's log. A second
+  marker a person typed was found in the first three, so those searches can see. **Not covered:** a tenant's
+  captured credential in a whole turn (its surface needs a second factor this walk does not have), and the other
+  786 registered tools.
+- **Verdict: acceptance pending, unchanged.** No S4 test-only item named on 2026-11-09 is left. What remains is:
+  - RIM's item on check 3 (reapproval after the one-byte change);
+  - S5's item on check 2 (a per-use credential event for gateway-account transmits);
+  - the founder's decisions on checks 5, 6 and 7 (a "never again" trigger, a version for the placement policy,
+    content-aware classification, automatic de-identification, qualified local weights);
+  - P-107's measured p95, which needs a real provider key: every run so far used a stand-in that answers at once.
+- **Next.** The go or no-go of §14.6 is put to the founder on this record.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
