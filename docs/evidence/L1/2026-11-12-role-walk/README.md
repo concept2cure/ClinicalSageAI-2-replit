@@ -61,6 +61,11 @@ Three people signed in at once (administrator, manager, a member), each keeping 
 So a demotion and a removal take effect on the very next request of a session that was already open, without a new
 sign-in (the role and the membership are read from the database on each request).
 
+The audit trail, read as the administrator afterwards, carries each act with who, what and why: "Member role
+changed: role from Member to Viewer | David Kim | <the reason typed>", "Member removed: role from Viewer to none
+(removed) | David Kim | <reason>", and for the settings write of finding 1 "Organisation settings changed: the
+values before and after were not recorded for: Slack", which is the writer keeping a credential out of the chain.
+
 ## A second organization's administrator (tenant isolation, in the running app)
 
 A second organization and its administrator were added to the local database for this check, and that person
