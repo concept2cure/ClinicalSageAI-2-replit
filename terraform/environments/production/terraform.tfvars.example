@@ -34,6 +34,10 @@
 #   TF_VAR_ai_provider_placement_approvals='{"anthropic":{...},"local":{"region":"on_prem","zeroRetentionApproved":true,"approvedDataClasses":["pii","phi"],"approvedIntendedUses":["embedding"]}}'
 
 region          = "us-east-1"
+# The disaster-recovery region, where the key replicas live (MR-04 Stage 1).
+# Required, with no default: the founder's decision (NEW-2). The recommendation
+# is us-west-2, which keeps the data in the US. It must differ from region.
+dr_region = "us-west-2"
 vpc_cidr        = "10.10.0.0/16"
 public_subnets  = ["10.10.101.0/24", "10.10.102.0/24"]
 private_subnets = ["10.10.1.0/24", "10.10.2.0/24"]

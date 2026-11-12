@@ -45,8 +45,30 @@ provider "aws" {
   }
 }
 
+# The disaster-recovery region (MR-04 Stage 1): the stack makes the replicas of
+# its database, vault and release-signing keys here. The founder names it
+# (NEW-2); it is a required input, as the domain and certificates are.
+provider "aws" {
+  alias  = "dr"
+  region = var.dr_region
+
+  default_tags {
+    tags = {
+      Project     = "concept2cure"
+      Environment = "staging"
+      ManagedBy   = "terraform"
+    }
+  }
+}
+
 module "stack" {
-  source      = "../../stack"
+  source = "../../stack"
+
+  providers = {
+    aws    = aws
+    aws.dr = aws.dr
+  }
+
   environment = "staging"
   region      = var.region
   tags        = var.tags

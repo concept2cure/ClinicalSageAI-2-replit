@@ -11,6 +11,8 @@
 | Findings | 5 total — open 5 · partially fixed 0 · fixed 0 · refuted 0 · unverifiable 0 |
 | Basis | cold audit at `92ccdba1`; every status re-verified at `94b4f9238` on 2026-10-13 — [evidence](../evidence/reviews/2026-10-13-market-readiness/) · [findings register](MR-findings-2026-10-13.json). The branch moves about 1,500 commits a day: re-confirm each finding at the current head before starting its stage. |
 
+> **Stage 1 landed on 2026-11-12.** The database and vault keys are multi-Region, and the database, vault and release-signing keys each have an `aws_kms_replica_key` in the DR region under the same policy. Each root takes the DR region as `dr_region`, required and with no default: it is still the founder's NEW-2 decision, and both `terraform.tfvars.example` files recommend `us-west-2`. MR-03's first-apply checklist names the region and this stage as a precondition. The vault key's administration statement gains `kms:ReplicateKey`, without which the replica cannot be created; it still grants no use of the key. `configuration_aliases` stops `terraform validate` running on the stack alone (Terraform 1.11), so `terraform-tests.yml` gives that one step a DR provider. Red, green and mutation runs: [`docs/evidence/MR-04/2026-11-12/stage-1/`](../evidence/MR-04/2026-11-12/stage-1/README.md). Not done here: the staging `terraform plan`, which needs AWS credentials, at MR-03 Stage 5.
+
 ## Goal
 
 When production breaks, someone is paged within five minutes, and the page

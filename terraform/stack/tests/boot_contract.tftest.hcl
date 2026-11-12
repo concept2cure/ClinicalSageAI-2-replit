@@ -79,6 +79,18 @@ mock_provider "aws" {
   # assertion below pass even with DATABASE_URL pointed at jwt_secret.
 }
 
+# The disaster-recovery region's provider, aws.dr (MR-04 Stage 1). The key
+# replicas go through it; tests/dr.tftest.hcl asserts them.
+mock_provider "aws" {
+  alias = "dr"
+  mock_data "aws_region" {
+    defaults = { name = "us-west-2" }
+  }
+  mock_data "aws_caller_identity" {
+    defaults = { account_id = "123456789012" }
+  }
+}
+
 # Throwaway values of the right SHAPE, for production's settings. Nothing here
 # is a real credential.
 # The database tier's two keys get distinct ARNs for every run (file level: runs
