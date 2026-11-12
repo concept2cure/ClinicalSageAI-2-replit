@@ -34,8 +34,8 @@ import {
 import { pool } from '../db';
 import { recomputeSiteRisk, SITE_READ_MESSAGE, type Exec as SiteExec } from '../services/rbm/site-risk-engine';
 import {
-  detectSiteOutliers, scorePatientCohort,
-  type SiteMetric, type PatientMetric,
+  detectSiteOutliers, detectSiteIndicatorOutliers, scorePatientCohort,
+  type SiteMetric, type PatientMetric, type SiteOutlierFinding, type SiteIndicatorFinding,
 } from '../services/rbm/central-statistical-monitoring';
 import { ingestMetrics, METRIC_SOURCES } from '../services/rbm/metric-ingestion';
 
@@ -125,6 +125,39 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
 // CENTRAL STATISTICAL MONITORING (CluePoints SMART-style cross-site outliers)
 // ════════════════════════════════════════════════════════════════════════════
 
+type ScanFinding = SiteOutlierFinding | SiteIndicatorFinding;
+const isIndicatorFinding = (f: ScanFinding): f is SiteIndicatorFinding => 'cohortMedian' in f;
+
+/** Which scan a snapshot gets, and what it found. */
+function scanSites(rows: Array<Record<string, unknown>>, cohort: SiteMetric[]): { basis: 'study_indicators' | 'site_intelligence'; findings: ScanFinding[] } {
+  const fromIndicators = rows.filter((r) => (r.metadata as { source?: unknown } | null)?.source === 'study_indicators');
+  if (fromIndicators.length === 0) return { basis: 'site_intelligence', findings: detectSiteOutliers(cohort) };
+  const indicatorRows = fromIndicators.map((r) => ({
+    siteId: r.site_id == null ? null : String(r.site_id), siteNumber: r.site_number == null ? null : String(r.site_number),
+    indicators: (Array.isArray((r.metadata as { indicators?: unknown }).indicators) ? (r.metadata as { indicators: unknown[] }).indicators : [])
+      .map((i) => i as { kriName?: unknown; value?: unknown; unit?: unknown; direction?: unknown })
+      .filter((i) => typeof i.kriName === 'string' && typeof i.value === 'number')
+      .map((i) => ({ kriName: i.kriName as string, value: i.value as number, unit: typeof i.unit === 'string' ? i.unit : null,
+        direction: i.direction === 'lower_worse' ? 'lower_worse' as const : 'higher_worse' as const })),
+  }));
+  return { basis: 'study_indicators', findings: detectSiteIndicatorOutliers(indicatorRows) };
+}
+
+/** The signal a finding raises: type, severity, title, detail and the statistic behind it, in that order. */
+function signalWords(f: ScanFinding): [string, string, string, string, string] {
+  const site = f.siteNumber ?? f.siteId ?? '?';
+  if (!isIndicatorFinding(f)) {
+    return [`outlier_${f.dimension}`, f.severity, `Site ${site} is a ${f.dimension}-risk outlier`,
+      `Central statistical monitoring flagged this site: ${f.dimension} risk score ${f.value} is an outlier vs the study cohort (robust z ${f.score}).`,
+      JSON.stringify({ dimension: f.dimension, value: f.value, score: f.score })];
+  }
+  const unit = f.unit ? ` ${f.unit}` : '';
+  return ['outlier_indicator', f.severity, `Site ${site} stands apart on ${f.dimension}`,
+    `Central statistical monitoring: at site ${site}, ${f.dimension} is ${f.value}${unit} against a study median of ${f.cohortMedian}${unit} across ${f.cohortSize} sites (robust score ${f.score}). ${f.direction === 'lower_worse' ? 'Lower' : 'Higher'} is worse for this indicator.`,
+    JSON.stringify({ basis: 'study_indicators', dimension: f.dimension, value: f.value, unit: f.unit, score: f.score,
+      direction: f.direction, cohortMedian: f.cohortMedian, cohortSize: f.cohortSize })];
+}
+
 /**
  * Run unsupervised cross-site outlier detection over the program's site-risk
  * snapshot and raise a signal for each flagged site×dimension. Replaces prior
@@ -139,7 +172,7 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
   const { programId } = parsed.data;
   try {
     const { rows: sites } = await pool.query(
-      `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk
+      `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk, metadata
          FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
       [orgId, programId],
     );
@@ -153,7 +186,11 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
         operational: num(s.operational_risk),
       },
     }));
-    const findings = detectSiteOutliers(cohort);
+    // A snapshot scored from the study's own site-level indicators is scanned indicator by indicator, on the
+    // readings each row records (site-risk-engine.ts). Its composite is a three-level roll-up of those readings and
+    // cannot be told apart statistically; one from Site Intelligence is scanned on its four risk scores, as before.
+    const scan = scanSites(sites, cohort);
+    const findings = scan.findings;
 
     const client = await pool.connect();
     try {
@@ -169,17 +206,12 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
         const { rows } = await client.query(
           `INSERT INTO rbm_signals (organization_id, program_id, site_id, source, signal_type, severity, title, detail, statistic, status)
            VALUES ($1,$2,$3,'central_stat',$4,$5,$6,$7,$8,'new') RETURNING *`,
-          [
-            orgId, programId, f.siteId, `outlier_${f.dimension}`, f.severity,
-            `Site ${f.siteNumber ?? f.siteId ?? '?'} is a ${f.dimension}-risk outlier`,
-            `Central statistical monitoring flagged this site: ${f.dimension} risk score ${f.value} is an outlier vs the study cohort (robust z ${f.score}).`,
-            JSON.stringify({ dimension: f.dimension, value: f.value, score: f.score }),
-          ],
+          [orgId, programId, f.siteId, ...signalWords(f)],
         );
         inserted.push(rows[0]);
       }
       await client.query('COMMIT');
-      return ok(res, { findings, signals: inserted }, { cohortSize: cohort.length, flagged: findings.length });
+      return ok(res, { findings, signals: inserted }, { cohortSize: cohort.length, flagged: findings.length, basis: scan.basis });
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
       throw err;
