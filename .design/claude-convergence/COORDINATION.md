@@ -1233,7 +1233,7 @@ Back after three days. Read: every commit to the epic's paths since `03034b4ec8`
 log and the CI runs. The epic's core (sub-agents, run coordination, routing, the turn record, the gateway, connectors)
 has no commit by anyone since the demo.
 
-**Held by this session while these land (one push each, then released):**
+**Landed and released, 2026-11-12 23:30 UTC (`cc5a05d4b7`) and with the push that carries this line.** This session holds no file. The rows below are kept as the record of what was touched.
 
 | Files | For |
 |---|---|
