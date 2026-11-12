@@ -2572,7 +2572,7 @@ database with trunk's own `.devcontainer` scripts, then clicked through as Ana A
 - Stage 7 steps 2–4 and 8.
 - Switch the common rule set to block two weeks after the first apply.
 
-#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-10)
+#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-12)
 
 The founder: "We don't have apps anymore. We just have the core product… The quality is a major part of the product. I
 just don't want separate apps or cards." Quality is one work area: a header, AnA's starters, its registers as tabs,
@@ -2614,12 +2614,22 @@ under `docs/evidence/DESIGN/D7/`.
 | — F1: a record linked to a change past proposal says why; the audit row keeps how it relates | `979554ff6` | "Link a record": Why it is linked |
 | — F1: a record's 404 names the record in the one refusal panel (`readSubject`); Quality's two local 404 overrides converge onto it | `94c4c6699` | Version history, notification target, editing copy, CAPA action items |
 | — D7: the capped CAPA figures read as one line | `c9c0b5409` | The CAPA register's figures |
+| Under P-122 (2026-11-11 and 2026-11-12), the merged Quality walked in the running app, each repair red first: | | |
+| — D7: a record's facts are never covered by its actions (the actions are the line under the facts); the tabs wrap instead of clipping | `c83219951` | Every register, at 1440, 1280, 1024 and 390 |
+| — D7: a confirmed write re-reads the figure line and the register beside it | `dd14af400` | Record a complaint: "open complaints" follows with no reload |
+| — R1: a record linked to a change can be removed from it, with its reason; why a record was linked is shown | `94450dd2c` | A change's row: Remove |
+| — D7 (P-122 rule 2): the change procedure and the coverage method are open again, the procedure's steps numbered; three unruled classes carry a rule | `9d1f8ea22` | Change control; the SOP tab's training section |
+| — D7: who is due to train, coverage and the review schedule follow a confirmed write; a controlled document walked end to end | `dd8f5488d` | "Training overdue, due or lapsing" after an assignment or an acknowledgement |
+| — F1: one read admits a project once, however many of its sources it lists; a failed Quality projection logs its cause | `df1a57ef1` | The editor's Sources rail and the data room: 7.5 to 8 s down to about 5 s for 168 sources |
+| — D7: a write the server did not confirm says so, and says to check before trying again | `c446043c2` | Any Quality drawer with the connection down |
 
 The sweep's C1–C18 are done, except C7. Every other `readWhat` in the product names a project-scoped read (CMC's
 registers, the data room, the project team, its records), for which "this project" is the right subject, so no other
 caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence is under
 `docs/evidence/DESIGN/D7/2026-11-10-*`, `docs/evidence/MR-12/2026-11-10-training-assessed/` and
-`docs/evidence/F1/2026-11-10-not-found-words/`.
+`docs/evidence/F1/2026-11-10-not-found-words/`. The P-122 repairs' evidence is under
+`docs/evidence/DESIGN/D7/2026-11-11-*` and `2026-11-12-*`, `docs/evidence/DESIGN/R1/2026-11-12-change-link-removal/`
+and `docs/evidence/F1/2026-11-12-source-scope-admissions/`.
 
 **Open:**
 - C7 waits on a decision: 48 px rows. The routine signature line and the route line would leave the row, and MR-12
@@ -2627,15 +2637,19 @@ caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence i
 - dialogs-3 waits on a decision: "Edit controlled text", a second editor inside the reader.
 - A change's `assessed_by` is set by any edit, even one that changes only the target date. The edit's audit row says
   exactly what changed and by whom; the column's meaning is what is off.
+- In this lane's files, found walking: the suppliers register is wider than its box at 1024; a complaint's row does
+  not name its MDR report (the server returns the report's id, not its number).
 - Outside D7, found walking:
-  - D0's table at a phone's width: a register row's next step and More sit past the right edge until the table is
-    scrolled sideways (w35, x≈700–1000 at 390). Pinning the actions cell would cover the Title column; the phone
-    table is D0's to change;
   - any other `ErrorState` whose read is of a record still says "this project" on a 404 until its caller passes
     `readSubject` (found by `readWhat=` naming a record);
   - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
     and its eyebrow; the Vault's test asserts it;
-  - the editor's project-sources read answered 409 and 503 in the walk environment.
+  - the editor's project-sources read is still about 5 s for a project with 168 sources, and answers 503
+    `SOURCE_READ_ACCESS_CHANGED` when a Quality record is written while it runs. What remains is measured in
+    `docs/evidence/F1/2026-11-12-source-scope-admissions/` and handed to the coordinating session in
+    `.design/claude-convergence/COORDINATION.md`;
+  - the editor's save toast on a controlled document speaks of a filing the document is never bound to (handed on in
+    the same place).
 
 
 #### R1 and F1 — client administration, and the open screen work (2026-11-10 to 2026-11-12)
