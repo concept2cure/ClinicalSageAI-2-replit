@@ -1,0 +1,27 @@
+# Unit suites of the licensing lane at a9b5af187 (30 files), before 922e6519c
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:177:38
+    175|     ['training', 'no path, lesson or certification exists'],
+    176|   ])('the shell no longer carries %s — %s', (surface) => {
+    177|     expect(isLaunchSurface(surface)).toBe(false);
+       |                                      ^
+    178|   });
+    179|   it('every app keeps a screen a client can work in', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 29 passed (30)
+      Tests  1 failed | 502 passed (503)
+

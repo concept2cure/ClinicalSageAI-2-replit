@@ -124,6 +124,8 @@ const ACTION_LABEL: Record<string, string> = {
   'tenant.status_change': 'Workspace status changed',
   'feature_flag.toggle': 'Feature flag changed',
   'enforcement.observations_cleared': 'Enforcement observations cleared',
+  'access_request.approved': 'Access request approved: module turned on',
+  'access_request.declined': 'Access request declined',
 };
 
 /** `mode_change` becomes `mode change`, capitalised only when it leads. */
