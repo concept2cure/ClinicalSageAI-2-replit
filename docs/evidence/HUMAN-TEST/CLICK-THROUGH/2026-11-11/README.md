@@ -64,6 +64,32 @@ The app was restarted on the changed server code and Projects was opened again.
   covers the five projects that are not on the page.
 - No request failed and the console was clean.
 
+## Phone width, 2026-11-12
+
+The walk above was at 1440 px. On 2026-11-12, with trunk at `82dfba5042`, the same app was walked at 390×844:
+LMN-201's 26 screens as the Lumen lead and the device project's 12 as Rhea Reviewer.
+
+- **How:** `walk.cjs` for what each screen shows, and `phone-width/probe-cutoff.cjs` for every control that runs
+  past the screen's edge, with whether a person can still reach it by scrolling its own container sideways. Results:
+  `phone-width/biotech-390.json`, `phone-width/device-390.json`.
+- **LMN-201, 26 screens:** no failed request, no console error, and no page scrolls sideways as a document.
+- **No control is out of reach on any of the 38 screens.** Before D8 slice 2 there was one: the Pre-Sub manager's
+  "Ask AnA to start a Q-Sub" ran from 284 to 472 px (`docs/evidence/DESIGN/D8/slice-2/`).
+- **Strips that scroll sideways by design** hold the rest on most screens: the project's steps (`.seg`), the tab
+  rows of Vault, Submission Center, Quality, CMC, Reporting and Communication, the starter prompts
+  (`.sp-starters`), the editor's ribbon and the IND checklist's forms table.
+
+Three places where a whole working area scrolls sideways, which is not the design:
+
+| # | Where | What a person meets at 390 px | Whose |
+|---|---|---|---|
+| P1 | Administration | The page's own container scrolls: the later tabs (API keys, Skills, Settings, at 374–644 px), the member filter (to 747 px), each member's row (65–716 px) and a member's actions ("Remove from organization", "Designate as QMS approver"). `phone-width/admin-console-390.png` shows the tab row starting to run off; the rest is below the first screen and is in `phone-width/biotech-390.json` | Client administration (`01T2woo…`) |
+| P2 | Protocol | The section's working area (`.pd-work`) scrolls: "Draft with AnA" is at 461–596 px and "Save section" at 294–418 (`phone-width/biotech-390.json`) | Protocol and R1 (`01QoxbLdKp…`) |
+| P3 | 510(k), PMA and Diagnostics | The device page's container (`.page`) scrolls: the pathway tabs run to 710 px, and on the 510(k) screen 47 controls are past the edge, "Refine query with AnA" and "Export SE matrix as CSV" among them. | D8, this lane: the next slice |
+
+Not walked at phone width: the other demo people, dark mode outside the device screens, and any control beyond a
+screen's tabs and steps.
+
 ## A mistake during the work
 
 The first push of these fixes was refused by the pre-push warning ratchet: `TypeCard` had gone one branch over the

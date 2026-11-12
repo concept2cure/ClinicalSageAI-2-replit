@@ -1,0 +1,926 @@
+{
+ "01-home": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "02-projects": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "03-project-plan": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Submit",
+    "left": 381,
+    "right": 470,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   },
+   {
+    "name": "Respond",
+    "left": 472,
+    "right": 573,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   }
+  ]
+ },
+ "04-project-evidence": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Submit",
+    "left": 381,
+    "right": 470,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   },
+   {
+    "name": "Respond",
+    "left": 472,
+    "right": 573,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   }
+  ]
+ },
+ "05-project-author": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Submit",
+    "left": 381,
+    "right": 470,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   },
+   {
+    "name": "Respond",
+    "left": 472,
+    "right": 573,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   }
+  ]
+ },
+ "06-project-review": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Submit",
+    "left": 381,
+    "right": 470,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   },
+   {
+    "name": "Respond",
+    "left": 472,
+    "right": 573,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   }
+  ]
+ },
+ "07-project-submit": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Submit",
+    "left": 381,
+    "right": 470,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   },
+   {
+    "name": "Respond",
+    "left": 472,
+    "right": 573,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   }
+  ]
+ },
+ "08-project-respond": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Submit",
+    "left": 381,
+    "right": 470,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   },
+   {
+    "name": "Respond",
+    "left": 472,
+    "right": 573,
+    "top": 911,
+    "reachableByScrolling": "seg"
+   }
+  ]
+ },
+ "09-tasks": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "10-communication-center": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Meetings & commitments",
+    "left": 236,
+    "right": 426,
+    "top": 536,
+    "reachableByScrolling": "cc-tabs"
+   },
+   {
+    "name": "Authority profiles",
+    "left": 430,
+    "right": 566,
+    "top": 536,
+    "reachableByScrolling": "cc-tabs"
+   }
+  ]
+ },
+ "11-vault": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Which documents are not yet effective?",
+    "left": 258,
+    "right": 553,
+    "top": 382,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Search my connected repositories",
+    "left": 561,
+    "right": 822,
+    "top": 382,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Required documents",
+    "left": 301,
+    "right": 459,
+    "top": 447,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Governed artifacts",
+    "left": 463,
+    "right": 608,
+    "top": 447,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Seals & fixity",
+    "left": 612,
+    "right": 718,
+    "top": 447,
+    "reachableByScrolling": "tabs"
+   }
+  ]
+ },
+ "12-document-authoring": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Cite a source — inserts a numbered citation and ad",
+    "left": 393,
+    "right": 437,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Insert a cross-reference to another section — § Re",
+    "left": 439,
+    "right": 483,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Insert table (3 columns × 3 rows, header row)",
+    "left": 490,
+    "right": 548,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Undo (⌘Z)",
+    "left": 555,
+    "right": 599,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Redo (⌘⇧Z)",
+    "left": 601,
+    "right": 645,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Find & replace (Ctrl/⌘-F)",
+    "left": 652,
+    "right": 696,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "More formatting",
+    "left": 698,
+    "right": 742,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Ask AnA to suggest a source for the selected claim",
+    "left": 748,
+    "right": 792,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Offer alternatives for the selected passage: AnA d",
+    "left": 794,
+    "right": 838,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "Comment on the selection",
+    "left": 840,
+    "right": 884,
+    "top": 718,
+    "reachableByScrolling": "rse-ribbon"
+   },
+   {
+    "name": "INPUT",
+    "left": 888,
+    "right": 904,
+    "top": 732,
+    "reachableByScrolling": "rse-ribbon"
+   }
+  ]
+ },
+ "13-review": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "14-protocol-dev": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Schedule of assessments",
+    "left": 328,
+    "right": 519,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Study design",
+    "left": 521,
+    "right": 640,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Design derivation",
+    "left": 642,
+    "right": 787,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Compliance",
+    "left": 789,
+    "right": 901,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "IRB package",
+    "left": 903,
+    "right": 1019,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Statistics",
+    "left": 1021,
+    "right": 1117,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Risk register",
+    "left": 1119,
+    "right": 1235,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Milestones",
+    "left": 1237,
+    "right": 1343,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Budget",
+    "left": 1345,
+    "right": 1430,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Amendments",
+    "left": 1432,
+    "right": 1552,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Deviations & CAPA",
+    "left": 1554,
+    "right": 1705,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Reviews",
+    "left": 1707,
+    "right": 1799,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Consent",
+    "left": 1801,
+    "right": 1893,
+    "top": 971,
+    "reachableByScrolling": "pd-tabs"
+   },
+   {
+    "name": "Draft with AnA",
+    "left": 461,
+    "right": 596,
+    "top": 1032,
+    "reachableByScrolling": "pd-work"
+   },
+   {
+    "name": "Not Started Draft Complete",
+    "left": 294,
+    "right": 402,
+    "top": 4417,
+    "reachableByScrolling": "pd-work"
+   },
+   {
+    "name": "Save section",
+    "left": 294,
+    "right": 418,
+    "top": 4458,
+    "reachableByScrolling": "pd-work"
+   }
+  ]
+ },
+ "15-submission-center": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "What blocks dispatch?",
+    "left": 292,
+    "right": 482,
+    "top": 371,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Plan the next sequence",
+    "left": 490,
+    "right": 685,
+    "top": 371,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Required deliverables",
+    "left": 271,
+    "right": 436,
+    "top": 608,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Sequences",
+    "left": 440,
+    "right": 535,
+    "top": 608,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Validation",
+    "left": 539,
+    "right": 624,
+    "top": 608,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Shadow review",
+    "left": 628,
+    "right": 750,
+    "top": 608,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Dispatch",
+    "left": 754,
+    "right": 833,
+    "top": 608,
+    "reachableByScrolling": "tabs"
+   }
+  ]
+ },
+ "16-ectd-compile": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "17-gateway-transmittals": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "18-ind-checklist": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Build & check",
+    "left": 363,
+    "right": 464,
+    "top": 3074,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "PDF",
+    "left": 470,
+    "right": 511,
+    "top": 3074,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Save to dossier",
+    "left": 400,
+    "right": 511,
+    "top": 3094,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Attach completed form: FDA 1571 — IND application",
+    "left": 353,
+    "right": 511,
+    "top": 3115,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Build & check",
+    "left": 363,
+    "right": 464,
+    "top": 3314,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "PDF",
+    "left": 470,
+    "right": 511,
+    "top": 3314,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Save to dossier",
+    "left": 400,
+    "right": 511,
+    "top": 3334,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Attach completed form: FDA 1572 — Statement of inv",
+    "left": 353,
+    "right": 511,
+    "top": 3354,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Build & check",
+    "left": 363,
+    "right": 464,
+    "top": 3518,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "PDF",
+    "left": 470,
+    "right": 511,
+    "top": 3518,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Save to dossier",
+    "left": 400,
+    "right": 511,
+    "top": 3539,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Attach completed form: FDA 3674 — ClinicalTrials.g",
+    "left": 353,
+    "right": 511,
+    "top": 3559,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Build & check",
+    "left": 363,
+    "right": 464,
+    "top": 3777,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "PDF",
+    "left": 470,
+    "right": 511,
+    "top": 3777,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Save to dossier",
+    "left": 400,
+    "right": 511,
+    "top": 3797,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Attach completed form: FDA 3454 — Financial disclo",
+    "left": 353,
+    "right": 511,
+    "top": 3817,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Build & check",
+    "left": 363,
+    "right": 464,
+    "top": 3982,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "PDF",
+    "left": 470,
+    "right": 511,
+    "top": 3982,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Save to dossier",
+    "left": 400,
+    "right": 511,
+    "top": 4002,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Attach completed form: FDA 3455 — Financial disclo",
+    "left": 353,
+    "right": 511,
+    "top": 4022,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Build & check",
+    "left": 363,
+    "right": 464,
+    "top": 4113,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "PDF",
+    "left": 470,
+    "right": 511,
+    "top": 4113,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Save to dossier",
+    "left": 400,
+    "right": 511,
+    "top": 4133,
+    "reachableByScrolling": "div"
+   },
+   {
+    "name": "Attach completed form: FDA 1574 — Assurance of IRB",
+    "left": 353,
+    "right": 511,
+    "top": 4153,
+    "reachableByScrolling": "div"
+   }
+  ]
+ },
+ "19-dispatch-readiness": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "20-quality": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Run a pre-inspection check",
+    "left": 293,
+    "right": 513,
+    "top": 333,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Where is training missing?",
+    "left": 521,
+    "right": 733,
+    "top": 333,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Complaints and MDR",
+    "left": 312,
+    "right": 472,
+    "top": 399,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Deviations",
+    "left": 476,
+    "right": 566,
+    "top": 399,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Nonconformances",
+    "left": 570,
+    "right": 714,
+    "top": 399,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Suppliers",
+    "left": 718,
+    "right": 801,
+    "top": 399,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Internal audits",
+    "left": 805,
+    "right": 920,
+    "top": 399,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Management reviews",
+    "left": 924,
+    "right": 1088,
+    "top": 399,
+    "reachableByScrolling": "tabs"
+   }
+  ]
+ },
+ "21-cmc": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Run the ICH compliance check and show every gap",
+    "left": 336,
+    "right": 648,
+    "top": 211,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Generate the drug-substance control strategy",
+    "left": 656,
+    "right": 968,
+    "top": 211,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Stability",
+    "left": 366,
+    "right": 434,
+    "top": 296,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Batch records",
+    "left": 434,
+    "right": 541,
+    "top": 296,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Change control",
+    "left": 541,
+    "right": 658,
+    "top": 296,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Quality by design",
+    "left": 667,
+    "right": 797,
+    "top": 296,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Module 3 build",
+    "left": 797,
+    "right": 910,
+    "top": 296,
+    "reachableByScrolling": "tabs"
+   },
+   {
+    "name": "Approvals & audit",
+    "left": 910,
+    "right": 1042,
+    "top": 296,
+    "reachableByScrolling": "tabs"
+   }
+  ]
+ },
+ "22-rbm": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "23-biostatistics": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "Refine the sample size rationale",
+    "left": 258,
+    "right": 504,
+    "top": 309,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "What will the reviewer question first?",
+    "left": 512,
+    "right": 789,
+    "top": 309,
+    "reachableByScrolling": "sp-starters"
+   }
+  ]
+ },
+ "24-insights": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "What reports can you run for LMN-201?",
+    "left": 259,
+    "right": 553,
+    "top": 448,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Compare readiness across all my projects",
+    "left": 561,
+    "right": 869,
+    "top": 448,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "When does each project file?",
+    "left": 877,
+    "right": 1107,
+    "top": 448,
+    "reachableByScrolling": "sp-starters"
+   },
+   {
+    "name": "Bundles",
+    "left": 362,
+    "right": 436,
+    "top": 514,
+    "reachableByScrolling": "tabs"
+   }
+  ]
+ },
+ "25-compliance-reports": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": []
+ },
+ "26-admin-console": {
+  "viewport": 390,
+  "pageOverflow": 0,
+  "pastTheEdge": [
+   {
+    "name": "API keys",
+    "left": 374,
+    "right": 453,
+    "top": 794,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Skills",
+    "left": 457,
+    "right": 539,
+    "top": 794,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Settings",
+    "left": 543,
+    "right": 644,
+    "top": 794,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "All",
+    "left": 494,
+    "right": 533,
+    "top": 899,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Active",
+    "left": 535,
+    "right": 599,
+    "top": 899,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Invited",
+    "left": 601,
+    "right": 666,
+    "top": 899,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Disabled",
+    "left": 668,
+    "right": 747,
+    "top": 899,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "LA Lumen Approver lumen.approver@lumen-demo.exampl",
+    "left": 65,
+    "right": 716,
+    "top": 983,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "LL Lumen Lead lumen.lead@lumen-demo.example Admin ",
+    "left": 65,
+    "right": 716,
+    "top": 1058,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "LR Lumen Reviewer lumen.reviewer@lumen-demo.exampl",
+    "left": 65,
+    "right": 716,
+    "top": 1133,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Remove from organization",
+    "left": 262,
+    "right": 456,
+    "top": 1699,
+    "reachableByScrolling": "page"
+   },
+   {
+    "name": "Designate as QMS approver",
+    "left": 462,
+    "right": 645,
+    "top": 1699,
+    "reachableByScrolling": "page"
+   }
+  ]
+ }
+}
