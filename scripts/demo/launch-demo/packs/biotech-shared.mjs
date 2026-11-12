@@ -83,3 +83,23 @@ export function makeTally(run) {
     tally,
   };
 }
+
+/**
+ * A project's objective of record, through the route the About card writes (PUT /api/charters/by-project/:ref/
+ * objectives). Moved here from lumen.mjs on 2026-11-12 so every pack records one the same way (GA-DEMO-15: C2C-101,
+ * C2C-201 and NeuroPanel-Dx had none, and their About card said "No objective is recorded for this project yet").
+ * A recorded objective is left as it is: a person may have changed it.
+ */
+export async function ensureObjective({ api, run, tally }, project, { label = project.id, objective, successCriteria, sources, reason }) {
+  await run.step(`Objective: ${label}`, async () => {
+    const path = `/api/charters/by-project/${encodeURIComponent(project.id)}/objectives`;
+    const read = await api('GET', path);
+    if (read.status !== 200) throw new Error(`read the project objective: HTTP ${read.status} ${String(read.text ?? '').slice(0, 300)}`);
+    if (read.json?.data?.current) { tally.found('objective'); return 'found'; }
+    const put = await api('PUT', path, { objective, successCriteria, sources, reason });
+    if (put.status !== 200) throw new Error(`record the project objective: HTTP ${put.status} ${String(put.text ?? '').slice(0, 300)}`);
+    tally.created('objective');
+    return 'created';
+  });
+}
+
