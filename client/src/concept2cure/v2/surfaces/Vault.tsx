@@ -3236,7 +3236,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
             </p>
           ) : null}
         </div>
-        <div className="ph-acts">
+        {/* With no project open the page asks only which sponsor's Vaults to show (UI walk, 2026-11-12): each control
+            here and each starter below needs a project, and returns with it. */}
+        {projectId ? <div className="ph-acts">
           {/* Offered only where the eTMF can be opened: outside this release it
               led to the locked panel (FILING_SPINE.md F16). */}
           {available('etmf') && (
@@ -3254,9 +3256,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               <button
                 type="button"
                 className="btn ghost"
-                disabled={!projectId || !cabinet}
+                disabled={!cabinet}
                 onClick={newFolder}
-                title={projectId ? 'Make a folder in this project’s Vault, in the folder open on the left' : 'Open a project first.'}
+                title="Make a folder in this project’s Vault, in the folder open on the left"
                 data-testid="vault-new-folder-button"
               >
                 {I.folder} New folder
@@ -3264,7 +3266,6 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               <button
                 type="button"
                 className="btn ghost"
-                disabled={!projectId}
                 onClick={addFolder}
                 title="Choose a folder of files on your computer to upload into this project’s Vault"
                 data-testid="vault-upload-folder-button"
@@ -3275,28 +3276,25 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
                 ref={addFilesButton}
                 type="button"
                 className="btn primary"
-                disabled={!projectId}
                 onClick={addFiles}
-                title={
-                  projectId
-                    ? 'Choose files to file into this project’s Vault'
-                    : 'Open a project first — a Vault document is filed against a project.'
-                }
+                title="Choose files to file into this project’s Vault"
                 data-testid="vault-upload-button"
               >
                 {I.upload} Add files
               </button>
             </>
           ) : null}
-        </div>
+        </div> : null}
       </header>
-      <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
-        {VAULT_STARTERS.map((s) => (
-          <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
-            <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
-          </button>
-        ))}
-      </div>
+      {projectId ? (
+        <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
+          {VAULT_STARTERS.map((s) => (
+            <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
+              <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* What qualifies every view: a transfer's outcome, a document that is
           not where it was looked for, a filing decision's outcome, a cabinet
