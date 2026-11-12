@@ -1,0 +1,69 @@
+// Flow 3 + 7: Admin console "Invite member" in Northgate Biologics GmbH: the form, refusals, each role, and the limit.
+const L = require('./lib.cjs');
+const fs = require('fs'); const path = require('path');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const LINKS = path.join(__dirname, '.setup-links.json');   // private: setup links, scratch only
+const links = fs.existsSync(LINKS) ? JSON.parse(fs.readFileSync(LINKS, 'utf8')) : {};
+const redact = (s) => String(s).replace(/token=[A-Za-z0-9._%-]+/g, 'token=<redacted>');
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('members tab first look', (await L.textOf(page, 'main')).slice(0, 1500));
+  await L.shot(page, 'w1-41-admin-members-initial.png');
+  L.drain(page);
+  const dialog = page.getByRole('dialog');
+  const openInvite = async () => { await page.getByTestId('admin-invite-member').click(); await dialog.waitFor({ timeout: 5000 }); await L.sleep(300); };
+  const toasts = async () => page.locator('[role=status], [role=alert], .toast, .c2c-toast').evaluateAll(els => [...new Set(els.map(e => e.textContent.trim()).filter(t => t && t.length < 400))]);
+  const invite = async ({ name, email, role, title, department }, label) => {
+    await openInvite();
+    if (name !== undefined) await dialog.getByLabel('Full name').fill(name);
+    if (email !== undefined) await dialog.getByLabel('Email').fill(email);
+    if (role) await dialog.getByLabel('Role').selectOption(role);
+    if (title) await dialog.getByLabel('Job title').fill(title);
+    if (department) await dialog.getByLabel('Department').fill(department);
+    await dialog.getByRole('button', { name: 'Send invite' }).click(); await L.sleep(1800);
+    const stillOpen = await dialog.isVisible().catch(() => false);
+    const out = { label, dialogStillOpen: stillOpen, dialogError: stillOpen ? await dialog.locator('[role=alert]').allInnerTexts() : [], toasts: await toasts(), writes: L.drain(page).map(redact).map(x => x.slice(0, 700)) };
+    // capture any setup link shown
+    const linkInputs = await page.locator('input[aria-label^="Setup link for"]').evaluateAll(els => els.map(e => [e.getAttribute('aria-label').replace('Setup link for ', ''), e.value]));
+    for (const [who, url] of linkInputs) links[who] = url;
+    fs.writeFileSync(LINKS, JSON.stringify(links, null, 1), { mode: 0o600 });
+    out.handover = (await page.locator('section[aria-label*="nvitation"], .ob-invite, [data-testid*=invitation]').allInnerTexts().catch(() => [])).map(redact).map(t => t.slice(0, 500));
+    note(label, out);
+    if (stillOpen) await dialog.getByRole('button', { name: /Cancel|Close/ }).first().click().catch(() => {});
+    await L.sleep(300);
+    return out;
+  };
+  // the form itself
+  await openInvite();
+  note('invite dialog text', await dialog.innerText());
+  note('role options', await dialog.getByLabel('Role').locator('option').evaluateAll(o => o.map(x => `${x.value}=${x.textContent}`)));
+  await L.shot(page, 'w1-42-invite-dialog.png');
+  await dialog.getByRole('button', { name: 'Send invite' }).click(); await L.sleep(500);
+  note('empty submit', await dialog.locator('[role=alert]').allInnerTexts());
+  await L.shot(page, 'w1-43-invite-dialog-empty.png');
+  await dialog.getByRole('button', { name: /Cancel/ }).click();
+  // refusals
+  await invite({ name: 'Bad Address', email: 'not-an-address', role: 'member' }, 'invalid address');
+  await L.shot(page, 'w1-44-invite-invalid-address.png');
+  await invite({ name: 'Avery Lind', email: 'avery.lind@northgate-bio.example.test', role: 'member' }, 'address already a member (myself)');
+  await L.shot(page, 'w1-45-invite-already-member.png');
+  await invite({ name: 'Noor Haddad', email: 'noor.haddad@northgate-bio.example.test', role: 'viewer' }, 'address already invited (noor, invited as Reviewer by the wizard), asked again as Viewer');
+  await L.shot(page, 'w1-46-invite-already-invited.png');
+  // each role, until the limit
+  const people = [
+    { name: 'Vik Osei', email: 'vik.osei@northgate-bio.example.test', role: 'viewer', title: 'Clinical Operations Associate', department: 'Clinical' },
+    { name: 'Priya Raman', email: 'priya.raman@northgate-bio.example.test', role: 'member', title: 'Medical Writer' },
+    { name: 'Quinn Abara', email: 'quinn.abara@northgate-bio.example.test', role: 'approver', title: 'Head of Quality' },
+    { name: 'Marta Kowal', email: 'marta.kowal@northgate-bio.example.test', role: 'manager', title: 'Program Manager' },
+    { name: 'Sam Okafor', email: 'sam.okafor@northgate-bio.example.test', role: 'admin', title: 'IT Lead' },
+    { name: 'Lena Fischer', email: 'lena.fischer@northgate-bio.example.test', role: 'member' },
+  ];
+  let i = 0;
+  for (const p of people) { i += 1; await invite(p, `invite ${i}: ${p.name} as ${p.role}`); await L.shot(page, `w1-47-invite-${i}-${p.role}.png`); }
+  note('members after', (await L.textOf(page, 'main')).slice(0, 2500));
+  await L.shot(page, 'w1-48-admin-members-after-invites.png');
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

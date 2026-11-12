@@ -30,7 +30,7 @@ import { I } from '../icons';
 import { RBM_VOCAB, type RbmSignal } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardSignal, RbmBoardSite, RbmBoardAction } from './rbmBoard';
 import {
-  RbmChip, RbmScore, RbmFreshness, RbmWhen, DimBars,
+  RbmChip, RbmFreshness, RbmWhen, DimBars,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
 import {
@@ -334,6 +334,29 @@ export function RbmPatients({ board, onReload }: SubProps) {
 }
 
 /* 8 -- Sites */
+const siteSourceWords = (source: 'site_intelligence' | 'study_indicators') =>
+  (source === 'study_indicators' ? 'the study’s site-level indicators' : 'site intelligence');
+
+/**
+ * A site's composite risk, 0 to 100, coloured by the tier the engine set from it (monitoringTierFromRisk). RbmScore
+ * bands on the RACT's 1 to 25 scale, which coloured a composite of 25 red beside a "Reduced" tier: the screen never
+ * re-bands a figure the engine has already banded.
+ */
+function SiteComposite({ composite, tier }: { composite: number; tier: string }) {
+  const band = tier === 'enhanced' ? 'high' : tier === 'standard' ? 'medium' : 'low';
+  return <span className="rbm-score" data-band={band}>{Math.round(composite)}</span>;
+}
+
+/** How a site's indicators band, in words: the basis of a composite scored from the study's own readings. */
+function SiteIndicatorCounts({ basis }: { basis: NonNullable<RbmBoardSite['basis']> }) {
+  const parts = [
+    basis.red ? `${basis.red} red` : null, basis.amber ? `${basis.amber} amber` : null,
+    basis.green ? `${basis.green} green` : null, basis.unbanded ? `${basis.unbanded} with no limit` : null,
+  ].filter(Boolean);
+  const evaluated = basis.red + basis.amber + basis.green;
+  return <span className="mut">{parts.length ? parts.join(' · ') : 'No indicator read'}{evaluated === 0 && parts.length ? ' — not scored' : ''}</span>;
+}
+
 export function RbmSites({ board, onReload }: SubProps) {
   const sites = board.sites;
   const mut = useRbmMutation(onReload);
@@ -342,8 +365,12 @@ export function RbmSites({ board, onReload }: SubProps) {
   const recompute = () => mut.run(async () => {
     const { meta } = await rbmWriteWithMeta<unknown[]>('POST', '/rbm-site-risk/recompute', { programId: board.programId });
     const n = Number(meta.count ?? 0);
-    return `Rescored ${n} site${n === 1 ? '' : 's'} from Site Intelligence.`;
+    return `Rescored ${n} site${n === 1 ? '' : 's'} from ${siteSourceWords(meta.source === 'study_indicators' ? 'study_indicators' : 'site_intelligence')}.`;
   });
+  // One snapshot has one source: the engine reads Site Intelligence, or, where it holds no site for the study, the
+  // study's own site-level indicator readings (server/services/rbm/site-risk-engine.ts).
+  const source = sites[0]?.source ?? 'site_intelligence';
+  const fromIndicators = sites.length > 0 && source === 'study_indicators';
 
   return (
     <div>
@@ -357,26 +384,26 @@ export function RbmSites({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">Composite from site intelligence · {at ? <>scored <GovernedTimestamp value={at} layout="inline" /></> : 'never scored'}</span>
+        <span className="rbm-bar-info">{sites.length > 0 ? `Composite from ${siteSourceWords(source)}` : 'Site risk'} · {at ? <>scored <GovernedTimestamp value={at} layout="inline" /></> : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={recompute}>{I.zap}{mut.busy ? 'Recomputing…' : 'Recompute site risk'}</button>
       </div>
       <div className="rbm-card">
-        <table className="rbm-tbl"><thead><tr><th>Site</th><th>Composite</th><th style={{ width: 230 }}>Dimensions (of 25)</th><th>Tier</th><th>Drivers — why this tier</th></tr></thead>
+        <table className="rbm-tbl"><thead><tr><th>Site</th><th>Composite</th><th style={{ width: 230 }}>{fromIndicators ? 'Indicators at the site' : 'Dimensions (of 25)'}</th><th>Tier</th><th>Drivers — why this tier</th></tr></thead>
           <tbody>{sites.map(s => (
             <tr key={s.n}>
               <td><b className="mono">{s.n}</b> {s.name}</td>
               <td>{s.composite != null
-                ? <><RbmScore v={Math.round(s.composite)} /> <span className="mono mut">{s.composite}</span></>
+                ? <><SiteComposite composite={s.composite} tier={s.tier} />{Math.round(s.composite) !== s.composite && <> <span className="mono mut">{s.composite}</span></>}</>
                 : <span className="mut">Not scored</span>}</td>
-              <td><DimBars enr={s.enr ?? 0} qual={s.qual ?? 0} ops={s.ops ?? 0} /></td>
+              <td>{s.basis ? <SiteIndicatorCounts basis={s.basis} /> : <DimBars enr={s.enr ?? 0} qual={s.qual ?? 0} ops={s.ops ?? 0} />}</td>
               <td><RbmChip vocab="tier" value={s.tier} /></td>
               <td className="mit"><div className="rbm-drivers">{s.drivers.map((d, i) => <span key={i} className="rbm-driver">{d}</span>)}</div></td>
             </tr>
           ))}
-          {sites.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No site risk scored for this study yet.</td></tr>}
+          {sites.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No site risk scored for this study yet. Sites are scored from the study’s site-level indicator readings: load an extract that carries site rows for an indicator that has limits, then recompute.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}All {sites.length} scored site{sites.length === 1 ? '' : 's'} shown, ranked by composite risk. The tier is set from the composite score; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available.</div>
+      <div className="rbm-note">{I.info}All {sites.length} scored site{sites.length === 1 ? '' : 's'} shown, ranked by composite risk. {fromIndicators ? 'Each indicator is banded at the site against its own limits: red counts 100, amber 50, green 0, and the composite is the mean over the indicators evaluated at the site. ' : ''}The tier is set from the composite score; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available.</div>
     </div>
   );
 }
@@ -436,7 +463,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
             return (
               <tr key={s.n}>
                 <td><b className="mono">{s.n}</b> {s.name}</td>
-                <td>{s.composite != null ? <RbmScore v={Math.round(s.composite)} /> : <span className="mut">—</span>}</td>
+                <td>{s.composite != null ? <SiteComposite composite={s.composite} tier={s.tier} /> : <span className="mut">—</span>}</td>
                 <td><RbmChip vocab="tier" value={s.tier} /></td>
                 <td>{c.open > 0 ? <button className="rbm-linknum" onClick={() => onTab?.('signals')}>{c.open} open {I.chevRight}</button> : <span className="mut">0</span>}</td>
                 <td>{c.high > 0 ? <button className="rbm-linknum hi" onClick={() => onTab?.('signals')}>{c.high} high {I.chevRight}</button> : <span className="mut">0</span>}</td>

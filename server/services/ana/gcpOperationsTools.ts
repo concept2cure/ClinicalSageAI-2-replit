@@ -253,8 +253,9 @@ export const PLAN_ESSENTIAL_DOCUMENTS: AnaTool = {
   description:
     'Generate the essential-documents / Trial Master File (TMF) plan per ICH E6 ' +
     '(the before-, during-, and after-trial document sets). Returns the essential ' +
-    'documents grouped by trial stage, a TMF zone structure (aligned to the DIA ' +
-    'TMF Reference Model concepts), a completeness/QC plan with citations, and ' +
+    'documents grouped by trial stage, each with its DIA TMF Reference Model ' +
+    'zone, the model\'s eleven zones as the eTMF and the Vault show them, a ' +
+    'completeness/QC plan with citations, and ' +
     'record-retention guidance — distinguishing the investigator site file from ' +
     'the sponsor TMF and accounting for electronic TMF and device trials. An ' +
     'unstated device status is not read as no device (see notes). Cites ' +

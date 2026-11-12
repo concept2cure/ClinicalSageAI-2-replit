@@ -66,7 +66,10 @@ export async function addArtifactTx(client: Queryable, orgId: number, userId: nu
     if (c.confidence === 'unclassified') {
       throw new EtmfError(
         'BAD_INPUT',
-        `"${input.artifactName}" matches no DIA TMF Reference Model zone keyword, so its zone is unknown. State the zone (1-11).`,
+        // A name that points to two zones was told it "matches no zone keyword" (until 2026-11-11).
+        c.conflict
+          ? `"${input.artifactName}" points to more than one DIA TMF Reference Model zone, so its zone is not decided here. State the zone (1-11).`
+          : `"${input.artifactName}" matches no DIA TMF Reference Model zone keyword, so its zone is unknown. State the zone (1-11).`,
       );
     }
     zone = c.zone;

@@ -1,0 +1,38 @@
+// Walk 2, flow 6b: the validation kit card on Settings (own org): what it lists, a download, and the record of it.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const ctxState = c.STATE('w2owner');
+  const { page, context } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  await c.step('validation kit: the card', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200);
+    await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(4000);
+    const t = await c.mainText(page, 60000);
+    const i = t.indexOf('Download unsaved Word proof'); const j = t.indexOf('URS-005');
+    s.notes.push(t.slice(i, j).split('\n').slice(3).join('\n'));
+    const kit = await c.api(page, 'GET', '/api/validation-kit');
+    const docs = kit.body?.documents || kit.body?.data?.documents || [];
+    s.notes.push('GET /api/validation-kit: ' + kit.status + ' keys ' + JSON.stringify(Object.keys(kit.body || {})) + ' documents ' + docs.length);
+    s.notes.push('statuses: ' + JSON.stringify(docs.reduce((a, d) => { a[d.status] = (a[d.status] || 0) + 1; return a; }, {})));
+    s.notes.push('first: ' + JSON.stringify(docs[0]).slice(0, 400));
+    const card = page.locator('main').getByText('URS-001', { exact: false }).first();
+    await card.scrollIntoViewIfNeeded().catch(() => {}); await c.sleep(500);
+    await c.shot(page, 'w2-60-validation-kit-card-1440.png');
+  });
+  await c.step('validation kit: download one document', async (s) => {
+    const before = c.psql(`select count(*) from audit_logs where tenant_id=7`);
+    const btn = page.getByRole('button', { name: /^Download/ }).filter({ hasNotText: /Word|saved/ }).first();
+    s.notes.push('button: ' + (await btn.getAttribute('aria-label')) + ' / ' + (await btn.innerText()));
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }).catch(() => null), btn.click()]);
+    await c.sleep(1500);
+    if (dl) { const p = `${c.SCRATCH}/walk2/kit-download-${dl.suggestedFilename()}`; await dl.saveAs(p); const body = c.fs.readFileSync(p, 'utf8'); s.notes.push(`downloaded ${dl.suggestedFilename()} ${body.length} bytes; first lines: ` + body.split('\n').slice(0, 14).join(' ⏎ ').slice(0, 900)); }
+    else s.notes.push('no download event; status text: ' + (await page.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 300));
+    s.notes.push('audit rows before/after: ' + before + ' / ' + c.psql(`select count(*) from audit_logs where tenant_id=7`) + ' | newest: ' + c.psql(`select action, left(new_values::text,160) from audit_logs where tenant_id=7 order by occurred_at desc limit 1`));
+  });
+  await c.step('validation kit: a member asks the server for it', async (s) => {
+    const m = (await c.pageFor(browser, 'w2member', 'walk2.member2@example.test')).page;
+    const r = await c.api(m, 'GET', '/api/validation-kit'); s.notes.push('member GET /api/validation-kit -> ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 200));
+  });
+  c.report(); c.save('w2-26-validation-kit');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

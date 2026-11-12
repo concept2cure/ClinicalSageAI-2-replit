@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useId } from 'react';
+import React, { useState, useMemo, useId, useCallback } from 'react';
 import { authService } from '@/services/portal/authService';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 
@@ -1381,6 +1381,26 @@ export function Vault(props: SurfaceViewProps) {
   return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} session={session} />;
 }
 
+/**
+ * Each heading's name by its number, from the tree the server sent: the filing's own outline, which the Library
+ * shows as the binder. The Required documents view names a section with it. A number the outline does not carry
+ * has no entry, and the view then says the number alone.
+ */
+function sectionNamesOf(tree: readonly (VaultDoc | VaultFolder)[]): Map<string, string> {
+  const names = new Map<string, string>();
+  const walk = (nodes: readonly (VaultDoc | VaultFolder)[]) => {
+    for (const n of nodes) {
+      if (isVaultDoc(n)) continue;
+      const code = (n.code ?? '').trim().toLowerCase();
+      const label = (n.label ?? '').trim();
+      if (code && label && !names.has(code)) names.set(code, label);
+      if (n.children) walk(n.children);
+    }
+  };
+  walk(tree);
+  return names;
+}
+
 function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session: ReturnType<typeof useAuthoringReadSession> }) {
   const available = useSurfaceAvailable();
   const projectId = currentProjectId();
@@ -1724,6 +1744,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     if (cabinet) walk(cabinet.children);
     return out;
   }, [cabinet]);
+
+  /* What the Required documents view calls each section: the outline's own names. */
+  const sectionNames = useMemo(() => sectionNamesOf(tree), [tree]);
+  const sectionName = useCallback((code: string) => sectionNames.get(code.trim().toLowerCase()) ?? null, [sectionNames]);
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -3109,6 +3133,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
       busy={filing}
       defaultOpen
       onShowOutline={() => setView('library')}
+      sectionName={sectionName}
     />
   );
 

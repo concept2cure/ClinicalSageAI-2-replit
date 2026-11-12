@@ -1,0 +1,59 @@
+// Flow 3 (first sign-in of the invited person) + flow 5 (the lowest role): Vik Osei, Viewer, Northgate Biologics GmbH.
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const VIK = 'vik.osei@northgate-bio.example.test';
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, VIK, { fresh: !require('fs').existsSync(L.stateFile(VIK)) });
+  await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('first screen url', page.url());
+  note('first screen', (await L.textOf(page, 'body')).slice(0, 1800));
+  await L.shot(page, 'w1-60-viewer-first-screen.png');
+  await page.getByRole('button', { name: /Vik Osei/ }).first().click(); await L.sleep(500);
+  note('account menu', await page.locator('[role=menu]').innerText());
+  await L.shot(page, 'w1-61-viewer-account-menu.png');
+  await page.keyboard.press('Escape');
+  for (const [id, shot] of [['admin-console', 'w1-62-viewer-admin-console.png'], ['licensing', 'w1-63-viewer-licensing.png'], ['onboarding', 'w1-64-viewer-onboarding.png'], ['access-requests', 'w1-65-viewer-access-requests.png'], ['usage', 'w1-66-viewer-usage.png'], ['master-licensing', 'w1-67-viewer-master-licensing.png']]) {
+    L.drain(page); L.errs();
+    await page.goto(`${L.BASE}/concept2cure/${id}`, { waitUntil: 'networkidle' }); await L.sleep(1800);
+    note(`/${id}: url`, page.url());
+    note(`/${id}: main`, (await L.textOf(page, 'main')).slice(0, 1400));
+    note(`/${id}: failed calls`, L.drain(page).map(x => x.slice(0, 260)));
+    note(`/${id}: console`, L.errs().console);
+    await L.shot(page, shot);
+  }
+  // The administration APIs, called directly with this person's token.
+  const A = (m, u, b) => L.api(page, m, u, b).then(r => `${r.status} ${JSON.stringify(r.body).slice(0, 330)}`);
+  const calls = [
+    ['GET', '/api/mdx/admin'],
+    ['GET', '/api/tenant-users/6'],
+    ['POST', '/api/tenant-users', { name: 'Eve Intruder', email: 'eve.intruder@northgate-bio.example.test', role: 'admin' }],
+    ['PATCH', '/api/tenant-users/6/11', { role: 'admin', reason: 'viewer tries to promote a colleague' }],
+    ['PATCH', '/api/tenant-users/6/10', { role: 'admin', reason: 'viewer tries to promote themselves' }],
+    ['DELETE', '/api/tenant-users/6/11', { reason: 'viewer tries to remove a colleague' }],
+    ['PUT', '/api/tenant-users/6/11/qms-approver', { designated: true, reason: 'viewer tries to designate' }],
+    ['GET', '/api/api-keys'],
+    ['POST', '/api/api-keys', { name: 'viewer key', scopes: ['read'] }],
+    ['GET', '/api/organizations/6'],
+    ['GET', '/api/organizations/6/settings'],
+    ['PATCH', '/api/organizations/6/settings', { sessionPolicy: { idleTimeoutMinutes: 600 }, reason: 'viewer tries to change the session policy' }],
+    ['PATCH', '/api/organizations/6/profile', { name: 'Renamed by a viewer', reason: 'viewer tries to rename' }],
+    ['GET', '/api/tenant-config/6/settings'],
+    ['PATCH', '/api/tenant-config/6/settings', { settings: { mfaRequired: false }, reason: 'viewer tries to turn off MFA' }],
+    ['PATCH', '/api/mdx/industry-profile', { primaryIndustry: 'cro', reason: 'viewer tries to change the client type' }],
+    ['PUT', '/api/client-branding/company-documents', { expectedRevision: 1, reason: 'viewer tries to change company details', companyName: 'Viewer Co' }],
+    ['PATCH', '/api/onboarding/discovery', { answers: { role: 'founder' } }],
+    ['GET', '/api/admin/security-health'],
+    ['GET', '/api/admin/access/grants'],
+    ['GET', '/api/module-access-requests'],
+    ['GET', '/api/licensing/entitlements'],
+    ['GET', '/api/billing/invoices'],
+    ['POST', '/api/billing/dtc-checkout', { tier: 'professional', billingCycle: 'monthly' }],
+    ['GET', '/api/validation-kit'],
+    ['GET', '/api/sso/config'],
+    ['GET', '/api/audit/logs?limit=5'],
+  ];
+  for (const [m, u, b] of calls) note(`${m} ${u}`, await A(m, u, b));
+  note('errors', L.errs().console.slice(0, 5));
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

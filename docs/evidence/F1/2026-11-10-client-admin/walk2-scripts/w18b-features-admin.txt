@@ -1,0 +1,19 @@
+// Walk 2, flow 5b: "Admin controls" on Subscription & features: what can be turned on or off, and what happens.
+const c = require('./lib.cjs');
+const subs = () => c.psql(`select module_id, enabled, disabled_at is not null, expires_at from module_subscriptions where organization_id=7 order by module_id`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (r.url().includes('/api/module-') && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 400); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} body=${(r.request().postData() || '').slice(0, 200)} -> ${b}`); } });
+  await c.step('Admin controls: what is on screen', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/features`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    await page.getByRole('button', { name: 'Admin controls' }).click(); await c.sleep(1500);
+    await c.shot(page, 'w2-50-features-admin-controls-1440.png');
+    await c.tallShot(page, 'w2-50-features-admin-controls-1440-tall.png', 4200);
+    const ctl = await page.locator('main button:visible, main [role=switch]:visible, main input[type=checkbox]:visible').evaluateAll(els => els.map(e => `${e.tagName.toLowerCase()}${e.getAttribute('role') ? '[' + e.getAttribute('role') + ']' : ''}:${(e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80)}${e.disabled ? ' [disabled]' : ''}${e.getAttribute('aria-checked') ? ' checked=' + e.getAttribute('aria-checked') : ''}${e.getAttribute('aria-pressed') ? ' pressed=' + e.getAttribute('aria-pressed') : ''}`));
+    s.notes.push('controls (' + ctl.length + '): ' + JSON.stringify(ctl.slice(0, 90)));
+    s.notes.push('db module_subscriptions:\n' + subs());
+  });
+  c.report(); c.save('w2-18b-features-admin');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

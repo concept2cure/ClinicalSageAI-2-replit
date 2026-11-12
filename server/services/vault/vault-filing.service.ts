@@ -43,7 +43,7 @@ import { detectCTDSection } from '../ctd-ingestion-service.js';
 import { soleModule1Placement, type ApplicationKind, type DocumentRole } from '../../../shared/regulatory/regional-module1';
 import { canonicalRegionOf, type CanonicalRegion } from '../../../shared/regulatory/region-identity';
 import { classifyArtifact as classifyTmfArtifact } from '../etmf/etmf-logic.js';
-import { TMF_ZONE_REFS } from '../../../shared/constants/domain/tmf-reference-model.js';
+import { TMF_ZONE_REFS, tmfArtifactName } from '../../../shared/constants/domain/tmf-reference-model.js';
 
 const logger = createScopedLogger('vault-filing');
 
@@ -117,6 +117,16 @@ interface FilingRule {
   dossierOwns?: (name: string) => boolean;
 }
 
+/**
+ * The service view's folder for Form FDA 1572: the TMF classifier's zone for the form, read once. The classifier
+ * reads a whole name, so a 1572 whose name also holds a TMF catalog name ("Form FDA 1572 Monitoring Plan") is two
+ * zones to it and still this folder here; nothing narrower than that is known to differ.
+ */
+const FORM_1572_TMF_FOLDER = ((): string | undefined => {
+  const c = classifyTmfArtifact('Form FDA 1572');
+  return c.confidence === 'matched' ? TMF_ZONE_REFS.find((z) => z.zone === c.zone)?.id : undefined;
+})();
+
 const EVERY_VIEW: Record<VaultViewId, string> = {
   pharma: 'corresp', biotech: 'corresp', device: 'corresp', ivd: 'corresp', service: 'corresp',
 };
@@ -143,9 +153,20 @@ export const FILING_RULES: FilingRule[] = [
     folders: { ...EVERY_VIEW },
   },
   // ── Official FDA forms ─────────────────────────────────────────────────────
+  // Form FDA 1572 is first and on its own because a TMF files it where the TMF classifier does (Site
+  // Management, zone 5), not with the application forms. Until 2026-11-10 the rule below held it too and
+  // filed it under Regulatory (z03) when the name said "FDA 1572", while a name that said only "1572"
+  // reached the classifier and went to z05: one form, two folders, by spelling.
+  {
+    label: 'Form FDA 1572',
+    pattern: /\b(form.?)?fda.?1572\b/i,
+    kind: 'cert',
+    folders: { pharma: 'module-1', biotech: 'module-1', ...(FORM_1572_TMF_FOLDER ? { service: FORM_1572_TMF_FOLDER } : {}) },
+    ctdSection: '1.1',
+  },
   {
     label: 'FDA administrative form',
-    pattern: /\b(form.?)?fda.?(1571|1572|3674|3454|356h)\b/i,
+    pattern: /\b(form.?)?fda.?(1571|3674|3454|356h)\b/i,
     kind: 'cert',
     folders: { pharma: 'module-1', biotech: 'module-1', service: 'z03' },
     ctdSection: '1.1',
@@ -358,6 +379,51 @@ function reconcileDeclaredType(
   return { ...byName, evidenceKind: kind, rationale: `Uploaded as ${label}. ${byName.rationale}` };
 }
 
+type TmfMatch = Extract<ReturnType<typeof classifyTmfArtifact>, { confidence: 'matched' }>;
+
+/**
+ * The TMF classifier's answer for a document. Its file name and its title are read apart: ingest always passes
+ * a title and the Data Room passes the file name as the title, and together ("Monitoring-Plan-v2.pdf Monitoring
+ * Plan v2") they are no artifact's name. An answer that names the artifact is preferred to one that names only
+ * the zone. A name that points to two zones, or a name and a title that point to different ones, is 'two zones':
+ * a clean title does not settle a name that disagrees with itself.
+ */
+function classifyTmfDocument(name: string, title: string): TmfMatch | 'two zones' | null {
+  const read = [...new Set([name, title].filter(Boolean))].map((text) => classifyTmfArtifact(text.replace(/[-_]+/g, ' ')));
+  if (read.some((c) => c.confidence === 'unclassified' && c.conflict)) return 'two zones';
+  const matched = read.filter((c): c is TmfMatch => c.confidence === 'matched');
+  if (new Set(matched.map((c) => c.zone)).size > 1) return 'two zones';
+  return matched.find((c) => c.code) ?? matched[0] ?? null;
+}
+
+/** The service view's proposal from the TMF classifier, or null when the name and title say nothing of a zone. */
+function fileByTmfZone(name: string, title: string): FilingClassification | null {
+  const tmf = classifyTmfDocument(name, title);
+  if (tmf === 'two zones') {
+    return {
+      evidenceKind: 'clinical',
+      folderId: null,
+      ctdSection: null,
+      confidence: 'none',
+      needsReview: true,
+      rationale: 'The name and title point to more than one TMF zone. Review where it belongs.',
+    };
+  }
+  const folderId = tmf ? TMF_ZONE_ID.get(tmf.zone) ?? null : null;
+  if (!tmf || !folderId) return null;
+  return {
+    evidenceKind: 'clinical',
+    folderId,
+    ctdSection: null,
+    confidence: 'medium',
+    needsReview: false,
+    // A name that is a catalog artifact was called a keyword match too (until 2026-11-10).
+    rationale: tmf.code
+      ? `Named as the TMF artifact "${tmfArtifactName(tmf.code)}" → Zone ${tmf.zone} (${tmf.zoneName}).`
+      : `A TMF artifact name or keyword in the name → Zone ${tmf.zone} (${tmf.zoneName}).`,
+  };
+}
+
 /** A proposal from the name, with what the matched rule says the document is in Module 1. */
 type NameProposal = FilingClassification & { module1Role?: DocumentRole };
 
@@ -432,23 +498,12 @@ function classifyByName(input: FilingInput): NameProposal {
     }
 
     // 3) Service (CRO/CDMO): the existing DIA TMF zone classifier. Only a
-    //    keyword MATCH files; a name it returns as 'unclassified' (no zone)
-    //    falls through to unfiled. (Before 2026-10-15 it defaulted to Zone 2.)
+    //    MATCH files (a catalog artifact's name, or a keyword); a name it
+    //    returns as 'unclassified' (no zone, or two zones) falls through to
+    //    unfiled. (Before 2026-10-15 it defaulted to Zone 2.)
     if (view === 'service') {
-      const tmf = classifyTmfArtifact(normalized);
-      if (tmf.confidence === 'matched') {
-        const folderId = TMF_ZONE_ID.get(tmf.zone) ?? null;
-        if (folderId) {
-          return {
-            evidenceKind: 'clinical',
-            folderId,
-            ctdSection: null,
-            confidence: 'medium',
-            needsReview: false,
-            rationale: `TMF keyword match → Zone ${tmf.zone} (${tmf.zoneName}).`,
-          };
-        }
-      }
+      const filed = fileByTmfZone(name, title);
+      if (filed) return filed;
     }
   }
 
