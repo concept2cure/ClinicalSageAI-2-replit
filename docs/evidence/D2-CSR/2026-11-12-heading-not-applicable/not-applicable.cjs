@@ -1,0 +1,41 @@
+/* Walk: on the Lumen CSR, state a heading the build does not draft "not applicable", then read it in the document. */
+const { open, rail, fs } = require('../../DEMO/2026-11-10-showcase-walk/tour-lib.cjs');
+const OUT = process.argv[2];
+(async () => {
+  fs.mkdirSync(OUT, { recursive: true });
+  const w = await open(null); const { page } = w;
+  await rail(page, 'Projects').click(); await page.waitForTimeout(1500);
+  await page.getByText(/LMN-201 — prevention of recurrent/).first().click();
+  await page.getByRole('heading', { level: 1, name: /LMN-201/ }).waitFor({ timeout: 30000 });
+  await page.getByRole('button', { name: /^Open .*Clinical Study Report — SYNTHETIC/ }).first().click();
+  await page.waitForSelector('.ed', { timeout: 60000 });
+  const panel = page.locator('details[aria-label="Build from the study’s data"]');
+  await panel.waitFor({ timeout: 60000 });
+  if (!(await panel.evaluate((d) => d.open))) await panel.locator('summary').click();
+  const group = panel.getByRole('group', { name: 'Headings the build does not draft' });
+  await group.waitFor({ timeout: 60000 });
+  await group.locator('summary').click();
+  await group.getByText(/can be stated not\s+applicable here/).waitFor({ timeout: 30000 });
+  const lead = (await group.locator('summary').innerText()).trim();
+  console.info('summary :', lead);
+  console.info('says    :', (await group.locator('p').first().innerText()).replace(/\s+/g, ' ').slice(0, 260));
+  console.info('parents :', (await group.locator('p.sec-sub').first().innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300));
+  const target = process.env.HEADING || '16.1.8';
+  const field = group.getByLabel(`Not applicable because, for §${target}`);
+  await field.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${OUT}/01-list.png` });
+  await field.fill('no audit of this study was performed, so there is no audit certificate');
+  await page.screenshot({ path: `${OUT}/02-reason.png` });
+  await group.getByRole('button', { name: `State §${target} not applicable in the document` }).click();
+  await field.waitFor({ state: 'detached', timeout: 30000 });
+  console.info('after   :', (await group.locator('summary').innerText()).trim());
+  // The document itself: open the heading in the outline and read its text.
+  await panel.locator('summary').first().scrollIntoViewIfNeeded(); await panel.locator('summary').first().click();
+  await page.locator('.ed').getByText(new RegExp(process.env.TITLE || '^Audit certificates')).filter({ visible: true }).first().click();
+  await page.waitForTimeout(4000);
+  const body = await page.locator('main').innerText();
+  console.info('document:', (body.match(/Not applicable to this study: [^\n]+/) || ['NOT FOUND'])[0].slice(0, 200));
+  await page.screenshot({ path: `${OUT}/03-in-document.png` });
+  console.info('API', JSON.stringify(w.net.slice(0, 6)), 'CONSOLE', JSON.stringify(w.cons.slice(0, 4)));
+  await w.browser.close();
+})().catch((e) => { console.error('FAILED', String(e).slice(0, 500)); process.exit(1); });
