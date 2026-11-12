@@ -49,6 +49,7 @@ import {
   CmDrugProducts,
 } from './cmcRegisters';
 import { CmChangeRegister } from './cmcChangeRegister';
+import { CmSpecReference } from './cmcSpecReference';
 /* Each of these two tabs carries its own ask list. They are imported, not
    restated here, so the page's starter row offers the same words the tab
    has always offered and there is one copy of each prompt (RULE 3). */
@@ -1491,6 +1492,9 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
           onClose={() => setHistoryFor(null)}
         />
       )}
+      {/* What ICH Q6A or Q6B expects a specification to carry (P-122, inventory B5): a reference under the table,
+          from the engine the Global RI catalog has always served. It gives no verdict on the rows above. */}
+      <CmSpecReference />
       {/* specification (the limit) -> method (how it is measured) -> QC test
           (the measurement actually performed against it) -> reference standard
           (what the measurement is reported against). */}
