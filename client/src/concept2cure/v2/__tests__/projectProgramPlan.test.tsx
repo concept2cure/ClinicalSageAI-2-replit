@@ -13,7 +13,7 @@ vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof impo
 // No signed-in user: canGovernedWrite admits it, as for a writer (shared/constants/permissions.ts).
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 import { ProjectProgramPlan, producingTaskId } from '../surfaces/PyramidProject';
-import { planAssignments, planDueFor, DueForYou, PYRAMID_TASK_ENTITY, PLAN_TASK_ENTITY } from '../surfaces/PlanAssign';
+import { planAssignments, planDueFor, DueForYou, PYRAMID_TASK_ENTITY, PLAN_TASK_ENTITY, assignForm, proposedOwners } from '../surfaces/PlanAssign';
 
 const PROGRAM = '7abb1c22-1111-4222-8333-444455556666';
 const PATH = `/api/v1/pyramids/by-project/${PROGRAM}`;
@@ -393,5 +393,45 @@ describe('a plan whose dates rest on working hours alone', () => {
     render(<ProjectProgramPlan programId={PROGRAM} onNav={vi.fn()} onAsk={vi.fn()} />);
     await screen.findByTestId('pj-program-schedule');
     expect(screen.queryByTestId('pj-program-minimum')).toBeNull();
+  });
+});
+
+// P-119, reached from S11: the work breakdown's role for a task names a job role, and the Assign form lists the
+// people who hold it first. A lookup in the standard catalog and the organisation's job roles; the person chooses.
+describe('the Assign form proposes the people who hold the task\'s job role', () => {
+  const ROSTER = [{ id: '12', name: 'Dana Ruiz' }, { id: '15', name: 'Sam Okoye' }, { id: '19', name: 'Lee Park' }];
+  const ROLES = [
+    { name: ' regulatory AFFAIRS lead ', members: [{ userId: 15, label: 'Sam Okoye', active: true }, { userId: 44, label: 'Gone', active: false }] },
+    { name: 'Our own reg role', members: [{ userId: 19, label: 'Lee Park', active: true }] },
+  ];
+  const person = (form: ReturnType<typeof assignForm>) => form.fields.find(f => f.key === 'assignee')!;
+
+  it('names the job role and its active holders, by the standard name only', () => {
+    expect(proposedOwners('ra_lead', ROLES)).toEqual({ roleName: 'Regulatory affairs lead', holderIds: ['15'] });
+    expect(proposedOwners('ra_lead', [])).toEqual({ roleName: 'Regulatory affairs lead', holderIds: [] });
+    expect(proposedOwners('a_role_the_catalog_does_not_know', ROLES)).toBeNull();
+    expect(proposedOwners(undefined, ROLES)).toBeNull();
+  });
+
+  it('lists the holders first and says so; everyone else can still be chosen', () => {
+    const f = person(assignForm('Submit IND', ROSTER, 'ready', undefined, { owners: proposedOwners('ra_lead', ROLES), state: 'ready' }));
+    expect(f.options?.map(o => o.label)).toEqual(['Sam Okoye (Regulatory affairs lead)', 'Dana Ruiz', 'Lee Park']);
+    expect(f.desc).toBe('The work breakdown gives this task to the Regulatory affairs lead.');
+    expect(f.descStatus).toBe('Listed first: the person who holds that job role.');
+  });
+
+  it('says when no one holds the job role, and when the job roles could not be read; never a guess', () => {
+    const none = person(assignForm('Submit IND', ROSTER, 'ready', undefined, { owners: proposedOwners('ra_lead', []), state: 'ready' }));
+    expect(none.descStatus).toBe('No one in your organisation holds that job role yet.');
+    expect(none.options?.map(o => o.label)).toEqual(['Dana Ruiz', 'Sam Okoye', 'Lee Park']);
+    const unread = person(assignForm('Submit IND', ROSTER, 'ready', undefined, { owners: proposedOwners('ra_lead', []), state: 'error' }));
+    expect(unread.descStatus).toBe('Who holds that job role could not be read.');
+    expect(unread.options?.map(o => o.label)).toEqual(['Dana Ruiz', 'Sam Okoye', 'Lee Park']);
+  });
+
+  it('says nothing about a job role for a deliverable or a role the catalog does not know', () => {
+    const f = person(assignForm('Cover letter', ROSTER, 'ready'));
+    expect(f.desc).toBeUndefined();
+    expect(f.descStatus).toBeUndefined();
   });
 });
