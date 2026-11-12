@@ -1,0 +1,11 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > holds the search, saved views, the two scopes and every filter, outside the list’s column 380ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > spans the grid, and its filters share the row (the stylesheet; jsdom applies none) 2ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/vault   (every Vault client suite, before this pin was added)
+ Test Files  71 passed (71)
+      Tests  796 passed (796)
+
+ci:undefined-css-classes, ci:surface-text-ramp, ci:check-css-selector-shadowing, ci:class-vocabulary, ci:unreferenced-modules, ci:launch-scope-api, ci:one-product and the ESLint warning ratchet: pass
