@@ -303,7 +303,7 @@
   .c2c-v2 :is(.c2c-input, .de-input, .de-select) { min-height: 44px; font-size: 16px; } /* iOS does not zoom at ≥16px */
 }
 /* Text fields that draw focus on their container step out of the global outline too. */
-.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .cmdk-in input):focus-visible { outline: none; }
+.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .rbm-ana-composer textarea, .cmdk-in input):focus-visible { outline: none; }
 
 /* Cards: 12px radius, a hairline, 16px padding, no header band. */
 .c2c-v2 :is(.pj-card, .reg-card) {
@@ -442,25 +442,25 @@
 .c2c-v2 :is(.cl-modal, .rbm-modal) { width: min(560px, calc(100vw - 32px)); max-height: 86vh; display: flex; flex-direction: column; background: var(--canvas-elevated); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--v2-shadow-lg); overflow: hidden; }
 
 /* Composer chrome (each composer keeps its own layout). */
-.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer) {
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer, .rbm-ana-composer) {
   /* The resting edge is --border-control, 3.91:1 on the page and 4.12:1 on the fill in light, 4.36 and 3.80 in
      dark (D0.md §8.4, WCAG 1.4.11). --border was 1.41:1, and --border-strong 1.70:1 in dark. */
   background: var(--canvas-elevated); border: 1px solid var(--border-control); border-radius: 20px;
   box-shadow: 0 1px 2px rgb(20 20 19 / .04), 0 6px 20px -8px rgb(20 20 19 / .10);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer) { box-shadow: 0 1px 2px rgb(0 0 0 / .30), 0 6px 20px -8px rgb(0 0 0 / .45); }
+.c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer, .rbm-ana-composer) { box-shadow: 0 1px 2px rgb(0 0 0 / .30), 0 6px 20px -8px rgb(0 0 0 / .45); }
 /* Focus: one quiet orange edge (plan §2: orange for focus), no 3px halo. --border-focus clears 3:1.
    The transparent outline is the composer's ring in forced colours, which repaint the border (D0
    review fix 13). Its text area keeps no outline of its own (the inputs block), so there is one ring. */
-.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); outline: 2px solid transparent; }
-.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 15px; line-height: 1.5; color: var(--text-100); }
-.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea)::placeholder { color: var(--text-300); }
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer, .rbm-ana-composer):focus-within { border-color: var(--border-focus); outline: 2px solid transparent; }
+.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .rbm-ana-composer textarea) { font-size: 15px; line-height: 1.5; color: var(--text-100); }
+.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .rbm-ana-composer textarea)::placeholder { color: var(--text-300); }
 /* On a touch screen every text area is 16px, so iOS does not zoom when it takes focus (D0 review
    fix 4; the inputs are in the coarse block above). It sits here, not there: it has the 15px rule's
    specificity, (0,2,1), so it must come after it. The size only: .de-textarea keeps its 80px. */
 @media (pointer: coarse) {
-  .c2c-v2 :is(.de-textarea, .landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 16px; }
+  .c2c-v2 :is(.de-textarea, .landing-input, .pj-composer textarea, .ct-composer textarea, .rbm-ana-composer textarea) { font-size: 16px; }
 }
 .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) {
   flex-shrink: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;

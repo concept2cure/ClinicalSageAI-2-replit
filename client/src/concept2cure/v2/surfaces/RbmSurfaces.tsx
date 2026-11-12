@@ -14,6 +14,7 @@ import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
 import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaOutputCards, type AnaOutput } from '../AnaOutputs';
+import { AnaMarkdown } from '../AnaMarkdown';
 import { useAgentActivity } from '../useAgentActivity';
 import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
@@ -52,6 +53,24 @@ export function RbmWhen({ at }: { at: string }) {
 }
 export function RbmFreshness({ at }: { at: string }) {
   return <span className="rbm-fresh">{I.clock}scored <RbmWhen at={at} /></span>;
+}
+
+/* ── AskAna ──
+   The board's own findings, taken to the conversation. Every sub-surface was handed `onAsk` and only the risk
+   report used it, so a monitor looking at a red indicator or a flagged site had to retype what was on screen into
+   the dock. The button sends a question that names the item; AnA answers from the same board (her grounding is
+   this surface's context, Rbm.tsx) and from the monitoring tools, never from a figure typed here. It is not drawn
+   where no conversation is attached. */
+export function AskAna({ onAsk, prompt, label = 'Ask AnA', title }: {
+  onAsk?: (t: string) => void; prompt: string; label?: string; title?: string;
+}) {
+  if (!onAsk) return null;
+  return (
+    <button type="button" className="rbm-linkbtn rbm-ask" title={title ?? 'Sends this question to AnA, beside the board'}
+      onClick={e => { e.stopPropagation(); onAsk(prompt); }}>
+      <span className="mk" aria-hidden="true">{'✻'}</span>{label}
+    </button>
+  );
 }
 
 /* ── RiskMatrix ── */
@@ -325,7 +344,9 @@ function RbmAnaMsg({
           host renders. This pane used to drop the tools, rounds and drafts and
           show "Thinking…". */}
       {m.activity && <AnaActivity {...m.activity} />}
-      {m.text && <div className="rbm-ana-text">{m.text}</div>}
+      {/* Her answer is prose: headings, lists and emphasis reached this pane as `##`, `-` and `**`. AnaMarkdown is
+          the one renderer every other host uses. */}
+      {m.text && <AnaMarkdown text={m.text} className="rbm-ana-text ana-md" />}
       {m.output && <AnaOutputCards message={m.output} />}
       {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
         <div className="rbm-ana-chips">
@@ -365,29 +386,73 @@ export interface RbmAnaWork {
   pendingSteers: string[];
 }
 
-export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo }: {
+/** The one composer AnA's conversation has on this screen: at the foot of the dock while it is open, under the
+    page's title while it is closed (Rbm.tsx). Enter sends; Shift+Enter starts a new line. The run-policy note
+    travels with it, because the chat it sends to is the same one in either place. */
+export function RbmAnaComposer({ study, onSend }: { study: string; onSend: (t: string) => void }) {
+  const [draft, setDraft] = useState('');
+  const send = () => { const text = draft.trim(); if (!text) return; onSend(text); setDraft(''); };
+  return (
+    <>
+      <div className="rbm-ana-composer">
+        <textarea rows={1} value={draft} onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+          aria-label="Ask AnA about this study" placeholder={study ? `Ask AnA about ${study}` : 'Ask AnA about this study'} />
+        <button type="button" className="rbm-ana-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={send}>{I.arrowUp}</button>
+      </div>
+      {/* This chat sends no run policy: Manual does not reach it (row 74). */}
+      <RunPolicyDockNote />
+    </>
+  );
+}
+
+/** A tab's suggested questions, as the chips every work area uses (`.sp-starter`). */
+export function RbmStarters({ nav, onAsk, layout }: { nav: RbmNavItem; onAsk: (t: string) => void; layout?: 'row' }) {
+  return (
+    <div className="sp-starters rbm-ana-starters" data-layout={layout} role="group" aria-label={`Suggestions for ${nav.label.toLowerCase()}`}>
+      {nav.starters.map((s, i) => (
+        <button key={i} type="button" className="sp-starter" onClick={() => onAsk(s)}>
+          <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo, drawer }: {
   nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
   onAsk: (t: string) => void; onClose: () => void;
   work?: RbmAnaWork;
   /** The shell's navigation, so AnA's navigation and screen-action chips work. */
   onNav?: (id: string) => void;
   onStartDemo?: (demoId: string, title: string) => void;
+  /** Below the docked width the conversation is a drawer over the board: a scrim, and Escape closes it. */
+  drawer?: boolean;
 }) {
-  const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   /* The same progress panel every host mounts, under the one shared show/hide
      choice (workDock.ts); the chip in the header toggles it. */
   const dock = useProgressDock();
-  const showWork = Boolean(work) && dock.open;
+  const empty = msgs.length === 0;
+  /* The record of her work has nothing to record before the first turn: its card said "AnA has not started a turn
+     in this conversation" over a third of the panel. It and its chip appear with the first turn. */
+  const hasWork = Boolean(work) && !empty;
+  const showWork = hasWork && dock.open;
   const anaWorkQueue = useAgentActivity(showWork, work?.streaming);
-  useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
-  const ask = (text: string) => { if (!text) return; onAsk(text); setDraft(''); };
-  return (
-    <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
-      <div className="rbm-ana-hdr">
-        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} — {nav.label}</div></div></div>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          {work && (
+  // Follow the newest turn. An empty conversation stays at its top, where the question is.
+  useEffect(() => { if (endRef.current && msgs.length > 0) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
+  const drawerRef = useDialog(onClose, Boolean(drawer));
+  const panel = (
+    <aside className="rbm-ana de" data-docked={drawer ? undefined : ''} aria-label="AnA — risk-based monitoring"
+      role={drawer ? 'dialog' : undefined} aria-modal={drawer || undefined} tabIndex={drawer ? -1 : undefined} ref={drawer ? (drawerRef as React.RefObject<HTMLElement>) : undefined}>
+      <div className="de-h">
+        <div>
+          <div className="de-h-t"><span className="rbm-ana-mk" aria-hidden="true">{'✻'}</span>AnA</div>
+          {/* Where the conversation is bound: the study and the tab open beside it. */}
+          <div className="de-h-s">{[study, nav.label].filter(Boolean).join(' · ')}</div>
+        </div>
+        <span className="rbm-ana-hdr-acts">
+          {hasWork && work && (
             <AnaProgressChip
               ref={dock.chipRef}
               messages={work.messages}
@@ -397,7 +462,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
               controls={dock.panelId}
             />
           )}
-          <button className="tb-btn" onClick={onClose} title="Collapse" aria-label="Collapse">{I.panelRight}</button>
+          <button type="button" className="de-x" onClick={onClose} aria-label="Close AnA" title="Close AnA">{I.close}</button>
         </span>
       </div>
       {showWork && work && (
@@ -413,24 +478,25 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
           />
         </div>
       )}
-      <div className="rbm-ana-ctx">
-        <div className="rbm-ana-ctx-k">On this surface</div>
-        <div className="rbm-ana-ctx-v">{nav.label}</div>
-        <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run — ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
-      </div>
       <div className="rbm-ana-scroll" ref={endRef}>
-        <div className="rbm-ana-starters">
-          <div className="rbm-ana-starters-l">Starters for {nav.label.toLowerCase()}</div>
-          {nav.starters.map((s, i) => <button key={i} className="rbm-starter" onClick={() => ask(s)}>{s}</button>)}
-        </div>
+        {empty && (
+          <div className="rbm-ana-hello">
+            <p className="rbm-ana-hello-t">{study ? `What should we look at in ${study}?` : 'What should we look at?'}</p>
+            <div className="rbm-ana-ctx">
+              <span className="rbm-ana-ctx-k">On this surface</span>
+              <span className="rbm-ana-ctx-v">{nav.label}</span>
+              <p className="rbm-ana-ctx-note">AnA reads the figures on this board and runs the same monitoring tools the buttons run. A plan or report she drafts stays a draft until it is approved.</p>
+            </div>
+            <RbmStarters nav={nav} onAsk={onAsk} />
+          </div>
+        )}
         {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} onNav={onNav} onStartDemo={onStartDemo} />)}
       </div>
-      <div className="rbm-ana-composer">
-        <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} aria-label="Ask AnA about this study" placeholder={`Ask AnA about ${study}...`} />
-        <button className="rbm-ana-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={() => ask(draft.trim())}>{I.zap}</button>
-      </div>
-      {/* This chat sends no run policy: Manual does not reach it (row 74). */}
-      <RunPolicyDockNote />
+      {/* With a conversation under way the open tab's suggestions stay one tap away, in one quiet row. */}
+      {!empty && <RbmStarters nav={nav} onAsk={onAsk} layout="row" />}
+      <RbmAnaComposer study={study} onSend={onAsk} />
     </aside>
   );
+  if (!drawer) return panel;
+  return <div className="de-bd" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>{panel}</div>;
 }
