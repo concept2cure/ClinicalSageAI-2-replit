@@ -50,7 +50,7 @@ const DISPOSITION_LABEL: Record<string, string> = {
  * name or first name; never print "undefined" as the signer. The server records
  * the real printed name.
  */
-function printedSigner(authUser: AuthUser | null): EsignSigner | undefined {
+export function printedSigner(authUser: AuthUser | null): EsignSigner | undefined {
   const printed = [authUser?.displayName, [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' '), authUser?.email]
     .find((v) => typeof v === 'string' && v.trim().length > 0);
   return printed ? { name: printed.trim(), ...(authUser?.email ? { email: authUser.email } : {}) } : undefined;

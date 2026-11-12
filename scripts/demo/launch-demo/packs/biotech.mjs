@@ -29,12 +29,12 @@
  */
 import { connectSigner, ensureSyntheticReviewer, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { ensureAuthoring } from './biotech-authoring.mjs';
-import { C2C101_IDENTITY, INDICATION, MOLECULE, PRODUCT_NAME, PROGRAM_NAME, PROVENANCE, SOPS, CHANGE, T, VAULT_DOCS, findDemoByTitle, inDays } from './biotech-content.mjs';
+import { C2C101_IDENTITY, C2C101_OBJECTIVE, INDICATION, MOLECULE, PRODUCT_NAME, PROGRAM_NAME, PROVENANCE, SOPS, CHANGE, T, VAULT_DOCS, findDemoByTitle, inDays } from './biotech-content.mjs';
 import { ensureProtocol } from './biotech-protocol.mjs';
 import { ensureQms } from './biotech-qms.mjs';
-import { NOT_EXECUTED_NO_SIGNER, asArray, ensureApplicantIdentity, makeTally } from './biotech-shared.mjs';
+import { NOT_EXECUTED_NO_SIGNER, asArray, ensureApplicantIdentity, ensureObjective, makeTally } from './biotech-shared.mjs';
 import { ensureSubmission } from './biotech-submission.mjs';
-import { BIOTECH_ADAPTIVE_PLAN, BIOTECH_CMC, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
+import { BIOTECH_ADAPTIVE_PLAN, BIOTECH_CMC, C2C201_OBJECTIVE, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks, ensureAdaptivePlan, ensureDesignTasks } from './work-areas.mjs';
 
 /* ───────────────────────── 1. Projects ───────────────────────── */
@@ -332,6 +332,7 @@ export async function seed(ctx) {
   await ensureDesignTasks(c, BIOTECH_STUDY_DESIGN.title);
   // Who files it, so the sequence's package identity is complete ("Download an inspection copy" was refused without).
   await ensureApplicantIdentity(c, { id: program.id, label: PRODUCT_NAME }, C2C101_IDENTITY);
+  await ensureObjective(c, program, C2C101_OBJECTIVE);
   await ensureSubmission(c, program, vaultDocs);
   await ensureQms(c, program);
   await ensureCmc(c, program, BIOTECH_CMC, 'C2C-101');
@@ -341,6 +342,7 @@ export async function seed(ctx) {
      build is refused by the boundary, which is correct and is the other half
      of what the demo shows. */
   const smallMolecule = await ensureProgram(sameSponsor(c, program), PROGRAMS.smallMolecule, 'programSmallMolecule');
+  await ensureObjective(c, smallMolecule, C2C201_OBJECTIVE);
   await ensureCmc(c, smallMolecule, BIOTECH_SM_CMC, BIOTECH_SM.molecule);
   await ensureModule3Build(c, smallMolecule, BIOTECH_SM.molecule);
   await ensureTasks(c, program, BIOTECH_TASKS, 'C2C-101');

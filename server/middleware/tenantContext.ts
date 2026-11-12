@@ -335,7 +335,8 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       tenantId: orgIdInt,
       industryMode: tenant[0].industryMode,
       role: resolvedRole,
-      organizationId: organizationId,
+      // The number, as the global /api gate puts it on req.user; the token's text was copied here (GA-D6-05).
+      organizationId: orgIdInt,
     };
     req.userId = req.user.id;
     req.tenantId = req.user.tenantId;

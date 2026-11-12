@@ -330,14 +330,18 @@ describe('AnA biostatistics tools — registration + deterministic compute', () 
     expect(Array.isArray(result.judgment.dimensions)).toBe(true);
   });
 
-  it('analyze_missing_data_impact returns adjusted power for a missing-data plan', async () => {
+  it('analyze_missing_data_impact states no adjusted power for MMRM, and the effective N (RULE 2)', async () => {
     const handler = getToolHandler('analyze_missing_data_impact')!;
     const result = JSON.parse(
       await handler({ ...validDesign, missingDataMethod: 'MMRM', expectedMissingRate: 0.2 }, { humanConfirmed: true } as ToolContext)
     );
     expect(result.status).toBe('computed');
     expect(result.missingDataImpact).toBeDefined();
-    expect(typeof result.missingDataImpact.adjustedPower).toBe('number');
+    // MMRM's power depends on the missingness mechanism; the engine does not compute it (2026-11-12).
+    expect(result.missingDataImpact.adjustedPower).toBeNull();
+    expect(result.missingDataImpact.powerReduction).toBeNull();
+    expect(typeof result.missingDataImpact.effectiveSampleSize).toBe('number');
+    expect(result.instruction).toMatch(/only where they are numbers/);
   });
 
   it('generate_statistical_document drafts a SAP section grounded in the engine', async () => {

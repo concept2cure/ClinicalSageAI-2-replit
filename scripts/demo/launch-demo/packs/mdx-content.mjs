@@ -10,6 +10,7 @@
  * in its provenance line. Manufacturer, device, product code, regulation
  * number, K numbers, addresses and study figures are fictional.
  */
+import { demoTitle } from '../lib.mjs';
 
 export const PROVENANCE =
   'Provenance: seeded demonstration content authored for the Concept2Cure launch demo (fictional manufacturer, fictional device). Not model-drafted — no AI provider is configured.';
@@ -193,3 +194,13 @@ export const SOPS = [
     ],
   },
 ];
+
+/** NeuroPanel-Dx's objective of record (GA-DEMO-15): clearance for the intended use its 510(k) Summary states. */
+export const NEUROPANEL_OBJECTIVE = {
+  label: DEVICE,
+  objective: `FDA 510(k) clearance of ${DEVICE}. Intended use: ${INTENDED_USE}`,
+  successCriteria: 'A substantial equivalence decision against the predicate named in the 510(k) Summary (section 3), on the analytical and clinical performance it reports (sections 7 and 8).',
+  sources: [{ kind: 'other', title: `${demoTitle('mdx', '510(k) Summary')} (fictional), in the project's documents`, locator: 'Section 5, Intended use' }],
+  reason: 'Demo seed: the objective the 510(k) Summary states.',
+};
+

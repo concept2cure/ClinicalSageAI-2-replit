@@ -1,7 +1,7 @@
 /**
  * CSP nonce plumbing for the SPA.
  *
- * Two responsibilities:
+ * Three responsibilities (the third is at the foot of the file):
  *
  *   1. Read the per-request nonce the server injected into the HTML
  *      (<meta name="csp-nonce" content="..."/>) and make it available to
@@ -26,6 +26,8 @@
  *   the nonce BEFORE insertion, so the browser sees a valid element
  *   when it does its CSP check.
  */
+
+import { z } from 'zod';
 
 const NONCE_META_NAME = 'csp-nonce';
 
@@ -84,3 +86,11 @@ function installCreateElementPatch(): void {
 }
 
 installCreateElementPatch();
+
+/*
+ * 3. Zod probes `new Function` once, to choose its compiled object parser. The release's script-src has no
+ *    'unsafe-eval', so the probe is refused: Zod catches that and parses without compiling, but the browser still
+ *    reports a policy violation on every page (seen on the built client under the release's policy, 2026-11-12).
+ *    `jitless` skips the probe. A release cannot compile anyway, so nothing is lost there.
+ */
+z.config({ jitless: true });

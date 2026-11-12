@@ -6098,7 +6098,8 @@ registerToolHandler('analyze_missing_data_impact', async (input: Record<string, 
       baselinePower: base.power,
       missingDataImpact: impact,
       assumptions: { missingDataMethod: normalized.missingDataMethod, expectedMissingRate: normalized.expectedMissingRate },
-      instruction: 'Report the effective sample size, power reduction, adjusted power, bias risk and recommendation verbatim.',
+      // adjustedPower and powerReduction are null for every method but complete case: the engine does not compute them (RULE 2).
+      instruction: 'Report the effective sample size, bias risk and recommendation verbatim. Report the adjusted power and power reduction only where they are numbers; where they are null, say the engine does not compute the power for this method and give no figure.',
     }));
   } catch (err: any) {
     return JSON.stringify({ error: `Missing-data impact analysis failed: ${err?.message || 'unknown error'}` });
@@ -11122,12 +11123,13 @@ registerToolHandler('review_financial_disclosure', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
   const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
   if (!Number.isInteger(disclosureId)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  // Through the pool, which sets the tenant per statement: a connection from connect() carries none before BEGIN (2026-11-12).
   const { getPool } = await import('../../db.js');
+  const scopedReads = { query: (sql: string, params?: unknown[]) => getPool().query(sql, params as unknown[]) };
   const { loadDisclosureSnapshot } = await import('../financial-disclosures/fcoi-service.js');
   const { validateDisclosureCompleteness } = await import('../financial-disclosures/fcoi-logic.js');
-  const client = await getPool().connect();
   try {
-    const snap = await loadDisclosureSnapshot(client, ctx.organizationId, disclosureId);
+    const snap = await loadDisclosureSnapshot(scopedReads, ctx.organizationId, disclosureId);
     const gate = validateDisclosureCompleteness(snap);
     return JSON.stringify({
       ok: true, riskLevel: gate.riskLevel, findings: gate.findings,
@@ -11138,8 +11140,6 @@ registerToolHandler('review_financial_disclosure', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -11389,12 +11389,13 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_iacuc_protocol requires tenant context.' });
   const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
   if (!Number.isInteger(protocolId)) return JSON.stringify({ error: 'protocol_id is required.' });
+  // Through the pool, which sets the tenant per statement: a connection from connect() carries none before BEGIN (2026-11-12).
   const { getPool } = await import('../../db.js');
+  const scopedReads = { query: (sql: string, params?: unknown[]) => getPool().query(sql, params as unknown[]) };
   const { getProtocolCompletenessInput } = await import('../iacuc/iacuc-service.js');
   const { evaluateProtocolCompleteness, approvalReviewStatus } = await import('../iacuc/iacuc-logic.js');
-  const client = await getPool().connect();
   try {
-    const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
+    const inp = await getProtocolCompletenessInput(scopedReads, ctx.organizationId, protocolId);
     const gate = evaluateProtocolCompleteness(inp);
     // Undetermined without an approval date; reviewStatus said "not expired". The
     // committee's recorded expiration wins over approval + 3 years (2026-10-15).
@@ -11408,8 +11409,6 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -11627,12 +11626,13 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_ibc_registration requires tenant context.' });
   const registrationId = typeof input.registration_id === 'number' ? input.registration_id : NaN;
   if (!Number.isInteger(registrationId)) return JSON.stringify({ error: 'registration_id is required.' });
+  // Through the pool, which sets the tenant per statement: a connection from connect() carries none before BEGIN (2026-11-12).
   const { getPool } = await import('../../db.js');
+  const scopedReads = { query: (sql: string, params?: unknown[]) => getPool().query(sql, params as unknown[]) };
   const { getContainmentInput } = await import('../ibc/ibc-service.js');
   const { evaluateContainment, registrationExpiration } = await import('../ibc/ibc-logic.js');
-  const client = await getPool().connect();
   try {
-    const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
+    const inp = await getContainmentInput(scopedReads, ctx.organizationId, registrationId);
     const gate = evaluateContainment(inp);
     // highestRequiredBsl is null with no agents, and the expiry undetermined
     // with no approval date; they were 'BSL-1' and "not expired". The
@@ -11648,8 +11648,6 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -11705,12 +11703,13 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_send_readiness requires tenant context.' });
   const studyId = typeof input.study_id === 'number' ? input.study_id : NaN;
   if (!Number.isInteger(studyId)) return JSON.stringify({ error: 'study_id is required.' });
+  // Through the pool, which sets the tenant per statement: a connection from connect() carries none before BEGIN (2026-11-12).
   const { getPool } = await import('../../db.js');
+  const scopedReads = { query: (sql: string, params?: unknown[]) => getPool().query(sql, params as unknown[]) };
   const { getSendReadinessInput } = await import('../nonclinical/nonclinical-service.js');
   const { evaluateSendReadiness } = await import('../nonclinical/nonclinical-logic.js');
-  const client = await getPool().connect();
   try {
-    const inp = await getSendReadinessInput(client, ctx.organizationId, studyId);
+    const inp = await getSendReadinessInput(scopedReads, ctx.organizationId, studyId);
     const gate = evaluateSendReadiness(inp);
     return JSON.stringify({
       ok: true, riskLevel: gate.riskLevel, findings: gate.findings, missingDomains: gate.missingDomains,
@@ -11720,8 +11719,6 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_send_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -13792,12 +13789,13 @@ registerToolHandler('review_ha_interaction', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_ha_interaction requires tenant context.' });
   const interactionId = typeof input.interaction_id === 'number' ? input.interaction_id : NaN;
   if (!Number.isInteger(interactionId)) return JSON.stringify({ error: 'interaction_id is required.' });
+  // Through the pool, which sets the tenant per statement: a connection from connect() carries none before BEGIN (2026-11-12).
   const { getPool } = await import('../../db.js');
+  const scopedReads = { query: (sql: string, params?: unknown[]) => getPool().query(sql, params as unknown[]) };
   const { getInteractionReadinessInput } = await import('../ha-interactions/ha-service.js');
   const { evaluateMeetingReadiness } = await import('../ha-interactions/ha-logic.js');
-  const client = await getPool().connect();
   try {
-    const r = await getInteractionReadinessInput(client, ctx.organizationId, interactionId);
+    const r = await getInteractionReadinessInput(scopedReads, ctx.organizationId, interactionId);
     const { ready, findings, note } = evaluateMeetingReadiness(r as any);
     const gaps = findings.filter((f) => f.severity !== 'minor');
     return JSON.stringify({
@@ -13810,8 +13808,6 @@ registerToolHandler('review_ha_interaction', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_ha_interaction failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
