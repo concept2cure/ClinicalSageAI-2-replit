@@ -393,6 +393,12 @@ function canvasPortfolio(gate: ReportEntitlementDecision, summary: OrgPortfolioS
  * refused rather than read as a project id: the client never parses one, and an
  * integer here would be another id space.
  */
+/** The device section over the reader's accessible projects, told which project leads the canvas (none: null). A failed read is said as one. */
+function deviceSectionFor(req: Request, organizationId: number, accessibleProjectIds: readonly number[], lead: CanvasLeadProgram | null): Promise<DevicePortfolioSection> {
+  return readDevicePortfolio(requestPgClient(req), organizationId, accessibleProjectIds, new Date(), lead?.projectId ?? null)
+    .catch((error: unknown) => deviceSectionUnavailable(organizationId, error));
+}
+
 function openProgramParam(raw: unknown): string | null | false {
   const v = typeof raw === 'string' ? raw.trim() : '';
   if (!v) return null;
@@ -661,9 +667,9 @@ export default function createInsightsCanvasRoutes(): Router {
 
       // The device section (fold F4): over the accessible projects only, on the
       // request's own connection, on every tier (Reporting's tier is standard).
-      // Its failure withdraws the section alone, said as unavailable.
-      const device: DevicePortfolioSection = await readDevicePortfolio(requestPgClient(req), organizationId, accessibleProjectIds, new Date())
-        .catch((error: unknown) => deviceSectionUnavailable(organizationId, error));
+      // Its failure withdraws the section alone, said as unavailable. It is told
+      // which project leads, so it can say whether that project is counted in it.
+      const device = await deviceSectionFor(req, organizationId, accessibleProjectIds, leadProgram);
 
       const data: CanvasOverview = {
         organizationId,

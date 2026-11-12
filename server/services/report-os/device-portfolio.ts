@@ -31,7 +31,14 @@
  * unavailable rather than drawing it empty; the drafts store missing a table
  * or column (42P01, 42703) withholds only the rate; any other drafts failure
  * throws. A genuine zero is zero, and with no AnA draft recorded the rate is
- * null, never 0%. The read runs on the client the caller hands it (the
+ * null, never 0%.
+ *
+ * The open project (S12 biotech sweep, finding 94; 2026-11-12): the section sits
+ * on the Reporting landing under whichever project is open, and under a biotech
+ * IND it gave device figures without saying whose they were. Told which project
+ * leads the canvas, the read says whether that project is one of the device
+ * projects it counted (`openProjectCounted`), from the same rows. Told none, it
+ * says nothing about one. The read runs on the client the caller hands it (the
  * request's own connection); nothing here reaches for a shared pool.
  *
  * @module server/services/report-os/device-portfolio
@@ -57,6 +64,8 @@ export type DevicePortfolio =
       byStatus: Array<{ status: string; count: number }>;
       pace: { months: string[]; counts: number[]; total: number };
       anaDrafts: DeviceAnaDrafts;
+      /** Whether the project leading the canvas is one of the device projects counted. Absent when none leads. */
+      openProjectCounted?: boolean;
     };
 
 /** What the overview carries: the engine's answer, or a read that failed. */
@@ -117,20 +126,27 @@ async function readAnaDrafts(client: DeviceSqlClient, organizationId: number, de
   return { state: 'computed', accepted, pending, acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : null };
 }
 
+/** Refuses an identity, an id or a date it cannot trust, before anything is read. */
+function requireTrustedInput(organizationId: number, projectIds: readonly number[], now: Date, openProjectId: number | null): void {
+  if (!positiveInteger(organizationId)) throw new Error('The device section needs a verified organization');
+  if (!projectIds.every(positiveInteger)) throw new Error('The device section reads project ids only');
+  if (openProjectId !== null && !positiveInteger(openProjectId)) throw new Error('The device section reads the open project by its id only');
+  if (!(now instanceof Date) || Number.isNaN(now.getTime())) throw new Error('The device section needs a date to pace to');
+}
+
 /**
  * The device section over `projectIds`, the projects the reader can open
  * (getAccessibleReportProjectIds). Refuses an identity it cannot trust before
- * reading anything.
+ * reading anything. `openProjectId` is the project leading the canvas, or null.
  */
 export async function readDevicePortfolio(
   client: DeviceSqlClient,
   organizationId: number,
   projectIds: readonly number[],
   now: Date,
+  openProjectId: number | null = null,
 ): Promise<DevicePortfolio> {
-  if (!positiveInteger(organizationId)) throw new Error('The device section needs a verified organization');
-  if (!projectIds.every(positiveInteger)) throw new Error('The device section reads project ids only');
-  if (!(now instanceof Date) || Number.isNaN(now.getTime())) throw new Error('The device section needs a date to pace to');
+  requireTrustedInput(organizationId, projectIds, now, openProjectId);
   if (projectIds.length === 0) return { state: 'none' };
 
   const { rows } = await client.query(DEVICE_PROJECTS_SQL, [organizationId, [...projectIds]]);
@@ -159,5 +175,6 @@ export async function readDevicePortfolio(
     byStatus,
     pace: { months, counts, total: counts.reduce((sum, n) => sum + n, 0) },
     anaDrafts: await readAnaDrafts(client, organizationId, deviceProjectIds),
+    ...(openProjectId !== null ? { openProjectCounted: deviceProjectIds.includes(openProjectId) } : {}),
   };
 }
