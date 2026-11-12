@@ -96,9 +96,10 @@ describe('the 1572 rule fires', () => {
 });
 
 describe('vault filing (service view) files catalog artifacts by their zone', () => {
-  /* Form FDA 1572 is not asserted here: Vault filing's own "FDA administrative
-     form" rule (vault-filing.service.ts FILING_RULES) files it, with 1571, 3674,
-     3454 and 356h, into the service view's z03 before the TMF classifier runs. */
+  /* Form FDA 1572 in Vault filing is asserted in
+     etmf-classifier-names-an-artifact-only-when-the-name-is-that-artifact.test.ts:
+     until 2026-11-10 Vault's "FDA administrative form" rule filed it into the
+     service view's z03 before the TMF classifier (zone 5) ran. */
   it('a CRO uploading its Monitoring Plan and its financial disclosure form gets the zone folder', () => {
     const expected: Record<string, string> = {
       'Monitoring-Plan-v2.pdf': 'z01',

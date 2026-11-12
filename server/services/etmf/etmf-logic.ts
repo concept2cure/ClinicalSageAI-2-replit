@@ -29,73 +29,188 @@ export function zoneName(zone: number): string {
 }
 
 /**
- * A name reduced to lower-case words: apostrophes dropped ("Investigator's" and
- * "Investigators" read the same), every other run of non-alphanumerics one space.
+ * A name as its words. `word` is the word with apostrophes dropped, so
+ * "Investigator's" and "Investigators" read the same against the catalog.
+ * `stem` also drops a possessive, so "IRB's approval" still holds the keyword
+ * "irb". Every other run of non-alphanumerics separates words: a space, a
+ * hyphen, a full stop and an underscore alike. `used` marks a word already
+ * taken by a longer phrase.
  */
-function words(s: string): string {
-  return s.toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+interface NameWord { word: string; stem: string; used: boolean }
+
+function nameWords(s: string): NameWord[] {
+  return s.toLowerCase().split(/[^a-z0-9'’]+/).flatMap((piece) => {
+    const word = piece.replace(/['’]/g, '');
+    if (!word) return [];
+    const stem = piece.replace(/['’]s$/, '').replace(/['’]/g, '') || word;
+    return [{ word, stem, used: false }];
+  });
+}
+
+const phraseOf = (s: string): string[] => nameWords(s).map((w) => w.word);
+
+/** Takes `phrase` wherever it stands, whole, in the words not yet taken; says whether it was found. */
+function take(name: NameWord[], phrase: string[], form: 'word' | 'stem'): boolean {
+  let found = false;
+  for (let i = 0; i + phrase.length <= name.length; i += 1) {
+    if (!phrase.every((w, j) => !name[i + j].used && name[i + j][form] === w)) continue;
+    for (let j = 0; j < phrase.length; j += 1) name[i + j].used = true;
+    found = true;
+    i += phrase.length - 1;
+  }
+  return found;
 }
 
 /**
- * The catalog, as the classifier reads it: every artifact's name in words,
+ * Words that say which copy of a document a file is, not which document: a
+ * version, a date, a status, a file extension. "Monitoring Plan v3 FINAL
+ * 2026-10-30.pdf" is the Monitoring Plan.
+ */
+const NOISE_WORD = new RegExp(
+  '^(?:' +
+    [
+      'v\\d*', '\\d+', 'version', 'ver', 'rev', 'revision', 'edition', 'ed',
+      'draft', 'final', 'signed', 'copy', 'scan', 'scanned', 'dated',
+      'jan(?:uary)?', 'feb(?:ruary)?', 'mar(?:ch)?', 'apr(?:il)?', 'may', 'june?', 'july?', 'aug(?:ust)?',
+      'sep(?:t(?:ember)?)?', 'oct(?:ober)?', 'nov(?:ember)?', 'dec(?:ember)?',
+      'pdf', 'docx?', 'docm', 'dotx?', 'xlsx?', 'xlsm', 'csv', 'pptx?', 'txt', 'rtf', 'odt', 'ods', 'xml', 'json',
+      'zip', 'msg', 'eml', 'html?', 'png', 'jpe?g', 'tiff?', 'gif',
+    ].join('|') +
+    ')$',
+);
+/** A name's words with the version, date, status and extension words taken out. */
+function identity(s: string): string {
+  return phraseOf(s).filter((w) => !NOISE_WORD.test(w)).join(' ');
+}
+
+/**
+ * The catalog, as the classifier reads it: every artifact's name as words,
  * longest first, so a name that contains another catalog name ("Sample
- * Informed Consent Form") is matched before the shorter one could be.
+ * Informed Consent Form") is found before the shorter one could be.
  */
 const CATALOG_NAMES = TMF_REFERENCE_MODEL.flatMap((z) =>
-  z.artifacts.map((a) => ({ zone: z.number, code: a.code, phrase: words(a.name) })),
+  z.artifacts.map((a) => ({ zone: z.number, code: a.code, phrase: phraseOf(a.name) })),
 ).sort((x, y) => y.phrase.length - x.phrase.length);
 const CATALOG_CODES = new Map(
   TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.map((a) => [a.code, { zone: z.number, code: a.code }] as const)),
 );
+/** Each catalog name with the same words taken out, so "is this name that artifact" compares like with like. */
+const CATALOG_IDENTITIES = new Map(
+  TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.map((a) => [identity(a.name), { zone: z.number, code: a.code }] as const)),
+);
 
 /**
- * Keyword → zone rules for names that are not catalog artifacts (first match
- * wins). `section` is what Store B records for an auto-classified artifact;
- * omitted, it is the zone's name.
+ * Keyword → zone rules for names that are not catalog artifacts. Each keyword
+ * is lower-case words, matched as whole words in the name's words. `section` is
+ * what Store B records for an auto-classified artifact; omitted, it is the
+ * zone's name.
  *
- * 2026-10-30: the zone-3 rule matched 'form fda 1572|1572|fda' ahead of the
- * zone-5 rule's '1572', so that keyword could never fire and Form FDA 1572 (a
- * Site Management record in the DIA model) was filed under Regulatory. 1572 is
- * now its own rule, ahead of the zone-3 rule, and nowhere else.
+ * Which keyword decides: a longer keyword takes its words first, so a shorter
+ * one inside it is not counted ("sample icf" is not also "icf"). Of the
+ * keywords then found, the earliest rule decides, as it always did.
+ *
+ * History of this table:
+ * - Until 2026-11-10 the rules were regular expressions read against the raw
+ *   name, first match wins. `\b` does not break at an underscore, so
+ *   "delegation_log_site_04.pdf" matched nothing. And three keywords could
+ *   never fire: "sample icf" and "sample crf" (zone 2) lost to "icf" (zone 4)
+ *   and "crf" (zone 10), and "randomisation list" (zone 11) to "randomisation"
+ *   (zone 6).
+ * - 2026-10-30: the zone-3 rule matched 'form fda 1572|1572|fda' ahead of the
+ *   zone-5 rule's '1572', so Form FDA 1572 (a Site Management record in the DIA
+ *   model) was filed under Regulatory. The investigator's own forms are the
+ *   first rule since 2026-11-11, so "Form FDA 1572 - IRB copy" is the 1572 too.
+ * - 2026-11-11: "financial disclosure" joined that rule. The catalog's
+ *   Financial disclosure form is a zone-5 record, and "Form FDA 3455 Financial
+ *   Disclosure - Dr Smith" was filed under Regulatory by the keyword "fda".
+ * - 2026-11-11: "randomisation" moved from IP and Trial Supplies (zone 6) to
+ *   Statistics (zone 11), in the same place in the order. The catalog's
+ *   Randomization plan is a zone-11 record, and the keyword contradicted it.
  */
-const CLASSIFY_RULES: Array<{ zone: number; section?: string; keywords: RegExp }> = [
-  { zone: 4, section: 'IRB/IEC Approval', keywords: /\b(irb|iec|ethics|informed consent|consent form|icf|assent)\b/i },
-  { zone: 5, keywords: /\b(form fda[ -]?1572|fda[ -]?1572|1572)\b/i },
-  { zone: 3, section: 'Regulatory Submission', keywords: /\b(ind|cta|regulatory|competent authority|fda)\b/i },
-  { zone: 7, keywords: /\b(sae|susar|safety|adverse|dsur|pharmacovigilance)\b/i },
-  { zone: 6, section: 'IP Management', keywords: /\b(investigational product|drug accountability|ip\b|randomi[sz]ation|unblinding|label)\b/i },
-  { zone: 5, keywords: /\b(site|delegation log|cv\b|curriculum vitae|training log|monitoring visit)\b/i },
-  { zone: 11, keywords: /\b(statistical analysis plan|\bsap\b|randomi[sz]ation list|statistics)\b/i },
-  { zone: 10, keywords: /\b(data management plan|\bdmp\b|crf|case report form|edit check|database lock)\b/i },
-  { zone: 8, section: 'Testing', keywords: /\b(laboratory|lab manual|central lab|sample handling|assay)\b/i },
-  { zone: 9, keywords: /\b(vendor|cro\b|contract|agreement|sow\b)\b/i },
-  { zone: 2, keywords: /\b(protocol|investigator brochure|\bib\b|sample (icf|crf))\b/i },
-  { zone: 1, keywords: /\b(trial plan|communication plan|tmf plan|oversight|kickoff)\b/i },
+export const TMF_KEYWORD_RULES: ReadonlyArray<{ zone: number; section?: string; phrases: readonly string[] }> = [
+  { zone: 5, phrases: ['1572', 'fda1572', 'statement of investigator', 'financial disclosure'] },
+  { zone: 4, section: 'IRB/IEC Approval', phrases: ['irb', 'iec', 'ethics', 'informed consent', 'consent form', 'icf', 'assent'] },
+  { zone: 3, section: 'Regulatory Submission', phrases: ['ind', 'cta', 'regulatory', 'competent authority', 'fda'] },
+  { zone: 7, phrases: ['sae', 'susar', 'safety', 'adverse', 'dsur', 'pharmacovigilance'] },
+  { zone: 11, phrases: ['randomisation', 'randomization'] },
+  { zone: 6, section: 'IP Management', phrases: ['investigational product', 'drug accountability', 'ip', 'unblinding', 'label'] },
+  { zone: 5, phrases: ['site', 'delegation log', 'cv', 'curriculum vitae', 'training log', 'monitoring visit'] },
+  { zone: 11, phrases: ['sap', 'statistics'] },
+  { zone: 10, phrases: ['dmp', 'crf', 'case report form', 'edit check', 'database lock'] },
+  { zone: 8, section: 'Testing', phrases: ['laboratory', 'lab manual', 'central lab', 'sample handling', 'assay'] },
+  { zone: 9, phrases: ['vendor', 'cro', 'contract', 'agreement', 'sow'] },
+  { zone: 2, phrases: ['protocol', 'investigator brochure', 'ib', 'sample icf', 'sample crf'] },
+  { zone: 1, phrases: ['trial plan', 'tmf plan', 'oversight', 'kickoff'] },
 ];
+
+/**
+ * Keywords that say whose document it is (which site, CRO, vendor or
+ * protocol), not what it is. Beside a catalog name they are not a second
+ * opinion: "SAE reports Site 101" is still the SAE reports' zone. With no
+ * catalog name in the name they decide as any keyword does.
+ */
+export const TMF_QUALIFIER_KEYWORDS: ReadonlySet<string> = new Set(['site', 'cro', 'vendor', 'protocol']);
+
+/** Every keyword, longest first; among equals the earlier rule first. */
+const KEYWORDS = TMF_KEYWORD_RULES.flatMap((rule, order) =>
+  rule.phrases.map((p) => ({ rule, order, phrase: p.split(' '), qualifier: TMF_QUALIFIER_KEYWORDS.has(p) })),
+).sort((x, y) => y.phrase.length - x.phrase.length || x.order - y.order);
 
 /** The section an artifact classified into `zone` is recorded under: its rule's, or the zone's name. */
 function sectionOf(zone: number): string {
-  return CLASSIFY_RULES.find((r) => r.zone === zone && r.section)?.section ?? zoneName(zone);
+  return TMF_KEYWORD_RULES.find((r) => r.zone === zone && r.section)?.section ?? zoneName(zone);
 }
 
 /**
- * `code` is the catalog artifact the name identifies, or null when only a
- * keyword rule matched: the zone is then known and the artifact is not.
+ * The keyword rule that decides among the words not yet taken: the earliest
+ * rule with a keyword found. `qualifiers: false` leaves the whose-document
+ * keywords out of the count.
+ */
+function keywordRule(name: NameWord[], qualifiers: boolean): (typeof TMF_KEYWORD_RULES)[number] | undefined {
+  let best: (typeof KEYWORDS)[number] | undefined;
+  for (const k of KEYWORDS) {
+    if (!take(name, k.phrase, 'stem')) continue;
+    if (k.qualifier && !qualifiers) continue;
+    if (!best || k.order < best.order) best = k;
+  }
+  return best?.rule;
+}
+
+/**
+ * `code` is the catalog artifact the name identifies, or null when the name
+ * only points to a zone: the zone is then known and the artifact is not.
+ * `conflict` is set when the name was left unclassified because it points to
+ * more than one zone, and absent when nothing in it points to any.
  */
 export type Classification =
   | { zone: number; zoneName: string; section: string; confidence: 'matched'; code: string | null }
-  | { zone: null; zoneName: null; section: null; confidence: 'unclassified' };
+  | { zone: null; zoneName: null; section: null; confidence: 'unclassified'; conflict?: true };
+
+const UNCLASSIFIED: Classification = { zone: null, zoneName: null, section: null, confidence: 'unclassified' };
+const TWO_ZONES: Classification = { ...UNCLASSIFIED, conflict: true };
+
+function inZone(zone: number, code: string | null, section = sectionOf(zone)): Classification {
+  return { zone, zoneName: zoneName(zone), section, confidence: 'matched', code };
+}
 
 /**
  * Auto-classify an artifact by name into a DIA RM zone. Pure, deterministic.
  *
- *   1. A catalog artifact code, given as the whole name ('monitoring_plan'),
- *      or a catalog artifact name found as whole words in it ("Monitoring Plan
- *      v3.pdf") identifies that artifact: its code and its own zone, under the
- *      section a keyword match into that zone records, so a name that
- *      classified correctly before keeps its section.
- *   2. Otherwise the keyword rules name a zone, with no artifact code.
- *   3. A name neither identifies is `unclassified`, with no zone.
+ *   1. The name IS a catalog artifact: its code given as the whole name
+ *      ('monitoring_plan'), or its catalog name give or take a version, a date,
+ *      a status word or a file extension ("Monitoring Plan v3 FINAL.pdf"). That
+ *      identifies the artifact: its code and its own zone, under the section a
+ *      keyword match into that zone records.
+ *   2. The name CONTAINS a catalog name among other words. That points to the
+ *      artifact's zone and names no artifact (`code: null`): "SAE reports Site
+ *      101", "LMN-201 Monitoring Plan v2". A keyword in the rest of the name
+ *      that says what the document is, and points elsewhere, makes two signals:
+ *      "IRB approval of Sample Informed Consent Form" is `unclassified`, and a
+ *      person files it. So do two catalog names from different zones. A keyword
+ *      inside the catalog name itself ("case report form" in "Sample Case Report
+ *      Form") is not counted, and neither is a whose-document keyword.
+ *   3. With no catalog name, the keyword rules name a zone, with no artifact.
+ *   4. A name with neither is `unclassified`, with no zone.
  *
  * 2026-10-15: an unmatched name returned Zone 2 (Central Trial Documents) as
  * confidence 'default', and addArtifactTx stored that zone as if it were known.
@@ -105,22 +220,28 @@ export type Classification =
  * Brochure", …) and 4 in another zone ("Sample Case Report Form" → 10, "Sample
  * Informed Consent Form" → 4, "Safety report submissions to IRB/IEC" → 4,
  * "Randomization plan" → 6) — in Store B and in Vault filing's service view.
+ *
+ * 2026-11-10: a catalog name found anywhere in a name identified that artifact,
+ * so "Data Safety Monitoring Plan.pdf" was the Monitoring Plan and "IRB approval
+ * of Sample Informed Consent Form.pdf" the sample consent form, each an
+ * essential record reported as present. Step 2 is that correction.
  */
 export function classifyArtifact(artifactName: string): Classification {
-  const raw = artifactName.trim().toLowerCase();
-  const text = ` ${words(artifactName)} `;
-  const byCode = CATALOG_CODES.get(raw);
-  const hit = byCode ?? CATALOG_NAMES.find((c) => c.phrase && text.includes(` ${c.phrase} `));
-  if (hit) {
-    return { zone: hit.zone, zoneName: zoneName(hit.zone), section: sectionOf(hit.zone), confidence: 'matched', code: hit.code };
+  const named = CATALOG_CODES.get(artifactName.trim().toLowerCase()) ?? CATALOG_IDENTITIES.get(identity(artifactName));
+  if (named) return inZone(named.zone, named.code);
+
+  const name = nameWords(artifactName);
+  const contained = new Set<number>();
+  for (const c of CATALOG_NAMES) if (take(name, c.phrase, 'word')) contained.add(c.zone);
+  if (contained.size > 1) return TWO_ZONES;
+
+  const [zone] = contained;
+  if (zone !== undefined) {
+    const other = keywordRule(name, false);
+    return !other || other.zone === zone ? inZone(zone, null) : TWO_ZONES;
   }
-  for (const rule of CLASSIFY_RULES) {
-    if (rule.keywords.test(artifactName)) {
-      const name = zoneName(rule.zone);
-      return { zone: rule.zone, zoneName: name, section: rule.section ?? name, confidence: 'matched', code: null };
-    }
-  }
-  return { zone: null, zoneName: null, section: null, confidence: 'unclassified' };
+  const rule = keywordRule(name, true);
+  return rule ? inZone(rule.zone, null, rule.section ?? zoneName(rule.zone)) : UNCLASSIFIED;
 }
 
 /** An artifact "counts as present" when it is received, in review, or final. */
