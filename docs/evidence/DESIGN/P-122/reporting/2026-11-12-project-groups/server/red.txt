@@ -1,0 +1,17 @@
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses an empty name
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses a name of spaces
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses a status no reader lists
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses a project id that is not a positive integer
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses an empty member list
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses a field the group does not have
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses nothing to change
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id validates the change before anything is read or written > refuses a group id that is not a positive integer
+ ✓ server/routes/__tests__/report-os-program-groups.test.ts > POST /program-groups > refuses a name of spaces
+ × server/routes/__tests__/report-os-program-groups.test.ts > POST /program-groups > writes the group, its members and one chained audit row in one tenant transaction
+ × server/routes/__tests__/report-os-program-groups.test.ts > POST /program-groups > commits nothing when the audit row cannot be written
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id > replaces the members and records what changed, in one tenant transaction
+ × server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id > archives a group with its time, and records that
+ ✓ server/routes/__tests__/report-os-program-groups.test.ts > PATCH /program-groups/:id > answers 404 and records nothing when the group is not this organization’s
+ × server/routes/__tests__/report-os-program-groups.test.ts > POST /program-groups/:id/snapshots > records the membership and one chained audit row in one tenant transaction
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 2 passed (15)
