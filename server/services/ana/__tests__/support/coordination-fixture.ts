@@ -17,15 +17,21 @@ import { admitRunCoordination, runOwnerInstance } from '../../run-control';
 
 export let fixture: JourneyDb;
 export let pool: CoordinationPool;
-export async function subject(adapter = pool, observed?: (projection: CoordinationProjection) => void) {
-  const scope: CoordinationScope = { runId: randomUUID(), organizationId: ORG, userId: Number(AUTHOR.id), projectId: 42, ownerInstance: runOwnerInstance() };
+export async function subject(adapter = pool, observed?: (projection: CoordinationProjection) => void, runId: string = randomUUID()) {
+  const scope: CoordinationScope = { runId, organizationId: ORG, userId: Number(AUTHOR.id), projectId: 42, ownerInstance: runOwnerInstance() };
   await pool.query(`INSERT INTO ana_runs(id,organization_id,user_id,project_id,surface,status,owner_instance)
     VALUES($1,$2,$3,'42','ana-ri-stream','running',$4)`, [scope.runId, ORG, scope.userId, scope.ownerInstance]);
   const source = { tiers: [3] as const, recheck: async () => { await admitRunCoordination(pool, scope); } };
   return { scope, source, host: await openRunCoordination({ ...scope, pool: adapter, source, onProjection: observed }) };
 }
 export const assignment = (intentId: string) => ({ intentId, role: 'research' as const, task: 't1', parentStep: 's1' });
-export async function setupCoordinationFixture(onReady?: (shared: CoordinationPool) => void) {
+/**
+ * `extra` joins another store to the same database: its prerequisite DDL after this fixture's, its migrations before
+ * the run's. The joined spike case (routes/__tests__/anaChildReportToFiledRecord.pglite.integration.test.ts) adds the
+ * authoring and Vault stores this way.
+ */
+export async function setupCoordinationFixture(onReady?: (shared: CoordinationPool) => void,
+  extra: { prereqSql?: string; migrations?: readonly string[] } = {}) {
     fixture = await createJourneyDb({ prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}
       CREATE ROLE app_service NOLOGIN; CREATE SCHEMA vault;
       CREATE TABLE vault.legal_holds(id serial PRIMARY KEY,organization_id integer,lifted_at timestamptz);
@@ -33,9 +39,10 @@ export async function setupCoordinationFixture(onReady?: (shared: CoordinationPo
         model text,system_prompt text,metadata jsonb,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
       CREATE TABLE chat_messages(id serial PRIMARY KEY,thread_id text,role text,content text,model text,tokens_used integer,metadata jsonb,created_at timestamptz DEFAULT now());
       ${extractTableDdl('migrations/0013_ana_intelligence_system.sql',['user_intelligence_profiles'])}
-      ALTER TABLE organizations ADD COLUMN settings jsonb NOT NULL DEFAULT '{}';`,
-      migrations: ['migrations/20260921_audit_logs_chain_seq.sql','db/migrations/20260917_ana_runs.sql',
-        'migrations/20260926_ana_turn_records.sql','db/migrations/20260617_audit_logs_immutability.sql'] });
+      ALTER TABLE organizations ADD COLUMN settings jsonb NOT NULL DEFAULT '{}';
+      ${extra.prereqSql ?? ''}`,
+      migrations: [...new Set([...(extra.migrations ?? []), 'migrations/20260921_audit_logs_chain_seq.sql','db/migrations/20260917_ana_runs.sql',
+        'migrations/20260926_ana_turn_records.sql','db/migrations/20260617_audit_logs_immutability.sql'])] });
     const query: CoordinationPool['query'] = async (sql, args) => fixture.pglite.query<Record<string, unknown>>(sql, args);
     pool = { query, connect: async () => ({ query, release() {} }) };
     onReady?.(pool);
