@@ -49,7 +49,8 @@ and `shared/authoring`; `git log --all --diff-filter=D` on `*NotApplicable*` (no
 
 ## Tests: red first, then green
 
-`client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx`, three new cases, 29 of 29 pass:
+`client/src/concept2cure/v2/__tests__/csrNotApplicable.test.tsx`, three cases (beside the 26 of
+`csrCardReach.test.tsx`, whose setup it repeats in the small; 29 of 29 pass):
 
 1. the list names the blank headings and separates the headings that hold only subsections;
 2. stating one sends exactly the document's section save, with the sentence, the reason for change and the copy's
