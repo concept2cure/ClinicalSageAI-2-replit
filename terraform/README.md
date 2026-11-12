@@ -69,6 +69,50 @@ Production needs a custom domain (`domain_aliases`), and both certificates
 (`acm_certificate_arn` on the ALB, `cloudfront_certificate_arn`) must cover it:
 CloudFront checks the ALB's certificate against the domain it forwards.
 
+### 4. After each apply: what the outputs feed
+
+Run `terraform output` in the root you applied. Both roots export the same
+names (`tests/ci/terraform-root-outputs.contract.test.ts`).
+
+| Output | Goes to |
+|---|---|
+| `cloudfront_domain` | the DNS alias for `domain_aliases[0]` |
+| `github_deploy_role_arn` | the GitHub environment's secret `AWS_DEPLOY_ROLE_ARN` |
+| `github_build_role_arn` | the GitHub environment's secret `AWS_BUILD_ROLE_ARN` |
+| `cloudfront_distribution_id` | the GitHub environment's secret `CLOUDFRONT_DISTRIBUTION_ID` |
+| `frontend_bucket` | the GitHub environment's variable `FRONTEND_BUCKET` |
+| `readyz_detail` | optional: the GitHub environment's secret `READYZ_TOKEN`, so a failed deploy's smoke test prints which dependency was not ready |
+| `first_run_setup` | the one `POST /api/setup/initialize` that creates the first administrator |
+| `engine_version_actual` | the IQ record |
+| `api_task_boot_contract` | review before the first deploy: what the API task carries |
+
+The GitHub environment is `staging` or `production`, named for the root.
+
+## Topology
+
+- **Postgres is the coordination store. There is no Redis or ElastiCache**
+  (decision B6, `docs/LAUNCH_DEFINITION_OF_DONE.md`). The API runs as more than
+  one task: two in production, one to two in staging.
+  - Sign-in sessions (idle timeout, concurrent-session limit, superseded
+    sessions) are shared through `session_activity`. A task that cannot read
+    it is reported not ready by `/readyz` (`sessions`).
+  - Scheduled jobs that take the lease run once per window across tasks
+    (`server/db/scheduledOnce.ts`). `api_max_count` stays at 2 until MR-14
+    closes OPS-07, the schedulers that do not take it yet.
+  - HTTP rate limits are still counted per task, in memory. Sharing them needs
+    a new table, which is a founder decision (MR-03 Stage 7 steps 2 and 3).
+- **Live co-editing is off.** `ENABLE_COLLAB_CRDT` keeps each open document in
+  one process's memory, so it cannot be on while more than one task serves.
+  The stack does not set it, and the deploy preflight refuses a task
+  definition that does, until F-27 decides how it is coordinated.
+- **The edge waits 60 seconds.** CloudFront's `origin_read_timeout` and the
+  ALB's `idle_timeout` are both 60 s, under the server's 65 s keep-alive
+  (`tests/ci/edge-timeouts.contract.test.ts`). Work that takes longer returns a
+  504 at the edge while the server finishes it (MR-03 Stage 6, open).
+- **`/readyz` through CloudFront answers `{ ready }` alone.** The detail goes
+  to a caller presenting the `readyz_detail` token in `x-readyz-token`, or to
+  one inside the task.
+
 ### Module tests (offline)
 
 `modules/alb` and `modules/cloudfront` carry `terraform test` suites that mock
@@ -83,7 +127,10 @@ terraform test
 ## Security Notes
 
 - All secrets are stored in AWS Secrets Manager, never in tfvars
-- RDS uses `manage_master_user_password = true` (AWS-managed credentials)
+- Terraform generates the two database passwords (the owner's and
+  `app_service`'s) and stores the composed `verify-full` URLs in Secrets
+  Manager. The API task holds only the runtime role's; the owner's is the
+  one-off database task's alone
 - S3 evidence bucket uses Object Lock (WORM) with 7-year retention
 - TLS 1.3 enforced on ALB; CloudFront uses TLS 1.2+
 - ECS tasks run in private subnets. The ALB is reachable from CloudFront alone:
