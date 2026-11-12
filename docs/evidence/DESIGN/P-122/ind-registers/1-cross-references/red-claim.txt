@@ -1,0 +1,34 @@
+# npx vitest run server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts, before the claim
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-references
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-reference-register
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-references/0b6d2c8e-1111-4c4c-8c8c-123456789abc/file-loa
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/cross-references/0b6d2c8e-1111-4c4c-8c8c-123456789abc
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-references
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-reference-register
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-references/:p/file-loa
+ × server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/cross-references/:p
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/safety-reports stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/safety-reports/overdue stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/icsr-transmissions stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7 stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/overview stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/cockpit stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/drift stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/8/cross-references stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission//cross-references stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > /api/ind-lifecycle/submission/7/cross-referencesx stays unattributed
+ ✓ server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > nothing beside the registers the screen calls is admitted > the stateless cross-reference register engine is not the stored one, and stays unattributed
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-references
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-reference-register
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/7/cross-references/0b6d2c8e-1111-4c4c-8c8c-123456789abc/file-loa
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/cross-references/0b6d2c8e-1111-4c4c-8c8c-123456789abc
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-references
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-reference-register
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/submission/:p/cross-references/:p/file-loa
+ FAIL  server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts > the cross-reference and letter of authorization register is served on the IND screen > /api/ind-lifecycle/cross-references/:p
+AssertionError: expected 'unmapped' to be 'launch' // Object.is equality
+Expected: "launch"
+Received: "unmapped"
+ Test Files  1 failed (1)
+      Tests  8 failed | 11 passed (19)

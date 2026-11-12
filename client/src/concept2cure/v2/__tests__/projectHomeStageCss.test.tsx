@@ -45,8 +45,10 @@ describe('the filing spine’s project-page classes', () => {
   });
 
   it('defines no class another v2 stylesheet already defines', () => {
-    /* Shared context classes the block only scopes under, never defines. */
-    const scopes = new Set(['c2c-v2', 'pj-lmod', 'pj-lmod-t']);
+    /* Shared context classes the block only scopes under, never defines. `pj-act` and `pj-act-w` are app-v2.css's
+       activity row: the Schedule's module only lets that row wrap inside itself
+       (`.pj-tracking-module .pj-act`, P-122 defects, d053ba0d5), as `.pj-side` does in app-v2.css. */
+    const scopes = new Set(['c2c-v2', 'pj-lmod', 'pj-lmod-t', 'pj-act', 'pj-act-w']);
     /* Classes the block defines that other sheets only place inside their own scope, never redefine globally:
        a section header's action row (`.pj-sec-acts`) is laid out by the work-area pattern
        (app-v2.css, `[data-work-area] .pj-sec-h > .pj-sec-acts`) and by Biostatistics' assessment

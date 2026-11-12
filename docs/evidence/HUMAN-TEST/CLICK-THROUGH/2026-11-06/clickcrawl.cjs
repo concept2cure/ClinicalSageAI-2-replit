@@ -191,7 +191,6 @@ async function discover(page, ev, add) {
   }
 }
 
-// One control on a freshly opened stop: click it and record what happened.
 // What the click did, from the page before (b) and after (a) it.
 function effectOf(clickErr, b, a, downloaded) {
   if (clickErr) return 'click-failed';
@@ -217,6 +216,15 @@ async function afterClick(page, bt) {
   return { a, stuck, newFail };
 }
 
+// A control inside a collapsed <details> has a box in current Chromium but is not visible, so its click timed out
+// (2026-11-10: a seal's "Open", a version's "View", a readiness finding's fix). The section is opened first, as a
+// person opens it, and the record says so.
+const openCollapsed = (loc) => loc.evaluate((el) => {
+  let n = 0;
+  for (let d = el.closest('details:not([open])'); d; d = d.closest('details:not([open])')) { d.open = true; n++; }
+  return n;
+}).catch(() => 0);
+
 // One control on a freshly opened stop: click it and record what happened.
 async function clickOne(page, ev, add, stop, c) {
   if (DONE.clicks.has(clickKey(stop, c)) || BUDGET.left <= 0) return;
@@ -228,10 +236,11 @@ async function clickOne(page, ev, add, stop, c) {
   if (!loc) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, outcome: 'not-found-after-reopen' }) + '\n'); return; }
   ev.errors.length = 0; ev.api.length = 0; const dl0 = ev.downloads;
   let clickErr = null;
+  const opened = await openCollapsed(loc);
   try { await loc.click({ timeout: 4000 }); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
   const { a, stuck, newFail } = await afterClick(page, bt);
   const effect = effectOf(clickErr, b, a, ev.downloads > dl0);
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr }) + '\n');
+  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr, ...(opened ? { opened } : {}) }) + '\n');
   if (effect === 'navigated') add(a.url);
   if (c.href?.startsWith('/concept2cure')) add(c.href);
   await page.keyboard.press('Escape').catch(() => {});

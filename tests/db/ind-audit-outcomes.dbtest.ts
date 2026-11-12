@@ -112,9 +112,20 @@ beforeAll(async () => {
     ($1,$2,'member',now()-interval '1 day'),($1,$3,'viewer',now()-interval '1 day'),($4,$5,'member',now()-interval '1 day')
     ON CONFLICT(user_id,organization_id) DO UPDATE SET role=EXCLUDED.role,created_at=EXCLUDED.created_at`,
   [ORG, userId, viewerId, FOREIGN_ORG, foreignId]);
-  const seedSubmission = async (organization: number, actor: number) => Number((await owner.query(`INSERT INTO submissions
-    (title,application_type,client_type,primary_region,organization_id,created_by)
-    VALUES ($1,'ind','biotech','fda',$2,$3) RETURNING id`, [PREFIX, organization, actor])).rows[0].id);
+  /* P-122 (2026-11-10): a register write admits the submission's project for the person (registers.routes.ts
+     admitSubmission), so each submission is anchored to a project its member owns. */
+  const seedSubmission = async (organization: number, actor: number) => {
+    const program = randomUUID();
+    await owner.query(`INSERT INTO regulatory_programs (id,organization_id,name,code,program_type,product_type,primary_agency,product_name,lead_user_id,status)
+      VALUES ($1,$2,$3,$4,'IND','drug','FDA','Synthetic product',$5,'active')`, [program, organization, PREFIX, `SIA-${program.slice(0, 8)}`, actor]);
+    const workspace = Number((await owner.query(`INSERT INTO client_workspaces (organization_id,name,slug,status) VALUES ($1,$2,$2,'active') RETURNING id`,
+      [organization, `${PREFIX}-${program.slice(0, 8)}`])).rows[0].id);
+    await owner.query(`INSERT INTO projects (organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id)
+      VALUES ($1,$2,$3,'regulatory','active',$4,$4,$5)`, [organization, workspace, PREFIX, actor, program]);
+    return Number((await owner.query(`INSERT INTO submissions
+      (title,application_type,client_type,primary_region,organization_id,created_by,program_id)
+      VALUES ($1,'ind','biotech','fda',$2,$3,$4) RETURNING id`, [PREFIX, organization, actor, program])).rows[0].id);
+  };
   submissionId = await seedSubmission(ORG, userId);
   foreignSubmissionId = await seedSubmission(FOREIGN_ORG, foreignId);
   sequenceId = Number((await owner.query(`INSERT INTO ectd_sequences (submission_id,region,sequence_number,type,organization_id,created_by)

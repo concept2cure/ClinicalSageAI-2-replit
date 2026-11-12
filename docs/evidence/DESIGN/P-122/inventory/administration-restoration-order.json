@@ -1,0 +1,302 @@
+[
+  {
+    "order": 1,
+    "title": "Organisation settings are reached by name: Settings opens with an index of its twelve cards, and Home's company step lands on the company card",
+    "rows": ["A22", "A23", "A24", "A25", "A26", "A27", "A28", "A29", "A30", "A31", "A16", "C8", "C17", "D17", "D18"],
+    "files": ["client/src/concept2cure/v2/surfaces/AdminSettings.tsx", "client/src/concept2cure/v2/surfaces/AdminAccess.tsx", "client/src/concept2cure/v2/surfaces/HomeSetup.tsx"],
+    "server": [],
+    "alreadyInFlight": "O-onboarding (W1-07: HomeSetup passes the section; the scroll-to-section in AdminAccess is handed on and not done)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "At 1440x900, open Admin and access → Settings: every card's name, including the GAMP 5 validation kit, retention, legal holds and company documents, is visible without scrolling, and each one scrolls to its card. From Home, 'Record your company details' shows the company card in view."
+  },
+  {
+    "order": 2,
+    "title": "Password and authenticator sit at the top of the Account drawer",
+    "rows": ["D3", "D4", "A15"],
+    "files": ["client/src/concept2cure/v2/AccountPanel.tsx", "client/src/concept2cure/v2/AccountOnboardingSettings.tsx"],
+    "server": [],
+    "alreadyInFlight": "U3-sign-in-and-account (one refusal at a time; it does not move the sections)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Open Account at 1440x900: 'Change password' and 'Set up authenticator app' are visible without scrolling the drawer. Changing the password and enrolling an authenticator both still work."
+  },
+  {
+    "order": 3,
+    "title": "Recovery codes are offered at password sign-in",
+    "rows": ["D5"],
+    "files": ["server/services/mfa-enrolment.ts"],
+    "server": ["POST /api/auth/mfa/verify (already accepts backup codes)"],
+    "alreadyInFlight": "U3-sign-in-and-account (SEC-03)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Sign in with a password as a member who has an authenticator: 'Use a recovery code' is offered, a recovery code signs in, and the same code is refused the second time."
+  },
+  {
+    "order": 4,
+    "title": "Signed audit extracts filtered by person and date: 'Audit activity' exports one member's record, and Audit trail exports a date range",
+    "rows": ["A8", "A36"],
+    "files": ["client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx", "client/src/concept2cure/v2/surfaces/AdminAccess.tsx"],
+    "server": ["GET /api/audit/export/signed with user_id, start_date, end_date (exists, never-gated)"],
+    "alreadyInFlight": "none (L5 raises the read to 1,000 rows; paging past 1,000 is separate server work)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "From a member's drawer, 'Audit activity' downloads a signed bundle with only that member's entries, and it verifies through Compliance reports' 'Verify a saved report'. On Audit trail, a date range gives a signed bundle covering only that range."
+  },
+  {
+    "order": 5,
+    "title": "Legal holds are placed where the record is, and by everyone the server allows: 'Place legal hold' in the Vault, and a door for managers",
+    "rows": ["A28", "D18"],
+    "files": ["client/src/concept2cure/v2/surfaces/Vault.tsx", "client/src/concept2cure/v2/surfaces/LegalHoldsCard.tsx", "client/src/concept2cure/v2/orgAdmin.ts", "client/src/concept2cure/v2/Shell.tsx"],
+    "server": ["POST /api/vault/legal-holds, POST /api/vault/legal-holds/:id/lift (claimed by vault and admin-console)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "A manager selects a document version in the Vault, places a hold with a reason and sees the hold notice. An administrator lifts it on Settings. Both acts appear on Audit trail."
+  },
+  {
+    "order": 6,
+    "title": "The gateway account is chosen at Submit's first transmit, as the Setup fold handed on",
+    "rows": ["A24", "C13"],
+    "files": ["client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx", "client/src/concept2cure/v2/surfaces/GatewayAccountsSetting.tsx", "client/src/concept2cure/v2/surfaces/Onboarding.tsx"],
+    "server": ["/api/gateway-accounts (LAUNCH_PLATFORM_API)"],
+    "alreadyInFlight": "O-onboarding (CA-10: the wizard's 'Admin, Setup' wording only)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "An administrator opening a first transmit with no gateway account chosen sees GatewayAccountsSetting in place and chooses one. The transmit then names that account."
+  },
+  {
+    "order": 7,
+    "title": "Seats are true: Licensing shows seats used of seats purchased from the server, and the second 'Seats' figure agrees",
+    "rows": ["B2", "B18"],
+    "files": ["client/src/concept2cure/v2/surfaces/LicensingSurface.tsx", "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx", "server/services/billing.ts"],
+    "server": ["GET /api/billing/seats (never-gated)", "GET /api/billing/status (drop the '|| 5' default)"],
+    "alreadyInFlight": "U2-licensing (R1-ADM-02, HS-01: Licensing reads /api/billing/seats)",
+    "needsFounderDecision": {"value": true, "question": "Which number is the contract seat limit: seats_purchased, or the licence's max_users? (U2 founder question 5, HS-07)"},
+    "proof": "For an organisation with no seat licence, Licensing reads 'unlimited', not 5. For one with 10 seats and 3 members, both Licensing and Subscription & features read 3 of 10."
+  },
+  {
+    "order": 8,
+    "title": "API keys: revoking asks for a reason, and the list shows every live key",
+    "rows": ["A19"],
+    "files": ["client/src/concept2cure/v2/surfaces/AdminAccess.tsx", "server/routes/mdx-admin.ts", "server/routes/api-keys.ts"],
+    "server": ["DELETE /api/api-keys/:id (take a reason into the audit row)", "GET /api/mdx/admin (filter revoked keys before the limit)"],
+    "alreadyInFlight": "none (U1-admin-console findings ADM-08, HS-05, HS-04 have no fix report; S1b and S3 touch other key behaviour)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "With 60 keys, 15 of them revoked, the API keys tab lists all 45 live keys. Revoking one asks for a reason, and the reason is on Audit trail."
+  },
+  {
+    "order": 9,
+    "title": "The set-up wizard asks each invitee's name instead of deriving it from the e-mail",
+    "rows": ["C15"],
+    "files": ["client/src/concept2cure/v2/surfaces/Onboarding.tsx"],
+    "server": ["POST /api/tenant-users"],
+    "alreadyInFlight": "O-onboarding (ADM-10, HS-12); S3-invitations (the reason)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Invite 'j.smith@…' from the wizard as 'Jane Smith': Members and the e-signature manifest show 'Jane Smith'."
+  },
+  {
+    "order": 10,
+    "title": "Pending invitations to existing accounts are listed on Members and can be withdrawn",
+    "rows": ["C23"],
+    "files": ["server/routes/mdx-admin.ts", "client/src/concept2cure/v2/surfaces/AdminAccess.tsx", "client/src/concept2cure/v2/surfaces/AdminMemberActions.tsx"],
+    "server": ["DELETE /api/tenant-users/:organizationId/:userId (S3's governed withdraw)", "GET /api/mdx/admin (add pending invitations)"],
+    "alreadyInFlight": "S3-invitations (server withdraw and 21-day expiry; the Members listing is not done)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Invite a person who already has an account: they appear under Members' 'Invited' filter with their sent and expiry dates. Withdrawing with a reason removes the invitation from their inbox, and the withdrawal is on Audit trail."
+  },
+  {
+    "order": 11,
+    "title": "The SSO and SCIM status says what is configured: the SSO tab reads the real SAML and SCIM records, and the member SSO column is true or removed",
+    "rows": ["A11", "A6"],
+    "files": ["server/routes/mdx-admin.ts", "server/routes/organizations-routes.ts", "client/src/concept2cure/v2/surfaces/AdminAccess.tsx", "client/src/concept2cure/v2/surfaces/AdminSettings.tsx"],
+    "server": ["GET /api/mdx/admin (read sso.ts's SAML configuration for the organisation, and scim_tenants' last event)", "PATCH /api/organizations/:id/settings (refuse security.ssoEnabled)"],
+    "alreadyInFlight": "none (U1-admin-console has no fix report)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "For an organisation with no SAML tenant, the SSO tab reads 'Not configured', even after an attempt to set ssoEnabled through the settings door, which is refused. For one with SAML configured, the tab names the provider. The SCIM card shows the real last event."
+  },
+  {
+    "order": 12,
+    "title": "Data return: the full export and the custody signature are reached from Audit & compliance reports",
+    "rows": ["A38", "D14", "D15"],
+    "files": ["client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx", "shared/constants/ui-surface-registry.ui-v2.ts"],
+    "server": ["GET /api/tenant-export/full", "GET/POST /api/tenant-export/custody"],
+    "alreadyInFlight": "L9-data-return (it adds the /full section but no registry claim; custody is in no lane)",
+    "needsFounderDecision": {"value": true, "question": "Admit /api/tenant-export/full and /api/tenant-export/custody to production under compliance-reports. This is a new production admission. Also L9's two questions: must the export give a reason, and is the digest's date canonicalisation fixed before GA?"},
+    "proof": "With LAUNCH_SCOPE_ENFORCE=on, an owner exports the organisation with a reason and receives the bytes and a receipt. The owner then signs custody with password and second factor. The custody act is on Audit trail, and a purge request no longer refuses for want of custody."
+  },
+  {
+    "order": 13,
+    "title": "Cancel at period end is shown: Licensing says 'Ends <date>' instead of 'Renews' when the subscription is cancelling",
+    "rows": ["B3"],
+    "files": ["client/src/concept2cure/v2/surfaces/LicensingSurface.tsx", "client/src/concept2cure/v2/fixtures/licensing.ts"],
+    "server": ["GET /api/billing/status (cancelAtPeriodEnd already returned)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Cancel a subscription in the Stripe portal: Licensing reads 'Ends <date>'."
+  },
+  {
+    "order": 14,
+    "title": "The subscription catalogue shows its features open, and the admin switches beside them",
+    "rows": ["B17", "B19"],
+    "files": ["client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx", "client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx"],
+    "server": [],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Open Subscription & features at 1440x900: the first area's features and lock reasons are visible without pressing anything. An administrator toggles a feature with a reason."
+  },
+  {
+    "order": 15,
+    "title": "Access levels read in full and in words, and the platform-staff panel leaves a client's Roles tab",
+    "rows": ["A9", "A10"],
+    "files": ["server/routes/mdx-admin.ts", "client/src/concept2cure/v2/surfaces/AdminAccess.tsx", "client/src/concept2cure/v2/surfaces/AdminPlatformGrants.tsx"],
+    "server": ["GET /api/mdx/admin (all six levels from shared/constants/org-roles.ts)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "The Roles tab lists all six access levels, including those nobody holds, with what each may do in words. A client admin sees no 'Platform access is restricted' panel."
+  },
+  {
+    "order": 16,
+    "title": "Sign out of every other session, from Account",
+    "rows": ["D6"],
+    "files": ["client/src/concept2cure/v2/AccountPanel.tsx"],
+    "server": ["POST /api/auth/logout with terminateAllSessions:true"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Signed in on two browsers, press 'Sign out everywhere' in one: the other browser's next request is refused and returns to sign-in."
+  },
+  {
+    "order": 17,
+    "title": "The SIEM feed is named where audit is administered",
+    "rows": ["A32", "D23"],
+    "files": ["client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx"],
+    "server": ["GET /api/admin/audit/siem, /siem/head (never-gated; admin and compliance officer)"],
+    "alreadyInFlight": "none (R1-ADM-13 is not fixed in S1c)",
+    "needsFounderDecision": {"value": true, "question": "May a SIEM collector pull the feed with an organisation API key, rather than a person's session?"},
+    "proof": "Audit trail says how to pull the feed and shows its head position. A compliance officer's request with the documented call returns new events."
+  },
+  {
+    "order": 18,
+    "title": "Set up from a document is reachable after the first project, from the wizard and the account menu's set-up entry",
+    "rows": ["C16", "C9"],
+    "files": ["client/src/concept2cure/v2/surfaces/Onboarding.tsx", "client/src/concept2cure/v2/surfaces/HomeSections.tsx"],
+    "server": ["POST /api/onboarding/ingest, /api/onboarding/commit"],
+    "alreadyInFlight": "O-onboarding (copy only)",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "In an organisation with projects, open 'Set up a workspace', choose to start from a document, approve AnA's proposal, and see it applied."
+  },
+  {
+    "order": 19,
+    "title": "Default markets, pathways and approval rigour are shown and editable on the Profile card",
+    "rows": ["C6"],
+    "files": ["client/src/concept2cure/v2/surfaces/OrganizationProfileCard.tsx", "client/src/concept2cure/mdx/hooks/useIndustryProfile.ts"],
+    "server": ["PATCH /api/mdx/industry-profile (defaultMarkets, defaultPathways, defaultApprovalRigor; LAUNCH_PLATFORM_API)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "The Profile card shows the markets and pathways seeded at sign-up. An administrator changes them with a reason, and a new project defaults to them."
+  },
+  {
+    "order": 20,
+    "title": "My time zone is set in Account, so review due dates end at my end of day",
+    "rows": ["D8"],
+    "files": ["client/src/concept2cure/v2/NotificationPreferences.tsx", "server/routes/users.ts"],
+    "server": ["PATCH /api/users/me/notifications (timezone only; whether it is audited is not verified)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Set Europe/Berlin in Account, then send a review due today: its due time is 23:59 Berlin, not UTC."
+  },
+  {
+    "order": 21,
+    "title": "Weekly limits, accrued overage and billing alerts are read on Usage & limits",
+    "rows": ["B12", "B13", "B14"],
+    "files": ["client/src/concept2cure/v2/surfaces/UsageBilling.tsx"],
+    "server": ["GET /api/billing/weekly-limits, /weekly-usage, /weekly-overage, /alerts/history; POST /alerts/:id/acknowledge"],
+    "alreadyInFlight": "S1b-billing-writes (the writes are governed); U2 removes the 'caps you set yourself' promise",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Usage & limits shows the configured weekly caps, this week's overage and the alert history. A billing administrator acknowledges an alert, and the acknowledgement is audited."
+  },
+  {
+    "order": 22,
+    "title": "Job roles appear in Administration in place of the empty Groups column",
+    "rows": ["A5", "D11"],
+    "files": ["server/routes/mdx-admin.ts", "client/src/concept2cure/v2/surfaces/AdminAccess.tsx"],
+    "server": ["GET /api/mdx/qms/job-roles"],
+    "alreadyInFlight": "P-119 slice 2 (the lead); slice 3 for Account",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Members shows each member's job roles, and the drawer lists them."
+  },
+  {
+    "order": 23,
+    "title": "Client (sponsor) workspaces are created and managed by the administrator, as a section of Admin and access",
+    "rows": ["C25"],
+    "files": ["client/src/concept2cure/v2/surfaces/AdminAccess.tsx", "client/src/concept2cure/v2/surfaces/Projects.tsx"],
+    "server": ["POST/PATCH/DELETE /api/clients, /api/clients/:id/settings (LAUNCH_PLATFORM_API)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": true, "question": "Which sponsor store is canonical, client_workspaces (/api/clients) or cro_clients (/api/cro/clients), and is the other converged onto it (Rule 3)?"},
+    "proof": "A CRO administrator creates 'Sponsor A', and New project then offers it. A project made in it filters by it on Projects."
+  },
+  {
+    "order": 24,
+    "title": "A name is corrected under a reason: by the member in Account, and by an administrator in the member drawer",
+    "rows": ["C24", "D2"],
+    "files": ["server/routes/users.ts", "server/routes/tenant-users.ts", "client/src/concept2cure/v2/AccountPanel.tsx", "client/src/concept2cure/v2/surfaces/AdminMemberActions.tsx"],
+    "server": ["PATCH /api/users/me (add a reason and a chained audit row)", "PATCH /api/tenant-users/:organizationId/:userId (accept a name)"],
+    "alreadyInFlight": "none",
+    "needsFounderDecision": {"value": false, "question": ""},
+    "proof": "Correct a name with a reason: the next signature manifest prints the new name, the earlier signatures keep the old one, and Audit trail shows the change before and after."
+  },
+  {
+    "order": 25,
+    "title": "Sign-in security policy becomes true: require an authenticator app, password policy, sign-in IP allowlist",
+    "rows": ["A14", "A17", "A18"],
+    "files": ["server/routes/organizations-routes.ts", "server/routes/auth.ts", "client/src/concept2cure/v2/onboarding/SessionPolicySetting.tsx"],
+    "server": ["PATCH /api/organizations/:id/settings", "POST /api/auth/login (enforcement)"],
+    "alreadyInFlight": "S2-settings-doors refuses the keys in plain words",
+    "needsFounderDecision": {"value": true, "question": "S2 founder question 1: should an organisation be able to require a second factor, restrict sign-in by IP, or set its own password policy? Enforcing them is server work."},
+    "proof": "With 'require authenticator' on, a member without an app is sent to enrol before reaching the product. A sign-in from outside the allowlist is refused, and the refusal is audited."
+  },
+  {
+    "order": 26,
+    "title": "Client administrators configure their own SAML and SCIM in the existing Identity console",
+    "rows": ["A12", "A13"],
+    "files": ["server/routes/admin/scim-tenants.ts", "server/routes/admin/scim-ip-allowlist.ts", "server/routes/sso.ts", "client/src/concept2cure/v2/surfaces/IdentityConsole.tsx"],
+    "server": ["/api/admin/scim-tenants", "/api/admin/scim-ip-allowlist", "/api/auth/sso/*"],
+    "alreadyInFlight": "S2 (removes the Settings door); X-scim-consent",
+    "needsFounderDecision": {"value": true, "question": "S2 founder question 2: may a client's administrator configure their own SAML, SCIM tokens and SCIM IP allowlist, scoped to their organisation?"},
+    "proof": "A client administrator mints a SCIM token, and Okta provisions a user into their organisation only."
+  },
+  {
+    "order": 27,
+    "title": "The plan cards sell only what is metered: meter credits and tokens and apply seats, or remove them by decision",
+    "rows": ["B7", "B8", "B9"],
+    "files": ["client/src/concept2cure/v2/surfaces/LicensingSurface.tsx", "client/src/concept2cure/v2/fixtures/licensing.ts", "server/services/credit-ledger.ts", "server/services/billing.ts"],
+    "server": ["GET /api/billing/pricing, /dtc-pricing", "GET /api/billing/credits, PUT /credits/auto-reload"],
+    "alreadyInFlight": "U2-licensing is removing the credit and user lines without a Founder-Decision",
+    "needsFounderDecision": {"value": true, "question": "U2 founder questions 2 and 3: meter deep-research and builder credits and AI tokens (and so restore the balance and auto-reload), or remove them from what is sold? Which self-service seat count applies?"},
+    "proof": "Every line on a plan card corresponds to a server meter or limit that a test exercises."
+  },
+  {
+    "order": 28,
+    "title": "Versioned licence agreements: accept, see what we accepted, be asked again on change",
+    "rows": ["B23"],
+    "files": ["server/routes/licensing.ts", "server/services/licensing/eula-service.ts"],
+    "server": ["/api/licensing/agreements/*, /api/licensing/acceptances"],
+    "alreadyInFlight": "S1a-agreements (at HEAD: fails closed)",
+    "needsFounderDecision": {"value": true, "question": "S1a: does the EULA service get its tables on the applier and a screen, or does sign-up's recorded acceptance suffice?"},
+    "proof": "After a new agreement is published, a member is asked to accept before continuing, and Account lists what was accepted and when."
+  },
+  {
+    "order": 29,
+    "title": "Decisions on invented items the server never recorded",
+    "rows": ["A20", "C3", "C4", "A39", "A40", "B26"],
+    "files": ["server/routes/mdx-admin.ts", "client/src/concept2cure/auth/ZenSignup.tsx"],
+    "server": [],
+    "alreadyInFlight": "U3 (C4 wording)",
+    "needsFounderDecision": {"value": true, "question": "Which to make true and which to retire? Key rotation (A20); the AI model-improvement choice and the privacy text that still describes it (C3); the plan chosen at sign-up (C4); the deleted Part 11 compliance-status and SOC 2 grid (A39); translation (A40); referral credits (B26)."},
+    "proof": "Each one either works end to end in the running app or is absent from every screen and text, with a Founder-Decision trailer on the commit."
+  },
+  {
+    "order": 30,
+    "title": "Decisions on organisation lifecycle and personal data",
+    "rows": ["D16", "D24", "D9", "B15", "B16", "B22"],
+    "files": [],
+    "server": ["DELETE /api/tenants/:id, /cancel-deletion", "/api/compliance/gdpr/*", "/api/billing/budgets", "/api/billing/usage/by-model, /activity", "/api/billing/capabilities"],
+    "alreadyInFlight": "S1b (budgets question)",
+    "needsFounderDecision": {"value": true, "question": "May a customer request closure themselves? Is the GDPR router admitted? Is the signed-in product localised? Are budgets kept? Is usage by model shown? Which entitlements resolver is canonical (R1-ADM-11)?"},
+    "proof": "Per decision."
+  }
+]
