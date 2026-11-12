@@ -13,6 +13,8 @@ export interface VaultCatalogDoc {
   mimeType: string | null; fileSize: number | null; version: string | null; createdAt: string | null; checksum: string | null;
   folder: string | null; folderLabel: string | null; ctdSection: string | null; evidenceKind: string | null;
   placementStatus: string | null; originalFileAvailable: boolean; textAvailable: boolean; grade?: SourceGrade | null;
+  /** What a profiled dataset holds: its first tables with their CDISC standard and class, columns and rows. */
+  dataset?: { format: string | null; tableCount: number; tables: Array<{ name: string; standard: string | null; domain: string | null; columns: number; rows: number }> } | null;
 }
 
 const PLACEMENT: Record<string, string> = { confirmed: 'filing confirmed', suggested: 'filing suggested, not yet confirmed', unfiled: 'not yet filed in a folder' };
@@ -35,6 +37,16 @@ function vaultLineage(doc: VaultCatalogDoc): string {
   ].filter(Boolean).join(' · ');
 }
 
+/** A dataset's tables as read from its bytes: "ADVS · ADaM BDS · 34 columns · 32,139 rows". A define file's rows are not data and are left out. */
+function datasetLines(dataset: NonNullable<VaultCatalogDoc['dataset']>): string[] {
+  const lines = dataset.tables.map(t => [
+    t.name, t.standard ? `${t.standard}${t.domain && t.domain !== t.name ? ` ${t.domain}` : ''}` : 'no CDISC standard recognized',
+    `${t.columns.toLocaleString()} column${t.columns === 1 ? '' : 's'}`, t.rows > 0 ? `${t.rows.toLocaleString()} row${t.rows === 1 ? '' : 's'}` : null,
+  ].filter(Boolean).join(' · '));
+  const more = dataset.tableCount - dataset.tables.length;
+  return more > 0 ? [...lines, `and ${more} more`] : lines;
+}
+
 export function VaultCatalogEntry({ doc, programId, uses }: { doc: VaultCatalogDoc; programId: string; uses?: ProjectUses }) {
   const elsewhere = doc.projectId !== programId;
   const placement = vaultPlacement(doc);
@@ -49,6 +61,9 @@ export function VaultCatalogEntry({ doc, programId, uses }: { doc: VaultCatalogD
     <div className="pf-library-detail">
       {placement && <span className="pf-sel-m" style={{ display: 'block' }} data-testid="source-placement">{placement}</span>}
       <span className="pf-sel-m" style={{ display: 'block' }} data-testid="source-lineage">{vaultLineage(doc)}</span>
+      {doc.dataset && <span className="pf-sel-m" style={{ display: 'block' }} data-testid="vault-dataset">
+        {doc.dataset.format === 'define-xml' ? 'Describes' : 'Dataset'}: {datasetLines(doc.dataset).join('; ')}
+      </span>}
       <GradeBasis grade={doc.grade} />
       <UseVaultAction doc={doc} uses={uses} />
       <p className="pf-sel-m">{elsewhere

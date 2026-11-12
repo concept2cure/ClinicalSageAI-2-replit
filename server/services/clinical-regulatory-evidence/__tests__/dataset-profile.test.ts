@@ -101,6 +101,12 @@ describe('detectCdisc', () => {
     expect(detectCdisc(['STUDYID', 'USUBJID', 'TRT01P', 'TRT01A', 'SAFFL', 'ITTFL']).domain).toBe('ADSL');
   });
 
+  it('recognises ADaM occurrence data (ADAE) by its analysis treatment and the event term, never an SDTM AE domain', () => {
+    expect(detectCdisc(['STUDYID', 'SITEID', 'USUBJID', 'TRTA', 'TRTAN', 'AETERM', 'AEDECOD', 'AESEV', 'TRTEMFL'])).toMatchObject({ standard: 'ADaM', domain: 'OCCDS' });
+    expect(detectCdisc(['STUDYID', 'DOMAIN', 'USUBJID', 'AETERM', 'AEDECOD', 'AESTDTC'])).toMatchObject({ standard: 'SDTM', domain: 'AE' });
+    expect(detectCdisc(['USUBJID', 'AETERM'])).toMatchObject({ standard: null });
+  });
+
   it('names no domain it cannot see in the variables', () => {
     expect(detectCdisc(['STUDYID', 'DOMAIN', 'USUBJID'])).toMatchObject({ standard: 'SDTM', domain: null });
   });
