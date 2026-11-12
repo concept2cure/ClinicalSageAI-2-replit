@@ -1,0 +1,51 @@
+// Walk 2, flow 5e: the administrator answers the access request; then a sixth person on five seats.
+const c = require('./lib.cjs');
+const sub = (m) => c.psql(`select module_id, enabled, enabled_by, disabled_by from module_subscriptions where organization_id=7 and module_id='${m}'`);
+const reqs = () => c.psql(`select id, module_id, requested_by, status, decided_by, coalesce(decision_reason,'') from module_access_requests where organization_id=7 order by id`);
+const audit = (n = 2) => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(new_values::text, 330) from audit_logs where tenant_id=7 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (/\/api\/(module-|tenant-users)/.test(r.url()) && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 500); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} seat=${r.headers()['x-seat-state'] || ''} ${r.headers()['x-seats-consumed'] || ''}/${r.headers()['x-seats-purchased'] || ''} body=${(r.request().postData() || '').slice(0, 160)} -> ${b.replace(/token=[^"&\s]+/g, 'token=<redacted>')}`); } });
+  await c.step('Access requests: decline needs a reason? approve needs a reason?', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/access-requests`, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    await page.getByRole('button', { name: /^Decline Quality/ }).click(); await c.sleep(900);
+    const d = page.locator('[role=dialog], [role=alertdialog]').first();
+    s.notes.push('decline form: ' + (await d.innerText().catch(() => '(none)')).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-52-access-request-decline-form.png');
+    await d.getByRole('button', { name: /cancel|close/i }).first().click().catch(() => page.keyboard.press('Escape')); await c.sleep(500);
+    await page.getByRole('button', { name: /^Approve Quality/ }).click(); await c.sleep(900);
+    s.notes.push('approve form: ' + (await d.innerText().catch(() => '(none)')).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-52-access-request-approve-form.png');
+    const submit = d.getByRole('button', { name: /approve|confirm/i }).last();
+    s.notes.push('submit enabled with nothing typed: ' + await submit.isEnabled().catch(() => 'n/a'));
+    const ta = d.locator('textarea').first(); if (await ta.count()) await ta.fill('F1 walk 2: the SOP owner needs Quality for the periodic review');
+    const yes = d.locator('input[type=text], input:not([type])').last(); if (await yes.count()) await yes.fill('yes').catch(() => {});
+    calls.length = 0; await submit.click(); await c.sleep(2500);
+    s.notes.push('requests: ' + JSON.stringify(calls));
+    s.notes.push('screen: ' + (await c.mainText(page, 900)).replace(/\n+/g, ' | '));
+    s.notes.push('db request: ' + reqs() + ' | subscription: ' + sub('quality'));
+    s.notes.push('audit:\n' + audit(2));
+    await c.shot(page, 'w2-52-access-request-approved.png');
+  });
+  await c.step('five seats, five members: invite a sixth person', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await page.getByRole('button', { name: 'Invite member' }).click(); await c.sleep(600);
+    const d = page.locator('[role=dialog]').first();
+    s.notes.push('what the invite form says about seats: ' + (await d.innerText()).split('\n').filter((l) => /seat/i.test(l)).join(' | '));
+    await d.getByLabel('Full name').fill('Sasha Sixth'); await d.getByLabel('Email').fill('walk2.sixth@example.test'); await d.getByLabel('Role').selectOption('viewer');
+    calls.length = 0; await d.getByRole('button', { name: 'Send invite' }).click(); await c.sleep(2500);
+    s.notes.push('requests: ' + JSON.stringify(calls).slice(0, 700));
+    const t = await c.mainText(page, 20000);
+    s.notes.push('after: ' + t.slice(Math.max(0, t.indexOf('Invitation handover')), Math.max(0, t.indexOf('Invitation handover')) + 300).replace(/\n+/g, ' | '));
+    s.notes.push('toast: ' + (await page.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 300));
+    s.notes.push('members now: ' + c.psql('select count(*) from organization_users where organization_id=7') + ' of ' + c.psql('select max_users from organizations where id=7'));
+    await page.goto(`${c.BASE}/concept2cure/features`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    s.notes.push('features strip: ' + (await c.mainText(page, 900)).replace(/\n+/g, ' | ').slice(300, 520));
+    await c.shot(page, 'w2-53-features-seats-over.png');
+    await page.goto(`${c.BASE}/concept2cure/licensing`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    s.notes.push('licensing strip: ' + (await c.mainText(page, 700)).replace(/\n+/g, ' | ').slice(250, 560));
+  });
+  c.report(); c.save('w2-21-approve-seats');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

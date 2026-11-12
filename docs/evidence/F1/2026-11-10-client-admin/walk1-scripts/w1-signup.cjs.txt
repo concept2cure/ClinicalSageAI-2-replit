@@ -1,0 +1,106 @@
+// Flow 1a: self-serve sign-up, field validation, as a person types.
+const c = require('../walk/common.cjs');
+const PW = process.env.WALK_PASSWORD;
+const EMAIL = process.env.W1_EMAIL || 'avery.lind@northgate-bio.example.test';
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'signup' });
+  const reqs = [];
+  page.on('request', (r) => { if (r.url().includes('/api/auth/signup') && r.method() === 'POST') reqs.push(Object.keys(JSON.parse(r.postData() || '{}'))); });
+  const resps = [];
+  page.on('response', async (r) => { if (r.url().includes('/api/auth/') && r.request().method() === 'POST') { let b = ''; try { b = (await r.text()).slice(0, 600); } catch {} resps.push(`${r.status()} ${r.url().replace(c.BASE, '')} ${b.replace(/"token":"[^"]+"/, '"token":"<redacted>"')}`); } });
+
+  await c.step('signup: empty Continue', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/signup', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await c.sleep(400);
+    s.notes.push(await c.textOf(page, 'body').then(t => t.split('Create your account')[1]?.slice(0, 700)));
+    await c.shot(page, 'w1-03-signup-empty-errors.png', { fullPage: true });
+  });
+  await c.step('signup: real typing keeps focus', async (s) => {
+    await page.click('#firstName');
+    await page.keyboard.type('Avery', { delay: 30 });
+    const v = await page.inputValue('#firstName');
+    const active = await page.evaluate(() => document.activeElement && document.activeElement.id);
+    s.notes.push(`typed "Avery" with the keyboard; field holds "${v}"; focus is on "${active}"`);
+    if (v !== 'Avery') return { outcome: 'defect' };
+  });
+  await c.step('signup: invalid values', async (s) => {
+    await page.fill('#firstName', 'Avery'); await page.fill('#lastName', 'Lind');
+    await page.fill('#email', 'not-an-address'); await page.fill('#password', 'short'); await page.fill('#confirmPassword', 'different');
+    await page.fill('#jobTitle', '');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(400);
+    s.notes.push(await c.textOf(page, 'body').then(t => t.split('Create your account')[1]?.slice(0, 700)));
+    await c.shot(page, 'w1-04-signup-invalid.png', { fullPage: true });
+  });
+  await c.step('signup: weak 12-char password passes step 1?', async (s) => {
+    await page.fill('#email', EMAIL); await page.fill('#password', 'aaaaaaaaaaaa'); await page.fill('#confirmPassword', 'aaaaaaaaaaaa');
+    await page.fill('#jobTitle', 'Head of Regulatory Affairs');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(600);
+    s.notes.push(await c.textOf(page, 'body').then(t => t.split('Create your account')[1]?.slice(0, 900)));
+    await c.shot(page, 'w1-05-signup-org-step.png', { fullPage: true });
+    const fields = await page.locator('input:visible, select:visible').evaluateAll(els => els.map(e => ({ tag: e.tagName, id: e.id, ph: e.getAttribute('placeholder'), opts: e.tagName === 'SELECT' ? [...e.options].map(o => o.textContent) : undefined })));
+    s.notes.push(JSON.stringify(fields));
+  });
+  await c.step('signup: organization step empty', async (s) => {
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(400);
+    s.notes.push(await c.textOf(page, 'body').then(t => t.split('Create your account')[1]?.slice(0, 900)));
+    await c.shot(page, 'w1-06-signup-org-errors.png', { fullPage: true });
+  });
+  await c.step('signup: organization step filled -> plan step', async (s) => {
+    await page.fill('#organization', 'Northgate Biologics');
+    await page.selectOption('#organizationType', 'biotech');
+    await page.fill('#country', 'Atlantis');
+    await page.selectOption('#useCase', 'ind');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(600);
+    s.notes.push(await c.textOf(page, 'body').then(t => t.split('Create your account')[1]?.slice(0, 1200)));
+    await c.shot(page, 'w1-07-signup-plan.png', { fullPage: true });
+  });
+  await c.step('signup: plan -> agreements', async (s) => {
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(600);
+    await c.shot(page, 'w1-08-signup-agreements.png', { fullPage: true });
+    const boxes = await page.locator('input[type=checkbox]').evaluateAll(els => els.map(e => e.disabled));
+    s.notes.push('checkbox disabled states before scrolling: ' + JSON.stringify(boxes));
+    // scroll both documents to the end
+    await page.locator('div.h-40.overflow-y-auto').evaluateAll(els => els.forEach(e => { e.scrollTop = e.scrollHeight; e.dispatchEvent(new Event('scroll', { bubbles: true })); }));
+    await c.sleep(400);
+    const boxes2 = await page.locator('input[type=checkbox]').evaluateAll(els => els.map(e => e.disabled));
+    s.notes.push('after scrolling: ' + JSON.stringify(boxes2));
+    for (const cb of await page.locator('input[type=checkbox]').all()) await cb.check();
+    // the AI Model Improvement toggle
+    const toggle = page.locator('button.relative.w-10');
+    s.notes.push('AI toggle accessible name: ' + JSON.stringify(await toggle.evaluate(e => ({ aria: e.getAttribute('aria-label'), role: e.getAttribute('role'), pressed: e.getAttribute('aria-pressed'), checked: e.getAttribute('aria-checked'), type: e.getAttribute('type') }))));
+    await toggle.click(); await c.sleep(200);
+    await c.shot(page, 'w1-09-signup-agreements-accepted.png', { fullPage: true });
+  });
+  await c.step('signup: Create account with weak password', async (s) => {
+    await page.getByRole('button', { name: /Create account|Start/i }).click(); await c.sleep(2500);
+    s.notes.push('POST body keys: ' + JSON.stringify(reqs));
+    s.notes.push('responses: ' + JSON.stringify(resps));
+    s.notes.push(await c.textOf(page, 'body').then(t => t.split(/Create your account/)[1]?.slice(0, 1200) || t.slice(0, 1200)));
+    await c.shot(page, 'w1-10-signup-weak-password-refused.png', { fullPage: true });
+  });
+  await c.step('signup: strong password, submit', async (s) => {
+    // back on step 1 if the policy refused
+    if (await page.locator('#password').count()) {
+      await page.fill('#password', PW); await page.fill('#confirmPassword', PW);
+      await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(400);
+      s.notes.push('org step retained: ' + await page.inputValue('#organization').catch(() => '(not on org step)'));
+      await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(400);
+      await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(400);
+      const boxes = await page.locator('input[type=checkbox]').evaluateAll(els => els.map(e => ({ d: e.disabled, c: e.checked })));
+      s.notes.push('agreements on return: ' + JSON.stringify(boxes));
+      await page.locator('div.h-40.overflow-y-auto').evaluateAll(els => els.forEach(e => { e.scrollTop = e.scrollHeight; e.dispatchEvent(new Event('scroll', { bubbles: true })); }));
+      await c.sleep(300);
+      for (const cb of await page.locator('input[type=checkbox]').all()) await cb.check();
+    }
+    resps.length = 0;
+    await page.getByRole('button', { name: /Create account|Start/i }).click(); await c.sleep(3500);
+    s.notes.push('responses: ' + JSON.stringify(resps));
+    s.notes.push(await c.textOf(page, 'body').then(t => t.slice(-1500)));
+    await c.shot(page, 'w1-11-signup-submitted.png', { fullPage: true });
+  });
+  console.log(JSON.stringify(c.log.steps.map(s => ({ n: s.name, o: s.outcome, e: s.error, http: s.http, console: s.console, notes: s.notes })), null, 1));
+  c.save('w1-signup');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

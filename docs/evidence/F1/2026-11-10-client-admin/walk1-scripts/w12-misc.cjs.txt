@@ -1,0 +1,40 @@
+// Remaining desktop checks as the administrator of Northgate Biologics GmbH.
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  const A = (m, u, b) => L.api(page, m, u, b).then(r => `${r.status} ${JSON.stringify(r.body).slice(0, 260)}`);
+  note('own role via the API (PATCH /api/tenant-users/6/2 -> member)', await A('PATCH', '/api/tenant-users/6/2', { role: 'member', reason: 'administrator tries to demote themselves' }));
+  note('own removal via the API (DELETE /api/tenant-users/6/2)', await A('DELETE', '/api/tenant-users/6/2', { reason: 'administrator tries to remove themselves' }));
+  note('own QMS designation via the API', await A('PUT', '/api/tenant-users/6/2/qms-approver', { designated: true, reason: 'administrator tries to designate themselves' }));
+  note('role outside the list (owner)', await A('PATCH', '/api/tenant-users/6/11', { role: 'owner', reason: 'a role the form does not offer' }));
+  note('role outside the list (super_admin)', await A('PATCH', '/api/tenant-users/6/11', { role: 'super_admin', reason: 'a role the form does not offer' }));
+  note('invite with a role outside the list', await A('POST', '/api/tenant-users', { name: 'Role Probe', email: 'role.probe@northgate-bio.example.test', role: 'super_admin' }));
+  note('role change with no reason', await A('PATCH', '/api/tenant-users/6/11', { role: 'manager' }));
+  note('removal with no reason', await A('DELETE', '/api/tenant-users/6/11', {}));
+  // Home after the team exists
+  await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('home setup', (await page.locator('[data-testid=home-setup]').innerText().catch(() => '(gone)')).replace(/\n/g, ' | '));
+  await page.getByRole('button', { name: /Create your first project/ }).first().click(); await L.sleep(1500);
+  note('home step 3 opens', `${page.url()} | ${(await L.textOf(page, 'main')).slice(0, 160).replace(/\n/g, ' | ')}`);
+  await L.shot(page, 'w1-99-home-step3-new-project.png');
+  // audit entry detail
+  await page.goto(L.BASE + '/concept2cure/audit-trail', { waitUntil: 'networkidle' }); await L.sleep(2500);
+  const rows = page.locator('button.ct-row');
+  const idx = await rows.evaluateAll(els => els.findIndex(e => /Member Role Changed/.test(e.innerText)));
+  await rows.nth(idx).click(); await L.sleep(1200);
+  const t = await L.textOf(page, 'body');
+  note('role-change entry detail', t.slice(t.indexOf('Entry detail') - 60, t.indexOf('Entry detail') + 900).replace(/\n/g, ' | '));
+  await page.getByText('Entry detail').first().scrollIntoViewIfNeeded().catch(() => {});
+  await L.shot(page, 'w1-82-audit-entry-role-changed.png');
+  // set up from a document
+  await page.goto(L.BASE + '/concept2cure/onboarding-ingest', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  note('onboarding-ingest', `${page.url()} | ${(await L.textOf(page, 'main')).slice(0, 900).replace(/\n/g, ' | ')}`);
+  await L.shot(page, 'w1-100-onboarding-ingest.png');
+  // legal pages named on the sign-up form
+  for (const p of ['/concept2cure/legal/terms', '/concept2cure/legal/privacy']) { await page.goto(L.BASE + p, { waitUntil: 'networkidle' }); await L.sleep(1200); note(`open ${p}`, `${page.url()} | ${(await L.textOf(page, 'body')).slice(0, 200).replace(/\n/g, ' | ')}`); }
+  await L.shot(page, 'w1-101-legal-terms-address.png');
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

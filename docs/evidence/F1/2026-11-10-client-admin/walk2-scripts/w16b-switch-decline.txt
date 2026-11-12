@@ -1,0 +1,64 @@
+// Walk 2, flow 4c: "Switch organisation" looked at closely; and the decline confirmed.
+const c = require('./lib.cjs');
+const dlg = (page) => page.locator('[role=dialog]').first();
+async function openAccount(page, name) {
+  await page.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1000);
+  await page.locator('button', { hasText: name }).first().click(); await c.sleep(500);
+  await page.locator('[role=menu]').getByText('Account', { exact: true }).first().click(); await c.sleep(1800);
+}
+(async () => {
+  const browser = await c.chromium.launch();
+  const admin = (await c.pageFor(browser, 'w2admin', 'walk2.admin@example.test')).page;
+  const calls = []; admin.on('response', async (r) => { if (r.url().includes('/api/') && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 300); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} ${b.replace(/"(token|accessToken|refreshToken)":"[^"]+"/g, '"$1":"<redacted>"')}`); } });
+  await c.step('switch organisation: every step the screen asks for', async (s) => {
+    await openAccount(admin, 'Wanda Walker');
+    const d = dlg(admin); const sel = d.getByLabel('Organisation to open');
+    const o = await sel.locator('option').allInnerTexts(); await sel.selectOption({ label: o.find((x) => /Walk Two/.test(x)) });
+    await sel.scrollIntoViewIfNeeded(); await c.sleep(300);
+    await c.shot(admin, 'w2-45-switch-org-selected.png');
+    calls.length = 0;
+    await d.getByRole('button', { name: 'Switch organisation' }).click(); await c.sleep(2500);
+    const t = await dlg(admin).innerText().catch(() => '(dialog gone)');
+    s.notes.push('after the first click: ' + t.slice(Math.max(0, t.indexOf('Switch organisation')), Math.max(0, t.indexOf('Switch organisation')) + 700).replace(/\n+/g, ' | '));
+    s.notes.push('requests: ' + JSON.stringify(calls));
+    s.notes.push('buttons: ' + JSON.stringify(await dlg(admin).locator('button:visible').evaluateAll(els => els.map(e => e.textContent.trim().slice(0, 50)))));
+    await c.shot(admin, 'w2-45-switch-org-after-click.png');
+    const confirm = dlg(admin).getByRole('button', { name: /confirm|switch to|yes|continue/i }).first();
+    if (await confirm.count()) {
+      s.notes.push('second control: ' + await confirm.innerText());
+      calls.length = 0; await confirm.click(); await c.sleep(4500);
+      s.notes.push('requests: ' + JSON.stringify(calls));
+    }
+    s.notes.push('now: url ' + admin.url() + ' | ' + (await admin.locator('button', { hasText: 'Wanda Walker' }).first().innerText().catch(() => '')).replace(/\n+/g, ' | '));
+    const me = await c.api(admin, 'GET', '/api/users/me'); s.notes.push('me: org ' + me.body?.organizationName + ' roles ' + JSON.stringify(me.body?.roles));
+    await c.shot(admin, 'w2-45-switch-org-result.png');
+    const adm = await c.api(admin, 'GET', '/api/mdx/admin'); s.notes.push('GET /api/mdx/admin (reviewer here, admin there): ' + adm.status + ' ' + JSON.stringify(adm.body).slice(0, 120));
+    s.notes.push('audit: ' + c.psql(`select tenant_id, action, to_char(occurred_at,'HH24:MI:SS'), left(new_values::text, 220) from audit_logs where user_id=3 order by occurred_at desc limit 3`));
+  });
+  await c.step('switch back to the seeded organisation', async (s) => {
+    await openAccount(admin, 'Wanda Walker');
+    const d = dlg(admin); const sel = d.getByLabel('Organisation to open');
+    const o = await sel.locator('option').allInnerTexts(); s.notes.push('options: ' + JSON.stringify(o));
+    const target = o.find((x) => /Concept2Cure Therapeutics/.test(x) && !/current/.test(x));
+    if (!target) { s.notes.push('already in the seeded organisation'); return; }
+    await sel.selectOption({ label: target });
+    await d.getByRole('button', { name: 'Switch organisation' }).click(); await c.sleep(2500);
+    const confirm = dlg(admin).getByRole('button', { name: /confirm|switch to|yes|continue/i }).first();
+    if (await confirm.count()) { await confirm.click(); await c.sleep(4500); }
+    s.notes.push('now: ' + (await admin.locator('button', { hasText: 'Wanda Walker' }).first().innerText().catch(() => '')).replace(/\n+/g, ' | '));
+  });
+  const member = (await c.pageFor(browser, 'w2seedmember', 'walk2.member@example.test')).page;
+  await c.step('decline, confirmed', async (s) => {
+    await openAccount(member, 'Miles Member');
+    const d = dlg(member);
+    await d.getByRole('button', { name: /^Decline/ }).first().click(); await c.sleep(800);
+    await c.shot(member, 'w2-44-account-invitation-decline-confirm.png');
+    await d.getByRole('button', { name: 'Confirm decline' }).click(); await c.sleep(2500);
+    const t2 = await dlg(member).innerText();
+    s.notes.push('after: ' + t2.slice(t2.indexOf('Invitations'), t2.indexOf('Reporting role')).replace(/\n+/g, ' | '));
+    s.notes.push('invitations: ' + c.psql(`select id, organization_id, email, role, status, responded_at is not null from organization_invitations order by id`));
+    s.notes.push('audit (org 7): ' + c.psql(`select action, actor_id, left(new_values::text, 220) from audit_logs where tenant_id=7 order by occurred_at desc limit 1`));
+  });
+  c.report(); c.save('w2-16b-switch-decline');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -1,0 +1,25 @@
+// Walk 2, flow 1: the Admin console, each tab, read as the seeded administrator (read-only).
+const c = require('./common.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page, context } = await c.newPage(browser, { who: 'owner' });
+  await c.signIn(page, 'jm.smith@concept2cure.pro');
+  await context.storageState({ path: c.SCRATCH + '/walk2/.state-owner.json' });
+  await c.step('admin console opens', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    s.notes.push(await c.textOf(page));
+    await c.shot(page, 'w2-01-admin-members-1440.png');
+  });
+  for (const [id, label] of [['roles', 'Roles + scopes'], ['sso', 'SSO + provisioning'], ['apikeys', 'API keys'], ['settings', 'Settings']]) {
+    await c.step(`tab: ${label}`, async (s) => {
+      await page.getByRole('tab', { name: label }).or(page.getByRole('button', { name: label })).first().click();
+      await c.sleep(2500);
+      s.notes.push(await page.locator('main').first().innerText().then(t => t.replace(/\n{2,}/g, '\n').slice(0, 9000)));
+      await c.shot(page, `w2-01-admin-${id}-1440.png`, { fullPage: true });
+      s.notes.push('overflowX ' + await c.overflowX(page));
+    });
+  }
+  for (const s of c.log.steps) { console.log('=====', s.name, s.outcome, s.error || ''); console.log('HTTP', JSON.stringify(s.http), 'CONSOLE', JSON.stringify(s.console)); console.log(s.notes.join('\n')); }
+  c.save('w2-01-admin-tabs');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

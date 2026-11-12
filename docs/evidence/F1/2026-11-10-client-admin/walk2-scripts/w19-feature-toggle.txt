@@ -1,0 +1,59 @@
+// Walk 2, flow 5c: turn a feature off and on (own organisation), what a member then sees, and requesting access.
+const c = require('./lib.cjs');
+const sub = (m) => c.psql(`select module_id, enabled, disabled_at is not null, disabled_by, enabled_by, left(coalesce(metadata::text,''),200) from module_subscriptions where organization_id=7 and module_id='${m}'`);
+const audit = (n = 2) => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(coalesce(old_values::text,''),120), left(new_values::text, 300) from audit_logs where tenant_id=7 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (/\/api\/module-/.test(r.url()) && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 400); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} body=${(r.request().postData() || '').slice(0, 200)} -> ${b}`); } });
+  const open = async () => { await page.goto(`${c.BASE}/concept2cure/features`, { waitUntil: 'networkidle' }); await c.sleep(2200); await page.getByRole('button', { name: /^Admin controls/ }).click(); await c.sleep(1200); };
+  await c.step('turn "Quality" off', async (s) => {
+    await open();
+    const sw = page.getByRole('switch', { name: 'Disable Quality' }); await sw.scrollIntoViewIfNeeded();
+    calls.length = 0; await sw.click(); await c.sleep(1500);
+    const dlg = page.locator('[role=dialog], [role=alertdialog]').first();
+    if (await dlg.count()) {
+      s.notes.push('dialog: ' + (await dlg.innerText()).replace(/\n+/g, ' | '));
+      await c.shot(page, 'w2-51-feature-off-dialog.png');
+      await dlg.getByRole('button', { name: /Confirm and log/ }).click({ timeout: 2000 }).catch(() => s.notes.push('Confirm is disabled with no reason'));
+      await dlg.locator('textarea').fill('short'); await dlg.locator('input').last().fill('yes');
+      s.notes.push('5-character reason: confirm enabled = ' + await dlg.getByRole('button', { name: /Confirm and log/ }).isEnabled());
+      await dlg.locator('textarea').fill('F1 walk 2: turn a feature off and on to read the record');
+      s.notes.push('reason given, "yes" typed: confirm enabled = ' + await dlg.getByRole('button', { name: /Confirm and log/ }).isEnabled());
+      await dlg.getByRole('button', { name: /Confirm and log/ }).click(); await c.sleep(2500);
+    } else s.notes.push('no dialog: the switch acted at once');
+    s.notes.push('requests: ' + JSON.stringify(calls));
+    s.notes.push('toast / status: ' + (await page.locator('[role=status]:visible, [role=alert]:visible').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 400));
+    s.notes.push('db: ' + sub('quality'));
+    s.notes.push('audit:\n' + audit(2));
+    await c.shot(page, 'w2-51-feature-off-after.png');
+    await page.reload({ waitUntil: 'networkidle' }); await c.sleep(2500);
+    s.notes.push('rail after reload: ' + (await page.locator('nav, aside').first().innerText()).replace(/\n+/g, ' | ').slice(0, 400));
+    s.notes.push('seats / projects strip: ' + (await c.mainText(page, 700)).replace(/\n+/g, ' | ').slice(250, 500));
+  });
+  const member = (await c.pageFor(browser, 'w2member', 'walk2.member2@example.test')).page;
+  await c.step('a member opens Quality while it is off, and asks for access', async (s) => {
+    await member.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await c.shot(member, 'w2-51-member-rail-quality-off.png');
+    const q = member.locator('nav, aside').getByText('Quality', { exact: true }).first();
+    await q.click().catch(() => {}); await c.sleep(2500);
+    s.notes.push('url ' + member.url());
+    const dlg = member.locator('[role=dialog], [role=alertdialog]').first();
+    s.notes.push('screen: ' + ((await dlg.count()) ? '[dialog] ' + (await dlg.innerText()) : await c.mainText(member, 900)).replace(/\n+/g, ' | ').slice(0, 900));
+    await c.shot(member, 'w2-51-member-quality-off.png');
+    const ask = member.getByRole('button', { name: /request access|ask (an|your) admin|request/i }).first();
+    if (await ask.count()) {
+      await ask.click(); await c.sleep(1200);
+      const d2 = member.locator('[role=dialog], [role=alertdialog]').first();
+      s.notes.push('request form: ' + (await d2.innerText().catch(() => '')).replace(/\n+/g, ' | ').slice(0, 500));
+      const why = d2.locator('textarea, input[type=text]').first(); if (await why.count()) await why.fill('I maintain our SOP register and need Quality for the periodic review.');
+      await c.shot(member, 'w2-51-member-request-form.png');
+      await d2.getByRole('button', { name: /send|submit|request/i }).last().click().catch(() => {}); await c.sleep(2000);
+      s.notes.push('after sending: ' + (await member.locator('[role=status]:visible, [role=alert]:visible, [role=dialog]:visible').allInnerTexts()).filter(Boolean).join(' / ').replace(/\n+/g, ' | ').slice(0, 500));
+    } else s.notes.push('no "request access" control is offered');
+    s.notes.push('db module_access_requests: ' + c.psql(`select string_agg(column_name, ',' order by ordinal_position) from information_schema.columns where table_name='module_access_requests'`) + '\n' + c.psql(`select * from module_access_requests`).slice(0, 600));
+    const api = await c.api(member, 'GET', '/api/qms/documents'); s.notes.push('the Quality API for the member while off: GET /api/qms/documents -> ' + api.status + ' ' + JSON.stringify(api.body).slice(0, 200));
+  });
+  c.report(); c.save('w2-19-feature-toggle');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
