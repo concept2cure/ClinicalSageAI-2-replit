@@ -65,7 +65,7 @@ describe("the write-back is handed the turn's answer check", () => {
     await runStreamPostProcessing(ctx());
     await new Promise((r) => setTimeout(r, 0));
     const handed = (h.memory.mock.calls[0] as any)?.[0];
-    expect(handed?.answerCheck).toMatchObject({ engine: 'answer-check/2', claims: 3, found: 2, notFound: [{ kind: 'figure', text: '45%' }] });
+    expect(handed?.answerCheck).toMatchObject({ engine: 'answer-check/3', claims: 3, found: 2, notFound: [{ kind: 'figure', text: '45%' }] });
     expect(handed?.messages.at(-1)).toEqual({ role: 'assistant', content: 'In NCT01234567 the ORR was 45% across 212 patients.' });
   });
 });
