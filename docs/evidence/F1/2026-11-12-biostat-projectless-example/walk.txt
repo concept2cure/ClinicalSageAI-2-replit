@@ -1,0 +1,55 @@
+# The running app (npm run dev, this container's Postgres), a FRESH browser context per visit:
+# local and session storage cleared, signed in, no project ever opened in it. Home -> the rail -> Biostatistics.
+# Chromium via Playwright at 1440x900 and 390x844. The organisation's industry was recorded each time through the
+# governed route itself (PATCH /api/mdx/industry-profile, with a reason for change), never by a database write.
+# Lines are the walk script's own output. "API >=400" and "console errors" lines are printed only when there are any.
+
+## BEFORE - trunk's Biostatistics.tsx, the organisation recorded as IVD diagnostics
+[before-ivd] signed in: org 2, roles ["admin","user"]
+[before-ivd] PATCH /api/mdx/industry-profile (ivd) -> HTTP 200 {"data":{"id":1,"organizationId":2,"primaryIndustry":"medical_device_diagnostics","mdxSpecialization":"ivd_diagnostics", ...
+[before-ivd 1440] url=/concept2cure/biostatistics h1="Biostatistics" projectOpen=false
+[before-ivd 1440] pressed example: ["Pivotal OS (survival)"]
+[before-ivd 1440] note: Worked example — Pivotal OS (survival), not your study. Choose your project’s study design on the left and the engine sizes your own.
+[before-ivd 1440] document: kind="Sample Size Rationale" meta="Deterministic engine, version 1.0.0 · draft · worked example, not your study" chars=2087
+[before-ivd 390] url=/concept2cure/biostatistics h1="Biostatistics" projectOpen=false
+[before-ivd 390] pressed example: ["Pivotal OS (survival)"]
+[before-ivd 390] note: Worked example — Pivotal OS (survival), not your study. Choose your project’s study design on the left and the engine sizes your own.
+
+## AFTER - the change, the same organisation (IVD diagnostics)
+[after-ivd 1440] url=/concept2cure/biostatistics h1="Biostatistics" projectOpen=false
+[after-ivd 1440] pressed example: ["Diagnostic accuracy"]
+[after-ivd 1440] note: Worked example — Diagnostic accuracy, not your study. Choose a design under Study design, or open a project, and the engine sizes your own.
+[after-ivd 1440] document: kind="Sample Size Rationale" meta="Deterministic engine, version 1.0.0 · draft · worked example, not your study" chars=2587
+[after-ivd 390] pressed example: ["Diagnostic accuracy"]
+[after-ivd 390] note: Worked example — Diagnostic accuracy, not your study. Choose a design under Study design, or open a project, and the engine sizes your own.
+
+## AFTER - the organisation recorded as medical device (not IVD)
+[after-device] PATCH /api/mdx/industry-profile (device) -> HTTP 200 {"data":{"id":1,"organizationId":2,"primaryIndustry":"medical_device_diagnostics","mdxSpecialization":"medical_device", ...
+[after-device 1440] pressed example: ["Diagnostic accuracy"]
+[after-device 390] pressed example: ["Diagnostic accuracy"]
+
+## AFTER - the organisation recorded as biotech / pharma (the truthful record for this demo tenant; left in place)
+[after-biotech] PATCH /api/mdx/industry-profile (biotech) -> HTTP 200 {"data":{"id":1,"organizationId":2,"primaryIndustry":"biotech_pharma","mdxSpecialization":null, ...
+[after-biotech 1440] pressed example: ["Pivotal OS (survival)"]
+[after-biotech 1440] note: Worked example — Pivotal OS (survival), not your study. Choose a design under Study design, or open a project, and the engine sizes your own.
+[after-biotech 390] pressed example: ["Pivotal OS (survival)"]
+
+## AFTER - nothing recorded (the route answered {"data":null}); walked before the note's final wording
+[after-noprofile] GET /api/mdx/industry-profile -> HTTP 200 {"data":null}
+[after-noprofile 1440] pressed example: ["Pivotal OS (survival)"]
+[after-noprofile 390] pressed example: ["Pivotal OS (survival)"]
+
+## AFTER - a project OPEN (Home -> [Demo · Biotech] C2C-101 -> the rail -> Biostatistics)
+[project-open] project row on Home: true
+[project-open] after opening the project: url=/concept2cure/project-home projectOpen=true productType=biologic
+[project-open] url=/concept2cure/biostatistics projectOpen=true
+[project-open] pressed example chips: ["[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis"]   <- the project's own design, not an example
+[project-open] note: (no example note: the page is on the project's own design)
+[project-open] document meta: Deterministic engine, version 1.0.0 · draft · IND: 5.3.5.1 (M5) · required — 5.3.5.1 Study report / protocol of controlled study (protocol appendix 16.1.1)
+[project-open] reads of /api/mdx/industry-profile made by this visit: 0
+
+## Not this change: five 5xx on the PROJECT PAGE of this container, none on Biostatistics
+500 GET /api/mdx/qms/documents || 503 GET /api/concept2cure/projects/<id>/agency-communications || 500 GET /api/project-sections/summary || 500 GET /api/project-sections/timeline || 503 GET /api/c2c/projects/<id>/source-changes
+The server log names the cause: relation "project_sections" does not exist, relation "audit.tamper_proof_log" does not
+exist, column "expires_at" does not exist. This container's database was provisioned on 2026-11-09 and has not had the
+migration set since (it stops here on the missing vector extension). The Biostatistics visits above had no response >= 400.
