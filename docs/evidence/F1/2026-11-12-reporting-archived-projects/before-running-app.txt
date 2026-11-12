@@ -1,0 +1,6 @@
+# node recheck.mjs, on the running app at a9b5af1873 (RLS and launch scope enforced), 2026-11-12
+created 201 0bcade16-900e-47ab-8bc7-040f7845da33
+before archive active {"picker":true,"count":8,"board":true}
+archive 200 {"ok":true,"projectId":"0bcade16-900e-47ab-8bc7-040f7845da33"}
+projects says archived · default list has it: false
+after archive {"picker":true,"count":8,"board":true}
