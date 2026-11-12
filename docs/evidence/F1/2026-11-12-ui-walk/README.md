@@ -118,8 +118,12 @@ the second person; `shots/after-*.png`. Tests red first: `06-cmc-screens-red-gre
 | A signed batch rejection never showed | The row reads the signed decision (`release_status`) before the working status, and adopts the answer where the route puts it (`data.batchRecord`). A released batch, whose status becomes `completed`, had read "Pending" too. The control is named "Disposition" and its button "Sign the disposition" (`cmcBatch.ts`, `CmcModule.tsx`) | Rejected under signature by the second person: "Batch … rejected · signed 2efad9f6a080…"; the row reads Rejected with no disposition control, and the same after a reload (`after-b2-*`) |
 | A placement showed no result | The verdict is kept with the sequence it was made into and shown again when the board remounts the control. It says what was written: "Already placed. Nothing was written. All 21 sections in sequence 0001 are unchanged."; "1 section filed again; 20 unchanged, in sequence 0001" (`CmcPlaceIntoSubmission.tsx`) | On the fully approved programme of the OQ run, a repeat from the board (`after-b3-01`) |
 
-Still open on the CMC screens, in files this session holds: the method form's per-characteristic ICH Q2 evidence; the
-wording when an authenticator code is missing; a hint on the QC sample type; stale sections on the Overview. In
+| The QC sample type offered tokens ("raw-material", "in-process"…) and no word said which is drug substance evidence | Each option says where a result of it is filed, read from the shared rule the write-through applies (`qcSampleTypeOptions`, `cmcRegisterForms.ts`); the stored values are unchanged, and the field is full width so the words fit | "Finished product (drug product, §3.2.P.5.4)", "Raw material (drug substance, §3.2.S.4.4)", "Reference standard (not a batch analysis)" (`after-b12-01`; `09-qc-sample-type-red-green.txt`) |
+
+The wording when an authenticator code is missing or wrong is repaired below ("A refused signature says why").
+
+Still open on the CMC screens, in files this session holds: the method form's per-characteristic ICH Q2 evidence;
+stale sections on the Overview. In
 `CmcModule3Build.tsx` (held by the screen-work session): the remount itself, "21 ready to compile" after a compile,
 and finding types shown as stored tokens.
 

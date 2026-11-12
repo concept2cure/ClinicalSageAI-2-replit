@@ -33,7 +33,7 @@
  * is a section Module 3 composition has nothing to say about.
  */
 
-import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
+import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES, FINISHED_PRODUCT, NON_BATCH_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
 import type { C2CFormConfig, C2CFormFieldOption } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
@@ -209,6 +209,34 @@ export function methodBody(v: Record<string, string>, projectId?: string): Analy
    mutability is a detail of C2CFormConfig. */
 export const QC_SAMPLE_TYPES: string[] = [...SHARED_QC_SAMPLE_TYPES];
 
+const SAMPLE_TYPE_WORDS: Record<string, string> = {
+  'raw-material': 'Raw material',
+  'in-process': 'In-process',
+  'finished-product': 'Finished product',
+  stability: 'Stability',
+  'reference-standard': 'Reference standard',
+  'cleaning-verification': 'Cleaning verification',
+};
+
+/**
+ * Each sample type with where a result of it is filed, read from the shared
+ * rule the write-through applies (cmc-write-through.ts: a finished-product
+ * result is drug product batch analyses, the other recognised types drug
+ * substance, and the two non-batch types neither). Walked 2026-11-12: the
+ * select offered "raw-material", "in-process"… and no word said which of them
+ * is drug substance evidence. The stored values are unchanged.
+ */
+export function qcSampleTypeOptions(): C2CFormFieldOption[] {
+  return QC_SAMPLE_TYPES.map((value) => {
+    const filed = NON_BATCH_SAMPLE_TYPES.includes(value)
+      ? 'not a batch analysis'
+      : value === FINISHED_PRODUCT
+        ? 'drug product, §3.2.P.5.4'
+        : 'drug substance, §3.2.S.4.4';
+    return { value, label: `${SAMPLE_TYPE_WORDS[value] ?? value} (${filed})` };
+  });
+}
+
 export interface QcTestBody {
   sampleId: string;
   /** The batch the sample represents; capability is assessed per batch. */
@@ -236,7 +264,8 @@ export function qcTestForm(): C2CFormConfig {
     fields: [
       { key: 'sampleId', label: 'Sample ID', type: 'text', required: true, half: true, placeholder: 'e.g. S-2407-118' },
       { key: 'batchNumber', label: 'Batch', type: 'text', half: true, placeholder: 'e.g. B-24-007 — the batch this sample represents', desc: 'Batch analyses are reported by batch, and process capability is computed across batches' },
-      { key: 'sampleType', label: 'Sample type', type: 'select', options: QC_SAMPLE_TYPES, required: true, half: true, default: 'finished-product' },
+      /* Full width: each option names the section it files into, and at half width the select cut that off. */
+      { key: 'sampleType', label: 'Sample type', type: 'select', options: qcSampleTypeOptions(), required: true, default: 'finished-product' },
       { key: 'testMethod', label: 'Test method', type: 'text', required: true, default: '', placeholder: 'Method code or title, e.g. AM-014 icIEF' },
       { key: 'testDate', label: 'Test date', type: 'date', required: true, half: true },
       { key: 'passFailStatus', label: 'Result', type: 'seg', options: ['pending', 'pass', 'fail'], default: 'pending', half: true },

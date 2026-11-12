@@ -1206,3 +1206,26 @@ describe('a register that signs two states round-trips either one', () => {
     expect(statusOptionsFor(statuses, ' Completed ', 'COMPLETED')).toEqual(['COMPLETED', 'ACTIVE', 'PAUSED']);
   });
 });
+
+/* Walked 2026-11-12: the Sample type select offered "raw-material", "in-process"… and nothing said which of them is
+   drug substance evidence. The composer files a result by its sample type (cmc-write-through.ts); each option now
+   says where, from the same shared rule. */
+describe('the QC sample type says where a result is filed', () => {
+  const sampleType = () => qcTestForm().fields.find((f) => f.key === 'sampleType');
+  const labelOf = (value: string) =>
+    (sampleType()?.options as Array<{ value: string; label: string }> | undefined)?.find((o) => o.value === value)?.label;
+
+  it('keeps the register’s values, so what is stored is unchanged', () => {
+    const values = (sampleType()?.options as Array<{ value: string }>).map((o) => o.value);
+    expect(values).toEqual(['raw-material', 'in-process', 'finished-product', 'stability', 'reference-standard', 'cleaning-verification']);
+  });
+
+  it('names the section each sample type files into', () => {
+    expect(labelOf('finished-product')).toBe('Finished product (drug product, §3.2.P.5.4)');
+    expect(labelOf('raw-material')).toBe('Raw material (drug substance, §3.2.S.4.4)');
+    expect(labelOf('in-process')).toBe('In-process (drug substance, §3.2.S.4.4)');
+    expect(labelOf('stability')).toBe('Stability (drug substance, §3.2.S.4.4)');
+    expect(labelOf('reference-standard')).toBe('Reference standard (not a batch analysis)');
+    expect(labelOf('cleaning-verification')).toBe('Cleaning verification (not a batch analysis)');
+  });
+});
