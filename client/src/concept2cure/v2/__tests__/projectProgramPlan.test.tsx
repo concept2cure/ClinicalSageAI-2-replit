@@ -405,6 +405,7 @@ describe('the Assign form proposes the people who hold the task\'s job role', ()
     { name: 'Our own reg role', members: [{ userId: 19, label: 'Lee Park', active: true }] },
   ];
   const person = (form: ReturnType<typeof assignForm>) => form.fields.find(f => f.key === 'assignee')!;
+  const optionLabel = (o: string | { label: string }) => (typeof o === 'string' ? o : o.label);
 
   it('names the job role and its active holders, by the standard name only', () => {
     expect(proposedOwners('ra_lead', ROLES)).toEqual({ roleName: 'Regulatory affairs lead', holderIds: ['15'] });
@@ -415,7 +416,7 @@ describe('the Assign form proposes the people who hold the task\'s job role', ()
 
   it('lists the holders first and says so; everyone else can still be chosen', () => {
     const f = person(assignForm('Submit IND', ROSTER, 'ready', undefined, { owners: proposedOwners('ra_lead', ROLES), state: 'ready' }));
-    expect(f.options?.map(o => o.label)).toEqual(['Sam Okoye (Regulatory affairs lead)', 'Dana Ruiz', 'Lee Park']);
+    expect(f.options?.map(optionLabel)).toEqual(['Sam Okoye (Regulatory affairs lead)', 'Dana Ruiz', 'Lee Park']);
     expect(f.desc).toBe('The work breakdown gives this task to the Regulatory affairs lead.');
     expect(f.descStatus).toBe('Listed first: the person who holds that job role.');
   });
@@ -423,10 +424,10 @@ describe('the Assign form proposes the people who hold the task\'s job role', ()
   it('says when no one holds the job role, and when the job roles could not be read; never a guess', () => {
     const none = person(assignForm('Submit IND', ROSTER, 'ready', undefined, { owners: proposedOwners('ra_lead', []), state: 'ready' }));
     expect(none.descStatus).toBe('No one in your organisation holds that job role yet.');
-    expect(none.options?.map(o => o.label)).toEqual(['Dana Ruiz', 'Sam Okoye', 'Lee Park']);
+    expect(none.options?.map(optionLabel)).toEqual(['Dana Ruiz', 'Sam Okoye', 'Lee Park']);
     const unread = person(assignForm('Submit IND', ROSTER, 'ready', undefined, { owners: proposedOwners('ra_lead', []), state: 'error' }));
     expect(unread.descStatus).toBe('Who holds that job role could not be read.');
-    expect(unread.options?.map(o => o.label)).toEqual(['Dana Ruiz', 'Sam Okoye', 'Lee Park']);
+    expect(unread.options?.map(optionLabel)).toEqual(['Dana Ruiz', 'Sam Okoye', 'Lee Park']);
   });
 
   it('says nothing about a job role for a deliverable or a role the catalog does not know', () => {
