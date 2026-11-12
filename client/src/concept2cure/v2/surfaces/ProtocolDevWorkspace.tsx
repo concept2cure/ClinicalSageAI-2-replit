@@ -240,6 +240,8 @@ interface BodyProps {
    *  the pane that wrote says what it wrote. */
   onRefresh: () => void;
   onPendingChange: (pending: boolean) => void;
+  /** The open project, for a tab that chooses among its records (the IRB link). */
+  programId: string | null;
 }
 
 /**
@@ -299,7 +301,7 @@ function TabBody(props: BodyProps) {
     case 'derivation':
       return <DerivationTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
     case 'compliance': return <ComplianceTab doc={doc} />;
-    case 'irb-package': return <IrbPackageTab doc={doc} />;
+    case 'irb-package': return <IrbPackageTab doc={doc} canWrite={canWrite} programId={props.programId} onError={onError} onToast={onToast} />;
     /* Scoped to the design BOUND to this protocol. Passing nothing rendered the
        whole program's designs on one protocol's workspace. `onChanged` is the
        re-read after the tab's governed write: the design gates' findings the
@@ -445,7 +447,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
             onError={(m) => fireToast(m, 'error')}
             onToast={(m) => fireToast(m)}
             onRefresh={() => onChanged?.()}
-            onPendingChange={setSourcePending}
+            onPendingChange={setSourcePending} programId={programId}
           />
         </div>
       </div>
