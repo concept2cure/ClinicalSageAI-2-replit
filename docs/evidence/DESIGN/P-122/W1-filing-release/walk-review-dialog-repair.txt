@@ -1,0 +1,38 @@
+{
+ "desktop-buttons": 1,
+ "desktop-dialog": "Record review decision\n1.14.4.1 · Investigator's Brochure\n\nM1 · en-US\n\nReview requested \n2026-11-10 07:35:41 UTC\nNov 10, 2026, 07:35 · UTC\n\n1.14.4.1 · Investigator's Brochure\n\nNo saved content in this section.\n\n1.14.4.1 · Title page with product identifier, IB version/edition number, and date\n\nNo saved content in this section.\n\n1.14.4.1 · Summary of physical, chemical, and pharmaceutical properties and formulation\n\nNo saved content in this section.\n\n1.14.4.1 · Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME\n\nNo saved content in this section.\n\n1.14.4.1 · Summary of available clinical pharmacokinetics, safety, and efficacy data\n\nNo saved content in this section.\n\n1.14.4.1 · A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management\n\nNo saved content in this section.\n\n1.14.4.1 · Reference safety information: the expected serious adverse reactions with their frequency and nature, used to assess expectedness for expedited reporting (ICH E6(R3) Appendix A)\n\nNo saved content in this section.\n\n1.14.4.1 · Clear version control and identification of the edition supporting the current protocol\n\nNo saved content in this section.\n\n1.14.4.1 · Cross-reference to the underlying nonclinical (Module 4) and clinical (Module 5) data sources\n\nNo saved content in this section.\n\nIndependent checks\n\nNot required for this document.\n\nChecks the saved document and recorded source links without calling a model. Scientific and clinical meaning still require human review.\n\nNo independent check receipt is recorded.\n\nRun independent checks\n\nRerunning clears unrecorded finding decisions so you can review the new result.\n\nDecision\nNot stated — choose\nApprove\nRequest changes — send it back with a reason\nDecline — reject this document\nNote for the thread (optional)\n\nYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.\n\nCancel\nReload review record\nRecord decision",
+ "desktop-workKey": false,
+ "desktop-optional": true,
+ "desktop-headings": [
+  "1.14.4.1 · Investigator's Brochure",
+  "1.14.4.1 · Title page with product identifier, IB version/edition number, and date",
+  "1.14.4.1 · Summary of physical, chemical, and pharmaceutical properties and formulation",
+  "1.14.4.1 · Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME",
+  "1.14.4.1 · Summary of available clinical pharmacokinetics, safety, and efficacy data",
+  "1.14.4.1 · A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management"
+ ],
+ "desktop-overflowX": 0,
+ "desktop-rec": {
+  "http": [],
+  "console": [],
+  "pageErrors": []
+ },
+ "phone-buttons": 1,
+ "phone-dialog": "Record review decision\n1.14.4.1 · Investigator's Brochure\n\nM1 · en-US\n\nReview requested \n2026-11-10 07:35:41 UTC\nNov 10, 2026, 07:35 · UTC\n\n1.14.4.1 · Investigator's Brochure\n\nNo saved content in this section.\n\n1.14.4.1 · Title page with product identifier, IB version/edition number, and date\n\nNo saved content in this section.\n\n1.14.4.1 · Summary of physical, chemical, and pharmaceutical properties and formulation\n\nNo saved content in this section.\n\n1.14.4.1 · Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME\n\nNo saved content in this section.\n\n1.14.4.1 · Summary of available clinical pharmacokinetics, safety, and efficacy data\n\nNo saved content in this section.\n\n1.14.4.1 · A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management\n\nNo saved content in this section.\n\n1.14.4.1 · Reference safety information: the expected serious adverse reactions with their frequency and nature, used to assess expectedness for expedited reporting (ICH E6(R3) Appendix A)\n\nNo saved content in this section.\n\n1.14.4.1 · Clear version control and identification of the edition supporting the current protocol\n\nNo saved content in this section.\n\n1.14.4.1 · Cross-reference to the underlying nonclinical (Module 4) and clinical (Module 5) data sources\n\nNo saved content in this section.\n\nIndependent checks\n\nNot required for this document.\n\nChecks the saved document and recorded source links without calling a model. Scientific and clinical meaning still require human review.\n\nNo independent check receipt is recorded.\n\nRun independent checks\n\nRerunning clears unrecorded finding decisions so you can review the new result.\n\nDecision\nNot stated — choose\nApprove\nRequest changes — send it back with a reason\nDecline — reject this document\nNote for the thread (optional)\n\nYour verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.\n\nCancel\nReload review record\nRecord decision",
+ "phone-workKey": false,
+ "phone-optional": true,
+ "phone-headings": [
+  "1.14.4.1 · Investigator's Brochure",
+  "1.14.4.1 · Title page with product identifier, IB version/edition number, and date",
+  "1.14.4.1 · Summary of physical, chemical, and pharmaceutical properties and formulation",
+  "1.14.4.1 · Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME",
+  "1.14.4.1 · Summary of available clinical pharmacokinetics, safety, and efficacy data",
+  "1.14.4.1 · A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management"
+ ],
+ "phone-overflowX": 0,
+ "phone-rec": {
+  "http": [],
+  "console": [],
+  "pageErrors": []
+ }
+}

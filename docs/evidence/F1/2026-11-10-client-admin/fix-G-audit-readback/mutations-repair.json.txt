@@ -1,0 +1,207 @@
+[
+ {
+  "name": "M5 ledger: target stays the reference",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "    target: subject ?? entry.target,",
+  "new": "    target: entry.target,",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "R2 V-2: 'stayed at' line lost",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (c.before === c.after) return `${name} stayed at ${c.after}`;\n",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "M6 ledger: no reason fallback to the stored values",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "    reason: entry.reason ?? words.reason,",
+  "new": "    reason: entry.reason,",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "M7 words: settings values ignored (as before)",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "      if (before && after && (f in before || f in after)) changes.push(",
+  "new": "      if (false && before && after && (f in before || f in after)) changes.push(",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "M8 words: a missing value is not said",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  const notes = missing.length > 0 ? [",
+  "new": "  const notes = false ? [",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "M9 words: a missing reason is not said",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (!reason && (REASON_ACTS.has(action) || valueAct)) notes.push('No reason was recorded.');",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "M10 words: unnamed person shown as nothing",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  return n?.name?.trim() || n?.email?.trim() || words.subjectFallback || PERSON_NOT_NAMED;",
+  "new": "  return n?.name?.trim() || n?.email?.trim() || words.subjectFallback || null;",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "M11 export: stored values not selected",
+  "file": "server/services/audit/signedAuditExport.ts",
+  "old": "            a.old_values, a.new_values,\n            a.payload_hash",
+  "new": "            a.payload_hash",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "M12 export: words not added",
+  "file": "server/services/audit/signedAuditExport.ts",
+  "old": "  const merged = await exportChangeWords(pool, [...events.rows, ...logs.rows].sort((a, b) => at(a) - at(b)));",
+  "new": "  const merged = [...events.rows, ...logs.rows].sort((a, b) => at(a) - at(b));",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "M13 export CSV: columns dropped",
+  "file": "server/services/audit/signedAuditExport.ts",
+  "old": "    'event_name', 'target_name', 'change_summary', 'change_note', 'reason_from_values', 'old_values', 'new_values',\n  ];",
+  "new": "  ];",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "M14 words: role words lost (raw enum shown)",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (ROLE_FIELDS.has(field)) return ROLE_WORDS[v] ?? labelOf(v);",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "M15 audit.export row named by its type again",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  'audit.export': { event: 'Signed audit trail exported', target: 'Audit trail' },",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts"
+  ]
+ },
+ {
+  "name": "R1 V-2: equal before/after not reported (back to 'not recorded')",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (changes.length === 0 && isValueAct(action, table)) changes.push(...pairs.flatMap(([b, a]) => unchanged(b, a)));",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R2 V-2: 'stayed at' line lost",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (c.before === c.after) return ;\n",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R3 V-3: stored reason column overwritten from the values",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "      ...r,\n      ...(isLog(r)",
+  "new": "      ...r, reason: r.reason ?? w.reason,\n      ...(isLog(r)",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R4 V-3: reason_from_values not carried",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "      reason_from_values: trimmed(r.reason) ? null : w.reason,\n",
+  "new": "",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R5 V-4a: on and off swapped",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (typeof v === 'boolean') return v ? 'on' : 'off';",
+  "new": "  if (typeof v === 'boolean') return v ? 'off' : 'on';",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R6 V-4b: export selects NULL AS old_values for audit_logs",
+  "file": "server/services/audit/signedAuditExport.ts",
+  "old": "            a.old_values, a.new_values,\n            a.payload_hash",
+  "new": "            NULL AS old_values, a.new_values,\n            a.payload_hash",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R7 V-4c: 'does not record the values' note dropped",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (valueAct && found.changes.length === 0 && notes.length === 0) notes.push(NO_VALUES_NOTE);",
+  "new": "",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R8 V-6: object words unbounded",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  return parts.length === 0 ? 'not set' : bounded(parts.join(', '));",
+  "new": "  return parts.length === 0 ? 'not set' : parts.join(', ');",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R9 V-6: array words unbounded",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  if (Array.isArray(v)) return v.length === 0 ? 'none' : bounded(v.map((x) => valueWords(field, x)).join(', '));",
+  "new": "  if (Array.isArray(v)) return v.length === 0 ? 'none' : v.map((x) => valueWords(field, x)).join(', ');",
+  "tests": [
+   "server/services/audit/__tests__/signed-export-governed-change.pglite.test.ts"
+  ]
+ },
+ {
+  "name": "R10 ledger: a row's own description no longer stands",
+  "file": "server/services/audit/audit-change-words.ts",
+  "old": "  const keep = entry.sig || ownDescription(asObject(row.new_values));",
+  "new": "  const keep = entry.sig;",
+  "tests": [
+   "server/routes/__tests__/audit-trail-ledger-governed-change.test.ts",
+   "server/routes/__tests__/audit-trail-ledger.routes.test.ts"
+  ]
+ }
+]

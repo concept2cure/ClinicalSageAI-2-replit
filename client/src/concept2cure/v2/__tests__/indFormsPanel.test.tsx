@@ -454,7 +454,10 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     expect(screen.getByText('2 box(es) left for you to complete on the form.')).toBeTruthy();
     // D3: backed is not the same as human-reviewed, and the panel says which.
     expect(screen.getByText('This asset has no named reviewer yet.')).toBeTruthy();
-    expect(screen.getByText('Asset reviewed by reviewer@example.com.')).toBeTruthy();
+    // GA-D7-12 (2026-11-10): an email address is never shown to a person as
+    // the reviewer. The asset still reads as reviewed, in plain words.
+    expect(screen.queryByText(/@/)).toBeNull();
+    expect(screen.getByText('Asset reviewed by a named reviewer on record.')).toBeTruthy();
   });
 
   it('a reconstruction is never described as the official form', async () => {

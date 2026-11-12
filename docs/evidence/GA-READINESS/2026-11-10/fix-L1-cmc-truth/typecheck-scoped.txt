@@ -1,0 +1,84 @@
+Scoped typecheck, 2026-11-12, NODE_OPTIONS=--max-old-space-size=3500..4096, merged tree.
+Covered: the 4 changed source files, the 5 lane test files, and every file that imports a changed module (git grep: 84 importers; 87 files in all).
+Run in chunks of 8, then 4, then 1, because whole-set runs were killed for memory (the machine is shared).
+
+Errors in lane files: 0.
+Three importer tests could not be checked: tsc was killed for memory even with each file alone:
+  client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx
+  client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx
+  client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx
+  They mount CmcModule; the lane changed no exported signature there (it added exports). All three pass in vitest (affected-tests.txt).
+The one changed type, RecordedReleaseTest (new required 'contradicted'), is built only by readRecordedReleaseTests and the fingerprint test's fixture (updated); batchRecordRoutes.ts only reads it.
+
+Per-run results:
+tsc-chunk-00.json rc=137 errors=0
+tsc-chunk-01.json rc=2 errors=20
+tsc-chunk-02.json rc=134 errors=0
+tsc-chunk-03.json rc=137 errors=0
+tsc-chunk-04.json rc=2 errors=16
+tsc-chunk-05.json rc=137 errors=0
+tsc-chunk-06.json rc=2 errors=17
+tsc-chunk-07.json rc=2 errors=16
+tsc-chunk-08.json rc=2 errors=16
+tsc-chunk-09.json rc=2 errors=16
+tsc-chunk-10.json rc=2 errors=19
+tsc-rechunk-000.json rc=2 errors=20
+tsc-rechunk-001.json rc=137 errors=0
+tsc-rechunk-020.json rc=137 errors=0
+tsc-rechunk-021.json rc=134 errors=0
+tsc-rechunk-030.json rc=2 errors=20
+tsc-rechunk-031.json rc=2 errors=16
+tsc-rechunk-050.json rc=2 errors=16
+tsc-rechunk-051.json rc=0 errors=0
+tsc-single-0010.json rc=2 errors=24
+tsc-single-0011.json rc=2 errors=24
+tsc-single-0012.json rc=2 errors=6
+tsc-single-0013.json rc=137 errors=0
+tsc-single-0200.json rc=2 errors=24
+tsc-single-0201.json rc=2 errors=24
+tsc-single-0202.json rc=2 errors=6
+tsc-single-0203.json rc=2 errors=24
+tsc-single-0210.json rc=0 errors=0
+tsc-single-0211.json rc=137 errors=0
+tsc-single-0212.json rc=0 errors=0
+tsc-single-0213.json rc=137 errors=0
+
+Every distinct error reported (all in other files: ambient types the scoped config does not load, or other lanes' uncommitted files):
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/shellProject.ts(209,16): error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(209,40): error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(218,17): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(96,10): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(98,10): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(98,54): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(251,17): error TS2345: Argument of type 'RefObject<HTMLHeadingElement | null>' is not assignable to parameter of type 'RefObject<HTMLElement>'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(256,51): error TS2339: Property 'message' does not exist on type '{ status: number; payload?: unknown; }'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(263,17): error TS2345: Argument of type 'RefObject<HTMLHeadingElement | null>' is not assignable to parameter of type 'RefObject<HTMLElement>'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(263,24): error TS2345: Argument of type 'RefObject<HTMLHeadingElement | null>' is not assignable to parameter of type 'RefObject<HTMLHeadingElement>'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(268,51): error TS2339: Property 'message' does not exist on type '{ status: number; payload?: unknown; }'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(275,24): error TS2345: Argument of type 'RefObject<HTMLHeadingElement | null>' is not assignable to parameter of type 'RefObject<HTMLHeadingElement>'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(396,67): error TS2345: Argument of type 'RefObject<HTMLHeadingElement | null>' is not assignable to parameter of type 'RefObject<HTMLElement>'.
+client/src/concept2cure/v2/surfaces/AdminAccess.tsx(408,74): error TS2345: Argument of type 'RefObject<HTMLHeadingElement | null>' is not assignable to parameter of type 'RefObject<HTMLHeadingElement>'.
+server/db/requestDbLease.ts(111,39): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(51,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(51,42): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(63,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/export/renderers.ts(3,25): error TS7016: Could not find a declaration file for module 'pdfkit'. 'node_modules/pdfkit/js/pdfkit.js' implicitly has an 'any' type.
+server/export/renderers.ts(476,20): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+server/middleware/establishRequestTenantScope.ts(249,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(16,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. 'server/metrics.js' implicitly has an 'any' type.
+server/services/__tests__/sign-payload-snapshot.test.ts(517,3): error TS2304: Cannot find name 'afterEach'.
+server/services/ana-ri/proposal-seal.ts(22,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+server/services/authoring/authoring-permissions.ts(125,24): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/cmc/link-to-module3.ts(36,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. 'server/metrics.js' implicitly has an 'any' type.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. 'node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. 'node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+tests/integration/orchestrator-e2e-ind.test.ts(235,3): error TS2322: Type '{ regional: RegionalFinding[]; sequence: SequenceFinding[]; dtd: DtdFinding[]; hardenedScore: number; ... 6 more ...; timestamp: string; }' is not assignable to type 'HardenedValidationResult'.
+tests/module3-e2e-journey.test.ts(664,53): error TS2322: Type 'string' is not assignable to type 'Record<string, any>'.
+tests/module3-e2e-journey.test.ts(676,53): error TS2322: Type 'string' is not assignable to type 'Record<string, any>'.

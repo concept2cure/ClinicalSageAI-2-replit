@@ -10,7 +10,7 @@
   "encryptionOfOriginal": "AES-128 (V4/R4)",
   "retrievedAt": "2026-02-26T00:00:00.000Z",
   "provenance": "Official FDA secured PDF provided by the product owner (upload); canonical source: fda.gov forms catalog. Decrypted at onboarding with pikepdf \u2014 the committed asset is the decrypted form, and sha256 above is of those bytes. sha256EncryptedOriginal is the as-supplied encrypted file.",
-  "reviewedBy": "jonmichaelpsmith@gmail.com",
+  "reviewedBy": "the product owner (regulatory forms review)",
   "reviewedAt": "2026-09-03T01:52:17.317Z",
   "xfaDynamic": false,
   "xfaLayer": "static",

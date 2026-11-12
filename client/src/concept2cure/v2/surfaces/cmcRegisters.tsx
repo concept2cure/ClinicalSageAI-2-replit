@@ -698,6 +698,43 @@ export interface QcTestApiRow {
   certificateOfAnalysis?: string | null;
   analyst?: number | null;
   reviewedBy?: number | null;
+  /**
+   * The server's comparison of the recorded value with the recorded
+   * criterion (services/cmc/batch-release-evidence.ts, recordedResultVerdict),
+   * when it sends one. Absent means not compared, never "within".
+   */
+  conformance?: 'within' | 'outside' | 'not-comparable' | null;
+}
+
+/**
+ * A recorded "pass" the recorded result contradicts (GA-DEMO-02, 2026-11-10).
+ * DS-2502-R2 is recorded as a pass at 97.4 % against 98.0 - 102.0 %, and this
+ * register printed "pass"; batch release now refuses it, and the register says
+ * the same thing release does.
+ */
+export function qcPassContradicted(r: QcTestApiRow): boolean {
+  return qcRecordedPass(r) && r.conformance === 'outside';
+}
+
+/** A recorded pass, in either word batch release accepts ("pass" or "passed"). */
+function qcRecordedPass(r: QcTestApiRow): boolean {
+  const word = String(r.passFailStatus || '').trim().toLowerCase();
+  return word === 'pass' || word === 'passed';
+}
+
+/** The recorded disposition, or the contradiction when the result disagrees with it. */
+function qcDisposition(r: QcTestApiRow): React.ReactNode {
+  if (qcPassContradicted(r)) {
+    return (
+      <span
+        className="rd-chip tone-err"
+        title="Recorded as a pass, but the recorded result is outside its recorded acceptance criterion. The batch cannot be released while the record contradicts itself."
+      >
+        pass, contradicted by its result
+      </span>
+    );
+  }
+  return chip(r.passFailStatus, 'pending');
 }
 
 /** The recorded measurement, rendered with its unit, or an em dash. */
@@ -725,10 +762,13 @@ export function CmQcTesting() {
       path="/api/cmc/qc-testing"
       title="QC testing"
       meta={(rows) => {
-        const pass = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'pass').length;
+        const contradicted = rows.filter(qcPassContradicted).length;
+        const pass = rows.filter(qcRecordedPass).length - contradicted;
         const fail = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'fail').length;
         const awaiting = rows.filter((r) => !r.reviewedBy).length;
-        return `${rows.length} samples — ${pass} pass / ${fail} fail — ${awaiting} awaiting review`;
+        return `${rows.length} samples — ${pass} pass / ${fail} fail` +
+          (contradicted ? ` — ${contradicted} contradicted` : '') +
+          ` — ${awaiting} awaiting review`;
       }}
       icon={I.microscope}
       loadingTitle="Loading QC testing records…"
@@ -768,7 +808,7 @@ export function CmQcTesting() {
         { header: 'Method', render: (r) => r.testMethod },
         { header: 'Result', render: qcResultValue },
         { header: 'Specification', render: (r) => text(r.specifications?.acceptanceCriteria) },
-        { header: 'Disposition', render: (r) => chip(r.passFailStatus, 'pending') },
+        { header: 'Disposition', render: qcDisposition },
         { header: 'Reviewed', render: (r) => (r.reviewedBy ? <span className="rd-chip tone-ok">verified</span> : <span className="rd-chip tone-warn">awaiting</span>) },
         { header: 'Tested', render: (r) => fmtDate(r.testDate) },
         { header: 'Released', render: (r) => fmtDate(r.releaseDate) },

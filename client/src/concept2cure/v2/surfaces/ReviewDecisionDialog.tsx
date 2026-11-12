@@ -3,6 +3,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import type { AuthoringReviewContext, AuthoringReviewRow, IndependentCheckContext } from '@shared/authoring/peer-review';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
+import { sectionNumberLabel } from '@shared/regulatory/section-code';
 import { registerCeremonyOpen } from '../ceremony';
 import { useDialog } from '../useDialog';
 import { peerReviewScope, type IndependentFindingDrafts, type PeerVerdict } from './authoringPeerReview';
@@ -82,10 +83,16 @@ function SavedReviewRead({ context }: { context: AuthoringReviewContext }) {
     {context.myReview && <p>Review requested <GovernedTimestamp value={context.myReview.requestedAt} /></p>}
     {snapshot.sections.length === 0 && <p>No saved sections are present in this document.</p>}
     {snapshot.sections.map((section) => <section key={section.id} className="rv-decision-section">
-      <h4>{section.code}{section.title ? ` · ${section.title}` : ''}</h4>
+      <h4>{sectionHeading(section, ' · ')}</h4>
       {section.content ? <AuthoredHtml html={section.content} className="ed-full-sec-body" /> : <p>No saved content in this section.</p>}
     </section>)}
   </section>;
+}
+
+type SavedSection = AuthoringReviewContext['snapshot']['sections'][number];
+/** A section in words: its outline number and its title, never its stored key (rB-F13: "1.14.4.1:work:3"). */
+function sectionHeading(section: Pick<SavedSection, 'code' | 'title'>, joiner: string): string {
+  return [sectionNumberLabel(section.code), section.title?.trim()].filter(Boolean).join(joiner) || 'Untitled section';
 }
 
 function DecisionFields({ state }: { state: PeerReviewDecision }) {
@@ -117,7 +124,8 @@ function IndependentReviewStep({ state }: { state: PeerReviewDecision }) {
   const check = context.independentCheck;
   const disabled = state.busy || state.blocked;
   return <section className="rv-decision-read" aria-label="Independent saved-document checks">
-    <h3>Independent checks{!check ? ' (optional)' : ''}</h3>
+    <h3>Independent checks</h3>
+    {!check && <p>Not required for this document.</p>}
     <p>Checks the saved document and recorded source links without calling a model. Scientific and clinical meaning still require human review.</p>
     <p role="status">{state.receipt ? 'This is the check record used for your verdict. Current finding standing comes from the refreshed review record.' : independentStanding(check)}</p>
     {!state.receipt && context.canRunIndependentChecks && <div className="rv-decision-actions"><button type="button" className="btn ghost" disabled={disabled}
@@ -161,7 +169,7 @@ function IndependentFinding({ finding, index, context, draft, disabled, onChange
 
 function findingSectionLabel(context: AuthoringReviewContext, finding: IndependentCheckContext['findings'][number]): string {
   const section = context.snapshot.sections.find(item => item.id === finding.sectionId);
-  return section ? ` · ${section.code}${section.title ? ` — ${section.title}` : ''}` : '';
+  return section ? ` · ${sectionHeading(section, ' — ')}` : '';
 }
 
 function DecisionReceipt({ receipt }: { receipt: AuthoringReviewRow }) {

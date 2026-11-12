@@ -1,0 +1,12 @@
+check-pushed-lint-warnings --base HEAD, 2026-11-12, after the repair.
+Lines naming this lane's files (none expected):
+(none)
+
+max-lines counts (skipBlankLines, skipComments): ledger 500 (HEAD 500), signedAuditExport.ts 494 (HEAD 490), audit-change-words.ts 344.
+
+File sizes in bytes:
+ 25143 server/services/audit/audit-change-words.ts
+ 33812 server/services/audit/signedAuditExport.ts
+ 38912 server/routes/audit-trail-ledger.routes.ts
+ 54019 server/routes/part11-compliance.ts
+151886 total

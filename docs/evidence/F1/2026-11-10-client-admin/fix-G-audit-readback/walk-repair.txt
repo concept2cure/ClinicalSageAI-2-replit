@@ -1,0 +1,22 @@
+# Desktop pass (1440 x 900), first run; its phone pass timed out at sign-in and was re-run alone (below). Copied from the run's output.
+desktop: ledger 200; 3 purchased-seats entries
+desktop:   AUD-49c4030b-32be-4786-9eb1-f5d2225c12cd | Purchased seats changed: purchased seats from 50 to 5 | note: none | reason: F1 walk 2: restore the seat count after the probe
+desktop:   AUD-1120ef73-89df-42be-8c1c-ed8f43109ee9 | Purchased seats changed: purchased seats from 5 to 50 | note: none | reason: F1 walk 2: can a client administrator raise its own seats without paying?
+desktop:   AUD-75b92bf2-364d-43e0-962e-49898100774a | Purchased seats changed: purchased seats stayed at 5 | note: none | reason: F1 walk 2: restore the seat count after the probe
+desktop: chain {"s":"intact","total":8,"broken":0}
+export: 75b92bf2-364d-43e0-962e-49898100774a | reason column: null | reason_from_values: F1 walk 2: restore the seat count after the probe | purchased seats stayed at 5 | note: none
+export: 1120ef73-89df-42be-8c1c-ed8f43109ee9 | reason column: null | reason_from_values: F1 walk 2: can a client administrator raise its own seats without paying? | purchased seats from 5 to 50 | note: none
+export: 49c4030b-32be-4786-9eb1-f5d2225c12cd | reason column: null | reason_from_values: F1 walk 2: restore the seat count after the probe | purchased seats from 50 to 5 | note: none
+after export: chain {"s":"intact","total":9,"broken":0}
+desktop: search "stayed at": 1 rows
+shot audit-trail-walk2-desktop-seats-unchanged.png
+
+# Phone pass (390 x 844)
+phone: ledger 200; 3 purchased-seats entries
+phone:   AUD-49c4030b-32be-4786-9eb1-f5d2225c12cd | Purchased seats changed: purchased seats from 50 to 5 | note: none | reason: F1 walk 2: restore the seat count after the probe
+phone:   AUD-1120ef73-89df-42be-8c1c-ed8f43109ee9 | Purchased seats changed: purchased seats from 5 to 50 | note: none | reason: F1 walk 2: can a client administrator raise its own seats without paying?
+phone:   AUD-75b92bf2-364d-43e0-962e-49898100774a | Purchased seats changed: purchased seats stayed at 5 | note: none | reason: F1 walk 2: restore the seat count after the probe
+phone: chain {"s":"intact","total":9,"broken":0}
+phone: search "stayed at": 1 rows
+phone: detail: AUD-75b92bf2-364d-43e0-962e-49898100774a — Entry detail | Event | Purchased seats changed: purchased seats stayed at 5 | Actor | Wanda Walkeruser:5 | Timestamp | 2026-11-10 07:16 | Target | Purchased seats | Record | organization_seats:7 | Kind | admin | Origin IP | Reason for change | F1 walk 2: restore the seat count after the probe | Entry hash | SHA-256: <hash> | Previous hash | 9ae872e0816e14552cbc013cabd28b1266d2591f465d4bea10ddccb8e069d1d0
+shot audit-trail-walk2-phone-seats-unchanged.png

@@ -1,0 +1,134 @@
+[
+ {
+  "stability": {
+   "390": {
+    "counts": "3 active studies \u00b7 0 outside limits \u00b7 14 not assessed",
+    "banner": [],
+    "resultsBtn": "6 recorded \u00b7 6 not assessed",
+    "chips": [
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed"
+    ],
+    "evidence": [
+     "3 active studies \u00b7 0 outside limits \u00b7 14 not assessed",
+     " \u00b7 6 not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     " \u00b7 5 not assessed",
+     " \u00b7 3 not assessed",
+     "14 results across 3 studies \u00b7 0 within acceptance criteria, 0 outside, 14 not assessed \u00b7 longest pull point recorded: 12 months"
+    ],
+    "overflowX": 0,
+    "rec": {
+     "http": [
+      "cal 409 POST /api/cmc/stability-studies/5/shelf-life :: This study is placed at 2 storage conditions (LT, 25\u00b0C \u00b1 2\u00b0C / 60% \u00b1 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. R",
+      "cal 409 POST /api/cmc/stability-studies/6/shelf-life :: This study is placed at 2 storage conditions (LT, 25\u00b0C \u00b1 2\u00b0C / 60% \u00b1 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. R",
+      "cal 409 POST /api/cmc/stability-studies/7/shelf-life :: This study is placed at 2 storage conditions (ACC, 40\u00b0C \u00b1 2\u00b0C / 75% \u00b1 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. "
+     ],
+     "console": [
+      "cal Failed to load resource: the server responded with a status of 409 (Conflict)",
+      "cal Failed to load resource: the server responded with a status of 409 (Conflict)",
+      "cal Failed to load resource: the server responded with a status of 409 (Conflict)"
+     ],
+     "pageErrors": []
+    }
+   },
+   "1440": {
+    "counts": "3 active studies \u00b7 0 outside limits \u00b7 14 not assessed",
+    "banner": [],
+    "resultsBtn": "6 recorded \u00b7 6 not assessed",
+    "chips": [
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed"
+    ],
+    "evidence": [
+     "3 active studies \u00b7 0 outside limits \u00b7 14 not assessed",
+     " \u00b7 6 not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     "not assessed",
+     " \u00b7 5 not assessed",
+     " \u00b7 3 not assessed",
+     "14 results across 3 studies \u00b7 0 within acceptance criteria, 0 outside, 14 not assessed \u00b7 longest pull point recorded: 12 months"
+    ],
+    "overflowX": 0,
+    "rec": {
+     "http": [
+      "cal 409 POST /api/cmc/stability-studies/5/shelf-life :: This study is placed at 2 storage conditions (LT, 25\u00b0C \u00b1 2\u00b0C / 60% \u00b1 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. R",
+      "cal 409 POST /api/cmc/stability-studies/6/shelf-life :: This study is placed at 2 storage conditions (LT, 25\u00b0C \u00b1 2\u00b0C / 60% \u00b1 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. R",
+      "cal 409 POST /api/cmc/stability-studies/7/shelf-life :: This study is placed at 2 storage conditions (ACC, 40\u00b0C \u00b1 2\u00b0C / 75% \u00b1 5% RH) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. "
+     ],
+     "console": [
+      "cal Failed to load resource: the server responded with a status of 409 (Conflict)",
+      "cal Failed to load resource: the server responded with a status of 409 (Conflict)",
+      "cal Failed to load resource: the server responded with a status of 409 (Conflict)"
+     ],
+     "pageErrors": []
+    }
+   }
+  }
+ },
+ {
+  "qc": {
+   "390": {
+    "qcMeta": "5 samples \u2014 4 pass / 0 fail \u2014 5 awaiting review \u00b7 this project",
+    "qcRow": "DS-2502-R2 in-process HPLC-UV assay and related substances 97.4 % 98.0 - 102.0 % Pass Awaiting 4/19/2026 -- History Review",
+    "overflowX": 0,
+    "rec": {
+     "http": [],
+     "console": [],
+     "pageErrors": []
+    }
+   },
+   "1440": {
+    "qcMeta": "5 samples \u2014 4 pass / 0 fail \u2014 5 awaiting review \u00b7 this project",
+    "qcRow": "DS-2502-R2 in-process HPLC-UV assay and related substances 97.4 % 98.0 - 102.0 % Pass Awaiting 4/19/2026 -- History Review",
+    "overflowX": 0,
+    "rec": {
+     "http": [],
+     "console": [],
+     "pageErrors": []
+    }
+   }
+  }
+ },
+ {
+  "batch": {
+   "390": {
+    "batchRow": "C2C201-DS-2502 C2C-201 78% 0 Yes Pending Edit Release",
+    "releaseButton": "enabled",
+    "overflowX": 0,
+    "rec": {
+     "http": [],
+     "console": [],
+     "pageErrors": []
+    }
+   },
+   "1440": {
+    "batchRow": "C2C201-DS-2502 C2C-201 78% 0 Yes Pending Edit Release",
+    "releaseButton": "enabled",
+    "overflowX": 0,
+    "rec": {
+     "http": [],
+     "console": [],
+     "pageErrors": []
+    }
+   }
+  }
+ }
+]

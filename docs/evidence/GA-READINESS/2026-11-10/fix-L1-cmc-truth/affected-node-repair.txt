@@ -1,0 +1,481 @@
+TAP version 13
+# Subtest: biotech (C2C-101): records the drug substance §3.2.S is written about
+ok 1 - biotech (C2C-101): records the drug substance §3.2.S is written about
+  ---
+  duration_ms: 60.634185
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): records the drug product §3.2.P is written about
+ok 2 - biotech (C2C-101): records the drug product §3.2.P is written about
+  ---
+  duration_ms: 0.383247
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): a biologic substance states its origin, as §3.2.A.2 asks
+ok 3 - biotech (C2C-101): a biologic substance states its origin, as §3.2.A.2 asks
+  ---
+  duration_ms: 0.114432
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): records the drug substance §3.2.S is written about
+ok 4 - lumen (LMN-201): records the drug substance §3.2.S is written about
+  ---
+  duration_ms: 0.07023
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): records the drug product §3.2.P is written about
+ok 5 - lumen (LMN-201): records the drug product §3.2.P is written about
+  ---
+  duration_ms: 0.13221
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): a biologic substance states its origin, as §3.2.A.2 asks
+ok 6 - lumen (LMN-201): a biologic substance states its origin, as §3.2.A.2 asks
+  ---
+  duration_ms: 0.055726
+  type: 'test'
+  ...
+# Subtest: every study that claims a shelf life sends it, so §3.2.P.8 has its subject
+ok 7 - every study that claims a shelf life sends it, so §3.2.P.8 has its subject
+  ---
+  duration_ms: 17.499899
+  type: 'test'
+  ...
+# Subtest: a study already on file without its claim is given one
+ok 8 - a study already on file without its claim is given one
+  ---
+  duration_ms: 82.921672
+  type: 'test'
+  ...
+# Subtest: the recorded release results reach the register §3.2.S.4.4 and §3.2.P.5.4 read
+ok 9 - the recorded release results reach the register §3.2.S.4.4 and §3.2.P.5.4 read
+  ---
+  duration_ms: 12.490363
+  type: 'test'
+  ...
+# Subtest: one recorded result disagrees with its own criterion, on purpose
+ok 10 - one recorded result disagrees with its own criterion, on purpose
+  ---
+  duration_ms: 0.549974
+  type: 'test'
+  ...
+# Subtest: the seeder records the substance and the product first of all
+ok 11 - the seeder records the substance and the product first of all
+  ---
+  duration_ms: 0.431253
+  type: 'test'
+  ...
+# Subtest: the substance carries the modality the boundary reads, as stated
+ok 12 - the substance carries the modality the boundary reads, as stated
+  ---
+  duration_ms: 0.374106
+  type: 'test'
+  ...
+# Subtest: a second run records neither material twice
+ok 13 - a second run records neither material twice
+  ---
+  duration_ms: 3.808319
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): every specification's method is a method the pack records
+ok 14 - biotech (C2C-101): every specification's method is a method the pack records
+  ---
+  duration_ms: 0.944421
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): every recorded method states the ICH Q2 parameters its validation signs for
+ok 15 - biotech (C2C-101): every recorded method states the ICH Q2 parameters its validation signs for
+  ---
+  duration_ms: 0.242263
+  type: 'test'
+  ...
+# Subtest: biotech (C2C-101): no method is declared validated in the pack's data
+ok 16 - biotech (C2C-101): no method is declared validated in the pack's data
+  ---
+  duration_ms: 0.126775
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): every specification's method is a method the pack records
+ok 17 - lumen (LMN-201): every specification's method is a method the pack records
+  ---
+  duration_ms: 0.076856
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): every recorded method states the ICH Q2 parameters its validation signs for
+ok 18 - lumen (LMN-201): every recorded method states the ICH Q2 parameters its validation signs for
+  ---
+  duration_ms: 0.138993
+  type: 'test'
+  ...
+# Subtest: lumen (LMN-201): no method is declared validated in the pack's data
+ok 19 - lumen (LMN-201): no method is declared validated in the pack's data
+  ---
+  duration_ms: 0.104473
+  type: 'test'
+  ...
+# Subtest: the seeder records each method before the specification that cites it
+ok 20 - the seeder records each method before the specification that cites it
+  ---
+  duration_ms: 89.56476
+  type: 'test'
+  ...
+# Subtest: the seeder carries the Q2 parameters, and does not sign without a signer
+ok 21 - the seeder carries the Q2 parameters, and does not sign without a signer
+  ---
+  duration_ms: 1.476106
+  type: 'test'
+  ...
+# Subtest: with a signer, each method is validated through the governed route
+ok 22 - with a signer, each method is validated through the governed route
+  ---
+  duration_ms: 0.796774
+  type: 'test'
+  ...
+# Subtest: a second run records nothing twice
+ok 23 - a second run records nothing twice
+  ---
+  duration_ms: 0.961842
+  type: 'test'
+  ...
+# Subtest: C2C-201: each of the eleven registers ensureCmc did not write gets a row
+ok 24 - C2C-201: each of the eleven registers ensureCmc did not write gets a row
+  ---
+  duration_ms: 21.360838
+  type: 'test'
+  ...
+# Subtest: C2C-201: the impurities cover every class the assessment routes, and dissolution can be compared
+ok 25 - C2C-201: the impurities cover every class the assessment routes, and dissolution can be compared
+  ---
+  duration_ms: 1.99747
+  type: 'test'
+  ...
+# Subtest: C2C-201: a second run creates nothing
+ok 26 - C2C-201: a second run creates nothing
+  ---
+  duration_ms: 3.53406
+  type: 'test'
+  ...
+# Subtest: C2C-201: each stability result carries the condition it was pulled at and its reading
+ok 27 - C2C-201: each stability result carries the condition it was pulled at and its reading
+  ---
+  duration_ms: 5.683336
+  type: 'test'
+  ...
+# Subtest: C2C-201: an earlier run’s results are re-recorded with their condition and reading, and only the seed’s own
+ok 28 - C2C-201: an earlier run’s results are re-recorded with their condition and reading, and only the seed’s own
+  ---
+  duration_ms: 6.295499
+  type: 'test'
+  ...
+# Subtest: C2C-201: every stability result records whether it is within its limit
+ok 29 - C2C-201: every stability result records whether it is within its limit
+  ---
+  duration_ms: 1.608077
+  type: 'test'
+  ...
+# Subtest: C2C-101: every stability result records whether it is within its limit
+ok 30 - C2C-101: every stability result records whether it is within its limit
+  ---
+  duration_ms: 0.104752
+  type: 'test'
+  ...
+# Subtest: C2C-201: exactly one stability result is out of specification, and it is the 6-month accelerated impurity
+ok 31 - C2C-201: exactly one stability result is out of specification, and it is the 6-month accelerated impurity
+  ---
+  duration_ms: 0.153268
+  type: 'test'
+  ...
+# Subtest: C2C-201: DS-2502-R2 is still recorded as a pass at 97.4 % (the phase 4 fixture pins it)
+ok 32 - C2C-201: DS-2502-R2 is still recorded as a pass at 97.4 % (the phase 4 fixture pins it)
+  ---
+  duration_ms: 0.173849
+  type: 'test'
+  ...
+# Subtest: seed identity comes from the verified session and exercises protected project and task reads
+ok 33 - seed identity comes from the verified session and exercises protected project and task reads
+  ---
+  duration_ms: 35.745232
+  type: 'test'
+  ...
+# Subtest: refuses unauthenticated envelope before any protected read or seed write
+ok 34 - refuses unauthenticated envelope before any protected read or seed write
+  ---
+  duration_ms: 53.321928
+  type: 'test'
+  ...
+# Subtest: refuses missing user before any protected read or seed write
+ok 35 - refuses missing user before any protected read or seed write
+  ---
+  duration_ms: 38.670048
+  type: 'test'
+  ...
+# Subtest: refuses missing organization before any protected read or seed write
+ok 36 - refuses missing organization before any protected read or seed write
+  ---
+  duration_ms: 13.134957
+  type: 'test'
+  ...
+# Subtest: refuses default organization is not a session before any protected read or seed write
+ok 37 - refuses default organization is not a session before any protected read or seed write
+  ---
+  duration_ms: 20.271965
+  type: 'test'
+  ...
+# Subtest: refuses zero organization before any protected read or seed write
+ok 38 - refuses zero organization before any protected read or seed write
+  ---
+  duration_ms: 14.105578
+  type: 'test'
+  ...
+# Subtest: refuses fractional organization before any protected read or seed write
+ok 39 - refuses fractional organization before any protected read or seed write
+  ---
+  duration_ms: 10.359593
+  type: 'test'
+  ...
+# Subtest: refuses truncated organization before any protected read or seed write
+ok 40 - refuses truncated organization before any protected read or seed write
+  ---
+  duration_ms: 30.190083
+  type: 'test'
+  ...
+# Subtest: refuses missing actor before any protected read or seed write
+ok 41 - refuses missing actor before any protected read or seed write
+  ---
+  duration_ms: 209.107272
+  type: 'test'
+  ...
+# Subtest: refuses missing email before any protected read or seed write
+ok 42 - refuses missing email before any protected read or seed write
+  ---
+  duration_ms: 74.580584
+  type: 'test'
+  ...
+# Subtest: refuses missing organization record before any protected read or seed write
+ok 43 - refuses missing organization record before any protected read or seed write
+  ---
+  duration_ms: 84.848635
+  type: 'test'
+  ...
+# Subtest: refuses a different session organization than the operator requested
+ok 44 - refuses a different session organization than the operator requested
+  ---
+  duration_ms: 73.28978
+  type: 'test'
+  ...
+# Subtest: a token must not silently override the explicitly named demo account
+ok 45 - a token must not silently override the explicitly named demo account
+  ---
+  duration_ms: 122.041386
+  type: 'test'
+  ...
+# Subtest: email comparison ignores surrounding whitespace and case
+ok 46 - email comparison ignores surrounding whitespace and case
+  ---
+  duration_ms: 15.22799
+  type: 'test'
+  ...
+# Subtest: refuses unprovisioned projects, rather than treating it as an empty demo tenant
+ok 47 - refuses unprovisioned projects, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 15.065612
+  type: 'test'
+  ...
+# Subtest: refuses malformed projects, rather than treating it as an empty demo tenant
+ok 48 - refuses malformed projects, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 17.947102
+  type: 'test'
+  ...
+# Subtest: refuses unreconciled project access, rather than treating it as an empty demo tenant
+ok 49 - refuses unreconciled project access, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 13.64181
+  type: 'test'
+  ...
+# Subtest: refuses partial board, rather than accepting a broken Tasking backend
+ok 50 - refuses partial board, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 50.080866
+  type: 'test'
+  ...
+# Subtest: refuses unread task source, rather than accepting a broken Tasking backend
+ok 51 - refuses unread task source, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 56.136123
+  type: 'test'
+  ...
+# Subtest: refuses malformed board, rather than accepting a broken Tasking backend
+ok 52 - refuses malformed board, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 32.909334
+  type: 'test'
+  ...
+# Subtest: session read failures do not expose response bodies or bearer material
+ok 53 - session read failures do not expose response bodies or bearer material
+  ---
+  duration_ms: 25.06009
+  type: 'test'
+  ...
+# Subtest: invalid workspace selection is refused before authentication or HTTP
+ok 54 - invalid workspace selection is refused before authentication or HTTP
+  ---
+  duration_ms: 16.651555
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — created demo-program (?)
+#   • Objective: C2C-101 … ok — recorded
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — created demo-program-sm (?)
+#   • Objective: C2C-201 … ok — recorded
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 5, found 0
+# Subtest: the fresh biotech pack supplies its recorded biologic class and explicit workspace
+ok 55 - the fresh biotech pack supplies its recorded biologic class and explicit workspace
+  ---
+  duration_ms: 18.334233
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … FAILED
+# Subtest: the biotech pack refuses an unread project list without attempting creation
+ok 56 - the biotech pack refuses an unread project list without attempting creation
+  ---
+  duration_ms: 15.823892
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — found demo-program (?)
+#   • Objective: C2C-101 … ok — recorded
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — found demo-program-sm (?)
+#   • Objective: C2C-201 … ok — recorded
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 3, found 2
+# Subtest: existing demo projects are reused without a second create
+ok 57 - existing demo projects are reused without a second create
+  ---
+  duration_ms: 51.377568
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — created demo-program (?)
+#   • Objective: C2C-101 … ok — recorded
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — created demo-program-sm (?)
+#   • Objective: C2C-201 … ok — recorded
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 5, found 0
+# Subtest: the Module 3 build runs after the registers it compiles from
+ok 58 - the Module 3 build runs after the registers it compiles from
+  ---
+  duration_ms: 90.605424
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — found demo-program (?)
+#   • Objective: C2C-101 … ok — recorded
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — created demo-program-sm (?)
+#   • Objective: C2C-201 … ok — recorded
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … 
+# ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 4, found 1
+# Subtest: a pack whose second programme is missing creates only that one
+ok 59 - a pack whose second programme is missing creates only that one
+  ---
+  duration_ms: 104.363292
+  type: 'test'
+  ...
+# Subtest: CLI refuses a mixed valid/invalid pack list before connecting
+ok 60 - CLI refuses a mixed valid/invalid pack list before connecting
+  ---
+  duration_ms: 269.025133
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — found demo-program (?)
+#   • Objective: C2C-101 … ok — recorded
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — found demo-program-sm (?)
+#   • Objective: C2C-201 … ok — recorded
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 3, found 2
+# Subtest: an existing demo on a later portfolio page is reused, not duplicated
+ok 61 - an existing demo on a later portfolio page is reused, not duplicated
+  ---
+  duration_ms: 72.464866
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … FAILED
+# Subtest: a stalled paginated project read cannot create a duplicate
+ok 62 - a stalled paginated project read cannot create a duplicate
+  ---
+  duration_ms: 118.510459
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … FAILED
+# Subtest: an explicit workspace does not silently reuse a project in another workspace
+ok 63 - an explicit workspace does not silently reuse a project in another workspace
+  ---
+  duration_ms: 55.150617
+  type: 'test'
+  ...
+# Subtest: a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+ok 64 - a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+  ---
+  duration_ms: 201.177401
+  type: 'test'
+  ...
+# Subtest: successful seeding still does not assert browser qualification
+ok 65 - successful seeding still does not assert browser qualification
+  ---
+  duration_ms: 88.075721
+  type: 'test'
+  ...
+# Subtest: an environment-named demo email must match even when a token is supplied
+ok 66 - an environment-named demo email must match even when a token is supplied
+  ---
+  duration_ms: 99.814062
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+ok 67 - CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+  ---
+  duration_ms: 228.013756
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+ok 68 - CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+  ---
+  duration_ms: 188.427042
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+ok 69 - CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+  ---
+  duration_ms: 147.324376
+  type: 'test'
+  ...
+# Subtest: biotech: C2C-201 is created under C2C-101's client workspace when the run named none
+ok 70 - biotech: C2C-201 is created under C2C-101's client workspace when the run named none
+  ---
+  duration_ms: 0.265982
+  type: 'test'
+  ...
+# Subtest: biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none
+ok 71 - biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none
+  ---
+  duration_ms: 0.071016
+  type: 'test'
+  ...
+1..71
+# tests 71
+# suites 0
+# pass 71
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3596.329114

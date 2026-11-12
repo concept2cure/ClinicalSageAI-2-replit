@@ -20,6 +20,7 @@ import type {
   RoleExplanations,
 } from './types';
 import { phaseOf } from './input-normalizer';
+import { computationEngine, ComputationRefusal } from './computation-engine';
 import {
   COMPARATOR_LABELS,
   ENDPOINT_TYPE_LABELS,
@@ -37,6 +38,140 @@ import {
    2026-10-31 they compared `input.phase === 'III'` and no caller sent that, so
    none of them ever fired. Rationale and flag prose names vocabulary values by
    their labels (shared/biostat-vocabulary.ts); the verdicts stay the keys. */
+
+/** The power below which a sensitivity point is a breakpoint. */
+export const SENSITIVITY_POWER_THRESHOLD = 0.8;
+
+function roundTo(value: number, places: number): number {
+  const f = 10 ** places;
+  return Math.round((value + Number.EPSILON) * f) / f;
+}
+
+/* Sensitivity points (GA-DEMO-05, 2026-11-10; repaired 2026-11-12). A
+   breakpoint is the value at which the design's evaluable N stops giving 80%
+   power, recomputed with the computation engine itself, so it carries each
+   method's own reading of the effect (a hazard-ratio reduction, a rate
+   difference, a margin). Until 2026-11-10 the effect point used
+   1 − Φ(z_{1−α/2} − mult·z_power), which is under 80% at the first step for
+   every design (always a 5% margin), and the attrition point was
+   min(1.5 × attrition, 0.5) with a fixed 50% margin. A design already under
+   80% power has no margin: its breakpoint is its current value. Margins are
+   the relative change in the parameter. Whether a design is under 80% is said
+   from the engine's own power (document-generator.ts), never from a rounded
+   margin. */
+type SensitivityPoint = FragilityAssessment['sensitiveParameters'][number];
+
+/** The smallest multiple of the planned effect the breakpoint search tries. */
+const EFFECT_SEARCH_FLOOR = 0.01;
+
+/** Said when power holds at 80% down to the search floor: no breakpoint was found, so none is claimed. */
+export const EFFECT_HOLDS_NOTE =
+  'Power stays at or above 80% for every effect size tested, down to 1% of the planned effect, so no effect-size breakpoint was found.';
+
+/** Said when the design could not be recomputed at 80% power: nothing was assessed, so nothing is claimed. */
+export const SENSITIVITY_NOT_ASSESSED_NOTE =
+  'Sensitivity to the effect size and the dropout rate was not assessed: the design could not be recomputed at 80% power.';
+
+/** Evaluable N the engine needs for 80% power with the effect scaled by `mult`. */
+function evaluableNeededAt80(input: StatisticalInput, mult: number): number {
+  const rates = typeof input.controlRate === 'number' && typeof input.treatmentRate === 'number'
+    ? { treatmentRate: input.controlRate + (input.treatmentRate - input.controlRate) * mult }
+    : {};
+  const scaled: StatisticalInput = {
+    ...input,
+    effectSize: input.effectSize * mult,
+    powerTarget: SENSITIVITY_POWER_THRESHOLD,
+    ...rates,
+  };
+  const n = computationEngine.compute(scaled).sampleSize.total;
+  return Number.isFinite(n) ? n : Infinity;
+}
+
+/** As above, where a scaled effect outside the method's domain cannot be sized: no evaluable N reaches 80% there. */
+function scaledNeededAt80(input: StatisticalInput, mult: number): number {
+  try {
+    return evaluableNeededAt80(input, mult);
+  } catch (err) {
+    if (err instanceof ComputationRefusal) return Infinity;
+    throw err;
+  }
+}
+
+/**
+ * The evaluable N needed for 80% power at the planned effect, or null when the
+ * design cannot be recomputed (the engine refuses it, or there is no effect or
+ * N to scale). Only a refusal means "not assessed"; any other error is a
+ * defect and is not swallowed.
+ */
+function baseNeededAt80(input: StatisticalInput, evaluableN: number): number | null {
+  const scalable = Number.isFinite(input.effectSize) && input.effectSize !== 0
+    && Number.isFinite(evaluableN) && evaluableN > 0;
+  if (!scalable) return null;
+  try {
+    return evaluableNeededAt80(input, 1);
+  } catch (err) {
+    if (err instanceof ComputationRefusal) return null;
+    throw err;
+  }
+}
+
+/** Bisection between the floor and the planned effect for the smallest multiple whose 80%-power N fits. */
+function smallestPoweredMultiple(input: StatisticalInput, evaluableN: number): number {
+  let lo = EFFECT_SEARCH_FLOOR;
+  let hi = 1;
+  for (let i = 0; i < 40 && hi - lo > 1e-6; i++) {
+    const mid = (lo + hi) / 2;
+    if (scaledNeededAt80(input, mid) <= evaluableN) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+/**
+ * The effect-size point, or null when power holds at 80% down to the search
+ * floor (the floor is not a breakpoint, so it is never reported as one).
+ */
+function effectSizePoint(input: StatisticalInput, evaluableN: number, baseNeeded: number): SensitivityPoint | null {
+  let breakpointMult = 1;
+  if (baseNeeded <= evaluableN) {
+    if (scaledNeededAt80(input, EFFECT_SEARCH_FLOOR) <= evaluableN) return null;
+    breakpointMult = smallestPoweredMultiple(input, evaluableN);
+  }
+  return {
+    parameter: 'effect_size',
+    currentValue: input.effectSize,
+    breakpointValue: roundTo(input.effectSize * breakpointMult, 4),
+    percentMargin: roundTo((1 - breakpointMult) * 100, 1),
+  };
+}
+
+/** The dropout rate at which the enrolled N leaves fewer evaluable subjects than 80% power needs. */
+function attritionPoint(input: StatisticalInput, comp: ComputationResult, baseNeeded: number): SensitivityPoint | null {
+  const enrolled = comp.adjustedTotal ?? comp.sampleSize.total;
+  if (!(input.attritionRate > 0) || !Number.isFinite(enrolled) || enrolled <= 0) return null;
+  const breakpointAttrition = Math.max(input.attritionRate, 1 - baseNeeded / enrolled);
+  return {
+    parameter: 'attrition_rate',
+    currentValue: input.attritionRate,
+    breakpointValue: roundTo(breakpointAttrition, 4),
+    percentMargin: roundTo(((breakpointAttrition - input.attritionRate) / input.attritionRate) * 100, 1),
+  };
+}
+
+/** Every sensitivity point the engine could recompute, and a note for each that it could not claim. */
+function sensitivityPoints(input: StatisticalInput, comp: ComputationResult): { points: SensitivityPoint[]; notes: string[]; assessed: boolean } {
+  const evaluableN = comp.sampleSize.total;
+  const baseNeeded = baseNeededAt80(input, evaluableN);
+  if (baseNeeded === null) return { points: [], notes: [SENSITIVITY_NOT_ASSESSED_NOTE], assessed: false };
+  const points: SensitivityPoint[] = [];
+  const notes: string[] = [];
+  const effect = effectSizePoint(input, evaluableN, baseNeeded);
+  if (effect) points.push(effect);
+  else notes.push(EFFECT_HOLDS_NOTE);
+  const attrition = attritionPoint(input, comp, baseNeeded);
+  if (attrition) points.push(attrition);
+  return { points, notes, assessed: true };
+}
 
 export class JudgmentEngine {
 
@@ -559,45 +694,16 @@ export class JudgmentEngine {
   // ════════════════════════════════════════════════════════════════
 
   assessFragility(input: StatisticalInput, comp: ComputationResult): FragilityAssessment {
-    const sensitiveParams: FragilityAssessment['sensitiveParameters'] = [];
-
-    // Effect size sensitivity: at what effect size does power drop below 80%?
-    const baseEffect = input.effectSize;
-    let breakpointEffect = baseEffect;
-    for (let mult = 0.95; mult > 0.3; mult -= 0.05) {
-      const testEffect = baseEffect * mult;
-      // Rough power estimate: power scales with effect^2 / n
-      const approxPower = 1 - this.normCdf(this.normQuantile(1 - input.alpha / 2) - testEffect / baseEffect * this.normQuantile(input.powerTarget));
-      if (approxPower < 0.80) {
-        breakpointEffect = testEffect;
-        break;
-      }
-    }
-    if (breakpointEffect < baseEffect) {
-      sensitiveParams.push({
-        parameter: 'effect_size',
-        currentValue: baseEffect,
-        breakpointValue: Number(breakpointEffect.toFixed(4)),
-        percentMargin: Number(((1 - breakpointEffect / baseEffect) * 100).toFixed(1)),
-      });
-    }
-
-    // Attrition sensitivity
-    const maxAttrition = 1 - comp.sampleSize.total / (comp.adjustedTotal ?? comp.sampleSize.total + 1);
-    if (input.attritionRate > 0) {
-      sensitiveParams.push({
-        parameter: 'attrition_rate',
-        currentValue: input.attritionRate,
-        breakpointValue: Math.min(input.attritionRate * 1.5, 0.50),
-        percentMargin: 50,
-      });
-    }
+    const { points: sensitiveParams, notes, assessed } = sensitivityPoints(input, comp);
+    const effectPoint = sensitiveParams.find(p => p.parameter === 'effect_size');
 
     // Compute fragility index
     let fragilityIndex = 0;
     if (comp.power < 0.85) fragilityIndex += 20;
     if (comp.power < 0.80) fragilityIndex += 20;
-    if (sensitiveParams.length > 0 && sensitiveParams[0].percentMargin < 20) fragilityIndex += 25;
+    // A sensitivity that could not be assessed keeps the penalty: missing
+    // points never make a design read less fragile.
+    if (!assessed || (effectPoint !== undefined && effectPoint.percentMargin < 20)) fragilityIndex += 25;
     if (input.attritionRate > 0.20) fragilityIndex += 15;
     if (comp.sampleSize.total < 50) fragilityIndex += 10;
     const defaultCount = comp.assumptions.filter(a => a.source === 'default').length;
@@ -610,43 +716,9 @@ export class JudgmentEngine {
     else if (fragilityIndex <= 65) category = 'fragile';
     else category = 'very_fragile';
 
-    const narrative = this.buildFragilityNarrative(category, sensitiveParams, comp);
+    const narrative = [this.buildFragilityNarrative(category, sensitiveParams, comp), ...notes].join(' ');
 
     return { fragilityIndex, category, sensitiveParameters: sensitiveParams, narrative };
-  }
-
-  private normCdf(z: number): number {
-    if (z < -8) return 0;
-    if (z > 8) return 1;
-    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
-    const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-    const sign = z < 0 ? -1 : 1;
-    const x = Math.abs(z) / Math.sqrt(2);
-    const t = 1 / (1 + p * x);
-    const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-    return 0.5 * (1 + sign * y);
-  }
-
-  private normQuantile(p: number): number {
-    if (p <= 0) return -Infinity;
-    if (p >= 1) return Infinity;
-    if (p === 0.5) return 0;
-    // Beasley-Springer-Moro approximation
-    const a = [0, -3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
-    const b = [0, -5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
-    const c = [0, -7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
-    const d = [0, 7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
-    const pLow = 0.02425;
-    if (p < pLow) {
-      const q = Math.sqrt(-2 * Math.log(p));
-      return (((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6]) / ((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);
-    } else if (p <= 1 - pLow) {
-      const q = p - 0.5, r = q * q;
-      return (((((a[1]*r+a[2])*r+a[3])*r+a[4])*r+a[5])*r+a[6])*q / (((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+b[5])*r+1);
-    } else {
-      const q = Math.sqrt(-2 * Math.log(1 - p));
-      return -(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6]) / ((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);
-    }
   }
 
   private buildFragilityNarrative(

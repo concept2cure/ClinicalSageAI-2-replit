@@ -1,0 +1,17 @@
+status 200
+.data.programs.0.code = C2C-101
+.data.programs.0.label = [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)
+.data.portfolio.programs.0.topBlockers.0 = No governed artifacts discovered for this scope
+.data.portfolio.programs.0.topBlockers.1 = No approved or locked governed artifacts
+.data.portfolio.programs.0.code = C2C-101
+.data.portfolio.programs.0.label = [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)
+.data.portfolio.programs.1.topBlockers.0 = No approved or locked governed artifacts
+.data.portfolio.programs.5.topBlockers.0 = No approved or locked governed artifacts
+.data.portfolio.programs.6.topBlockers.0 = No governed artifacts discovered for this scope
+.data.portfolio.programs.6.topBlockers.1 = No approved or locked governed artifacts
+.data.portfolio.programs.7.topBlockers.0 = No governed artifacts discovered for this scope
+.data.portfolio.programs.7.topBlockers.1 = No approved or locked governed artifacts
+.data.portfolio.programs.8.topBlockers.0 = No approved or locked governed artifacts
+.data.portfolio.programs.9.topBlockers.0 = No governed artifacts discovered for this scope
+.data.portfolio.programs.9.topBlockers.1 = No approved or locked governed artifacts
+matches 4
