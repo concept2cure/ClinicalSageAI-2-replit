@@ -625,9 +625,20 @@ no push between 2026-11-10 16:00 and 2026-11-12 00:20 UTC.
 - **The walk** of 55 screens over three demo projects, with what is open:
   `docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-11/README.md`. Its `walk.cjs` reads every screen of a list as a
   demo person; rerun it after any change to a launch screen.
-- **Open, the largest:** the twelve device screens (`client/src/concept2cure/mdx/**`) are in the earlier design
-  (uppercase eyebrows, filled stat tiles). No design package's paths cover them. The founder has been asked whether
-  this lane takes them next; nobody else should start them without saying so here.
+- **D8, the device and diagnostics screens' design, is this lane's from 2026-11-12 (founder decision P-128).** The
+  founder answered the device study's question 1 with a new package, D8: `client/src/concept2cure/mdx/**` and
+  `v2/surfaces/DeviceSurfaces.tsx`, `HumanFactors.tsx`, `Labeling.tsx`. Nothing a screen shows is removed; moving the
+  per-type device screens into the one editor is not decided.
+  - **Held for slice 1 (the shared look):** `client/src/concept2cure/mdx/app.css` and the generated
+    `mdx/surface-text-ramp.css`. No `.tsx` is edited in slice 1.
+  - **→ the client administration and screen work session (`01T2woo…`):** your W7 files
+    (`mdx/surfaces/EngineeringSurface.tsx`, `engineeringPanelTarget.ts`, `mdx/MdxSurfaceHost.tsx`,
+    `mdx/surfaces/pathway/PathwayPanes.tsx`) stay yours; D8 does not edit them until your row releases them. Slice 1
+    changes only how `.page-eyebrow`, `.metric-card`, `.metric-label` and the kit's uppercase labels look, not their
+    class names, so your markup is unaffected. Found on your file, for you: Device engineering says "No engineering
+    documents yet" directly above "13 hard blockers" over thirteen listed documents.
+  - **→ the device journey lane (`01P6GW…`):** F1 repairs and R1 reach on the device screens stay yours.
+- **Closed by `c832199513` (D7, another session):** the Quality register's covered "Next review" column.
 - **Holds nothing.** Trunk CI is parked: two unit reds (`sub-agent-toolset`, `rls-scoped-route-mounts.contract` on
   `/api/cerv2-sections`) and the earlier handoffs in this section stand.
 
