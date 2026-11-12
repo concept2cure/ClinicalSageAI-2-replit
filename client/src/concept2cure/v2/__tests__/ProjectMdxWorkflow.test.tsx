@@ -72,16 +72,21 @@ describe('project MDX workflow', () => {
     expect(analytical[0].filingSectionsSupported.some(s => s.startsWith('510k:'))).toBe(false);
   });
 
-  it('hands De Novo assembly to project authoring while preserving its filing identity', () => {
+  /* P-114 item 4 (2026-11-09, decided under the founder's delegation; MDX journey
+     M7). Until then a De Novo had no pathway door: its assembly was handed to
+     Author, though the 510(k) screen already produced its eSTAR. */
+  it('opens De Novo assembly on its own eSTAR, under its own name, never as a 510(k)', () => {
     const p = props();
     render(<ProjectMdxWorkflow {...p} project={{ ...project, program_type: 'DE_NOVO', regulatory_path: 'de_novo' }} />);
     const workflow = screen.getByTestId('pj-mdx-workflow');
     expect(workflow.querySelector('h2')?.textContent).toBe('What this De Novo needs');
     const assembly = workflow.querySelector('[data-work-package="submission-assembly"]')! as HTMLElement;
-    fireEvent.click(within(assembly).getByRole('button', { name: 'Write this work’s documents on Author' }));
-    expect(p.onStage).toHaveBeenCalledWith('author');
-    expect(p.onNav).not.toHaveBeenCalled();
+    fireEvent.click(within(assembly).getByRole('button', { name: 'Assemble the De Novo eSTAR' }));
+    expect(p.onNav).toHaveBeenCalledWith('device-510k');
     expect(within(assembly).queryByRole('button', { name: 'Assemble the eSTAR' })).toBeNull();
+    // A De Novo claims no predicate: its strategy door is the search that shows none exists, not an SE comparison.
+    expect(within(workflow).queryByRole('button', { name: /Choose predicates and build the SE comparison/ })).toBeNull();
+    expect(within(workflow).getAllByRole('button', { name: 'Show no predicate exists and propose the classification' }).length).toBeGreaterThan(0);
   });
 
   it('does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug', () => {

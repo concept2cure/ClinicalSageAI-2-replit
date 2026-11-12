@@ -35,9 +35,12 @@ function filingLabelFor(programType: string | null | undefined, primary: string 
   return String(programType ?? '').trim().toLowerCase() === 'cer' ? CER_LABEL : FILING_LABELS[primary ?? ''];
 }
 /** Each primary pathway's own feature, and the names of its strategy and assembly doors (section 9: a device
- *  door's name depends on the pathway the project files). A De Novo or an unrecorded route has none. */
+ *  door's name depends on the pathway the project files). An unrecorded route has none. A De Novo had none until
+ *  P-114 item 4 (2026-11-09, MDX journey M7): its eSTAR is produced on the 510(k) screen, which names itself for
+ *  the pathway the project files (mdx/surfaces/K510Surface.tsx). */
 export const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
   '510k': { surface: 'device-510k', doors: DEVICE_DOORS.pathway['510k'] },
+  de_novo: { surface: 'device-510k', doors: DEVICE_DOORS.pathway.de_novo },
   pma: { surface: 'device-pma', doors: DEVICE_DOORS.pathway.pma },
   mdr: { surface: 'device-cer', doors: DEVICE_DOORS.pathway.mdr },
   ivdr: { surface: 'device-diagnostics', doors: DEVICE_DOORS.pathway.ivdr },
