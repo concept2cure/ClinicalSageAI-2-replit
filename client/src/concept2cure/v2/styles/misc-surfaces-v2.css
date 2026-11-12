@@ -657,7 +657,12 @@
    either side knowing the widths. Each table declares its own template; the
    base `.ml-table` is the packaging one. */
 
-.c2c-v2 .ml-lic{ display:flex; flex-direction:column; gap:18px; }
+/* `min-width:0`: `.page-full` lays the page out as a row, so without it the
+   column's automatic minimum is its min-content width, which is the tables'
+   760–900px `min-width`. At 390px the column measured 915px and the
+   description, the find box and every table were cut off at the right edge
+   (2026-11-12). Each table already scrolls inside its own `.ml-scroll`. */
+.c2c-v2 .ml-lic{ display:flex; flex-direction:column; gap:18px; min-width:0; }
 
 /* ── Tab strip ─────────────────────────────────────────────────────────────
    aria-current="page" is the selected state the markup already sets, so it is
@@ -670,10 +675,16 @@
    `overflow-y:hidden` is explicit. With only overflow-x set the y axis computes
    to `auto`, and `.ml-tab`'s `margin-bottom:-1px` — which lays the active
    indicator over the strip's own border — raises a stray vertical scrollbar.
-   Same reasoning, same two lines, as `.mdx-shell .cer-tabbar`. */
+   Same reasoning, same two lines, as `.mdx-shell .cer-tabbar`.
+   `flex-shrink:0` is what keeps the strip on the screen. A scroll container's
+   automatic minimum height is 0, so inside `.ml-lic`'s column, once the
+   95-row packaging table overflowed it, the strip shrank to its 1px border and
+   every tab was clipped: in the running app, 2026-11-12, nobody could reach
+   Tenants, Access requests, Trials, Enforcement or Decisions. */
 .c2c-v2 .ml-tabs{
   display:flex; gap:4px; border-bottom:1px solid var(--border);
   overflow-x:auto; overflow-y:hidden; scrollbar-width:thin;
+  flex-shrink:0;
 }
 .c2c-v2 .ml-tabs > .ml-tab{ flex:0 0 auto; }
 .c2c-v2 .ml-tab{

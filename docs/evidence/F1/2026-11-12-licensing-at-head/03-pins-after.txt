@@ -1,0 +1,5 @@
+# After 922e6519c
+## server/services/entitlements/__tests__/launch-scope.test.ts: 48/48
+## tests/db/signup-launch-catalog.dbtest.ts
+ Test Files  1 passed (1)
+      Tests  16 passed (16)

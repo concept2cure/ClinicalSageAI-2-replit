@@ -1,0 +1,34 @@
+# Real-database suites of the licensing lane at a9b5af187 (8 files), before 922e6519c
+# CI=true NODE_ENV=test RLS_ENFORCE=on, APP_DATABASE_URL=app_service, database built from empty
+# (The FAIL-CLOSED lines in the raw log come from cases that call without a tenant scope and assert the refusal.)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: granted launch apps open and professional CMC remains tier-locked
+AssertionError: expected [ 'communication-center:tier', …(17) ] to deeply equal [ 'communication-center:tier', …(16) ]
+
+- Expected
++ Received
+
+@@ -10,10 +10,11 @@
+    "device-udi:tier",
+    "device-postmarket:tier",
+    "device-presub:tier",
+    "human-factors:tier",
+    "labeling:tier",
++   "etmf:tier",
+    "ind-checklist:tier",
+    "cmc:tier",
+    "rbm:tier",
+    "biostatistics:tier",
+  ]
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:472:20
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 229 passed (230)
+
