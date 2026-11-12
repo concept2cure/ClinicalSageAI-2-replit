@@ -1,0 +1,6 @@
+# The picker's verdict for the types it asks about, read from the running app (dev server :5000, read-only GET), 2026-11-09T20:34:36Z
+# eu_variation_ii: programTypeFor -> 'nda' (see filing-application-type.test.ts); eu_maa -> 'maa'
+$ GET /api/submissions/market-support?applicationType=nda&market=EMA  -> markets[0].offer
+{"tier": "not_offered", "label": "Not offered", "reason": "EMA has no governed NDA outline here, so a project would have nothing to author and no channel to send it.", "appliesTo": null}
+$ GET /api/submissions/market-support?applicationType=maa&market=EMA  -> markets[0].offer
+{"tier": "author_only", "label": "Author documents for this market", "reason": "Author the documents here. Module 1 leaves are filed flat under the agency's root element, not under its headings, so no EMA sequence is built.", "appliesTo": null}

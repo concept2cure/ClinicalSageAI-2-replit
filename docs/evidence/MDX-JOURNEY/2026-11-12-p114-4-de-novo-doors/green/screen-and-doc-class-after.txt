@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > calls the pathway and its package De Novo 171ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > claims no predicate and no substantial equivalence: similar devices, and how this one differs 64ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > shows the De Novo stages in place of the two that are a 510(k)'s, and keeps the count 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > opens the section that says why a De Novo is appropriate, not an SE discussion 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a 510(k) project, says what it said > keeps its pathway, package, panels and stages 26ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > docClassForPathway > names the De Novo class as the server records it 1ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > docClassForPathway > leaves the pathways whose class is their own spelling 0ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  22:00:15
+   Duration  3.75s (transform 2.09s, setup 241ms, import 2.46s, tests 345ms, environment 423ms)
+

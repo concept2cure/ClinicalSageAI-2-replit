@@ -1,0 +1,22 @@
+-- P-92 C3 second walk: the walk database after 0005 was re-opened on the fixed code (throwaway p86_walk; FDA answers are labelled stand-ins)
+ id | sequence_number | dispatch_status 
+----+-----------------+-----------------
+ 31 | 0001            | sent
+ 34 | 0004            | rejected
+ 35 | 0005            | rejected
+(3 rows)
+
+ id |  status  |                                        mdn_raw                                        | receipt_status | receipt_verified | settlement_outcome | reopened_by_user 
+----+----------+---------------------------------------------------------------------------------------+----------------+------------------+--------------------+------------------
+  1 | received | Walk stand-in for FDA's signed MDN for sequence 0001: processed. Not an FDA document. | received       | true             | not-received       | 17
+  4 | rejected |                                                                                       | rejected       | true             | received           | 17
+  5 | rejected | Walk stand-in for FDA's signed MDN for sequence 0005: failed. Not an FDA document.    | rejected       | true             | received           | 17
+(3 rows)
+
+ sequence |         action          |                                         reason                                          |    meaning     |          dispatch_status           |             transmittal_status              
+----------+-------------------------+-----------------------------------------------------------------------------------------+----------------+------------------------------------+---------------------------------------------
+ 35       | ECTD_HELD_SEND_REOPENED | FDA's signed answer (a labelled walk stand-in) refuses sequence 0005's send.            | responsibility | {"to": "rejected", "from": "sent"} | {"to": "rejected", "from": "ack2_received"}
+ 31       | ECTD_HELD_SEND_REOPENED | FDA's signed receipt (a labelled walk stand-in) shows it received sequence 0001's send. | responsibility | {"to": "sent", "from": "pending"}  | {"to": "received", "from": "rejected"}
+ 34       | ECTD_HELD_SEND_REOPENED | FDA's signed answer (a labelled walk stand-in) refuses sequence 0004's send.            | responsibility | {"to": "rejected", "from": "sent"} | {"to": "rejected", "from": "ack2_received"}
+(3 rows)
+

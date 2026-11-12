@@ -1,0 +1,36 @@
+{
+  "pack": "lumen",
+  "prefix": "[Demo · Lumen]",
+  "outcome": "failed",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T18:41:56.616Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 114,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {},
+      "found": {}
+    }
+  },
+  "notes": [
+    "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.",
+    "FAILED: list client workspaces: HTTP 401 {\"error\":\"This session has ended. Sign in again.\",\"code\":\"SESSION_ENDED\"}"
+  ],
+  "finishedAt": "2026-11-09T18:41:56.878Z"
+}

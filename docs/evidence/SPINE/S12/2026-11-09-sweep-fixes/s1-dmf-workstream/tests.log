@@ -1,0 +1,365 @@
+## Green: the changed suite
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | shared/constants/domain/__tests__/product-types.test.ts
+{
+  "timestamp": "2026-11-09T20:25:06.989Z",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T20:25:06.990Z",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | shared/constants/domain/__tests__/product-types.test.ts
+{
+  "timestamp": "2026-11-09T20:25:06.990Z",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | shared/constants/domain/__tests__/product-types.test.ts
+[database] Database connection successful
+
+stderr | shared/constants/domain/__tests__/product-types.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | shared/constants/domain/__tests__/product-types.test.ts
+{
+  "timestamp": "2026-11-09T20:25:07.218Z",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > pma / US_CDX_PMA names cdx independently of lane 3ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > pma /  cdx_pma  names cdx independently of lane 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > 510k / US_CDX_510K names cdx independently of lane 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > ivdr / cdx_ivdr_d names cdx independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > device / us_samd_presub names samd independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > ivd / US_COMPLEMENTARY_DX names ivd independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > uses existing regional limits and keeps generic pathways refinable 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > reports a contradictory exact pathway without inventing a default 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > refuses an unresolved stated device filing while preserving omission 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > mdl preserves its filing family across arrival lanes 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > shonin preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ninsho preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > todokede preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ivd_licence preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ivd_approval preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > jp_cdx preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > retains HDE diagnostic refinement without refining device-only regional filings 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device can never resolve to a drug or a biologic 2ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > resolves the EU technical files that used to fall through to a drug 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > does not guess at a filing type it has never seen 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > normalises casing and separators the store actually holds 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an diagnostics lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an ivd lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an diagnostics_ivd lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > reads a 510(k) started from the Diagnostics lane as an IVD 510(k) 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > cannot make a device filing medicinal, whatever the lane says 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > leaves medicinal filings alone 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > ind resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > IND resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > cta resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > maa resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > jnda resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > the filings that do fix it still resolve: NDA and ANDA are drugs, a BLA is a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats companion diagnostics as IVDs 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats software as a medical device as a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > keeps medicinal products out of the device family 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > is null-safe and case-insensitive 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > lists exactly the four device-family classes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > carries the six classes, each with a label and a regulatory reference 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > recognises its own members and nothing else 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every device and IVD instrument in MDX 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets the medicinal lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > returns null rather than guessing for an unknown filing type 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets a filing document class by its product class, and only once that is stated 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets a DMF by its stated product class, and only once that is stated 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every accepted filing type and recorded class in MDX, Biotech or Pharma, in SQL as in the function 2587ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > generates SQL that agrees with the function, member for member 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > product descriptions preserve conditional diagnostic classification > does not assign an EU risk class from the companion-diagnostic label 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a drug IND, an NDA and a biologic BLA are not device filings 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a recorded device-family product type is a device filing 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a device filing class decides when the product type is not recorded 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > no record is not a device filing 0ms
+
+ Test Files  1 passed (1)
+      Tests  71 passed (71)
+   Start at  20:25:05
+   Duration  6.56s (transform 2.52s, setup 68ms, import 3.70s, tests 2.62s, environment 0ms)
+
+
+## Related existing suites
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 26ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Module 3.2.S at "ICH / Global", sent as the wizard sends it (an NDA) with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses the Quality Overall Summary at "ICH / Global", by its legacy id with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses any other filing at "ICH / Global" (a comparability protocol) with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a Prior Approval Supplement at FDA: created author-only, its own outline, no submission spine 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a clinical study report at "ICH / Global": created author-only, scaffolded against ICH, no submission spine 7ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a class covers drugs and biologics alike, so the product class must be stated 3ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Module 1 without the agency's headings, no transmit channel 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Module 1 to the agency's headings 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no transmit channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (510k, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (pma, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (de_novo, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (ide, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (mdr, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (cer, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a 510(k) has its outline: outline only, no package 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a DMF has the ICH Module 3 outline the scaffolder gives its project 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport fails closed on an empty rule-pack read > no active pack at all is a failed read, not "No outline" for every market 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > FDA market support separates product copy from technical diagnostics > renders the plain FDA product line while retaining its technical diagnostic 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > an EU CTA is a CTA, not an NDA 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta registry row actually carries a pathwayKey 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the eu_cta row no longer claims to be an eCTD five-module dossier 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > a 505(b)(2) is an NDA, a 351(k) is a BLA, a DMF is a master file — none of them is an IND 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > the controls still map correctly 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_au is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_hc is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ctn_jp is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cta_nmpa is a clinical trial application, not a marketing application 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_i routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iia routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iib routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_mdr_iii routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_sig_change routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_clin_inv routes to the EU MDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_a routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_b routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > eu_ivdr_cd routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cdx_ivdr_d routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_perf_study routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivdr_pmpf routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_pms_plan routes to the EU IVDR technical file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > uk_ukca is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > br_device is a device filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > nmpa_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > tga_ivd is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > ivd_vigilance is an IVD filing with no defined pack and fails closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > fda_hde reaches its exact regional application class hde 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_mdl reaches its exact regional application class mdl 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > hc_ivd reaches its exact regional application class ivd_licence 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_shonin reaches its exact regional application class shonin 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_nintei reaches its exact regional application class ninsho 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > jp_todokede reaches its exact regional application class todokede 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > pmda_ivd reaches its exact regional application class ivd_approval 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > cdx_pmda reaches its exact regional application class jp_cdx 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > the New Project wizard creates the filing type that was chosen > no device or IVD filing resolves to a drug marketing application 1ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_nda_supp is created as pas 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cbe is created as cbe 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_nda_annual is created as annual_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_rems is created as rems 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_pader is created as pader 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_amendment is created as ind_amendment 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_sr is created as ind_safety_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_annual is created as ind_annual_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_a_meeting is created as briefing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_b_meeting is created as briefing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_c_meeting is created as briefing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_orphan is created as orphan 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_btd is created as designation 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_fast_track is created as fast_track 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_rmat is created as rmat 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_psp is created as psp 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_d_meeting is created as type_d_meeting 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_interact is created as interact_meeting 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_expanded_access_individual is created as expanded_access_individual 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_expanded_access_intermediate is created as expanded_access_intermediate 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_expanded_access_treatment is created as expanded_access_treatment 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_supp is created as bla_pas 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_cbe30 is created as bla_cbe30 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_cbe0 is created as bla_cbe0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_annual is created as bla_annual_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_pediatric_annual is created as bla_pediatric_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_pmr_annual is created as bla_pmr_status_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_distribution is created as bla_distribution_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bpdr is created as bpdr 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_pae_report is created as bla_pae_report 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cber_master_file is created as cber_master_file 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cber_lot_release is created as cber_lot_release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_eua_therapeutic is created as eua_request 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_csr is created as csr 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_protocol is created as protocol 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_ib is created as ib 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_sap is created as sap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_icf is created as icf 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_dsur is created as dsur 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > eu_psur is created as psur 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > none of them is created as the application it belongs to 0ms
+ ✓ client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > the Pre-IND meeting still creates the IND it is about 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > leaves no client code, no organization-wide aggregate and no claim for the old route 239ms
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there 1ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > an sBLA is a biologic without being asked, and cannot be recorded as a drug 3ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > an NDA/BLA Prior Approval Supplement fixes nothing: the person states it 1ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > a filing that is its own class is created as that class, never as its parent application 1ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > a filing document class records the product class the filing fixes > the question names the filing in a sentence a person reads 1ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > hde fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > mdl fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_licence fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > shonin fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ninsho fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > todokede fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_approval fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > jp_cdx fixes its default family without a redundant selection 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > mdl refuses a contradictory ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > shonin refuses a contradictory cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ninsho refuses a contradictory ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > todokede refuses a contradictory cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_licence refuses a contradictory device product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_approval refuses a contradictory samd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > jp_cdx refuses a contradictory ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > mdl permits its compatible samd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_licence permits its compatible cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > ivd_approval permits its compatible cdx product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > regional device intake preserves exact application and product family > hde permits its compatible ivd product 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > pma / US_CDX_PMA defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > pma / cdx_pma defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > 510k / us_cdx_510k defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > ivdr / cdx_ivdr_d defaults to cdx and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > device / us_samd_presub defaults to samd and refuses another subtype 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible 510k / cdx / US_CDX_PMA 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible pma / cdx / US_CDX_510K 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible ind / drug / US_CDX_PMA 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible 510k / device / US_NDA 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible ivdr / samd / EU_IVDR 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible mdr / cdx / EU_MDR_TECHDOC 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible pma / samd / US_PMA_IVD 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > refuses incompatible ivd / cdx / US_COMPLEMENTARY_DX 0ms
+ ✓ server/routes/c2c/__tests__/project-intake-class.test.ts > named device filings retain their product identity > retains compatible refinements and generic-family controls 0ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list 12ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection 4ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default 7ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > is additive: every key the card carried before is still there, with its value 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > keeps EU evaluation filings distinct from a separately recorded US route 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server product_type onto the kit Program, alongside the k510 pathway 63ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server regulatory_path onto the kit Program — De Novo is classified and kept as De Novo 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > device portfolio retains each device filing and states no invented readiness > does not read creation progress or stale progress as readiness 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > device portfolio retains each device filing and states no invented readiness > keeps IDE, regional and unknown device rows, but excludes medicinal filings 54ms
+ ✓ server/services/__tests__/mdx-health-honest-probe.test.ts > probeMdxHealth > reports a table it could not probe as unknown, not as not provisioned 4ms
+ ✓ server/services/__tests__/mdx-health-honest-probe.test.ts > probeMdxHealth > reports pathway counts it could not read as unknown, not zero 2ms
+ ✓ server/services/__tests__/mdx-health-honest-probe.test.ts > probeMdxHealth > treats a pathway no program uses as a fact, and recommends no seed 3ms
+ ✓ server/services/__tests__/mdx-health-honest-probe.test.ts > counts exact evaluation, regional, IDE and unknown device paths with the shared classifier 1ms
+ ✓ server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts > the portfolio card > projects no blocker, in the list and in the creator’s 201 1ms
+ ✓ server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts > the portfolio card > filters by a drug or biologic pathway, and refuses one outside the vocabulary 1ms
+ ✓ server/services/c2c/__tests__/project-portfolio-vocabulary.test.ts > the portfolio card > classifies an IND, an NDA and a De Novo in SQL as the filter names them 1665ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Health_Canada 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders the catalog authority label for saved Registered_Certification_Body 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders client, product, indication and the IND number from GET /api/c2c/projects/:id 193ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for client, product or indication the row lacks 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says the client type the filing type gives, as the project list does, with no list row handed over 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > a filing type no client type is known for is still "not recorded", never a guess 74ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for 510K / null 5ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for  510(K)  / null 2ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for de-novo / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for 510k / de_novo 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for PMA / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for CER / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for MDR / 510k 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for MDR_TD / pma 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for IVDR_TD / 510k 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for IVD / 510k 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for IVDR / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for IDE / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for device / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for HDE / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for MDL / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for ivd_licence / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for SHONIN / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for ninsho / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for todokede / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for IVD_APPROVAL / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for JP_CDX / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for unknown / IVDR 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for unknown / unknown 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for IND / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for nda / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for BLA / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for anda / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for cta / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for MAA / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for jnda / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for null / null 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for  /  1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > keeps JS and SQL consistent for __proto__ / constructor 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > classifies every admitted regional device application 1ms
+ ✓ shared/constants/domain/__tests__/pathways.test.ts > shared portfolio pathway classification > has a label for every declared pathway, including Other 1ms
+ ✓ server/services/__tests__/mdx-health.release.test.ts > deriveMdxReleaseStatus > never equates schema presence with release readiness 1ms
+ ✓ server/services/__tests__/mdx-health.release.test.ts > deriveMdxReleaseStatus > fails closed for dependency status fail 0ms
+ ✓ server/services/__tests__/mdx-health.release.test.ts > deriveMdxReleaseStatus > fails closed for dependency status unverified 0ms
+ ✓ server/services/__tests__/mdx-health.release.test.ts > deriveMdxReleaseStatus > fails closed for dependency status not_run 0ms
+ ✓ server/services/__tests__/mdx-health.release.test.ts > deriveMdxReleaseStatus > fails closed for stale qualification 0ms
+ ✓ server/services/__tests__/mdx-health.release.test.ts > deriveMdxReleaseStatus > caps technical qualification at controlled beta 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > resolves legacy aliases only at the compatibility boundary 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVDR/null as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVD/null as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivdr as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivd as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > does not coerce unknown or 510(k) programs into IVDR 0ms
+ Test Files  13 passed (13)
+      Tests  245 passed (245)
+   Duration  20.87s (transform 5.62s, setup 381ms, import 11.36s, tests 6.63s, environment 1.10s)

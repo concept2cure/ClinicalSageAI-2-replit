@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { K510_STAGES } from '../data/k510';
+import { k510PathwayWords } from '../data/k510';
 import type { Predicate, SeRow } from '../data/k510';
 import type { Program } from '../data/programs';
 import {
@@ -134,6 +134,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
      says so, instead of the fixture's "Stage 5 of 7" on a device nobody
      opened. */
   const activeStageIdx = program ? program.stageIdx : -1;
+  /* The pathway the project files names the screen's parts (P-114 item 4):
+     a De Novo is not called a 510(k). */
+  const words = k510PathwayWords(officialEstarTypeFor(program));
   const programStatus = program?.status ?? 'idle';
   const programId = program?.id ?? null;
 
@@ -337,11 +340,11 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            510(k) pathway · {program ? program.title : 'No project selected'}
+            {words.pathway} pathway · {program ? program.title : 'No project selected'}
           </div>
           <div className="section-sub">
             {program
-              ? `Stage ${activeStageIdx + 1} of ${K510_STAGES.length} — ${K510_STAGES[activeStageIdx]?.label ?? ''} · ${program.dueLabel}`
+              ? `Stage ${activeStageIdx + 1} of ${words.stages.length} — ${words.stages[activeStageIdx]?.label ?? ''} · ${program.dueLabel}`
               : 'Open a device project to see its stage and filing clock.'}
           </div>
         </div>
@@ -350,12 +353,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
           onClick={() =>
             onOpenEditor &&
             onOpenEditor({
-              code: 11,
-              label: sourceEstar.find((s) => s.id === 11)?.label ?? 'Substantial Equivalence Discussion',
+              code: words.editorSection.code,
+              label: sourceEstar.find((s) => s.id === words.editorSection.code)?.label ?? words.editorSection.label,
             })
           }
         >
-          Open §11 in editor {I.arrowRight}
+          Open {words.editorSection.ref} in editor {I.arrowRight}
         </button>
         <button
           className="section-more"
@@ -365,14 +368,14 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
             lockedTitle ??
             (program
               ? 'Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests'
-              : 'Select a 510(k) project first')
+              : `Select a ${words.pathway} project first`)
           }
           onClick={() => {
             if (!program) return;
             void estarExport.exportDraftPackage({ id: program.id, code: program.code, title: program.title });
           }}
         >
-          Export 510(k) package {I.download}
+          Export {words.pathway} package {I.download}
         </button>
       </div>
 
@@ -388,7 +391,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
       )}
 
       <div className="stage-strip">
-        {K510_STAGES.map((s, i) => {
+        {words.stages.map((s, i) => {
           const stateClass =
             i < activeStageIdx
               ? 'complete'
@@ -426,7 +429,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
           <span>
             {(predicates.notConfigured
               ? 'Predicate intelligence is not configured for this workspace. Live K-number candidates ' +
-                'and the substantial-equivalence matrix appear here once it is; until then the reduced ' +
+                `and ${words.comparisonNoun} appear here once it is; until then the reduced ` +
                 'openFDA clearance lookup below is the only source.'
               : 'Predicate intelligence is not reachable for this tenant. Live K-number candidates ' +
                 'appear here once the shadow service is reachable; until then the reduced openFDA ' +
@@ -456,7 +459,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
           <div className="panel">
             <div className="panel-hdr">
               <div>
-                <div className="t">Predicate search · K-numbers</div>
+                <div className="t">{words.searchTitle}</div>
                 <div className="s">
                   {selected.size} of {sourcePredicates.length} selected · ranked by similarity · check 2+ for side-by-side
                   {predicates.rows === null && !predicates.error && (
@@ -527,8 +530,8 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
                   state={predicatesState}
                   label="predicate candidates"
                   onRetry={predicates.refresh}
-                  emptyHint="Run a predicate search for this device to populate candidates."
-                  regulation="Serves the 510(k) predicate comparison (21 CFR 807.92)"
+                  emptyHint={words.searchEmptyHint}
+                  regulation={words.searchRegulation}
                 >
                   {() => null}
                 </DataGate>
@@ -670,9 +673,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
           <div className="panel">
             <div className="panel-hdr">
               <div>
-                <div className="t">Substantial equivalence matrix</div>
+                <div className="t">{words.comparisonTitle}</div>
                 <div className="s">
-                  {subjectName} vs. {multi ? `${selectedList.length} predicates` : selectedList[0]?.name}
+                  {subjectName} vs. {multi ? `${selectedList.length} ${words.comparedWith}` : selectedList[0]?.name}
                 </div>
               </div>
               <div className="actions">
@@ -701,12 +704,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
             </div>
             <DataGate
               state={seState}
-              label="substantial-equivalence rows"
+              label={words.comparisonRows}
               onRetry={seMatrix.notConfigured ? undefined : seMatrix.refresh}
               emptyHint={seMatrix.notConfigured
-                ? 'The SE matrix is built by predicate intelligence, which is not configured for this workspace.'
-                : 'Compare this device against a selected predicate to build the SE matrix.'}
-              regulation="Serves the 510(k) substantial-equivalence discussion"
+                ? words.comparisonNotConfigured
+                : words.comparisonEmptyHint}
+              regulation={words.comparisonRegulation}
             >
               {() => (
                 multi ? (
@@ -792,7 +795,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
                   title="Run pre-flight validation" aria-label="Run pre-flight validation"
                   onClick={() =>
                     onAskAna(
-                      `Run pre-flight RTA validation on the 510(k) eSTAR module for ${program?.code ?? 'this project'}. ` +
+                      `Run pre-flight RTA validation on the ${words.pathway} eSTAR module for ${program?.code ?? 'this project'}. ` +
                         `Report blockers, missing required fields, and the overall judgment.`,
                     )
                   }
@@ -806,7 +809,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
               label="eSTAR sections"
               onRetry={estar.refresh}
               emptyHint="Start the eSTAR package for this submission to list its sections."
-              regulation="Serves the FDA eSTAR 510(k) submission template"
+              regulation={words.estarRegulation}
             >
               {() => (
                 <div className="estar">

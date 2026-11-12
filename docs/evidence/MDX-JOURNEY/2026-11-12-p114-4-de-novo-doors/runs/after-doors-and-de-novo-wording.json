@@ -1,0 +1,52 @@
+{
+ "bad": [
+  "503 /api/predicate-intelligence/candidates?program_id=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+  "503 /api/predicate-intelligence/se-matrix?program_id=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+  "503 /api/predicate-intelligence/se-matrix?program_id=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+  "503 /api/predicate-intelligence/candidates?program_id=2a61cb26-b021-4fff-9e36-8923c3c7c2db"
+ ],
+ "planDoors": [
+  "Show no predicate exists and propose the classification",
+  "Assemble the De Novo eSTAR"
+ ],
+ "assemblyDoorOffered": 1,
+ "assemblyUrl": "/concept2cure/device-510k?program=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+ "title": "De Novo pathway · Lumina retinal scanner",
+ "panelTitles": [
+  "Similar devices · K-numbers",
+  "Comparison with similar devices",
+  "eSTAR sections",
+  "Fields the template carries"
+ ],
+ "stages": [
+  "Intake",
+  "Classify",
+  "Similar-device search",
+  "Performance testing",
+  "Classification and special controls",
+  "Assemble eSTAR",
+  "Submit"
+ ],
+ "buttons": [
+  "Open §C1 in editor",
+  "Export De Novo package",
+  "Generate official eSTAR (PDF)"
+ ],
+ "says510k": [
+  "510(k) and eSTAR",
+  "510(k) Premarket Notification",
+  "Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+ ],
+ "serves": [
+  "Serves the De Novo classification summary: how this device differs from similar ones (21 CFR 860.220)",
+  "Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+ ],
+ "submitDoor": 1,
+ "editorButton": 1,
+ "editorUrl": "/concept2cure/document-authoring?program=2a61cb26-b021-4fff-9e36-8923c3c7c2db",
+ "editorSays": [
+  "Reason De Novo is appropriate (no legally marketed predicate)",
+  "No sections yet in this document.",
+  "Couldn’t open “Reason De Novo is appropriate (no legally marketed predicate)” (section C1) — The requested section is not in the accessible working copies bound to this filing. Nothing else was selected."
+ ]
+}

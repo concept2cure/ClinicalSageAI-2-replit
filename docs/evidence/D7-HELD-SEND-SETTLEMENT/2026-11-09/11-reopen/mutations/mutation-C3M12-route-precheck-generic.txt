@@ -1,0 +1,5 @@
+MUTATION C3M12-route-precheck-generic in server/routes/submissions.ts (on the final code and tests, 2026-11-09T19:06:02.827296Z): replaced [    if (parsed.data.step === 'held-send-reopen') return res.json(await precheckHeldSendReopen(seqId, ctx));] with [    if (parsed.data.step === ('never' as string)) return res.json(await precheckHeldSendReopen(seqId, ctx));]
+ × server/routes/__tests__/submissions-held-send-reopen.test.ts > the re-open's precheck, answered at the route > sends the step to its own function, never to the generic precheck 52ms
+      Tests  1 failed | 3 skipped (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 6ea64784d283dba0f7dce24bf955b2b5caed4715c2caa0c17759789c72dfdcd9 (expected 6ea64784d283dba0f7dce24bf955b2b5caed4715c2caa0c17759789c72dfdcd9)

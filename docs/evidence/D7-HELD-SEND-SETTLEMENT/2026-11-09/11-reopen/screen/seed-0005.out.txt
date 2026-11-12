@@ -1,0 +1,9 @@
+BEGIN
+DO
+INSERT 0 1
+ id | sequence_number | dispatch_status | transmittal_id |    status     | mdn_kept | settled  | kept 
+----+-----------------+-----------------+----------------+---------------+----------+----------+------
+ 35 | 0005            | sent            |              5 | ack2_received | f        | received |    1
+(1 row)
+
+COMMIT

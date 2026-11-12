@@ -205,3 +205,35 @@ describe('recorded profile response ownership', () => {
     expect(reads()).toHaveLength(1);
   });
 });
+
+/* 2026-11-09: moving Projects → C2C-101 (client workspace 2) → Projects → LMN-201 (workspace 16) sent the profile read
+   with the PREVIOUS project's client claim, and the server answered 409 PROJECT_WORKSPACE_MISMATCH, both ways. The
+   shell's current client follows the open project only after its own read (clientFollowsProject.ts). The claim now
+   follows the open project's recorded workspace, which the project page already holds. */
+describe('the client claim follows the open project, across client workspaces in one session', () => {
+  const sideIn = (projectWorkspaceId: number | null | 'reading') =>
+    <ProjectSide pid={PID} projectWorkspaceId={projectWorkspaceId} records={{ data: null, loading: true, empty: false }} />;
+
+  it('claims the open project\'s recorded workspace, not the previous project\'s current selection', async () => {
+    tenant.currentClientWorkspace = { id: '34', organizationId: '7' };
+    render(sideIn(21));
+    expect(await screen.findByText('Recorded strategy from the client profile')).toBeTruthy();
+    expect(reads()).toHaveLength(1);
+    expect(reads()[0][3]).toEqual(expect.objectContaining({ 'x-client-id': '21' }));
+  });
+
+  it('sends no profile read while the project\'s own record is still being read', () => {
+    tenant.currentClientWorkspace = { id: '34', organizationId: '7' };
+    render(sideIn('reading'));
+    expect(reads()).toHaveLength(0);
+    expect(screen.getByText('Reading saved project profile…')).toBeTruthy();
+  });
+
+  it('writes a refused read as an error, never as no saved profile', async () => {
+    serve(ok({ success: false, error: 'PROJECT_WORKSPACE_MISMATCH' }, 409));
+    render(sideIn(21));
+    const refused = await screen.findByText('Recorded project context could not be read. Retry to read the current saved profile.');
+    expect(refused.getAttribute('role')).toBe('alert');
+    expect(screen.queryByText('No saved intelligence profile for this project.')).toBeNull();
+  });
+});

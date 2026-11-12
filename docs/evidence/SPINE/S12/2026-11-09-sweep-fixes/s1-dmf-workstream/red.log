@@ -1,0 +1,162 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | shared/constants/domain/__tests__/product-types.test.ts
+{
+  "timestamp": "2026-11-09T20:23:30.543Z",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T20:23:30.544Z",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | shared/constants/domain/__tests__/product-types.test.ts
+{
+  "timestamp": "2026-11-09T20:23:30.544Z",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | shared/constants/domain/__tests__/product-types.test.ts
+[database] Database connection successful
+
+stderr | shared/constants/domain/__tests__/product-types.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | shared/constants/domain/__tests__/product-types.test.ts
+{
+  "timestamp": "2026-11-09T20:23:30.694Z",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > pma / US_CDX_PMA names cdx independently of lane 2ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > pma /  cdx_pma  names cdx independently of lane 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > 510k / US_CDX_510K names cdx independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > ivdr / cdx_ivdr_d names cdx independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > device / us_samd_presub names samd independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > ivd / US_COMPLEMENTARY_DX names ivd independently of lane 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > uses existing regional limits and keeps generic pathways refinable 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > reports a contradictory exact pathway without inventing a default 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > exact device filing identities and bounded human refinements > refuses an unresolved stated device filing while preserving omission 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > mdl preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > shonin preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ninsho preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > todokede preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ivd_licence preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > ivd_approval preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > jp_cdx preserves its filing family across arrival lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > regional device application product identity > retains HDE diagnostic refinement without refining device-only regional filings 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > resolves the EU technical files that used to fall through to a drug 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > does not guess at a filing type it has never seen 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > normalises casing and separators the store actually holds 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an diagnostics lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an ivd lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > an diagnostics_ivd lane cannot turn MDR or CER into an IVD instrument 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > reads a 510(k) started from the Diagnostics lane as an IVD 510(k) 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > cannot make a device filing medicinal, whatever the lane says 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > leaves medicinal filings alone 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > ind resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > IND resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > cta resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > maa resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > jnda resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > the filings that do fix it still resolve: NDA and ANDA are drugs, a BLA is a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats companion diagnostics as IVDs 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats software as a medical device as a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > keeps medicinal products out of the device family 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > is null-safe and case-insensitive 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > lists exactly the four device-family classes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > carries the six classes, each with a label and a regulatory reference 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > recognises its own members and nothing else 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every device and IVD instrument in MDX 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets the medicinal lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > returns null rather than guessing for an unknown filing type 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets a filing document class by its product class, and only once that is stated 0ms
+ × shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets a DMF by its stated product class, and only once that is stated 4ms
+   → expected null to be 'Pharma' // Object.is equality
+ × shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every accepted filing type and recorded class in MDX, Biotech or Pharma, in SQL as in the function 2738ms
+   → expected [ …(4) ] to deeply equal []
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > generates SQL that agrees with the function, member for member 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > product descriptions preserve conditional diagnostic classification > does not assign an EU risk class from the companion-diagnostic label 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a drug IND, an NDA and a biologic BLA are not device filings 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a recorded device-family product type is a device filing 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > a device filing class decides when the product type is not recorded 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > isDeviceOrDiagnosticProgram — the program record decides > no record is not a device filing 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets a DMF by its stated product class, and only once that is stated
+AssertionError: expected null to be 'Pharma' // Object.is equality
+
+- Expected:
+"Pharma"
+
++ Received:
+null
+
+ ❯ shared/constants/domain/__tests__/product-types.test.ts:261:52
+    259|   // About read "not recorded".
+    260|   it('buckets a DMF by its stated product class, and only once that is…
+    261|     expect(workstreamForFilingType('dmf', 'drug')).toBe('Pharma');
+       |                                                    ^
+    262|     expect(workstreamForFilingType('dmf', 'biologic')).toBe('Biotech');
+    263|     expect(workstreamForFilingType('DMF', 'Biologic')).toBe('Biotech');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every accepted filing type and recorded class in MDX, Biotech or Pharma, in SQL as in the function
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "dmf/drug -> SQL Dmf, function null",
++   "DMF/drug -> SQL Dmf, function null",
++   "dmf/biologic -> SQL Dmf, function null",
++   "DMF/biologic -> SQL Dmf, function null",
++ ]
+
+ ❯ shared/constants/domain/__tests__/product-types.test.ts:292:21
+    290|           || r.ws !== workstreamForFilingType(r.program_type, r.produc…
+    291|         .map((r) => `${r.program_type}/${r.product_type} -> SQL ${r.ws…
+    292|       expect(wrong).toEqual([]);
+       |                     ^
+    293|     } finally {
+    294|       await db.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 69 passed (71)
+   Start at  20:23:29
+   Duration  5.64s (transform 1.73s, setup 62ms, import 2.66s, tests 2.76s, environment 0ms)
+

@@ -1028,3 +1028,59 @@ says so, with the tree it was checked against.
   statement restores it only as `statement`.
 - **(c)** A kept package that can no longer be read is an integrity incident, never covered by a statement.
 - **(d)** A signed statement cannot be superseded for now; a correction is a later sequence.
+
+## Re-cut for C2, against `dbeb901b17` (appended 2026-11-09, before any C2 code)
+
+C2's citations were re-checked against the tree C2 is built on: local `concept2cure-v2` at `dbeb901b17`. Origin's 46
+newer commits touch none of the files C2 edits. The table, the method and the evidence are in
+`p99-restore-unrecorded-sequence.citations-c2-2026-11-09.md`, beside this file: 121 citations, 65 same, 35 moved,
+21 changed, none gone. What the changes mean for C2, and the coordinating session's rulings of 2026-11-09:
+
+1. **The precheck is its own function, not a step of `precheckGovernedStep`.** Each act since P-86 has its own precheck,
+   which the route dispatches by step (`server/routes/submissions.ts:2214-2226`). C2 adds `precheckSentRecord(seqId,
+   ctx)` beside them, and `'sent-record'` to `governedPrecheckSchema`'s enum (`:2165`). The read-back takes no extra
+   body field. §3.5's `compilationId`, `leftOut` and `evidenceDocumentId` belong to the statement (C3). The schema's
+   refine at `:2198-2201` admits `evidenceDocumentId` only beside `outcome` or for `'technical-rejection'`, so C3
+   widens it then.
+2. **Rule 2 (§3.0) reads only the transmit's own `ECTD_TRANSMITTED` rows.** Since P-92, `spendTransmitSignature`
+   (`fda-esg-receipts.ts:160-171`) also writes that action: the receipt path writes one, and the settlement writes
+   one with `source: 'held-send-settlement'`. Neither carries `packageSha256`. Rule 2 counts only rows whose details
+   carry both `transmittalId` and `packageSha256` (the transmit writes both, `submission-service.ts:4343-4345`), and
+   no test send (`testSend` true, or `environment` staging). Zero or more than one such row still refuses.
+3. **The guard's server-owned keys (§3.3), with one addition.** Today the guard stamps only `dispatchBinding` and
+   `leafManifest` as undefined after the caller's metadata (`index.ts:348-354`). C2 adds P-99's three keys, as
+   designed. The re-check also found P-92's record keys unstamped: `heldSendSettlement`, `technicalRejection`,
+   `as2Receipt` and `as2ReceiptHistory`. The governed HTTP transmit (`POST /api/mdx/gateways/:region/:gateway/transmit`)
+   passes caller metadata through, so a person with transmit authority could put "released as not received … by
+   signature" or "rejected by FDA on its Ack3, by signature" on their own package row's line in both lists, with no
+   signature behind it. The acts are not reachable that way (each reads only a row bound by `dispatchBinding`, which
+   is stamped), but the words are. C2 stamps those four keys too, in the same lines, with T9's case extended. This
+   addition was put to the coordinating session with this re-cut.
+4. **`applySequenceChangeWithAudit` already takes `audit.reason` and `update.afterUpdate`** (P-86 `2b79ca12e`, P-92
+   `950e0dca97`; `submission-service.ts:1495-1527`). It sets no tenant context, so C2's `underLock` sets it, as P-92's
+   acts do.
+5. **`MODIFIED_FILE` is not exported** (`prior-sequence-loader.ts:435`, used once at `:514`). C2 exports it, and
+   `bindToFiledState` uses it. The other pointer parsers are named as left, by path, as the coordinating session ruled:
+   `regional-packager.ts:907-908` (`MODIFIED_FILE_NAMES_A_LEAF`), `ectd/qualification/qualify.ts:200` (an inline regex
+   in `unresolvedModifiedFiles`) and the reader's own `split('#')` with `intoSibling`
+   (`filed-sequence-pointers.ts:140-143`).
+6. **The fold (§3.3), as it stands.** The transmittal arm (`prior-sequence-loader.ts:323-331`) joins on
+   `dispatchBinding`'s attempt, sequence and signature. It keeps `sameAgency` rows (`:352`) and throws on more than
+   one (`:356-361`). Today `FiledRecordBasis` is `'transmit' | 'compiles'` (`:250`), with `'none'` internal (`:258`).
+   C2 widens the join to `restoredBinding` and adds `restored`. The `'statement'` basis comes with C3.
+7. **What the re-check found false in §1, now:**
+   - §1.6: C1 landed (`27b901c491`, `refuseCompileOfSequenceOnFile`, `ectd-compile.ts:303-323`, called at `:713`);
+   - §1.7: D7-A1 and D7-A2 landed (`c023b17ae0`, `f52cc3be22`, `a66c04fa56`). P-92's held-send and rejection doors
+     now sit in `TransmitPanel`, beside where C4a's door goes;
+   - §1.8: the clone is no longer shallow (19,354 commits). The full-history deletion search for every name C2 adds
+     finds none in code, ever: each appears only in design-doc commits (`b0bb8dccc3`, `bc7ffda39`).
+   - §1.3 and §1.4, wrong at the design's own tree too: two of `readSentPackage`'s refusals do not say "nothing was
+     downloaded" (§1.3), so C2's R7 rewords its sentences by code, not by suffix; and the reader has 21 literal
+     refusal codes, not 20 (§1.4).
+8. **Not a defect, named for the record.** `spendTransmitSignature`'s own list (`fda-esg-receipts.ts:156-157`) lacks
+   P-92 C4's and C3's actions, which Gate 1's list has. It asks whether the transmit signature S was spent, and those
+   rows carry their own signer's signature, of another intent, never S. Only its comment ("every act") is wider than
+   its use.
+9. **Order and pushing (the coordinating session, 2026-11-09):** C2 and C4's read-back half (C4a) are two commits
+   pushed in one window, after `dbeb901b17`. C3 and C4's statement half (C4b) follow in the next. Stage 9's lane was
+   told before `filed-sequence-pointers.ts` was edited.

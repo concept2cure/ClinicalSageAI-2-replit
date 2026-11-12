@@ -1,0 +1,7 @@
+MUTATION C4M03-R3-acceptance-ignored in server/services/ectd/filed-sequence-rejection.ts (on the final code and tests, 2026-11-09T18:27:39.274678Z): replaced [  if (ACCEPTANCE_STATUSES.has(t.status)) {
+    return `FDA's center is recorded as accepting] with [  if (false) {
+    return `FDA's center is recorded as accepting]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a transmission FDA's center accepted, before anyone signs, in words 320ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3 (expected 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3)

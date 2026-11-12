@@ -1,0 +1,5 @@
+MUTATION C3M02-reopened-twice in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T19:26:13.556899Z): replaced [  const open = rows.filter((r) => !r.metadata?.heldSendSettlement?.reopenedBy && keptAnswerOf(r.metadata ?? {}));] with [  const open = rows.filter((r) => keptAnswerOf(r.metadata ?? {}));]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > nothing to re-open: a settlement with no contradicting answer, and one already re-opened 437ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711 (expected 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711)

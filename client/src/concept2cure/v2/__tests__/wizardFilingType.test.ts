@@ -39,7 +39,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { programTypeFor } from '../surfaces/Projects';
+import { programTypeFor } from '@shared/constants/domain/filing-application-type';
 import { getSubmissionTypeContext, GLOBAL_REGISTRY } from '../surfaces/RegistryBridge';
 
 /** Exactly what Projects.tsx:130 builds before calling programTypeFor. */

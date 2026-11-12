@@ -1,0 +1,26 @@
+-- P-99 C1: the README's pre-deploy read-only query, run once (2026-11-09T19:46:32Z) in a READ ONLY transaction on the throwaway
+-- deploy-shaped database concept2cure-ri_dbtest_p99 (install-fresh.mjs, then deploy-migrate.mjs) after the dbtest ran: it parses
+-- and runs against the schema a deployment builds. It is NOT a run on a deployed database; that run is still owed.
+
+BEGIN READ ONLY;
+BEGIN
+SELECT s.organization_id, s.submission_id, s.id AS sequence_id, s.sequence_number, s.dispatch_status, t.sent_at
+  FROM ectd_sequences s
+  JOIN LATERAL (SELECT min(a.occurred_at) AS sent_at FROM audit_logs a
+                 WHERE a.tenant_id = s.organization_id AND a.action = 'ECTD_TRANSMITTED'
+                   AND a.record_id = s.id::text) t ON t.sent_at IS NOT NULL
+ WHERE s.deleted_at IS NULL AND s.dispatch_status IN ('sent', 'acknowledged')
+   AND EXISTS (SELECT 1 FROM ectd_compilations c
+                WHERE c.organization_id = s.organization_id AND c.submission_id = s.submission_id
+                  AND c.sequence_number = s.sequence_number AND c.compilation_type <> 'rehearsal')
+   AND NOT EXISTS (SELECT 1 FROM ectd_compilations c
+                WHERE c.organization_id = s.organization_id AND c.submission_id = s.submission_id
+                  AND c.sequence_number = s.sequence_number AND c.compilation_type <> 'rehearsal'
+                  AND c.compiled_at <= t.sent_at);
+ organization_id | submission_id | sequence_id | sequence_number | dispatch_status | sent_at 
+-----------------+---------------+-------------+-----------------+-----------------+---------
+(0 rows)
+
+ROLLBACK;
+ROLLBACK
+psql exit=0

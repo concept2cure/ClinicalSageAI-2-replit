@@ -1,0 +1,28 @@
+# P-92 C3 red, 2026-11-09T18:46:44Z, at b149f7e267, before any C3 code: held-send-reopen.pglite.test.ts
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > a release FDA received: the sequence is sent with its claim restored, the transmittal received with FDA's receipt 354ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > "received" FDA refused: the sequence and the transmittal are rejected, and both records stay 54ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > nothing to re-open: a settlement with no contradicting answer, and one already re-opened 44ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > a release whose sequence was sent again is not re-opened by an act: FDA may hold two copies 45ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > the sequence's creator is told before signing 40ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > Gate 1 refuses a signature with another meaning, and voids it 41ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > Gate 1 refuses a signature with another settlement, and voids it 41ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > Gate 1 refuses a signature with another FDA answer, and voids it 44ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > Gate 1 refuses a signature with no statement, and voids it 45ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > the statement is compared word for word: one character changed is refused 44ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > judged again under the lock: a sequence sent again after the first read is refused, the signature void 42ms
+   → precheckHeldSendReopen is not a function
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > a signature with no reason re-opens nothing 39ms
+   → precheckHeldSendReopen is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  12 failed (12)

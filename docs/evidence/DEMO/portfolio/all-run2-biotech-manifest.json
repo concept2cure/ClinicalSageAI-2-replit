@@ -1,0 +1,583 @@
+{
+  "pack": "biotech",
+  "prefix": "[Demo · Biotech]",
+  "outcome": "failed",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T18:40:41.740Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 114,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {},
+      "found": {
+        "program": 1,
+        "vault-document": 6,
+        "vault-filing": 6,
+        "authoring-document": 3,
+        "authoring-section": 16,
+        "authoring-comment": 3,
+        "authoring-comment-resolution": 2,
+        "protocol-document": 1,
+        "protocol-section": 10,
+        "protocol-objective": 6,
+        "protocol-criterion": 16,
+        "protocol-visit": 9,
+        "protocol-team-member": 6,
+        "protocol-soa-assessment": 10,
+        "protocol-soa-cell": 51,
+        "protocol-risk": 6,
+        "protocol-milestone": 5,
+        "protocol-amendment": 1,
+        "protocol-version": 1,
+        "study-design": 1,
+        "submission": 1,
+        "sequence": 1
+      }
+    },
+    "identities": {
+      "author": {
+        "email": "jm.smith@concept2cure.pro",
+        "userId": "1",
+        "organizationId": "2"
+      },
+      "signer": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+    },
+    "provenance": "Seeded demonstration content authored for the Concept2Cure launch demo (fictional sponsor, molecule, study and people). Not model-drafted: no AI provider is configured.",
+    "program": {
+      "id": "6065271c-d4b0-4936-aad1-02855423a738",
+      "code": "C2C-101",
+      "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "productName": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)",
+      "programType": "ind",
+      "phase": "planning",
+      "status": "active",
+      "indication": "Moderate-to-severe plaque psoriasis in adults",
+      "sponsor": "Concept2Cure Therapeutics (fictional) — the organisation the founder is signed into",
+      "spineSubmissionId": null,
+      "created": false
+    },
+    "vault.documents": [
+      {
+        "key": "ib",
+        "id": "75d6cf26-b705-4aea-9d18-cbd03f163b91",
+        "title": "[Demo · Biotech] Investigator's Brochure C2C-101 v3.0",
+        "documentType": "IB",
+        "folderId": "module-1",
+        "sectionCode": "m1.14.4.1",
+        "leafTitle": "Investigator's Brochure v3.0",
+        "pages": 2,
+        "bytes": 7296,
+        "sha256": "b23339ccea9d8b0ef2087fc525c56abe512815ae7244d2b77cfec383d7c94578",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "protocol",
+        "id": "e7ae5774-0678-4423-86fc-5f7dbd3e0c57",
+        "title": "[Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled",
+        "documentType": "PROTOCOL",
+        "folderId": "module-5",
+        "sectionCode": "m5.3.5.1",
+        "leafTitle": "Protocol C2C-101-201 v1.0",
+        "pages": 2,
+        "bytes": 9196,
+        "sha256": "44cf3a1bedc69fc402070838694cd33e02c9c51b0a08c5a0b06706e8ca839b4f",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "sap",
+        "id": "dc4f5bfc-3c10-4e25-92ba-5c6202e17120",
+        "title": "[Demo · Biotech] Statistical Analysis Plan C2C-101-201 v1.0",
+        "documentType": "SAP",
+        "folderId": "module-5",
+        "sectionCode": "m5.3.5.1",
+        "leafTitle": "Statistical Analysis Plan C2C-101-201 v1.0",
+        "pages": 2,
+        "bytes": 6891,
+        "sha256": "aeecd5e3f5a1d142cbf72ba2bf683e9f54db23dd360220167a6fc073efc44e18",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "cmc",
+        "id": "be0f7621-7c77-429c-be6d-6ac73da3ed6d",
+        "title": "[Demo · Biotech] CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101",
+        "documentType": "MODULE_2",
+        "folderId": "module-2",
+        "sectionCode": "m2.3",
+        "leafTitle": "Quality Overall Summary — C2C-101",
+        "pages": 2,
+        "bytes": 6467,
+        "sha256": "2dddf37b17b81e1cf62c4dbfc38dae63be419faf73d87e2c9cfc9d1c2d331e3e",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "tox",
+        "id": "98c0b490-17da-4595-80ea-a6153c057363",
+        "title": "[Demo · Biotech] Nonclinical Toxicology Summary — C2C-101",
+        "documentType": "MODULE_2",
+        "folderId": "module-2",
+        "sectionCode": "m2.6.6",
+        "leafTitle": "Toxicology Written Summary — C2C-101",
+        "pages": 2,
+        "bytes": 5781,
+        "sha256": "ae9376f9a34659fee25aba45670484f52d9dcd4d6f4c671657eb52f1e3bdeeaa",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      },
+      {
+        "key": "preind",
+        "id": "84155fd7-0758-444c-a7a5-f39d60cb05ce",
+        "title": "[Demo · Biotech] Pre-IND Meeting Minutes — C2C-101 (Type B)",
+        "documentType": "CORRESPONDENCE",
+        "folderId": "module-1",
+        "sectionCode": "m1.6.3",
+        "leafTitle": "Pre-IND meeting minutes (Type B)",
+        "pages": 2,
+        "bytes": 5599,
+        "sha256": "9f2e02c4e112226ea244a738ae36bfc0d9bfc2314e30371b4541d73a0915756a",
+        "contentHash": null,
+        "filing": null,
+        "created": false
+      }
+    ],
+    "vault.readModel": {
+      "documentCount": 21,
+      "unfiledCount": 12,
+      "standard": "biotech",
+      "dataRoom": {
+        "captured": 36,
+        "classified": 10,
+        "filed": 0,
+        "needsReview": 26,
+        "sources": [
+          {
+            "id": 455,
+            "title": "Sweep_RV_C2C-101_DataRoom_Note.pdf",
+            "kind": "PDF",
+            "sizeLabel": "745 B",
+            "addedAt": "24m ago",
+            "stage": "needs_review",
+            "readState": "Read",
+            "suggestedFolder": null,
+            "suggestedFolderLabel": "",
+            "evidenceKind": null,
+            "confidence": "none",
+            "needsReview": true,
+            "filedAs": null
+          },
+          {
+            "id": 229,
+            "title": "stability-data-cut-1794183324923.txt",
+            "kind": "Text",
+            "sizeLabel": "84 B",
+            "addedAt": "18h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 227,
+            "title": "stability-data-cut-1794183288633.txt",
+            "kind": "Text",
+            "sizeLabel": "84 B",
+            "addedAt": "18h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 225,
+            "title": "stability-data-cut-1794183148874.txt",
+            "kind": "Text",
+            "sizeLabel": "101 B",
+            "addedAt": "18h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 223,
+            "title": "stability-data-cut-1794183127960.txt",
+            "kind": "Text",
+            "sizeLabel": "101 B",
+            "addedAt": "18h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 221,
+            "title": "stability-data-cut-1794183085570.txt",
+            "kind": "Text",
+            "sizeLabel": "101 B",
+            "addedAt": "18h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 219,
+            "title": "stability-data-cut-1794183040093.txt",
+            "kind": "Text",
+            "sizeLabel": "74 B",
+            "addedAt": "19h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 218,
+            "title": "stability-data-cut-1794183040093.txt",
+            "kind": "Text",
+            "sizeLabel": "73 B",
+            "addedAt": "19h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 217,
+            "title": "stability-data-cut-1794183006228.txt",
+            "kind": "Text",
+            "sizeLabel": "60 B",
+            "addedAt": "19h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 216,
+            "title": "stability-data-cut-1794182991748.txt",
+            "kind": "Text",
+            "sizeLabel": "59 B",
+            "addedAt": "19h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "module-3",
+            "suggestedFolderLabel": "Module 3 · Quality",
+            "evidenceKind": "report",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          },
+          {
+            "id": 163,
+            "title": "[Demo] FDA information request (fictional) - IND C2C-101.txt",
+            "kind": "Text",
+            "sizeLabel": "1.3 kB",
+            "addedAt": "20h ago",
+            "stage": "classified",
+            "readState": "Read",
+            "suggestedFolder": "corresp",
+            "suggestedFolderLabel": "Agency correspondence",
+            "evidenceKind": "resp",
+            "confidence": "high",
+            "needsReview": false,
+            "filedAs": null
+          }
+        ],
+        "window": {
+          "shown": 11,
+          "truncated": false
+        }
+      }
+    },
+    "authoring.documents": [
+      {
+        "key": "synopsis",
+        "title": "[Demo · Biotech] Protocol Synopsis C2C-101-201",
+        "module": "M5",
+        "role": "frozen-signed",
+        "id": "d49749de-add0-4380-935f-a111e2d04b25",
+        "status": "draft",
+        "created": false,
+        "governance": null,
+        "sections": [
+          {
+            "id": "b4799c7d-aedc-422a-9c6e-3086b9da8ef9",
+            "code": "S.1",
+            "title": "Objectives"
+          },
+          {
+            "id": "820ef675-0653-4e75-8192-a147eb11416e",
+            "code": "S.2",
+            "title": "Study design"
+          },
+          {
+            "id": "812cc5e5-ca05-4e5c-878f-6e9a21f9eff4",
+            "code": "S.3",
+            "title": "Study population"
+          },
+          {
+            "id": "1a7bcf62-daad-487a-8d9f-2fee37fd1b7a",
+            "code": "S.4",
+            "title": "Endpoints"
+          },
+          {
+            "id": "c6fdcca1-1101-4b09-b5dc-fb719aeafb46",
+            "code": "S.5",
+            "title": "Sample size rationale"
+          },
+          {
+            "id": "9069c453-5c7b-4d90-81d0-6ff4c0e0a09c",
+            "code": "S.6",
+            "title": "Statistical methods"
+          }
+        ],
+        "comments": [
+          {
+            "id": "87b4bad1-7319-4da0-981f-1df890c7e087",
+            "sectionCode": "S.5",
+            "status": "resolved",
+            "resolvedBy": "jm.smith@concept2cure.pro"
+          },
+          {
+            "id": "661598af-7f84-467c-8978-b68ffe86d65a",
+            "sectionCode": "S.2",
+            "status": "resolved",
+            "resolvedBy": "jm.smith@concept2cure.pro"
+          }
+        ],
+        "review": null,
+        "frozen": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+        "signature": "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)"
+      },
+      {
+        "key": "clinical-overview",
+        "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+        "module": "M2",
+        "role": "in-review",
+        "id": "79793c98-005d-45bc-8261-0cd0d2208ec7",
+        "status": "draft",
+        "created": false,
+        "governance": null,
+        "sections": [
+          {
+            "id": "c7f0c674-abdd-47a6-80e2-7e66c2bbd489",
+            "code": "2.5.1",
+            "title": "Product Development Rationale"
+          },
+          {
+            "id": "d0ea5645-b27f-430a-91bc-594833c4fb0e",
+            "code": "2.5.2",
+            "title": "Overview of Biopharmaceutics"
+          },
+          {
+            "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+            "code": "2.5.3",
+            "title": "Overview of Clinical Pharmacology"
+          },
+          {
+            "id": "1b160bae-4cb6-44dc-bb04-fe405215d8c1",
+            "code": "2.5.4",
+            "title": "Overview of Efficacy"
+          },
+          {
+            "id": "b59189fc-4ade-4688-bb10-6a757c1b408e",
+            "code": "2.5.5",
+            "title": "Overview of Safety"
+          },
+          {
+            "id": "32374305-2e73-4800-9d71-c50f5acffac7",
+            "code": "2.5.6",
+            "title": "Benefits and Risks Conclusions"
+          }
+        ],
+        "review": null
+      },
+      {
+        "key": "ib-summary",
+        "title": "[Demo · Biotech] IB Summary of Data and Guidance for the Investigator — C2C-101",
+        "module": "M1",
+        "role": "draft-open-comment",
+        "id": "bdd5a24e-10d7-4dd1-aba6-e65a6c069758",
+        "status": "draft",
+        "created": false,
+        "governance": null,
+        "sections": [
+          {
+            "id": "0ed07960-0e49-4cc9-93d5-1fa4b2d7fe05",
+            "code": "7.1",
+            "title": "Summary of nonclinical data"
+          },
+          {
+            "id": "03d134e8-12b7-45f3-b4e6-73db4dc82931",
+            "code": "7.2",
+            "title": "Summary of clinical data"
+          },
+          {
+            "id": "1496ef1a-9595-4f10-a56e-16d86f522aad",
+            "code": "7.3",
+            "title": "Guidance for the investigator"
+          },
+          {
+            "id": "96447076-2cd6-45d3-b51a-471c2d19a45d",
+            "code": "7.4",
+            "title": "Reference safety information"
+          }
+        ],
+        "comments": [
+          {
+            "id": "a3d380b8-4763-4996-b672-fcaa82490a1d",
+            "sectionCode": "7.3",
+            "status": "open",
+            "resolvedBy": null
+          }
+        ]
+      }
+    ],
+    "protocol": {
+      "title": "[Demo · Biotech] Protocol C2C-101-201 — Phase 2 dose-ranging study of C2C-101 in plaque psoriasis",
+      "protocolNumber": "C2C-101-201",
+      "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+      "id": 1,
+      "soa": {
+        "assessments": 10,
+        "visits": 9,
+        "totalCells": 51
+      },
+      "risks": 6,
+      "milestones": 5,
+      "amendment": {
+        "id": 1,
+        "title": "Amendment 1 — add Week 2 PK sampling and align stratification wording"
+      },
+      "versions": 1,
+      "pdev": {
+        "id": "1",
+        "objectives": 6,
+        "inclusion": 8,
+        "exclusion": 8,
+        "visits": 9,
+        "assessments": 10,
+        "risks": 6,
+        "milestones": 5,
+        "amendments": 1,
+        "team": 6,
+        "keys": [
+          "id",
+          "programId",
+          "title",
+          "shortTitle",
+          "kind",
+          "version",
+          "status",
+          "sponsor",
+          "pi",
+          "principalInvestigator",
+          "team",
+          "updated",
+          "completeness",
+          "openSection",
+          "sections",
+          "content",
+          "objectives",
+          "eligibility",
+          "soa",
+          "riskSummary",
+          "risks",
+          "milestones",
+          "budget",
+          "amendments",
+          "deviations",
+          "reviews",
+          "reviewComments",
+          "finalization",
+          "consent",
+          "consentForm",
+          "completenessFindings",
+          "ruleFindings",
+          "studyDesign"
+        ]
+      }
+    },
+    "submission": {
+      "submission": {
+        "id": 29,
+        "title": "Sweep API eu_biosimilar_maa",
+        "productName": "C2C-101",
+        "applicationType": "maa",
+        "primaryRegion": "eu",
+        "status": "planning"
+      },
+      "sequence": {
+        "id": 4,
+        "sequenceNumber": "0000",
+        "status": "draft",
+        "region": "fda"
+      }
+    }
+  },
+  "notes": [
+    "not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Authoring freeze of Protocol Synopsis C2C-101-201: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "Authoring e-signature on Protocol Synopsis C2C-101-201: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)",
+    "The submission is the program's canonical spine created by intake (title = program name, productName = program product). There is no PATCH /api/submissions/:id, so the story's label \"IND 0000 — Original IND\" is carried by the sequence (number 0000, type original), not by a renamed submission.",
+    "FAILED: place leaf m1.14.4.1 ib: HTTP 409 {\"error\":{\"code\":\"CROSS_PROJECT\",\"message\":\"This document belongs to another project. A filing can hold only its own project’s documents.\"}}"
+  ],
+  "finishedAt": "2026-11-09T18:41:00.935Z"
+}

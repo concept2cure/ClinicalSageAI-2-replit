@@ -453,7 +453,10 @@
    journey-v2.css owns that class for the Program journey's stage cells, and
    two global rules on one class merge (flex, padding and min-width leaked
    both ways). */
-.c2c-v2 .pj-stagebody{display:flex;flex-direction:column;gap:32px;min-width:0;}
+/* position:relative: the page scrolls inside .page-inner, which is not positioned, so a step's visually-hidden text
+   (.sr-only, .pj-sr: position:absolute) hung off the document and made it scrollable (Respond's letters by 151px,
+   Evidence by 499px). Landing a Filing row on its place then scrolled the whole shell under the top bar (sweep D3). */
+.c2c-v2 .pj-stagebody{position:relative;display:flex;flex-direction:column;gap:32px;min-width:0;}
 /* The step bodies (D3-4, D3.md §4.7): their rows are app-v2.css's .pj block; these are the parts only they have. */
 /* Tasks and approvals: the status in words at the row's right, the warning tone and its icon only when blocked. */
 .c2c-v2 .pj-work-status{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;font-size:var(--fs-small);color:var(--text-300);}
@@ -515,7 +518,8 @@
    words, never colour alone. */
 .c2c-v2 .pj-mkts{list-style:none;margin:0;padding:0;}
 .c2c-v2 .pj-mkt{display:flex;flex-direction:column;gap:2px;}
-.c2c-v2 .pj-mkt-verdict{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:600;color:var(--text-200);}
+/* Positioned so the market's name read to a screen reader (.pj-sr) stays inside it, not on the document (sweep D3 (a)). */
+.c2c-v2 .pj-mkt-verdict{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:600;color:var(--text-200);}
 .c2c-v2 .pj-mkt-verdict[data-tone=ok]{color:var(--success);}
 .c2c-v2 .pj-mkt-verdict[data-tone=blocked]{color:var(--error);}
 .c2c-v2 .pj-mkt-verdict[data-tone=warn]{color:var(--warning);}
@@ -591,7 +595,9 @@
 .c2c-v2 .pj-knows-t{white-space:pre-wrap;overflow-wrap:anywhere;}
 .c2c-v2 .pj-knows h4{margin:10px 0 2px;font-size:13px;font-weight:600;color:var(--text-100);}
 /* A market's verdict, as the button that opens it on Submit. */
-.c2c-v2 .pj-status-open{background:none;border:1px solid transparent;border-radius:var(--radius-md);padding:2px 6px;margin:-2px -6px;font:inherit;cursor:pointer;text-align:left;}
+/* position:relative holds the row's screen-reader text (.pj-sr, absolute): with no positioned host it hung off the
+   document, which became scrollable, and opening Submit scrolled the whole shell up 48px (sweep D3 (a), 2026-11-09). */
+.c2c-v2 .pj-status-open{position:relative;background:none;border:1px solid transparent;border-radius:var(--radius-md);padding:2px 6px;margin:-2px -6px;font:inherit;cursor:pointer;text-align:left;}
 .c2c-v2 .pj-status-open:hover{border-color:var(--border);background:var(--bg-100);}
 .c2c-v2 .pj-status-open:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 .c2c-v2 .pj-status-go svg{width:12px;height:12px;}
