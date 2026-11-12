@@ -137,3 +137,72 @@ describe('reading a document from its record', () => {
     expect(screen.queryByRole('dialog', { name: /^Reading/ })).toBeNull();
   });
 });
+
+/* Reported 2026-11-12 by the document path screen repairs (01QoxbLcnW…), on the W3 installation: Versions → View
+   framed version 1.0 inside the record panel, 319 by 320px at 1440 by 900. The record's own View opened the wide
+   drawer; a version's did not. Both now read through the record's one reader. */
+describe('reading an earlier version from the record’s Versions section', () => {
+  const V1 = '33333333-3333-4333-8333-333333333333';
+  const V1_DOWNLOAD = `/api/c2c/project-vault/${PID}/documents/${V1}/download`;
+  const version = (id: string, v: string, current: boolean) => ({
+    id, version: v, contentHash: HASH, fileSize: 2048, fileName: 'stability-summary-24m.pdf', uploader: 'Uma Uploader',
+    uploaderId: 3, createdAt: '2026-09-30T10:00:00.000Z', current, link: 'none', lifecycle: null,
+  });
+  let v1Refused = false;
+
+  function installWithVersions() {
+    install({ mimeType: 'application/pdf' });
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === `/api/c2c/project-vault/${PID}/documents/${DOC_ID}/versions`) {
+        return ok({ success: true, data: { versions: [version(DOC_ID, '2.0', true), version(V1, '1.0', false)] } });
+      }
+      if (method === 'GET' && url.startsWith(V1_DOWNLOAD)) {
+        reads.push(url);
+        if (v1Refused) return { ok: false, status: 423, json: async () => ({ success: false, error: { message: 'This version is on legal hold and is not served.' } }) } as Response;
+        return {
+          ok: true, status: 200,
+          headers: new Headers({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="stability-summary-24m.pdf"', 'X-Content-SHA256': HASH }),
+          arrayBuffer: async () => PDF.slice().buffer,
+        } as unknown as Response;
+      }
+      return base(method, url, body);
+    });
+  }
+
+  async function viewVersionOne() {
+    await openRecord('stability-summary-24m');
+    const versions = await screen.findByTestId('vault-versions');
+    const button = await within(versions).findByRole('button', { name: 'View version 1.0 of stability-summary-24m' });
+    fireEvent.click(button);
+    return versions;
+  }
+
+  beforeEach(() => { v1Refused = false; });
+
+  it('opens in the same wide reading drawer as the record’s own View, and frames nothing inside the record', async () => {
+    installWithVersions();
+    const versions = await viewVersionOne();
+    const drawer = await screen.findByRole('dialog', { name: /^Reading stability-summary-24m v1\.0/ });
+    expect(drawer.classList.contains('vd-read')).toBe(true);
+    expect(reads).toEqual([V1_DOWNLOAD]);
+    expect(drawer.querySelector('iframe')?.getAttribute('src')).toBe('blob:test/1');
+    expect(drawer.textContent).toContain(`SHA-256 ${HASH.slice(0, 16)}`);
+    // No second frame under the version list.
+    expect(within(versions).queryByTestId('vault-version-viewer')).toBeNull();
+    expect(document.querySelectorAll('iframe')).toHaveLength(1);
+    fireEvent.click(within(drawer).getByRole('button', { name: /Close viewer/ }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /^Reading/ })).toBeNull());
+    expect(revoked).toEqual(['blob:test/1']);
+  });
+
+  it('a refusal is said in the Versions section, where the View was pressed, and not under the record’s actions', async () => {
+    installWithVersions();
+    v1Refused = true;
+    const versions = await viewVersionOne();
+    const note = await within(versions).findByRole('alert');
+    expect(note.textContent).toContain('legal hold');
+    expect(screen.queryByTestId('vault-record-view-note')).toBeNull();
+    expect(screen.queryByRole('dialog', { name: /^Reading/ })).toBeNull();
+  });
+});
