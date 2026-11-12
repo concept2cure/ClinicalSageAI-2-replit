@@ -1,0 +1,179 @@
+# The test as committed, against trunk's document-generator.ts (53135c5f71). Trunk has no interim-boundaries module, so this run stubs that one import; every case that reads the DOCUMENT runs unchanged. Expected: red.
+ ✓ the engine it now calls agrees with the published tables > 2 looks
+ ✓ the engine it now calls agrees with the published tables > 3 looks
+ ✓ the engine it now calls agrees with the published tables > 4 looks
+ × a superiority comparison: the table is the engine’s > two interim looks print ±3.71, ±2.51 and a final ±1.99 — not ±2.76, ±2.56 and ±1.97
+ × a superiority comparison: the table is the engine’s > every printed boundary is the engine’s own solve, rounded
+ × a superiority comparison: the table is the engine’s > the final boundary moves with α; it is not a constant
+ × a superiority comparison: the table is the engine’s > the cumulative spend at the final analysis is α/2 in each direction, and says so
+ × a superiority comparison: the table is the engine’s > the table has four narrow columns, and says what the short headings mean
+ × a superiority comparison: the table is the engine’s > a p-value below the printed precision is written <0.0001, never 0.0000
+ × a superiority comparison: the table is the engine’s > it no longer calls its own figures indicative, and names how they were computed
+ × a superiority comparison: the table is the engine’s > states what the boundaries cost in power, from the same engine
+ × a non-inferiority comparison is one-sided > prints an upper boundary with no ±, at α/2
+ × a design the boundaries are not for gets no number, and the reason > equivalence (two one-sided tests)
+ × a design the boundaries are not for gets no number, and the reason > diagnostic accuracy with co-primary endpoints
+ × a design the boundaries are not for gets no number, and the reason > more than two groups
+ × a design the boundaries are not for gets no number, and the reason > more than one primary endpoint
+ × the count of looks arrives unvalidated > an absurd count is refused at once, not solved
+ × the count of looks arrives unvalidated > a fractional count is not rounded into a design nobody recorded
+ × a design that plans no interim analysis is told so > does not claim to govern one planned interim analysis
+ ✓ a design that plans no interim analysis is told so > a design that records them is unchanged in its first line
+ × a design that plans no interim analysis is told so > writes "an equivalence study", not "a equivalence study"
+ × an adaptive design > gets the efficacy boundaries and is told what they do not cover
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '1', '2', 'Final' ] to deeply equal [ Array(3) ]
+- Expected
++ Received
+-   "1 (33%)",
+-   "2 (67%)",
+-   "Final (100%)",
++   "1",
++   "2",
++   "Final",
+AssertionError: expected [ '50%', '100%' ] to deeply equal [ '±2.96', '±1.97' ]
+- Expected
++ Received
+-   "±2.96",
+-   "±1.97",
++   "50%",
++   "100%",
+AssertionError: expected '100%' to be '±1.97' // Object.is equality
+Expected: "±1.97"
+Received: "100%"
+AssertionError: expected undefined to be '0.0250' // Object.is equality
+- Expected:
++ Received:
+AssertionError: expected '## 3. Alpha Spending\n\nA group-seque…' to contain '| Look | Boundary (Z) | Nominal p | α…'
+- Expected
++ Received
+- | Look | Boundary (Z) | Nominal p | α spent |
++ ## 3. Alpha Spending
++ A group-sequential design with an O'Brien–Fleming-type alpha-spending function is recommended to preserve a conservative early boundary and a near-nominal final boundary. The cumulative spend at the final a
++ | Look | Information fraction | Indicative two-sided boundary (Z) |
++ |---|---|---|
++ | 1 | 33% | ±2.76 |
++ | 2 | 67% | ±2.56 |
++ | Final | 100% | ±1.97 |
++ *Boundaries are indicative; compute exact boundaries with the chosen spending function (e.g. Lan–DeMets) at finalization.*
+AssertionError: expected [ '1', '25%', '±2.81' ] to deeply equal [ '1 (25%)', '±4.33', '<0.0001', …(1) ]
+- Expected
++ Received
+-   "1 (25%)",
+-   "±4.33",
+-   "<0.0001",
+-   "<0.0001",
++   "1",
++   "25%",
++   "±2.81",
+AssertionError: expected '## 3. Alpha Spending\n\nA group-seque…' not to match /indicative/i
+- Expected:
++ Received:
+AssertionError: expected [ '50%', '100%' ] to deeply equal [ '3.34', '2.25' ]
+- Expected
++ Received
+-   "3.34",
+-   "2.25",
++   "50%",
++   "100%",
+AssertionError: expected [ [ '1', '50%', '±2.66' ], …(1) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   [
++     "1",
++     "50%",
++     "±2.66",
++   ],
++   [
++     "Final",
++     "100%",
++     "±1.97",
++   ],
++ ]
+AssertionError: expected [ [ '1', '50%', '±2.66' ], …(1) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   [
++     "1",
++     "50%",
++     "±2.66",
++   ],
++   [
++     "Final",
++     "100%",
++     "±1.97",
++   ],
++ ]
+AssertionError: expected [ [ '1', '33%', '±2.76' ], …(2) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   [
++     "1",
++     "33%",
++     "±2.76",
++   ],
++   [
++     "2",
++     "67%",
++     "±2.56",
++   ],
++   [
++     "Final",
++     "100%",
++     "±1.97",
++   ],
++ ]
+AssertionError: expected [ [ '1', '33%', '±2.76' ], …(2) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   [
++     "1",
++     "33%",
++     "±2.76",
++   ],
++   [
++     "2",
++     "67%",
++     "±2.56",
++   ],
++   [
++     "Final",
++     "100%",
++     "±1.97",
++   ],
++ ]
+AssertionError: expected { kind: 'not_computed', …(1) } to deeply equal { kind: 'not_computed', …(1) }
+- Expected
++ Received
+-   "reason": "boundaries are computed for up to 10 interim analyses, and this design records 1000000",
++   "reason": "trunk has no boundary module",
+AssertionError: expected { kind: 'not_computed', …(1) } to deeply equal { kind: 'not_computed', …(1) }
+- Expected
++ Received
+-   "reason": "the number of interim analyses is not a whole number of one or more",
++   "reason": "trunk has no boundary module",
+AssertionError: expected '# Interim Analysis Plan\n\n## 1. Purp…' to match /The design records no interim analysi…/
+- Expected:
++ Received:
+- **Efficacy**: cross the upper boundary at an interim look.
+- **Futility**: non-binding futility boundary (e.g. conditional power < 20%).
+- **Safety**: per DSMB charter, independent of efficacy boundaries.
+AssertionError: expected '# Interim Analysis Plan\n\n## 1. Purp…' to match /for an equivalence study/
+- Expected:
++ Received:
+- **Efficacy**: cross the upper boundary at an interim look.
+- **Futility**: non-binding futility boundary (e.g. conditional power < 20%).
+- **Safety**: per DSMB charter, independent of efficacy boundaries.
+AssertionError: expected '## 3. Alpha Spending\n\nA group-seque…' to match /±3\.71/
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  18 failed | 4 passed (22)
