@@ -69,6 +69,25 @@ Production needs a custom domain (`domain_aliases`), and both certificates
 (`acm_certificate_arn` on the ALB, `cloudfront_certificate_arn`) must cover it:
 CloudFront checks the ALB's certificate against the domain it forwards.
 
+### 4. After each apply: what the outputs feed
+
+Run `terraform output` in the root you applied. Both roots export the same
+names (`tests/ci/terraform-root-outputs.contract.test.ts`).
+
+| Output | Goes to |
+|---|---|
+| `cloudfront_domain` | the DNS alias for `domain_aliases[0]` |
+| `github_deploy_role_arn` | the GitHub environment's secret `AWS_DEPLOY_ROLE_ARN` |
+| `github_build_role_arn` | the GitHub environment's secret `AWS_BUILD_ROLE_ARN` |
+| `cloudfront_distribution_id` | the GitHub environment's secret `CLOUDFRONT_DISTRIBUTION_ID` |
+| `frontend_bucket` | the GitHub environment's variable `FRONTEND_BUCKET` |
+| `readyz_detail` | optional: the GitHub environment's secret `READYZ_TOKEN`, so a failed deploy's smoke test prints which dependency was not ready |
+| `first_run_setup` | the one `POST /api/setup/initialize` that creates the first administrator |
+| `engine_version_actual` | the IQ record |
+| `api_task_boot_contract` | review before the first deploy: what the API task carries |
+
+The GitHub environment is `staging` or `production`, named for the root.
+
 ## Topology
 
 - **Postgres is the coordination store. There is no Redis or ElastiCache**

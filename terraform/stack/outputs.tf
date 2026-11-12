@@ -19,6 +19,11 @@ output "rds_endpoint" {
   sensitive = true
 }
 
+output "engine_version_actual" {
+  description = "The PostgreSQL version RDS runs (major pinned, minor chosen and patched by RDS). Recorded in the IQ evidence after each apply."
+  value       = module.rds.engine_version_actual
+}
+
 output "rds_db_name" {
   value = module.rds.db_name
 }
