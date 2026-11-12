@@ -20,7 +20,9 @@ import { pool } from '../../db';
 import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
 import { vaultFilterSql } from '../vault/vault-document-filter.js';
 import { supersededSql } from '../vault/vault-version-family.js';
-import { gradeCapture, type DataRoomGradeFacts, type StoredGrade } from './data-room-grade.js';
+import { gradeCapture, profiledTables, type DataRoomGradeFacts, type StoredGrade } from './data-room-grade.js';
+import { profileDataset, profileFormat, type DatasetProfile } from './dataset-profile.js';
+import { logger } from '../../utils/logger.js';
 import type { CatalogFacet, CatalogFacets, DataRoomQuery } from './data-room-search.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
@@ -44,6 +46,8 @@ export interface VaultCatalogDocument {
   placementStatus: string | null;
   originalFileAvailable: boolean;
   textAvailable: boolean;
+  /** What a dataset holds, from its profile: each table's name, CDISC standard and class, columns and rows. Null for a document that is not a profiled dataset. */
+  dataset: { format: string | null; tableCount: number; tables: Array<{ name: string; standard: string | null; domain: string | null; columns: number; rows: number }> } | null;
   grade: StoredGrade;
 }
 
@@ -56,10 +60,15 @@ export interface VaultCatalogPage {
 
 const EMPTY: VaultCatalogPage = { total: 0, documents: [], facets: { project: [], kind: [], ctd: [], folder: [] } };
 const DATASET_FILE = /\.(xpt|sas7bdat)$/i;
+/** A dataset this size or smaller is profiled when the catalog first lists it; a larger one says its structure was not read. */
+const PROFILE_MAX_BYTES = 128 * 1024 * 1024;
+/** Profiles made per catalog read: each reads a file's bytes, so a page of new datasets fills in over a few reads. */
+const PROFILES_PER_READ = 2;
 export const VAULT_CATALOG_LIMIT = 200;
 
 /** The grade's facts for a Vault document, each one the Vault's own record. */
 export function vaultGradeFacts(r: Record<string, any>): DataRoomGradeFacts {
+  const tables = profiledTables({ datasetProfile: r.dataset_profile });
   return {
     checksum: r.content_hash ?? null,
     capturedBy: r.created_by == null ? null : Number(r.created_by),
@@ -75,20 +84,37 @@ export function vaultGradeFacts(r: Record<string, any>): DataRoomGradeFacts {
     filed: true,
     fixity: r.verdict ?? null,
     catalogState: r.catalog_state ?? null,
-    datasetTables: null,
+    // The profile the catalog made of these bytes (below), exactly as a capture carries one.
+    datasetTables: tables,
     nativeLifecycle: null,
-    ...(DATASET_FILE.test(String(r.file_name ?? '')) ? { datasetUnprofiled: true as const } : {}),
+    ...(!tables?.length && DATASET_FILE.test(String(r.file_name ?? '')) ? { datasetUnprofiled: true as const } : {}),
   };
 }
 
 const orNull = <T>(v: T | null | undefined): T | null => v ?? null;
 /** One narrowing value as a filter dimension: absent narrows nothing, as orNull's NULL did. */
 const oneOf = (v: string | null | undefined): string[] | undefined => (v == null ? undefined : [v]);
+const list = <T>(v: unknown): T[] => (Array.isArray(v) ? v as T[] : []);
 const numberOrNull = (v: unknown): number | null => (v == null ? null : Number(v));
 
 /** What the document is called: its title, else its file, else its code. */
 function titleOf(r: Record<string, any>): string {
   return String(r.document_title || r.title || r.file_name || r.document_code || 'Untitled Vault document');
+}
+
+/** The profile as the catalog row says it: the first few tables, never the column list. */
+function datasetSummary(profile: unknown): VaultCatalogDocument['dataset'] {
+  const p = profile && typeof profile === 'object' ? profile as Record<string, any> : null;
+  const tables = list<Record<string, any>>(p?.tables);
+  if (!p || tables.length === 0) return null;
+  return {
+    format: typeof p.format === 'string' ? p.format : null,
+    tableCount: Number(p.tableCount ?? tables.length),
+    tables: tables.slice(0, 5).map((t) => ({
+      name: String(t.name ?? ''), standard: orNull(t.cdisc?.standard), domain: orNull(t.cdisc?.domain),
+      columns: Number(t.columnCount ?? 0), rows: Number(t.rowCount ?? 0),
+    })),
+  };
 }
 
 function shape(r: Record<string, any>, nameFolder: FolderNamer, gradedAt: string): VaultCatalogDocument {
@@ -112,6 +138,7 @@ function shape(r: Record<string, any>, nameFolder: FolderNamer, gradedAt: string
     placementStatus: orNull(r.placement_status),
     originalFileAvailable: r.original_file_available !== false,
     textAvailable: r.text_available === true,
+    dataset: datasetSummary(r.dataset_profile),
     grade: { grade: g.grade, score: g.score, basis: g.basis, cap: g.cap, engine: g.engine, gradedAt },
   };
 }
@@ -166,7 +193,8 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
               d.folder_id, d.ctd_section, d.evidence_kind, d.placement_status, d.processing_status::text AS processing_status,
               (d.extracted_text IS NOT NULL AND btrim(d.extracted_text) <> '') AS text_available,
               ${vaultBinaryAvailableSql('d')} AS original_file_available,
-              c.catalog_state
+              c.catalog_state, c.dataset_profile, (c.document_id IS NOT NULL) AS cataloged,
+              d.storage_version_id, d.storage_provider, d.s3_key
          FROM vault.documents d
          JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
          LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
@@ -209,10 +237,11 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
                       GROUP BY v.facet, v.value) f) AS facets`,
     params,
   );
-  return vaultPage(rows[0] ?? {}, programIds, await folderNamer(orgId, programIds));
+  const row = rows[0] ?? {};
+  await profileListedDatasets(orgId, list<Record<string, any>>(row.documents), q);
+  return vaultPage(row, programIds, await folderNamer(orgId, programIds));
 }
 
-const list = <T>(v: unknown): T[] => (Array.isArray(v) ? v as T[] : []);
 
 function vaultPage(row: Record<string, any>, programIds: string[], nameFolder: FolderNamer): VaultCatalogPage {
   const listed = list<Record<string, any>>(row.documents);
@@ -221,6 +250,52 @@ function vaultPage(row: Record<string, any>, programIds: string[], nameFolder: F
   }
   const gradedAt = new Date().toISOString();
   return { total: Number(row.total ?? 0), documents: listed.map((d) => shape(d, nameFolder, gradedAt)), facets: facetsOf(list(row.facets), nameFolder) };
+}
+
+/** A profile with no tables: the bytes were read and are not a dataset this profiler reads. Stored so they are read once. */
+const NOT_A_DATASET = { format: null, tables: [], tableCount: 0, profiledBy: 'dataset-profile v1' as const };
+
+/** Whether a listed document is a dataset file the catalog has not profiled yet, small enough to read now. */
+function awaitsProfile(d: Record<string, any>): boolean {
+  if (d.dataset_profile || d.cataloged !== true || !d.file_name) return false;
+  if (Number(d.file_size ?? 0) > PROFILE_MAX_BYTES) return false;
+  return profileFormat(String(d.file_name), String(d.mime_type ?? '')) !== null;
+}
+
+/**
+ * The profile of one Vault document's bytes, read through the Vault's own verified read (the recorded SHA-256 is
+ * checked before a byte is trusted); null when the bytes cannot be read now.
+ */
+async function profileOf(orgId: number, d: Record<string, any>): Promise<DatasetProfile | typeof NOT_A_DATASET | null> {
+  const { readVerifiedVaultBytes } = await import('../../routes/c2c/project-vault.js');
+  const read = await readVerifiedVaultBytes({ storageVersionId: d.storage_version_id, storageKey: d.s3_key,
+    organizationId: orgId, storageProvider: d.storage_provider }, d.content_hash, String(d.id));
+  if (!read.ok) return null;
+  return await profileDataset(read.bytes, String(d.file_name), String(d.mime_type ?? '')) ?? NOT_A_DATASET;
+}
+
+/**
+ * Profile the listed datasets that have no profile yet (a few per read), and store each on the Vault's catalog record
+ * of that content, so it is made once. A dataset filed in the Vault is then graded for CDISC conformance exactly as a
+ * captured one is. A failure leaves the document listed with "its structure has not been read here": never a guess.
+ */
+async function profileListedDatasets(orgId: number, listed: Array<Record<string, any>>, q: Queryable): Promise<void> {
+  for (const d of listed.filter(awaitsProfile).slice(0, PROFILES_PER_READ)) {
+    try {
+      const profile = await profileOf(orgId, d);
+      if (!profile) continue;
+      // tenant-isolation-safe: the row is the listed document's own catalog record, bound to its content hash and the organization.
+      await q.query(
+        `UPDATE vault.document_catalog c SET dataset_profile = $1::jsonb, dataset_profiled_at = now()
+          WHERE c.document_id = $2::uuid AND btrim(c.content_hash) = $3 AND c.dataset_profile IS NULL
+            AND EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = c.document_id AND d.organization_id = $4)`,
+        [JSON.stringify(profile), d.id, d.content_hash, orgId],
+      );
+      d.dataset_profile = profile;
+    } catch (err) {
+      logger.warn('[data-catalog] a Vault dataset could not be profiled', { documentId: String(d.id), err: err instanceof Error ? err.message : String(err) });
+    }
+  }
 }
 
 /** The catalog's facets over captures and Vault documents together: one count per value. */

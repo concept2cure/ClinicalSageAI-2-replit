@@ -100,6 +100,13 @@ describe('the data catalog with the Vault\'s documents', () => {
     expect(reads().at(-1)).toMatch(/offset=0/);
   });
 
+  it('says what a profiled dataset holds: each table\'s standard, columns and rows', async () => {
+    sourcesPage = page({ vault: { total: 1, documents: [vaultDoc({ title: 'advs.xpt', dataset: { format: 'xpt', tableCount: 1,
+      tables: [{ name: 'ADVS', standard: 'ADaM', domain: 'BDS', columns: 34, rows: 32139 }] } })] } });
+    render(<DataRoomSourcesPanel programId={P} initialScope="catalog" />);
+    expect((await screen.findByTestId('vault-dataset')).textContent).toBe('Dataset: ADVS · ADaM BDS · 34 columns · 32,139 rows');
+  });
+
   it('says so when the Vault\'s documents could not be listed, and still lists the captures', async () => {
     sourcesPage = page({ vault: undefined, vaultUnavailable: true });
     render(<DataRoomSourcesPanel programId={P} initialScope="catalog" />);

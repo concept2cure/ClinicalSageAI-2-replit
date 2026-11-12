@@ -3840,6 +3840,10 @@ export const C2C_MIGRATION_FILES = [
   // support_ticket_messages gains that column from its ticket and a same-organisation key, amended in place in the
   // creating file (RULE 1). Every statement is guarded; no DROP.
   'migrations/0007_support_admin.sql',
+  // The Vault catalog record carries a dataset's profile (S2, the data catalog, 2026-11-12): two nullable columns on
+  // vault.document_catalog (dataset_profile, dataset_profiled_at), so a dataset filed in the Vault is graded for CDISC
+  // conformance as a captured one is. ADD COLUMN IF NOT EXISTS only; no table, constraint, trigger or DROP.
+  'migrations/20261112_vault_catalog_dataset_profile.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

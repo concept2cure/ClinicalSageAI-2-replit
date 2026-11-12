@@ -46,6 +46,30 @@ describe('gradeCapture', () => {
     expect(conformance.detail).toMatch(/0 of 1 table pass the ADaM validator.*ADSL: \d+ errors?/);
   });
 
+  it('validates an ADaM table under its own name, not the class its columns show', () => {
+    const cols = (names: string) => names.split(' ').map(name => ({ name, type: 'text' }));
+    // The CDISC pilot's ADVS: a BDS dataset. It was validated as "BDS", which no validator knows, and failed.
+    const advs = { name: 'ADVS', columns: cols('STUDYID SITEID USUBJID TRTP TRTA PARAMCD PARAM ADT AVISIT AVAL BASE CHG'), cdisc: { standard: 'ADaM' as const, domain: 'BDS' } };
+    expect(gradeCapture(facts({ datasetTables: [advs] })).basis.find(b => b.criterion === 'conformance'))
+      .toMatchObject({ points: 15, detail: expect.stringMatching(/^1 of 1 table pass the ADaM validator with no error\./) });
+    // A sponsor-named analysis dataset (the pilot's ADLBC, ADQSADAS) is not failed for a name the validator's list lacks.
+    const adlbc = { ...advs, name: 'adlbc.csv' };
+    expect(gradeCapture(facts({ datasetTables: [adlbc] })).basis.find(b => b.criterion === 'conformance')).toMatchObject({ points: 15 });
+    // Every other finding still counts: a lower-case variable name is an error under any name.
+    const bad = { ...advs, name: 'ADLBC', columns: [...advs.columns, { name: 'aval2', type: 'number' }] };
+    expect(gradeCapture(facts({ datasetTables: [bad] })).basis.find(b => b.criterion === 'conformance'))
+      .toMatchObject({ points: 0, detail: expect.stringMatching(/ADLBC: 1 error/) });
+    // A name that is not an ADaM dataset name is validated as the class, and that still fails.
+    const odd = { ...advs, name: 'labs_export' };
+    expect(gradeCapture(facts({ datasetTables: [odd] })).basis.find(b => b.criterion === 'conformance')).toMatchObject({ points: 0 });
+  });
+
+  it('does not validate a define file\'s described datasets, which list no variables', () => {
+    const described = ['ADSL', 'ADVS'].map(name => ({ name, columns: [], cdisc: { standard: 'ADaM' as const, domain: name } }));
+    expect(gradeCapture(facts({ datasetTables: described })).basis.find(b => b.criterion === 'conformance'))
+      .toMatchObject({ points: null, detail: expect.stringMatching(/^Describes 2 datasets and holds none of their data/) });
+  });
+
   it('gives no conformance to a dataset with no CDISC standard recognized', () => {
     const t = { name: 'listing.csv', columns: [{ name: 'X', type: 'text' }], cdisc: { standard: null, domain: null } };
     expect(gradeCapture(facts({ datasetTables: [t] })).basis.find(b => b.criterion === 'conformance')).toMatchObject({ points: 0 });
