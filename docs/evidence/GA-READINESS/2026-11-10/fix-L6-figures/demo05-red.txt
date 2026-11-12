@@ -1,0 +1,198 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > worked figure: d = 0.4 at 90% power has about a 13.6% margin, not 5% 26ms
+   → expected 5 not to be 5 // Object.is equality
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous superiority: the engine needs about the current evaluable N for 80% {} power at the breakpoint 9ms
+   → expected 230 to be greater than 266
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous at 80% power: the engine needs about the current evaluable N for 80% { powerTarget: 0.8 } power at the breakpoint 6ms
+   → expected 212 to be less than or equal to 200
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > binary from rates: the engine needs about the current evaluable N for 80% { endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15 } power at the breakpoint 2ms
+   → expected 374 to be greater than 434
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > time to event: the engine needs about the current evaluable N for 80% { endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 } power at the breakpoint 1ms
+   → expected 490 to be greater than 552
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > worked figure: 10% dropout on N enrolled for 90% power tolerates about 33% 2ms
+   → expected 0.15000000000000002 to be close to 0.32432432432432434, received difference is 0.17432432432432432, but expected 0.0005
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > a 15% dropout rate prints no floating-point tail 1ms
+   → expected 17 to be less than or equal to 4
+ × server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > the governed document prints the recomputed points > sample size rationale and assumption note carry rounded breakpoints and name the 80% threshold 3ms
+   → expected '# Sample Size Rationale\n\n## Study C…' not to match /\d\.\d{6,}/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > worked figure: d = 0.4 at 90% power has about a 13.6% margin, not 5%
+AssertionError: expected 5 not to be 5 // Object.is equality
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:58:35
+     56|     const z = normalQuantile(0.975);
+     57|     const closed = (1 - (z + normalQuantile(0.8)) / (z + normalQuantil…
+     58|     expect(sp!.percentMargin).not.toBe(5);
+       |                                   ^
+     59|     expect(Math.abs(sp!.percentMargin - closed)).toBeLessThan(1.5);
+     60|     expect(sp!.percentMargin).toBeGreaterThan(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous superiority: the engine needs about the current evaluable N for 80% {} power at the breakpoint
+AssertionError: expected 230 to be greater than 266
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:89:51
+     87|       if (sp!.percentMargin > 0) {
+     88|         expect(scale(sp!.breakpointValue * 1.02)).toBeLessThanOrEqual(…
+     89|         expect(scale(sp!.breakpointValue * 0.98)).toBeGreaterThan(n);
+       |                                                   ^
+     90|       }
+     91|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > continuous at 80% power: the engine needs about the current evaluable N for 80% { powerTarget: 0.8 } power at the breakpoint
+AssertionError: expected 212 to be less than or equal to 200
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:88:51
+     86|       };
+     87|       if (sp!.percentMargin > 0) {
+     88|         expect(scale(sp!.breakpointValue * 1.02)).toBeLessThanOrEqual(…
+       |                                                   ^
+     89|         expect(scale(sp!.breakpointValue * 0.98)).toBeGreaterThan(n);
+     90|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > binary from rates: the engine needs about the current evaluable N for 80% { endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15 } power at the breakpoint
+AssertionError: expected 374 to be greater than 434
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:89:51
+     87|       if (sp!.percentMargin > 0) {
+     88|         expect(scale(sp!.breakpointValue * 1.02)).toBeLessThanOrEqual(…
+     89|         expect(scale(sp!.breakpointValue * 0.98)).toBeGreaterThan(n);
+       |                                                   ^
+     90|       }
+     91|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > effect-size breakpoint > time to event: the engine needs about the current evaluable N for 80% { endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 } power at the breakpoint
+AssertionError: expected 490 to be greater than 552
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:89:51
+     87|       if (sp!.percentMargin > 0) {
+     88|         expect(scale(sp!.breakpointValue * 1.02)).toBeLessThanOrEqual(…
+     89|         expect(scale(sp!.breakpointValue * 0.98)).toBeGreaterThan(n);
+       |                                                   ^
+     90|       }
+     91|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > worked figure: 10% dropout on N enrolled for 90% power tolerates about 33%
+AssertionError: expected 0.15000000000000002 to be close to 0.32432432432432434, received difference is 0.17432432432432432, but expected 0.0005
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:102:33
+    100|     const enrolled = computation.adjustedTotal ?? computation.sampleSi…
+    101|     const expected = 1 - evaluableAt80(input, input.effectSize) / enro…
+    102|     expect(sp!.breakpointValue).toBeCloseTo(expected, 3);
+       |                                 ^
+    103|     expect(sp!.breakpointValue).toBeGreaterThan(0.3);
+    104|     expect(sp!.breakpointValue).toBeLessThan(0.36);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > attrition breakpoint > a 15% dropout rate prints no floating-point tail
+AssertionError: expected 17 to be less than or equal to 4
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:112:44
+    110|     const { judgment } = run({ attritionRate: 0.15 });
+    111|     for (const sp of judgment.fragility.sensitiveParameters) {
+    112|       expect(decimals(sp.breakpointValue)).toBeLessThanOrEqual(4);
+       |                                            ^
+    113|       expect(decimals(sp.percentMargin)).toBeLessThanOrEqual(1);
+    114|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts > the governed document prints the recomputed points > sample size rationale and assumption note carry rounded breakpoints and name the 80% threshold
+AssertionError: expected '# Sample Size Rationale\n\n## Study C…' not to match /\d\.\d{6,}/
+
+- Expected:
+/\d\.\d{6,}/
+
++ Received:
+"# Sample Size Rationale
+
+## Study Context
+- **Track**: Pharma / biotech
+- **Study Type**: Superiority
+- **Endpoint Type**: Continuous
+- **Objective**: Efficacy
+- **Phase**: Phase III
+- **Target Regulatory Body**: FDA
+
+## Sample Size Determination
+
+### Statistical Method
+Two-sample t-test (superiority)
+
+### Formula
+smallest n with two-sided t-test power ≥ 0.9 (noncentral t, df = n(1+r) − 2), starting from n = (1 + 1/r) * σ² * (z_{1−α/2} + z_{1−β})² / δ², where δ=0.4, σ=1.000
+
+### Assumptions
+
+| Parameter | Value | Source | Sensitivity |
+|-----------|-------|--------|-------------|
+| Alpha | 0.05 | Engine default | Moderate |
+| Power | 0.9 | Stated | High |
+| Effect size | 0.4 | Stated | High |
+| Variance | 1 | Engine default | High |
+| Attrition rate | 0.15 | Engine default | Moderate |
+| Allocation ratio | 1 | Engine default | Low |
+
+### Result
+
+- **Sample size per group**: 133
+- **Number of groups**: 2
+- **Total (unadjusted)**: 266
+- **Dropout adjustment**: 15%
+- **Total (adjusted)**: 314
+- **Achieved power**: 90.1%
+- **Significance level**: 0.05 (two-sided)
+
+### Scenario Analysis
+
+| Scenario | Sample Size (total) | Power | Notes |
+|----------|-------------------|-------|-------|
+| Conservative (75% effect) | 554 | 90% | Effect size = 0.3000 |
+| Base case | 314 | 90% | Effect size = 0.4000 |
+| Optimistic (125% effect) | 204 | 90% | Effect size = 0.5000 |
+| Optimistic (150% effect) | 142 | 90% | Effect size = 0.6000 |
+
+## Statistical Assessment
+
+- **Overall Verdict**: Inadequate
+- **Action Recommendation**: Escalate
+- **Fragility**: Fragile (index: 45)
+- **Confidence Level**: Moderate (65/100)
+
+### Sensitivity Points
+
+- **Effect size**: current 0.4, breakpoint 0.38 (5% margin)
+- **Attrition rate**: current 0.15, breakpoint 0.22499999999999998 (50% margin)
+
+## Limitations
+
+- 4 parameters used default values
+
+
+---
+*Generated by AnA Biostats Engine v1.0.0. All numeric results are deterministic. Judgment and framing are rule-backed. This document should be reviewed by a qualified biostatistician before regulatory submission.*
+"
+
+ ❯ server/services/ana-biostats/__tests__/sensitivity-breakpoints-recompute-power.test.ts:126:27
+    124|     for (const type of ['sample_size_rationale', 'design_assumption_no…
+    125|       const content = documentGenerator.generate(type, input, computat…
+    126|       expect(content).not.toMatch(/\d\.\d{6,}/);
+       |                           ^
+    127|       expect(content).toMatch(/below 80% power/);
+    128|       expect(content).not.toMatch(/\(5% margin\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  12:17:20
+   Duration  1.21s (transform 560ms, setup 177ms, import 516ms, tests 56ms, environment 0ms)
+
