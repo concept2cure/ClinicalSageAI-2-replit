@@ -58,6 +58,53 @@ function writeLocation(view: View) {
   } catch { /* the view still changes; only the address does not */ }
 }
 
+/** The Help & training home: the courses for this client type and the Help Center by collection. */
+function HelpHome({ read, onRetry, onGo }: { read: { data: HelpIndexRead | null; loading: boolean; error?: string }; onRetry: () => void; onGo: (v: View) => void }) {
+  const index = read;
+  const go = onGo;
+  return (
+    <>
+    {index.loading ? (
+      <div role="status" className="scaf-note">Loading the Help Center…</div>
+    ) : index.error || !index.data ? (
+      <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the Help Center"
+        hint="The help articles could not be read. This is a failed read, not an empty Help Center."
+        retry={onRetry} />
+    ) : (
+      <>
+        <section className="hc-sec" aria-labelledby="hc-courses-h">
+          <h2 id="hc-courses-h" className="hc-h">Training courses</h2>
+          <ul className="hc-list">
+            {index.data.courses.map((c) => (
+              <li key={c.id}>
+                <button type="button" className="hc-row" onClick={() => go({ kind: 'course', id: c.id })}>
+                  <span className="hc-row-t">{c.title}</span>
+                  <span className="hc-row-s">{c.summary} {c.lessons.length} lessons.</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className="hc-sec" aria-labelledby="hc-browse-h">
+          <h2 id="hc-browse-h" className="hc-h">Browse help</h2>
+          {index.data.collections.map((c) => (
+            <div key={c.id} className="hc-coll">
+              <h3 className="hc-coll-t">{c.title}{c.audience === 'administrators' && <span className="hc-aud"> · for administrators</span>}</h3>
+              <p className="hc-coll-s">{c.summary}</p>
+              <ul className="hc-links">
+                {c.articles.map((a) => (
+                  <li key={a.slug}><button type="button" className="hc-link" onClick={() => go({ kind: 'article', slug: a.slug })}>{a.title}</button></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      </>
+    )}
+    </>
+  );
+}
+
 export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
   const clientType = helpClientType(segment);
   const [view, setView] = useState<View>(() => (typeof window === 'undefined' ? { kind: 'home' } : helpViewFromLocation(window.location.search)));
@@ -126,43 +173,7 @@ export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
           onBack={() => go({ kind: 'home' })} onOpen={(slug) => go({ kind: 'article', slug })} />
       ) : (
         <>
-          {index.loading ? (
-            <div role="status" className="scaf-note">Loading the Help Center…</div>
-          ) : index.error || !index.data ? (
-            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the Help Center"
-              hint="The help articles could not be read. This is a failed read, not an empty Help Center."
-              retry={() => setVersion((v) => v + 1)} />
-          ) : (
-            <>
-              <section className="hc-sec" aria-labelledby="hc-courses-h">
-                <h2 id="hc-courses-h" className="hc-h">Training courses</h2>
-                <ul className="hc-list">
-                  {index.data.courses.map((c) => (
-                    <li key={c.id}>
-                      <button type="button" className="hc-row" onClick={() => go({ kind: 'course', id: c.id })}>
-                        <span className="hc-row-t">{c.title}</span>
-                        <span className="hc-row-s">{c.summary} {c.lessons.length} lessons.</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-              <section className="hc-sec" aria-labelledby="hc-browse-h">
-                <h2 id="hc-browse-h" className="hc-h">Browse help</h2>
-                {index.data.collections.map((c) => (
-                  <div key={c.id} className="hc-coll">
-                    <h3 className="hc-coll-t">{c.title}{c.audience === 'administrators' && <span className="hc-aud"> · for administrators</span>}</h3>
-                    <p className="hc-coll-s">{c.summary}</p>
-                    <ul className="hc-links">
-                      {c.articles.map((a) => (
-                        <li key={a.slug}><button type="button" className="hc-link" onClick={() => go({ kind: 'article', slug: a.slug })}>{a.title}</button></li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </section>
-            </>
-          )}
+          <HelpHome read={index} onRetry={() => setVersion((v) => v + 1)} onGo={go} />
           <OrganisationTraining paths={paths} certs={certs} onAsk={onAsk} />
         </>
       )}

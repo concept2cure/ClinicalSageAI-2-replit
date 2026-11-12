@@ -8,7 +8,7 @@
 import { HELP_COLLECTIONS } from './collections';
 import { HELP_COURSES } from './courses';
 import { ALL_HELP_ARTICLES } from './articles';
-import type { HelpArticle, HelpClientType, HelpCollection, HelpCollectionId, HelpCourse } from './types';
+import type { HelpArticle, HelpClientType, HelpCollectionId, HelpCourse } from './types';
 
 export type { HelpArticle, HelpClientType, HelpCollection, HelpCollectionId, HelpCourse } from './types';
 export { HELP_COLLECTIONS, HELP_COURSES, ALL_HELP_ARTICLES };
