@@ -1,45 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { compileModule3Sections, markStaleSections, canFinalizeExport } from '../cmc-module3-compiler';
+import { canFinalizeExport } from '../cmc-module3-compiler';
 import { summarizeSectionDiff } from '../cmc-module3-compiler';
 import { createSourceHash } from '../cmc-module3-compiler';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
 
 describe('CMC Module 3 compiler', () => {
-  it('compiles deterministic sections from canonical source objects', () => {
-    const compiled = compileModule3Sections([
-      { id: '1', sourceType: 'drug_substance', sourcePayload: { name: 'API-X' }, sourceHash: 'h1' },
-      { id: '2', sourceType: 'specification', sourcePayload: { assay: '98-102' }, sourceHash: 'h2' },
-      { id: '3', sourceType: 'method', sourcePayload: { method: 'HPLC' }, sourceHash: 'h3' },
-    ]);
-
-    const s4 = compiled.find((s) => s.sectionKey === '3.2.S.4');
-    expect(s4).toBeDefined();
-    expect(s4?.deterministicJson.objects.length).toBe(2);
-    expect(s4?.lineage.length).toBe(2);
-    expect(s4?.compiledHash).toBeTruthy();
-  });
-
-  it('marks dependent sections stale on source changes', () => {
-    const compiled = compileModule3Sections([
-      { id: '2', sourceType: 'specification', sourcePayload: { assay: '98-102' }, sourceHash: 'h2' },
-    ]);
-    const stale = markStaleSections(compiled, 'specification', 'spec updated');
-    expect(stale.some((s) => s.sectionKey === '3.2.S.4' && s.stale)).toBe(true);
-    expect(stale.some((s) => s.sectionKey === '3.2.P.5' && s.stale)).toBe(true);
-  });
-
+  // The compile and stale cases went with compileModule3Sections and
+  // markStaleSections (R1 S29, 2026-11-09). The composer is pinned by
+  // module3Composer.test.ts; staleness by impactedSectionsForSourceType.
   it('blocks final export for unresolved critical contradictions', () => {
     expect(canFinalizeExport({ approvalState: 'approved', contradictions: [{ severity: 'critical', status: 'open' }] })).toBe(false);
     expect(canFinalizeExport({ approvalState: 'approved', contradictions: [{ severity: 'high', status: 'open' }] })).toBe(true);
-  });
-
-  it('produces deterministic hashes for unchanged canonical input', () => {
-    const input = [{ id: '1', sourceType: 'drug_substance', sourcePayload: { name: 'API-X' }, sourceHash: 'h1' }];
-    const a = compileModule3Sections(input);
-    const b = compileModule3Sections(input);
-    expect(a.find((x) => x.sectionKey === '3.2.S.1')?.compiledHash).toEqual(
-      b.find((x) => x.sectionKey === '3.2.S.1')?.compiledHash
-    );
   });
 });
 

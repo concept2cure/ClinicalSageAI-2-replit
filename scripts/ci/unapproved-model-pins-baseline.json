@@ -25,10 +25,6 @@
       "count": 1,
       "reason": "Section-order suggestions returned to the editor, not stored; the response now says whether the model's suggestions are included or unavailable."
     },
-    "server/api/drafting/routes.ts": {
-      "count": 1,
-      "reason": "/extract-entities builds a search index (vault.extracted_entities) that no applier provisions; the governed /generate path in this file routes as document_drafting with no pin."
-    },
     "server/services/ai/openai-orchestrator.ts": {
       "count": 1,
       "reason": "Unreachable: no importer is reachable from server/index.ts since its route was deleted in 3cc8547d2. Listed for deletion by an owner; if revived it must route as document_drafting / regulatory_review."

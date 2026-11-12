@@ -3,8 +3,6 @@ import {
   normalizeRegion,
   getModule1Structure,
   getModule2Structure,
-  annotateModuleBuildState,
-  type SectionStatusRow,
 } from '../../../server/services/regulatory/ctd-module-structure';
 
 describe('CTD structure — region-aware Module 1', () => {
@@ -38,43 +36,5 @@ describe('CTD structure — Module 2 summaries with source-module links', () => 
     expect(m2.find((s) => s.code === '2.4')!.sourceModules).toEqual([4]); // Nonclinical overview ← M4
     expect(m2.find((s) => s.code === '2.5')!.sourceModules).toEqual([5]); // Clinical overview ← M5
     expect(m2.find((s) => s.code === '2.7')!.sourceModules).toEqual([5]);
-  });
-});
-
-describe('CTD build-state — pure annotation', () => {
-  it('empty store → all not_started, 0% readiness', () => {
-    const bs = annotateModuleBuildState(1, 'FDA', getModule1Structure('FDA'), []);
-    expect(bs.summary.readinessPercent).toBe(0);
-    expect(bs.summary.notStarted).toBe(bs.summary.total);
-    expect(bs.sections.every((s) => s.status === 'not_started')).toBe(true);
-  });
-
-  it('maps section_key statuses (m-prefixed and bare) onto the tree', () => {
-    const rows: SectionStatusRow[] = [
-      { section_key: 'm1.2', status: 'approved' },
-      { section_key: '1.14', status: 'review' },
-    ];
-    const bs = annotateModuleBuildState(1, 'FDA', getModule1Structure('FDA'), rows);
-    expect(bs.sections.find((s) => s.code === '1.2')!.status).toBe('approved');
-    expect(bs.sections.find((s) => s.code === '1.14')!.status).toBe('review');
-    expect(bs.summary.approved).toBeGreaterThanOrEqual(1);
-  });
-
-  it('M2 upstream readiness reflects the source module status', () => {
-    // M3 fully approved → QOS (2.3) upstream is ready.
-    const ready: SectionStatusRow[] = [
-      { section_key: '3.2.S', status: 'approved' },
-      { section_key: '3.2.P', status: 'locked' },
-      { section_key: 'm2.3', status: 'todo' },
-    ];
-    const bs = annotateModuleBuildState(2, 'FDA', getModule2Structure(), ready);
-    const qos = bs.sections.find((s) => s.code === '2.3')!;
-    expect(qos.upstreamReadyPercent).toBe(1);
-    expect(qos.upstreamReady).toBe(true);
-
-    // M3 not approved → not ready.
-    const notReady: SectionStatusRow[] = [{ section_key: '3.2.S', status: 'drafted' }];
-    const bs2 = annotateModuleBuildState(2, 'FDA', getModule2Structure(), notReady);
-    expect(bs2.sections.find((s) => s.code === '2.3')!.upstreamReady).toBe(false);
   });
 });

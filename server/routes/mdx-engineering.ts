@@ -70,7 +70,7 @@ import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import type { QueryResultRow } from 'pg';
 import { requestPgClient, MissingRequestDbContextError, type RequestSqlClient } from '../db/requestDb';
 import { governedActorId } from '../middleware/orgMembership';
-import { designControlTraceState } from '../../shared/regulatory/design-controls-trace';
+import { designControlTraceState, designFileStanding } from '../../shared/regulatory/design-controls-trace';
 import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, ProgramReadAccessError } from '../services/c2c/current-program-access';
 
 const router = Router();
@@ -352,12 +352,21 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       updated_at: Date | null;
       document_id: string;
       document_title: string;
+      doc_type?: string | null;
+      group_label?: string | null;
     }>(
       'dhf',
+      /* P-114 item 2: the document's class and the label of the section's
+         outline group, which decide whether it is a design record or the
+         filing's paperwork (designFileStanding). The FDA device outlines are
+         two levels deep, so a section's parent is its top-level group. */
       `SELECT s.id, s.section_key, s.label, s.status, s.mandatory, s.version, s.updated_at,
-              d.id AS document_id, d.title AS document_title
+              d.id AS document_id, d.title AS document_title, d.doc_type,
+              g.label AS group_label
          FROM c2c_document_sections s
          JOIN c2c_documents d ON d.id = s.document_id
+         LEFT JOIN c2c_document_sections g
+                ON g.document_id = s.document_id AND g.section_key = s.parent_key
         WHERE d.org_id = $1 AND d.project_id = $2::uuid AND d.status <> 'archived'
           AND (s.status <> 'todo' OR NOT EXISTS (
                 SELECT 1 FROM c2c_document_sections held
@@ -390,6 +399,9 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         meta: `${d.document_title}${d.mandatory ? ' · mandatory' : ''}`,
         documentId: d.document_id,
         document: d.document_title,
+        /* A cover letter, an FDA form or a certification is the filing's
+           paperwork, not a design record (P-114 item 2). Still listed. */
+        record: designFileStanding({ docType: d.doc_type, label: d.label, groupLabel: d.group_label }),
       };
     });
 

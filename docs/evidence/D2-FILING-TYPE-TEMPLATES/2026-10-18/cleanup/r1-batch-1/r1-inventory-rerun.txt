@@ -1,0 +1,21 @@
+R1 inventory re-run (docs/evidence/DESIGN/R1/2026-11-01-inventory/method: trace.cjs, compose.py, resolve.cjs, match.py), on live servers.
+Before (trunk 51c52751e): 3929 /api handlers, 1384 with a client caller.
+After (+ S05b, S12, S13, S19, S29): 3915 /api handlers, 1384 with a client caller.
+
+The 14 retired handlers, as the before-run classifies them:
+  GET    /api/biopharma/ctd/build-state/:projectId               caller=none
+  GET    /api/biopharma/ctd/structure                            caller=none
+  POST   /api/gcc/drafting/extract-entities                      caller=none
+  POST   /api/gcc/drafting/generate                              caller=none
+  GET    /api/gcc/drafting/sessions                              caller=none
+  GET    /api/gcc/drafting/sessions/:id                          caller=none
+  GET    /api/gcc/drafting/stats                                 caller=none
+  GET    /api/gcc/ectd/modules                                   caller=none
+  GET    /api/gcc/ectd/status                                    caller=none
+  POST   /api/submission-orchestrator/csr/tabulate               caller=none
+  POST   /api/submission-orchestrator/m2/clinical                caller=none
+  POST   /api/submission-orchestrator/m2/clinical-overview       caller=none
+  POST   /api/submission-orchestrator/m2/nonclinical             caller=none
+  POST   /api/submission-orchestrator/validate/hardened          caller=none
+
+Every other handler keeps its caller classification: True
