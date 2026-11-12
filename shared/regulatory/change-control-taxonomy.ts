@@ -239,6 +239,40 @@ export function defaultImpactForScope(scope: ChangeScope): ChangeImpactTier {
   return SCOPE_DEFAULT_IMPACT[scope];
 }
 
+// ─── The device change determination: what its two engines ask ─────────────
+
+/** The market a device change is assessed for: the FDA 510(k) change flow, or the EU significant-change criteria. */
+export type DeviceChangeMarket = 'us' | 'eu';
+export const DEVICE_CHANGE_MARKETS: readonly DeviceChangeMarket[] = ['us', 'eu'];
+
+/**
+ * The questions the device change engines ask (`server/services/regulatory/change-assessment.ts`), in the order
+ * they are asked of a person (P-122, 2026-11-12: the determination reached from a Quality change record). `key` is
+ * the engine's input; `question` is that input in plain words. Each is answered yes or no. None has a default: the
+ * engines refuse an unanswered question, and the form that asks them starts with none answered.
+ */
+export const DEVICE_CHANGE_QUESTIONS = {
+  us: [
+    { key: 'affectsIndicationsForUse', question: 'Does the change affect the indications for use or the intended use?' },
+    { key: 'changesControlMechanismOrOperatingPrinciple', question: 'Does it change the control mechanism, the operating principle or the energy type?' },
+    { key: 'changesPatientContactingMaterials', question: 'Does it change a material that contacts the patient or the body, or add a new chemical risk?' },
+    { key: 'softwareChangeAffectsRisk', question: 'Is it a software change that introduces a new risk or modifies an existing risk control?' },
+    { key: 'riskAssessmentShowsNewOrModifiedRisk', question: 'Did the risk assessment find new risks, or existing risks significantly modified?' },
+    { key: 'couldSignificantlyAffectSafetyOrEffectiveness', question: 'Could the change significantly affect safety or effectiveness?' },
+    { key: 'verificationDemonstratesEquivalence', question: 'Do documentation and testing show that it does not significantly affect safety or effectiveness (for example, verification passes within the existing specifications)?' },
+  ],
+  eu: [
+    { key: 'changesIntendedPurpose', question: 'Does the change alter the intended purpose?' },
+    { key: 'changesDesignOrPerformanceOutsideSpec', question: 'Does it add or modify design or performance characteristics outside the original specification?' },
+    { key: 'changesSterilisationOrMaterials', question: 'Does it change the sterilisation method or the materials?' },
+    { key: 'significantSoftwareChange', question: 'Is it a software change beyond a bug fix or a security update, one that affects diagnosis or therapy?' },
+    { key: 'newOperatingPrinciple', question: 'Does it add or modify an operating principle, or add a new means of actuation?' },
+  ],
+} as const;
+
+/** An engine input a person answers, for a market. */
+export type DeviceChangeFact<M extends DeviceChangeMarket> = (typeof DEVICE_CHANGE_QUESTIONS)[M][number]['key'];
+
 // ─── Change record shape (what a project tracks) ───────────────────────────
 
 /**

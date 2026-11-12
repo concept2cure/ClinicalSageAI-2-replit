@@ -393,14 +393,17 @@ describe('launch scope', () => {
   /* `q_sub.create` (device-presub) and `post_market.document.create`
      (device-postmarket) moved to KEPT when the device surfaces joined the launch
      catalog on 2026-10-23 (62a8d5e7f); `pdev.program.contradictions` and
-     `evaluate_endpoint`, whose surfaces are still outside it, take their places. */
-  const HIDDEN = ['pdev.program.get', 'pdev.program.contradictions', 'evaluate_endpoint', 'search_precedents'];
+     `evaluate_endpoint`, whose surfaces were still outside it, took their places.
+     `evaluate_endpoint` moved to KEPT when it was re-filed under the protocol
+     workspace on 2026-11-12 (P-122); `generate_report` (report-governance) takes
+     its place. */
+  const HIDDEN = ['pdev.program.get', 'pdev.program.contradictions', 'generate_report', 'search_precedents'];
   /* `cmc_status` moved from HIDDEN to KEPT when the CMC surface joined the
      launch catalog on 2026-10-12 (decision P-28). It is the same check that
      decides either way — anaCapabilityInLaunchScope against
      LAUNCH_SURFACE_IDS — so the pair below is one assertion about one rule, and
      a command whose app leaves the catalog is refused again. */
-  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all', 'cmc_status', 'q_sub.create', 'post_market.document.create'];
+  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all', 'cmc_status', 'q_sub.create', 'post_market.document.create', 'evaluate_endpoint', 'recommend_endpoints'];
 
   it('refuses a hidden-app command in production, read or write, whatever the role', async () => {
     vi.stubEnv('NODE_ENV', 'production');
