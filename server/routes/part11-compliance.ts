@@ -372,7 +372,7 @@ const log = createScopedLogger('part11');
 const SIGNATURES_BY_TARGET_SQL = `
       SELECT es.id, es.document_id, es.version_id, es.signed_target, es.signature_type,
              es.signature_purpose, es.signer_id, es.signer_name, es.signer_title, es.signer_email,
-             es.signature_meaning, es.signature_hash, es.binding_basis,
+             es.signature_meaning, es.signature_hash, es.binding_basis, es.bound_payload_digest,
              es.second_factor_verified, es.is_valid, es.signed_at, es.ip_address,
              share.approvals_recorded, share.approvals_required, share.interim_approval
       FROM electronic_signatures es
@@ -438,7 +438,7 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
       `
       SELECT id, document_id, version_id, signed_target, signature_type,
              signature_purpose, signer_id, signer_name, signer_title, signer_email,
-             signature_meaning, signature_hash, binding_basis,
+             signature_meaning, signature_hash, binding_basis, bound_payload_digest,
              second_factor_verified, is_valid, signed_at, ip_address
       FROM electronic_signatures
       WHERE document_id = $1 AND organization_id = $2

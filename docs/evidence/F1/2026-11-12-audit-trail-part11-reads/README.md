@@ -137,3 +137,30 @@ not sealed for your organisation, so it is not checked here." (`verify-other-org
 
 **Not run.** The OQ protocol (OQ-RPT-14) was not executed here; it runs the report and the check as one
 audit reader of one organisation, which the gate admits.
+
+## GA-D5-02 — signatures by target named the binding's basis, not the digest; the chain verdict's readers
+
+**What already exists.** `GET /api/part11/signatures/by-target` and `GET /api/part11/signatures/:documentId`
+(`server/routes/part11-compliance.ts`) serve the §11.50 manifestation rows. `electronic_signatures.bound_payload_digest`
+(added by `migrations/20260629_orchestrator_awaiting_signature_status.sql`) is the §11.70 binding: the SHA-256 of
+what was signed. `binding_basis` names how it was computed. The organisation's chain verdict a customer can reach
+is the Audit trail integrity attestation, `GET /api/audit/reports/audit-trail-integrity`; the OQ already reads it
+(`tests/validation/lib/chain-verdict.mjs`, OQ-001 v0.12, OQ-002 v0.17).
+
+**Fix.** Both reads now select `bound_payload_digest`. A reader of a signature can see what it is bound to, not
+only how; OQ-CMC-14 noted that "no product read serves the bound digest" and read it from the database instead.
+
+**Red first.**
+
+- `server/routes/__tests__/part11-signatures-by-target.test.ts`: two new cases failed on the old SQL ("the read
+  does not select the bound digest"). After: 82 tests across the `part11*` route suites pass.
+- `tests/db/review-route-qms-rr2.dbtest.ts`, against PostgreSQL 16 as the non-owner runtime role with
+  `RLS_ENFORCE=on`: the new assertion (both signatures of a two-approver QMS document carry a 64-hex digest)
+  failed on the old route, `expected [ false, false ] to deeply equal [ true, true ]`, and passes with the fix;
+  7 of 7 tests pass.
+
+**The chain verdict route.** `GET /api/c2c/actions/verify-chain` stays claimed by no launch surface and so is
+refused in production; its readers now read the attestation instead. Two pointers remain, both outside this
+lane: the header of `server/routes/audit-trail-ledger.routes.ts` (line 53, held by another session for event
+names) still calls verify-chain "the authoritative verdict", and `scripts/demo/launch-demo/packs/mdx.mjs:485`
+reads it. Recorded for their holders in `.design/claude-convergence/COORDINATION.md`.
