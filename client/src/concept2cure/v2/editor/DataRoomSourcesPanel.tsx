@@ -24,7 +24,7 @@ interface CatalogFacet { value: string; label: string; count: number }
 type FacetKey = 'project' | 'study' | 'kind' | 'ctd' | 'folder';
 type SourcesPage = ProjectSourcePage<SourceRow> & {
   scope?: 'catalog'; catalogProjects?: number; facets?: Record<FacetKey, CatalogFacet[]>;
-  /** The Vault's current documents of the catalog's projects (first page), and whether that read failed. */
+  /** The Vault's current documents of the catalog's projects, paged with the captures, and whether that read failed. */
   vault?: { total: number; documents: VaultCatalogDoc[] }; vaultUnavailable?: boolean;
 };
 /** A row of the catalog: a data-room capture, or a Vault document. */
@@ -195,6 +195,12 @@ function catalogItems(sources: SourceRow[], vault: VaultCatalogDoc[]): CatalogIt
   ];
 }
 
+/** Another page exists when the captures or the Vault's documents run past this one. */
+function morePages(data: SourcesPage | null, offset: number): boolean {
+  if (data?.window?.truncated === true) return true;
+  return Boolean(data?.vault && data.vault.total > offset + data.vault.documents.length);
+}
+
 /** How many there are and how many are shown, for captures and, in the catalog, for the Vault's documents. */
 function CatalogCount({ data, shown }: { data: SourcesPage | null; shown: number }) {
   if (typeof data?.total !== 'number') return null;
@@ -231,19 +237,20 @@ function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull,
   const sources = state.data?.sources ?? [];
   return <>
     <CatalogCount data={state.data} shown={sources.length} />
-    <CatalogRows items={catalogItems(sources, offset === 0 ? state.data?.vault?.documents ?? [] : [])} groupBy={groupBy} facets={state.data?.facets}
+    <CatalogRows items={catalogItems(sources, state.data?.vault?.documents ?? [])} groupBy={groupBy} facets={state.data?.facets}
       empty={<EmptySources term={term} onClear={onClear} />}
       entry={item => item.kind === 'vault'
         ? <VaultCatalogEntry key={`vault:${item.doc.documentId}`} doc={item.doc} programId={programId} uses={uses} />
         : <SourceEntry key={item.source.id} source={item.source} term={term} onPull={onPull} onAsk={onAsk} programId={programId} onNav={onNav} catalog={catalog} uses={uses} />} />
-    <SourcePagination offset={offset} truncated={state.data?.window?.truncated === true} onPage={onPage} />
+    <SourcePagination offset={offset} truncated={morePages(state.data, offset)} onPage={onPage} />
   </>;
 }
 
 /** The catalog's ways in: narrow by any facet, and organize the list under one. Counts are over every match. */
-function CatalogControls({ facets, filters, groupBy, onFilter, onGroup }: {
+function CatalogControls({ facets, filters, groupBy, onFilter, onGroup, replaced, onReplaced }: {
   facets?: Record<FacetKey, CatalogFacet[]>; filters: Filters; groupBy: FacetKey | null;
   onFilter: (key: FacetKey, value: string) => void; onGroup: (key: FacetKey | null) => void;
+  replaced: boolean; onReplaced: (include: boolean) => void;
 }) {
   const groupId = useId();
   return <div className="pf-search pf-actions" data-testid="data-room-catalog-controls" style={{ flexWrap: 'wrap', gap: 6 }}>
@@ -261,14 +268,19 @@ function CatalogControls({ facets, filters, groupBy, onFilter, onGroup }: {
         {options.map(o => <option key={o.value} value={o.value}>{facetLabel(k, o.label)} ({o.count})</option>)}
       </select>;
     })}
+    {/* The catalog lists what is current; what a later capture replaced is kept and shown on request. */}
+    <label className="pf-sel-m" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <input type="checkbox" checked={replaced} onChange={e => onReplaced(e.target.checked)} /> Include replaced versions
+    </label>
   </div>;
 }
 
 /** The read's URL: the project's room, or the catalog with its filters (the server decides which projects). */
-export function dataRoomReadUrl(programId: string, request: { offset: number; term: string; scope: RoomScope; filters: Filters }): string {
+export function dataRoomReadUrl(programId: string, request: { offset: number; term: string; scope: RoomScope; filters: Filters; replaced?: boolean }): string {
   const base = projectSourceCatalogUrl(programId, { limit: PAGE_SIZE, offset: request.offset, query: request.term });
   if (request.scope !== 'catalog') return base;
   const params = new URLSearchParams({ scope: 'catalog' });
+  if (!request.replaced) params.set('current', 'true');
   for (const [k] of FACETS) { const v = request.filters[k]; if (v) params.set(k, v); }
   return `${base}&${params}`;
 }
@@ -283,13 +295,13 @@ export function DataRoomSourcesPanel(props: DataRoomSourcesPanelProps) {
   return <DataRoomForProgram key={`${props.programId}:${scope.current.epoch}`} {...props} ownerCurrent={owned.current} />;
 }
 
-function DataRoomPage({ programId, offset, term, readOwner, scope, filters, groupBy, onFilter, onGroup, uses, ...actions }: {
-  uses?: ProjectUses;
+function DataRoomPage({ programId, offset, term, readOwner, scope, filters, groupBy, onFilter, onGroup, uses, replaced, onReplaced, ...actions }: {
+  uses?: ProjectUses; replaced: boolean; onReplaced: (include: boolean) => void;
   programId: string; offset: number; term: string; readOwner?: DataReadOwner; onRetry: () => void; onClear: () => void;
   onPage: (offset: number) => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
   scope: RoomScope; filters: Filters; groupBy: FacetKey | null; onFilter: (key: FacetKey, value: string) => void; onGroup: (key: FacetKey | null) => void;
 }) {
-  const url = dataRoomReadUrl(programId, { offset, term, scope, filters });
+  const url = dataRoomReadUrl(programId, { offset, term, scope, filters, replaced });
   const read = useLiveData<unknown>(url, [url], undefined, readOwner);
   const parsed = parseProjectSourcePage<SourceRow>(read.data, { programId, limit: PAGE_SIZE, offset });
   const state: DataState<SourcesPage> = {
@@ -300,7 +312,7 @@ function DataRoomPage({ programId, offset, term, readOwner, scope, filters, grou
   return <div className="pf-list" aria-busy={state.loading}>
     {catalog && <>
       {typeof state.data?.catalogProjects === 'number' && <p className="pf-sel-m">Every captured file and Vault document across your {state.data.catalogProjects} project{state.data.catalogProjects === 1 ? '' : 's'} of this sponsor, each graded from what the system records about it.</p>}
-      <CatalogControls facets={state.data?.facets} filters={filters} groupBy={groupBy} onFilter={onFilter} onGroup={onGroup} />
+      <CatalogControls facets={state.data?.facets} filters={filters} groupBy={groupBy} onFilter={onFilter} onGroup={onGroup} replaced={replaced} onReplaced={onReplaced} />
     </>}
     {!catalog && uses && <UsedInProject uses={uses} programId={programId} onNav={actions.onNav} />}
     <SourceListPage state={state} offset={offset} term={term} programId={programId} catalog={catalog} groupBy={groupBy} uses={uses} {...actions} />
@@ -322,6 +334,7 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner
   const [scope, setScope] = useState<RoomScope>(initialScope);
   const [filters, setFilters] = useState<Filters>({});
   const [groupBy, setGroupBy] = useState<FacetKey | null>(initialScope === 'catalog' ? 'folder' : null);
+  const [replaced, setReplaced] = useState(false);
   const uses = useProjectUses(programId, current);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -354,7 +367,8 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner
       <input id={searchId} className="c2c-input" type="search" value={query} onChange={e => { const value = e.target.value; if (current()) setQuery(previous => current() ? value : previous); }} placeholder="Find source documents and data…" />
     </div>
     {searchPending ? <div className="pf-list" aria-busy="true"><EmptyState busy icon={I.fileText} title="Loading project sources…" /></div>
-      : <DataRoomPage key={`${scope}\u0000${JSON.stringify(filters)}\u0000${term}\u0000${offset}\u0000${epoch}`} programId={programId} offset={offset} term={term} readOwner={readOwner ? { key: readOwner.key, current } : undefined}
+      : <DataRoomPage key={`${scope}\u0000${JSON.stringify(filters)}\u0000${term}\u0000${offset}\u0000${epoch}\u0000${replaced}`}
+        replaced={replaced} onReplaced={include => { if (current()) { setReplaced(include); setOffset(0); } }} programId={programId} offset={offset} term={term} readOwner={readOwner ? { key: readOwner.key, current } : undefined}
         scope={scope} filters={filters} groupBy={groupBy} uses={uses}
         onFilter={(key, value) => { if (current()) { setFilters(previous => ({ ...previous, [key]: value || undefined })); setOffset(0); } }}
         onGroup={key => { if (current()) setGroupBy(key); }}

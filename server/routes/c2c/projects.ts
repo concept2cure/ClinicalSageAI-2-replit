@@ -2089,7 +2089,7 @@ function catalogAnswer(catalog: boolean, grades: Map<number, unknown> | null, pr
 type VaultCatalogPage = import('../../services/clinical-regulatory-evidence/data-room-vault.js').VaultCatalogPage;
 /** The Vault's documents for the catalog; a failed read leaves the captures readable and says the Vault's are unavailable (null). */
 async function vaultForCatalog(catalog: boolean, orgId: number, query: import('../../services/clinical-regulatory-evidence/data-room-search.js').DataRoomQuery, programId: string): Promise<VaultCatalogPage | null | undefined> {
-  if (!catalog || (query.offset ?? 0) !== 0) return undefined;
+  if (!catalog) return undefined;
   try {
     const { listVaultForCatalog } = await import('../../services/clinical-regulatory-evidence/data-room-vault.js');
     return await listVaultForCatalog(orgId, query);
@@ -2098,7 +2098,7 @@ async function vaultForCatalog(catalog: boolean, orgId: number, query: import('.
     return null;
   }
 }
-/** What the catalog answers about the Vault's documents: them, that they could not be listed, or nothing (not the catalog's first page). */
+/** What the catalog answers about the Vault's documents: them, that they could not be listed, or nothing (not the catalog). */
 function vaultAnswer(vault: VaultCatalogPage | null | undefined) {
   if (vault === undefined) return {};
   return vault === null ? { vaultUnavailable: true } : { vault: { total: vault.total, documents: vault.documents } };
@@ -2168,7 +2168,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       return send404(res);
     }
     const { total, currentTotal, sources, facets: captureFacets } = await searchDataRoom(orgId, query, { userId: userId });
-    // The catalog also lists the Vault's current documents of the same projects, on its first page (S2, 2026-11-11).
+    // The catalog also lists the Vault's current documents of the same projects, paged with the captures (S2, 2026-11-11/12).
     const vault = await vaultForCatalog(catalog, orgId, query, programId);
     const facets = await catalogFacetsWithVault(captureFacets, vault);
     const truncated = (query.offset ?? 0) + sources.length < total;
