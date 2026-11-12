@@ -27,6 +27,10 @@ import { evaluateSendReadiness, requiredSendDomains } from '../services/nonclini
 import { recordNonclinicalStudyCreated, recordSendValidation } from '../services/nonclinical-metrics';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
+/** Reads go through the pool, which sets the tenant for each statement. A connection from connect() carries
+ *  no tenant before BEGIN, so a read on one found no row for any organization (2026-11-12). */
+const scopedReads = { query: (sql: string, params?: unknown[]) => pool.query(sql, params as unknown[]) };
+
 const router = Router();
 const logger = createScopedLogger('nonclinical');
 
@@ -198,14 +202,11 @@ router.get('/studies/:id/send-readiness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const client = await pool.connect();
   try {
-    const input = await getSendReadinessInput(client, orgId, id);
+    const input = await getSendReadinessInput(scopedReads, orgId, id);
     res.json(evaluateSendReadiness(input));
   } catch (err) {
     fail(res, err, req);
-  } finally {
-    client.release();
   }
 });
 

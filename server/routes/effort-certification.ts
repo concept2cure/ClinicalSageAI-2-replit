@@ -16,6 +16,10 @@ import { recordEffortStatementCreated, recordEffortLineAdded, recordEffortCertif
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
+/** Reads go through the pool, which sets the tenant for each statement. A connection from connect() carries
+ *  no tenant before BEGIN, so a read on one found no row for any organization (2026-11-12). */
+const scopedReads = { query: (sql: string, params?: unknown[]) => pool.query(sql, params as unknown[]) };
+
 const router = Router();
 
 /* A write here needs a writing role; a read does not. The mount is behind
@@ -42,7 +46,7 @@ router.get('/', async (req, res) => { const o = oid(req); if (!o) return res.sta
 const lineSchema = z.object({ activityLabel: z.string().min(1).max(300), committedPct: z.number().min(0).max(100), actualPct: z.number().min(0).max(100), awardId: z.number().int().positive().optional(), reason });
 router.post('/:id/lines', async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); const p = lineSchema.safeParse(req.body ?? {}); if (!p.success) return res.status(400).json({ error: { code: 'VALIDATION', details: p.error.flatten() } }); await governed(req, res, 'update', p.data.reason, async (c, o, u) => { const { id: lid } = await addLineTx(c, o, u, id, p.data); recordEffortLineAdded(); return { target: `effort-certification:${id}`, payload: { lineId: lid }, body: { certificationId: id, lineId: lid } }; }); });
 
-router.get('/:id/validation', async (req, res) => { const o = oid(req); if (!o) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } }); const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); const c = await pool.connect(); try { const { lines } = await loadStatement(c, o, id); res.json(validateEffort(lines)); } catch (e) { fail(res, e); } finally { c.release(); } });
+router.get('/:id/validation', async (req, res) => { const o = oid(req); if (!o) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } }); const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); try { const { lines } = await loadStatement(scopedReads, o, id); res.json(validateEffort(lines)); } catch (e) { fail(res, e); } });
 
 // Certifying is an electronic signature (P0-10a): password, enrolled second
 // factor, meaning and reason, through the one ceremony (governed-signed-act.ts).

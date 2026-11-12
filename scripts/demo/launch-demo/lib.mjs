@@ -300,10 +300,20 @@ export async function ensureSyntheticReviewer({ api, baseUrl, identity, onRecord
   return { state: found ? 'found' : 'created', email, password, session, api: reviewerApi, userId: session.user?.id ?? null, note };
 }
 
-/** PDF string escaping: parentheses and backslashes, and anything outside Latin-1 becomes '?'. */
+/**
+ * Characters the pack prose uses that Latin-1 lacks. Until 2026-11-12 each printed as "?" in every seeded PDF
+ * (GA-DEMO-14). The fonts are Helvetica with WinAnsiEncoding, which has the dashes, the curly quotes, the bullet,
+ * the ellipsis and the euro sign at its own codes (0x80-0x9f); the rest has no code there and is written out.
+ */
+const WIN_ANSI = { '\u2013': '\x96', '\u2014': '\x97', '\u2018': '\x91', '\u2019': '\x92', '\u201c': '\x93', '\u201d': '\x94', '\u2022': '\x95', '\u2026': '\x85', '\u20ac': '\x80', '\u2122': '\x99' };
+const SPELLED = { '\u2265': '>=', '\u2264': '<=', '\u2212': '-', '\u2192': '->', '\u2190': '<-', '\u2500': '-', '\u2248': '~', '\u2260': '!=', '\u03b1': 'alpha', '\u03b2': 'beta', '\u03b3': 'gamma', '\u03b4': 'delta', '\u03b8': 'theta', '\u03ba': 'kappa', '\u03bb': 'lambda', '\u03c3': 'sigma', '\u00a0': ' ' };
+
+/** PDF string escaping: WinAnsi and spelled-out characters first, then parentheses and backslashes; anything else becomes '?'. */
 function pdfLatin1(s) {
   return String(s ?? '')
-    .replace(/[^\x20-\x7e\xa0-\xff]/g, '?')
+    .replace(/[\u2013\u2014\u2018\u2019\u201c\u201d\u2022\u2026\u20ac\u2122]/g, (c) => WIN_ANSI[c])
+    .replace(/[\u2265\u2264\u2212\u2192\u2190\u2500\u2248\u2260\u03b1-\u03c3\u00a0]/g, (c) => SPELLED[c] ?? '?')
+    .replace(/[^\x20-\x7e\x80-\xff]/g, '?')
     .replace(/\\/g, '\\\\')
     .replace(/\(/g, '\\(')
     .replace(/\)/g, '\\)');
@@ -344,8 +354,9 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
   const LEFT = 72;
   const lines = []; // { text, bold, size }
   const push = (text, bold = false, size = BODY_SIZE) => lines.push({ text, bold, size });
-  push(title, true, 16);
-  if (subtitle) push(subtitle, false, 11);
+  // Wrapped to the 468 pt column: a long subtitle ran off the page (GA-DEMO-14).
+  for (const l of wrap(title, 56)) push(l, true, 16);
+  if (subtitle) for (const l of wrap(subtitle, 84)) push(l, false, 11);
   push('');
   for (const sec of sections) {
     push(sec.heading, true, 13);
@@ -371,7 +382,8 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
   pages.forEach((pageLines, idx) => {
     let y = TOP;
     const ops = [];
-    ops.push(`BT /F2 8 Tf ${LEFT} 752 Td (${pdfLatin1(title)}) Tj ET`);
+    const header = title.length > 110 ? `${title.slice(0, 109).trimEnd()}\u2026` : title;
+    ops.push(`BT /F2 8 Tf ${LEFT} 752 Td (${pdfLatin1(header)}) Tj ET`);
     ops.push(`BT /F1 8 Tf ${LEFT} 40 Td (${pdfLatin1(`${footer ? footer + '  |  ' : ''}Page ${idx + 1} of ${pages.length}`)}) Tj ET`);
     for (const l of pageLines) {
       if (l.text) ops.push(`BT /${l.bold ? 'F2' : 'F1'} ${l.size} Tf ${LEFT} ${y} Td (${pdfLatin1(l.text)}) Tj ET`);
