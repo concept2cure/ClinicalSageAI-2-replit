@@ -1,0 +1,13 @@
+1 | claude-sonnet-5 | 50 tools | 1 messages | key header present, sha256 ac33dbdb1492… | asked: What can you do here, and which integrations are connected? | no tool result yet
+2 | claude-sonnet-5 | 50 tools | 3 messages | key header present, sha256 ac33dbdb1492… | asked: What can you do here, and which integrations are connected? | carries the result of describe_capabilities
+3 | claude-sonnet-5 | 50 tools | 1 messages | key header present, sha256 ac33dbdb1492… | asked: What is this organization set up to do? | no tool result yet
+4 | claude-sonnet-5 | 50 tools | 1 messages | key header present, sha256 ac33dbdb1492… | asked: What screens can you open for me? | no tool result yet
+5 | claude-sonnet-5 | 50 tools | 3 messages | key header present, sha256 ac33dbdb1492… | asked: What screens can you open for me? | carries the result of list_app_screens
+6 | claude-sonnet-5 | 50 tools | 1 messages | key header present, sha256 ac33dbdb1492… | asked: Find anything about an api key across the platform. | no tool result yet
+7 | claude-sonnet-5 | 50 tools | 3 messages | key header present, sha256 ac33dbdb1492… | asked: Find anything about an api key across the platform. | carries the result of global_search
+8 | claude-sonnet-5 | 50 tools | 1 messages | key header present, sha256 ac33dbdb1492… | asked: Have a research agent look into the predicate device. | no tool result yet
+9 | claude-opus-5-5 | 18 tools | 2 messages | key header present, sha256 ac33dbdb1492… | asked: Objective: Summarize what this project has on file about its predicate | no tool result yet
+10 | claude-opus-5-5 | 18 tools | 4 messages | key header present, sha256 ac33dbdb1492… | asked: Objective: Summarize what this project has on file about its predicate | carries the result of run_agent
+11 | claude-sonnet-5 | 50 tools | 4 messages | key header present, sha256 ac33dbdb1492… | asked: Have a research agent look into the predicate device. | carries the result of run_agent
+12 | claude-sonnet-5 | 50 tools | 1 messages | key header present, sha256 ac33dbdb1492… | asked: Detector control, typed by a person: <CONTROL>. Wha | no tool result yet
+13 | claude-sonnet-5 | 50 tools | 3 messages | key header present, sha256 ac33dbdb1492… | asked: Detector control, typed by a person: <CONTROL>. Wha | carries the result of list_app_screens
