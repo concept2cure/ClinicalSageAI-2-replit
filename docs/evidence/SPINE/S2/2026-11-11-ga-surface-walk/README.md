@@ -100,9 +100,20 @@ No API response ≥ 400 and no console error on any step after the fix.
   graded and used, and is cited through the Vault's own citation path.
 - **Datasets in the Vault are not profiled**, so CDISC conformance is not checked for them (the grade says so). A
   dataset dropped in the data room is.
-- **The catalog lists the first 200 Vault documents** that match (newest first) and says how many match. Paging
-  the Vault half is the next step if a sponsor's Vault outgrows that.
+- ~~The catalog lists the first 200 Vault documents.~~ **Done 2026-11-12:** the Vault's documents page with the
+  captures (the catalog's own limit and offset), and "More sources" is offered while either has more.
 - **Each catalog read takes 2 to 3.5 s** on this machine: it reconciles the Quality records and grades the page on
   every read. Not changed here.
 - **AnA in a conversation** was not run: this container has no model key.
 - Withdrawing a Quality record snapshot from data use on the project page (open since 2026-11-10).
+
+## 2026-11-12: current by default, and the Vault half pages
+
+- The catalog asks for what is current. What a later capture replaced is kept and listed with **Include replaced
+  versions**. Before, the filter counts included replaced captures: "LMN-201 (81)" for a project with 45 current
+  items and 17 Vault documents; it now reads (62).
+- Walked as the Lumen lead: "90 matching sources · showing 50. 31 Vault documents · showing 31."; More sources → the
+  remaining 40; Include replaced versions → 109. No API response ≥ 400.
+- Tests: `dataRoomCatalogVault.test.tsx` (the read asks `current=true`, another page while the Vault has more, the
+  option drops the narrowing and returns to the first page), `data-room-vault.test.ts` (the page's limit and offset
+  are bound), `projects-sources-window.test.ts` (a later catalog page carries its Vault documents).
