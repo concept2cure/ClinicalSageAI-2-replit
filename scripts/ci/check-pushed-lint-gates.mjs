@@ -25,9 +25,13 @@
  * - in SLOW (the proof tier, the ESLint ratchet, the full typechecks).
  *
  * ── Whose red it is ─────────────────────────────────────────────────────────
- * The gates run on the working tree, as the hook's other gates do ("push from a
- * quiet tree", COORDINATION.md). Each red gate is then run again on the base,
- * the commit this push lands on, in a temporary git worktree:
+ * The gates run on what is pushed: HEAD, checked out in a temporary git
+ * worktree. An uncommitted edit is not pushed, so it is not read. Nor is a
+ * worktree nested in the repository (an agent's, under .claude/worktrees/),
+ * which repo-walking gates would read as a second copy of every migration and
+ * dependency: on 2026-11-12 three gates refused a push that changed one
+ * Markdown file. Each red gate is then run again on the base, the commit this
+ * push lands on, in a second temporary worktree:
  * - green on the base: this push brought the red, so it is refused;
  * - red on both, naming a tracked or changed file now that it did not name on
  *   the base: this push added to it, so it is refused;
@@ -42,11 +46,10 @@
  * the gate's script or ci.yml. With no base at all, every red is refused: no
  * comparison can be made.
  *
- * ── Leaves the tree as it found it ──────────────────────────────────────────
- * Two gates rewrite reports under docs/reports/ as they run. Every tracked file
- * there is read before the run, and any whose content changed is written back
- * exactly as it was. That includes a pusher's own uncommitted edit. Any other
- * tracked file that changed during the run is named, never touched.
+ * ── Never touches the working tree ──────────────────────────────────────────
+ * Two gates rewrite reports under docs/reports/ as they run. They do it inside
+ * the temporary worktrees, which are removed afterwards. HEAD that cannot be
+ * checked out is a failure: nothing was checked.
  *
  * Usage:
  *   node scripts/ci/check-pushed-lint-gates.mjs              # against the upstream ref
@@ -72,7 +75,6 @@ const SELFTEST_ID = /:(?:selftest|self-test)$|selftest\.mjs$|^test:|:test$/;
 const SELFTEST_LINE = /\s--self-?test\b/;
 const COMMAND = /^(?:npm run (?:--silent |-s )?([\w:.@/-]+)|node (scripts\/ci\/[\w./-]+\.m?js)(?:\s+[\w=./-]+)*)$/;
 /** Where gates write their latest report as they run. */
-export const REPORTS = 'docs/reports';
 
 /** The commands of one `run:` block, or null when any line is not a plain gate command. */
 export function gateCommands(run) {
@@ -195,27 +197,6 @@ function changedFiles(base) {
   return out === null ? null : out.split('\n').map((s) => s.trim()).filter(Boolean);
 }
 
-/** Every tracked file under docs/reports/ with its content, to write back after the run. */
-function snapshotReports() {
-  const listed = git(['ls-files', '-z', '--', REPORTS]);
-  const snap = new Map();
-  for (const f of (listed ?? '').split('\0').filter(Boolean)) {
-    try { snap.set(f, fs.readFileSync(path.join(ROOT, f))); } catch { /* deleted in the tree: nothing to restore */ }
-  }
-  return snap;
-}
-
-/** Writes back each snapshotted report whose content changed. Returns the paths written back. */
-export function restoreReports(snap, { read = (f) => fs.readFileSync(path.join(ROOT, f)), write = (f, b) => fs.writeFileSync(path.join(ROOT, f), b) } = {}) {
-  const restored = [];
-  for (const [f, before] of snap) {
-    let now = null;
-    try { now = read(f); } catch { now = null; }
-    if (now === null || !Buffer.from(now).equals(Buffer.from(before))) { write(f, before); restored.push(f); }
-  }
-  return restored;
-}
-
 function runOne(gate, cwd) {
   return new Promise((resolve) => {
     const script = gate.commands.map((c) => c.line).join(' && ');
@@ -242,15 +223,15 @@ async function runAll(gates, cwd, width = 3) {
   return results;
 }
 
-/** Run `gates` on `ref` in a temporary worktree: { map: Map name → result, or null when it could not be made, tree }. */
-async function runOnBase(gates, ref) {
+/** Run `gates` on `ref` in a temporary worktree: { results, map: Map name → result, both null when it could not be made, tree }. */
+async function runAt(gates, ref, name) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'c2c-pushed-lint-gates-'));
-  const tree = path.join(dir, 'base');
+  const tree = path.join(dir, name);
   try {
-    if (spawnSync('git', ['worktree', 'add', '--quiet', '--detach', tree, ref], { cwd: ROOT }).status !== 0) return { map: null, tree };
+    if (spawnSync('git', ['worktree', 'add', '--quiet', '--detach', tree, ref], { cwd: ROOT }).status !== 0) return { results: null, map: null, tree };
     fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(tree, 'node_modules'));
     const results = await runAll(gates, tree);
-    return { map: new Map(results.map((r) => [r.name, r])), tree };
+    return { results, map: new Map(results.map((r) => [r.name, r])), tree };
   } finally {
     spawnSync('git', ['worktree', 'remove', '--force', tree], { cwd: ROOT });
     fs.rmSync(dir, { recursive: true, force: true });
@@ -287,31 +268,26 @@ async function main(argv) {
   const changed = base ? changedFiles(base) : null;
   const t0 = Date.now();
 
-  const snap = snapshotReports();
-  const dirtyBefore = new Set((git(['diff', '--name-only']) ?? '').split('\n').filter(Boolean));
-  let results;
-  try {
-    results = (await runAll(gates, ROOT)).map((r, i) => ({ ...r, files: gateFiles(gates[i].commands, scripts) }));
-  } finally {
-    const restored = restoreReports(snap);
-    if (restored.length) console.log(`${TAG} wrote back ${restored.length} report(s) the gates rewrote: ${restored.join(', ')}`);
-    const other = (git(['diff', '--name-only']) ?? '').split('\n').filter((f) => f && !dirtyBefore.has(f) && !f.startsWith(`${REPORTS}/`));
-    if (other.length) console.log(`${TAG} changed while the gates ran (left as they are): ${other.join(', ')}`);
+  const head = await runAt(gates, 'HEAD', 'head');
+  if (!head.results) {
+    console.error(`${TAG} FAIL — HEAD could not be checked out in a temporary worktree. Nothing was checked.`);
+    return 1;
   }
+  const results = head.results.map((r, i) => ({ ...r, files: gateFiles(gates[i].commands, scripts) }));
 
   const reds = results.filter((r) => !r.ok);
   let onBase = null;
   let baseTree = null;
   if (reds.length && base) {
     const redGates = gates.filter((g) => reds.some((r) => r.name === g.name));
-    const ran = await runOnBase(redGates, base);
+    const ran = await runAt(redGates, base, 'base');
     onBase = ran.map;
     baseTree = ran.tree;
     if (!onBase) console.log(`${TAG} the base (${base}) could not be checked out; reds are judged by the files they name.`);
   }
   const tracked = new Set((git(['ls-files']) ?? '').split('\n').filter(Boolean).concat(changed ?? []));
   const known = (p) => tracked.has(p) || attribute([p], [...tracked]).length > 0;
-  const { refuse, trunk } = decide(results, { onBase, changed, known, roots: [ROOT, baseTree] });
+  const { refuse, trunk } = decide(results, { onBase, changed, known, roots: [head.tree, baseTree, ROOT] });
   const seconds = Math.round((Date.now() - t0) / 1000);
   console.log(`${TAG} ${gates.length} Lint-job gate(s) run in ${seconds}s; ${reds.length} red${onBase ? `, each run again on ${base}` : ''}.`);
   for (const r of trunk) {

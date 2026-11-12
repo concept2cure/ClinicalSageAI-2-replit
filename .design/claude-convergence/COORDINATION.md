@@ -811,6 +811,47 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
       `PostmarketSurface.tsx:408` (D8 and R1), `CmcModule.tsx:2101` (CMC screens), `foundationsRetiredRatchet`
       (`01T2woo…`), `workbenchRemedies` (the Codex editor lane), `d0PhoneWidth` (R1), the CSR path's two files,
       and S13's three handed over at 12:36 (eight hours at 20:36).
+- **The GA ledger's unheld items, re-checked at HEAD, 2026-11-12 19:00 (this lane):**
+  - **Scope.** 32 open, unheld, non-large code and data items of `docs/evidence/GA-READINESS/2026-11-10/ledger.json`
+    that no commit since 2026-11-10 names. One read-only agent per item checked the code, this file's holds, and the
+    last 36 hours of commits. Results: `docs/evidence/F1/2026-11-10-trunk-ci/` once filed.
+  - **This lane takes eight, from now until they land (each red first, three skeptics each):**
+    - `GA-F1-01`: `server/routes/c2c/artifacts.ts`.
+    - `GA-UI-19`: two labels in `editor/DocumentWorkbench.tsx` only. **→ the Codex editor lane:** nothing near the
+      bridge effect.
+    - `GA-S4-04`: `services/ana/submission-center-tool-defs.ts`, `AnaToolExecutor.ts` (the placement tool's input),
+      `skills/library/submissions.ts`.
+    - `GA-DEMO-28`: `services/qms/sopTemplates.ts`, `routes/mdx-qms.ts`.
+    - `GA-S11-01`: `routes/pyramid.routes.ts`, `surfaces/PyramidProject.tsx`, `PlanAssign.tsx`.
+    - `GA-S2-03`: `routes/chat/upload.ts`, `clinical-regulatory-evidence/evidence-spine.service.ts`.
+    - `GA-D5-04`: `services/vault/vault-fixity.ts`, and its job's registration in `server/index.ts`.
+    - `GA-CI-11`: `middleware/auditLogger.js`, `services/auditService.ts`, `routes/mdx-udi.ts`.
+  - **Closed at HEAD, so the ledger can mark them:**
+    - `GA-D1-03` (`29acce3657`);
+    - `GA-D5-06` (`ea718c177`, `a27e6b061`, `d435eeead`);
+    - `GA-S2-02` (`46d849a026`).
+    - `GA-S8-03`: the run of show keeps RBM in the Lumen account.
+  - **Held, left with the holder:**
+    - row 121's map lanes: `GA-CI-10`, `GA-CC-04` (L9), `GA-D7-04`, `GA-D7-06` (L10), `GA-CC-06` (L11),
+      `GA-DEMO-13` (L3) and `GA-SAL-05`;
+    - `GA-D1-05` (AWS readiness);
+    - `GA-DEMO-09` (Wave B, row 122);
+    - `GA-S6-03` (Vault parity);
+    - `GA-CC-09` (the CSR lane);
+    - `GA-CT-04` (`011Dpx…` in `packs/mdx.mjs`).
+  - **→ Client administration (`01T2woo…`), L9:** `pglite-harness.ts` and `disposition-fixture.ts` have had no
+    commit since 11-09, and no `fix-L9` evidence exists. Release them, or say L9 is running. `GA-CI-10` is fixable:
+    the harness should apply `20260921_audit_logs_chain_seq.sql`, and five suites drop their non-idempotent patches
+    in the same commit.
+  - **Not a session's to fix now:**
+    - `GA-R1-02` and `GA-R1-03`: the store owner and the route retirement need P-107 decisions;
+    - `GA-S6-05`, part 1: disposition activation;
+    - `GA-DEMO-30`: the transcription;
+    - `GA-CC-13`: large; its OQ scripts sit under row 97.
+  - **Fixable, not taken this round:**
+    - `GA-UI-26`: `CmcModule.tsx` is held;
+    - `GA-UI-28`: it touches the shell broadly;
+    - `GA-CT-05`: a device and diagnostics demo organisation, for the GA lead to want first.
 - **→ every lane: `.husky/pre-push` now runs CI's Lint-job gates on what your push brings**
   (`ci:pushed-lint-gates`).
   - **Why:** 113 of the Lint job's 130 steps ran commands the hook never ran, so the five reds above landed with no
@@ -823,6 +864,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
     - It is trunk's, and only named, when it was red there with nothing new. Touching a file whose red is already
       on trunk does not refuse a push.
     - The base is your upstream, or `origin/concept2cure-v2` on a detached HEAD (a worktree push).
+    - **Since 2026-11-12 19:30 the gates run on HEAD in a temporary worktree, not on the working tree.** An
+      agent worktree nested under `.claude/worktrees/` made three repo-walking gates (the duplicate CREATE TABLE
+      check, the legacy-dependency quarantine and DOCX runtime canonicality) read a second copy of the repository.
+      They refused a push that changed one Markdown file. Uncommitted edits are not pushed, so they are no longer
+      read. `docs/reports/` is no longer touched.
   - **Shown working:** about 90–110 s with a red on trunk.
     - From a detached worktree with no change: passed, with the four trunk reds named.
     - An envelope read added to `HomeSections.tsx`: refused.
