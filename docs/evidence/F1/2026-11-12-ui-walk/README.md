@@ -136,6 +136,35 @@ which already prints them. One projection, one field on the read, one clause on 
 was added. `07-vault-seal-line-red-green.txt`: 10 new cases red on the committed code, then 45 of 45; the Vault's 70
 client suites, 790 of 790.
 
+## A refused signature says why (2026-11-12)
+
+Seen in the CMC walk: a signer whose authenticator code was not accepted read "Couldn’t approve section … — The server
+did not accept the change (HTTP 401).. Nothing was persisted."; a blank code was not caught by the form, which cannot
+know whether the signer has one enrolled.
+
+**What already exists.** `verifyReauth` (`server/routes/c2c/actions.ts`) is the one re-verification every high-risk
+route uses, and it answered a `REAUTH_*` code. The sentences a signer is told for each code already existed, but only
+inside the signature ceremony (`server/services/part11/governed-signature-ceremony.ts`, `REAUTH_MESSAGE`), so the
+ceremony's routes said why and the nine routes that call `verifyReauth` directly sent the code alone. The CMC screens
+read the server's sentence through `serverMessage`, and fell back to "HTTP 401" when there was none.
+
+**The repair.** The sentences moved from the ceremony to `verifyReauth`, which now returns the sentence with the
+code; the ceremony uses it, and the nine routes send it as `message` beside the unchanged code
+(`api/cmc/{routes,specificationRoutes,batchRecordRoutes,module3OperatingSystemRoutes}.ts`,
+`routes/c2c/{actions,documents}.ts`, `routes/510k-estar-routes.ts`, `routes/mdx-submission-gateway.ts` twice,
+`routes/financial-disclosures.ts`). A client that reads the code is unchanged. On the CMC screens the sentence is
+shown once, with one full stop (`cmcShared.tsx` `cmcRefusal`, used by `cmcWriteFailed` and the Overview), and the
+specification and batch dispositions no longer write their own "re-authentication failed".
+
+**Used in the running app** (`after-d2-01`, `after-d2-02`), as the run identity on an approvable §3.1: with the right
+password and a wrong code, "Couldn’t approve section 3.1 — The authenticator code was not accepted. Nothing was
+signed."; with no code, "… Your account has an authenticator enrolled: enter its current code to sign. Nothing was
+signed." Both answered 401 with the code and the sentence, and the section stayed Draft.
+
+`08-signature-refusal-red-green.txt`: 21 red on the committed code (one of them already red on trunk), 4 more on the
+screen's half; then 142 of 143 with the change, the one being that trunk-red case; 3,504 of 3,521 across the 221
+suites around it, where the other 14 are the report-pack export suite, which fails the same way on trunk.
+
 ## Not done
 
 - The screen repairs not listed in the table above.
