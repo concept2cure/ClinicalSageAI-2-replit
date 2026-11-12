@@ -1,0 +1,16 @@
+✗ sse-heartbeat: 10 stream(s) opened by hand
+
+  server/routes/ana-features.ts:5184 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/ana-intelligence.ts:202 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/ana-ri/stream.ts:1054 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/contentAssembly.routes.ts:256 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/cortex-unified.ts:534 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/deep-research.ts:172 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/fieldSync.routes.ts:326 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/ind.ts:372 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/routes/submissions.ts:1615 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+  server/services/ai-actions/sse-stream.ts:94 — sets text/event-stream by hand; open the stream with openSseStream (server/utils/sse-stream.ts)
+
+Behind CloudFront and the ALB, 60 s without a byte closes the connection.
+openSseStream (server/utils/sse-stream.ts) sets the headers and writes a heartbeat every 15 s.
+exit 1

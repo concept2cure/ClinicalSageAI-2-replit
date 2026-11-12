@@ -15,6 +15,7 @@ import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import { resolveOrgId } from '../types/auth-request';
 import indCopilot from '../services/indCopilot.js';
+import { openSseStream } from '../utils/sse-stream';
 
 const router = Router();
 const logger = createScopedLogger('ind-routes');
@@ -369,10 +370,8 @@ router.post('/applications/:id/stream/:sectionCode', async (req: Request, res: R
   const { id, sectionCode } = req.params;
   const { model, temperature, max_tokens } = req.body || {};
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
+  // SSE headers and a heartbeat until the first token (server/utils/sse-stream.ts).
+  openSseStream(req, res);
 
   try {
     const stream = await indCopilot.streamSectionContent(id, sectionCode, {
