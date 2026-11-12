@@ -29,6 +29,12 @@ describe('a Vault document\'s grade', () => {
     const g = gradeCapture(vaultGradeFacts(row()));
     expect(g).toMatchObject({ grade: 'B', score: 82, engine: 'data-room-grade v1', cap: null });
     expect(g.basis.find((b) => b.criterion === 'integrity')).toMatchObject({ points: 15 });
+    // Said in the Vault's words: it was added and filed, not captured.
+    expect(g.basis.map((b) => b.detail).slice(0, 3)).toEqual([
+      'SHA-256 recorded when it was added to Vault; who added it is recorded; filed in Vault.',
+      'original bytes held; held under the Vault’s controls; fixity not yet checked.',
+      'Current: no later version replaced it.',
+    ]);
     // Confirmed by a person, and its fixity proven: the facts move the grade, nothing else does.
     expect(gradeCapture(vaultGradeFacts(row({ catalog_state: 'confirmed', verdict: 'verified' })))).toMatchObject({ grade: 'A', score: 100 });
   });
@@ -50,7 +56,10 @@ describe('listVaultForCatalog', () => {
     const query = vi.fn(async () => answer([row()], [{ facet: 'folder', value: 'module-5', label: null, n: 1 }, { facet: 'project', value: P, label: 'Open project', n: 1 }]));
     const page = await listVaultForCatalog(7, { programId: P, programIds: [P, OTHER.toUpperCase()], kind: 'protocol', ctd: '5.3', q: 'dose' }, { query });
     const [sql, args] = query.mock.calls[0] as unknown as [string, unknown[]];
-    expect(args).toEqual([7, [P, OTHER], null, 'protocol', '5.3', null, null, null, 'dose', 200]);
+    expect(args).toEqual([7, [P, OTHER], null, 'protocol', '5.3', null, null, null, 'dose', 200, 0]);
+    // The catalog's own page: its limit (never more than 200) and offset.
+    await listVaultForCatalog(7, { programId: P, programIds: [P], limit: 50, offset: 100 }, { query });
+    expect((query.mock.calls[1] as unknown as [string, unknown[]])[1].slice(-2)).toEqual([50, 100]);
     expect(sql).not.toMatch(/protocol|dose/);
     expect(page.total).toBe(1);
     expect(page.documents[0]).toMatchObject({ documentId: row().id, projectId: P, title: 'Protocol v3', folder: 'module-5', folderLabel: 'Module 5 · Clinical',

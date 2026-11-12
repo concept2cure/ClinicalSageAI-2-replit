@@ -87,6 +87,19 @@ describe('the data catalog with the Vault\'s documents', () => {
     expect(screen.queryByTestId('data-room-vault-entry')).toBeNull();
   });
 
+  it('asks for what is current, shows replaced versions on request, and offers another page while the Vault has more', async () => {
+    sourcesPage = page({ vault: { total: 120, documents: [vaultDoc()] } });
+    render(<DataRoomSourcesPanel programId={P} initialScope="catalog" />);
+    await screen.findByTestId('data-room-vault-entry');
+    const reads = () => apiRequest.mock.calls.filter(c => String(c[1]).includes('/sources?')).map(c => String(c[1]));
+    expect(reads().at(-1)).toMatch(/scope=catalog&current=true/);
+    fireEvent.click(screen.getByRole('button', { name: 'More sources' }));
+    await waitFor(() => expect(reads().at(-1)).toMatch(/offset=50/));
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Include replaced versions' }));
+    await waitFor(() => expect(reads().at(-1)).not.toMatch(/current=true/));
+    expect(reads().at(-1)).toMatch(/offset=0/);
+  });
+
   it('says so when the Vault\'s documents could not be listed, and still lists the captures', async () => {
     sourcesPage = page({ vault: undefined, vaultUnavailable: true });
     render(<DataRoomSourcesPanel programId={P} initialScope="catalog" />);
