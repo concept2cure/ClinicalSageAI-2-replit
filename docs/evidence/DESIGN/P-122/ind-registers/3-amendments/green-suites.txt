@@ -1,0 +1,10 @@
+# every entitlements suite; server/routes/ind-lifecycle/__tests__; the IND screen's client suites; tests/db/ind-audit-outcomes.dbtest.ts
+green-claim-3.txt: Test Files  24 passed (24)
+green-claim-3.txt:      Tests  652 passed (652)
+ind-server-3.txt: Test Files  11 passed (11)
+ind-server-3.txt:      Tests  176 passed (176)
+ind-client-3.txt: Test Files  16 passed (16)
+ind-client-3.txt:      Tests  130 passed (130)
+audit-outcomes-4.txt: Test Files  1 passed (1)
+audit-outcomes-4.txt:      Tests  15 passed (15)
+ci:launch-scope-api: 666 API paths named by launch and shell screens; none refused. {"launch":608,"infrastructure":9,"never-gated":49}

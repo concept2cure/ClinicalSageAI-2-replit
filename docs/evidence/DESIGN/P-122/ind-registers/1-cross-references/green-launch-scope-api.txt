@@ -1,0 +1,2 @@
+# node scripts: npm run -s ci:launch-scope-api
+ci:launch-scope-api: 663 API paths named by launch and shell screens; none refused. {"launch":605,"infrastructure":9,"never-gated":49}

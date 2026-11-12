@@ -494,6 +494,10 @@
    The row wraps, as Project knowledge's rows do. */
 .c2c-v2 .pj-tracking-module .pj-act{flex-wrap:wrap;min-width:0;}
 .c2c-v2 .pj-tracking-module .pj-act-w{flex-shrink:1;min-width:0;overflow-wrap:anywhere;}
+/* P-122 milestones: "Record a milestone" follows the Schedule's list of deadlines and milestones. A date that wraps
+   below its row (at 390 px, a milestone row also holds "Update") stays at the row's end, as every other date is. */
+.c2c-v2 .pj-sched-act{margin-top:10px;}
+.c2c-v2 .pj-sched-date{margin-left:auto;}
 /* Review tab: this filing's reviews, grouped by what they need from the
    person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
 .c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}
