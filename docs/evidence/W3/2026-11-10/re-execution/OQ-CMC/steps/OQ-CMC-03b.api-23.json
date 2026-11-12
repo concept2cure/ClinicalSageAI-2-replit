@@ -35,20 +35,20 @@
         }
       ],
       "processDevelopment": "Direct compression was chosen over wet granulation after the blend showed adequate flow; coating parameters were set by a three-batch study",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 38,
+    "durationMs": 32,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "aef08428-bb65-4e8a-aaa8-b7c17843ae1f",
+        "id": "8a410ea3-f2c9-4aea-940e-c34623f9d393",
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "processName": "BX-702 tablet manufacture",
         "processType": "drug_product",
         "processDescription": null,
@@ -90,8 +90,8 @@
         "validationStatus": "not-started",
         "validatedBy": null,
         "validationDate": null,
-        "createdAt": "2026-11-10T13:06:42.133Z",
-        "updatedAt": "2026-11-10T13:06:42.133Z"
+        "createdAt": "2026-11-12T00:34:45.162Z",
+        "updatedAt": "2026-11-12T00:34:45.162Z"
       },
       "module3Linked": true
     }

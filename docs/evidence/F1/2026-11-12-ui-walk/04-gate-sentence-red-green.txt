@@ -1,0 +1,16 @@
+final-export-gate.test.ts on trunk's gate: the three new cases fail (the field staleApprovedSections does not exist; stale drafts are said to have gone stale after approval).
+
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a stale section is described as what it is > stale drafts are not said to have gone stale after approval; the remedy is a compile
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a stale section is described as what it is > approved sections that went stale are said to owe a re-approval, as before
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a stale section is described as what it is > a mix names each kind with its own count
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+
+With the repair, the CMC service and route suites:
+ × server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section whose own compiled record is incomplete — 409, rolled back, nothing written 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 101 passed (102)
+      Tests  1 failed | 1920 passed (1921)
+
+The one failure is module3OperatingSystemRoutes.test.ts 'refuses to approve a section whose own compiled record is incomplete': it expects the raw field keys in a message that now uses words. It fails the same way on trunk without these changes.

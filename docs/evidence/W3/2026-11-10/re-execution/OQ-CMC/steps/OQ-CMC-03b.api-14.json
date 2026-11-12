@@ -12,20 +12,20 @@
       "observedLevel": "0.05",
       "levelUnit": "%",
       "maximumDailyDose": "10 mg",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 31,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 3,
+        "id": 7,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "scope": "drug_substance",
         "materialName": "BX-702",
         "impurityName": "Des-methyl BX-702",
@@ -55,8 +55,8 @@
         "status": "draft",
         "qualifiedBy": null,
         "qualificationDate": null,
-        "createdAt": "2026-11-10T13:06:39.567Z",
-        "updatedAt": "2026-11-10T13:06:39.567Z"
+        "createdAt": "2026-11-12T00:34:42.593Z",
+        "updatedAt": "2026-11-12T00:34:42.593Z"
       },
       "module3Linked": true
     }

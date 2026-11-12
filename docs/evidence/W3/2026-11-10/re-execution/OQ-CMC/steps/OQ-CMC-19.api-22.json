@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.4/approve",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.4/approve",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
@@ -16,16 +16,16 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 406,
+    "durationMs": 404,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "sectionKey": "3.2.S.4",
       "versionNumber": 1,
-      "approvedVersionId": "a63ccfcb-1535-42bb-a714-2b9d139fabaa",
+      "approvedVersionId": "444d612f-8d7c-4a40-9320-a7e387a5de0d",
       "governance": {
-        "actionId": "act_fba6c1bfee6d45389bdb7709a02b846f",
-        "sha256Chain": "bb4101d975b6f02913fe7459564c00cca0c0f301c411af311e500464a2858f58"
+        "actionId": "act_3fdef7f66506455cb7afa50ada1d216a",
+        "sha256Chain": "5f30a6015ea5fff89364680f77d0d1c195b1947719a9e39ccc38a9f2d0d266a3"
       }
     }
   }

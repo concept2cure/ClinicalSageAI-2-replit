@@ -1,0 +1,282 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "sectionKey": "3.1",
+          "sectionPath": "3.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.A.1",
+          "sectionPath": "3.2.A.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 50,
+          "missingInputs": [
+            "containerDescription"
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.2",
+          "sectionPath": "3.2.A.2",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.A.3",
+          "sectionPath": "3.2.A.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "Whether these components are of human or animal origin is NOT established by this section: the flag rests on their names, and no origin is recorded for them."
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.1",
+          "sectionPath": "3.2.P.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 75,
+          "missingInputs": [
+            "formulationCompositionComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.2",
+          "sectionPath": "3.2.P.2",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "formulationDevelopment",
+            "manufacturingProcessDev",
+            "containerClosureStudies"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.3",
+          "sectionPath": "3.2.P.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 33,
+          "missingInputs": [
+            "formulation",
+            "drugProductProcessComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.4",
+          "sectionPath": "3.2.P.4",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "excipientSpecifications",
+            "excipientAnalyticalProcedures",
+            "excipientControlComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.5",
+          "sectionPath": "3.2.P.5",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 25,
+          "missingInputs": [
+            "releaseCriteria",
+            "drugProductBatchAnalyses",
+            "drugProductImpurityProfileComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.6",
+          "sectionPath": "3.2.P.6",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductReferenceStandard",
+            "drugProductReferenceStandardCoA",
+            "drugProductReferenceStandardComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.7",
+          "sectionPath": "3.2.P.7",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductContainerDescription",
+            "drugProductClosureDescription",
+            "drugProductSuitabilityJustification",
+            "drugProductContainerClosureComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.8",
+          "sectionPath": "3.2.P.8",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductShelfLifeClaim"
+          ]
+        },
+        {
+          "sectionKey": "3.2.R.1.US",
+          "sectionPath": "3.2.R.1.US",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.1",
+          "sectionPath": "3.2.S.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.2",
+          "sectionPath": "3.2.S.2",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 50,
+          "missingInputs": [
+            "processControls",
+            "manufacturingProcessComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.3",
+          "sectionPath": "3.2.S.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "structuralElucidation",
+            "physicochemicalProperties",
+            "biologicalActivity",
+            "drugSubstanceImpurityProfileComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.4",
+          "sectionPath": "3.2.S.4",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 50,
+          "missingInputs": [
+            "drugSubstanceBatchAnalyses",
+            "drugSubstanceImpurityProfileComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.5",
+          "sectionPath": "3.2.S.5",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceReferenceStandard",
+            "drugSubstanceReferenceStandardCoA",
+            "drugSubstanceReferenceStandardComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.6",
+          "sectionPath": "3.2.S.6",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceContainerDescription",
+            "drugSubstanceClosureDescription",
+            "drugSubstanceSuitabilityJustification",
+            "drugSubstanceContainerClosureComplete"
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.7",
+          "sectionPath": "3.2.S.7",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.3",
+          "sectionPath": "3.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
+          "completeness": 100,
+          "missingInputs": []
+        }
+      ]
+    }
+  }
+}
