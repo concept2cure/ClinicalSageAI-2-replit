@@ -1,0 +1,9 @@
+# P-92 C4 route red, 2026-11-09T17:59:47Z, before the route: submissions-technical-rejection.test.ts
+ × server/routes/__tests__/submissions-technical-rejection.test.ts > the technical rejection's door > refuses a body without the signature, and records nothing 32ms
+ × server/routes/__tests__/submissions-technical-rejection.test.ts > the technical rejection's door > passes the sequence, the signature and the caller, and answers the record 6ms
+ × server/routes/__tests__/submissions-technical-rejection.test.ts > the technical rejection's door > answers the act's refusal as 409 in its own words 4ms
+ × server/routes/__tests__/submissions-technical-rejection.test.ts > the technical rejection's precheck, answered at the route > sends the step, with or without the Ack3, to its own function, never to the generic precheck 11ms
+ ✓ server/routes/__tests__/submissions-technical-rejection.test.ts > the technical rejection's precheck, answered at the route > refuses an evidence document that is not an id, and asks nothing 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)

@@ -1,0 +1,6 @@
+MUTATION C2M10-guard-keeps-restored-binding in server/services/submission-gateways/index.ts (on the final code and tests, 2026-11-09T21:16:48.645132Z): replaced [          restoredBinding: undefined,
+] with []
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply a restored record or binding: P-99’s keys never reach the row, bound or unbound 15ms
+      Tests  1 failed | 6 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 e3f33deadfe51dc292d7c7cfa2ff4102a2ab0a0daeef5247a0aaa4aa2d358cb4 (expected e3f33deadfe51dc292d7c7cfa2ff4102a2ab0a0daeef5247a0aaa4aa2d358cb4)

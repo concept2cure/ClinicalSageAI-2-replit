@@ -1,0 +1,20 @@
+# P-92 C4 client red, 2026-11-09T18:13:30Z, before the client code: dispatchTechnicalRejection.test.tsx
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > a closed, quiet door that asks nothing until opened 5043ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is pending (region fda) 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is transmitting (region fda) 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is acknowledged (region fda) 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is rejected (region fda) 15ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > there is no door while the dispatch status is sent (region ema) 16ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > opened: the send, what the door does, and FDA's Ack3 chosen in this project's Vault; then the server's statement and the sign button 5009ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > asks again on every open and keeps no answer across a close 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > the server's refusal stands in its words, and nothing is offered 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > the sequence's creator is told why, and offered no document 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > a chosen document the server refuses: its sentence, and no sign button 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > an unreadable answer is said, never taken as nothing to record 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, asks again, then records; no record key and no signature id on screen 5181ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > a statement that changed after the dialog opened is not signed 5055ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > a 200 that is not the record of this sequence is not a success 5051ms
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > the act's refusal is shown in the server's words; nothing is said recorded 5048ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  11 failed | 5 passed (16)

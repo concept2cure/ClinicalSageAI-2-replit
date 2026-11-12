@@ -1,0 +1,12 @@
+# P-99 C2 red, 2026-11-09T20:42:51Z, the route before its door and precheck step: submissions-sent-record.test.ts
+ × server/routes/__tests__/submissions-sent-record.test.ts > the read-back door > refuses a body without a reason or the read-back it records, and records nothing 33ms
+   → {}: expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/submissions-sent-record.test.ts > the read-back door > passes the sequence, the caller, the reason and the read-back, and answers the record 6ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/submissions-sent-record.test.ts > the read-back door > answers the act's refusal as 409 in its own words, and an uncoded error as 500 4ms
+   → expected 404 to be 409 // Object.is equality
+ × server/routes/__tests__/submissions-sent-record.test.ts > the read-back's precheck, answered at the route > sends the step to its own function, never to the generic precheck 12ms
+   → expected 400 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

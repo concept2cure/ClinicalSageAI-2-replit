@@ -1,0 +1,7 @@
+MUTATION C2M12-no-tenant-context in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T21:17:09.339522Z): replaced [        await setTenantContextTx(client, ctx.organizationId);
+        const cq = asQueryable(client);
+        // The transmittal first, as the receipt path] with [        const cq = asQueryable(client);
+        // The transmittal first, as the receipt path]; tests/db/ectd-filed-state-view.dbtest.ts -t 'T11', on PostgreSQL as app_service with RLS_ENFORCE=on
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a send put on record after it was sent (P-99 C2) > T11 the act, through its routes as the runtime role under RLS, finds the send and its bytes and records what it carried 9413ms
+      Tests  1 passed | 10 skipped (11)
+restored sha256 fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990 (expected fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990)

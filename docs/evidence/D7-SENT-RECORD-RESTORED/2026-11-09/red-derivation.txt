@@ -1,0 +1,14 @@
+# P-99 C2 red, 2026-11-09T20:17:59Z, at dbeb901b17, before any C2 code: sent-record-rederive.test.ts (T1-T5)
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T1 two sequences sent through the real guard each read back to exactly what the guard stamped 268ms
+   → deriveSentLeafManifest is not a function
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T2 what a package cannot hold is not recorded, and is named 137ms
+   → deriveSentLeafManifest is not a function
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T3 each leaf’s precise section is read back from its ID and folder, and two that disagree refuse it by name 166ms
+   → deriveSentLeafManifest is not a function
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T4 what points outside the package is bound against the filed state, or refused 150ms
+   → deriveSentLeafManifest is not a function
+ × server/services/submission-gateways/__tests__/sent-record-rederive.test.ts > P-99 C2: a sent sequence’s record is read back from the package it sent > T5 the same bytes and the same filed state always give the same record 145ms
+   → deriveSentLeafManifest is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

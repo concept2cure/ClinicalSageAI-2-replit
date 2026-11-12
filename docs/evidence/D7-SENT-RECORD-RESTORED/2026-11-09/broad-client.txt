@@ -1,0 +1,53 @@
+Broad client, final code and tests (2026-11-09): 49 client test files (Submission Center, Dispatch, eCTD, filed state)
+Per file: mark, file, tests
+✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx 6
+✓ client/src/concept2cure/v2/__tests__/deviceFilingsGateAndHistory.test.tsx 10
+✓ client/src/concept2cure/v2/__tests__/dispatchApplicantReauthorization.test.tsx 17
+✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx 28
+✓ client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx 9
+✓ client/src/concept2cure/v2/__tests__/dispatchReadinessActs.test.tsx 21
+✓ client/src/concept2cure/v2/__tests__/dispatchSentRecord.test.tsx 8
+✓ client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx 16
+✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx 15
+✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx 4
+✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx 4
+✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx 23
+✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx 14
+✓ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx 2
+✓ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx 3
+✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx 12
+✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx 4
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx 10
+✓ client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx 14
+✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx 9
+✓ client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx 11
+✓ client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx 17
+✓ client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx 8
+✓ client/src/concept2cure/v2/__tests__/submissionBuilderHistory.test.tsx 2
+✓ client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx 3
+✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyPlacement.test.tsx 21
+✓ client/src/concept2cure/v2/__tests__/submissionBuilderStudyTagging.test.tsx 21
+✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx 3
+✓ client/src/concept2cure/v2/__tests__/submissionCenterBuilderSection.test.tsx 16
+✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx 8
+✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx 11
+✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx 19
+✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx 13
+✓ client/src/concept2cure/v2/__tests__/submissionCenterIndForms.test.tsx 2
+✓ client/src/concept2cure/v2/__tests__/submissionCenterLaunchCeiling.test.tsx 1
+✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx 29
+✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx 17
+✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx 8
+✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx 10
+✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx 11
+✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx 3
+✓ client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx 10
+✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts 12
+✓ client/src/concept2cure/v2/__tests__/submissionPackageDownloadSendsTheReviewConfirmation.test.tsx 2
+✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx 7
+✓ client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx 50
+✓ client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx 11
+✓ client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx 4
+✓ client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx 4
+ Test Files  49 passed (49)
+      Tests  563 passed (563)

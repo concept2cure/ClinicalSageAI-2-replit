@@ -24,7 +24,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 vi.mock('../C2CForm', () => ({
-  C2CForm: ({ config }: any) => <div data-testid="form">{config.title}</div>,
+  C2CForm: ({ config }: any) => <div data-testid="form">{config.title}<p>{config.sub}</p></div>,
 }));
 
 import { GatewayTransmittals } from '../surfaces/GatewayTransmittals';
@@ -123,6 +123,33 @@ describe('Gateway transmittals — a read-only transmission log', () => {
     for (const name of [/Rollback/, /Settle/, /Release/, /Record as received/]) {
       expect(screen.queryByRole('button', { name }), String(name)).toBeNull();
     }
+  });
+
+  /* P-92 C4 (the coordinating session's ruling 1): a sequence's technical rejection, recorded from its Dispatch tab, is said
+     under its status in the ramp's tested secondary colour; the package form says it serves only package rows before
+     2026-10-17, and every send since is recorded from its sequence. */
+  it("a sequence's technical rejection is said under its status, readably, with no control added", async () => {
+    const row = { ...LOG[0], id: 10, package_id: null, transmission_id: 'ESG-REJ-10', status: 'validation_failed',
+      metadata: { sequence: '0001', technicalRejection: { sequence: '0001', recordedAt: '2026-11-09T18:00:00.000Z', evidence: { kind: 'ack3' } } } };
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/mdx/gateways/transmittals'
+        ? ({ ok: true, status: 200, json: async () => ({ data: [row], meta: { count: 1, signing: { canSign: true } } }) } as Response)
+        : ({ ok: true, status: 200, json: async () => ({ data: [] }) } as Response));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-REJ-10');
+    const note = screen.getByTestId('technical-rejection-note');
+    expect(note.textContent).toBe('rejected by FDA on its Ack3, by signature · 9 November 2026');
+    expect(note.style.color).toBe('var(--text-300)');
+    expect(screen.queryByRole('button', { name: /Technical rejection/ })).toBeNull();
+  });
+
+  it('the package form says it serves only package transmittals written before 2026-10-17', async () => {
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-PKG-7');
+    fireEvent.click(screen.getAllByRole('button', { name: /Technical rejection/ })[0]);
+    const form = await screen.findByTestId('form');
+    expect(form.textContent).toContain('Only for a package transmittal written before 2026-10-17.');
+    expect(form.textContent).toContain("Every send since is a sequence's: record its technical rejection from that sequence's Dispatch tab.");
   });
 
   it('a failed log read is an error, never "No transmittals yet"', async () => {
