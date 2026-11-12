@@ -36,6 +36,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { assessmentState } from '../assessmentState';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
+import { COMPILE_ASYNC, compileOutcome, type CompileJobAccepted } from './ectdCompileJob';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { consumeNavParams } from '../navParams';
@@ -249,9 +250,10 @@ async function readJsonKeepingError<T = any>(
   method: 'GET' | 'POST',
   path: string,
   body?: unknown,
+  headers?: Record<string, string>,
 ): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
-    const res = await apiRequest(method, path, body);
+    const res = await (headers ? apiRequest(method, path, body, headers) : apiRequest(method, path, body));
     const parsed = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body: parsed };
   } catch (err) {
@@ -947,6 +949,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   // outcome is kept, exactly like statusState.
   const [historyState, setHistoryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
+  const [compileElapsed, setCompileElapsed] = useState<number | null>(null);
   const readRevision = useRef({ status: 0, history: 0 });
   const actionRevision = useRef(0);
   const actionCurrent = useCallback((request: number) => current() && actionRevision.current === request, [current]);
@@ -1174,24 +1177,29 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     const request = ++actionRevision.current;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJsonKeepingError<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
+      const answered = await readJsonKeepingError<CompileResult | CompileJobAccepted<CompileResult>>('POST', `/api/ectd-compile/${identPath}/compile`, {
         ...(recordedType ? {} : { submissionType }),
         ...regionBody,
         ...seqBody,
         ...(followUp && rehearsal ? { rehearsal: true } : {}),
-      });
+      }, COMPILE_ASYNC);
       if (!actionCurrent(request)) return;
-      if (!ok || !body) {
-        fireToast(compileFailureWords(st, body), 'error');
+      const outcome = await compileOutcome(answered, identPath, () => actionCurrent(request), setCompileElapsed,
+        { readJson: readJsonKeepingError, failureWords: compileFailureWords });
+      if (!outcome || !actionCurrent(request)) return;
+      if ('error' in outcome) {
+        fireToast(outcome.error, 'error');
+        if (outcome.fromJob) { void loadStatus(); void loadHistory(); }
         return;
       }
+      const body = outcome.result;
       setCompileResult(body);
       setValidationFailed(false);
       setFindings(body.validationResults ?? null);
       const notice = compilationNotice(body);
       fireToast(notice.text, notice.tone);
       void loadStatus(); void loadHistory();
-    } finally { if (actionCurrent(request)) setBusy(null); }
+    } finally { if (actionCurrent(request)) { setBusy(null); setCompileElapsed(null); } }
   }, [identPath, submissionType, recordedType, regionBody, seqBody, followUp, rehearsal, fireToast, loadStatus, loadHistory, current, actionCurrent]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
@@ -1529,7 +1537,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <button className="nda-open" onClick={doValidate} disabled={busy != null}>{I.checkCircle} {busy === 'validate' ? 'Validating…' : 'Validate'}</button>
-            <button className="btn primary" style={{ height: 32 }} onClick={doCompile} disabled={busy != null}>{I.layers} {busy === 'compile' ? 'Compiling…' : 'Compile eCTD'}</button>
+            <button className="btn primary" style={{ height: 32 }} onClick={doCompile} disabled={busy != null}>{I.layers} {busy === 'compile' ? (compileElapsed ? `Compiling… ${compileElapsed} s` : 'Compiling…') : 'Compile eCTD'}</button>
           </div>
         </div>
       </div>
