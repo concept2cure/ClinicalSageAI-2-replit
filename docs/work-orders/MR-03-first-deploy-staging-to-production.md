@@ -164,9 +164,18 @@ proof only; nothing was applied.
   `idle_timeout = 60` (fails at 59), and `tests/ci/edge-timeouts.contract.test.ts` holds CloudFront = ALB <
   keep-alive < headers timeout, and refuses a task definition that overrides either server value.
 
+**Landed 2026-11-12 (same session), evidence `docs/evidence/D1/2026-11-12-edge-streams/`.** Code only; nothing applied.
+- **Stage 6 steps 7 and 8, `333802662`.** One SSE helper, `server/utils/sse-stream.ts` (`openSseStream`): the headers,
+  and a `: heartbeat` every 15 s that stops on the response's finish or close. All ten producers open their streams
+  with it, and their private copies are deleted. `ci:sse-heartbeat` (with a self-test, in `ci.yml`'s lint job and
+  `.husky/pre-push`) refuses any other server file that names `text/event-stream`.
+- **Stage 6 step 9, `fac4a391c`.** The connector's tool runtime sends `notifications/progress` every 15 s to a call
+  carrying a progress token. A tool that writes nothing governed is answered at 50 s with an error result, never a
+  partial one. A governed tool has no deadline. The agency-response draft's model call takes the call's signal.
+
 **Still open in this order, engineering:**
-- Stage 6 (OPS-17: long submission work behind the 60 s edge; SSE heartbeats). Steps 2 and 4–9. Step 2, the
-  measurement on the production image, comes first and decides whether steps 4–6 are needed.
+- Stage 6 steps 2 and 4–6 (OPS-17: long submission work behind the 60 s edge). Step 2, the measurement on the
+  production image, comes first and decides whether steps 4–6 are needed. Then the staging acceptance, after Stage 5.
 - Stage 7 steps 2–3 (shared rate-limit counters in Postgres). **This now waits for the founder:** the step creates
   `public.rate_limit_counters`, and since RULE 6 (P-80) a new table needs an `approvedAdditions` entry in
   `docs/design/one-design-plan.json` under a founder decision. NEW-2 (confirm B6 for rate limits) is the same decision.

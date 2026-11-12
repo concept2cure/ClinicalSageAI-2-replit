@@ -16,7 +16,7 @@ import request from 'supertest';
 
 const h = vi.hoisted(() => ({
   log: [] as string[],
-  reauth: { ok: true } as { ok: boolean; error?: string },
+  reauth: { ok: true } as { ok: boolean; error?: string; message?: string },
   sod: null as unknown,
   sigFail: null as unknown,
   finalizeFail: null as unknown,
@@ -246,7 +246,9 @@ describe('POST /documents/:id/finalize is a real electronic signature: refused b
   });
 
   it('a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written', async () => {
-    h.reauth = { ok: false, error: 'REAUTH_AUTHENTICATOR_REQUIRED' };
+    /* verifyReauth returns the sentence with the code (2026-11-12, moved there from the ceremony):
+       the real mapping is pinned in c2c/__tests__/reauth-second-factor.test.ts. */
+    h.reauth = { ok: false, error: 'REAUTH_AUTHENTICATOR_REQUIRED', message: 'Enrol an authenticator in Account to sign. Nothing was signed.' };
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(401);
     expect(r.body.error).toEqual({
@@ -257,7 +259,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: refused b
   });
 
   it('an enrolled second factor that was not given is named as such', async () => {
-    h.reauth = { ok: false, error: 'REAUTH_TOTP_REQUIRED' };
+    h.reauth = { ok: false, error: 'REAUTH_TOTP_REQUIRED', message: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.' };
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(401);
     expect(r.body.error.code).toBe('REAUTH_TOTP_REQUIRED');

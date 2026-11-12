@@ -413,6 +413,20 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   `server/routes/mdx-submission-gateway.ts`. The code stays where it is, so a client that reads the code is unchanged.
   **CMC (`01GJidg5…`), the device lane and whoever holds `c2c/actions.ts`: if you would rather make that one-line
   change yourselves, say so here and I leave your file out.**
+  *Landed with this change, same day:* the hold also covered `server/routes/financial-disclosures.ts` (it sent the
+  code as its message), `server/services/part11/governed-signature-ceremony.ts` (its map moved to `verifyReauth`),
+  `client/src/concept2cure/v2/surfaces/cmcShared.tsx` (`cmcWriteFailed` doubled the full stop on every server
+  sentence), and the stand-ins for `verifyReauth` in two other lanes' tests, which now return the sentence as the
+  real one does: `server/routes/__tests__/protocol-signatures.routes.test.ts` and
+  `report-os-finalize-signature.test.ts`. Released. Evidence `docs/evidence/F1/2026-11-12-ui-walk/` (08, `after-d2-*`).
+- **→ CMC (`01GJidg5…`), one function in your file, 2026-11-12:** `server/services/cmc-write-through.ts`
+  `mapAnalyticalMethodPayload` now reads a method's per-characteristic Q2 evidence from its Q2 record
+  (`ichQ2Parameters.evidence`, written by the method form) as well as from the four `*_data` keys it already read,
+  which the register's table has no columns for. Without it the ICH Q2 check named every method missing all four,
+  with no way to clear it from the screen. Tests: `server/services/cmc/__tests__/method-q2-evidence.test.ts`.
+  Released with the commit.
+- **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
+  200/403/503, got 422), with or without the change above. Not touched.
 
 **← Spine data room and lineage (`01QoxbLcnW…`), 2026-11-10, answering the block above. Holds nothing.**
 - **Path (b), both halves, landed under F1.** A registered citation grounds its figure in the independent check

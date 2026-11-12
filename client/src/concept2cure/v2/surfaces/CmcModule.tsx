@@ -78,6 +78,7 @@ import {
   cmcProjectUuid,
   cmcWriteError,
   cmcWriteFailed,
+  cmcRefusal,
   cmcWriteThrew,
   cmcAssessmentThrew,
 } from './cmcShared';
@@ -911,7 +912,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         return;
       }
       if (!res.ok) {
-        fireToast('Couldn’t approve section ' + target.key + ' — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error');
+        /* A refused signature carries its own sentence ("The authenticator code was not accepted.
+           Nothing was signed."); the route used to send the code alone and this read "HTTP 401..". */
+        fireToast(cmcRefusal('Couldn’t approve section ' + target.key + ' — ', specErr(json, res.status)), 'error');
         return;
       }
       setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
@@ -1420,7 +1423,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       });
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.', 'error'); return; }
+      if (res.status === 401) { fireToast(joinSentence('The specification was not approved — ', specErr(json, 401)), 'error'); return; }
       if (!res.ok) { fireToast(joinSentence('Couldn’t approve the specification — ', specErr(json, res.status), 'Nothing was persisted.'), 'error'); return; }
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
       setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
@@ -2709,7 +2712,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
-      if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.', 'error'); return; }
+      if (res.status === 401) { fireToast(joinSentence('The disposition was not signed — ', specErr(json, 401)), 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
       /* The row the server signed, read where the route puts it. The answer was read as `data` when the batch
          is `data.batchRecord`, so the row showed "undefined" and, with nothing adopted, was called released. */

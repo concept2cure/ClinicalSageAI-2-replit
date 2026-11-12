@@ -75,6 +75,7 @@ import { readSubmissionHistoryForRequest } from '../services/submission-service/
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
 import { readSubmissionLeafSourceEvidence, requireSubmissionLeafSourceEvidenceStillCurrent, SubmissionLeafSourceReadError } from '../services/ectd/submission-leaf-source-evidence';
+import { openSseStream } from '../utils/sse-stream';
 
 const logger = createScopedLogger('submissions-routes');
 const router = Router();
@@ -1611,19 +1612,12 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
   const parsed = generateSectionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
 
-  // Server-Sent Events: stream tokens as `chunk`, then a final `done` (or `error`).
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
-  // Stop writing once the client disconnects (avoids EPIPE / write-after-end).
-  let closed = false;
-  res.on('close', () => {
-    closed = true;
-  });
+  // Server-Sent Events: stream tokens as `chunk`, then a final `done` (or `error`),
+  // with a heartbeat until the first token (server/utils/sse-stream.ts). Nothing
+  // is written once the client has gone.
+  const sse = openSseStream(req, res);
   const send = (event: string, data: unknown) => {
-    if (closed) return;
-    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    sse.send(data, event);
   };
   try {
     const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
@@ -1634,7 +1628,7 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
     send('error', { code: known ? err.code : 'GENERATION_FAILED',
       message: known ? err.message : 'The section draft could not be completed. Its saved status has not been confirmed.' });
   } finally {
-    res.end();
+    sse.end();
   }
 });
 

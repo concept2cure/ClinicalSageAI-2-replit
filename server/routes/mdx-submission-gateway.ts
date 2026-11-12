@@ -368,7 +368,7 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
-    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    return res.status(401).json({ error: reauthResult.error, message: reauthResult.message });
   }
   // Captured here, at the moment the human actually re-authenticated, and
   // handed to the gateway as this transmission's authorization. The gateway
@@ -617,7 +617,7 @@ router.post('/gateways/transmittals/:id/technical-rejection', requireEditorAcces
   const reauthResult = await verifyReauth(userId, p.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
-    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    return res.status(401).json({ error: reauthResult.error, message: reauthResult.message });
   }
   // The proof the service requires: captured when the human re-authenticated.
   const reauthVerifiedAt = new Date();

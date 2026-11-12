@@ -1,0 +1,16 @@
+# The QC sample type says where a result is filed. 2026-11-12.
+# Red first: the new cases on the committed cmcRegisterForms.ts (the labels were later shortened to fit the select; the red is the absence).
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > the QC sample type says where a result is filed > keeps the register’s values, so what is stored is unchanged 10ms
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > the QC sample type says where a result is filed > names the section each sample type files into 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 99 passed (101)
+
+# With the change:
+$ npx vitest run client/src/concept2cure/v2/__tests__/cmc*
+ Test Files  33 passed (33)
+      Tests  403 passed (403)
+
+# In the running app, Log a QC result, the Sample type options:
+# ["Raw material (drug substance, §3.2.S.4.4)","In-process (drug substance, §3.2.S.4.4)","Finished product (drug product, §3.2.P.5.4)",
+#  "Stability (drug substance, §3.2.S.4.4)","Reference standard (not a batch analysis)","Cleaning verification (not a batch analysis)"]
