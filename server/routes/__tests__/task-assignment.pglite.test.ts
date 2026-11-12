@@ -203,6 +203,21 @@ describe("a task's due date is changed with a reason, on the ledger", () => {
     expect(trace.indexOf('COMMIT')).toBeGreaterThan(trace.findIndex(s => s.includes('INSERT INTO c2c_ana_actions')));
   });
 
+  it('tells the owner when someone else moves their deadline, after the commit, and not when it is their own change', async () => {
+    const r = await request(app()).patch(taskPath).send(reschedule());
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(h.notifications).toHaveBeenCalledOnce();
+    expect(h.notifications.mock.calls[0][0]).toMatchObject({ organizationId: 7, recipientUserId: 6, category: 'task_update',
+      title: 'Due date changed: Review evidence', body: 'Now due 2027-06-03.', taskId: 'T1' });
+    // The notice is not part of the response.
+    expect(Object.keys(r.body.data).sort()).toEqual(['dueDate', 'previousDueDate', 'taskId']);
+    h.notifications.mockClear();
+    await pg.exec("UPDATE unified_tasks SET assignee_id=5 WHERE task_id='T1'");
+    const own = await request(app()).patch(taskPath).send(reschedule({ dueDate: '2027-07-01T17:00:00.000Z', expectedDueDate: NEW }));
+    expect(own.status).toBe(200);
+    expect(h.notifications).not.toHaveBeenCalled();
+  });
+
   it('refuses a stale date, the same date, a missing reason and a malformed date, changing nothing', async () => {
     expect((await request(app()).patch(taskPath).send(reschedule({ expectedDueDate: '2027-01-01T17:00:00.000Z' }))).status).toBe(409);
     await pg.query("UPDATE unified_tasks SET due_date=$1 WHERE task_id='T1'", [NEW]);
@@ -244,5 +259,7 @@ describe("a task's due date is changed with a reason, on the ledger", () => {
     loseCommit = true;
     const r = await request(app()).patch(taskPath).send(reschedule());
     expect(r.status).toBe(500); expect(r.body.error).toBe('OUTCOME_UNKNOWN'); expect(discard).toHaveBeenCalledOnce();
+    // Nobody is told of a change that was not confirmed.
+    expect(h.notifications).not.toHaveBeenCalled();
   });
 });

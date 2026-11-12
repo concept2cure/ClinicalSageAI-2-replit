@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > letter-to-file when no trigger met 2ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > intended-use change escalates beyond 510(k) 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > new 510(k) when S&E affected without demonstrated equivalence 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > letter-to-file when triggers exist but equivalence demonstrated 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessEuSignificantChange > significant when intended purpose changes 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessEuSignificantChange > non-significant when no criterion met 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > an unanswered question is refused by field, never read as no > no answers at all: neither engine returns a verdict 1ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > an unanswered question is refused by field, never read as no > one question left out is named, for each question of each engine 1ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > an unanswered question is refused by field, never read as no > text is not an answer: "false" is refused, not read as yes 1ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > the questions asked of a person are the engines' inputs > each market's questions name every input of its engine, once, in plain words 1ms
+ × server/services/regulatory/__tests__/change-assessment.test.ts > the rules carry a version, and every answer set's outcome is pinned to it > FDA 510(k) change rules 10ms
+   → expected 'b725c51fd11d40125fc23ead34a21cd36ea5b…' to be 'd7e175a69907ac297c1fc3b493a6d50512aa8…' // Object.is equality
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > the rules carry a version, and every answer set's outcome is pinned to it > EU significant-change rules 1ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > the rules carry a version, and every answer set's outcome is pinned to it > the three FDA outcomes and both EU outcomes are all reachable, so the pin covers each 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/change-assessment.test.ts > the rules carry a version, and every answer set's outcome is pinned to it > FDA 510(k) change rules
+AssertionError: expected 'b725c51fd11d40125fc23ead34a21cd36ea5b…' to be 'd7e175a69907ac297c1fc3b493a6d50512aa8…' // Object.is equality
+
+Expected: "d7e175a69907ac297c1fc3b493a6d50512aa85082b174e8f37f88db5f1b5f1e1"
+Received: "b725c51fd11d40125fc23ead34a21cd36ea5bc5a0c0dc0a100ef96e4ec114c70"
+
+ ❯ server/services/regulatory/__tests__/change-assessment.test.ts:156:68
+    154|   it('FDA 510(k) change rules', () => {
+    155|     expect(FDA_CHANGE_RULES).toBe('fda-510k-change-2017/1');
+    156|     expect(outcomesDigest(Object.keys(noChange), assessFdaChange)).toB…
+       |                                                                    ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  00:36:41
+   Duration  687ms (transform 271ms, setup 125ms, import 194ms, tests 24ms, environment 0ms)
+

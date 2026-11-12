@@ -31,6 +31,7 @@ import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/gove
 import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { I } from '../icons';
 import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { CsrNotApplicable } from './CsrNotApplicable';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
 
 const JOBS = '/api/csr/jobs';
@@ -445,6 +446,7 @@ function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentC
         onImport={sectionNumbers => setImporting(sectionNumbers)} />
       {importing && <ImportIntoDocument key={importing.join(',')} programId={programId} documentId={documentId} jobId={build.jobId}
         sectionNumbers={importing} onClose={() => setImporting(null)} onImported={onDocumentChanged} />}
+      <CsrNotApplicable documentId={documentId} jobId={build.jobId} headings={headings} onDocumentChanged={onDocumentChanged} />
       <CsrNarrativeBuild jobId={build.jobId} headings={headings} onChanged={reload} />
       <CsrAssemblyControl jobId={build.jobId} />
     </>}

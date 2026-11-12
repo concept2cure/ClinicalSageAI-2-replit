@@ -179,6 +179,13 @@ export interface CommitmentInput {
  * ('supports') so fulfillment is traceable end to end.
  */
 export async function createCommitmentTx(client: Queryable, orgId: number, userId: number, input: CommitmentInput): Promise<{ id: number; provenanceLinkIds: number[] }> {
+  // As a meeting (createInteractionTx): a commitment names a submission of this
+  // organisation or none. Until 2026-11-12 the id was inserted as given, and the
+  // foreign key alone admits any submission's, another tenant's included.
+  if (input.submissionId != null) {
+    const owned = await client.query(`SELECT 1 FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [input.submissionId, orgId]);
+    if (!owned.rows.length) throw new HaError('NOT_FOUND', 'That submission is not one of this organisation\'s. Nothing was recorded.');
+  }
   if (input.sourceInteractionId != null) {
     const owner = await client.query(
       `SELECT id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
@@ -223,6 +230,43 @@ export interface CommitmentScope {
   projectId: number | null;
 }
 export const ORG_LEVEL: CommitmentScope = Object.freeze({ projectId: null });
+
+/**
+ * The one live project of a submission's program in this organisation, or
+ * null: no such submission here, no project on its program, or more than one.
+ * A meeting or commitment that names a submission is admitted by that
+ * project's sharing policy: the meeting routes (routes/ha-interactions.ts) and
+ * AnA's commitment tools (AnaToolExecutor.ts) both read the project from here.
+ */
+export async function projectOfSubmission(client: Queryable, orgId: number, submissionId: number): Promise<number | null> {
+  const { rows } = await client.query(
+    `SELECT p.id FROM submissions s
+       JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
+      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 2`, [submissionId, orgId]);
+  return rows.length === 1 ? Number(rows[0].id) : null;
+}
+
+/** The submission a meeting names: null when it names none, undefined when there is no such meeting here. */
+export async function submissionOfInteraction(client: Queryable, orgId: number, interactionId: number): Promise<number | null | undefined> {
+  const { rows } = await client.query(
+    `SELECT submission_id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [interactionId, orgId]);
+  if (!rows.length) return undefined;
+  return rows[0].submission_id == null ? null : Number(rows[0].submission_id);
+}
+
+/**
+ * Whether a reader may be answered about this submission's commitments: it is
+ * this organisation's, live, and in no program or in one of `programIds`, the
+ * reader's verified program scope. One that is not reads as one that does not
+ * exist, as what met a commitment does (commitment-fulfilment.ts).
+ */
+export async function submissionReadableIn(client: Queryable, orgId: number, submissionId: number, programIds: readonly string[]): Promise<boolean> {
+  const { rows } = await client.query(
+    `SELECT 1 FROM submissions s
+      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL
+        AND (s.program_id IS NULL OR s.program_id::text = ANY($3::text[])) LIMIT 1`, [submissionId, orgId, [...programIds]]);
+  return rows.length > 0;
+}
 
 /** A fulfilment date is a fact about the past (yyyy-mm-dd, a real date). */
 export function fulfilmentDateRefusal(fulfilledDate: string | null, today: string): string | null {
@@ -423,18 +467,27 @@ export async function listInteractions(orgId: number, submissionId: number | und
  * users RLS would hide). They are inputs to commitmentsForViewer
  * (commitment-fulfilment.ts), which projects them per reader; no route sends
  * these rows as they are.
+ *
+ * `programIds` (2026-11-12), when given, is the reader's verified program
+ * scope, bound here before anything is counted: a commitment that names a
+ * submission is listed only when that submission is in no program or in one of
+ * those programs. AnA's portfolio review passes it; the two screens' doors do
+ * not, and list as they did.
  */
 export async function listCommitments(
   orgId: number,
   submissionId?: number,
   scope: CommitmentScope = ORG_LEVEL,
   client: Queryable = pool as unknown as Queryable,
+  programIds: readonly string[] | null = null,
 ): Promise<any[]> {
+  const readable = programIds === null ? null : [...programIds];
   // DATE columns read as their own text: node-pg turns a DATE into a local
   // midnight, which a server east or west of UTC serialised as the day before
   // or a timestamp, and the overdue rule (ha-logic toDays) reads yyyy-mm-dd.
   // Two literal statements (with and without the submission filter): no SQL
-  // text is assembled at run time.
+  // text is assembled at run time. The reader's scope is a bound parameter in
+  // both, NULL when the caller gives none.
   const { rows } = submissionId != null
     ? await client.query(
         `SELECT rc.id, rc.submission_id, rc.source_interaction_id, rc.commitment_type, rc.description, rc.status,
@@ -455,8 +508,12 @@ export async function listCommitments(
        LEFT JOIN LATERAL public.actor_name(rc.fulfilment_recorded_by) recorder ON TRUE
       WHERE rc.organization_id = $1 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $2
          AND rc.submission_id = $3
+         AND ($4::text[] IS NULL OR EXISTS (
+               SELECT 1 FROM submissions s
+                WHERE s.id = rc.submission_id AND s.organization_id = rc.organization_id
+                  AND (s.program_id IS NULL OR s.program_id::text = ANY($4::text[]))))
        ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
-        [orgId, scope.projectId, submissionId],
+        [orgId, scope.projectId, submissionId, readable],
       )
     : await client.query(
         `SELECT rc.id, rc.submission_id, rc.source_interaction_id, rc.commitment_type, rc.description, rc.status,
@@ -476,8 +533,12 @@ export async function listCommitments(
          ON q.id = rc.source_question_id AND q.organization_id = rc.organization_id
        LEFT JOIN LATERAL public.actor_name(rc.fulfilment_recorded_by) recorder ON TRUE
       WHERE rc.organization_id = $1 AND rc.deleted_at IS NULL AND rc.project_id IS NOT DISTINCT FROM $2
+         AND ($3::text[] IS NULL OR rc.submission_id IS NULL OR EXISTS (
+               SELECT 1 FROM submissions s
+                WHERE s.id = rc.submission_id AND s.organization_id = rc.organization_id
+                  AND (s.program_id IS NULL OR s.program_id::text = ANY($3::text[]))))
        ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
-        [orgId, scope.projectId],
+        [orgId, scope.projectId, readable],
       );
   return rows;
 }

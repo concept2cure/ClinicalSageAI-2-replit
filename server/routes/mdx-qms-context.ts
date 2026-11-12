@@ -8,12 +8,14 @@
  * @module server/routes/mdx-qms-context
  */
 import type { NextFunction, Request, Response } from 'express';
-import { requestPgClient } from '../db/requestDb';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { queryRowsClient } from '../db/queryRowsClient';
-import { resolveOrgId } from '../types/auth-request';
+import { resolveOrgId, resolveUserId } from '../types/auth-request';
 import { admitProject } from '../lib/admit-project';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../services/c2c/current-program-access';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
 
 /* The caller's organization and user come from the one resolver
    (server/types/auth-request.ts), under the names the QMS routers use;
@@ -80,6 +82,26 @@ export async function queryProject(req: Request, res: Response): Promise<string 
     serverError(res, log, 'project-admission', err);
     return false;
   }
+}
+
+/**
+ * A change to a record that is filed under a project (P-122, 2026-11-12: the device change determination on a change
+ * control). The organization owning the project is not enough: this person must be able to open it, and to change
+ * it. A colleague who is not on a private project is refused (403 PROJECT_PERMISSION_DENIED), as on the IND
+ * registers (ind-lifecycle/registers.routes.ts admitSubmission), and so is one who can read it and does not edit it.
+ * On the writer's own executor, inside its transaction. Throws the refusal; `sendProjectRefusal` answers it.
+ */
+export async function admitProjectWrite(req: Request, q: RequestSqlClient, organizationId: number, programId: string): Promise<void> {
+  const access = await requireCurrentProgramAccess(q, { organizationId, userId: resolveUserId(req) ?? undefined, programId });
+  await requireProjectAdmission(req, String(access.projectId), true, { executor: q, programId });
+}
+
+/** A project refusal, answered with its own status and code in the QMS envelope. False when `err` is not one. */
+export function sendProjectRefusal(res: Response, err: unknown): boolean {
+  if (!(err instanceof ProgramReadAccessError) && !(err instanceof ProjectAdmissionRefusal)) return false;
+  const message = err.status === 503 ? 'Current project access could not be verified. Nothing was changed.' : err.message;
+  res.status(err.status).json({ error: message, details: { code: err.code } });
+  return true;
 }
 
 /** The project `admitBodyProject` admitted for this request, or null. */
