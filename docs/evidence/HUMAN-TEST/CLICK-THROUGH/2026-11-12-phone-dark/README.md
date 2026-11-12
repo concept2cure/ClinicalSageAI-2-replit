@@ -61,6 +61,27 @@ Six texts measured under 3:1:
 | 3 | **Text a person reads is set in the faintest text tier**: the audit's finding, confirmed across 134 screens (`.tb-empty`, `.rbm-col-empty`, `.pd-tree-opt` under 3:1 in dark). `scripts/ci/check-token-contrast.mjs:218-226` already states the rule: after the 2026-09-03 repair, "what is left on --text-500 is genuinely disabled or ornamental". An accessibility read of every `color: var(--text-500)` in the client (static; nothing opened) found 77 declarations: **23 on readable text with a consumer found**, 3 placeholders and 2 disabled controls (exempt), 18 decoration, and 31 whose class has no consumer found. The 23, by stylesheet: `app-v2.css` 7 (`.tb-empty`, `.pj-act-n`, `.art-kind`, `.reg-pill.na`, `.ct-ground-l`, `.ct-att-chip[data-status="uploading"] em`, `.dj-step-meta`); `coverage-v2.css` 2 (`.indl-h-x`, `.indl-proj`); `research-v2.css` 2 (`.pd-tree-opt`, `.pd-soa-vw`); `pyramid-v2.css` 2 (`.py-over.ok`, `.py-cov-row .n`); `rbm-v2.css` 1 (`.rbm-col-empty`); `mdx/` 5 (`.dd-doc-hint`, `.dd-att-drop-sub`, `.status-pill.na`, `.status-pill.empty`, `.ftp-trunc`); `pdev/app.css` 1 (`.pdev-state-pill.state-neutral`); inline styles 3 (`ClinicalStudiesSurface.tsx:437`, `Orchestration.tsx:923`, `:1360`). One step up the ramp (`--text-400`; `--text-300` on a tinted surface) clears each. | **Open, routed as the audit routes it.** The rows in S11's, RBM's and the device lane's stylesheets were sent to those sessions. The shell's (`app-v2.css`) and the unheld sheets' are not repaired here: the audit sent them to the shell lane and the IND lifecycle lane, and this session does not take another lane's rows a second time. |
 | 4 | White on the accent: the AnA drive button (2.4:1) and the member avatars' initials (3.0:1). | **Not changed.** The accent with white text is the product's primary colour pair; whether it meets AA for small text is D0's and the founder's call, and it is the same in light. |
 
+## Repaired, 2026-11-12 16:50 UTC: the faintest tier holds no readable text in the v2 stylesheets
+
+No session held the six stylesheets, and finding 3 had not moved since the morning. `011Dpx…` wrote its row and
+repaired them under F1:
+
+- **A test first:** `client/src/concept2cure/v2/__tests__/faintestTextTier.test.ts`. Every `color: var(--text-500)`
+  in `client/src/concept2cure/v2/styles/` must be an ornament named with its reason (a row-go arrow, a caret, a pin
+  beside a label), a separator glyph, a placeholder or a disabled control. It failed on 34 selectors in
+  `app-v2.css` (21), `coverage-v2.css` (6), `journey-v2.css`, `pyramid-v2.css`, `rbm-v2.css` and `research-v2.css`
+  (1 in `journey-v2.css`, 2 in each of the others). Each is now `--text-400`, which is 4.5:1 on the page and is re-based on every
+  tinted surface by the generated ramp (`styles/surface-text-ramp.css`). The exception is `.reg-pill.na`, which
+  paints its own `--bg-100`, so it takes `--text-300`. `.avb-key` also loses an `opacity: 0.6` that halved it again.
+  The test also fails if a named ornament leaves the stylesheets, so the list cannot keep a stale exception.
+- **Gates:** `ci:surface-text-ramp` (the generated ramp still matches), `ci:token-contrast` (131 pairs) and
+  `ci:check-shell-css-collisions` pass.
+- **Measured in the running app** (`contrast.cjs`, the built client): the RBM board's "Configure" control and the
+  project page's activity dates read **4.50:1 in light and in dark**, from 2.11:1 and 2.76:1. The others were not on
+  screen with this data; they use the same token.
+- **Not repaired here:** `client/src/concept2cure/mdx/**` (5 uses; D8's row holds `mdx/app.css`) and
+  `client/src/concept2cure/pdev/**` (1), sent to their holders.
+
 ## Not covered
 
 - Clicks at 390 px or in dark: dialogs, menus, the editor's toolbars.

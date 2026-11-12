@@ -23,6 +23,12 @@ and filed only what its wider measurement adds (`docs/evidence/HUMAN-TEST/CLICK-
 admin console (repaired) and three RBM tabs (repaired by RBM's session) scrolled sideways at 390 px, and 23 uses of the
 faintest text tier on text a person reads, listed by stylesheet.
 
+**Held 2026-11-12 16:50–17:00 UTC by `011Dpx…` (F1), released with its commit:** the `color: var(--text-500)` declarations on readable
+text in `styles/app-v2.css`, `coverage-v2.css`, `journey-v2.css`, `pyramid-v2.css`, `rbm-v2.css` and
+`research-v2.css` (34 selectors, each raised one step to `--text-400`; nothing else in those files), and a new test
+`v2/__tests__/faintestTextTier.test.ts`. This answers S11's audit for the shell's, the IND lifecycle's, S11's and RBM's
+rows; none of those files is held. Released with the commit. Not touched: `mdx/**` (D8's row) and `pdev/**`.
+
 **The device demo pack** (`scripts/demo/launch-demo/packs/mdx.mjs`, `mdx-filing.mjs`): `011Dpx…` closed `GA-DEMO-10`,
 `-11` and `-12` of the GA map on 2026-11-12 (`docs/evidence/DEMO/2026-11-12-device-pack/`) and holds no file now.
 
