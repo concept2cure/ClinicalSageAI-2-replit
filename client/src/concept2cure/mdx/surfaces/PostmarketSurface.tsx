@@ -240,10 +240,10 @@ export function PostmarketSurface({
         <div className="metric-card" data-tone="err">
           <div className="metric-label">MDRs due ≤72h</div>
           <div className="metric-val" data-testid="pm-mdr-due">{mdrDue ?? '—'}</div>
-          {/* Slice 0: the triage read lists MDR events in every state, so an MDR
-              already filed whose due date is still ahead is counted here until
-              the read leaves it out (server, getTriageQueueTx). Say so. */}
-          <div className="metric-meta">FDA 5-day · 30-day · EU 15-day · filed MDRs not yet excluded</div>
+          {/* GA-DEMO-08 (2026-11-10): the triage read leaves out filed, acknowledged
+              and closed MDRs (server, getTriageQueueTx), so the caveat this card
+              carried is gone. */}
+          <div className="metric-meta">FDA 5-day · 30-day · EU 15-day</div>
         </div>
         <div className="metric-card" data-tone="warn">
           <div className="metric-label">CAPAs open</div>
@@ -297,8 +297,8 @@ export function PostmarketSurface({
             {/* Slice 0: the project by its title, and what the MDR rows include. */}
             {program ? `${program.title} only` : 'All projects'} · complaints · MDR
             events · CAPAs — overdue first, then soonest due. FDA 5-day and
-            30-day, EU MDR Article 87 15-day. MDR events are listed in every
-            state, filed and closed included.
+            30-day, EU MDR Article 87 15-day. Filed, acknowledged and closed
+            MDRs are left out.
           </span>
         </div>
         <DataGate
@@ -325,11 +325,11 @@ export function PostmarketSurface({
                 <div className="metric-card" data-tone={triage.dueSoon.length > 0 ? 'warn' : 'ok'}>
                   <div className="metric-label">Due within 7 days</div>
                   <div className="metric-val">{triage.dueSoon.length}</div>
-                  {/* Slice 0: by due date, not a running clock — filed MDRs are in the read. */}
-                  <div className="metric-meta">By due date · filed MDRs not yet excluded</div>
+                  {/* Slice 0: by due date, not a running clock. Filed MDRs are not in the read (GA-DEMO-08). */}
+                  <div className="metric-meta">By due date</div>
                 </div>
                 <div className="metric-card">
-                  {/* Slice 0: not "Open items" — MDR events arrive in every state. */}
+                  {/* Slice 0: "In the queue": open complaints, CAPAs and unfiled MDRs (GA-DEMO-08). */}
                   <div className="metric-label">In the queue</div>
                   <div className="metric-val">{items.length}</div>
                   <div className="metric-meta">

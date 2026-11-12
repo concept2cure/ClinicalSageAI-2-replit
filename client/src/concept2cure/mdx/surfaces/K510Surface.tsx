@@ -106,6 +106,29 @@ export interface K510SurfaceProps {
   onOpenLetter?: (letterId: string) => void;
 }
 
+/**
+ * GA-DEMO-07 (2026-11-10): why the reduced openFDA clearance lookup could not
+ * run, in words. The server's reason is written for its log
+ * (server/services/integrations/openfda-device-client.ts): "openFDA
+ * device/510k.json unreachable: fetch failed", a dataset path and a runtime
+ * error, and the rehearsal printed it under the banner. The three transport
+ * failures that client reports are each said plainly; anything else that reads
+ * as machine text is said generically; a reason already written as a sentence
+ * for a person (the hook's "Enter a product code…") is kept.
+ */
+export function fallbackReasonInWords(reason: string | null | undefined): string {
+  const raw = (reason ?? '').trim();
+  const source = "The FDA's public clearance database";
+  if (/unreachable|fetch failed|failed to fetch|network|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT/i.test(raw)) {
+    return `${source} could not be reached from this server. Try again later.`;
+  }
+  if (/timed out|timeout/i.test(raw)) return `${source} did not answer in time. Try again later.`;
+  if (/responded\s+\d{3}|HTTP\s+\d{3}/i.test(raw)) return `${source} answered with an error. Try again later.`;
+  const machine = !raw || /^openFDA\b|\.json\b|[a-z]+\/[a-z0-9_.]+|\bunavailable$/i.test(raw);
+  if (machine) return `${source} could not be searched just now. Try again later.`;
+  return /[.!?]$/.test(raw) ? raw : `${raw}.`;
+}
+
 export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K510SurfaceProps) {
   /* No program ⇒ no stage. -1 lights no dot in the strip and the header
      says so, instead of the fixture's "Stage 5 of 7" on a device nobody
@@ -417,7 +440,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
           nothing under the banner. */}
       {predicateFallbackActive && predicateFallback.available === false && (
         <div className="section-sub" role="status" style={{ margin: '0 0 8px' }}>
-          Reduced openFDA fallback unavailable — {predicateFallback.unavailableReason}
+          The openFDA clearance lookup could not run. {fallbackReasonInWords(predicateFallback.unavailableReason)}
         </div>
       )}
       {predicateFallbackActive &&
