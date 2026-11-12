@@ -1508,14 +1508,19 @@ export const CLASSIFY_TMF_ARTIFACT: AnaTool = {
   },
 };
 
+// 2026-11-12 (eTMF convergence E4 step 2): reads a study's trial master file from the deployed store, as get_tmf_view
+// does; it named a row of the retired store (tmf_file_id). It retires onto get_tmf_view in step 3 (P-124 item 5).
 export const REVIEW_TMF_COMPLETENESS: AnaTool = {
   name: 'review_tmf_completeness',
   description:
-    "Run the deterministic TMF completeness gap-check on a TMF (read-only): completeness %, per-zone coverage, the list of required artifacts not yet final, and an inspection-readiness verdict. Use to tell the user where the TMF has gaps before an inspection.",
+    "Read a study's Trial Master File readiness as the platform assessed it from the study's stored filings (read-only): ready, not ready, or not determined, with the basis and the counts it rests on (required, present and missing records per DIA TMF Reference Model zone, those filed without a document that could be verified, and those declared not applicable). No percentage is computed: report the readiness and counts as returned. Use to tell the user where a study's trial master file has gaps before an inspection. get_tmf_view with no study_id lists the studies.",
   input_schema: {
     type: 'object',
-    properties: { tmf_file_id: { type: 'number' } },
-    required: ['tmf_file_id'],
+    properties: {
+      study_id: { type: 'string', description: "The study's own id, as get_tmf_view lists it." },
+      scope: { type: 'string', enum: ['essential', 'all'], description: "'essential' (the default) or 'all' records of the reference model." },
+    },
+    required: ['study_id'],
   },
 };
 
