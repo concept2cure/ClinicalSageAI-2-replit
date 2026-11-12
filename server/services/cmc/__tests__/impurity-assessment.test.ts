@@ -408,7 +408,7 @@ describe('ICH Q3D — a level recorded as a concentration, with the daily dose',
   const pd = (over: Record<string, unknown> = {}) => assessRecordedImpurity({
     impurityName: 'Palladium', impurityType: 'elemental', observedLevel: '3', levelUnit: 'ppm',
     maximumDailyDose: '15 mg', routeOfAdministration: 'oral', ...over,
-  });
+  }, 'drug_substance');
 
   it('converts ppm × daily dose to µg/day and compares it to the PDE', () => {
     const a = pd();
