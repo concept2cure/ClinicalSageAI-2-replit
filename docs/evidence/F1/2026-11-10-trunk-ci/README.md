@@ -212,5 +212,50 @@ head of its moment.
 - Already handed over earlier, and still open:
   - the founder-path walk's seal gates;
   - S6's reason for change;
-  - the sub-agent path check;
+  - ~~the sub-agent path check~~ (fixed 2026-11-12, below);
   - `auditLogger.js`, which runs on no live request.
+
+## Two unit reds at head, fixed 2026-11-12
+
+Both were red at `2cdfe99657` and again at trunk `82dfba5042` (re-run 2026-11-12 03:56 UTC), on every session's push.
+
+### `tests/rls-scoped-route-mounts.contract.test.ts`: the mount was there; the test could not see it
+
+- **What it said:** "`app.use('/api/cerv2-sections', ...)` not found in `server/bootstrap/register-document-routes.ts`".
+- **What is true:** the mount is on line 327, behind `requireTenantContext`, as the contract requires.
+- **Cause:** the test stripped comments with its own regex, `/\/\*[\s\S]*?\*\//g`, which does not know about
+  strings. Line 139 logs `'… /api/ectd/v4/*, /api/ectd/controlled-vocab'`. That `/*` opened a "comment". Until
+  2026-11-10 nothing after it closed one, so nothing was removed. `5ac92bfaac` then added a real block comment at
+  lines 455–458, and its `*/` closed the false one: lines 140–453 were stripped, the mount among them.
+- **What already exists (RULE 3):** `scripts/ci/lib/strip-comments.mjs`, the quote-, template- and regex-aware
+  stripper written for exactly this (its header records the same failure on 2026-09-23), already imported by
+  `server/api/cmc/__tests__/register-edit-is-audited.contract.test.ts`.
+- **Fix, tests only:** the test imports that stripper and its own regex is deleted. The same regex stood in four
+  more source-reading tests, which passed while reading less than they claimed; they are converged in the same
+  change: `tests/rls-scoped-route-mounts-tranche2.contract.test.ts`, `tests/rls-auth-boundary-invariant.contract.test.ts`,
+  `tests/rls-users-preauth-scope.contract.test.ts` and `tests/routes/route-ownership.test.ts`.
+- **Measured** over the ten files those tests read: the regex hid **178** lines of code in
+  `register-document-routes.ts` (140–453) and **188** in `server/bootstrap/register-inline-routes.ts` (838–1131),
+  which the tranche-2 and route-ownership tests read. The other eight files lost nothing.
+- **Run:** the five files, 1 failed and 34 passed before; 35 of 35 after. No assertion was changed.
+- **The gate still fails on what it exists to catch** (the product file was restored after each):
+  - `requireTenantContext` removed from the mount: "`/api/cerv2-sections` must include requireTenantContext in its
+    mount chain";
+  - the mount commented out: "`app.use('/api/cerv2-sections', ...)` not found".
+
+### `server/services/ana/__tests__/sub-agent-toolset.test.ts`: a sub-agent's tool took an input named `folder`
+
+- **What it said:** "expected `[ 'list_project_documents.folder' ]` to deeply equal `[]`", in "no input of any child
+  tool or check names a path, a directory or a folder".
+- **Cause:** `069516d07e` (S4, 2026-11-10) gave `list_project_documents` a `folder` narrowing for the data catalog.
+  That tool is one of the seventeen a sub-agent is offered (`RESEARCH_TOOLS`), and the rule is by name so that it
+  stays cheap and cannot be argued with. The narrowing is a Vault folder of the catalog, not a file path: nothing
+  unsafe was reachable. The session that added it has left (COORDINATION.md), so nobody held the red.
+- **Fix:** the input is `filed_in`. It reaches the catalog as the catalog's own `folder` parameter and is checked by
+  the catalog's own parser, as before (`server/services/ana/document-catalog-data-room.ts`, `CATALOG_NARROWINGS`).
+  The rule and its test are unchanged. What the tool returns (`organizedBy.folder`, `proposedFolder`) is unchanged.
+- **Red first:** two new cases in `document-catalog-data-room.test.ts` failed before the rename (`filed_in` was
+  ignored; a `filed_in` that is not a Vault folder was not refused), with the trunk red. After: 12 files, 135 of 135,
+  across the catalog tool's six suites, the sub-agent toolset and the five source-reading tests above.
+- **Checked for anything that pins the input's name:** the tool register and the launch inventory name the tool, not
+  its inputs; no prompt, skill or design document tells AnA to pass `folder`.

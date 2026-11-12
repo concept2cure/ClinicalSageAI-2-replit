@@ -414,7 +414,7 @@
 .mdx-shell .tbl thead th {
   background: var(--bg-100); padding: 8px 12px;
   font-weight: 500; color: var(--text-300); text-align: left;
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: var(--fs-caption);
   border-bottom: 1px solid var(--border); white-space: nowrap;
 }
 .mdx-shell .tbl tbody td {
@@ -1443,24 +1443,38 @@
    ═════════════════════════════════════════════════════════════════ */
 
 /* ── Shared page chrome ─────────────────────────────────────── */
+/* D8 slice 2 (P-128): the header is laid out as the canonical page header is (`.c2c-v2 .ph`, app-v2.css). It
+   was one row that never wrapped, so at 390 px the title stood in a narrow column beside its actions and the last
+   action was cut off at the screen's edge. The text block now keeps the canonical floor and the actions wrap
+   under it; at phone width each takes a full line. Nothing in the header is removed (P-122). */
 .mdx-shell .page-header {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 24px; padding: 28px 32px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px 24px; flex-wrap: wrap; padding: 28px 32px 20px;
   border-bottom: 1px solid var(--border);
 }
+.mdx-shell .page-header > :first-child { flex: 1 1 0%; min-width: min(420px, 100%); }
 .mdx-shell .page-eyebrow {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  font-size: var(--fs-caption); font-weight: 500;
+  color: var(--text-300);
   margin-bottom: 4px;
 }
 .mdx-shell .page-title {
   font-family: var(--font-serif);
   font-size: 28px; font-weight: 500;
   color: var(--text-100); letter-spacing: -0.01em;
-  margin: 0 0 6px;
+  margin: 0 0 6px; overflow-wrap: anywhere;
 }
 .mdx-shell .page-sub { font-size: 13px; color: var(--text-300); max-width: 640px; line-height: 1.5; }
 .mdx-shell .page-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+/* At phone width the header's actions take a full line under its text, the title takes the canonical phone size,
+   and a row of actions wraps. The host's context line is such a row (the way back to the project, the project's
+   name and the scope note): at 390 px it stood as three narrow columns. Wider than a phone it is one row, as it
+   was. */
+@media (max-width: 640px) {
+  .mdx-shell .page-header > :not(:first-child) { flex: 1 1 100%; }
+  .mdx-shell .page-title { font-size: 22px; }
+  .mdx-shell .page-actions { flex-wrap: wrap; gap: 8px 10px; }
+}
 
 /* ── Metrics row (reused across surfaces) ─────────────────────── */
 .mdx-shell .metrics-row {
@@ -1474,12 +1488,13 @@
   transition: border-color var(--dur) var(--ease);
 }
 .mdx-shell .metric-card:hover { border-color: var(--border-strong); }
-.mdx-shell .metric-card[data-tone="err"]  { background: var(--error-muted); border-color: color-mix(in oklab, var(--error) 20%, transparent); }
-.mdx-shell .metric-card[data-tone="warn"] { background: var(--warning-muted); border-color: color-mix(in oklab, var(--warning) 20%, transparent); }
-.mdx-shell .metric-card[data-tone="ok"]   { background: var(--success-muted); border-color: color-mix(in oklab, var(--success) 20%, transparent); }
+/* D8 slice 1 (P-128): a tile is not filled by its tone (ONE_DESIGN_PLAN §2: status colour only for meaning). The
+   figure says the tone, as .reg-kpi-v does in the canonical register; "ok" needs no colour. */
+.mdx-shell .metric-card[data-tone="err"] .metric-val { color: var(--error); }
+.mdx-shell .metric-card[data-tone="warn"] .metric-val { color: var(--warning); }
 .mdx-shell .metric-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-200); margin-bottom: 8px;
+  font-size: var(--fs-caption); font-weight: 500;
+  color: var(--text-300); margin-bottom: 8px;
 }
 .mdx-shell .metric-val {
   font-family: var(--font-serif);
@@ -1532,8 +1547,8 @@
 }
 .mdx-shell .ctable-head {
   background: var(--bg-050); color: var(--text-300);
-  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; border-bottom: 1px solid var(--border);
+  font-size: var(--fs-caption); font-weight: 500;
+  border-bottom: 1px solid var(--border);
 }
 .mdx-shell .ctable-row {
   border-bottom: 1px solid var(--border);
