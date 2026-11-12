@@ -229,7 +229,11 @@ study does not have.
 
 ### Demo day, 2026-11-09: the founder's Codespace, in order
 
-*Added 2026-11-09 for the client demo at 1:00 pm Pacific.*
+*Added 2026-11-09 for the client demo at 1:00 pm Pacific. Corrected 2026-11-12 from that day's rehearsal
+(`../../DEMO/2026-11-09-demo-day-rewalk/README.md`): step 4 and live step 5 below. This runbook describes the app as it
+was on 2026-11-09. The CSR path has moved since (sending every draft for review in one act, stopping and resuming a
+build, "Not applicable because …" on a heading): the current record is the CSR lane's, in
+`.design/claude-convergence/COORDINATION.md`, "The CSR path to a reviewable report".*
 
 **AnA's conversation was refused on every turn on trunk from 2026-11-06.** That came from b8cee0745: every run
 started at tier 3, which only a self-hosted model may serve. The founder chose the fix: d8febe020, on trunk at
@@ -264,7 +268,9 @@ gateway admits tier 2 or above only to a self-hosted model.
 - **The CSR build and the editor's drafting are not affected**: they pass no tiers.
 
 4. **Build the CSR now**, not live: Author → "CDISCPILOT01 Clinical Study Report" → Build from the study's data →
-   Build CSR draft. It takes tens of minutes. Then do steps 11–13 below.
+   Build CSR draft. It takes tens of minutes. Then do steps 11–14 below. Step 14 (Send for review) is what gives
+   the reviewer something to review in live step 5; until 2026-11-12 this line said "11–13" and left it out
+   (found by the rehearsal of 2026-11-09, `../../DEMO/2026-11-09-demo-day-rewalk/README.md`, CSR-2).
 
 ### Before the demo: the environment
 
@@ -329,8 +335,10 @@ study data. A local server's `ALLOWED_ORIGINS` must name its own URL (for exampl
    Show the build's section review, the narratives (95 of 95, each listing what the source does not record) and
    the CSR files with their gaps.
 4. **The CSR's imported sections** (needs a real build for drafted text). Show the drafted text beside the tables.
-5. **Review**, as the reviewer: the project's **Review** tab → the CSR → **Record review decision** →
-   **Approve**. In the CSR scientific review, tick **"Study data frozen for this document"** (since F6, the build
+5. **Review**, as the reviewer: the project's **Review** tab → **Review documents on the review board** → the
+   card "CDISCPILOT01 Clinical Study Report … Awaiting your review" → **Record review decision** → **Approve**.
+   Do not press **Open document** on the Review tab's row: it opens the editor, which has no review decision
+   (corrected 2026-11-12; re-walked that day on trunk `a9b5af187`, rehearsal finding CSR-1). In the CSR scientific review, tick **"Study data frozen for this document"** (since F6, the build
    writes into this CSR, so its own study data is listed; "…the imported CSR build was drafted from" appears only
    for a separate working copy) → **Read the retained tables** → map each figure to its cell → attest → **Record
    approval**. A section that still holds a "[…]" placeholder blocks it (F8).
