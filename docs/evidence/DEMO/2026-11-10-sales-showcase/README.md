@@ -60,7 +60,7 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 | 3 | **Evidence**, then **Vault** | Data room: 45 sources. Vault: 16 uploads, "Required sections: 5 of 36 have a confirmed document", 3 governed artifacts, 1 seal "by Lumen Approver · 16 documents · SHA-256 …" with **Verify** | Give Evidence a few seconds to load. Open Required documents, then Seals & fixity and press Verify: "Intact: every sealed document is recorded with its sealed hash, and each stored file was read again and matches" |
 | 4 | Author, **Write the protocol in the protocol workspace** | Protocol LMN-201-CDI-02 (synthetic): 10 sections, 5 objectives, 10 eligibility criteria, 8 assessments by 7 visits, 6 risks, amendment 2, 2 deviations with a CAPA. Statistics: "375 planned subjects · 80% power · 0.05 alpha". Compliance: 28 rules assessed, 5 unmet, 17 not assessed | Show Schedule of assessments, Statistics, then Compliance: three counts, never one score |
 | 5 | **Biostatistics** | The bound study design and its statistical read | "No governed statistical documents yet" is true: none has been written |
-| 6 | **Risk-based monitoring** | Overall risk High; 6 critical factors; KRIs 1 red and 2 amber of 8; 0 QTLs breached, 1 approaching; 5 open signals; 12 subjects scored | Overview, RACT, Key risk indicators, Patient profiles. Skip Site risk and Site oversight (see below) |
+| 6 | **Risk-based monitoring** | Overall risk High; 6 critical factors; KRIs 1 red and 2 amber of 8; 0 QTLs breached, 1 approaching; 5 open signals; "8 sites — 12 subjects scored". Site risk: site 104 at 100, Enhanced, with its two red indicators and their limits; site 106 Standard. Site oversight: each site with its open signals and scheduled visit | Overview, RACT, Key risk indicators, Patient profiles, then Site risk and Site oversight. On Central monitoring press **Run central monitoring**: two Critical signals for site 104, each with the reading and the study median (since 2026-11-11; see `docs/evidence/SPINE/S8/2026-11-11-site-risk-from-study-data/`) |
 | 7 | **Quality** | 3 controlled documents, 2 in force, each "Approved by Lumen Reviewer · Meaning: Approval"; 1 change in implementation; 3 open CAPAs; 3 open deviations; 5 suppliers; 4 audits; 2 management reviews | Open SOP-201; show "Read and acknowledge" |
 | 8 | **Author**, open **LMN-201 RePreve Part B Clinical Study Report — SYNTHETIC**, then "Build from the study's data" | Study data frozen: "DEMO-LMN201-PARTB-001 … SYNTHETIC, NOT CLINICAL EVIDENCE". **Build CSR draft** is ready; no build has run | The headline. Press Build CSR draft (needs the model key). The page shows the heading being written and its prose, "N of 69 headings written". Do not promise a filed CSR: see below |
 | 9 | Sign in as **Lumen Reviewer**, LMN-201, **Review** | "Waiting on you 1": 1.14.4.1 Investigator's Brochure, "Awaiting your review" | Open the document and review it. Then sign in as Lumen Approver for approval and signature |
@@ -82,9 +82,9 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
   the check cannot complete. With `xmllint` installed the screen no longer also says "xmllint not available".
 - **Validation shows 7 errors on sequence 0000.** That is the state of an IND whose Module 1 forms and Module 3 are
   not placed yet, and it is the point of scene 10.
-- **Risk-based monitoring's Site risk and Site oversight read "0 sites".** The site register those two tabs read has
-  no writer reachable in the product. It is a known product defect, handed over on 2026-11-06; the other eight tabs
-  are populated.
+- **Site risk is scored by a stated rule that clinical operations has not confirmed.** A study's sites are scored
+  from its own site-level indicator readings: red counts 100, amber 50, green 0, averaged over the site's
+  indicators. The rule is written under the table. (Until 2026-11-11 these two tabs read "0 sites".)
 - **Of LMN-201's three governed artifacts, one is approved, one is in review and one is a draft.** A placed
   artifact needs two independent reviewers (decision P-95), and the Lumen account has one besides its author and
   approver, so the placed one stays in review.
@@ -207,7 +207,8 @@ says why.
   Before a showcase, press the editor's PDF export and Submit's "Compile and download" in the real Codespace.
 - **The data room lists quality training records first**, each saying "The original file is unavailable, so a
   working copy cannot be created". That is the product's ordering, not the data.
-- **Risk-based monitoring's site register** has no reachable writer (handed over 2026-11-06).
+- **Risk-based monitoring's sites** are scored from the study's own data since 2026-11-11. The separate Site
+  Intelligence register stays unreached and outside the launch catalog; reaching or retiring it is the founder's.
 - **A presenter's rehearsal of the whole platform with the launch gate on** is another session's (`01T2woo…`), under
   `docs/evidence/DEMO/2026-11-10-sales-rehearsal/`. This note is the Lumen account in the Codespace, where launch
   scope is off.

@@ -99,7 +99,8 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
   const isOpen = (s: RbmSignal) => !['resolved', 'dismissed'].includes(s.status);
   const shown = signals
     .filter(s => filter === 'all' || (filter === 'open' ? isOpen(s) : s.status === filter))
-    .sort((a, b) => (SEV_ORDER[a.severity] || 3) - (SEV_ORDER[b.severity] || 3));
+    // `??`, not `||`: Critical's rank is 0, and `0 || 3` listed every Critical signal last, under Low.
+    .sort((a, b) => (SEV_ORDER[a.severity] ?? 3) - (SEV_ORDER[b.severity] ?? 3));
 
   /** Re-run central statistical monitoring server-side and report what it
    *  actually found — the engine's own cohort size and flagged count. */

@@ -18,7 +18,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { RbmOverview } from '../surfaces/RbmSurfacesA';
-import { RbmSites, RbmOversight } from '../surfaces/RbmSurfacesB';
+import { RbmSites, RbmOversight, RbmSignals } from '../surfaces/RbmSurfacesB';
 import type { RbmBoard } from '../surfaces/rbmBoard';
 
 const PROGRAM = '11111111-2222-3333-4444-555555555555';
@@ -143,5 +143,23 @@ describe('The extract-load panel says what became of the site rows', () => {
     mockIngest(ingestResult());
     await loadExtract();
     expect(screen.queryByText(/site risk/i)).toBeNull();
+  });
+});
+
+// Found with the first statistical signals a real scan raised (2026-11-11): the list ranked a severity with
+// `rank || 3`, and Critical's rank is 0, so the two Critical signals were listed last, under Medium and Low.
+describe('Central monitoring lists the most severe signal first', () => {
+  const signal = (id: number, severity: string, title: string): RbmBoard['signals'][number] => ({
+    id, source: severity === 'critical' ? 'central_stat' : 'manual', type: 'outlier_indicator', severity, title, site: '104',
+    detail: 'detail', detected: '2026-11-11T00:00:00.000Z', status: 'new', resolution: null,
+  });
+
+  it('Critical, then High, Medium, Low, whatever order the board carries them in', () => {
+    const { container } = render(<RbmSignals board={board({ signals: [
+      signal(1, 'low', 'A low signal'), signal(2, 'medium', 'A medium signal'), signal(3, 'critical', 'Site 104 stands apart on Open query aging'), signal(4, 'high', 'A high signal'),
+    ] })} onReload={vi.fn()} />);
+    expect([...container.querySelectorAll('.rbm-sig-t')].map((el) => el.textContent)).toEqual([
+      'Site 104 stands apart on Open query aging', 'A high signal', 'A medium signal', 'A low signal',
+    ]);
   });
 });

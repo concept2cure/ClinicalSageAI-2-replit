@@ -181,6 +181,45 @@ describe('POST /rbm-metric-ingest rescores the study\'s sites when the extract c
   });
 });
 
+// A snapshot scored from the study's own site-level indicators is scanned indicator by indicator. Its composite
+// ties at 0 for most sites and could never be flagged; the readings are what a cross-site comparison is for.
+describe('POST /rbm-central-monitoring/run', () => {
+  const indicatorRow = (n: string, aging: number) => ({ site_id: n, site_number: n, composite_risk: n === '104' ? '100' : '0',
+    enrollment_risk: null, quality_risk: null, operational_risk: null,
+    metadata: { source: 'study_indicators', indicators: [{ kriName: 'Open query aging', value: aging, unit: 'days', direction: 'higher_worse', status: n === '104' ? 'red' : 'green' }] } });
+  const AGING: Array<[string, number]> = [['101', 12], ['102', 10], ['103', 14], ['104', 58], ['105', 11], ['106', 16], ['107', 6], ['108', 2]];
+  const run = () => request(app()).post('/api/mdx/rbm-central-monitoring/run').send({ programId: PROGRAM });
+  const signalInsert = () => h.calls.find(c => c.sql.includes('INSERT INTO rbm_signals'));
+
+  it('raises a signal for the site that stands apart on an indicator, with the reading, the study median and the cohort', async () => {
+    on(/FROM rbm_site_risk_scores WHERE organization_id = \$1 AND program_id = \$2/, AGING.map(([n, v]) => indicatorRow(n, v)));
+    on(/INSERT INTO rbm_signals/, [{ id: 1 }]);
+    const res = await run();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.meta).toMatchObject({ cohortSize: 8, flagged: 1, basis: 'study_indicators' });
+    const args = signalInsert()!.args;
+    expect(args.slice(2, 6)).toEqual(['104', 'outlier_indicator', 'critical', 'Site 104 stands apart on Open query aging']);
+    expect(args[6]).toMatch(/^Central statistical monitoring: at site 104, Open query aging is 58 days against a study median of 11\.5 days across 8 sites \(robust score [\d.]+\)\. Higher is worse for this indicator\.$/);
+    expect(JSON.parse(String(args[7]))).toMatchObject({ basis: 'study_indicators', dimension: 'Open query aging', value: 58, cohortMedian: 11.5, cohortSize: 8 });
+  });
+
+  it('a snapshot from Site Intelligence is still scanned on its risk scores, with the wording it had', async () => {
+    const scores = [10, 12, 11, 13, 12, 11, 10, 95];
+    on(/FROM rbm_site_risk_scores WHERE organization_id = \$1 AND program_id = \$2/, scores.map((v, i) => ({ site_id: String(i + 1), site_number: `S${i + 1}`,
+      composite_risk: String(v), enrollment_risk: null, quality_risk: null, operational_risk: null, metadata: { source: 'site_intelligence' } })));
+    on(/INSERT INTO rbm_signals/, [{ id: 1 }]);
+    const res = await run();
+    expect(res.body.meta).toMatchObject({ cohortSize: 8, flagged: 1, basis: 'site_intelligence' });
+    expect(signalInsert()!.args.slice(3, 6)).toEqual(['outlier_composite', 'critical', 'Site S8 is a composite-risk outlier']);
+  });
+
+  it('with no site scored it scans nothing and raises nothing', async () => {
+    const res = await run();
+    expect(res.body.meta).toMatchObject({ cohortSize: 0, flagged: 0 });
+    expect(signalInsert()).toBeUndefined();
+  });
+});
+
 describe('POST /rbm-patient-profiles/score', () => {
   it('persists the per-dimension breakdown as metadata.dimensionScores', async () => {
     const cohort = [1, 2, 3, 4, 5].map(i => ({ id: i, subject_id: `P${i}`, site_id: null, metrics: { queries: i === 5 ? 40 : 2 + (i % 2) } }));
