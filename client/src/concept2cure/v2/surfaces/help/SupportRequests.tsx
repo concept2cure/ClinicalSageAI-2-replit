@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { I } from '../../icons';
 import { useLiveData, EmptyState, ErrorState } from '../../dataConnect';
-import { apiRequest, ApiRequestError } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 
 export interface SupportTicket {
   number: string; subject: string; description: string; status: string; priority: string; category: string;
@@ -37,16 +37,17 @@ const when = (iso: string | null | undefined) => {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 };
 
-/** The server's reason for a refused write, or the failed-write sentence. */
+const NOT_SENT = 'The request could not be sent. Nothing was saved.';
+
+/** The server's reason for a refused write (read by the one envelope reader, serverMessage), or the failed-write sentence. */
 async function send(method: 'POST', url: string, body: unknown): Promise<{ ok: true; data: unknown } | { ok: false; message: string }> {
   try {
     const res = await apiRequest(method, url, body);
-    const json = await res.json().catch(() => null) as { data?: unknown; error?: { message?: string } } | null;
+    const json = await res.json().catch(() => null) as { data?: unknown } | null;
     if (res.ok) return { ok: true, data: json?.data };
-    return { ok: false, message: json?.error?.message ?? 'The request could not be sent. Nothing was saved.' };
+    return { ok: false, message: serverMessage(json) ?? NOT_SENT };
   } catch (e) {
-    const payload = e instanceof ApiRequestError ? (e.payload as { error?: { message?: string } } | undefined) : undefined;
-    return { ok: false, message: payload?.error?.message ?? 'The request could not be sent. Nothing was saved.' };
+    return { ok: false, message: serverMessage(e instanceof ApiRequestError ? e.payload : undefined) ?? NOT_SENT };
   }
 }
 
