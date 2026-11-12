@@ -1,0 +1,22 @@
+R1 effect breakpoint fixed at 0.95 (author M1, re-run): exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+R2 attrition back to 1.5x (author M2, re-run): exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+R3 attrition breakpoint unrounded (author M3, re-run): exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+R4 generator drops the 80% wording (author M4, re-run): exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 90dc13219406563b
+V2 below-80 read from the rounded margin again: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 90dc13219406563b
+V5/M6 at-threshold branch widened to every margin: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 90dc13219406563b
+V5/M10 attrition floor removed: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+V3 search floor reported as a breakpoint: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+V6 every error swallowed at the base recompute: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+V6 missing points lower the index: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 7bb6c33f365ffd6e
+V3/V6 notes not printed in the rationale: exit=1 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯ -> KILLED
+  restored sha256 90dc13219406563b

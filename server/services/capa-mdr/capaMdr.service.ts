@@ -9,7 +9,7 @@
  * receipt when commit completion is unknown. No patient narrative is fabricated.
  */
 
-import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, like, notInArray, sql } from 'drizzle-orm';
 
 import { writeChainedAuditRow } from '../auditService';
 import { capaContext, authorizeCapaProgram, visibleCapaPrograms, mutateCapa, readCapa, CapaPersistenceError, type CapaCaller } from './governed-context';
@@ -573,8 +573,15 @@ export interface ListMdrFilters {
   state?: MdrState;
   jurisdiction?: MdrJurisdiction;
   overdueOnly?: boolean;
+  /** Leave out MDRs whose report is filed, acknowledged or closed: what is
+   *  still owed to a regulator. `followup_required` stays in: a supplemental
+   *  report is due. */
+  openOnly?: boolean;
   limit?: number;
 }
+
+/** MDR states that owe no report (the state machine's filed side and its end). */
+const MDR_REPORTED_STATES = ['filed', 'acknowledged', 'closed'] as const;
 
 async function listMdrEventsTx(
   organizationId: number,
@@ -586,6 +593,7 @@ async function listMdrEventsTx(
   const conds = [eq(regulatoryPrograms.organizationId, organizationId), inArray(mdrEvents.programId, programs)];
   if (filters.state) conds.push(eq(mdrEvents.state, filters.state));
   if (filters.jurisdiction) conds.push(eq(mdrEvents.jurisdiction, filters.jurisdiction));
+  if (filters.openOnly) conds.push(notInArray(mdrEvents.state, [...MDR_REPORTED_STATES]));
   if (filters.overdueOnly) {
     conds.push(
       sql`${mdrEvents.reportDueAt} < now() AND ${mdrEvents.state} NOT IN ('filed','acknowledged','closed')`
@@ -1098,8 +1106,12 @@ async function getTriageQueueTx(
       openOnly: filters.openOnly ?? true,
       limit,
     }),
+    /* GA-DEMO-08 (2026-11-10): open MDRs only, like complaints and CAPAs. The
+       queue used to list MDR events in every state, so a filed MDR whose due
+       date was still ahead was counted on the post-market screen as due. */
     listMdrEventsTx(organizationId, {
       programId: filters.programId,
+      openOnly: filters.openOnly ?? true,
       limit,
     }),
     listCapaRecordsTx(organizationId, {

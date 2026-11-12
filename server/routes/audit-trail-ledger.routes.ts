@@ -88,13 +88,14 @@ import {
 import { tenantChainVerdict } from '../services/audit/audited-export.js';
 import { approvalShareJoin, QMS_INTERIM_APPROVAL_TYPE, shareWords, VAULT_INTERIM_APPROVAL_TYPE } from '../services/review/approval-share.js';
 import { LIFECYCLE_SIGNATURE_TYPE } from '../services/regulatory/lifecycle-signature.js';
+import { EVENT_TYPE_WORDS, ledgerChange, namesForRows, type LedgerChangeFields, type PeopleNames } from '../services/audit/audit-change-words.js';
 
 const logger = createScopedLogger('audit-trail-ledger-routes');
 
 export type AuditLedgerSource = 'audit_logs' | 'audit_events';
 
 // ─── Display shape (mirrors AuditEntry in v2/fixtures/admin-data.ts) ──────────
-export interface AuditLedgerEntry {
+export interface AuditLedgerEntry extends LedgerChangeFields {
   id: string;
   when: string;
   /** ISO-8601 instant the event was recorded; the merge order key. */
@@ -124,6 +125,8 @@ export interface AuditLedgerEntry {
   signatureRef?: string | null;
   /** The record's own reference (`qms-document:1`) when `target` names it for a reader instead. */
   targetRef?: string | null;
+  // `changes` and `changeNote` (AUD-01, W1-18): what a governed change changed, and what its row does not
+  // hold, from LedgerChangeFields (services/audit/audit-change-words.ts).
 }
 
 // ─── Pure helpers (presentation derivations of REAL columns) ──────────────────
@@ -268,10 +271,8 @@ function auditEventEntry(row: Record<string, unknown>): AuditLedgerEntry {
     at: isoOf(row.at),
     actor: nonEmpty(row.user_name) ?? 'System',
     actorRef: userRef(row.user_id == null ? null : Number(row.user_id)),
-    event:
-      metaString(row.metadata, ['description', 'summary', 'title', 'message']) ??
-      humanizeEventType(row.event_type),
-    target: deriveEventTarget(row),
+    event: metaString(row.metadata, ['description', 'summary', 'title', 'message']) ?? EVENT_TYPE_WORDS[String(row.event_type ?? '')]?.event ?? humanizeEventType(row.event_type),
+    target: EVENT_TYPE_WORDS[String(row.event_type ?? '')]?.target ?? deriveEventTarget(row),
     kind: deriveKind(row.event_type, row.signature_status),
     sig: String(row.signature_status ?? '').toLowerCase() === 'signed',
     // REAL chain values. record_hash is guaranteed non-null by the WHERE
@@ -510,6 +511,11 @@ function withSignature(entry: AuditLedgerEntry, sig: LinkedSignature | undefined
   };
 }
 
+// ─── A governed change, in words (AUD-01, W1-18; services/audit/audit-change-words.ts) ──
+
+/** An audit_logs entry with its governed change said in words; the row's own description, when stored, stands. */
+const withChange = (e: AuditLedgerEntry, r: Record<string, unknown>, names: PeopleNames): AuditLedgerEntry => ({ ...e, ...ledgerChange(e, r, names, ACTION_EVENT) });
+
 // ─── SQL ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -527,14 +533,14 @@ function withSignature(entry: AuditLedgerEntry, sig: LinkedSignature | undefined
 const AUDIT_LOGS_SQL = `
   WITH chained AS (
     SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
-           a.ip_address, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
+           a.ip_address, a.old_values, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
            LAG(a.sha256_chain) OVER (ORDER BY ${AUDIT_CHAIN_ORDER_ASC_SQL}) AS prev_hash
       FROM audit_logs a
      WHERE a.tenant_id = $1
        AND a.sha256_chain IS NOT NULL
   )
   SELECT c.id, c.action, c.actor_id, c.target, c.table_name, c.record_id, c.reason,
-         c.ip_address, c.new_values, c.occurred_at, c.sha256_chain, c.chain_seq, c.prev_hash,
+         c.ip_address, c.old_values, c.new_values, c.occurred_at, c.sha256_chain, c.chain_seq, c.prev_hash,
          to_char(c.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS when_display,
          u.name  AS user_name,
          u.email AS user_email
@@ -641,9 +647,9 @@ export async function readAuditLedger(
     client.query(AUDIT_LOGS_SQL, [orgId, limit]),
     client.query(AUDIT_EVENTS_SQL, [orgId, limit]),
   ]);
-  const signatures = await linkedSignatures(client, orgId, logs.rows as Record<string, unknown>[]);
+  const [signatures, names] = await Promise.all([linkedSignatures(client, orgId, logs.rows as Record<string, unknown>[]), namesForRows(client, logs.rows as Record<string, unknown>[])]);
   const merged = [
-    ...logs.rows.map((r: Record<string, unknown>) => withSignature(auditLogEntry(r), signatures.get(String(r.id)))),
+    ...logs.rows.map((r: Record<string, unknown>) => withChange(withSignature(auditLogEntry(r), signatures.get(String(r.id))), r, names)),
     ...events.rows.map((r: Record<string, unknown>) => auditEventEntry(r)),
   ]
     .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
@@ -669,7 +675,7 @@ export async function readAuditLedger(
  */
 const RECORD_HISTORY_SQL = `
   SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
-         a.ip_address, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
+         a.ip_address, a.old_values, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
          prev.sha256_chain AS prev_hash,
          to_char(a.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS when_display,
          u.name  AS user_name,
@@ -709,9 +715,9 @@ export async function readRecordAuditHistory(
   const keys = [{ tableName: record.tableName, recordId: Array.isArray(record.recordId) ? record.recordId : [record.recordId] }, ...(record.also ?? [])]
     .flatMap((k) => k.recordId.map((id) => [k.tableName, id] as const));
   const rows = await client.query(RECORD_HISTORY_SQL, [orgId, keys.map((k) => k[0]), keys.map((k) => k[1]), limit]);
-  const signatures = await linkedSignatures(client, orgId, rows.rows as Record<string, unknown>[]);
+  const [signatures, names] = await Promise.all([linkedSignatures(client, orgId, rows.rows as Record<string, unknown>[]), namesForRows(client, rows.rows as Record<string, unknown>[])]);
   const data = rows.rows.map((r: Record<string, unknown>) => ({
-    ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),
+    ...withChange(withSignature(auditLogEntry(r), signatures.get(String(r.id))), r, names),
     prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
   }));
   return { data, meta: { chain: ledgerVerdict(orgId, await verifyTenantChain(orgId)) } };

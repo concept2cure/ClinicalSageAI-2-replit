@@ -1,0 +1,13 @@
+M1 gate drops the not-required note [server/services/ectd/dispatch-gate.ts] -> KILLED (Tests  5 failed | 40 passed (45)); restored sha256 match=True
+M2 validate drops the rule-set finding [server/routes/ectd-compile.ts] -> KILLED (Tests  2 failed | 1 passed (3)); restored sha256 match=True
+M3 validate drops ruleSet on the response [server/routes/ectd-compile.ts] -> KILLED (Tests  1 failed | 2 passed (3)); restored sha256 match=True
+M4 panel shows an e-mail reviewer [client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx] -> KILLED (Tests  1 failed | 28 passed (29)); restored sha256 match=True
+M5 manifest carries an address again [templates/forms/acroforms/FDA_3454.pdf.manifest.json] -> KILLED (Tests  1 failed | 5 passed (6)); restored sha256 match=True
+M6 manifest reviewer emptied (asset untrusted) [templates/forms/acroforms/FDA_356H.pdf.manifest.json] -> KILLED (Tests  1 failed | 5 passed (6)); restored sha256 match=True
+M7 vault branch removed [server/services/ind-lifecycle/ind-checklist-view-assembler.ts] -> KILLED (Tests  3 failed | 1 passed (4)); restored sha256 match=True
+M8 tenant check removed [server/services/ind-lifecycle/ind-checklist-view-assembler.ts] -> KILLED (Tests  1 failed | 3 passed (4)); restored sha256 match=True
+M9 placed reads approved [server/services/ind-lifecycle/ind-checklist-view-assembler.ts] -> KILLED (Tests  3 failed | 1 passed (4)); restored sha256 match=True
+M10 deleted vault doc counted [server/services/ind-lifecycle/ind-checklist-view-assembler.ts] -> KILLED (Tests  1 failed | 3 passed (4)); restored sha256 match=True
+M11 placed rank above approved [server/services/ind-lifecycle/ind-checklist-view-assembler.ts] -> KILLED (Tests  1 failed | 3 passed (4)); restored sha256 match=True
+M12 screen loses the placed label [client/src/concept2cure/v2/surfaces/IndLifecycle.tsx] -> KILLED (Tests  1 failed | 1 passed (2)); restored sha256 match=True
+M13 card says required again [client/src/concept2cure/v2/surfaces/IndLifecycle.tsx] -> KILLED (Tests  1 failed | 1 passed (2)); restored sha256 match=True

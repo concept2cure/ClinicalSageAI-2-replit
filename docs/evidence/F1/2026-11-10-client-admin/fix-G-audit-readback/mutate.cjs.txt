@@ -1,0 +1,19 @@
+// usage: node mutate.cjs <mutations.json>  — each {file, old, new, tests:[...], name}
+const fs=require('fs'),cp=require('child_process'),crypto=require('crypto');
+const ROOT='/home/user/ClinicalSageAI-2-replit';
+const muts=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const sha=f=>crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+let killed=0;
+for (const m of muts){
+  const f=ROOT+'/'+m.file; const orig=fs.readFileSync(f,'utf8'); const h=sha(f);
+  const n=orig.split(m.old).length-1; if(n!==1){console.log(`SKIP ${m.name}: old occurs ${n} times`);continue;}
+  fs.writeFileSync(f,orig.replace(m.old,m.new));
+  let out='',code=0;
+  try{out=cp.execFileSync('npx',['vitest','run',...m.tests,'--maxWorkers=2'],{cwd:ROOT,encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:300000});}catch(e){code=e.status||1;out=(e.stdout||'')+(e.stderr||'');}
+  fs.writeFileSync(f,orig);
+  const restored=sha(f)===h;
+  const t=(out.match(/Tests\s+[^\n]*/)||['?'])[0];
+  if(code!==0) killed++;
+  console.log(`${code!==0?'KILLED':'SURVIVED'} ${m.name} | ${t.trim()} | restored sha256 ${restored?'ok':'MISMATCH'}`);
+}
+console.log(`${killed}/${muts.length} mutations killed`);
