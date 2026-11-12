@@ -36,7 +36,9 @@ describe('regional catalog unavailable states retain existing UI treatment', () 
   it.each(['not-applicable', 'filing-context-required', 'context-unavailable'] as const)('filters %s by its real availability without offering a Run action', state => {
     panel();
     const select = screen.getByRole('combobox', { name: 'Availability' });
-    expect(within(select).getByRole('option', { name: state.replaceAll('-', ' ') })).toBeTruthy();
+    // The option reads in words (P-122); the stored value it filters by is unchanged.
+    const words = { 'not-applicable': 'Does not apply to this filing', 'filing-context-required': 'Needs the project’s filing recorded', 'context-unavailable': 'Filing context could not be read' }[state];
+    expect((within(select).getByRole('option', { name: words }) as HTMLOptionElement).value).toBe(state);
     fireEvent.change(select, { target: { value: state } });
     const expected = rows.find(type => type.availabilityState === state)!;
     expect(document.body.textContent).toContain(expected.availabilityReason);
