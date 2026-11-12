@@ -1,0 +1,16 @@
+{
+  "390": {
+    "answer": "Which projects are at risk this week Answered by Sentinel’s analyzers and the submission operations register, for the projects you can open. Risks Sentinel found 7 open findings, most severe first. Critical · Quality drift Quality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion 1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 12 Critical · Quality drift Quality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion 0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 12 Critical · Quality drift Quality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 14% task completion 2/14 tasks done, 0 blocked, 0 overdue. · Found Nov 12 High · Quality drift Quality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion 8/26 tasks done, 1 blocked, 2 overdue. · Found Nov 12 High · Cross project Demo Reviewer (synthetic) is spread across 6 active projects Resource over-allocation: 18 open tasks across 6 projects. · Found Nov 12 Medium · Cross project JM Smith is spread across 5 active projects Resource over-allocation: 21 open tasks across 5 projects. · Found Nov 12 Medium · Deadline risk 2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" 2 tasks past due ",
+    "namesDeletedProject": false,
+    "projectsListed": 0,
+    "offered": 1,
+    "errors": []
+  },
+  "1440": {
+    "answer": "Which projects are at risk this week Answered by Sentinel’s analyzers and the submission operations register, for the projects you can open. Risks Sentinel found 7 open findings, most severe first. Critical · Quality drift Quality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion 1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 12 Critical · Quality drift Quality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion 0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 12 Critical · Quality drift Quality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 14% task completion 2/14 tasks done, 0 blocked, 0 overdue. · Found Nov 12 High · Quality drift Quality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion 8/26 tasks done, 1 blocked, 2 overdue. · Found Nov 12 High · Cross project Demo Reviewer (synthetic) is spread across 6 active projects Resource over-allocation: 18 open tasks across 6 projects. · Found Nov 12 Medium · Cross project JM Smith is spread across 5 active projects Resource over-allocation: 21 open tasks across 5 projects. · Found Nov 12 Medium · Deadline risk 2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" 2 tasks past due ",
+    "namesDeletedProject": false,
+    "projectsListed": 0,
+    "offered": 1,
+    "errors": []
+  }
+}

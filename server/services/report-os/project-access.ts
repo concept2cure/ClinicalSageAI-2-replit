@@ -26,11 +26,27 @@ function allowedByProjectPolicy(row: Record<string, unknown>, actor: ReportProje
   return forWrite ? canEditProject(input) : canUseProject(input) || row.review_assigned === true;
 }
 
-async function accessibleProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient, projectId?: number, forWrite = false): Promise<number[]> {
+/* `closed`: a project deleted in Projects, and every work project under one. Deleting sets
+   regulatory_programs.deleted_at and leaves the anchor projects row as it was (routes/c2c/projects.ts closeOut); a
+   legacy row carries status 'deleted' itself. UNION, so a parent cycle cannot run on. */
+const CLOSED_PROJECTS_CTE = `
+    WITH RECURSIVE closed(id) AS (
+      SELECT cp.id FROM projects cp
+        LEFT JOIN regulatory_programs rp ON rp.id = cp.regulatory_program_id AND rp.organization_id = cp.organization_id
+       WHERE cp.organization_id = $1 AND (cp.status = 'deleted' OR rp.deleted_at IS NOT NULL)
+      UNION
+      SELECT child.id FROM projects child JOIN closed ON child.parent_project_id = closed.id WHERE child.organization_id = $1)`;
+
+/** `openable`: only the projects a person can open now (see getAccessibleReportProjectIds). */
+interface ProjectAccessRead { projectId?: number; forWrite?: boolean; openable?: boolean }
+
+async function accessibleProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient, read: ProjectAccessRead = {}): Promise<number[]> {
+  const { projectId, forWrite = false, openable = false } = read;
   positiveId(organizationId);
   positiveId(actor.userId);
   if (projectId !== undefined) positiveId(projectId);
-  const { rows } = await client.query(`
+  // The default read's statement is as it always was; only the openable read names `closed`.
+  const { rows } = await client.query(`${openable ? CLOSED_PROJECTS_CTE : ''}
     SELECT p.id, p.owner_id, p.created_by_id, p.settings, v.visibility,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('userId', m.user_id, 'role', m.role, 'status', m.status))
         FROM project_members m WHERE m.project_id = p.id AND m.organization_id = p.organization_id AND m.status = 'active'), '[]'::jsonb) AS members,
@@ -38,14 +54,26 @@ async function accessibleProjectIds(organizationId: number, actor: ReportProject
         WHERE ra.reviewer_id = $2 AND ra.organization_id = $1 AND a.organization_id = $1
           AND a.project_id = p.id AND ra.status = 'pending') AS review_assigned
     FROM projects p LEFT JOIN project_visibility_settings v ON v.project_id = p.id AND v.organization_id = p.organization_id
-    WHERE p.organization_id = $1 AND ($3::int IS NULL OR p.id = $3)
+    WHERE p.organization_id = $1 AND ($3::int IS NULL OR p.id = $3)${openable ? ' AND NOT EXISTS (SELECT 1 FROM closed WHERE closed.id = p.id)' : ''}
     ORDER BY p.id`, [organizationId, actor.userId, projectId ?? null]);
   return rows.filter(row => allowedByProjectPolicy(row, actor, forWrite)).map(row => positiveId(row.id));
 }
 
-/** Read failures throw; [] means an actual evaluated denial/empty set. */
-export function getAccessibleReportProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient = getPool()): Promise<number[]> {
-  return accessibleProjectIds(organizationId, actor, client);
+/**
+ * The projects the sharing policy admits a person to. Read failures throw; [] means an actual evaluated
+ * denial/empty set.
+ *
+ * Two meanings share this list:
+ *   - the default: the projects whose saved reports the person may read. A deleted project stays in it, because a
+ *     signed report run is a record and deleting a project does not check for one (projects.ts
+ *     PROJECT_HOLD_READS). Run history and packs are admitted through it.
+ *   - `{ openable: true }`: the projects the person can open now. A project deleted in Projects, and a work
+ *     project under one, is left out; an archived project can still be opened and stays. The "at risk" read asked
+ *     for the default and listed a deleted project's finding under "the projects you can open" (seen in the
+ *     running app, 2026-11-12).
+ */
+export function getAccessibleReportProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient = getPool(), options: { openable?: boolean } = {}): Promise<number[]> {
+  return accessibleProjectIds(organizationId, actor, client, { openable: options.openable === true });
 }
 
 export async function canAccessReportProject(organizationId: number, actor: ReportProjectActor, projectId: number, client: RequestSqlClient = getPool(), options: { forWrite?: boolean } = {}): Promise<boolean> {
@@ -57,7 +85,7 @@ export async function canAccessReportProject(organizationId: number, actor: Repo
     await client.query(`SELECT user_id FROM project_members
       WHERE organization_id=$1 AND project_id=$2 AND user_id=$3 FOR SHARE`, [organizationId, projectId, actor.userId]);
   }
-  return (await accessibleProjectIds(organizationId, actor, client, projectId, options.forWrite === true)).includes(projectId);
+  return (await accessibleProjectIds(organizationId, actor, client, { projectId, forWrite: options.forWrite === true })).includes(projectId);
 }
 
 export interface ReportAccessScope {

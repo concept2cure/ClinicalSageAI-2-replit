@@ -46,7 +46,9 @@ const analyzerTypes: SentinelAnalyzerType[] = [
 async function readableProjectIds(req: Request, organizationId: number): Promise<number[]> {
   const userId = authedUserId(req);
   const actor = await readCurrentProgramActor(pool, { organizationId, userId: userId ?? undefined });
-  return getAccessibleReportProjectIds(organizationId, actor, pool);
+  // Openable: a project deleted in Projects is not one the person can open, so its findings are not listed
+  // (seen in the running app, 2026-11-12: a deleted project's "3 days overdue" stayed in the answer).
+  return getAccessibleReportProjectIds(organizationId, actor, pool, { openable: true });
 }
 
 /** Whether the finding exists and every project it names is one the person can open. Throws when that cannot be read. */

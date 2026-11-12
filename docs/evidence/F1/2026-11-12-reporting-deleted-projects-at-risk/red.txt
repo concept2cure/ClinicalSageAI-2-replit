@@ -1,0 +1,14 @@
+# Before the change (HEAD 23e464451c + the two new test files): failing cases and totals.
+ × server/services/report-os/__tests__/project-access-openable.pglite.test.ts > the projects a person can open > leaves out a project deleted in Projects, the work projects under it, and a row marked deleted 14ms
+   → expected [ 1, 2, 3, 4, 5, 6, 7, 8 ] to deeply equal [ 1, 5, 6, 8 ]
+ ✓ server/services/report-os/__tests__/project-access-openable.pglite.test.ts > the projects a person can open > keeps an archived project: it is still opened from Projects 3ms
+ ✓ server/services/report-os/__tests__/project-access-openable.pglite.test.ts > the projects a person can open > only ever removes projects the sharing policy admitted 4ms
+ ✓ server/services/report-os/__tests__/project-access-openable.pglite.test.ts > the projects whose saved reports a person may read > still names a deleted project, so its signed runs stay in Run history 2ms
+ ✓ server/services/report-os/__tests__/project-access-openable.pglite.test.ts > the projects whose saved reports a person may read > still admits a saved report’s deleted project when it is checked by itself 2ms
+ × server/routes/__tests__/sentinel-openable-projects.test.ts > GET /api/sentinel/findings > asks for the projects the person can open now, not every project the policy admits 20ms
+   → expected "vi.fn()" to be called with arguments: [ 7, …(3) ]
+ ✓ server/routes/__tests__/sentinel-openable-projects.test.ts > GET /api/sentinel/findings > answers 503, and reads no finding, when the projects cannot be read 4ms
+ × server/routes/__tests__/sentinel-openable-projects.test.ts > a finding is changed only when every project it names can be opened now > refuses a finding that names a deleted project 10ms
+   → expected "vi.fn()" to be called with arguments: [ 7, …(3) ]
+ Test Files  2 failed (2)
+      Tests  3 failed | 5 passed (8)
