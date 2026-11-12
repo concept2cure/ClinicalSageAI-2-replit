@@ -1,0 +1,20 @@
+# The pack's pins with the change
+      Tests  8 passed (8)
+
+# Every report-os suite and the canvas catalog route: 38 fail, the same 38 as on HEAD before this change (diffed by name):
+# each is a PDF render refused with REPORT_PDF_FONTS_UNAVAILABLE on this host, which has no report fonts.
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  8 failed | 63 passed (71)
+      Tests  38 failed | 806 passed | 1 skipped (845)
+
+# Typecheck (typecheck-no-regression --incremental)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+# Gates
+ci:sql-interpolation: ok
+ci:unreferenced-modules: ok
+ci:launch-scope-api: ok
+ci:migration-set-order: ok
+ci:migration-drop-safety: ok
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
