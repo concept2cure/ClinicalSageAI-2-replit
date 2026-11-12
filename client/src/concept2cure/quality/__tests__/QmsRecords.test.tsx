@@ -411,6 +411,71 @@ describe('Quality records', () => {
     await waitFor(() => expect(screen.getByText('Action 1 was closed.')).toBeTruthy());
   });
 
+  /* The reach-map lane's handoff (2026-11-12): with the connection down a drawer read "Not recorded — Failed to fetch",
+     the browser's own throw. And a connection can drop after the server took the write, so the line does not say that
+     nothing was recorded (this lane's rule since the periodic review's signature): it says to check before trying again. */
+  describe('a write the server did not confirm', () => {
+    const UNCONFIRMED = 'Not confirmed — the server could not be reached. Check your connection, then reload to see whether it was recorded before trying again.';
+    const said = async () => {
+      await waitFor(() => expect(within(screen.getByRole('dialog')).getByRole('status').textContent).toBe(UNCONFIRMED));
+      expect(screen.getByRole('dialog').textContent).not.toMatch(/Failed to fetch|Not recorded/);
+    };
+
+    it('a record\'s move says so in plain words, and never that nothing was recorded', async () => {
+      H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: false, error: null };
+      H.apiRequest.mockRejectedValue(new TypeError('Failed to fetch'));
+      render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+      openMore();
+      fireEvent.click(screen.getByRole('button', { name: /Advance/ }));
+      fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/^Move to/), { target: { value: 'escalated' } });
+      fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Reason for this move/), { target: { value: 'The fix did not hold on the fourth lot.' } });
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Record the move' }));
+      await said();
+    });
+
+    it('a CAPA action\'s move says so', async () => {
+      H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: false, error: null };
+      H.reads[`/api/capa-mdr/capa/${CAPA.id}`] = {
+        data: { ...CAPA, actions: [{ id: 'a1', n: 1, type: 'corrective', description: 'Replace the HPLC column', owner: 'QC', dueDate: null, state: 'in_progress', completedAt: null }] },
+        loading: false, error: null,
+      };
+      H.apiRequest.mockRejectedValue(new TypeError('Load failed'));
+      render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'CAPA-007' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Mark done: action 1' }));
+      fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Evidence of completion/), { target: { value: 'Column log CL-22, re-test report TR-118' } });
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Record the move' }));
+      await said();
+    });
+
+    it('a management-review action\'s closure says so', async () => {
+      const REVIEW = { id: 3, review_date: '2026-10-01', period: 'H2-2026', inputs: null, outputs: { decisions: 'Staff QA', actions: [
+        { n: 1, description: 'Appoint a QA lead', owner: 'CEO', dueDate: '2026-12-01', state: 'open' },
+      ] }, open_action_count: 1, closed_action_count: 0 };
+      H.reads['/api/mdx/qms/management-reviews'] = { data: { data: [REVIEW] }, loading: false, error: null };
+      H.apiRequest.mockRejectedValue(new TypeError('Failed to fetch'));
+      render(<QmsRecords tab="reviews" onAsk={vi.fn()} />);
+      fireEvent.click(screen.getByRole('button', { name: 'H2-2026' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Close action 1' }));
+      fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/How it was closed/), { target: { value: 'QA lead started on 2026-11-15' } });
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close action' }));
+      await said();
+    });
+
+    it('a refusal keeps the server\'s own sentence', async () => {
+      H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: false, error: null };
+      H.apiRequest.mockRejectedValue(new Error('This CAPA cannot be escalated from its current state.'));
+      render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+      openMore();
+      fireEvent.click(screen.getByRole('button', { name: /Advance/ }));
+      fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/^Move to/), { target: { value: 'escalated' } });
+      fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Reason for this move/), { target: { value: 'The fix did not hold on the fourth lot.' } });
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Record the move' }));
+      await waitFor(() => expect(within(screen.getByRole('dialog')).getByRole('status').textContent)
+        .toBe('Not recorded — This CAPA cannot be escalated from its current state.'));
+    });
+  });
+
   it('shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register', () => {
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC, { ...NC, id: 5, nc_number: 'NC-2026-005' }] }, loading: false, error: null };
     H.reads['/api/capa-mdr/capa'] = { data: { rows: [{ ...CAPA, capaCode: 'CAPA-008', sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }] }] }, loading: false, error: null };
