@@ -2,21 +2,55 @@
   "unsigned": {
     "required": true,
     "verdict": "unsigned",
-    "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:14",
+    "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:18",
     "cleared": false
   },
   "signed": {
     "required": true,
     "verdict": "signed",
-    "signatureId": 109,
-    "detail": "signed for dispatch on ectd-sequence:14, bound to the current leaf manifest",
+    "signatureId": 167,
+    "detail": "signed for dispatch on ectd-sequence:18, bound to the current leaf manifest",
     "cleared": true
   },
-  "afterFurtherPlacement": {
+  "afterUnchangedPlacement": {
+    "required": true,
+    "verdict": "signed",
+    "signatureId": 167,
+    "detail": "signed for dispatch on ectd-sequence:18, bound to the current leaf manifest",
+    "cleared": true
+  },
+  "afterChangedPlacement": {
     "required": true,
     "verdict": "invalid",
-    "signatureId": 109,
+    "signatureId": 167,
     "detail": "the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content",
     "cleared": false
-  }
+  },
+  "refiled": [
+    "3.2.P.8"
+  ],
+  "unchanged": 20,
+  "gateWithStaleSections": {
+    "status": 409,
+    "error": "2 section(s) went stale after approval and must be re-approved before final export",
+    "staleSections": 2,
+    "driftedApprovedSections": [
+      {
+        "sectionKey": "3.2.P.8",
+        "reasons": [
+          "stability \"stability:84\" changed after compile"
+        ]
+      },
+      {
+        "sectionKey": "3.2.S.7",
+        "reasons": [
+          "stability \"stability:84\" changed after compile"
+        ]
+      }
+    ]
+  },
+  "reapproved": [
+    "3.2.P.8",
+    "3.2.S.7"
+  ]
 }

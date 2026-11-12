@@ -231,6 +231,17 @@ export { NON_BATCH_SAMPLE_TYPES, FINISHED_PRODUCT } from '../../shared/cmc/qc-sa
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/** A batch record's release decision as the register wrote it, lower-cased; '' when none. */
+function batchDecision(batch: Record<string, any>): string {
+  return String(batch.releaseStatus || batch.disposition || '').trim().toLowerCase();
+}
+
+/** A decision has been taken on the batch: anything but none, and not still pending. */
+function batchIsDecided(batch: Record<string, any>): boolean {
+  const decision = batchDecision(batch);
+  return decision !== '' && decision !== 'pending';
+}
+
 function val(sources: CanonicalSource[], field: string): string {
   for (const s of sources) {
     const v = s.sourcePayload?.[field];
@@ -2823,7 +2834,6 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
 
   '3.2.P.3': (m) => {
     const formulation = val(m, 'formulation');
-    const batchNum = val(m, 'batchNumber');
     /* The §11 release decision, read from ONE batch record.
        val() scans each key independently across sources, so with more than one
        batch source the disposition, the releaser and the date could each come
@@ -2831,12 +2841,21 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        The facts travel together or not at all. Gated on what the register
        actually writes (release_status / released_by / released_at); the old
        `disposition` gate was a column no route ever populates, so the clause
-       could never render. */
-    const releasedBatch = m
+       could never render.
+       2026-11-12: a rejected batch is not read here at all. With one rejected
+       under signature the section read "Representative batch: <it> …
+       disposition: rejected, released by <the signer>": a rejected batch
+       represents nothing, and a rejection is not a release. A batch whose
+       decision is still pending has no disposition to state either. */
+    const batches = m
       .filter((s) => s.sourceType === 'batch')
       .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-      .find((p) => p.releasedBy || p.releasedAt || p.releaseStatus || p.disposition) ?? null;
-    const disposition = String(releasedBatch?.disposition || releasedBatch?.releaseStatus || val(m, 'disposition') || '');
+      .filter((p) => batchDecision(p) !== 'rejected');
+    const representative = batches[0] ?? null;
+    const anyBatchRecorded = m.some((s) => s.sourceType === 'batch');
+    const batchNum = representative ? String(representative.batchNumber || '') : (anyBatchRecorded ? '' : val(m, 'batchNumber'));
+    const releasedBatch = batches.find((p) => p.releasedBy || p.releasedAt || batchIsDecided(p)) ?? null;
+    const disposition = String(releasedBatch?.disposition || releasedBatch?.releaseStatus || '');
     const releasedBy = String(releasedBatch?.releasedBy || '');
     const releasedAt = String(releasedBatch?.releasedAt || '');
     const releasedBatchNumber = String(releasedBatch?.batchNumber || '');
@@ -2925,9 +2944,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     return {
       narrative: `The drug product is manufactured according to the batch formula described below. ` +
-        (batchNum ? `Representative batch: ${batchNum}` : '') +
-        (batchSize ? ` (batch size: ${batchSize})` : '') +
-        `. ` +
+        (batchNum ? `Representative batch: ${batchNum}` + (batchSize ? ` (batch size: ${batchSize})` : '') + `. ` : '') +
         (manufacturingSite ? `Manufactured at: ${manufacturingSite}. ` : '') +
         process.narrative +
         (legacySteps.length > 0 ? `The process comprises ${legacySteps.length} unit operations. ` : '') +

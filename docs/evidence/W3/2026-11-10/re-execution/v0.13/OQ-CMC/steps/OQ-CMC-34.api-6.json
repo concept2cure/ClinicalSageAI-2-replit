@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/process-validation",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "processName": "OQ probe PPQ",
+      "stage": "qualification",
+      "status": "planning"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 46,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 6,
+        "organizationId": 2,
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "processName": "OQ probe PPQ",
+        "stage": "qualification",
+        "batchNumbers": null,
+        "criticalProcessParameters": null,
+        "criticalQualityAttributes": null,
+        "controlStrategy": null,
+        "validationProtocol": null,
+        "validationReport": null,
+        "status": "planning",
+        "leadValidator": null,
+        "approvedBy": null,
+        "approvalDate": null,
+        "createdAt": "2026-11-10T13:23:07.022Z",
+        "updatedAt": "2026-11-10T13:23:07.022Z"
+      },
+      "module3Linked": true
+    }
+  }
+}
