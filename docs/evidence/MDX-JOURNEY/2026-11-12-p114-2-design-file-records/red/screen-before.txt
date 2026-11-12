@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > lists the project's document sections, grouped under the document each belongs to 117ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > says what the panel is and is not: not an inspected design history file index 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > counts the project's mandatory sections approved, and does not call it DHF completion 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > a blocked section reaches the blocker feed by its section and document, not as a DHF entry 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > an empty design history says where sections come from 26ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > tags a blocked cover letter "filing" in the blocker feed, and a blocked test report "dhf" 40ms
+   → expected 'dhf' to be 'filing' // Object.is equality
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > marks it as filing content in the section list, and says why in the note 34ms
+   → expected null to be 'filing-content' // Object.is equality
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > a row the route did not mark keeps the standing it had 32ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the Open risks card is red only when a risk is open > zero open risks with no risk file recorded is neither red nor green: "No risks recorded yet" 36ms
+   → expected 'err' to be null
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the Open risks card is red only when a risk is open > an open risk is red 45ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > tags a blocked cover letter "filing" in the blocker feed, and a blocked test report "dhf"
+AssertionError: expected 'dhf' to be 'filing' // Object.is equality
+
+Expected: "filing"
+Received: "dhf"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx:135:47
+    133|     const letter = feedRow(container, '§A1');
+    134|     expect(letter, 'the cover letter still blocks its document, and is…
+    135|     expect(letter?.getAttribute('data-kind')).toBe('filing');
+       |                                               ^
+    136|     expect(letter?.querySelector('.eng-blocker-kind')?.textContent).to…
+    137|     expect(feedRow(container, '§E5')?.getAttribute('data-kind')).toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — a filing's paperwork is not tagged as a design record > marks it as filing content in the section list, and says why in the note
+AssertionError: expected null to be 'filing-content' // Object.is equality
+
+- Expected:
+"filing-content"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx:147:49
+    145|     const letter = cells.find((c) => /Cover letter/.test(c.textContent…
+    146|     const report = cells.find((c) => /Bench performance testing/.test(…
+    147|     expect(letter?.getAttribute('data-record')).toBe('filing-content');
+       |                                                 ^
+    148|     expect(letter?.textContent ?? '').toMatch(/filing content/);
+    149|     expect(report?.getAttribute('data-record')).toBe('design-file');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the Open risks card is red only when a risk is open > zero open risks with no risk file recorded is neither red nor green: "No risks recorded yet"
+AssertionError: expected 'err' to be null
+
+- Expected:
+null
+
++ Received:
+"err"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx:167:42
+    165|     const c = card(container, 'Open risks');
+    166|     expect(c?.textContent ?? '').toMatch(/No risks recorded yet/);
+    167|     expect(c?.getAttribute('data-tone')).toBeNull();
+       |                                          ^
+    168|   });
+    169|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  21:08:49
+   Duration  2.55s (transform 950ms, setup 230ms, import 1.15s, tests 450ms, environment 559ms)
+
