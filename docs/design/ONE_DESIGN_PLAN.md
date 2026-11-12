@@ -2569,10 +2569,15 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
 - **Found:** the demo's `mdx` pack authors its 510(k) documents unbound to the project's filing, so the seeded export
   refuses (422) until a section is written into the filing. The live path works (editing copy, then B1, then export:
   200).
-- **Next**, after the demo:
-  - the `mdx` pack writes into the filing;
-  - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
-    (M7), and the IVD 510(k) outline (M6(a)).
+- **2026-11-12.**
+  - **P-114 item 2 landed** (`8d9a60593`, `docs/evidence/MDX-JOURNEY/2026-11-12-p114-2-design-file-records/`).
+    Engineering tags a filing's paperwork (the outline's own Administrative group, and Form FDA 3881) "filing", not
+    "DHF". It is still listed. The Open risks figure is red only when a risk is open. Walked in the running app on a
+    database rebuilt from empty.
+  - **The demo pack finding is closed**, by the demo seed's owner (`011Dpx…`, `GA-DEMO-10`,
+    `docs/evidence/DEMO/2026-11-12-device-pack/`): the `mdx` pack files its text into the filing.
+- **Next.** P-114's items 4, 3 and 5: the De Novo doors (M7), the EU technical file per project (M3), and the IVD
+  510(k) outline (M6(a)).
 
 #### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 

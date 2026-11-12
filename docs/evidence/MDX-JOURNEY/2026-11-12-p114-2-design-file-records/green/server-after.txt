@@ -1,0 +1,375 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows
+{
+  "timestamp": "2026-11-12T21:08:19.549Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel risks failed",
+  "context": {
+    "err": "permission denied for table risk_items"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed
+{
+  "timestamp": "2026-11-12T21:08:19.553Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel risks failed",
+  "context": {
+    "err": "permission denied"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed
+{
+  "timestamp": "2026-11-12T21:08:19.555Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel software failed",
+  "context": {
+    "err": "deadlock detected"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 403 without org context 24ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 422 when programId is not a UUID 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 404 for a program outside the caller tenant 5ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > returns every key the useEngineering hook destructures 7ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > returns empty arrays, never fabricated rows, for an empty tenant 5ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > maps ISO 14971 integer scales onto the surface heatmap keys 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > falls back to initial severity when no control has moved residual risk 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > clamps out-of-range scale values rather than dropping the hazard 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > survives a missing optional table instead of blanking the surface 5ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > does not call a design input verified while its validation is pending 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > renders the design outputs, not [object Object] 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > passes the store id through instead of re-prefixing a TEXT key 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > does not list a merely unmigrated table as unavailable 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 PROJECT_ACCESS_UNAVAILABLE when current admission cannot run, and reads nothing 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > refuses a project the organization does not own with 404 "Project not found", and reads nothing 3ms
+stderr | server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history
+{
+  "timestamp": "2026-11-12T21:08:20.682Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel dhf failed",
+  "context": {
+    "err": "relation unreadable"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one
+{
+  "timestamp": "2026-11-12T21:08:20.709Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel ecrs failed",
+  "context": {
+    "err": "column \"program_id\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project 21ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit 4ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary 4ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > leaves out an empty heading, as the documents' readiness does, so it is not reported as a blocker 4ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history 5ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > marks the Administrative group's sections and the indications for use statement as filing content 4ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > still lists them, with their status: a mandatory cover letter with nothing written blocks its document 5ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record > decides nothing for a document whose class is not an FDA device filing 4ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project 2ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > never shows a sibling project's change, the organization's unscoped one, another organization's or a deleted one 2ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes 2ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open 2ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one 3ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > another organization's project is refused before either panel is read 2ms
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 2ms
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-11-12T21:08:21.898Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-11-12T21:08:22.709Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T21:08:22.711Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-11-12T21:08:22.711Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-11-12T21:08:23.045Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.issue udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "99"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-11-12T21:08:23.046Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-11-12T21:08:23.046Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-11-12T21:08:23.047Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.udi.issue",
+    "resourceType": "udi_record",
+    "resourceId": "99",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > AnA review queue returns 403 without org context 25ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > UDI list returns 403 without org context 6ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > Risk items list returns 403 without org context 5ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > Software list returns 403 without org context 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > returns the canonical envelope with the card list 9ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > rejects an invalid pathway value 5ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > rejects an out-of-range limit 9ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > surfaces a 409 when the draft_source column is missing 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > GET /api/mdx/udi returns the canonical list envelope 7ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi rejects missing required fields 16ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row 6ms
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-11-12T21:08:23.053Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.submit_gudid udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-11-12T21:08:23.053Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-11-12T21:08:23.054Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-11-12T21:08:23.054Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.udi.submit_gudid",
+    "resourceType": "udi_record",
+    "resourceId": "1",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi surfaces a 409 on duplicate UDI-DI 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST validates severity in [1..5] 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST computes initial_risk = severity × probability 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > GET /risk-summary/:programId requires UUID 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST /risk-items/:id/controls 404s on cross-tenant id 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > POST rejects unknown item_kind 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > POST rejects unknown doc_level 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > GET /software-summary requires UUID 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > GET /software-summary returns matrix + completion % 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > rejects non-UUID program 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > 404s when program not in tenant 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > returns the panel shape the useEngineering hook destructures 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over mandatory sections only 3ms
+stderr | server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a store without the program key is a failed panel, not an empty one
+{
+  "timestamp": "2026-11-12T21:08:24.098Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel issues failed",
+  "context": {
+    "err": "column \"program_id\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > reads the project's own non-conformances, after the ownership check, and reports the panel keyed to the project 23ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > never shows another project's non-conformances, the organization's unscoped ones, or another organization's 5ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > the open-issues card counts the project's records only 4ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a project with none of its own reads an empty panel, still keyed to it 4ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a store without the program key is a failed panel, not an empty one 16ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > reads the artifacts of the project's own anchored records, plus its IEC 62304 items, and reports the panel keyed to the project 3ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > never shows a sibling project's artifacts, an unanchored project's, or a mis-anchored foreign project's 3ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > another organization's project is refused before any panel is read 2ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 4ms
+stderr | server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > a store without the program key is a failed panel, not an empty one
+{
+  "timestamp": "2026-11-12T21:08:25.184Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel trace failed",
+  "context": {
+    "err": "column \"program_id\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > reads the project's own design inputs, after the ownership check, and reports the panel keyed to the project 24ms
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > never shows another project's inputs or the organization's unscoped ones 5ms
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > a project with no design inputs of its own reads an empty trace, still keyed to it 3ms
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > another organization's project is refused before the trace is read 3ms
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > a store without the program key is a failed panel, not an empty one 4ms
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's 3ms
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-11-12T21:08:26.113Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-11-12T21:08:27.720Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T21:08:27.720Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-11-12T21:08:27.720Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-11-12T21:08:27.901Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-11-12T21:08:27.918Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-11-12T21:08:27.933Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-11-12T21:08:27.945Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 38ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 5ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 4ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 4ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 4ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 5ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+ ✓ shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > marks a section of the outline's Administrative group as filing content 2ms
+ ✓ shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > reads the PMA outline's group by its own label, and the group heading itself 1ms
+ ✓ shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > marks the indications for use statement (Form FDA 3881) wherever the outline files it 0ms
+ ✓ shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > leaves the design and performance sections in the design file 0ms
+ ✓ shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > decides nothing for a document that is not an FDA device filing, or whose class is unknown 0ms
+ ✓ shared/regulatory/__tests__/design-file-standing.test.ts > designFileStanding > does not take a word inside a label for the group 0ms
+
+ Test Files  7 passed (7)
+      Tests  102 passed (102)
+   Start at  21:08:17
+   Duration  10.73s (transform 2.85s, setup 495ms, import 8.47s, tests 543ms, environment 1ms)
+
