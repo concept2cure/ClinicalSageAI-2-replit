@@ -95,6 +95,21 @@ mock_provider "aws" {
   }
 }
 
+# CloudFront's v2 access log (access_logs.tf) validates the distribution's, the
+# access-log bucket's and its destination's ARNs; a mock's random strings are not ARNs.
+override_resource {
+  target = module.cdn.aws_cloudfront_distribution.this
+  values = { arn = "arn:aws:cloudfront::123456789012:distribution/EMOCKDIST" }
+}
+override_resource {
+  target = aws_s3_bucket.access_logs
+  values = { arn = "arn:aws:s3:::c2c-prod-access-logs-123456789012", id = "c2c-prod-access-logs-123456789012" }
+}
+override_resource {
+  target = aws_cloudwatch_log_delivery_destination.cloudfront
+  values = { arn = "arn:aws:logs:us-east-1:123456789012:delivery-destination:c2c-production-cloudfront" }
+}
+
 # Throwaway values of the right SHAPE, for production's settings. Nothing here
 # is a real credential.
 # The database tier's two keys get distinct ARNs for every run (file level: runs

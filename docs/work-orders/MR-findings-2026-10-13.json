@@ -3327,6 +3327,15 @@
    "lane": "infra",
    "sevAtBasis": "P1",
    "id": "OPS-15",
+   "recheck": {
+    "head": "fdd83d55d",
+    "date": "2026-11-12",
+    "status": "PARTIALLY_FIXED",
+    "testerImpact": "none",
+    "fixedBy": "MR-04 Stage 3 steps 4-5 commit, 2026-11-12",
+    "evidence": "VPC flow logs: terraform/modules/vpc-secure/main.tf aws_flow_log.this, ALL traffic, to /aws/vpc/<name>/flow-logs kept >= 365 days under its own key (logs.<region> may use it for that group only), delivered by a role only vpc-flow-logs.amazonaws.com in this account can assume. ALB access logs: terraform/stack/access_logs.tf, a private versioned SSE-S3 bucket (ALB delivery supports no KMS; inline #trivy:ignore:AWS-0132 with the reason), expiring after access_log_retention_days, written only by the region's ELB account and the log-delivery service under alb-logs/AWSLogs/<account>/, TLS only; module.alb now receives it. CloudFront v2 access logs and S3 server access logs of the vault and frontend buckets go to one access-log bucket (terraform/stack/access_logs.tf). tests: modules/vpc-secure/tests/flow_logs.tftest.hcl and stack/tests/detective_controls.tftest.hcl red at fdd83d55d, green after. Checkov CKV2_AWS_11 now passes. docs/evidence/MR-04/2026-11-12/stage-3/.",
+    "remaining": "GuardDuty (S3, RDS, ECS runtime), Security Hub (FSBP, CIS), the Config recorder and rules, and budgets: the account baseline waits on the founder's account layout (F-4) and budget recipients. WAF (Stage 5). The staging proof that log objects arrive."
+   },
    "workOrder": "MR-04",
    "depth": "thorough",
    "batchFile": "infra-hi-4.json",
@@ -4112,7 +4121,7 @@
     "testerImpact": "none",
     "fixedBy": "MR-04 Stage 2 commit, 2026-11-12",
     "evidence": "The alarm and alert items: terraform/stack/monitoring.tf alarms on the CIS CloudTrail events (root activity, IAM policy change, KMS key disable or scheduled deletion, security-group change, console sign-in failure) and on reportSecurityAlert's line, now marked [SECURITY] [alert:<kind>] (server/services/security-alerts.ts) so a blocked CORS origin does not page. All publish to the one alarm topic. docs/evidence/MR-04/2026-11-12/stage-2/.",
-    "remaining": "No WAF, GuardDuty, Config, VPC flow logs or ALB access logs (MR-04 Stages 3 and 5). SECURITY_ALERT_WEBHOOK_URL is still unprovisioned; the alarm topic is the paging path."
+    "remaining": "No WAF (Stage 5), GuardDuty or Config (the Stage 3 account baseline, waiting on F-4). VPC flow logs, ALB, CloudFront and S3 access logs landed on 2026-11-12 (OPS-15 recheck). SECURITY_ALERT_WEBHOOK_URL is still unprovisioned; the alarm topic is the paging path."
    },
    "workOrder": "MR-04",
    "depth": "thorough",

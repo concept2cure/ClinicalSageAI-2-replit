@@ -608,3 +608,15 @@ variable "alb_p95_latency_alarm_seconds" {
   type        = number
   default     = 10
 }
+
+# How long the load balancer's access logs are kept (access_logs.tf). The
+# records-retention policy for access logs is not yet decided; a year matches
+# the flow logs' floor (MR-04 Stage 3).
+variable "access_log_retention_days" {
+  type    = number
+  default = 365
+  validation {
+    condition     = var.access_log_retention_days >= 365
+    error_message = "Access logs are kept at least 365 days."
+  }
+}

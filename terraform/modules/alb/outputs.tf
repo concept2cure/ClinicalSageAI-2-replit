@@ -36,3 +36,12 @@ output "alb_arn_suffix" {
 output "api_target_group_arn_suffix" {
   value = aws_lb_target_group.api.arn_suffix
 }
+
+# Where the load balancer writes its access log, for the stack's test that
+# production writes one (terraform/stack/tests/detective_controls.tftest.hcl).
+output "access_logs" {
+  value = {
+    enabled = one(aws_lb.this.access_logs).enabled
+    bucket  = one(aws_lb.this.access_logs).bucket
+  }
+}
