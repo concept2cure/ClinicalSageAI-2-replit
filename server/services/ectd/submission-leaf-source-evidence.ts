@@ -21,6 +21,7 @@ import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibilit
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle';
 import { companyLegalSubmissionContext } from './company-legal-context';
 import { isModule3PlacementSnapshot } from '../cmc/module3-placement-marker';
+import { readAuthoringVaultFilingReceipt } from '../authoring/authoring-vault-filing-receipt';
 
 type Input = {
   organizationId:number; userId:number; programId:string; projectId:number;
@@ -236,13 +237,35 @@ function retainedPlainText(bytes:Buffer):boolean {
   });
   return Buffer.from(plain,'utf8').equals(bytes)&&!plain.startsWith('%PDF-')&&!controlCharacter;
 }
+/* A Vault rendition (a PDF) filed from a sealed Authoring document: the chained filing receipt names the sealed
+   version these exact bytes were rendered from (LX-10), and that record holds the text. Its text, when the record
+   still matches its own seal; otherwise null and the bytes stay "not established". Walked 2026-11-12: the walked
+   document's Vault leaf read "substantive source text is not established" although its seal was on record. */
+async function sealedRenditionText(state:State,args:{leaf:SubmissionLeaf;sha256:string}):Promise<string|null> {
+  const q={query:async(sql:string,params?:unknown[])=>({rows:await tracked(state,sql,params??[])})};
+  const receipt=await readAuthoringVaultFilingReceipt(q as unknown as Parameters<typeof readAuthoringVaultFilingReceipt>[0],
+    {organizationId:state.input.organizationId,programId:state.input.programId,vaultDocumentId:String(args.leaf.documentUuid),artifactSha256:args.sha256});
+  const sealed=receipt.status==='recorded'?receipt.source.sealedVersion:undefined;
+  if(receipt.status!=='recorded'||!sealed)return null;
+  const frozen=await tracked(state,`SELECT frozen_content,content_hash FROM frozen_documents
+    WHERE document_id=$1 AND tenant_id=$2 AND version=$3 ORDER BY frozen_at DESC,id DESC LIMIT 1`,[receipt.source.nativeId,state.input.organizationId,sealed.version]);
+  const record=frozen[0];const content=object(record?.frozen_content);
+  const sections=Array.isArray(content.sections)?content.sections as AuthoringSectionRow[]:[];const title=object(content.document).title;
+  if(!record||record.content_hash!==sealed.contentHash||!sections.length||typeof title!=='string')return null;
+  const seal=await checkAgainstSeal(q,{sourceId:receipt.source.nativeId,organizationId:state.input.organizationId,live:sections,title,verdict:'approved',sealVersion:sealed.version});
+  return seal.ok?assembleAuthoredSections(sections):null;
+}
 async function vaultContentEvidence(state:State,args:{leaf:SubmissionLeaf;row:Record<string,unknown>;proof:{sha256:string;bytes:Buffer};pin:DeliverableSourceEvidence['pin']}):Promise<StoreEvidence> {
   const {leaf,row,proof,pin}=args;
   const notFinalized=await vaultVersionNotTransmittable({query:async(sql:string,params?:unknown[])=>({rows:await tracked(state,sql,params??[])})},state.input.organizationId,String(leaf.documentUuid),proof.sha256,
     companyLegalSubmissionContext({programId:state.input.programId,region:state.input.sequenceRegion,applicationType:state.input.applicationType}));
   if(pin!=='match')return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:{...unknown(pin==='mismatch'?'SOURCE_PIN_MISMATCH':'SOURCE_UNPINNED'),pin}};
   const mime=String(row.mime_type??'').toLowerCase();
-  if(mime!=='text/plain')return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:{...unknown('SOURCE_BINARY_CONTENT_UNVERIFIED'),pin,lifecycle:notFinalized?'unverified':'finalized'}};
+  if(mime!=='text/plain') {
+    const sealedText=notFinalized?null:await sealedRenditionText(state,{leaf,sha256:proof.sha256});
+    if(sealedText!==null)return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:evidenceFor(textBody(sealedText),'approved','c2c_document_sections',pin)};
+    return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:{...unknown('SOURCE_BINARY_CONTENT_UNVERIFIED'),pin,lifecycle:notFinalized?'unverified':'finalized'}};
+  }
   const plain=proof.bytes.toString('utf8');
   if(!retainedPlainText(proof.bytes))return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:{...unknown('SOURCE_BODY_UNVERIFIED'),pin}};
   return {label:typeof row.source_label==='string'?row.source_label:undefined,found:true,storedSha256:proof.sha256,evidence:notFinalized?{...unknown('SOURCE_BODY_UNVERIFIED'),pin}

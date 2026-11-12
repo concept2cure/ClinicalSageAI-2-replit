@@ -142,9 +142,12 @@ and section key (`place-module3-into-submission.ts`, marked by `module3-placemen
 copy. A copy carrying the placement marker is now traced to its CMC section in this project; its pinned text and
 approved status are judged as before. A copy naming another project is refused; one whose section the project does not
 hold stays undetermined. In the running app both Module 3 sequences went from 21 undetermined to 21 resolved, and the
-Builder reads "Source verified" (`after-b11-01`, `14-builder-module3-leaf-source-red-green.txt`). **Still
-undetermined:** a Vault leaf whose file is a PDF ("substantive source text is not established"); for a Vault version
-filed from a sealed Authoring document the filing receipt names the seal (LX-10), which could establish it. Not done.
+Builder reads "Source verified" (`after-b11-01`, `14-builder-module3-leaf-source-red-green.txt`). The Vault leaf of
+the walked document read "substantive source text is not established": its file is a PDF. Its chained filing receipt
+names the sealed version the PDF was rendered from (LX-10), and that record holds the text; the reader now establishes
+the text from it when the record still matches its own seal (`sealedRenditionText`), and a PDF with no receipt, or a
+receipt naming a seal the record does not hold, stays not established. In the running app the walked document's Vault
+leaf went to resolved and reads "Vault document · Source verified" (`after-b11-02`).
 
 **A citation outside the editor** read as its source's file name in the Document view ("62%C2C-101-biopharmaceutics-
 BP-001.txt"), where the canvas and the filed document print "[1]". The stored link caches the name, and the

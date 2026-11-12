@@ -22,3 +22,21 @@ $ npx vitest run server/services/ectd/__tests__/submission-leaf-source-evidence.
 #  after:  sequence 16 and 18: 21 × coauthor_documents | resolved
 #  unchanged: sequence 17: 1 × vault_documents | undetermined | The retained bytes were verified; substantive source text is not established.
 # The Builder for BX-733: each Module 3 leaf reads 'Source verified'; the 'not yet determined' notice is gone.
+
+# The Vault PDF leaf, same day: its text is established from the sealed record its filing receipt names (LX-10).
+# Red first, on the reader as committed in 44329d6a4b:
+ × server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > a Vault PDF filed from a sealed Authoring document > its text is established from the sealed record the receipt name
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > a Vault PDF filed from a sealed Authoring document > a receipt naming a seal the record does not hold leaves it not
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > a Vault PDF filed from a sealed Authoring document > control: a PDF with no filing receipt stays not established 17
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 27 passed (28)
+# With the change:
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+# Around it (the same 67 files):
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 64 passed (67)
+      Tests  19 failed | 1114 passed (1133)
+# The 19 failures are the same three report-PDF suites, red on trunk.
+# In the running app: sequence 17 (the walked document's Vault leaf): 1 × vault_documents | resolved (was undetermined, 'substantive source text is not established'); the Builder reads 'Vault document · Source verified'.
