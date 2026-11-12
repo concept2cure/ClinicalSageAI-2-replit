@@ -101,6 +101,7 @@ import { isPathWithin } from '../../utils/document-file-roots';
 import { buildIchModuleTree, findDroppedLeaves, ECTD_XLINK_NS, type RenderedLeaf } from './ectd-packager/ich-headings';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
 import { ctdFolderSlug, compareSectionCode } from '../../../shared/regulatory/section-code';
+import { isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 
 // Re-export the public packager surface (barrel).
 export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
@@ -609,6 +610,7 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
        past those branches and reached the operator as a bare 500 — 'amendment'
        is an ordinary word for a follow-up filing and no fdast term, so the
        obvious value produced an unexplained failure. */
+    refuseDeviceFilingOnEctd(input);
     throw new ValidationError(
       `Cannot build the FDA regional backbone: no application type was supplied, and ` +
         `${JSON.stringify(input.submissionType)} is not one. The eCTD Module 1 ` +
@@ -1020,6 +1022,75 @@ function refuseUnlessFourDigitSequence(sequence: unknown): void {
   );
 }
 
+/** A device or diagnostic filing (510(k), De Novo, PMA, IDE): FDA files these as eSTAR or eCopy, not eCTD.
+    Decided by the registry's one device predicate (isDeviceRegistryEntry), on the
+    submission type or, failing that, on fda.applicationType. */
+function isDeviceFiling(input: PackagerInput, registryEntry: ReturnType<typeof resolveToRegistryEntry>): boolean {
+  const fdaEntry = input.fda?.applicationType ? resolveToRegistryEntry(String(input.fda.applicationType)) : null;
+  return [registryEntry, fdaEntry].some((e) => !!e && isDeviceRegistryEntry(e));
+}
+
+/**
+ * A device or diagnostic filing that reached the eCTD backbone: the refusal in
+ * words a person can act on. 2026-11-12 (rehearsal B2, lane W2-assembly-refusal):
+ * "Assemble a test package" on the 510(k) refused with "Pass fda.applicationType.
+ * Defaulting to fdaat1 ...", which names a code field and a vocabulary term. The
+ * reason is unchanged (a 510(k) has no eCTD Module 1 application-type); it is said
+ * as the filing fact it is. Returns, doing nothing, for anything that is not a device filing.
+ */
+function refuseDeviceFilingOnEctd(input: PackagerInput): void {
+  const entry = resolveToRegistryEntry(input.submissionType);
+  if (!entry || !isDeviceFiling(input, entry)) return;
+  const format = entry.submissionFormat && entry.submissionFormat !== 'none' ? ` FDA receives it as ${entry.submissionFormat}.` : '';
+  throw new ValidationError(
+    `A ${entry.displayName} is a device filing, not an eCTD sequence, so no eCTD package is assembled for it.${format} ` +
+      'The eCTD Module 1 application-type vocabulary covers drug and biologic applications (NDA, ANDA, BLA, IND) and ' +
+      'master files only. Nothing was assembled.',
+    [],
+  );
+}
+
+/* FDA eCTD validation 1789 — every file in a Module 4/5 study section (all
+   but 4.3, 5.2, 5.3.6 and 5.4) must be referenced by a Study Tagging File,
+   so it needs a study id and an STF file-tag. Checked before any byte is
+   read, by the one coverage check (auditStfCoverage, ectd4-validator.ts).
+   A US sequence that breaks it is refused, naming every such file; another
+   region packages and the count is carried on bundle.stf.untagged.
+   2026-10-05 (g-stf-1789-fail-closed): the STF pass below kept only leaves
+   that already had both, so an untagged study report shipped with no STF,
+   `untagged` was always 0 and nothing reported the rejection FDA would
+   issue.
+   2026-11-12 (rehearsal B2, lane W2-assembly-refusal): 1789 is a validation of
+   drug and biologic eCTD sequences (CDER/CBER). A device or diagnostic filing
+   is not an eCTD sequence at FDA and has no Study Tagging File, so it is not
+   held to it; it was refused "Assemble a test package" for it. The refusal now
+   names each document by its title and section (the packaged file name is a
+   generated one a person cannot place); findings keep the file name. */
+function refuseUntaggedStudyFiles(input: PackagerInput, registryEntry: ReturnType<typeof resolveToRegistryEntry>) {
+  if (isDeviceFiling(input, registryEntry)) return [];
+  const stfUncovered = input.leaves.flatMap((leaf) =>
+    auditStfCoverage(
+      [{
+        section: leaf.ctdSection, title: `${leaf.title} [${leaf.fileName}]`, operation: leaf.operation,
+        studyId: leaf.studyId, stfFileTag: leaf.stfFileTag,
+      }],
+      { region: input.region, fileTagModelled: true },
+    ).map((finding) => ({ leaf, finding })),
+  );
+  const stfRefusals = stfUncovered.filter((u) => u.finding.severity === 'error');
+  if (stfRefusals.length === 0) return stfUncovered;
+  const named = (leaf: EctdLeaf) => (leaf.title?.trim() ? `"${leaf.title.trim()}"` : leaf.fileName);
+  throw new ValidationError(
+    `FDA validation 1789 (technical rejection): ${stfRefusals.length} file(s) in Module 4/5 study sections ` +
+      `would be referenced by no Study Tagging File — ` +
+      stfRefusals.map((u) => `${named(u.leaf)} (section ${normalizeCtdCode(u.leaf.ctdSection) ?? u.leaf.ctdSection}, no ${u.finding.code === 'STF_MISSING_FILE_TAG' ? 'file-tag' : 'study id'})`).join('; ') +
+      `. Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.`,
+    stfRefusals.map((u) => ({
+      ruleId: 'FDA-TRC-1789', severity: 'error', filePath: u.leaf.fileName, message: u.finding.message,
+    })),
+  );
+}
+
 export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
   refuseUnlessFourDigitSequence(input.sequence);
   /* Resolve the caller-supplied submission type through the canonical bridge.
@@ -1043,37 +1114,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const region = input.region;
   const backboneFileByRegion = REGIONAL_BACKBONE_BY_REGION;
 
-  /* FDA eCTD validation 1789 — every file in a Module 4/5 study section (all
-     but 4.3, 5.2, 5.3.6 and 5.4) must be referenced by a Study Tagging File,
-     so it needs a study id and an STF file-tag. Checked before any byte is
-     read, by the one coverage check (auditStfCoverage, ectd4-validator.ts).
-     A US sequence that breaks it is refused, naming every such file; another
-     region packages and the count is carried on bundle.stf.untagged.
-     2026-10-05 (g-stf-1789-fail-closed): the STF pass below kept only leaves
-     that already had both, so an untagged study report shipped with no STF,
-     `untagged` was always 0 and nothing reported the rejection FDA would
-     issue. */
-  const stfUncovered = input.leaves.flatMap((leaf) =>
-    auditStfCoverage(
-      [{
-        section: leaf.ctdSection, title: `${leaf.title} [${leaf.fileName}]`, operation: leaf.operation,
-        studyId: leaf.studyId, stfFileTag: leaf.stfFileTag,
-      }],
-      { region, fileTagModelled: true },
-    ).map((finding) => ({ leaf, finding })),
-  );
-  const stfRefusals = stfUncovered.filter((u) => u.finding.severity === 'error');
-  if (stfRefusals.length > 0) {
-    throw new ValidationError(
-      `FDA validation 1789 (technical rejection): ${stfRefusals.length} file(s) in Module 4/5 study sections ` +
-        `would be referenced by no Study Tagging File — ` +
-        stfRefusals.map((u) => `${u.leaf.fileName} (section ${u.leaf.ctdSection}, no ${u.finding.code === 'STF_MISSING_FILE_TAG' ? 'file-tag' : 'study id'})`).join('; ') +
-        `. Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.`,
-      stfRefusals.map((u) => ({
-        ruleId: 'FDA-TRC-1789', severity: 'error', filePath: u.leaf.fileName, message: u.finding.message,
-      })),
-    );
-  }
+  const stfUncovered = refuseUntaggedStudyFiles(input, registryEntry);
 
   const zip = new JSZip();
   const checksums: ChecksumEntry[] = [];

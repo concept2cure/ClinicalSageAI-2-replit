@@ -1,0 +1,33 @@
+const c = require('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/gademo/common.cjs');
+const OUT='/home/user/ClinicalSageAI-2-replit/docs/evidence/GA-READINESS/2026-11-10/fix-L7-shell/';
+const log=[]; const L=(...a)=>{const s=a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' '); log.push(s); console.log(s);};
+(async()=>{
+ const browser = await c.launch();
+ try{
+ for (const vp of ['desktop','phone']) {
+  const W = vp==='desktop'?1440:390;
+  const { page, rec, context } = await c.open(browser, 'ava', { viewport: vp });
+  await page.reload(); await page.waitForTimeout(2500);
+  const bell = page.locator('button.tt-trigger').first();
+  const bb = await bell.boundingBox(); const badge = await page.locator('.tt-badge').first().boundingBox();
+  const glyph = await bell.locator('svg').first().boundingBox();
+  L(W,'GA-UI-03 bell',bb,'glyph',glyph,'badge',badge,'overlap', !!(glyph&&badge&& badge.x < glyph.x+glyph.width && badge.x+badge.width>glyph.x && badge.y<glyph.y+glyph.height && badge.y+badge.height>glyph.y));
+  L(W,'page overflowX', await page.evaluate(()=>document.documentElement.scrollWidth - window.innerWidth));
+  await page.screenshot({path:OUT+`after-GA-UI-03-bell-${W}.png`, clip: W===1440?{x:1040,y:0,width:400,height:64}:{x:0,y:0,width:390,height:70}});
+  // GA-UI-04: open tray, click the route task
+  await bell.click(); await page.waitForTimeout(1500);
+  const row = page.locator('.tt-item', {hasText:'Approve: [Demo · Lumen] TD02 etiology'}).first();
+  await row.scrollIntoViewIfNeeded(); await row.click(); await page.waitForTimeout(3500);
+  L(W,'GA-UI-04 url after one click', page.url().replace(/^http:\/\/127\.0\.0\.1:5240/,''));
+  await page.screenshot({path:OUT+`after-GA-UI-04-route-task-opens-version-${W}.png`});
+  // GA-UI-05: the audit notice
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('c2c:audit-row-not-persisted',{detail:{code:'AUDIT_UNCONFIRMED',method:'POST',path:'/lane-l7-shell/demo',correlationId:'lane-l7-shell-ref'}})));
+  await page.waitForTimeout(600);
+  const bg = await page.evaluate(()=>{const e=document.querySelector('[data-testid="global-audit-row-notice"]'); return e? getComputedStyle(e).backgroundImage+' | '+getComputedStyle(e).backgroundColor+' | border '+getComputedStyle(e).borderTopWidth+' '+getComputedStyle(e).borderTopColor : 'none';});
+  L(W,'GA-UI-05 notice style', bg);
+  await page.screenshot({path:OUT+`after-GA-UI-05-audit-notice-${W}.png`});
+  L(W,'recorder', rec.take());
+  await context.close();
+ }
+ } finally { await browser.close(); c.fs.writeFileSync('/home/user/ClinicalSageAI-2-replit/docs/evidence/GA-READINESS/2026-11-10/fix-L7-shell/walk-1.txt', log.join('\n')+'\n'); }
+})().catch(e=>{console.error(e);process.exit(1)});

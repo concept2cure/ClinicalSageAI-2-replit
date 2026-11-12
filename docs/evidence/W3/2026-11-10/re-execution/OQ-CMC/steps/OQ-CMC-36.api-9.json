@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "cb3a11fa-9de1-496e-a694-18409d070dd4",
+      "projectId": "05ddc758-4095-4857-ac48-5ebcd53d9266",
       "productName": "Q1E-beyond",
       "batchNumber": "B-1",
       "dosageForm": "tablet",
@@ -49,14 +49,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 43,
+    "durationMs": 30,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 70,
+        "id": 88,
         "organizationId": 2,
-        "projectId": "cb3a11fa-9de1-496e-a694-18409d070dd4",
+        "projectId": "05ddc758-4095-4857-ac48-5ebcd53d9266",
         "studyTitle": null,
         "productName": "Q1E-beyond",
         "batchNumber": "B-1",
@@ -103,8 +103,8 @@
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T13:26:04.200Z",
-        "updatedAt": "2026-11-10T13:26:04.200Z"
+        "createdAt": "2026-11-12T00:55:34.138Z",
+        "updatedAt": "2026-11-12T00:55:34.138Z"
       },
       "module3Linked": true
     }

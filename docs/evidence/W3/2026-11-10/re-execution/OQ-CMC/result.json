@@ -5,8 +5,8 @@
   "appLabel": "CMC / Module 3",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/cmc/run.mjs",
-  "executedAt": "2026-11-10T13:06:27.451Z",
-  "finishedAt": "2026-11-10T13:28:35.430Z",
+  "executedAt": "2026-11-12T00:34:30.495Z",
+  "finishedAt": "2026-11-12T00:58:05.034Z",
   "environment": {
     "baseUrl": "http://localhost:5200",
     "node": "v22.23.4",
@@ -14,7 +14,7 @@
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "d8ab1a1922fcf078b188596da22014b2487fc32b"
+      "commit": "31047492b7b14e95f7499bf98d94ac8aa1cf446a"
     },
     "testUser": "oq-runner@validation.local",
     "authentication": "password+totp",
@@ -60,8 +60,8 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-11-10T13:06:29.247Z",
-      "finishedAt": "2026-11-10T13:06:29.504Z",
+      "startedAt": "2026-11-12T00:34:32.389Z",
+      "finishedAt": "2026-11-12T00:34:32.648Z",
       "evidence": [],
       "api": [
         {
@@ -85,9 +85,9 @@
       "action": "POST /api/c2c/projects, then the drug substance, product, method, specification, batch and stability under it",
       "expected": "created; every row carries the programme",
       "status": "pass",
-      "observed": "programme 6270d978-aff3-43f0-ad87-1e6726350bf8 with 6 reference records",
-      "startedAt": "2026-11-10T13:06:29.504Z",
-      "finishedAt": "2026-11-10T13:06:31.700Z",
+      "observed": "programme 8655492d-c15c-4585-9ed2-6a645fc7c7f6 with 6 reference records",
+      "startedAt": "2026-11-12T00:34:32.648Z",
+      "finishedAt": "2026-11-12T00:34:34.824Z",
       "evidence": [
         "steps/OQ-CMC-03.records.json"
       ],
@@ -150,49 +150,49 @@
       "expected": "each read 200; the write 403 and no row written",
       "status": "pass",
       "observed": "drug-substances 200; drug-products 200; analytical-methods 200; specifications 200; batch-records 200; stability-studies 200; the viewer's write 403 , no row",
-      "startedAt": "2026-11-10T13:06:31.700Z",
-      "finishedAt": "2026-11-10T13:06:34.352Z",
+      "startedAt": "2026-11-12T00:34:34.824Z",
+      "finishedAt": "2026-11-12T00:34:37.355Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-02.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-products?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/drug-products?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/specifications/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/specifications/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/batch-records/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/batch-records/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-6.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/stability-studies?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/stability-studies?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
@@ -206,7 +206,7 @@
         {
           "file": "steps/OQ-CMC-02.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         }
       ],
@@ -225,8 +225,8 @@
       "expected": "the read names no record of that programme (404/403, or 200 with nothing); the write is refused and no row is written",
       "status": "pass",
       "observed": "read 200; write 409",
-      "startedAt": "2026-11-10T13:06:34.353Z",
-      "finishedAt": "2026-11-10T13:06:34.905Z",
+      "startedAt": "2026-11-12T00:34:37.356Z",
+      "finishedAt": "2026-11-12T00:34:37.923Z",
       "evidence": [],
       "api": [
         {
@@ -257,8 +257,8 @@
       "expected": "one canonical source per recorded row; no section record yet",
       "status": "pass",
       "observed": "0 sections before compile; source-evidence 200",
-      "startedAt": "2026-11-10T13:06:34.905Z",
-      "finishedAt": "2026-11-10T13:06:35.462Z",
+      "startedAt": "2026-11-12T00:34:37.923Z",
+      "finishedAt": "2026-11-12T00:34:38.486Z",
       "evidence": [
         "steps/OQ-CMC-05.source-evidence.json"
       ],
@@ -266,13 +266,13 @@
         {
           "file": "steps/OQ-CMC-05.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         }
       ],
@@ -290,9 +290,9 @@
       "action": "POST /api/c2c/projects for a second small-molecule US IND; enter, through the register routes, every record a complete Module 3 needs; compile",
       "expected": "each record created under the programme; the compile composes 21 sections, each complete with nothing missing",
       "status": "pass",
-      "observed": "programme 7f94ec32-9a96-4b06-a9f2-409507e041dc with 23 records; 21 of 21 sections complete",
-      "startedAt": "2026-11-10T13:06:35.462Z",
-      "finishedAt": "2026-11-10T13:06:43.753Z",
+      "observed": "programme 689b2e11-9727-43af-9aae-1369322b42cc with 23 records; 21 of 21 sections complete",
+      "startedAt": "2026-11-12T00:34:38.486Z",
+      "finishedAt": "2026-11-12T00:34:46.709Z",
       "evidence": [
         "steps/OQ-CMC-03b.complete-programme.json"
       ],
@@ -444,13 +444,13 @@
         {
           "file": "steps/OQ-CMC-03b.api-25.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-03b.api-26.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         }
       ],
@@ -469,8 +469,8 @@
       "expected": "the core §3.2.S / §3.2.P / 3.1 / 3.3 sections, the emittable 3.2.A appendices and US 3.2.R; each completeness is the compiler’s",
       "status": "pass",
       "observed": "21 sections: 3.1, 3.2.A.1, 3.2.A.2, 3.2.A.3, 3.2.P.1, 3.2.P.2, 3.2.P.3, 3.2.P.4, 3.2.P.5, 3.2.P.6, 3.2.P.7, 3.2.P.8, 3.2.R.1.US, 3.2.S.1, 3.2.S.2, 3.2.S.3, 3.2.S.4, 3.2.S.5, 3.2.S.6, 3.2.S.7, 3.3",
-      "startedAt": "2026-11-10T13:06:43.753Z",
-      "finishedAt": "2026-11-10T13:06:44.948Z",
+      "startedAt": "2026-11-12T00:34:46.709Z",
+      "finishedAt": "2026-11-12T00:34:47.694Z",
       "evidence": [
         "steps/OQ-CMC-06.sections.json"
       ],
@@ -478,13 +478,13 @@
         {
           "file": "steps/OQ-CMC-06.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-06.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         }
       ],
@@ -503,8 +503,8 @@
       "expected": "409 naming the registers to record first; nothing written",
       "status": "pass",
       "observed": "409: No canonical source objects for this project — nothing to compile. Record the project's CMC data in the registers (substance, product, methods, specifications, batches, stability);",
-      "startedAt": "2026-11-10T13:06:44.948Z",
-      "finishedAt": "2026-11-10T13:06:45.911Z",
+      "startedAt": "2026-11-12T00:34:47.694Z",
+      "finishedAt": "2026-11-12T00:34:48.674Z",
       "evidence": [],
       "api": [
         {
@@ -516,13 +516,13 @@
         {
           "file": "steps/OQ-CMC-07.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/68f09ab0-99f1-441c-94f7-c03bd7bbfb76",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/6806bf10-fa8f-4732-9e36-a6b0385371e7",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-07.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/68f09ab0-99f1-441c-94f7-c03bd7bbfb76",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/6806bf10-fa8f-4732-9e36-a6b0385371e7",
           "status": 200
         }
       ],
@@ -541,8 +541,8 @@
       "expected": "409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE; nothing composed; the refusal names ICH Q6B and the authoring path",
       "status": "pass",
       "observed": "409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE; 0 sections; This project records its product as a biologic, and Module 3 is composed here only for a drug (a small-molecule medicinal product). A biologic's quality require",
-      "startedAt": "2026-11-10T13:06:45.911Z",
-      "finishedAt": "2026-11-10T13:06:47.170Z",
+      "startedAt": "2026-11-12T00:34:48.674Z",
+      "finishedAt": "2026-11-12T00:34:49.941Z",
       "evidence": [],
       "api": [
         {
@@ -560,13 +560,13 @@
         {
           "file": "steps/OQ-CMC-08.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/84914360-8fb5-48f7-b167-54a2a092efb2",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/d32c437d-311f-485e-a918-3d94c2ad01b8",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-08.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/84914360-8fb5-48f7-b167-54a2a092efb2",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/d32c437d-311f-485e-a918-3d94c2ad01b8",
           "status": 200
         }
       ],
@@ -585,8 +585,8 @@
       "expected": "409 CMC_APPLICATION_OUT_OF_SCOPE, then 409 CMC_MODALITY_NOT_ESTABLISHED; nothing composed",
       "status": "pass",
       "observed": "NDA CMC_APPLICATION_OUT_OF_SCOPE; no route recorded CMC_MODALITY_NOT_ESTABLISHED",
-      "startedAt": "2026-11-10T13:06:47.170Z",
-      "finishedAt": "2026-11-10T13:06:49.137Z",
+      "startedAt": "2026-11-12T00:34:49.942Z",
+      "finishedAt": "2026-11-12T00:34:51.868Z",
       "evidence": [],
       "api": [
         {
@@ -604,7 +604,7 @@
         {
           "file": "steps/OQ-CMC-09.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/358aa6c8-630e-48e6-9bcb-43d47e4364bb",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/e8362357-4e96-41ce-8adc-aaf3b46c8573",
           "status": 409
         },
         {
@@ -622,7 +622,7 @@
         {
           "file": "steps/OQ-CMC-09.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/4abb0fc4-d698-4f45-8705-c90125c61df1",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/1f259c74-e4fd-4293-b95f-579d4bc85564",
           "status": 409
         }
       ],
@@ -641,26 +641,26 @@
       "expected": "the stored record is the composer’s; the body’s claim is not written",
       "status": "pass",
       "observed": "§3.2.S.1 refresh 200; stored completeness 100 unchanged",
-      "startedAt": "2026-11-10T13:06:49.137Z",
-      "finishedAt": "2026-11-10T13:06:50.015Z",
+      "startedAt": "2026-11-12T00:34:51.868Z",
+      "finishedAt": "2026-11-12T00:34:52.721Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-10.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.S.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.S.1",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-10.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.S.1/refresh",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.S.1/refresh",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-10.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.S.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.S.1",
           "status": 200
         }
       ],
@@ -679,20 +679,20 @@
       "expected": "400 REASON_REQUIRED naming the field; both refused with nothing written",
       "status": "pass",
       "observed": "no reason 400 REASON_REQUIRED (field reason); a 7-character reason 400 REASON_REQUIRED",
-      "startedAt": "2026-11-10T13:06:50.015Z",
-      "finishedAt": "2026-11-10T13:06:50.562Z",
+      "startedAt": "2026-11-12T00:34:52.721Z",
+      "finishedAt": "2026-11-12T00:34:53.268Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-11.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.1/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-11.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.1/approve",
           "status": 400
         }
       ],
@@ -711,27 +711,27 @@
       "expected": "403 ESIGNATURE_NO_AUTHORITY; no signature row",
       "status": "pass",
       "observed": "the member's approval 403 ESIGNATURE_NO_AUTHORITY; signature rows 0 → 0",
-      "startedAt": "2026-11-10T13:06:50.562Z",
-      "finishedAt": "2026-11-10T13:06:51.798Z",
+      "startedAt": "2026-11-12T00:34:53.268Z",
+      "finishedAt": "2026-11-12T00:34:54.530Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-12.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A6270d978-aff3-43f0-ad87-1e6726350bf8%2F3.1",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A8655492d-c15c-4585-9ed2-6a645fc7c7f6%2F3.1",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-12.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.1/approve",
           "status": 403,
           "identity": "oq-member@validation.local"
         },
         {
           "file": "steps/OQ-CMC-12.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A6270d978-aff3-43f0-ad87-1e6726350bf8%2F3.1",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A8655492d-c15c-4585-9ed2-6a645fc7c7f6%2F3.1",
           "status": 200
         }
       ],
@@ -749,9 +749,9 @@
       "action": "as the signer: approve with a wrong password, then with the password and a fresh authenticator code",
       "expected": "401 then 200; the section approved; one electronic_signatures row with the signer, the meaning and the bound digest; a chained audit row; a version snapshot",
       "status": "pass",
-      "observed": "wrong password 401; signed 200; version 678b7f19-d1af-459a-9b7e-988b4765c896; 1 signature row(s)",
-      "startedAt": "2026-11-10T13:06:51.798Z",
-      "finishedAt": "2026-11-10T13:07:01.213Z",
+      "observed": "wrong password 401; signed 200; version fd772363-ca43-4712-abd8-ecb7e87fa52d; 1 signature row(s)",
+      "startedAt": "2026-11-12T00:34:54.530Z",
+      "finishedAt": "2026-11-12T00:35:01.258Z",
       "evidence": [
         "steps/OQ-CMC-13.signature-rows.json"
       ],
@@ -759,27 +759,27 @@
         {
           "file": "steps/OQ-CMC-13.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.1/approve",
           "status": 401,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-13.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.1/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-13.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.1",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-13.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A6270d978-aff3-43f0-ad87-1e6726350bf8%2F3.1",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A8655492d-c15c-4585-9ed2-6a645fc7c7f6%2F3.1",
           "status": 200
         }
       ],
@@ -797,9 +797,9 @@
       "action": "as the runtime role (DATABASE_URL_RUNTIME, the organisation set as the server sets it): read the signature row's bound digest and the approved version's stored snapshot; recompute the §11.70 digest",
       "expected": "the signature row carries a sha256 bound digest, basis cmc-module3-section-version-sha256, equal to sha256 of the canonical JSON of {organizationId, projectId, sectionKey, versionNumber, approvedVersionId, snapshot}",
       "status": "pass",
-      "observed": "signature 83: stored 9ca698cfbe10f6d9… = recomputed over version 678b7f19-d1af-459a-9b7e-988b4765c896 (v1)",
-      "startedAt": "2026-11-10T13:07:01.213Z",
-      "finishedAt": "2026-11-10T13:07:01.518Z",
+      "observed": "signature 141: stored 6662691f9880cf1f… = recomputed over version fd772363-ca43-4712-abd8-ecb7e87fa52d (v1)",
+      "startedAt": "2026-11-12T00:35:01.258Z",
+      "finishedAt": "2026-11-12T00:35:01.559Z",
       "evidence": [
         "steps/OQ-CMC-14.digest-recomputation.json"
       ],
@@ -826,21 +826,21 @@
       "expected": "409 SECTION_CHANGED; nothing signed",
       "status": "pass",
       "observed": "409 SECTION_CHANGED; §3.2.A.1 still draft",
-      "startedAt": "2026-11-10T13:07:01.518Z",
-      "finishedAt": "2026-11-10T13:07:31.001Z",
+      "startedAt": "2026-11-12T00:35:01.559Z",
+      "finishedAt": "2026-11-12T00:35:30.945Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-15.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.A.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.A.1/approve",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-15.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.A.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.A.1",
           "status": 200
         }
       ],
@@ -859,8 +859,8 @@
       "expected": "the sweep reports what it examined; a recorded resolution survives the re-run",
       "status": "pass",
       "observed": "the sweep reports {\"specifications\":1,\"methods\":1,\"stability\":1,\"batches\":1,\"comparability\":0}; re-sweep 200",
-      "startedAt": "2026-11-10T13:07:31.001Z",
-      "finishedAt": "2026-11-10T13:07:31.586Z",
+      "startedAt": "2026-11-12T00:35:30.945Z",
+      "finishedAt": "2026-11-12T00:35:31.530Z",
       "evidence": [
         "steps/OQ-CMC-16.sweeps.json"
       ],
@@ -868,13 +868,13 @@
         {
           "file": "steps/OQ-CMC-16.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-16.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         }
       ],
@@ -893,8 +893,8 @@
       "expected": "the sweep records a critical finding; 403 ESIGNATURE_NO_AUTHORITY and 422 REASON_REQUIRED with the row still open and no audit row; then resolved, with a chained row",
       "status": "pass",
       "observed": "batch_rejected (critical) recorded; gate 409 while open; member 403 ESIGNATURE_NO_AUTHORITY; signer with no reason 422 REASON_REQUIRED; row still open and no audit row; signer with a reason 200, 1 chained row(s), chain ok",
-      "startedAt": "2026-11-10T13:07:31.587Z",
-      "finishedAt": "2026-11-10T13:08:03.734Z",
+      "startedAt": "2026-11-12T00:35:31.530Z",
+      "finishedAt": "2026-11-12T00:36:03.753Z",
       "evidence": [
         "steps/OQ-CMC-17.gate-with-critical-open.json",
         "steps/OQ-CMC-17.resolution.json"
@@ -909,46 +909,46 @@
         {
           "file": "steps/OQ-CMC-17.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/batch-records/389b4308-3626-4eb6-909a-e2738ed9721f/release",
+          "url": "http://localhost:5200/api/cmc/batch-records/63245ec5-3c3a-4661-81fa-51ffaeae2fb1/release",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-17.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-17.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-17.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-17.api-6.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/576afa28-6c58-488a-82a8-6b12921fe5c0/resolve",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/be3eb6b1-332b-4968-a0d3-4570d8ff479f/resolve",
           "status": 403,
           "identity": "oq-member@validation.local"
         },
         {
           "file": "steps/OQ-CMC-17.api-7.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/576afa28-6c58-488a-82a8-6b12921fe5c0/resolve",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/be3eb6b1-332b-4968-a0d3-4570d8ff479f/resolve",
           "status": 422,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-17.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
@@ -960,14 +960,14 @@
         {
           "file": "steps/OQ-CMC-17.api-10.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/576afa28-6c58-488a-82a8-6b12921fe5c0/resolve",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/be3eb6b1-332b-4968-a0d3-4570d8ff479f/resolve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-17.api-11.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
@@ -992,8 +992,8 @@
       "expected": "409 naming the blocker; 200 only when every blocker is clear",
       "status": "pass",
       "observed": "409: 20 of 21 sections unapproved, 3 without source lineage; sentence: 3 section(s) have no recorded source lineage, so the audit trail required for export is incomplete",
-      "startedAt": "2026-11-10T13:08:03.734Z",
-      "finishedAt": "2026-11-10T13:08:04.022Z",
+      "startedAt": "2026-11-12T00:36:03.753Z",
+      "finishedAt": "2026-11-12T00:36:04.048Z",
       "evidence": [
         "steps/OQ-CMC-18.gate.json"
       ],
@@ -1001,7 +1001,7 @@
         {
           "file": "steps/OQ-CMC-18.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 409
         }
       ],
@@ -1017,11 +1017,11 @@
       ],
       "kind": "scripted",
       "action": "on the second programme: validate the method under signature, compile, sweep, approve every section as the signer, read the final-export gate; create the IND sequence; place into another submission, then into its own; then place again",
-      "expected": "every section approved and the gate 200; another submission refused with no leaf; 200 with one leaf per section; the repeat adds no leaf",
+      "expected": "every section approved and the gate 200; another submission refused with no leaf; 200 with one leaf per section; the repeat writes nothing",
       "status": "pass",
-      "observed": "21 sections approved; gate 200; another submission 404 with no leaf; placed 21 leaves, one per section; the repeat 200 with 21 leaves still (each leaf updated in place)",
-      "startedAt": "2026-11-10T13:08:04.022Z",
-      "finishedAt": "2026-11-10T13:20:31.285Z",
+      "observed": "21 sections approved; gate 200; another submission 404 with no leaf; placed 21 leaves, one per section; the repeat 200: 21 of 21 sections unchanged, no leaf and no filing document written",
+      "startedAt": "2026-11-12T00:36:04.048Z",
+      "finishedAt": "2026-11-12T00:48:30.732Z",
       "evidence": [
         "steps/OQ-CMC-19.gate-every-blocker-cleared.json",
         "steps/OQ-CMC-19.placement.json",
@@ -1031,185 +1031,185 @@
         {
           "file": "steps/OQ-CMC-19.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/18/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/23/validate",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-19.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-19.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-19.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-19.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.1/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.A.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.A.1/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-8.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.A.2/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.A.2/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.A.3/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.A.3/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-10.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.1/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.2/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.2/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-12.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.3/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.3/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-13.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.4/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.4/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-14.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.5/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.5/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-15.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.6/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.6/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-16.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.7/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.7/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-17.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.P.8/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.8/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-18.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.R.1.US/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.R.1.US/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-19.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.1/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-20.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.2/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.2/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-21.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.3/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.3/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-22.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.4/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.4/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-23.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.5/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.5/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-24.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.6/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.6/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-25.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.2.S.7/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.7/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-26.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc/3.3/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.3/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-27.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200
         },
         {
@@ -1221,46 +1221,46 @@
         {
           "file": "steps/OQ-CMC-19.api-29.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/submissions/86/sequences",
+          "url": "http://localhost:5200/api/submissions/101/sequences",
           "status": 201
         },
         {
           "file": "steps/OQ-CMC-19.api-30.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 404,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-31.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/18/leaves",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-19.api-32.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-33.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/18/leaves",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-19.api-34.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-19.api-35.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/18/leaves",
           "status": 200
         }
       ],
@@ -1279,27 +1279,27 @@
       "expected": "403; no leaf written",
       "status": "pass",
       "observed": "403 ; leaves 21 → 21",
-      "startedAt": "2026-11-10T13:20:31.285Z",
-      "finishedAt": "2026-11-10T13:20:32.653Z",
+      "startedAt": "2026-11-12T00:48:30.732Z",
+      "finishedAt": "2026-11-12T00:48:32.058Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-20.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/18/leaves",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-20.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 403,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-20.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/18/leaves",
           "status": 200
         }
       ],
@@ -1318,8 +1318,8 @@
       "expected": "each refused by the database",
       "status": "pass",
       "observed": "cmc_module3_section_versions.UPDATE refused: 42501; cmc_module3_section_versions.DELETE refused: 42501; cmc_provenance_events.UPDATE refused: 42501; cmc_provenance_events.DELETE refused: 42501",
-      "startedAt": "2026-11-10T13:20:32.653Z",
-      "finishedAt": "2026-11-10T13:20:32.671Z",
+      "startedAt": "2026-11-12T00:48:32.059Z",
+      "finishedAt": "2026-11-12T00:48:32.069Z",
       "evidence": [
         "steps/OQ-CMC-21.append-only.json"
       ],
@@ -1339,14 +1339,14 @@
       "expected": "409 each time; nothing released",
       "status": "pass",
       "observed": "release with no QC result 409; create already released 409",
-      "startedAt": "2026-11-10T13:20:32.671Z",
-      "finishedAt": "2026-11-10T13:21:00.637Z",
+      "startedAt": "2026-11-12T00:48:32.069Z",
+      "finishedAt": "2026-11-12T00:49:00.621Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-22.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/batch-records/9d97fa5b-5393-48f1-af3d-aa49e0130536/release",
+          "url": "http://localhost:5200/api/cmc/batch-records/2c35450c-02e7-40d3-a417-b28672a46e72/release",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
@@ -1372,40 +1372,40 @@
       "expected": "the method validated 200; the approval 200; 422 without a reason; with one, the edit lands and the approval is withdrawn",
       "status": "pass",
       "observed": "method validated 200; approved 200; edit with no reason 422; with a reason 200 and the approval withdrawn (undefined)",
-      "startedAt": "2026-11-10T13:21:00.637Z",
-      "finishedAt": "2026-11-10T13:22:01.542Z",
+      "startedAt": "2026-11-12T00:49:00.621Z",
+      "finishedAt": "2026-11-12T00:50:01.573Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-23.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/17/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/22/validate",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-23.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e/approve",
+          "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-23.api-3.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+          "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
           "status": 422
         },
         {
           "file": "steps/OQ-CMC-23.api-4.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+          "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-23.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+          "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
           "status": 200
         }
       ],
@@ -1424,8 +1424,8 @@
       "expected": "it cites the guideline revision and the records it judged; 403/404 for the foreign programme",
       "status": "pass",
       "observed": "compliance 200 citing guidelines; a nonexistent programme 404 with no records; a foreign programme 404",
-      "startedAt": "2026-11-10T13:22:01.542Z",
-      "finishedAt": "2026-11-10T13:22:02.426Z",
+      "startedAt": "2026-11-12T00:50:01.573Z",
+      "finishedAt": "2026-11-12T00:50:02.437Z",
       "evidence": [
         "steps/OQ-CMC-24.ich-compliance.json"
       ],
@@ -1464,8 +1464,8 @@
       "expected": "the approvals, portfolio, build state and the gate’s own readiness verdict are shown; an uncomputed figure says so; a never-swept programme is not reported as swept and clear",
       "status": "pass",
       "observed": "screens captured for the recorded and the empty programme; the reviewer reads the screenshots",
-      "startedAt": "2026-11-10T13:22:02.426Z",
-      "finishedAt": "2026-11-10T13:22:22.274Z",
+      "startedAt": "2026-11-12T00:50:02.437Z",
+      "finishedAt": "2026-11-12T00:50:20.315Z",
       "evidence": [
         "steps/OQ-CMC-25.overview.png",
         "steps/OQ-CMC-25.empty-programme.png"
@@ -1490,8 +1490,8 @@
         "anaDependency": "down",
         "launchScopeEnforced": true
       },
-      "startedAt": "2026-11-10T13:22:22.274Z",
-      "finishedAt": "2026-11-10T13:22:22.884Z",
+      "startedAt": "2026-11-12T00:50:20.315Z",
+      "finishedAt": "2026-11-12T00:50:20.909Z",
       "evidence": [
         "steps/OQ-CMC-26.posture.json",
         "steps/OQ-CMC-26.at-failure.png"
@@ -1522,12 +1522,12 @@
         "URS-CMC-017"
       ],
       "kind": "scripted",
-      "action": "as the signer, sign the second programme’s sequence for dispatch; read the release verdict; place Module 3 again; read the verdict again",
-      "expected": "signed and bound to the current leaf manifest; after the placement the signature no longer clears the sequence, and the verdict says to sign the current content",
+      "action": "as the signer, sign the second programme’s sequence for dispatch; place Module 3 again unchanged; then change the product’s shelf life, read the gate, compile, re-approve what lost its approval, and place; read the release verdict at each point",
+      "expected": "signed and bound to the current leaf manifest; an unchanged placement leaves it clearing; the edit makes approved sections stale and the gate refuses until they are re-approved; once the changed section is placed the signature no longer clears the sequence, and the verdict says to sign the current content",
       "status": "pass",
-      "observed": "unsigned; signed and bound to the current leaf manifest (signature 109); after a further placement: invalid, not cleared — the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content",
-      "startedAt": "2026-11-10T13:22:22.884Z",
-      "finishedAt": "2026-11-10T13:23:01.306Z",
+      "observed": "signed and bound to the current leaf manifest (signature 167); an unchanged placement left it clearing; the shelf-life edit made 2 approved section(s) stale and the gate 409; 3.2.P.8, 3.2.S.7 re-approved, gate 200; 3.2.P.8 filed again; then: invalid, not cleared — the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content",
+      "startedAt": "2026-11-12T00:50:20.909Z",
+      "finishedAt": "2026-11-12T00:52:30.774Z",
       "evidence": [
         "steps/OQ-CMC-27.release-signature.json"
       ],
@@ -1535,7 +1535,7 @@
         {
           "file": "steps/OQ-CMC-27.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
           "status": 200
         },
         {
@@ -1548,25 +1548,88 @@
         {
           "file": "steps/OQ-CMC-27.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-27.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-27.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-6.json",
+          "method": "PUT",
+          "url": "http://localhost:5200/api/cmc/stability-studies/84",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-7.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
+          "status": 409
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-8.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/689b2e11-9727-43af-9aae-1369322b42cc",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-9.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-10.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
+          "status": 409
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-11.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.8/approve",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-12.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.S.7/approve",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-13.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/689b2e11-9727-43af-9aae-1369322b42cc",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-14.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/689b2e11-9727-43af-9aae-1369322b42cc",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-CMC-27.api-15.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
           "status": 200
         }
       ],
       "consoleErrors": [],
-      "note": "v0.13: executed for the first time. Until v0.12 the step posted to /api/submissions/sequences/:id/sign-release, which is no route; a sequence's release is a governed signature (POST /api/c2c/actions/sign, intent `dispatch`), as the Submission Center signs it.",
+      "note": "v0.13: executed for the first time; until v0.12 the step posted to /api/submissions/sequences/:id/sign-release, which is no route (a release is a governed signature, POST /api/c2c/actions/sign, intent `dispatch`). v0.14: the content is changed the way a programme changes it. In v0.13 the step placed the same Module 3 again, which then rewrote every filing document; since the 2026-11-11 repair an unchanged placement writes nothing, and the step asserts that too. The gate's answer with approved sections made stale is attached (URS-CMC-010's stale case).",
       "rateLimitRetries": 0
     },
     {
@@ -1580,8 +1643,8 @@
       "expected": "blocked for 3.2.S and for 3.2.P, citing 21 CFR 312.23(a)(7) and (b) and naming both remedies; no such finding once Module 3 is placed",
       "status": "pass",
       "observed": "with no Module 3: blocked for 3.2.S and 3.2.P, each citing 21 CFR 312.23(a)(7) and (b) and naming both remedies; with Module 3 placed: no such finding",
-      "startedAt": "2026-11-10T13:23:01.306Z",
-      "finishedAt": "2026-11-10T13:23:02.587Z",
+      "startedAt": "2026-11-12T00:52:30.774Z",
+      "finishedAt": "2026-11-12T00:52:31.994Z",
       "evidence": [
         "steps/OQ-CMC-28.dispatch-readiness.json"
       ],
@@ -1595,19 +1658,19 @@
         {
           "file": "steps/OQ-CMC-28.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/submissions/85/sequences",
+          "url": "http://localhost:5200/api/submissions/100/sequences",
           "status": 201
         },
         {
           "file": "steps/OQ-CMC-28.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/15/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/19/dispatch-readiness",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-28.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/14/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
           "status": 200
         }
       ],
@@ -1626,8 +1689,8 @@
       "expected": "the called path served; the unclaimed path 403 LAUNCH_SCOPE",
       "status": "pass",
       "observed": "claimed 200; unclaimed 403 LAUNCH_SCOPE",
-      "startedAt": "2026-11-10T13:23:02.587Z",
-      "finishedAt": "2026-11-10T13:23:03.415Z",
+      "startedAt": "2026-11-12T00:52:31.994Z",
+      "finishedAt": "2026-11-12T00:52:32.811Z",
       "evidence": [
         "steps/OQ-CMC-29.launch-scope.json"
       ],
@@ -1635,7 +1698,7 @@
         {
           "file": "steps/OQ-CMC-29.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         },
         {
@@ -1668,8 +1731,8 @@
       "observed": {
         "error": "invalid_request"
       },
-      "startedAt": "2026-11-10T13:23:03.415Z",
-      "finishedAt": "2026-11-10T13:23:03.779Z",
+      "startedAt": "2026-11-12T00:52:32.811Z",
+      "finishedAt": "2026-11-12T00:52:33.185Z",
       "evidence": [
         "steps/OQ-CMC-30.at-failure.png"
       ],
@@ -1696,9 +1759,9 @@
       "action": "read the chained audit ledger after the prerequisite’s writes",
       "expected": "one row per recorded row, naming the operator and the record; none anonymous; the chain verifies",
       "status": "pass",
-      "observed": "6/6 records named by a register-create row; 218 rows, none anonymous; chain ok over 1433 row(s) of audit_logs",
-      "startedAt": "2026-11-10T13:23:03.779Z",
-      "finishedAt": "2026-11-10T13:23:04.156Z",
+      "observed": "6/6 records named by a register-create row; 232 rows, none anonymous; chain ok over 1875 row(s) of audit_logs",
+      "startedAt": "2026-11-12T00:52:33.185Z",
+      "finishedAt": "2026-11-12T00:52:33.537Z",
       "evidence": [
         "steps/OQ-CMC-32.register-create-ledger.json"
       ],
@@ -1725,26 +1788,26 @@
       "expected": "403 SEPARATION_OF_DUTIES naming why; then 400 APPROVAL_IS_NOT_AUTHORSHIP; nothing signed either time",
       "status": "pass",
       "observed": "self-approval 403 SEPARATION_OF_DUTIES; authorship meaning 400 APPROVAL_IS_NOT_AUTHORSHIP; §3.2.S.1 still draft",
-      "startedAt": "2026-11-10T13:23:04.156Z",
-      "finishedAt": "2026-11-10T13:23:05.335Z",
+      "startedAt": "2026-11-12T00:52:33.537Z",
+      "finishedAt": "2026-11-12T00:52:34.677Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-33.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.S.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.S.1/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-33.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.S.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.S.1/approve",
           "status": 403
         },
         {
           "file": "steps/OQ-CMC-33.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.S.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/8655492d-c15c-4585-9ed2-6a645fc7c7f6/3.2.S.1",
           "status": 200
         }
       ],
@@ -1764,8 +1827,8 @@
       "expected": "reviewer judgment",
       "status": "pass",
       "observed": "the run’s own identifiers are attached for the reviewer; the runner records no further observation",
-      "startedAt": "2026-11-10T13:23:05.335Z",
-      "finishedAt": "2026-11-10T13:23:05.336Z",
+      "startedAt": "2026-11-12T00:52:34.678Z",
+      "finishedAt": "2026-11-12T00:52:34.678Z",
       "evidence": [
         "steps/OQ-CMC-31.run-state.json"
       ],
@@ -1785,8 +1848,8 @@
       "expected": "each refused 409 naming the governed path that does record it; nothing written, and no signer or date set",
       "status": "pass",
       "observed": "4 registers refuse the signed state on create; 3 refuse it on an edit; each names its own governed path",
-      "startedAt": "2026-11-10T13:23:05.336Z",
-      "finishedAt": "2026-11-10T13:23:08.987Z",
+      "startedAt": "2026-11-12T00:52:34.678Z",
+      "finishedAt": "2026-11-12T00:52:38.259Z",
       "evidence": [
         "steps/OQ-CMC-34.refusals.json"
       ],
@@ -1806,13 +1869,13 @@
         {
           "file": "steps/OQ-CMC-34.api-3.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-34.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24",
           "status": 404
         },
         {
@@ -1830,13 +1893,13 @@
         {
           "file": "steps/OQ-CMC-34.api-7.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/process-validation/6",
+          "url": "http://localhost:5200/api/cmc/process-validation/7",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-34.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/process-validation/6",
+          "url": "http://localhost:5200/api/cmc/process-validation/7",
           "status": 404
         },
         {
@@ -1854,13 +1917,13 @@
         {
           "file": "steps/OQ-CMC-34.api-11.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-34.api-12.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
           "status": 404
         },
         {
@@ -1885,8 +1948,8 @@
       "expected": "the signature records the status, the signer and the date, writes one electronic_signatures row bound to the chained audit row, and the edit after it is refused",
       "status": "pass",
       "observed": "3 registers signed through the path their refusal named; each records the signer and refuses the edit after",
-      "startedAt": "2026-11-10T13:23:08.987Z",
-      "finishedAt": "2026-11-10T13:26:01.259Z",
+      "startedAt": "2026-11-12T00:52:38.259Z",
+      "finishedAt": "2026-11-12T00:55:31.273Z",
       "evidence": [
         "steps/OQ-CMC-35.ungoverned-halves.json",
         "steps/OQ-CMC-35.signatures.json"
@@ -1895,127 +1958,127 @@
         {
           "file": "steps/OQ-CMC-35.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24/validate",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-35.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24/validate",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-35.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/6/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/7/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-35.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/6/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/7/approve",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-35.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-35.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453/approve",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-35.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24/validate",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-8.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24/validate",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-10.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=analytical_method%3A19",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=analytical_method%3A24",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-11.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/19",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/24",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-12.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/6/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/7/approve",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-13.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/process-validation/6",
+          "url": "http://localhost:5200/api/cmc/process-validation/7",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-14.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/6/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/7/approve",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-15.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=process_validation%3A6",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=process_validation%3A7",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-16.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/process-validation/6",
+          "url": "http://localhost:5200/api/cmc/process-validation/7",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-17.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453/approve",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-18.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-19.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453/approve",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-20.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=comparability_study%3A7f1b844f-0ca5-4408-ace9-f366a44687af",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=comparability_study%3A42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-21.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/42d864f5-b8a5-4a4c-bbfa-e6ca4ef77453",
           "status": 409
         }
       ],
@@ -2034,8 +2097,8 @@
       "expected": "Q1E pass, then a finding naming the months claimed and the months covered, then a second finding that Q1E admits extrapolation only on accelerated data, then not_evaluated quoting the text it could not read — never a pass",
       "status": "pass",
       "observed": "4 stability programmes judged: within=pass, beyond=warning, noaccel=warning, unreadable=not_evaluated, planned=warning",
-      "startedAt": "2026-11-10T13:26:01.259Z",
-      "finishedAt": "2026-11-10T13:26:09.026Z",
+      "startedAt": "2026-11-12T00:55:31.273Z",
+      "finishedAt": "2026-11-12T00:55:38.745Z",
       "evidence": [
         "steps/OQ-CMC-36.q1e-verdicts.json"
       ],
@@ -2199,9 +2262,9 @@
       "action": "edit one record in each of three registers — a serial one, a uuid one, and one moved by two fields at once — then send the same body again; then edit a record that does not exist; read each record’s chained history back",
       "expected": "one act per edit that moved something, each naming the actor, the fields that moved and both values; the repeat body adds no act; the unknown record is a 404 that adds none; every act is sealed into the tenant chain",
       "status": "pass",
-      "observed": "3 registers record an edit with both values; a repeat body records none; chain ok over 1472 row(s)",
-      "startedAt": "2026-11-10T13:26:09.026Z",
-      "finishedAt": "2026-11-10T13:26:14.142Z",
+      "observed": "3 registers record an edit with both values; a repeat body records none; chain ok over 1914 row(s)",
+      "startedAt": "2026-11-12T00:55:38.746Z",
+      "finishedAt": "2026-11-12T00:55:43.772Z",
       "evidence": [
         "steps/OQ-CMC-37.recorded-edits.json"
       ],
@@ -2215,25 +2278,25 @@
         {
           "file": "steps/OQ-CMC-37.api-2.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/20",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/25",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/20",
+          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/25",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-4.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/20",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/25",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/20",
+          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/25",
           "status": 200
         },
         {
@@ -2245,25 +2308,25 @@
         {
           "file": "steps/OQ-CMC-37.api-7.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/76",
+          "url": "http://localhost:5200/api/cmc/stability-studies/94",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/76",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/94",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-9.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/76",
+          "url": "http://localhost:5200/api/cmc/stability-studies/94",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-10.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/76",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/94",
           "status": 200
         },
         {
@@ -2275,25 +2338,25 @@
         {
           "file": "steps/OQ-CMC-37.api-12.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-13.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-14.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-15.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
           "status": 200
         },
         {
@@ -2330,8 +2393,8 @@
       "expected": "the create and each edit in order with the person, the fields and both values; 404 for the unknown record; 404 naming the registers that do keep one — never an empty history; the specifications route still answers 200",
       "status": "pass",
       "observed": "3 record histories read in order; an unserved register names the served ones; specifications 200",
-      "startedAt": "2026-11-10T13:26:14.142Z",
-      "finishedAt": "2026-11-10T13:26:15.538Z",
+      "startedAt": "2026-11-12T00:55:43.772Z",
+      "finishedAt": "2026-11-12T00:55:45.135Z",
       "evidence": [
         "steps/OQ-CMC-38.histories.json"
       ],
@@ -2339,19 +2402,19 @@
         {
           "file": "steps/OQ-CMC-38.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/20",
+          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/25",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-38.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/76",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/94",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-38.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
           "status": 200
         },
         {
@@ -2363,7 +2426,7 @@
         {
           "file": "steps/OQ-CMC-38.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e/history",
+          "url": "http://localhost:5200/api/cmc/specifications/87b7e7c4-5c82-4941-97ea-5fbdf36fd699/history",
           "status": 200
         }
       ],
@@ -2382,8 +2445,8 @@
       "expected": "each read 404 stating nothing was assessed and each create 409 naming the programme as not this organisation’s, with nothing written; the same six succeed under the run’s own programme; the create with no programme is accepted as an organisation-wide record",
       "status": "pass",
       "observed": "3 unheld programme(s) × 6 paths refused; the same 6 serve this run's own programme; an org-wide record is accepted",
-      "startedAt": "2026-11-10T13:26:15.538Z",
-      "finishedAt": "2026-11-10T13:26:22.544Z",
+      "startedAt": "2026-11-12T00:55:45.135Z",
+      "finishedAt": "2026-11-12T00:55:52.009Z",
       "evidence": [
         "steps/OQ-CMC-39.unheld-programmes.json"
       ],
@@ -2505,7 +2568,7 @@
         {
           "file": "steps/OQ-CMC-39.api-20.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/quality/qbd/6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "url": "http://localhost:5200/api/cmc/quality/qbd/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": 200
         },
         {
@@ -2554,8 +2617,8 @@
       "expected": "the create and the PUT are each refused 409 naming POST /api/cmc/stability-studies/:id/close-out and nothing is stored; then 400, then 401, then 409 naming the missing shelf life, then 409 naming the absent results, then 200 with COMPLETED, the signer and the date set and one electronic_signatures row; the edit after is 409 SIGNED_RECORD and a second close-out is 409 already COMPLETED",
       "status": "pass",
       "observed": "the close-out is a signature: refused on the create, on the edit, with no reason, with no re-authentication, over no claim and over no data; once signed, closed and unrepeatable",
-      "startedAt": "2026-11-10T13:26:22.544Z",
-      "finishedAt": "2026-11-10T13:28:00.625Z",
+      "startedAt": "2026-11-12T00:55:52.009Z",
+      "finishedAt": "2026-11-12T00:57:30.667Z",
       "evidence": [
         "steps/OQ-CMC-40.close-out.json"
       ],
@@ -2575,73 +2638,73 @@
         {
           "file": "steps/OQ-CMC-40.api-3.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/77",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/95",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-40.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-40.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-8.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-10.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-12.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=stability_study%3A77",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=stability_study%3A95",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-13.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-14.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
           "status": 409
         }
       ],
@@ -2660,8 +2723,8 @@
       "expected": "both sections state the period and the data it is subject to review of; the signed one reads \"accepted on a signed study close-out\" and the running one \"recorded on a study that has not been closed out under signature\" — the only difference between the two sections",
       "status": "pass",
       "observed": "two programmes identical but for the signature compose two different §3.2.P.8 provenance statements",
-      "startedAt": "2026-11-10T13:28:00.625Z",
-      "finishedAt": "2026-11-10T13:28:32.483Z",
+      "startedAt": "2026-11-12T00:57:30.667Z",
+      "finishedAt": "2026-11-12T00:58:02.107Z",
       "evidence": [
         "steps/OQ-CMC-41.provenance.json"
       ],
@@ -2693,7 +2756,7 @@
         {
           "file": "steps/OQ-CMC-41.api-5.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/78",
+          "url": "http://localhost:5200/api/cmc/stability-studies/96",
           "status": 200
         },
         {
@@ -2723,25 +2786,25 @@
         {
           "file": "steps/OQ-CMC-41.api-10.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/79",
+          "url": "http://localhost:5200/api/cmc/stability-studies/97",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-41.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/79/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/97/close-out",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-41.api-12.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/7902e393-1415-4027-aa17-a6d6c0eed598",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/3cffcaa3-e0fd-4343-9091-3f63cb83b0aa",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-41.api-13.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/031c4bc8-7235-4862-9d75-ade3489fd988",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/8568ced5-a274-44b4-bf32-732fcba2eaed",
           "status": 200
         }
       ],
@@ -2759,9 +2822,9 @@
       "action": "POST and PATCH /api/cmc/agency-questions; as the runtime role, INSERT, UPDATE, DELETE and TRUNCATE on reg_questions (each rolled back); log a response-required letter on the programme and record a question on it at §3.2.P.7; set its owner to a member of the organisation with a reason; read the programme's Module 3 questions",
       "expected": "410 CMC_QUESTION_FILE_READ_ONLY twice with the earlier file unchanged; the runtime role refused by the database; 201 for the question; 200 for the owner; the Module 3 read lists it at §3.2.P.7 from the question, unanswered, not overdue, with that owner",
       "status": "pass",
-      "observed": "legacy POST 410, PATCH 410; reg_questions.INSERT refused: 42501; reg_questions.UPDATE refused: 42501; reg_questions.DELETE refused: 42501; reg_questions.TRUNCATE refused: 42501; question 6 listed at §3.2.P.7, unanswered",
-      "startedAt": "2026-11-10T13:28:32.483Z",
-      "finishedAt": "2026-11-10T13:28:35.340Z",
+      "observed": "legacy POST 410, PATCH 410; reg_questions.INSERT refused: 42501; reg_questions.UPDATE refused: 42501; reg_questions.DELETE refused: 42501; reg_questions.TRUNCATE refused: 42501; question 7 listed at §3.2.P.7, unanswered",
+      "startedAt": "2026-11-12T00:58:02.107Z",
+      "finishedAt": "2026-11-12T00:58:04.895Z",
       "evidence": [
         "steps/OQ-CMC-42.module3-read.json",
         "steps/OQ-CMC-42.read-only.json"
@@ -2794,31 +2857,31 @@
         {
           "file": "steps/OQ-CMC-42.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/agency-communications",
+          "url": "http://localhost:5200/api/concept2cure/projects/8655492d-c15c-4585-9ed2-6a645fc7c7f6/agency-communications",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-42.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/agency-communications/ace_1794317313937_0c513e4f/questions",
+          "url": "http://localhost:5200/api/concept2cure/projects/8655492d-c15c-4585-9ed2-6a645fc7c7f6/agency-communications/ace_1794445083525_cb561475/questions",
           "status": 201
         },
         {
           "file": "steps/OQ-CMC-42.api-7.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/team",
+          "url": "http://localhost:5200/api/concept2cure/projects/8655492d-c15c-4585-9ed2-6a645fc7c7f6/team",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-42.api-8.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/agency-communications/ace_1794317313937_0c513e4f/questions/6/owner",
+          "url": "http://localhost:5200/api/concept2cure/projects/8655492d-c15c-4585-9ed2-6a645fc7c7f6/agency-communications/ace_1794445083525_cb561475/questions/7/owner",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-42.api-9.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/agency-questions?ctdModule=3",
+          "url": "http://localhost:5200/api/concept2cure/projects/8655492d-c15c-4585-9ed2-6a645fc7c7f6/agency-questions?ctdModule=3",
           "status": 200
         }
       ],

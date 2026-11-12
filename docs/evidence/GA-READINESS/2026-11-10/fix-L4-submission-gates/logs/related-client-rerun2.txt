@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > requires a reason and binds the explicit sponsor with the exact program revision 1007ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 204 answer without a matching receipt holds further saves 146ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > an HTTP 200 answer without a matching receipt holds further saves 127ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > says when a confirmed program save has no retrievable audit entry 84ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > shows a failed registry read instead of an empty sponsor selector 47ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > creates an existing-registry record without silently binding it to the program 228ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > sends a versioned shared registry edit and reports its audit uncertainty 202ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant facts in the existing forms panel > does not publish an old program write receipt after an A to B to A visit 107ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > distinguishes an empty registry from malformed records 56ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > refuses malformed registry records without offering them 71ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with unchanged revision 149ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > holds an otherwise successful program receipt with inconsistent sponsor name 251ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > requires explicit successful read reconciliation after a lost program write answer 132ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > keeps an uncertain sponsor write held after closing its editor until the registry is explicitly read 532ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish an old program listing after opening another program 47ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > does not publish a late write receipt after session retirement 126ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > recorded applicant read ownership and reconciliation > clears previous field checks when recorded form inputs change 271ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > continues to save after StrictMode effect replay 180ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > applicant editor interaction lifecycle > preserves spaces while a person types a multiword sponsor address 214ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > does not repaint an old field check after a concurrent identity save 528ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when an explicit reload reads changed program facts 443ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > field checks follow recorded input ownership > clears an old check when the per-form serial number changes 169ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{}} 122ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":[]} 68ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1571","fields":{}}} 101ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1572","fields":{},"missingRequired":[]}} 109ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > does not call a malformed HTTP 200 build clean: {"payload":{"formId":"FDA_1571","fields":{},"missingRequired":[null]}} 69ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > refuses a 1572 array when any investigator result is malformed 103ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > form check and sponsor receipt proof > requires an updated revision on a shared sponsor PATCH receipt 250ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > all recorded sponsor and investigator inputs reach field checks > retires a check when the bound sponsor changes without a program revision change 201ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > all recorded sponsor and investigator inputs reach field checks > shows missing fields from the second investigator instead of calling a 1572 array clean 94ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryName 797ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor save when the receipt omits signatoryTitle 285ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > holds a sponsor update when the returned representative differs from the submitted fact 375ms
+ ✓ client/src/concept2cure/v2/__tests__/indApplicantIdentity.test.tsx > existing sponsor authorized representative facts > reads and clears an existing representative title while retaining other recorded facts 154ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source 939ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type with reason, revision and an exact resulting receipt 1166ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error 351ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record 267ms
+
+ Test Files  2 passed (2)
+      Tests  39 passed (39)
+   Start at  12:28:10
+   Duration  20.92s (transform 5.25s, setup 372ms, import 6.89s, tests 10.59s, environment 2.03s)
+

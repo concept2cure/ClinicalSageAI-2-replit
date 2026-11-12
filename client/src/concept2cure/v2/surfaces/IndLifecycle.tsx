@@ -802,7 +802,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      release). */
   const deliverables = INDL_DELIVERABLES.filter((d) => d.group === tab && !d.withheld);
   const withheldHere = INDL_DELIVERABLES.filter((d) => d.group === tab && d.withheld);
-  const stLabel = INDL_STATUS_LABEL;
+  /* GA-D7-13 (2026-11-10): a section placed from the Vault comes back 'placed'
+     (there, not approved) and read "Not started" before the server knew it. */
+  const stLabel: Record<string, string> = { ...INDL_STATUS_LABEL, placed: 'Placed, not yet approved' };
 
   /* Cover-letter exemplar handlers — real POSTs against the real routes
      (server/routes/ind-lifecycle/documents.routes.ts). Identity comes from the
@@ -1384,7 +1386,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                       />
                     </div>
                     <div className="indl-mod-m">
-                      {m.completed}/{m.total} required sections approved
+                      {/* The card counts the module's whole outline, not the
+                          required set the headline counts (GA-D7-13). */}
+                      {m.completed}/{m.total} sections approved
                     </div>
                   </div>
                 ))}

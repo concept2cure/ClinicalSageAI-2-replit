@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-11-10T13:29:13.810Z |
+| Version | generated 2026-11-12T01:00:22.114Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-00* requirement tables · RA-001 rows · docs/evidence/W3/2026-11-10/OQ-*/result.json · IQ/iq-results.json |
@@ -32,7 +32,7 @@
 | Protocol | App | Executed | Pass | Fail | Deviation | Not executed | Evidence |
 |---|---|---|---|---|---|---|---|
 | OQ-003 | Authoring | 2026-11-10T02:48:17.937Z | 25 | 0 | 1 | 0 | `docs/evidence/W3/2026-11-10/OQ-AUTHORING/` |
-| OQ-008 | CMC / Module 3 | 2026-11-10T13:06:27.451Z | 41 | 0 | 2 | 0 | `docs/evidence/W3/2026-11-10/OQ-CMC/` |
+| OQ-008 | CMC / Module 3 | 2026-11-12T00:34:30.495Z | 41 | 0 | 2 | 0 | `docs/evidence/W3/2026-11-10/OQ-CMC/` |
 | OQ-001 | Projects | 2026-11-10T03:05:59.119Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-11-10/OQ-PROJECTS/` |
 | OQ-006 | QMS controlled documents | 2026-11-10T03:11:18.613Z | 22 | 0 | 0 | 0 | `docs/evidence/W3/2026-11-10/OQ-QMS/` |
 | OQ-007 | Reporting & analytics | 2026-11-10T03:35:45.244Z | 17 | 0 | 1 | 0 | `docs/evidence/W3/2026-11-10/OQ-REPORTING/` |

@@ -166,7 +166,7 @@ describe('GET /:id/sources: the catalog and its grades (S2, 2026-11-06)', () => 
     expect(res.body).toMatchObject({ scope: 'catalog', catalogProjects: 2 });
   });
 
-  it('lists the Vault\'s documents beside the captures on the catalog\'s first page, with one count per facet value', async () => {
+  it('lists the Vault\'s documents beside the captures, page by page, with one count per facet value', async () => {
     catalogProgramIds.mockResolvedValue([P, OTHER]);
     searchDataRoom.mockResolvedValue({ total: 1, sources: [src(1)], facets: { project: [], study: [], kind: [], ctd: [], folder: [{ value: 'module-5', label: 'Module 5', count: 1 }] } });
     listVaultForCatalog.mockResolvedValue({ total: 2, documents: [{ documentId: 'd1', title: 'Protocol' }, { documentId: 'd2', title: 'SAP' }],
@@ -176,11 +176,12 @@ describe('GET /:id/sources: the catalog and its grades (S2, 2026-11-06)', () => 
     expect(listVaultForCatalog.mock.calls[0][1]).toMatchObject({ programIds: [P, OTHER] });
     expect(res.body.vault).toMatchObject({ total: 2, documents: [{ documentId: 'd1' }, { documentId: 'd2' }] });
     expect(res.body.facets.folder).toEqual([{ value: 'module-5', label: 'Module 5', count: 3 }, { value: 'corresp', label: 'Agency correspondence', count: 1 }]);
-    // Not on a later page, and never for the one project's own room.
+    // Paged with the captures, and never for the one project's own room.
     listVaultForCatalog.mockClear();
-    expect((await request(app()).get(`/api/c2c/projects/${P}/sources?scope=catalog&offset=50`)).body.vault).toBeUndefined();
+    expect((await request(app()).get(`/api/c2c/projects/${P}/sources?scope=catalog&offset=50&limit=50`)).body.vault.total).toBe(2);
+    expect(listVaultForCatalog.mock.calls[0][1]).toMatchObject({ offset: 50, limit: 50 });
     expect((await request(app()).get(`/api/c2c/projects/${P}/sources`)).body.vault).toBeUndefined();
-    expect(listVaultForCatalog).not.toHaveBeenCalled();
+    expect(listVaultForCatalog).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the captures readable when the Vault\'s documents cannot be listed, and says so', async () => {

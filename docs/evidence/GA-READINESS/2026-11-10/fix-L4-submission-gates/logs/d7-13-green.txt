@@ -1,0 +1,24 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-10T12:14:12.873Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > the placed Investigator's Brochure and QOS read "placed", never "not started" and never approved 30ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > the module card counts a placed section as in progress, not approved 10ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > a leaf naming another organisation's document, a missing one or a deleted one places nothing 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts > IND checklist — a section placed from the Vault reads as placed > a co-authored document at the same code still governs when it is less advanced 10ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  12:14:09
+   Duration  8.04s (transform 2.31s, setup 96ms, import 4.67s, tests 2.96s, environment 0ms)
+

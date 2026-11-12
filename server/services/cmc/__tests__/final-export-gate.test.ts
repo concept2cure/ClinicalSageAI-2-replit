@@ -236,3 +236,38 @@ describe('evaluateFinalExportGate — a detected contradiction is not waved thro
     await expect(evaluateFinalExportGate({ orgId: 1, projectId: PROGRAM, actorId: 'u1' })).rejects.toThrow(/not readable/);
   });
 });
+
+/* 2026-11-12 (CMC walked in the running app): with no section approved and two drafts stale, the build screen read
+   "2 section(s) went stale after approval and must be re-approved before final export". Nothing had been approved. */
+describe('evaluateFinalExportGate — a stale section is described as what it is', () => {
+  const withSections = (rows: ReturnType<typeof section>[]) => {
+    queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
+      if (sql.includes('FROM cmc_module3_sections')) return { rows };
+      return { rows: [] };
+    });
+    return evaluateFinalExportGate({ orgId: 1, projectId: 'p1', actorId: 'u1' });
+  };
+
+  it('stale drafts are not said to have gone stale after approval; the remedy is a compile', async () => {
+    const verdict = await withSections([section({ approval_state: 'draft', stale: true }), section({ approval_state: 'draft', stale: true }), section({ approval_state: 'draft' })]);
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.error).not.toMatch(/after approval|re-approved/);
+    expect(verdict.error).toMatch(/2 draft section\(s\) are stale/);
+    expect(verdict.error).toMatch(/recompile/i);
+    expect(verdict.data).toMatchObject({ staleSections: 2, staleApprovedSections: 0 });
+  });
+
+  it('approved sections that went stale are said to owe a re-approval, as before', async () => {
+    const verdict = await withSections([section({ stale: true }), section({ stale: true }), section({})]);
+    expect(verdict.error).toBe('2 section(s) went stale after approval and must be re-approved before final export');
+    expect(verdict.data).toMatchObject({ staleSections: 2, staleApprovedSections: 2 });
+  });
+
+  it('a mix names each kind with its own count', async () => {
+    const verdict = await withSections([section({ stale: true }), section({ approval_state: 'draft', stale: true }), section({})]);
+    expect(verdict.error).toMatch(/^1 section\(s\) went stale after approval/);
+    expect(verdict.error).toMatch(/1 draft section\(s\) are stale/);
+    expect(verdict.data).toMatchObject({ staleSections: 2, staleApprovedSections: 1 });
+  });
+});

@@ -1,6 +1,6 @@
 {
   "finding": {
-    "id": "576afa28-6c58-488a-82a8-6b12921fe5c0",
+    "id": "be3eb6b1-332b-4968-a0d3-4570d8ff479f",
     "severity": "critical",
     "contradictionType": "batch_rejected",
     "details": "At least one batch is rejected while Module 3 composition may include releasable assertions.",
@@ -13,7 +13,7 @@
       "MSAT/Process Engineer"
     ],
     "status": "open",
-    "updatedAt": "2026-11-10T13:08:01.020Z"
+    "updatedAt": "2026-11-12T00:36:01.012Z"
   },
   "member": {
     "success": false,
@@ -30,28 +30,28 @@
   "resolved": {
     "success": true,
     "data": {
-      "id": "576afa28-6c58-488a-82a8-6b12921fe5c0",
+      "id": "be3eb6b1-332b-4968-a0d3-4570d8ff479f",
       "status": "resolved"
     }
   },
   "ledgerRows": [
     {
-      "id": "AUD-890bb920-2191-4601-b126-2a007cc0c89d",
-      "when": "2026-11-10 13:08",
-      "at": "2026-11-10T13:08:03.103Z",
+      "id": "AUD-afab2be0-7a6b-40b9-9553-eaf04237b5ec",
+      "when": "2026-11-12 00:36",
+      "at": "2026-11-12T00:36:03.117Z",
       "actor": "OQ Signer",
       "actorRef": "user:2",
       "event": "Cmc Contradiction Resolve",
-      "target": "cmc_contradiction:576afa28-6c58-488a-82a8-6b12921fe5c0",
+      "target": "cmc_contradiction:be3eb6b1-332b-4968-a0d3-4570d8ff479f",
       "kind": "admin",
       "sig": false,
-      "hash": "f11c2814e6bf4567ec3fe852cf1527d0cb8e701162d474bc997ab6e121687e87",
-      "prevHash": "420c9dd675998fadf30c19fb53b0996149a5079d71e4512b65dbcf54072182d0",
+      "hash": "a5f492f2d2311b030c0fffd8a8f31cc4bec0074d7e26387f038e55c48e68e466",
+      "prevHash": "d7702e584a66702843e3250a1e8e7c22fa5b75cbca9190bd85a31b442a3195c7",
       "ip": "127.0.0.1",
       "reason": null,
       "meaning": null,
       "source": "audit_logs",
-      "seq": 1361,
+      "seq": 1842,
       "signatureRef": null,
       "targetRef": null
     }
@@ -59,9 +59,9 @@
   "chain": {
     "store": "audit_logs",
     "legacyRows": 0,
-    "sequencedRows": 1340,
+    "sequencedRows": 1820,
     "ok": true,
-    "rowsChecked": 1340,
+    "rowsChecked": 1820,
     "head": {
       "verified": false,
       "status": "not_configured",

@@ -136,11 +136,10 @@ export async function listDataCatalogForAna(
 
 /**
  * The Vault's current documents of the same projects under the same narrowings (data-room-vault.ts), as the screen
- * lists them on its first page. A failed read says so; the captures are still answered.
+ * lists them, paged with the captures. A failed read says so; the captures are still answered.
  */
 async function vaultItemsForAna(orgId: number, query: import('../clinical-regulatory-evidence/data-room-search.js').DataRoomQuery):
 Promise<{ vaultTotal?: number; vaultDocuments?: Array<Record<string, unknown>>; vaultUnavailable?: string }> {
-  if ((query.offset ?? 0) !== 0) return {};
   try {
     const { listVaultForCatalog } = await import('../clinical-regulatory-evidence/data-room-vault.js');
     const page = await listVaultForCatalog(orgId, query);

@@ -5,8 +5,8 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "031c4bc8-7235-4862-9d75-ade3489fd988",
-      "substanceName": "PRV-signed-20261110130629",
+      "projectId": "8568ced5-a274-44b4-bf32-732fcba2eaed",
+      "substanceName": "PRV-signed-20261112003432",
       "status": "development",
       "developmentPhase": "phase1",
       "modality": "small_molecule"
@@ -15,15 +15,15 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 50,
+    "durationMs": 35,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 61,
+        "id": 74,
         "organizationId": 2,
-        "projectId": "031c4bc8-7235-4862-9d75-ade3489fd988",
-        "substanceName": "PRV-signed-20261110130629",
+        "projectId": "8568ced5-a274-44b4-bf32-732fcba2eaed",
+        "substanceName": "PRV-signed-20261112003432",
         "structuralFormula": null,
         "molecularFormula": null,
         "molecularWeight": null,
@@ -42,8 +42,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": "phase1",
-        "createdAt": "2026-11-10T13:28:02.953Z",
-        "updatedAt": "2026-11-10T13:28:02.953Z"
+        "createdAt": "2026-11-12T00:57:32.993Z",
+        "updatedAt": "2026-11-12T00:57:32.993Z"
       },
       "module3Linked": true
     }

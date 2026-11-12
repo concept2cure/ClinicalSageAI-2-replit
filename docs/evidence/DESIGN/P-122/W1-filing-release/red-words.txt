@@ -1,0 +1,18 @@
+ × client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > names a working field by its section number and title, never its stored key 670ms
+ × client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > says checks are not required for this document, and when they are, instead of "(optional)" 323ms
+ × client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx > the review dialog speaks in words > a finding names its section in words 116ms
+ × shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > shows a working field the number of the section it belongs to, never its stored key 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '1.14.4.1:work:3', …(2) ] to deeply equal [ '1.14.4.1', '1.2', '5.3.5.1' ]
+- Expected
++ Received
+AssertionError: expected '1.14.4.1:work:3 · Pharmacology and to…' to be '1.14.4.1 · Pharmacology and toxicolog…' // Object.is equality
+Expected: "1.14.4.1 · Pharmacology and toxicology summary"
+Received: "1.14.4.1:work:3 · Pharmacology and toxicology summary"
+AssertionError: expected 'Independent checks (optional)' to be 'Independent checks' // Object.is equality
+Expected: "Independent checks"
+Received: "Independent checks (optional)"
+AssertionError: expected 'Finding 1: empty sectionlow · Advisor…' to match /1\.14\.4\.1 — Pharmacology and toxico…/
+- Expected:
++ Received:
+      Tests  4 failed | 27 passed (31)

@@ -146,11 +146,10 @@ agency questions. Nothing was changed at any of these sites.
 
 ## Not done
 
-- **ICH Q6A/Q6B reference test sets beside Specifications.** The Q3 reference reaches the impurity register through the
-  per-impurity assessment (thresholds at the recorded dose, Q3C class and limit, Q3D PDE). The Q6 test-set reference
-  (`GET /api/global-ri/cmc/specifications/:productType`) is served under `/api/global-ri`, which no launch surface
-  claims; showing it in CMC needs the CMC surface to claim `/api/global-ri/cmc` in `ui-surface-registry.ts`. That file
-  was changed by another session within the hour, and the claim was left for a separate change.
+- **ICH Q6A/Q6B reference test sets beside Specifications: done on 2026-11-12**, item 7
+  (`7-spec-reference/README.md`). The CMC screen claims the one route it calls,
+  `/api/global-ri/cmc/specifications`. Still unreached from CMC, from the same inventory row: the Q1A stability
+  zones and the process-validation framework.
 - The full-repo typecheck (`tsc -p tsconfig.json`) was killed by the out-of-memory killer three times: the sessions
   share one 14.3 GB memory cgroup with several dev servers and other typechecks. Every changed TypeScript file (53,
   with every `.d.ts`) was typechecked with a focused config instead, run only when no other `tsc` was running. Its

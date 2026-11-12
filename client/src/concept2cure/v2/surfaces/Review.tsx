@@ -60,6 +60,8 @@ import { C2CToast, useToast } from '../toast';
 /** Sub-headline shared by the surface header and its honest empty/error states. */
 /** The registry label, so the page and its breadcrumb are one name (section 9). */
 const REVIEW_TITLE = getSurfaceMeta('review').label;
+/** What AnA is told when the editor queue is empty but other reviews are listed (GA-UI-05). */
+const EDITOR_QUEUE_EMPTY = 'No document from the editor is in review. Vault versions and reviews you were named for are listed on this screen.';
 const REVIEW_SUB = 'Reviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
 
 /**
@@ -257,6 +259,12 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     (threadFor ? '&itemId=' + encodeURIComponent(threadFor) : '');
   const boardState = useLiveData<ReviewBoardData>(boardUrl, [boardUrl, boardEpoch]);
   const board = boardState.data;
+  /* The reviews this person was named for (P-95), listed below the board by
+     ReviewRequests.tsx. The board's queue covers documents from the editor
+     only, so with any listed, or with that list unread, "Nothing is in review"
+     would be untrue above them (GA-UI-05): the claim narrows to the editor. */
+  const namedState = useLiveData<{ assignments?: unknown[] }>('/api/concept2cure/reviews/pending', ['review-board-named']);
+  const namedBelow = Boolean(namedState.error) || (Array.isArray(namedState.data?.assignments) && namedState.data!.assignments!.length > 0);
   const workflows: Record<string, ReviewWorkflow> = board?.workflows ?? {};
 
   // Seed the queue + thread from every board that resolves: nothing is edited
@@ -313,6 +321,9 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     if (ceremonyOpen()) return { ok: false, reason: 'The review decision dialog is open — close it first.' };
     return null;
   };
+  const vaultInReview = (board?.vaultReviews ?? []).length;
+  /** Other reviews are listed on this screen, so an empty editor queue is not "nothing in review". */
+  const editorQueueOnly = vaultInReview > 0 || namedBelow;
   useSurfaceActionHandlers('review', {
     'review.select-document': (params) => {
       const guarded = reviewBusyGuard();
@@ -326,9 +337,9 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
       if (queue.length === 0)
         return {
           ok: false,
-          reason: Array.isArray(board?.queue)
-            ? 'Nothing is in review.'
-            : 'The review board could not be read.',
+          reason: !Array.isArray(board?.queue)
+            ? 'The review board could not be read.'
+            : editorQueueOnly ? EDITOR_QUEUE_EMPTY : 'Nothing is in review.',
         };
       const lower = wanted.toLowerCase();
       const exact = queue.find((r) => r.id === wanted || r.doc.toLowerCase() === lower);
@@ -356,9 +367,9 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
       if (queue.length === 0)
         return {
           ok: false,
-          reason: Array.isArray(board?.queue)
-            ? 'Nothing is in review.'
-            : 'The review board could not be read.',
+          reason: !Array.isArray(board?.queue)
+            ? 'The review board could not be read.'
+            : editorQueueOnly ? EDITOR_QUEUE_EMPTY : 'Nothing is in review.',
         };
       if (!queue.some((r) => r.state !== 'approved'))
         return { ok: false, reason: 'The queue has no next review decision to open. Check final sign-off separately.' };
@@ -414,7 +425,6 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
       <ReviewVaultQueue items={board?.vaultReviews} meId={meId} onOpenVault={(item) => openVaultVersion(item, onNav, fireToast)} />
     </>
   );
-  const vaultInReview = (board?.vaultReviews ?? []).length;
 
   // ── The three honest states, before any row is dereferenced. No fixture ──
   if (boardState.loading && queue.length === 0) {
@@ -450,7 +460,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     const boardRead = Array.isArray(board?.queue);
     /* With Vault versions listed above, "nothing" would be untrue: the claim
        narrows to the Authoring queue. */
-    const emptyTitle = vaultInReview > 0
+    const emptyTitle = editorQueueOnly
       ? 'No document from the editor is in this queue'
       : scope === 'mine' ? 'Nothing awaits your review'
       : scope === 'requested' ? 'You have not requested a review'

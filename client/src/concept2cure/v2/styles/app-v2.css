@@ -1041,9 +1041,12 @@
 .c2c-v2 .tt-trigger{position:relative;}
 /* The count in ink, not orange; red only when something is overdue (TaskTray.tsx sets
    data-overdue and says "n overdue" in the button's name). D1.md §D1.B step 7. */
-/* On the button's corner, not its glyph: at top/right 1px a two-digit count covered the
-   bell at 1440 (J1 human test, 2026-11-06). The count reads "99+" at most (TaskTray.tsx). */
-.c2c-v2 .tt-badge{position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);font-weight:600;line-height:16px;text-align:center;pointer-events:none;}
+/* Beside the bell, in the button's flow (GA-UI-03, 2026-11-10). On the button's corner a
+   two-digit count still covered the bell's glyph at 1440 (J1 human test, 2026-11-06; seen
+   again 2026-11-10 with "45"). The button widens to hold both; the count reads "99+" at most
+   (TaskTray.tsx). */
+.c2c-v2 .tt-trigger:has(.tt-badge){width:auto;min-width:32px;padding:0 6px;gap:4px;}
+.c2c-v2 .tt-badge{min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);font-weight:600;line-height:16px;text-align:center;pointer-events:none;}
 .c2c-v2 .tt-trigger[data-overdue] .tt-badge{background:var(--error);color:var(--on-error,#fff);}
 /* The scrim's chrome is the drawer backdrop's (journey-v2.css .de-bd, D0 §4.2.14); it keeps its
    own layer, under the panel (91). The class is doubled because that rule loads later at the same
@@ -1799,6 +1802,7 @@
    crumbs and the project crumb sit flush after the menu button: pulled 8px left,
    the row would lie over the button's last 4px and take its taps. */
 @media (max-width:640px){
+  .c2c-v2 .tt-trigger:has(.tt-badge){min-width:44px;}
   .c2c-v2 .topbar{padding:0 8px;}
   .c2c-v2 :is(.tb-rail, .tb-new){display:inline-flex;}
   .c2c-v2 .topbar .tb-collab, .c2c-v2 .topbar .tb-newtask{display:none;}
@@ -3375,7 +3379,10 @@
 
 /* ════ Registry Picker ════ */
 .c2c-v2 .rpk{display:flex;flex-direction:column;gap:0;}
-.c2c-v2 .rpk-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.c2c-v2 .rpk-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding-bottom:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;}
+/* The filing tabs are 661px wide: at 390 the last two were cut off (human test J1, 2026-11-06). Every filing picker
+   scrolls them sideways in place, not only New project's (GA-UI-07, 2026-11-10). */
+.c2c-v2 .rpk-tabs > *{flex-shrink:0;}
 .c2c-v2 .rpk-tab{display:flex;align-items:center;gap:5px;height:36px;padding:0 10px;margin-bottom:-1px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-300);border-bottom:2px solid transparent;transition:border-bottom-color var(--dur), color var(--dur);white-space:nowrap;}
 /* D2-2b (D2.md §2.4 item 9): the selected tab is an ink underline, not orange. */
 .c2c-v2 .rpk-tab[data-on]{color:var(--text-100);border-bottom-color:var(--text-100);font-weight:500;}
@@ -3879,6 +3886,23 @@
 @media (max-width: 480px) {
   .c2c-global-errors { right: 8px; left: 8px; bottom: 8px; width: auto; }
 }
+/* The notices are mounted at the root (main.tsx), outside .c2c-v2, so the error-state rules
+   above never reached them: the "audit entry is unconfirmed" notice had no background and the
+   page showed through it (GA-UI-05; P-95 walk, 2026-11-09). They float over the page, so the
+   tint is laid on the page colour, opaque, with the same border and type as everywhere else. */
+.c2c-global-errors .c2c-error-state {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
+  border: 1px solid var(--error); border-radius: var(--radius-md, 6px);
+  background: linear-gradient(color-mix(in srgb, var(--error) 8%, transparent), color-mix(in srgb, var(--error) 8%, transparent)), var(--bg-000);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+  color: var(--text-200); font-family: var(--font-sans); font-size: 12px; line-height: 1.5;
+}
+.c2c-global-errors .c2c-error-ic { flex: 0 0 auto; margin-top: 1px; color: var(--error); }
+.c2c-global-errors .c2c-error-ic svg { width: 15px; height: 15px; }
+.c2c-global-errors .c2c-error-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.c2c-global-errors .c2c-error-t { font-size: 13px; font-weight: 600; color: var(--text-200); }
+.c2c-global-errors .c2c-error-h { font-size: 12px; line-height: 1.5; color: var(--text-200); }
+.c2c-global-errors .c2c-error-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
 
 /* The batch-draft card, opened for editing. Same box as the rendered body so
    the card does not jump when the two swap. */
@@ -4025,11 +4049,8 @@
   .c2c-v2 .pj-main .pj-sec-acts { justify-content: flex-start; flex-basis: 100%; }
   .c2c-v2 .pj-main .btn, .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; text-align: left; }
 }
-/* New project's filing tabs (Pharma & Biotech, Medical Devices, Diagnostics & IVD, Cross-Cutting Documents) are 661px
-   wide; at 390 the last two were cut off, so a diagnostics company could not open its own tab on a phone (human test
-   J1, 2026-11-06). The row scrolls sideways in place. Moved here from project-home-v2.css (2026-11-08). */
-.c2c-v2 .npw .rpk-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-.c2c-v2 .npw .rpk-tabs > * { flex-shrink: 0; }
+/* New project's filing tabs scroll sideways at 390 through the base .rpk-tabs rule, which every filing picker shares
+   (GA-UI-07, 2026-11-10; it lived here for New project only, from human test J1, 2026-11-06). */
 /* A module row says its name and its count in full, on its own line above the bar (walked 2026-11-08: a 104px
    ellipsis cut "Module 1 · Administrative · 0 of 13 approved or locked" to "Module 1 · Admin…", so the count was
    only in the row's accessible name). */
