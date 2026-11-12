@@ -8,6 +8,7 @@ import { LiveDriveControlsContext } from '../LiveDriveSwitch';
 import { availableDemoScripts } from '../../components/ana/anaLockedScreens';
 import { helpClientType } from '@shared/help';
 import { askSupport } from './help/supportEntry';
+import { NewRequest, RequestView, YourRequests, type RequestDraft } from './help/SupportRequests';
 import '../styles/project-home-v2.css';
 import '../styles/help-v2.css';
 
@@ -35,11 +36,27 @@ interface ArticleRead {
 }
 interface SearchRead { query: string; hits: Array<ListedArticle & { snippet: string }> }
 
-type View = { kind: 'home' } | { kind: 'article'; slug: string } | { kind: 'course'; id: string };
+type View =
+  | { kind: 'home' } | { kind: 'article'; slug: string } | { kind: 'course'; id: string }
+  | { kind: 'request'; number: string } | { kind: 'new-request'; draft: RequestDraft };
 
-/** The view a link names: ?article=<slug> or ?course=<id>; else the Help Center's front page. */
+/** The parameters a view writes into the address; all of them are cleared when the view changes. */
+const VIEW_PARAMS = ['article', 'course', 'request', 'subject', 'details', 'category', 'priority', 'articles'];
+
+/** The view a link names: ?article=<slug>, ?course=<id>, ?request=<number>, or ?request=new with AnA's draft
+ *  (subject, details, category, priority, articles); else the Help Center's front page. */
 export function helpViewFromLocation(search: string): View {
   const q = new URLSearchParams(search);
+  const request = q.get('request');
+  if (request === 'new') {
+    const articles = q.get('articles');
+    return { kind: 'new-request', draft: {
+      subject: q.get('subject') ?? undefined, details: q.get('details') ?? undefined,
+      category: q.get('category') ?? undefined, priority: q.get('priority') ?? undefined,
+      articles: articles ? articles.split(',').filter(Boolean) : undefined,
+    } };
+  }
+  if (request) return { kind: 'request', number: request };
   const article = q.get('article');
   if (article) return { kind: 'article', slug: article };
   const course = q.get('course');
@@ -50,8 +67,9 @@ export function helpViewFromLocation(search: string): View {
 function writeLocation(view: View) {
   try {
     const url = new URL(window.location.href);
-    url.searchParams.delete('article');
-    url.searchParams.delete('course');
+    for (const p of VIEW_PARAMS) url.searchParams.delete(p);
+    if (view.kind === 'request') url.searchParams.set('request', view.number);
+    if (view.kind === 'new-request') url.searchParams.set('request', 'new');
     if (view.kind === 'article') url.searchParams.set('article', view.slug);
     if (view.kind === 'course') url.searchParams.set('course', view.id);
     window.history.replaceState(window.history.state, '', url.toString());
@@ -130,10 +148,15 @@ export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
       ? `Help & training: reading the help article "${article.data.article.title}".`
       : view.kind === 'course'
         ? 'Help & training: a training course.'
+        : view.kind === 'request'
+          ? `Help & training: the support request ${view.number}.`
+          : view.kind === 'new-request'
+            ? 'Help & training: writing a new support request.'
         : `Help & training: the Help Center${index.data ? ` (${index.data.articleCount} articles)` : ''}, training courses and support requests.`,
     facts: {
       openArticle: view.kind === 'article' ? view.slug : null,
       openCourse: view.kind === 'course' ? view.id : null,
+      openRequest: view.kind === 'request' ? view.number : null,
       search: debounced || null,
       courses: index.data?.courses.map((c) => c.title) ?? null,
     },
@@ -143,6 +166,7 @@ export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
       'Take a training course',
       'Ask support (opens the support conversation)',
       'Read your support requests',
+      'Write a new support request',
     ],
   }), [view, article.data, index.data, debounced]);
   usePublishSurfaceContext('training', anaContext);
@@ -168,11 +192,16 @@ export function Training({ onAsk, onNav, segment }: SurfaceViewProps) {
         <SearchResults read={search} query={debounced} onOpen={(slug) => go({ kind: 'article', slug })} onSupport={support} />
       ) : view.kind === 'article' ? (
         <ArticleView read={article} onBack={() => go({ kind: 'home' })} onOpen={(slug) => go({ kind: 'article', slug })} onSupport={support} />
+      ) : view.kind === 'request' ? (
+        <RequestView number={view.number} onBack={() => go({ kind: 'home' })} />
+      ) : view.kind === 'new-request' ? (
+        <NewRequest draft={view.draft} onBack={() => go({ kind: 'home' })} onSent={(number) => go({ kind: 'request', number })} />
       ) : view.kind === 'course' ? (
         <CourseView course={index.data?.courses.find((c) => c.id === view.id) ?? null} loading={index.loading}
           onBack={() => go({ kind: 'home' })} onOpen={(slug) => go({ kind: 'article', slug })} />
       ) : (
         <>
+          <YourRequests onOpen={(number) => go({ kind: 'request', number })} onNew={() => go({ kind: 'new-request', draft: {} })} />
           <HelpHome read={index} onRetry={() => setVersion((v) => v + 1)} onGo={go} />
           <OrganisationTraining paths={paths} certs={certs} onAsk={onAsk} />
         </>
