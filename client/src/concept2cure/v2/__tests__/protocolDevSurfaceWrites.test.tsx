@@ -77,7 +77,7 @@ const DOC = {
   amendments: [], deviations: [],
   reviews: [{ id: '5', reviewer: 'Dr Iyer', role: 'scientific', status: 'assigned', disposition: '', dueDate: '2026-10-01' }],
   reviewComments: [{ id: '41', sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false }, { id: '42', sec: '5.2', sev: 'minor', text: 'Name the comparator', resolved: true }],
-  consent: [{ id: '90', el: 'Statement that the study involves research', key: 'research_statement', required: true, present: true }],
+  consent: [{ id: '90', el: 'Statement that the study involves research', key: 'research_statement', required: true, present: true, complete: true }], consentGate: { requiredTotal: 1, requiredComplete: 1, pct: 100, readyToApprove: true, findings: [], incomplete: [], predates: [] },
   consentForm: { id: '4', title: 'Main consent', version: '1.0', status: 'draft', formsLinked: 1 },
   completenessFindings: [],
 };
