@@ -1,0 +1,3201 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a device project's change offers it, with no verdict before the engine has run 441ms
+   → Unable to find an accessible element with the role "heading" and name "Regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a biologic project's change does not offer it, and says so in one sentence 16ms
+   → Unable to find an element by: [data-testid="change-impact-not-offered"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a drug project's change says the same of a drug project 16ms
+   → Unable to find an element by: [data-testid="change-impact-not-offered"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an organisation-wide change says where it is offered 11ms
+   → Unable to find an element by: [data-testid="change-impact-not-offered"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > says nothing about it where nobody would look: an organisation with no device project 13ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a row that carries no answer from the server neither offers nor describes it 11ms
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an approved device change is not assessed any more, and says why 20ms
+   → expected 'Current state → proposed stateCurrent…' to contain 'This change is approved, so its conte…'
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the US engine's questions in plain words, with none answered 117ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > does not send while a question is unanswered 93ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > posts the answers, never a verdict, and reports the engine's determination 87ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the EU engine's questions when the European Union is chosen, and posts those answers 89ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > assessing again shows the recorded answer beside each question, answers none for the person, and states why 113ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > shows the US verdict with the engine's rationale and what it found, the rules' version, who and when 13ms
+   → Unable to find an element by: [data-testid="change-impact"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > says it is the engine's determination, and that a person classifies the change 17ms
+   → expected 'Current state → proposed stateCurrent…' to contain 'The rules engine\'s determination fro…'
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > the approval reads the determination among what it signs 1ms
+   → changeImpactRows is not a function
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a refusal stays in the drawer in the server's words, and no verdict appears 92ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a reply whose determination cannot be read names no verdict, and the log is read again 104ms
+   → Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > something kept that is not a determination is said to be unreadable, not shown as a verdict or as none 13ms
+   → Unable to find an element by: [data-testid="change-impact"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ × client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > reads the server's row: an outcome it does not know is unreadable, a missing answer is no answer 1ms
+   → regulatoryImpactOf is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a device project's change offers it, with no verdict before the engine has run
+TestingLibraryElementError: Unable to find an accessible element with the role "heading" and name "Regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:97:22
+     95|     renderLog(row(DEVICE));
+     96|     const d = detail();
+     97|     expect(within(d).getByRole('heading', { name: 'Regulatory impact' …
+       |                      ^
+     98|     expect(within(d).getByRole('button', { name: 'Assess the regulator…
+     99|     const facts = within(d).getByTestId('change-impact');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a biologic project's change does not offer it, and says so in one sentence
+TestingLibraryElementError: Unable to find an element by: [data-testid="change-impact-not-offered"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:109:28
+    107|     const d = detail();
+    108|     expect(within(d).queryByRole('button', { name: 'Assess the regulat…
+    109|     const note = within(d).getByTestId('change-impact-not-offered');
+       |                            ^
+    110|     expect(note.textContent).toBe('The device determination (new 510(k…
+    111|     expect(d.querySelectorAll('[data-testid="change-impact-not-offered…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > a drug project's change says the same of a drug project
+TestingLibraryElementError: Unable to find an element by: [data-testid="change-impact-not-offered"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:117:29
+    115|   it('a drug project\'s change says the same of a drug project', () =>…
+    116|     renderLog(row({ applies: 'not_device', productType: 'drug', organi…
+    117|     expect(within(detail()).getByTestId('change-impact-not-offered').t…
+       |                             ^
+    118|   });
+    119|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an organisation-wide change says where it is offered
+TestingLibraryElementError: Unable to find an element by: [data-testid="change-impact-not-offered"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:123:22
+    121|     renderLog(row({ applies: 'no_project', productType: null, organisa…
+    122|     const d = detail();
+    123|     expect(within(d).getByTestId('change-impact-not-offered').textCont…
+       |                      ^
+    124|       .toBe('The device determination (new 510(k) or letter to file; s…
+    125|     expect(within(d).queryByRole('button', { name: 'Assess the regulat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > where the determination is offered > an approved device change is not assessed any more, and says why
+AssertionError: expected 'Current state → proposed stateCurrent…' to contain 'This change is approved, so its conte…'
+
+Expected: "This change is approved, so its content is fixed: a determination can no longer be recorded on it."
+Received: "Current state → proposed stateCurrent: threshold 32 cycles. Proposed: 34 cycles.Reason for the changeLate-crossing samples were called negative.RiskMediumImpact assessmentNot recorded yet.Implementation planNot recorded yet.Linked recordsNo linked records yet.To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)."
+
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:144:27
+    142|     const d = detail();
+    143|     expect(within(d).queryByRole('button', { name: 'Assess the regulat…
+    144|     expect(d.textContent).toContain('This change is approved, so its c…
+       |                           ^
+    145|   });
+    146| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the US engine's questions in plain words, with none answered
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:151:38
+    149|   it('asks the US engine\'s questions in plain words, with none answer…
+    150|     renderLog(row(DEVICE));
+    151|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    152|     const d = drawer();
+    153|     expect(within(within(d).getByRole('radiogroup', { name: 'Assess fo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > does not send while a question is unanswered
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:163:38
+    161|   it('does not send while a question is unanswered', () => {
+    162|     renderLog(row(DEVICE));
+    163|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    164|     const d = drawer();
+    165|     for (const q of DEVICE_CHANGE_QUESTIONS.us.slice(1)) answer(d, q.q…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > posts the answers, never a verdict, and reports the engine's determination
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:178:38
+    176|     } } }));
+    177|     renderLog(row(DEVICE));
+    178|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    179|     const d = drawer();
+    180|     for (const q of DEVICE_CHANGE_QUESTIONS.us) answer(d, q.question, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > asks the EU engine's questions when the European Union is chosen, and posts those answers
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:197:38
+    195|     } } }));
+    196|     renderLog(row(DEVICE));
+    197|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    198|     const d = drawer();
+    199|     fireEvent.click(within(within(d).getByRole('radiogroup', { name: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's questions, as a form > assessing again shows the recorded answer beside each question, answers none for the person, and states why
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:212:38
+    210|     H.apiRequest.mockResolvedValue(json(200, { data: { id: 1, regulato…
+    211|     renderLog(row({ ...DEVICE, us: NEW_510K }));
+    212|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    213|     const d = drawer();
+    214|     // The first market still to assess is the one the form opens on; …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > shows the US verdict with the engine's rationale and what it found, the rules' version, who and when
+TestingLibraryElementError: Unable to find an element by: [data-testid="change-impact"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:236:36
+    234|   it('shows the US verdict with the engine\'s rationale and what it fo…
+    235|     renderLog(row({ ...DEVICE, us: NEW_510K, eu: NOT_SIGNIFICANT }));
+    236|     const facts = within(detail()).getByTestId('change-impact');
+       |                                    ^
+    237|     const us = within(facts).getByText('United States').closest('div')…
+    238|     expect(within(us).getByText('New 510(k)')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > says it is the engine's determination, and that a person classifies the change
+AssertionError: expected 'Current state → proposed stateCurrent…' to contain 'The rules engine\'s determination fro…'
+
+Expected: "The rules engine's determination from the answers recorded. It does not classify the change: its classification, assessment and approval are a person's."
+Received: "Current state → proposed stateCurrent: threshold 32 cycles. Proposed: 34 cycles.Reason for the changeLate-crossing samples were called negative.RiskMediumImpact assessmentNot recorded yet.Implementation planNot recorded yet.Linked recordsNo linked records yet.To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)."
+
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:251:34
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > the engine's verdict, shown as the engine's > the approval reads the determination among what it signs
+TypeError: changeImpactRows is not a function
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:257:18
+    255|
+    256|   it('the approval reads the determination among what it signs', () =>…
+    257|     const rows = changeImpactRows(row({ ...DEVICE, us: NEW_510K, eu: n…
+       |                  ^
+    258|     expect(rows).toEqual([
+    259|       { label: 'Regulatory impact, United States (the rules engine\'s …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a refusal stays in the drawer in the server's words, and no verdict appears
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:271:38
+    269|     H.apiRequest.mockRejectedValue(new Error('The rules engine refused…
+    270|     renderLog(row(DEVICE));
+    271|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    272|     const d = drawer();
+    273|     for (const q of DEVICE_CHANGE_QUESTIONS.us) answer(d, q.question, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > a reply whose determination cannot be read names no verdict, and the log is read again
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Assess the regulatory impact"
+
+Here are the accessible roles:
+
+  term:
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  Name "":
+  <dt />
+
+  --------------------------------------------------
+  definition:
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  Name "":
+  <dd
+    data-empty="true"
+  />
+
+  --------------------------------------------------heading:
+
+  Name "Linked records":
+  <h3
+    class="qcc-detail-title"
+  />
+
+  --------------------------------------------------status:
+
+  Name "":
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:286:38
+    284|     H.apiRequest.mockResolvedValue(json(200, { data: { id: 1, regulato…
+    285|     renderLog(row(DEVICE));
+    286|     fireEvent.click(within(detail()).getByRole('button', { name: 'Asse…
+       |                                      ^
+    287|     const d = drawer();
+    288|     for (const q of DEVICE_CHANGE_QUESTIONS.us) answer(d, q.question, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > something kept that is not a determination is said to be unreadable, not shown as a verdict or as none
+TestingLibraryElementError: Unable to find an element by: [data-testid="change-impact"]
+
+Ignored nodes: comments, script, style
+<div
+  class="qcc-detail"
+>
+  <dl
+    class="qcc-facts"
+  >
+    <div>
+      <dt>
+        Current state → proposed state
+      </dt>
+      <dd>
+        Current: threshold 32 cycles. Proposed: 34 cycles.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Reason for the change
+      </dt>
+      <dd>
+        Late-crossing samples were called negative.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Risk
+      </dt>
+      <dd>
+        Medium
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Impact assessment
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+    <div>
+      <dt>
+        Implementation plan
+      </dt>
+      <dd
+        data-empty="true"
+      >
+        Not recorded yet.
+      </dd>
+    </div>
+  </dl>
+  <h3
+    class="qcc-detail-title"
+  >
+    Linked records
+  </h3>
+  <div
+    aria-live="polite"
+    class="c2c-empty-state"
+    role="status"
+  >
+    <div
+      class="c2c-empty-t"
+    >
+      No linked records yet.
+    </div>
+    <div
+      class="c2c-empty-h"
+    >
+      To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record).
+    </div>
+  </div>
+</div>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:297:40
+    295|   it('something kept that is not a determination is said to be unreada…
+    296|     renderLog(row({ ...DEVICE, us: 'unreadable' }));
+    297|     const us = within(within(detail()).getByTestId('change-impact')).g…
+       |                                        ^
+    298|     expect(us.textContent).toContain('A determination is kept for this…
+    299|     expect(us.textContent).not.toMatch(/Not assessed yet|Letter to fil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx > honest states > reads the server's row: an outcome it does not know is unreadable, a missing answer is no answer
+TypeError: regulatoryImpactOf is not a function
+ ❯ client/src/concept2cure/quality/__tests__/ChangeRegulatoryImpact.test.tsx:306:12
+    304|       result: { decision: 'new_510k', rationale: NEW_510K.rationale, t…
+    305|     const view = { applies: 'device', productType: 'ivd', organisation…
+    306|     expect(regulatoryImpactOf({ ...view, us, eu: null })).toEqual({ ..…
+       |            ^
+    307|     expect(regulatoryImpactOf({ ...view, us: { ...us, result: { ...us.…
+    308|       .toEqual({ ...DEVICE, us: 'unreadable', eu: 'unreadable' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 2 passed (19)
+   Start at  00:58:35
+   Duration  2.81s (transform 565ms, setup 137ms, import 764ms, tests 1.27s, environment 451ms)
+

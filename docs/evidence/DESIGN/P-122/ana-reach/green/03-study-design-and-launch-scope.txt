@@ -1,0 +1,123 @@
+# GREEN — the study-design capabilities re-filed, and the launch-scope test for all five (working tree on 1ac146d37).
+# 2026-11-12T00:45:56Z  npx vitest run <the files below> --reporter=verbose
+
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a member of the project is answered: the organisation’s own commitments they may open, counted by urgency 669ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > with the project open in the conversation, the same member is answered for that project’s sponsor 34ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a private project’s commitment is counted only for someone who can open that project 46ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a submission of a project the person cannot open is refused, in the words a missing one is 32ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation is refused that submission, and never counts this organisation’s commitments 32ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation who opens this organisation’s project is refused before anything is read 6ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > nobody identified, or someone who is not a current member, is refused 8ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a sharing policy that cannot be read is an error, never an empty portfolio 11ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who may change the project records a commitment on its submission, in the organisation’s register 55ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a commitment that names no submission and no meeting is the organisation’s own: an editor records it 23ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a user of another organisation cannot record a commitment against this organisation’s submission 24ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > nor from this organisation’s meeting 20ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who can open the project but not change it is refused, and nothing is recorded 16ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a private project’s submission, or its meeting, is refused in the words a missing one is 44ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a submission in no project is refused: there is no project whose edit right could admit it 15ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > the project’s owner records a commitment on the private project’s submission 26ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a viewer is refused before any of it: the write needs an editor role 7ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a sharing policy that cannot be read records nothing, and says so 16ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member of the project is answered from the engine and their organisation’s history 426ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > RULE 2: no model is asked for anything, and the same design gives the same answer 42ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a user of another organisation who opens this project is refused, and nothing is simulated 4ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member who cannot open a private project is refused there 37ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > each organisation’s prior rests on its own reports, never another’s 33ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a member of the project is recommended the endpoints their organisation’s reports record 1984ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an endpoint a model proposes carries no rate and no count, and is labelled as a model’s 16ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an evaluation carries no score, even when the model’s commentary contains one 15ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation who opens this project is refused, and no command runs 7ms
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation reads their own organisation’s corpus, never this one’s 18ms
+ ✓ server/services/__tests__/endpoint-recommender-reads-only-the-callers-corpus.pglite.test.ts > the endpoint commands read the caller's corpus only > recommend_endpoints counts this organization's reports, not another's 14ms
+ ✓ server/services/__tests__/endpoint-recommender-reads-only-the-callers-corpus.pglite.test.ts > the endpoint commands read the caller's corpus only > evaluate_endpoint compares against this organization's primary endpoints only 3ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every handler is reachable > no registered handler is absent from ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > the launch screens that own the jobs > Communication and the protocol workspace are launch surfaces; the two locked screens are not 2ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > create_regulatory_commitment is classified, and not as a hidden app’s tool 1ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > review_commitment_portfolio is classified, and not as a hidden app’s tool 1ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > simulate_study_design is classified, and not as a hidden app’s tool 0ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > the command evaluate_endpoint is classified, and not as a hidden app’s command 0ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > the command recommend_endpoints is classified, and not as a hidden app’s command 0ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > in production, the toolset every chat door composes offers the re-filed tools 2ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > in production, the fulfilment tool is still withheld 2ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, create_regulatory_commitment is not refused as outside the release 2ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, review_commitment_portfolio is not refused as outside the release 67ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, simulate_study_design is not refused as outside the release 1ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the fulfilment tool is refused as outside the release, before anyone is asked to confirm 1ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the command evaluate_endpoint passes the launch-scope step of dispatch 1ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the command recommend_endpoints passes the launch-scope step of dispatch 0ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeSimulationResult — disclaimer + upload prompt > ALWAYS attaches the disclaimer 2ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeSimulationResult — disclaimer + upload prompt > requests a history upload only when there is no history 1ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > computes a probability of success from the deterministic engine 17ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > reports no probability — honestly — when the design has no effect assumption 0ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > reports no probability for a single-arm design rather than faking one 0ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > treats supplied grounding text as history (no upload request) 7ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > marks grounded when csr_reports exist for the org 5ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeTwinPrediction — figures come from the engine > renders the computed probability and the defensibility risk 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 5ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > evidence_sufficiency.assess keeps the same dispatch and scope without device-workstream 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > reviewer_simulation.run keeps the same dispatch and scope without device-workstream 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > evidence_sufficiency.assess describes the selected project and its existing confirmation gate 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > reviewer_simulation.run describes the selected project and its existing confirmation gate 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > DENIES a dispatchable-looking command that carries no authorization metadata 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > allows a read-only command without consulting RBAC 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a non-MDX write that the tenant deny-list names 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a READ the tenant deny-list names (deny outranks the degraded-read path) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a command absent from a non-empty allow-list (whitelist actually constrains) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > ALLOWS a command that is on the allow-list, and when no policy is set 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation when the caller lacks the required role (viewer) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > ALLOWS a mutation when the caller holds the required role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > demands the manager tier for Part 11 record-altering commands 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES when the RBAC lookup throws (fail closed, never fail open) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with non-numeric userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with zero organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a viewer (RBAC_DENIED), naming the manager tier 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a member (RBAC_DENIED), naming the manager tier 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a manager 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a admin 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES when the role lookup throws (fail closed) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES without a provable identity, before any role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > a self-asserted ctx.userRole does not stand in for the RBAC lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > stays a read: the tier is checked while governance is unresolved, and a manager is still admitted 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > leaves untiered reads open to every member without a role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS every mutation when tenant governance config could not be resolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS a Part 11 governed mutation when governance config is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > keeps READ-ONLY commands available while governance is unresolved (documented degraded mode) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > lets the central gate through so the handler can apply the self-service rule 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > still demands provable identity for the GDPR commands 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > blocks the erase mutation when governance is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for manager+ in the organization 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for a dedicated privacy role that has no hierarchy level 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false for an ordinary member and never trusts ctx.userRole 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false when the role lookup throws 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false without a provable identity 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > classifies EVERY dispatchable command 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > has no authorization entry for a command that is not dispatchable 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > gives every mutation-capable command a role tier or an explicit handler carve-out 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > puts a role tier on a read only where the read returns the audit trail (audit.explain, manager) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > marks every dispatchable Part 11 governed command as a manager-tier write 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > mirrors the Part 11 e-signature subset exactly 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never marks a Part 11 governed command as read-only 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > leaves in-scope commands to the normal checks 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > with launch scope off (a development server), a hidden-app command reaches the normal checks 0ms
+ ✓ server/services/ana-ri/__tests__/endpoint-commands-say-what-was-read.test.ts > recommend_endpoints > says the CSR corpus could not be read, instead of reporting what the model generated 3ms
+ ✓ server/services/ana-ri/__tests__/endpoint-commands-say-what-was-read.test.ts > recommend_endpoints > says which recommendations a language model proposed and which sources were unavailable 3ms
+ ✓ server/services/ana-ri/__tests__/endpoint-commands-say-what-was-read.test.ts > evaluate_endpoint > reports no score, rather than the number the model typed 1ms
+ ✓ server/services/ana-ri/__tests__/endpoint-commands-say-what-was-read.test.ts > evaluate_endpoint > fails when the model request fails, instead of succeeding with an error message as feedback 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > the probes stand for hidden tools and two in-scope tools 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, is refused and its handler never runs 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, the fast path’s own tool runs now that CMC is in the catalog 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, a hidden write is refused before a person is asked to confirm it 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > in production, an in-scope tool still runs 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope-execution.test.ts > a hidden-app tool reached by name > with launch scope off (a development server), a hidden tool runs 1ms
+ Test Files  10 passed (10)
+      Tests  911 passed (911)

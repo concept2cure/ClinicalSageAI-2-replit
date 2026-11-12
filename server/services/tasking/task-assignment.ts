@@ -283,6 +283,20 @@ export const rescheduleSchema = z.object({
 }).strict();
 export type RescheduleInput = { taskId: string; dueDate: string; expectedDueDate: string | null; reason: string };
 export interface TaskRescheduleResult { taskId: string; dueDate: string; previousDueDate: string | null }
+/** What the notice needs, kept off the response: who owns the task, who moved it, and its title. */
+type RescheduleNotice = { organizationId: number; assigneeId: number | null; actorUserId: number; title: string };
+const notices = new WeakMap<TaskRescheduleResult, RescheduleNotice>();
+
+/** The owner is told when someone else moves their deadline, once the change has committed. Their own change is
+ *  not announced to them; a failed notice never fails the change. */
+function notifyRescheduled(result: TaskRescheduleResult): void {
+  const n = notices.get(result);
+  if (!n || n.assigneeId === null || n.assigneeId === n.actorUserId) return;
+  try {
+    notifyTaskEvent({ organizationId: n.organizationId, recipientUserId: n.assigneeId, category: 'task_update',
+      title: `Due date changed: ${n.title}`, body: `Now due ${result.dueDate.slice(0, 10)}.`, taskId: result.taskId });
+  } catch { console.warn('[tasking] Confirmed reschedule notification could not be scheduled.'); }
+}
 
 const dueMs = (value: unknown): number | null => (value == null ? null : new Date(value as string | Date).getTime());
 
@@ -304,14 +318,16 @@ async function rescheduleInTx(req: Request, q: RequestSqlClient, input: Reschedu
   if (before !== dueMs(input.expectedDueDate)) throw stale();
   if (before === next) throw new TaskAssignmentError(409, 'DUE_DATE_UNCHANGED', 'The task is already due on this date. Nothing was changed.');
   // A new due date is a new deadline: the due-soon and overdue markers are cleared so the assignee is reminded afresh.
-  const result = await q.query(`/* task-reschedule:update */ UPDATE unified_tasks SET due_date=$1,last_modified_by=$2,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$3 AND organization_id=$4 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING task_id,due_date`,
+  const updated = await q.query(`/* task-reschedule:update */ UPDATE unified_tasks SET due_date=$1,last_modified_by=$2,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$3 AND organization_id=$4 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING task_id,due_date`,
     [new Date(next), ctx.actor.userId, ctx.task.id, ctx.organizationId]);
-  if (result.rows.length !== 1) throw stale();
+  if (updated.rows.length !== 1) throw stale();
   const previousDueDate = before === null ? null : new Date(before).toISOString();
   const dueDate = new Date(next).toISOString();
   await auditTaskActionInTx(q, { orgId: ctx.organizationId, userId: ctx.actor.userId, command: 'task.reschedule', taskId: input.taskId,
     payload: { previousDueDate, dueDate }, reason: input.reason, summary: 'Task due date changed' });
-  return { taskId: input.taskId, dueDate, previousDueDate };
+  const result: TaskRescheduleResult = { taskId: input.taskId, dueDate, previousDueDate };
+  notices.set(result, { organizationId: ctx.organizationId, assigneeId: numberOrNull(ctx.task.assignee_id), actorUserId: ctx.actor.userId, title: String(ctx.task.title) });
+  return result;
 }
 
 /** One due-date change on its own transaction; an unconfirmed commit is said as unknown, never as done. */
@@ -323,6 +339,7 @@ export async function rescheduleTask(req: Request, input: RescheduleInput): Prom
     await client.query('BEGIN'); began = true;
     const result = await rescheduleInTx(req, q, input);
     committing = true; await client.query('COMMIT'); committing = false; began = false;
+    notifyRescheduled(result);
     return result;
   } catch (error) {
     let uncertain = !began || committing;

@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-12T00:43:01.631Z","pid":31642,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-12T00:43:01.633Z","pid":31642,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-12T00:43:01.633Z","pid":31642,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-device-change-determination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-device-change-determination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > before any assessment, the register says the determination applies and none is recorded 18ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the US verdict is the engine's, and is kept on the change with the answers, the rules' version, who and when 42ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the audit trail has a chained row for it, with the answers and the outcome 3ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > a verdict sent by the caller is not kept: the engine decides from the answers 26ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the engine does not classify the change: its classification and state are as they were 1ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the register carries both determinations, and the content an approval signs has changed with them 10ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > an unanswered question is refused, by name, and nothing is kept or audited 46ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > a market that is not one of the two is refused 6ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > assessing again states why, and the audit row keeps the determination it replaced 34ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > another organisation gets 404, and learns nothing 22ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who is not on a private project gets 403 10ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who can open the project and does not edit it gets 403 40ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > the private project's owner assesses it 25ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > a drug project's change is refused, and the register says it is not a device's 26ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation-wide change is refused: there is no device to assess 15ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an approved change's content is fixed: nothing is recorded on it 29ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation with no device project is told so on its rows 7ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > what is kept and cannot be read is said to be unreadable, never shown as a verdict or as none 7ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  00:42:59
+   Duration  9.82s (transform 6.01s, setup 90ms, import 8.78s, tests 623ms, environment 0ms)
+
