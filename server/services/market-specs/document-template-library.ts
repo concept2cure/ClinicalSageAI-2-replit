@@ -42,7 +42,7 @@ import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
 import { clinicalSectionDraftingMode, isClinicalWorkingComponent } from '../authoring/document-template-outline-sections';
-import { US_BIOTECH_LIFECYCLE_TEMPLATES } from './us-biotech-lifecycle-templates';
+import { US_BIOTECH_LIFECYCLE_TEMPLATES, usBiotechLifecycleComponentIdForRegistry } from './us-biotech-lifecycle-templates';
 import { MEDICINAL_WORKING_TEMPLATES, canonicalCtdRegistryOutline } from './medicinal-working-templates';
 
 export interface TemplateSection {
@@ -506,6 +506,28 @@ const REGISTRY_COMPONENT_TEMPLATES: Readonly<Record<string, string>> = {
 /** Share component identity with inquiry and drafting without copying this map. */
 export function componentTemplateIdForRegistry(registryId: string): string | undefined {
   return REGISTRY_COMPONENT_TEMPLATES[registryId];
+}
+
+/**
+ * The component whose draftability a registry identity shares: its mapped
+ * component, or the US biotech lifecycle component read from the same one record
+ * when the registry outline is exactly that record's parts (2026-11-12). A BLA
+ * change's outline also lists the CTD sections it updates, so it has none yet.
+ *
+ * Narrower than `componentTemplateIdForRegistry` on purpose. Inquiry, AnA's
+ * section requirements and the package inventory key on that one, and a filing
+ * identity that reads a lifecycle record is not a component to any of them.
+ */
+export function draftingComponentIdForRegistry(registryId: string): string | undefined {
+  const mapped = REGISTRY_COMPONENT_TEMPLATES[registryId];
+  if (mapped) return mapped;
+  const componentId = usBiotechLifecycleComponentIdForRegistry(registryId);
+  const component = componentId ? getDocumentTemplate(componentId) : undefined;
+  const registry = component ? lifecycleRecordOutlineFor(registryId) : undefined;
+  if (!component || !registry) return undefined;
+  const sameParts = registry.sections.length === component.sections.length
+    && registry.sections.every((s, i) => s.number === component.sections[i].number && s.heading === component.sections[i].heading);
+  return sameParts ? componentId : undefined;
 }
 
 /** Known existing structures whose scope still needs regional review. */

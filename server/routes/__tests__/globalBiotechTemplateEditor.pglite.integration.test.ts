@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { GLOBAL_REGISTRY, isDeviceRegistryEntry } from '../../../shared/regulatory/global-document-registry';
-import { DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getRegistryDocumentTemplate, type DocumentTemplateStructure, type TemplateSection } from '../../services/market-specs/document-template-library';
+import { DOCUMENT_TEMPLATES, draftingComponentIdForRegistry, getRegistryDocumentTemplate, type DocumentTemplateStructure, type TemplateSection } from '../../services/market-specs/document-template-library';
 import * as builtinTemplates from '../../services/authoring/builtin-authoring-templates';
 import { buildDocumentPreparation } from '../../services/market-specs/document-preparation';
 import { critiqueSavedDocument } from '../../services/ana/saved-document-critique';
@@ -297,7 +297,9 @@ describe('every supported active medicinal, device and diagnostics filing and co
       const outline = await getRegistryDocumentTemplate(filing.id);
       const module = outline?.ctdSection?.match(/^([1-5])(?:\.|$)/)?.[1];
       expect(row!.module).toBe(module ? `M${module}` : null);
-      if (!componentTemplateIdForRegistry(filing.id)) expect(row).toMatchObject({ kind: 'preparation', aiDraftable: false });
+      // A filing with no draftable component of its own is a worksheet. The fourteen US identities that read
+      // one lifecycle record share that record's draftability (2026-11-12, draftingComponentIdForRegistry).
+      if (!draftingComponentIdForRegistry(filing.id)) expect(row).toMatchObject({ kind: 'preparation', aiDraftable: false });
       sectionCount += await verifyCopy(row!, outline);
     }
     for (const component of components) {
