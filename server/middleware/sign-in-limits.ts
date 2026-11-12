@@ -43,6 +43,7 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 import { SIGN_IN_LIMITS } from '../config/platform-limits';
+import { SharedRateLimitStore, usesSharedRateLimitStore } from './redisRateLimiter';
 import { clientIpKey } from '../utils/client-ip';
 import * as mfaService from '../services/mfaService';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
@@ -97,11 +98,15 @@ export function sessionAccountKey(authorization: unknown): string | null {
 }
 
 function perAccount(
+  name: string,
   limit: { windowMs: number; max: number },
   accountKey: (req: Request) => string | null,
   message: (req: Request) => string,
 ) {
   return rateLimit({
+    // Counted across every API task in production (P-129, MR-03 Stage 7): one
+    // account's guesses spread over two tasks were each task's allowance.
+    ...(usesSharedRateLimitStore() ? { store: new SharedRateLimitStore(`sign-in:${name}:`) } : {}),
     windowMs: limit.windowMs,
     limit: limit.max,
     standardHeaders: true,
@@ -126,6 +131,7 @@ interface SecondFactorDoor {
 }
 const secondFactorDoorOf = new WeakMap<Request, SecondFactorDoor>();
 const secondFactorCount = perAccount(
+  'second-factor',
   SIGN_IN_LIMITS.mfaFailuresPerAccount,
   (req) => secondFactorDoorOf.get(req)?.accountKey(req) ?? null,
   (req) => secondFactorDoorOf.get(req)?.message ?? 'Too many incorrect verification codes for this account.',
@@ -139,6 +145,7 @@ function secondFactorDoor(door: SecondFactorDoor): RequestHandler {
 
 export const signInLimits = {
   login: perAccount(
+    'login',
     SIGN_IN_LIMITS.loginFailuresPerAccount,
     (req) => signInAccountKey(req.body),
     () => 'Too many failed sign-in attempts for this account. Please try again later.',

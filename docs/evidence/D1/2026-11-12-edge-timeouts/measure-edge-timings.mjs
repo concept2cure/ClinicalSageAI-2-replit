@@ -30,6 +30,9 @@ const PASSWORD = `Edge-Timing-${crypto.randomBytes(9).toString('base64url')}!7`;
 const SIZES = (process.env.SIZES ?? '50,200').split(',').map(Number);
 const RUNS = Number(process.env.RUNS ?? 5);
 const PAGES = Number(process.env.PAGES ?? 8);
+// ASYNC=1: each call asks for Prefer: respond-async (MR-03 Stage 6 step 4) and polls its job every 2 s. Each call
+// then records the time to the 202 (`acceptMs`) and to the job's end (`ms`), so the edge sees only the first.
+const ASYNC = process.env.ASYNC === '1';
 
 function fail(step, detail) {
   console.error(`measure FAILED at ${step}: ${detail}`);
@@ -75,7 +78,7 @@ function totp(secret, offsetSteps = 0) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** One request, waiting out a 429; returns status, parsed body and elapsed ms of the final attempt. */
-async function call(method, path, body, token, { form } = {}) {
+async function call(method, path, body, token, { form, headers = {} } = {}) {
   for (let attempt = 0; ; attempt += 1) {
     const started = performance.now();
     const res = await fetch(`${BASE}${path}`, {
@@ -85,6 +88,7 @@ async function call(method, path, body, token, { form } = {}) {
         origin: ORIGIN,
         'x-forwarded-proto': 'https',
         ...(token ? { authorization: `Bearer ${token}` } : {}),
+        ...headers,
       },
       body: form ?? (body ? JSON.stringify(body) : undefined),
       redirect: 'manual',
@@ -173,6 +177,17 @@ const SECTIONS = [
   'm5.2', 'm5.3.1.1', 'm5.3.3.1', 'm5.3.5.1', 'm5.3.5.1', 'm5.3.5.1', 'm5.3.5.3', 'm5.3.7', 'm5.4',
 ];
 
+/** Poll an accepted job every 2 s until it ends; the time is from the request to the job's end. */
+async function followJob(accepted, token) {
+  const started = performance.now() - accepted.ms;
+  let job;
+  do {
+    await sleep(2000);
+    job = await call('GET', accepted.json.poll, null, token);
+  } while (job.status === 200 && job.json?.status === 'running');
+  return { ...job, ms: performance.now() - started, acceptMs: accepted.ms, json: job.json?.result ?? job.json, jobStatus: job.json?.status };
+}
+
 const pct = (xs, p) => {
   const s = [...xs].sort((a, b) => a - b);
   return s[Math.min(s.length - 1, Math.ceil((p / 100) * s.length) - 1)];
@@ -256,10 +271,11 @@ for (const n of SIZES) {
     const times = [];
     const statuses = [];
     for (let r = 0; r < RUNS; r += 1) {
-      const out = await call(method, path, body, token);
+      let out = await call(method, path, body, token, ASYNC ? { headers: { prefer: 'respond-async' } } : {});
+      if (ASYNC && out.status === 202 && out.json?.jobId) out = await followJob(out, token);
       times.push(out.ms);
       statuses.push(out.status);
-      console.info(JSON.stringify({ event: 'call', leaves: n, endpoint: name, run: r + 1, status: out.status, ms: Math.round(out.ms), bytes: out.bytes, ...(out.status >= 400 ? { body: out.text } : {}), ...(r === 0 && out.json && typeof out.json === 'object' ? { outcome: { status: out.json.status ?? null, leafFilesRendered: out.json.leafFilesRendered ?? out.json.materialized ?? null, blockers: (out.json.submissionBlockers ?? []).slice(0, 3), errors: (out.json.errors ?? []).slice(0, 3) } } : {}) }));
+      console.info(JSON.stringify({ event: 'call', leaves: n, endpoint: name, run: r + 1, status: out.status, ms: Math.round(out.ms), ...(out.acceptMs != null ? { acceptMs: Math.round(out.acceptMs), jobStatus: out.jobStatus } : {}), bytes: out.bytes, ...(out.status >= 400 ? { body: out.text } : {}), ...(r === 0 && out.json && typeof out.json === 'object' ? { outcome: { status: out.json.status ?? null, leafFilesRendered: out.json.leafFilesRendered ?? out.json.materialized ?? null, blockers: (out.json.submissionBlockers ?? []).slice(0, 3), errors: (out.json.errors ?? []).slice(0, 3) } } : {}) }));
     }
     summary.push({ leaves: n, endpoint: name, runs: RUNS, statuses: [...new Set(statuses)], p50_s: +(pct(times, 50) / 1000).toFixed(2), p95_s: +(pct(times, 95) / 1000).toFixed(2), max_s: +(Math.max(...times) / 1000).toFixed(2) });
   }

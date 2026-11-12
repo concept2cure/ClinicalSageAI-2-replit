@@ -134,6 +134,33 @@ describe('indicators by site', () => {
     expect(screen.getAllByRole('button', { name: /By site/ })).toHaveLength(1);
   });
 
+  it('shows an indicator’s course at a site across the loads, in a line and in words, and calls one reading one reading', () => {
+    const b = board();
+    b.sites[0].indicators![0].history = [{ v: 6, cutoff: '2026-08-31' }, { v: 12, cutoff: '2026-09-30' }, { v: 21, cutoff: '2026-10-31' }];
+    b.sites[1].indicators![0].history = [{ v: 8, cutoff: '2026-10-31' }];
+    const { container } = render(<RbmKris board={b} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /By site — 3/ }));
+    const table = screen.getByRole('table', { name: 'Latest reading of AE reporting lag at each site, with its band' });
+    expect(within(table).getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Site', 'Reading', 'Band', 'Data cut-off', 'Over the loads']);
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows[0].querySelector('svg.rbm-spark')).toBeTruthy();
+    expect(rows[0].textContent).toContain('Site 104, 3 readings, oldest first: 2026-08-31: 6, 2026-09-30: 12, 2026-10-31: 21');
+    expect(rows[1].textContent).toContain('One reading');
+    expect(rows[1].querySelector('svg.rbm-spark')).toBeNull();
+    // The Site risk tab points here in place of "trend over time is not available".
+    cleanup();
+    const sites = render(<RbmSites board={b} onReload={vi.fn()} />);
+    expect(sites.container.textContent).not.toMatch(/trend over time is not available/);
+    expect(sites.container.textContent).toMatch(/Each indicator’s readings at a site across the loads are on Key risk indicators, under “By site”/);
+    expect(container).toBeTruthy();
+  });
+
+  it('offers no trend column when no site has more than one reading', () => {
+    render(<RbmKris board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /By site — 3/ }));
+    expect(screen.queryByRole('columnheader', { name: 'Over the loads' })).toBeNull();
+  });
+
   it('no longer says a per-site view is not implemented, and says what still is not there', () => {
     const { container } = render(<RbmKris board={board()} onReload={vi.fn()} />);
     const note = [...container.querySelectorAll('.rbm-note')].at(-1)!.textContent!;

@@ -52,6 +52,10 @@ export interface VaultDoc {
   id: string;
   /** Recorded filing section; null explicitly addresses the whole filing. */
   filingSectionKey?: string | null;
+  /** An authored section placed in the filing binder (P-123 item 8): the filing document it is a section of. */
+  filingDocumentId?: unknown;
+  /** With `filingDocumentId`: the filing's type (`IND`, `K510`, ...). */
+  filingFamily?: string;
   num: string;
   title: string;
   type: string;

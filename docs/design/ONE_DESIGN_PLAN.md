@@ -1529,12 +1529,20 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
   governed artifacts of every project you can open"; no view spans sponsors, and it now says what the page does
   while it asks and once a sponsor is chosen. Evidence `docs/evidence/SPINE/S6/2026-11-12-vault-no-project-header/`.
 
+- **A filing's outline is shown once** (F1, `41d18d0b85`; P-123 item 8, `4d69f24af8`). The Library listed every
+  filing's outline twice, as the filing binder and as the authored filing document's sections, with the same headings
+  and different counts (the 510(k) and both demo INDs). Each authored section now sits in the binder heading with its
+  code, with its requirement, state, owner and door to the editor. A section the binder has no heading for stays
+  under its document. Evidence `docs/evidence/SPINE/S6/2026-11-12-one-outline-per-filing/`.
+- **A person who may read the project's Vault reads its trial master file** (F1, `9fd75d2fcc`; P-124 item 7,
+  `4c5c9ef4ec`). Every eTMF route required the regulatory-author role, reads included, so a viewer met a failed read
+  under the section's own view-only notice. The four reads now admit a viewer; every write keeps the writer's role.
+  Proven on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-reader-reads-the-tmf/`.
+
 Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
 administration's restoration order); on a phone the first document is below the first screen (the shared page
-header takes four lines); **a filing's Library lists its outline twice**, as the filing binder (the files placed
-against the outline) and as the authored filing document's own sections, with the same headings and different counts:
-seen on the 510(k) (eSTAR A to G) and on both INDs (eCTD M1 to M5). Which the tree shows, or how one carries the other's state, is a design decision in S6's binder
-(`server/routes/c2c/project-vault.ts`, `documentFolder` and `filingCabinet`).
+header takes four lines); an authored section's door opens the editor only once its filing has a working copy (the
+editor says so, and offers "Create editing copy"; unchanged, and the editor's).
 
 **E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
 deployed store as the person who runs it, one project or every project they can open. Each figure is the store's
@@ -1886,9 +1894,16 @@ screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-u
   placement says what it wrote and keeps saying it; the Vault's version line names the sealed version its file was
   rendered from. The real-PostgreSQL suites around the Vault, CMC evidence and signing were run on a disposable,
   deploy-shaped database: 13 files, 188 of 188.
-- **Next, found in the same walk:** a signer whose password or authenticator code is not accepted is told "HTTP 401"
-  or "Sign in again". The sentences exist on the server (`governed-signature-ceremony.ts` `REAUTH_MESSAGE`) and nine
-  routes that verify a signer do not send them. The repair is to send them, not to write them again.
+- **Landed later the same day, each used in the running app** (evidence `docs/evidence/F1/2026-11-12-ui-walk/` 08–14):
+  a refused signature says why on every route that verifies a signer (the ceremony's sentences moved to
+  `verifyReauth`); the QC sample type says where a result is filed; a method's ICH Q2 evidence can be recorded and
+  reaches the check; a stale Module 3 section says so on the Overview and is not offered for approval; the Overview
+  re-reads the export verdict after an approval; CMC refusals end once; a citation reads as its number in the Document
+  view; the Builder verifies a placed Module 3 leaf through its CMC section, and a Vault PDF filed from a sealed
+  document through the seal its filing receipt names (LX-10). Two trunk reds in a held file were repaired with them
+  (`ci:success-before-ok`, the retired-name ratchet).
+- **Handed on:** the reviewer's copy of a document still shows a citation as a file name (one prop, in a file Wave B
+  holds); three report-PDF suites are red on trunk (Reporting).
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 

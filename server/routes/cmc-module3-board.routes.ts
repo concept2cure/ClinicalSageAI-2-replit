@@ -84,6 +84,9 @@ interface SectionRow {
   completeness: number | null;
   /** The required inputs the compiler found missing — what an approval would sign over. */
   missingInputs: string[];
+  /** A source record changed after the section's compile: the approve route refuses it until it is recompiled. */
+  stale: boolean;
+  staleReason: string | null;
 }
 
 /** Resolve the JWT-derived org id as the integer tenant_id / organization_id, or null. */
@@ -185,7 +188,7 @@ async function buildSections(
   try {
     const rows = (
       await q(
-        `select section_key, section_path, approval_state, deterministic_json
+        `select section_key, section_path, approval_state, deterministic_json, stale, stale_reason
            from cmc_module3_sections
           where organization_id = $1 and project_id = $2
           order by section_key`,
@@ -196,6 +199,8 @@ async function buildSections(
       section_path: string | null;
       approval_state: string | null;
       deterministic_json: unknown;
+      stale: boolean | null;
+      stale_reason: string | null;
     }>;
     return {
       /* completeness / missingInputs are read by the same rule the approve
@@ -210,6 +215,10 @@ async function buildSections(
           st: mapApprovalState(r.approval_state),
           completeness: record.completeness,
           missingInputs: record.missingInputs,
+          /* Walked 2026-11-12: a stale section read "Draft" with a live
+             "Approve section", which the approve route then refused. */
+          stale: r.stale === true,
+          staleReason: r.stale_reason ?? null,
         };
       }),
       provisioned: true,

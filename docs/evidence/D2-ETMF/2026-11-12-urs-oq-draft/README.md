@@ -31,8 +31,8 @@ touched.
 ## The drafts
 
 - `URS-ETMF-draft.md`: proposed URS-009. Twenty requirements, each with its Part 11 clause, risk, source and the
-  suites that prove it today. Section 3 records six constraints, one of them a question for the founder: a read-only
-  identity cannot read a trial master file today.
+  suites that prove it today. Section 3 records six constraints. The question it first put to the founder, whether a
+  read-only identity may read a trial master file, is answered by P-124 item 7: it reads, and writes nothing.
 - `OQ-ETMF-draft.md`: proposed OQ-009. Thirty-seven steps against those requirements. Each expected result, except
   the two launch-boundary steps, is one a development suite already observes. The runner is owed, under
   `tests/validation/oq/etmf/`.

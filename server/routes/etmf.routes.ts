@@ -43,6 +43,15 @@ const logger = createScopedLogger('etmf-routes');
 const router = Router();
 const limiter = createRateLimiter();
 const AUTHOR = 'regulatory-author';
+/**
+ * Who reads a study's trial master file: everyone who may read the project's Vault (P-124 item 7, 2026-11-12). The
+ * Vault's own reads admit an organization's viewer (routes/c2c/project-vault.ts), and ICH E6(R3) and the EMA's TMF
+ * guideline expect monitors, auditors and inspectors to read the TMF without writing it. Each read still admits the
+ * person to the study's project by the Vault's rule (tmf-study-access.ts). Every write keeps AUTHOR and the Vault's
+ * write role. Until 2026-11-12 the reads required AUTHOR too, and a viewer met a failed read under the section's
+ * view-only notice.
+ */
+const READERS = [AUTHOR, 'viewer'] as const;
 
 function refuse(res: Response, status: number, code: string, message: string): Response {
   return res.status(status).json({ success: false, error: code, message });
@@ -89,7 +98,7 @@ function confirmedStatementRefusal(error: unknown): boolean {
 }
 
 /** The DIA TMF Reference Model (zones + artifacts) for a checklist. */
-router.get('/reference-model', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+router.get('/reference-model', limiter, requireRole(...READERS), (_req: Request, res: Response) => {
   res.json({ zones: getTmfReferenceModel() });
 });
 
@@ -146,7 +155,7 @@ router.post('/trials/:trialId/artifacts', limiter, requireRole(AUTHOR), async (r
  * List a study's live filings. Each carries `document`: `{ id, title, version, current }` when its reference is a
  * live Vault document of the study's project, else null.
  */
-router.get('/trials/:trialId/artifacts', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
+router.get('/trials/:trialId/artifacts', limiter, requireRole(...READERS), async (req: Request, res: Response) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
   try {
@@ -157,7 +166,7 @@ router.get('/trials/:trialId/artifacts', limiter, requireRole(AUTHOR), async (re
 });
 
 /** Inspection-readiness for a study computed from its stored filings, with the study. ?scope=essential|all. */
-router.get('/trials/:trialId/completeness', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
+router.get('/trials/:trialId/completeness', limiter, requireRole(...READERS), async (req: Request, res: Response) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
   const scope = req.query.scope === 'all' ? 'all' : 'essential';
@@ -269,7 +278,7 @@ function packageResponse(res: Response, pkg: InspectionPackageResult) {
  * persist (503 UNAUDITED_EXPORT_REFUSED). Until 2026-11-10 the package left
  * with nothing recorded.
  */
-router.get('/trials/:trialId/inspection-package', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
+router.get('/trials/:trialId/inspection-package', limiter, requireRole(...READERS), async (req: Request, res: Response) => {
   const ctx = ctxOf(req);
   if (!ctx) return noAuth(res);
   const scope = req.query.scope === 'all' ? 'all' : 'essential';

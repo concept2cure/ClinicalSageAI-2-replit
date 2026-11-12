@@ -1,0 +1,23 @@
+The Library's tree, read by the walk in the running app (PostgreSQL, 1440 by 900), demo organisation.
+
+BEFORE (the code without this change; walked 2026-11-12, morning and evening), [Demo · MDX] NeuroPanel-Dx 510(k): 56 tree items.
+  0  Filing binder · 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807
+  2  A Administrative 0/0            3 A1 Cover letter 0/0 ... 39 G2 Additional information / amendment responses 0/0
+  40-47  510(k) submissions, Clinical evaluation, Engineering (DHF + RMF), Labeling and UDI, Post-market vigilance,
+         Quality system, Agency correspondence, Shared · Templates
+  48 K510 [Demo · MDX] NeuroPanel-Dx 510(k) — 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807 0/31
+  49 A Administrative 0/9   50 B Device description 0/3   51 C Substantial equivalence 0/2
+  52 D Design, manufacturing and labeling 0/6   53 E Performance and safety testing 0/8
+  54 F Quality management 0/1   55 G References and additional information 0/2
+  IND C2C-101 and IND C2C-201: roots "Filing binder · IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5"
+  and "IND C2C-10x (...) — IND × FDA · eCTD M1 (FDA Modu..." (both outlines).
+  The before walk after the server restart on the code without this change: outline roots
+  ["Filing binder · 510(k) × FDA · eSTAR (nIVD/IVD v7.", "K510 [Demo · MDX] NeuroPanel-Dx 510(k) — 510(k) × "].
+
+AFTER (this change):
+  ivd510k: 48 folders; outline roots: ["Filing binder · 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CF"]
+  ind101: 97 folders; outline roots: ["Filing binder · IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3)"]
+  ind201: 99 folders; outline roots: ["Filing binder · IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3)"]
+  A1 rows: ["A1 Cover letter Not started Required · 2d ago"]
+  The door: before "Couldn’t open “Cover letter” (section A1) — No accessible working document is bound to the
+  requested filing"; after, the same sentence. Console errors: none.
