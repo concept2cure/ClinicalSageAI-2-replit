@@ -1,0 +1,26 @@
+import hashlib, subprocess, sys
+R='/home/user/ClinicalSageAI-2-replit/'
+D='client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx'
+G='server/services/authoring/workflow-import-governance.ts'
+W='client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx'
+P='server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts'
+muts=[
+ ('V2 drop UTC conversion', G, "to_char(a.occurred_at AT TIME ZONE 'UTC',", "to_char(a.occurred_at,", P),
+ ('V6 always say not required', D, "{!check && <p>Not required", "{true && <p>Not required", W),
+ ('V7 no untitled fallback', D, "|| 'Untitled section'", "|| ''", W),
+ ('V1 restate the wrong rule', D, "<p>Not required for this document.</p>", "<p>Not required for this document. They are required when AnA drafted any of its text.</p>", W),
+]
+out=[]
+for name,f,a,b,t in muts:
+    p=R+f; src=open(p,'rb').read(); h=hashlib.sha256(src).hexdigest()
+    s=src.decode(); assert s.count(a)==1,(name,s.count(a))
+    open(p,'w').write(s.replace(a,b))
+    try:
+        r=subprocess.run(['npx','vitest','run',t,'--maxWorkers=2'],cwd=R,capture_output=True,text=True,timeout=600)
+    finally:
+        open(p,'wb').write(src)
+    assert hashlib.sha256(open(p,'rb').read()).hexdigest()==h
+    txt=r.stdout+r.stderr
+    fails=[l.strip() for l in txt.splitlines() if l.strip().startswith(('×','FAIL')) or 'Tests ' in l]
+    out.append(f"{name}: {'CAUGHT' if r.returncode!=0 else 'SURVIVED'} (rc {r.returncode}); restored sha256 {h}\n  "+"\n  ".join(fails[:6]))
+print("\n".join(out))

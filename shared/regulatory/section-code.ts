@@ -260,10 +260,12 @@ export function sectionStructureIssues(orderedCodes: readonly string[]): Section
 }
 
 /** The number a reader is shown for a section: its outline code, or nothing for a name code
- *  (title_page, qms-purpose), which is a key, not a number (J3, 2026-11-06). */
+ *  (title_page, qms-purpose), which is a key, not a number (J3, 2026-11-06). A working field of an IND form is
+ *  stored as "<number>:work:<n>" (ind-template-outlines-m1.ts); the reader is shown the number it belongs to, and
+ *  the field's title says which (rB-F13, 2026-11-12). */
 export function sectionNumberLabel(code: string | null | undefined): string {
-  const trimmed = String(code ?? '').trim();
-  return isNamedMatterCode(trimmed) ? '' : trimmed;
+  const outline = String(code ?? '').trim().split(':')[0].trim();
+  return isNamedMatterCode(outline) ? '' : outline;
 }
 
 /** A section coded by its name rather than its place in the outline: title_page, references,
