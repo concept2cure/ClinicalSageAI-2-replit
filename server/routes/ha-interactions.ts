@@ -27,6 +27,8 @@ import {
   listInteractions,
   listCommitments,
   getInteractionReadinessInput,
+  projectOfSubmission,
+  submissionOfInteraction,
   ORG_LEVEL,
 } from '../services/ha-interactions/ha-service';
 import { evaluateMeetingReadiness } from '../services/ha-interactions/ha-logic';
@@ -139,15 +141,13 @@ const interactionSchema = z.object({
  */
 async function admitSubmissionWrite(req: Request, res: Response, orgId: number, submissionId: number | null | undefined, forWrite = true): Promise<boolean> {
   if (submissionId == null) return true;
-  const { rows } = await requestPgClient(req).query(
-    `SELECT p.id FROM submissions s
-       JOIN projects p ON p.regulatory_program_id = s.program_id AND p.organization_id = s.organization_id AND p.status IS DISTINCT FROM 'deleted'
-      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 2`, [submissionId, orgId]);
-  if (rows.length !== 1) {
+  // The submission's one project, read where AnA's commitment tools read it (ha-service.ts).
+  const projectId = await projectOfSubmission(requestPgClient(req) as never, orgId, submissionId);
+  if (projectId === null) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: forWrite ? 'That submission is not one of a project you may change. Nothing was recorded.' : 'Interaction not found for this organization.' } });
     return false;
   }
-  try { await requireProjectAdmission(req, String(rows[0].id), forWrite); return true; } catch (err) {
+  try { await requireProjectAdmission(req, String(projectId), forWrite); return true; } catch (err) {
     if (!(err instanceof ProjectAdmissionRefusal)) throw err;
     // A read refused is a meeting this person cannot see: said as not found, never confirmed.
     if (!forWrite) res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Interaction not found for this organization.' } });
@@ -203,9 +203,7 @@ const statusSchema = z.object({
 
 /** The submission a meeting names, for its write admission; undefined when there is no such meeting here. */
 async function meetingSubmission(req: Request, orgId: number, id: number): Promise<number | null | undefined> {
-  const { rows } = await requestPgClient(req).query(
-    `SELECT submission_id FROM ha_interactions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, orgId]);
-  return rows.length ? (rows[0].submission_id == null ? null : Number(rows[0].submission_id)) : undefined;
+  return submissionOfInteraction(requestPgClient(req) as never, orgId, id);
 }
 
 router.patch('/interactions/:id/status', async (req, res) => {

@@ -1,0 +1,28 @@
+# RED 3 — the service test against ha-service.ts as it stood at HEAD 0ecb26381: a commitment took another tenant's submission.
+# 2026-11-12T00:36:48Z  npx vitest run server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts --reporter=verbose
+
+ × server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > recording a commitment > names this organisation's submission, or none, and never another tenant's 15ms
+   → promise resolved "{ id: 1, provenanceLinkIds: [ 1 ] }" instead of rejecting
+ × server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission has one live project in its own organisation, or none that can admit a write 1ms
+   → projectOfSubmission is not a function
+ × server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a meeting's submission is read in its own organisation only 1ms
+   → submissionOfInteraction is not a function
+ × server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission is readable in no program, or in a program of the reader’s scope 0ms
+   → submissionReadableIn is not a function
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with no scope given, lists as the screens always have: every commitment of the organisation 8ms
+ × server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with a reader’s program scope, lists those that name no submission, one in no program, or one in scope 3ms
+   → expected [ 10, 11, 12, null ] to deeply equal [ 10, 12, null ]
+ ✓ server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > never another organisation's, whatever the scope 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > recording a commitment > names this organisation's submission, or none, and never another tenant's
+AssertionError: promise resolved "{ id: 1, provenanceLinkIds: [ 1 ] }" instead of rejecting
+ FAIL  server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission has one live project in its own organisation, or none that can admit a write
+TypeError: projectOfSubmission is not a function
+ FAIL  server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a meeting's submission is read in its own organisation only
+TypeError: submissionOfInteraction is not a function
+ FAIL  server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > what a submission and a meeting belong to > a submission is readable in no program, or in a program of the reader’s scope
+TypeError: submissionReadableIn is not a function
+ FAIL  server/services/ha-interactions/__tests__/commitment-scope.pglite.test.ts > listing the organisation’s own commitments > with a reader’s program scope, lists those that name no submission, one in no program, or one in scope
+AssertionError: expected [ 10, 11, 12, null ] to deeply equal [ 10, 12, null ]
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)

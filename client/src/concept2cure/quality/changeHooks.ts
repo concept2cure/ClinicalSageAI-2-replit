@@ -15,6 +15,7 @@ import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { scopedPath, useAnswerOf, useQualityScope } from './registerContext';
 import { listOf } from './qmsList';
 import { learningReviewViewOf } from './qmsApproval';
+import { regulatoryImpactOf } from './changeData';
 import type {
   ChangeControl, ChangeLink, ChangeSummary, ChangeState, ChangeType,
   Classification, RiskLevel, LinkType, Relationship,
@@ -59,6 +60,8 @@ interface ServerChange {
   /** CHANGE_TRANSITIONS for this row's status, sent by the register read. */
   next_states?: unknown;
   learning_review?: unknown;
+  /** Whether the device change determination applies, and what is recorded (change-regulatory-impact.ts). */
+  regulatory_impact?: unknown;
 }
 interface ServerLink {
   id: number;
@@ -98,6 +101,7 @@ function adaptChange(r: ServerChange): ChangeControl {
     implementationPlan: typeof r.implementation_plan === 'string' ? r.implementation_plan : null,
     contentDigest: typeof r.content_digest === 'string' && /^[a-f0-9]{64}$/.test(r.content_digest) ? r.content_digest : null,
     learningReview: learningReviewViewOf(r.learning_review),
+    regulatoryImpact: regulatoryImpactOf(r.regulatory_impact),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,
     updatedAt: r.updated_at,

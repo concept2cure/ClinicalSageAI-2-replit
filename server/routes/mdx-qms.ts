@@ -96,12 +96,12 @@ import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
   createChange, listChanges, getChange, updateChange, changeEditRefusal, transitionChange, deleteChange,
   listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary, ChangeLinkRefusedError,
-  CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
-  LINK_TYPES, LINK_RELATIONSHIPS,
+  CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES, LINK_TYPES, LINK_RELATIONSHIPS,
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
 import { approveQmsChangeSigned, computeQmsChangeContentDigest, type QmsChangeRow } from '../services/qms/change-approval-signature';
+import { regulatoryImpactViews } from '../services/qms/change-regulatory-impact';
 import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
@@ -1187,10 +1187,10 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
        rendered "0 links" for every change and could only hand a move to AnA
        (QA walk 2026-10-08, J8). `implementation_overdue` is the database's
        verdict against CURRENT_DATE (changeControl.service). */
-    const links = await listLinksForChanges(orgId, rows.map((r) => r.id), requestPgClient(req));
+    const links = await listLinksForChanges(orgId, rows.map((r) => r.id), requestPgClient(req)), impactOf = await regulatoryImpactViews(orgId, rows, requestPgClient(req));
     const register = rows.map((r) => ({
       ...r,
-      links: links.get(Number(r.id)) ?? [],
+      links: links.get(Number(r.id)) ?? [], regulatory_impact: impactOf(r), // P-122: the device change determination
       next_states: nextStatesOf(r.status), content_digest: computeQmsChangeContentDigest(r as unknown as QmsChangeRow),
     }));
     return ok(res, register, { count: register.length });

@@ -2694,7 +2694,12 @@
   "create_regulatory_commitment": {
    "class": "confirm",
    "writes": "INSERT regulatory_commitments + provenance + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_regulatory_commitment')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_regulatory_commitment')",
+   "present": {
+    "verb": "record",
+    "object": "a regulatory commitment",
+    "source": "project"
+   }
   },
   "create_research_agreement": {
    "class": "confirm",
@@ -3768,7 +3773,12 @@
   "fulfill_regulatory_commitment": {
    "class": "confirm",
    "writes": "UPDATE regulatory_commitments fulfilled (terminal), meeting commitment or other only; a PMR, PMC or REMS writes nothing (a signed act, P-41)",
-   "site": "AnaToolExecutor.ts registerToolHandler('fulfill_regulatory_commitment')"
+   "site": "AnaToolExecutor.ts registerToolHandler('fulfill_regulatory_commitment')",
+   "present": {
+    "verb": "record",
+    "object": "a commitment as fulfilled",
+    "source": "project"
+   }
   },
   "gateway_configuration_status": {
    "class": "read",
@@ -5899,7 +5909,12 @@
   "review_commitment_portfolio": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('review_commitment_portfolio')"
+   "site": "AnaToolExecutor.ts registerToolHandler('review_commitment_portfolio')",
+   "present": {
+    "verb": "review",
+    "object": "the commitment portfolio",
+    "source": "project"
+   }
   },
   "review_consent_completeness": {
    "class": "read",
@@ -7139,7 +7154,12 @@
   "simulate_study_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('simulate_study_design')"
+   "site": "AnaToolExecutor.ts registerToolHandler('simulate_study_design')",
+   "present": {
+    "verb": "simulate",
+    "object": "the study design",
+    "source": "engine"
+   }
   },
   "size_diagnostic_study": {
    "class": "read",
