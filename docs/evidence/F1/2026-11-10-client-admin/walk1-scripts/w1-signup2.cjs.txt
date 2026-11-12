@@ -1,0 +1,83 @@
+// Flow 1b: the sign-up completed on the second instance (5231, mail to the local sink).
+const c = require('../walk/common.cjs');
+const mail = require('./mail.cjs');
+const PW = process.env.WALK_PASSWORD;
+const EMAIL = 'avery.lind@northgate-bio.example.test';
+const redact = (s) => String(s).replace(/token=[A-Za-z0-9._-]+/g, 'token=<redacted>').replace(/"token":"[^"]+"/g, '"token":"<redacted>"');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'signup' });
+  const resps = [];
+  page.on('response', async (r) => { if (r.url().includes('/api/auth/') && r.request().method() === 'POST') { let b = ''; try { b = (await r.text()).slice(0, 700); } catch {} resps.push(`${r.status()} ${r.url().replace(c.BASE, '')} ${redact(b)}`); } });
+  let since = Date.now() - 1000;
+  await c.step('signup: fill four steps and create', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/signup', { waitUntil: 'networkidle' });
+    await page.fill('#firstName', 'Avery'); await page.fill('#lastName', 'Lind'); await page.fill('#email', EMAIL);
+    await page.fill('#password', PW); await page.fill('#confirmPassword', PW); await page.fill('#jobTitle', 'Head of Regulatory Affairs');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(300);
+    await page.fill('#organization', 'Northgate Biologics'); await page.selectOption('#organizationType', 'biotech');
+    await page.fill('#country', 'Germany'); await page.selectOption('#useCase', 'ind');
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(300);
+    await page.getByRole('button', { name: 'Continue' }).click(); await c.sleep(300);
+    await page.locator('div.h-40.overflow-y-auto').evaluateAll(els => els.forEach(e => { e.scrollTop = e.scrollHeight; e.dispatchEvent(new Event('scroll', { bubbles: true })); }));
+    await c.sleep(300);
+    for (const cb of await page.locator('input[type=checkbox]').all()) await cb.check();
+    await page.locator('button.relative.w-10').click(); // AI Model Improvement: on
+    since = Date.now() - 1000;
+    await page.getByRole('button', { name: /Create account/i }).click(); await c.sleep(3500);
+    s.notes.push('responses: ' + JSON.stringify(resps));
+    s.notes.push('screen: ' + (await c.textOf(page, 'body')).split('Română')[1]);
+    await c.shot(page, 'w1-13-signup-check-your-email.png', { fullPage: true });
+  });
+  let link = null;
+  await c.step('signup: the verification mail', async (s) => {
+    const m = await mail.mailFor(EMAIL, since, 'verify');
+    s.notes.push('subject: ' + mail.subjectOf(m));
+    s.notes.push('from: ' + m.from + ' to: ' + m.to.join(','));
+    s.notes.push('text: ' + redact(mail.plainOf(m)));
+    link = mail.linkIn(m);
+    s.notes.push('link shape: ' + redact(link));
+  });
+  await c.step('signup: sign in BEFORE confirming the address', async (s) => {
+    const { page: p2, context } = await c.newPage(browser, { who: 'unverified' });
+    const r2 = [];
+    p2.on('response', async (r) => { if (r.url().includes('/api/auth/') && r.request().method() === 'POST') { let b = ''; try { b = (await r.text()).slice(0, 500); } catch {} r2.push(`${r.status()} ${r.url().replace(c.BASE, '')} ${redact(b)}`); } });
+    await p2.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+    await p2.fill('#login-email', EMAIL); await p2.fill('#login-password', PW);
+    await p2.getByRole('button', { name: 'Sign in', exact: true }).click(); await c.sleep(2500);
+    s.notes.push('responses: ' + JSON.stringify(r2));
+    s.notes.push('screen: ' + (await c.textOf(p2, 'body')).split('Română')[1]?.slice(0, 600));
+    await c.shot(p2, 'w1-14-signin-before-verification.png');
+    await context.close();
+  });
+  await c.step('signup: resend button state', async (s) => {
+    s.notes.push('buttons: ' + JSON.stringify(await page.locator('button:visible').evaluateAll(els => els.map(e => `${e.textContent.trim()}${e.disabled ? ' (disabled)' : ''}`))));
+  });
+  await c.step('verify: open the link (clean browser context)', async (s) => {
+    const { page: p3, context } = await c.newPage(browser, { who: 'verify' });
+    const r3 = [];
+    p3.on('response', async (r) => { if (r.url().includes('/api/auth/') && r.request().method() === 'POST') { let b = ''; try { b = (await r.text()).slice(0, 500); } catch {} r3.push(`${r.status()} ${r.url().replace(c.BASE, '')} ${redact(b)}`); } });
+    await p3.goto(link, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    s.notes.push('address bar after: ' + redact(p3.url()));
+    s.notes.push('responses: ' + JSON.stringify(r3));
+    s.notes.push('screen: ' + (await c.textOf(p3, 'body')).split('Română')[1]?.slice(0, 500));
+    await c.shot(p3, 'w1-15-verify-email-done.png');
+    // second use
+    r3.length = 0;
+    await p3.goto(link, { waitUntil: 'networkidle' }); await p3.reload({ waitUntil: 'networkidle' }).catch(() => {});
+    await p3.goto('about:blank'); await p3.goto(link, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    s.notes.push('SECOND USE responses: ' + JSON.stringify(r3));
+    s.notes.push('SECOND USE screen: ' + (await c.textOf(p3, 'body')).split('Română')[1]?.slice(0, 500));
+    await c.shot(p3, 'w1-16-verify-email-second-use.png');
+    // a damaged link
+    r3.length = 0;
+    await p3.goto('about:blank'); await p3.goto(c.BASE + '/concept2cure/verify-email#token=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', { waitUntil: 'networkidle' }); await c.sleep(1200);
+    s.notes.push('DAMAGED responses: ' + JSON.stringify(r3) + ' url ' + p3.url());
+    s.notes.push('DAMAGED screen: ' + (await c.textOf(p3, 'body')).split('Română')[1]?.slice(0, 500));
+    await c.shot(p3, 'w1-17-verify-email-damaged.png');
+    await context.close();
+  });
+  console.log(JSON.stringify(c.log.steps.map(s => ({ n: s.name, o: s.outcome, e: s.error, http: s.http, console: s.console, notes: s.notes })), null, 1));
+  c.save('w1-signup2');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -1,0 +1,29 @@
+// Flow 4 (after removal): Quinn Abara was removed while invited, then set a password with the old setup link.
+// Can Quinn sign in, and what do they reach?
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const redact = (s) => String(s).replace(/"(token|accessToken|refreshToken|mfaToken|challengeToken)":"[^"]+"/g, '"$1":"<redacted>"');
+(async () => {
+  const browser = await L.chromium.launch();
+  const ctx = await browser.newContext({ viewport: L.VIEWPORTS.desktop }); const page = await ctx.newPage();
+  const seen = []; page.on('response', async (r) => { if (r.url().includes('/api/') && (r.request().method() !== 'GET' || r.status() >= 400)) { let b = ''; try { b = (await r.text()).slice(0, 400); } catch {} seen.push(redact(`${r.status()} ${r.request().method()} ${r.url().replace(L.BASE, '')} ${b}`)); } });
+  await page.goto(L.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+  await page.fill('#login-email', 'quinn.abara@northgate-bio.example.test'); await page.fill('#login-password', process.env.WALK_PASSWORD);
+  const since = Date.now() - 2000;
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await L.sleep(3000);
+  note('after password', (await L.textOf(page, 'body')).split('Română')[1]?.slice(0, 500));
+  note('calls', seen.splice(0));
+  await L.shot(page, 'w1-83-removed-member-signin.png');
+  if (await page.getByLabel('Digit 1').count()) {
+    const code = await L.otpFor('quinn.abara@northgate-bio.example.test', since);
+    for (let i = 0; i < 6; i += 1) await page.getByLabel(`Digit ${i + 1}`).fill(code[i]);
+    await L.sleep(3500);
+    note('after code: url', page.url());
+    note('after code: screen', (await L.textOf(page, 'body')).slice(0, 900));
+    note('calls', seen.splice(0));
+    await L.shot(page, 'w1-84-removed-member-after-code.png');
+    const A = (m, u, b) => L.api(page, m, u, b).then(r => `${r.status} ${JSON.stringify(r.body).slice(0, 260)}`);
+    for (const u of ['/api/v1/auth/session', '/api/tenants', '/api/organizations', '/api/organizations/6', '/api/tenant-users/6', '/api/c2c/projects', '/api/client-branding/company-documents?includeLegal=false', '/api/tenant-config/6/settings']) note(`GET ${u}`, await A('GET', u));
+  }
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

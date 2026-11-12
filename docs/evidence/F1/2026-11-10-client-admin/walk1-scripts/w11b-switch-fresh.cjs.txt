@@ -1,0 +1,28 @@
+// Flow 6c, repeated from a clean sign-in (no saved session, no helper script in the page): switch organization.
+const c = require('../walk/common.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const AVERY = 'avery.lind@northgate-bio.example.test';
+const red = (x) => x.replace(/"(token|accessToken|refreshToken)":"[^"]+"/g, '"$1":"<redacted>"').slice(0, 330);
+(async () => {
+  const browser = await c.chromium.launch();
+  const context = await browser.newContext({ viewport: c.VIEWPORTS.desktop });
+  const page = await context.newPage();
+  const seen = [];
+  page.on('response', async (r) => { const u = r.url(); if (!u.includes('/api/')) return; const m = r.request().method(); if (m === 'GET' && r.status() < 400 && !/auth\/session/.test(u)) return; let b = ""; try { b = (await r.text()).replace(/"token":"[^"]*"?/g, "\"token\":\"<redacted>\"").slice(0, 300); } catch {} seen.push(red(`${new Date().toISOString().slice(17, 23)} ${r.status()} ${m} ${u.replace(c.BASE, '')} ${b}`)); });
+  await c.signIn(page, AVERY);
+  note('signed in at', page.url());
+  seen.length = 0;
+  await page.getByRole('button', { name: 'Organizations and invitations' }).click(); await c.sleep(1200);
+  const panel = page.getByRole('dialog').first();
+  note('panel', await panel.innerText());
+  const target = process.argv[3] || 'Concept2Cure Therapeutics';
+  await panel.getByRole('button', { name: new RegExp(`Switch to ${target}`) }).click(); await c.sleep(700);
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Switch organization' }).click();
+  await c.sleep(7000);
+  note('calls during the switch', seen.splice(0));
+  note('after switch: url', page.url());
+  note('after switch: screen', (await c.textOf(page, 'body')).replace(/\n+/g, ' | ').slice(0, 500));
+  await c.shot(page, process.argv[4] || 'w1-91-after-switch-seeded-org.png');
+  if (!/login/.test(page.url())) await context.storageState({ path: require('path').join(__dirname, `.state-${AVERY.replace(/[^a-z0-9]/gi, '_')}.json`) });
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

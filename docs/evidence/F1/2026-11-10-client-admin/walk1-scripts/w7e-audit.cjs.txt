@@ -1,0 +1,20 @@
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  await page.goto(L.BASE + '/concept2cure/audit-trail', { waitUntil: 'networkidle' }); await L.sleep(2500);
+  const rows = page.locator('button.ct-row');
+  note('row count', await rows.count());
+  const idx = await rows.evaluateAll(els => els.findIndex(e => /Member Role Changed/.test(e.innerText)));
+  const before = (await L.textOf(page, 'body')).split('\n');
+  await rows.nth(idx).click(); await L.sleep(1200);
+  const after = (await page.locator('body').innerText()).split('\n');
+  note('role-change entry detail', after.filter(l => l.trim() && !before.includes(l)).join(' | ').slice(0, 1800));
+  await rows.nth(idx).scrollIntoViewIfNeeded();
+  await L.shot(page, 'w1-82-audit-entry-role-changed.png');
+  for (const q of ['Priya Raman', 'priya', 'organization_users:11', 'Continuity cover', 'Quinn']) { await page.getByPlaceholder('Search entries...').fill(q); await L.sleep(900); note(`search "${q}" rows`, await rows.count()); }
+  await page.getByPlaceholder('Search entries...').fill('zzzz-no-such'); await L.sleep(900);
+  note('no-match state text', (await L.textOf(page, 'main')).split('Sig\n')[1]?.slice(0, 200));
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
