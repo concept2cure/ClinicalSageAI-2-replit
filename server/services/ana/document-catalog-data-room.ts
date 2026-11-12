@@ -155,6 +155,8 @@ Promise<{ vaultTotal?: number; vaultDocuments?: Array<Record<string, unknown>>; 
       vaultDocuments: page.documents.map((d) => ({
         documentId: d.documentId, title: d.title, project: d.projectName, projectId: d.projectId, kind: d.evidenceKind,
         ctdSection: d.ctdSection, folder: d.folderLabel ?? d.folder, placementStatus: d.placementStatus, version: d.version,
+        // What a profiled dataset holds (standard, class, columns, rows), from its bytes; absent for any other document.
+        ...(d.dataset ? { dataset: d.dataset } : {}),
         grade: gradeForAna(d.grade),
       })),
     };
