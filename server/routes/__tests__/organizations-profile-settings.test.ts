@@ -315,6 +315,57 @@ describe('platform staff acting on another organization', () => {
   });
 });
 
+describe('GET /api/organizations/:id/settings — what each role may read (role walk, 2026-11-12)', () => {
+  const stored = {
+    general: { organizationName: 'Bright Bio' },
+    security: { sessionTimeoutMinutes: 30, passwordPolicy: { minLength: 12 }, ipWhitelist: ['203.0.113.7'], ipRestrictions: ['203.0.113.0/24'] },
+    integrations: {
+      docusign: { enabled: true, apiKey: 'dsk-live-1234567890' },
+      slack: { enabled: true, webhookUrl: 'https://hooks.slack.example/services/T0/B0/secret' },
+      microsoftOffice: { enabled: true, tenantId: 'tenant-guid', clientId: 'client-guid', clientSecret: 'ms-secret' },
+    },
+  };
+  const read = async (user: string) => {
+    nextSelectRows = [{ id: 7, name: 'Bright Bio', settings: stored }];
+    return request(makeApp()).get('/api/organizations/7/settings').set('x-test-user', user);
+  };
+
+  it('never returns a stored credential in the clear, to an administrator either: it says one is stored', async () => {
+    const res = await read(ORG7_ADMIN);
+    expect(res.status).toBe(200);
+    const text = JSON.stringify(res.body);
+    for (const secret of ['dsk-live-1234567890', 'hooks.slack.example', 'ms-secret']) expect(text).not.toContain(secret);
+    expect(res.body.settings.integrations.docusign).toEqual({ enabled: true, apiKey: '', apiKeyConfigured: true });
+    expect(res.body.settings.integrations.slack).toEqual({ enabled: true, webhookUrl: '', webhookUrlConfigured: true });
+    expect(res.body.settings.integrations.microsoftOffice).toMatchObject({ tenantId: 'tenant-guid', clientSecret: '', clientSecretConfigured: true });
+    // An administrator still reads the network posture and the policies they set.
+    expect(res.body.settings.security).toEqual(stored.security);
+  });
+
+  it('gives a member the settings their screens read, without the integrations or the network allowlist', async () => {
+    const res = await read(ORG7_MEMBER);
+    expect(res.status).toBe(200);
+    expect(res.body.settings.general).toEqual(stored.general);
+    expect(res.body.settings.security).toEqual({ sessionTimeoutMinutes: 30, passwordPolicy: { minLength: 12 } });
+    expect(res.body.settings).not.toHaveProperty('integrations');
+    expect(JSON.stringify(res.body)).not.toContain('203.0.113');
+  });
+
+  it('still refuses another organization\'s administrator', async () => {
+    expect((await read(ORG9_ADMIN)).status).toBe(403);
+  });
+
+  it('a write does not echo the credential it stored', async () => {
+    nextSelectRows = [{ id: 7, name: 'Bright Bio', settings: {} }];
+    writerMock.mockResolvedValue({ id: 7, settings: {} });
+    const res = await request(makeApp()).patch('/api/organizations/7/settings').set('x-test-user', ORG7_ADMIN)
+      .send({ settings: { integrations: { slack: { enabled: true, webhookUrl: 'https://hooks.slack.example/services/T0/B0/secret' } } }, reason: 'Connecting the release channel.' });
+    expect(res.status).toBe(200);
+    expect(JSON.stringify(res.body)).not.toContain('hooks.slack.example');
+    expect(res.body.settings.integrations.slack).toEqual({ enabled: true, webhookUrl: '', webhookUrlConfigured: true });
+  });
+});
+
 describe('PATCH /api/organizations/:id/settings', () => {
   const orgRow = { id: 7, settings: { security: { mfaEnabled: true } } };
 
