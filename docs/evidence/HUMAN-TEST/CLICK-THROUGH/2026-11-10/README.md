@@ -55,7 +55,7 @@ sandbox's CSR study before this was seen.
 B, D and E ran one at a time, each browser for 20 clicks. They were stopped when the push's typecheck needed the
 sandbox's memory (the typecheck was killed twice beside the app and a browser), and the sandbox then restarted. They
 were not resumed: the walk of 2026-11-11 opens every one of their screens and tabs again, with production's
-launch-scope gate on (`../2026-11-11/`).
+launch-scope gate on (`../2026-11-11-release-gate/`).
 
 37 clicks in B and D timed out on controls inside a collapsed section (a seal's "Open", a version's "View" and
 "Download", a readiness finding's "Place a leaf"). Current Chromium gives such a control a box though it is not
