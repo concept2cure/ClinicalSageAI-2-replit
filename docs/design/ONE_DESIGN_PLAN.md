@@ -1519,6 +1519,9 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
   package and index say how many were declared. A filed record is not declared over (409). A document filed against
   a declared record ends the declaration. Withdrawing it is a removal with a reason. The store's file was amended in
   place (RULE 1). Walked on a deploy-migrated database. Evidence `docs/evidence/D2-ETMF/2026-11-12-not-applicable/`.
+- **A filed record says its document's review stage** (F1, `d35c89ed05`; P-124 item 5's other half, "a record's
+  status is its document's"). The stage is the one the Library reads for the same document, e.g. "Review:
+  Approved.". Readiness is unchanged.
 
 Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
 administration's restoration order); on a phone the first document is below the first screen (the shared page
