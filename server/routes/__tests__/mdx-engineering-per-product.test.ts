@@ -31,7 +31,7 @@ const OWN = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SIBLING = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
 const FOREIGN = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
-type Doc = { id: string; org_id: number; project_id: string; title: string; status: string };
+type Doc = { id: string; org_id: number; project_id: string; title: string; status: string; doc_type?: string };
 type Section = {
   id: number; document_id: string; section_key: string; parent_key: string | null; label: string;
   status: string; mandatory: boolean; version: number;
@@ -87,6 +87,11 @@ const h = vi.hoisted(() => {
           .map((s) => ({
             id: s.id, section_key: s.section_key, label: s.label, status: s.status, mandatory: s.mandatory,
             version: s.version, updated_at: null, document_id: s.document_id, document_title: docOf(s).title,
+            /* Returned only to a read that asks for them (P-114 item 2). */
+            ...(/d\.doc_type/.test(sql) ? { doc_type: docOf(s).doc_type ?? null } : {}),
+            ...(/g\.label AS group_label/.test(sql)
+              ? { group_label: state.sections.find((g) => g.document_id === s.document_id && g.section_key === s.parent_key)?.label ?? null }
+              : {}),
           })),
       };
     }
@@ -234,6 +239,52 @@ describe("GET /api/mdx/engineering/:programId — the design history is the proj
     expect(res.status).toBe(200);
     expect(res.body.data.dhf).toEqual([]);
     expect(res.body.meta.unavailable).toEqual(expect.arrayContaining(['dhf', 'summary']));
+  });
+});
+
+/* P-114 item 2 (2026-11-09, decided under the founder's delegation; MDX journey
+   M16): a filing's paperwork is not a design record. The route marks each
+   section by the governed outline's own Administrative group
+   (shared/regulatory/design-controls-trace.ts designFileStanding). */
+describe("GET /api/mdx/engineering/:programId — a filing's paperwork is not a design record", () => {
+  beforeEach(() => {
+    h.state.docs = [{ id: 'doc_own', org_id: ORG, project_id: OWN, title: 'Sensor 510(k)', status: 'draft', doc_type: 'k510' }];
+    /* [id, key, parent, label, status] */
+    const rows: Array<[number, string, string | null, string, string]> = [
+      [1, 'A', null, 'Administrative', 'todo'],
+      [2, 'A1', 'A', 'Cover letter', 'todo'],
+      [3, 'A6', 'A', 'Truthful and accuracy statement (21 CFR 807.87(k))', 'drafted'],
+      [4, 'B', null, 'Device description', 'todo'],
+      [5, 'B1', 'B', 'Device description and principles of operation', 'drafted'],
+      [6, 'B2', 'B', 'Indications for use statement', 'todo'],
+      [7, 'E', null, 'Performance and safety testing', 'todo'],
+      [8, 'E5', 'E', 'Bench performance testing', 'approved'],
+    ];
+    h.state.sections = rows.map(([id, section_key, parent_key, label, status]) =>
+      ({ id, document_id: 'doc_own', section_key, parent_key, label, status, mandatory: true, version: 1 }));
+  });
+
+  it("marks the Administrative group's sections and the indications for use statement as filing content", async () => {
+    const res = await get();
+    const record = Object.fromEntries(res.body.data.dhf.map((d: { num: string; record?: string }) => [d.num, d.record]));
+    expect(record).toEqual({
+      A1: 'filing-content', A6: 'filing-content', B2: 'filing-content',
+      B1: 'design-file', E5: 'design-file',
+    });
+  });
+
+  it('still lists them, with their status: a mandatory cover letter with nothing written blocks its document', async () => {
+    const res = await get();
+    const byNum = Object.fromEntries(res.body.data.dhf.map((d: { num: string }) => [d.num, d]));
+    expect(byNum.A1).toMatchObject({ status: 'blocked', label: 'Cover letter', record: 'filing-content' });
+    // The summary's figure is the project's mandatory sections, filing content included: one of five approved.
+    expect(res.body.data.summary.dhfCompletion).toBe(20);
+  });
+
+  it('decides nothing for a document whose class is not an FDA device filing', async () => {
+    h.state.docs[0].doc_type = 'ivdr';
+    const res = await get();
+    expect(new Set(res.body.data.dhf.map((d: { record?: string }) => d.record))).toEqual(new Set(['design-file']));
   });
 });
 

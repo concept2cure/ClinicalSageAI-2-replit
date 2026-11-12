@@ -51,14 +51,6 @@ export interface GccModule {
 
 export const GCC_MODULES: readonly GccModule[] = [
   {
-    key: 'ectd',
-    summary: 'eCTD module structure and seeder.',
-    state: 'prototype',
-    servedInsteadBy:
-      'The governed eCTD tree is built from the rule packs in c2c_rule_packs; ' +
-      'see /api/c2c/projects and the authoring surfaces.',
-  },
-  {
     key: 'signing',
     summary: 'E-signature workflows (21 CFR Part 11).',
     state: 'not_implemented',
@@ -73,11 +65,6 @@ export const GCC_MODULES: readonly GccModule[] = [
     key: 'labeling',
     summary: 'Label impact simulator.',
     state: 'not_implemented',
-  },
-  {
-    key: 'drafting',
-    summary: 'Defensible drafting (chain of verification).',
-    state: 'available',
   },
 ];
 

@@ -76,7 +76,6 @@ const APPROVED = new Set([
   // exists — an orphaned entry breaks the gate rather than merely ageing.
   // Additional pre-existing direct callers documented at gate-introduction
   // time (2026-05-07). Migration target: enhancedEmbeddingService.embed().
-  'server/api/drafting/routes.ts',
   // server/brain/vaultRetriever.js — migrated 2026-05-07 to
   // embeddingService.embed() with corpus 'vaultDocumentChunks'.
   'server/openai-service.ts',

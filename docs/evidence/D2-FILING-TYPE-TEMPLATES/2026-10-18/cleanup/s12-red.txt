@@ -1,0 +1,13 @@
+s12 red: server/routes/__tests__/biopharma-ctd-route-retired.test.ts on trunk 51c52751e (the parent of this change), 2026-11-09T19:52Z
+ × server/routes/__tests__/biopharma-ctd-route-retired.test.ts > S12: /api/biopharma/ctd is retired > the route file is gone 
+ × server/routes/__tests__/biopharma-ctd-route-retired.test.ts > S12: /api/biopharma/ctd is retired > nothing mounts it 
+ × server/routes/__tests__/biopharma-ctd-route-retired.test.ts > S12: /api/biopharma/ctd is retired > the build-state helpers only it used are gone; the structure stays 
+ × server/routes/__tests__/biopharma-ctd-route-retired.test.ts > S12: /api/biopharma/ctd is retired > no AnA tool description sends the model to the retired route 
+ ✓ server/routes/__tests__/biopharma-ctd-route-retired.test.ts > S12: /api/biopharma/ctd is retired > the replacements are reached: the AnA structure tool and the editor's filing outline 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected '/**\n * Inline-route bootstrap slots.…' not to match /['"]\/api\/biopharma\/ctd['"]|rou…/api\
+AssertionError: expected { …(5), …(1) } to not have property "annotateModuleBuildState"
+AssertionError: expected '/**\n * BLA 351(a) biologics + CTD no…' not to contain '/api/biopharma/ctd'
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)

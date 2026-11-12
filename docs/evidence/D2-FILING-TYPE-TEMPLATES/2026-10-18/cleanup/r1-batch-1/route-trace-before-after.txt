@@ -1,0 +1,21 @@
+Live route table, traced from the running server with docs/evidence/DESIGN/R1/2026-11-01-inventory/method/trace.cjs + compose.py.
+Before: trunk 51c52751e, 3993 mounted handlers.
+After: trunk + S05b, S12, S13, S19, S29, 3979 mounted handlers. Both servers booted with 0 "Failed to mount" lines.
+
+Routes gone (14):
+  GET /api/biopharma/ctd/build-state/:projectId  (server/routes/biopharma/ctd.ts)
+  GET /api/biopharma/ctd/structure  (server/routes/biopharma/ctd.ts)
+  GET /api/gcc/drafting/sessions  (server/api/drafting/routes.ts)
+  GET /api/gcc/drafting/sessions/:id  (server/api/drafting/routes.ts)
+  GET /api/gcc/drafting/stats  (server/api/drafting/routes.ts)
+  GET /api/gcc/ectd/modules  (server/api/gcc/ectd/routes.js)
+  GET /api/gcc/ectd/status  (server/api/gcc/ectd/routes.js)
+  POST /api/gcc/drafting/extract-entities  (server/api/drafting/routes.ts)
+  POST /api/gcc/drafting/generate  (server/api/drafting/routes.ts)
+  POST /api/submission-orchestrator/csr/tabulate  (server/routes/submission-orchestrator.ts)
+  POST /api/submission-orchestrator/m2/clinical  (server/routes/submission-orchestrator.ts)
+  POST /api/submission-orchestrator/m2/clinical-overview  (server/routes/submission-orchestrator.ts)
+  POST /api/submission-orchestrator/m2/nonclinical  (server/routes/submission-orchestrator.ts)
+  POST /api/submission-orchestrator/validate/hardened  (server/routes/submission-orchestrator.ts)
+
+Routes added (0):

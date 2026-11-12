@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-11-12T18:39:27.125Z",
+  "generatedAt": "2026-11-12T21:04:35.074Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 293,
+  "totalMigrations": 292,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -245,7 +245,6 @@
       "migrations": [
         "014_gcc_regulatory_timeline.sql",
         "015_gcc_submission_package.sql",
-        "038_gcc_ectd_seeder_service.sql",
         "050_gcc_ectd_v4_domain_registry.sql",
         "052_gcc_ectd_v4_cou_graph.sql",
         "060_regulatory_foundation.sql",
@@ -345,7 +344,6 @@
     "030_stability_results.sql",
     "036_gcc_discovery_bridge.sql",
     "037_gcc_registry_trial_ledger.sql",
-    "038_gcc_ectd_seeder_service.sql",
     "039_gcc_label_impact_simulator.sql",
     "040_gcc_site_intelligence.sql",
     "041_gcc_signing_gates.sql",
