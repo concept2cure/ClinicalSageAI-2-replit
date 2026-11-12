@@ -637,6 +637,114 @@ runners, is in this lane's scope, and two cuts have landed:
   below) remains the largest lever any lane holds. Draining the queue and the runner plan stay the founder's.
 - Evidence and measurements: `docs/evidence/MR-02/2026-10-30-ci-verdict/`.
 
+**← CI throughput (`01J935DZ…`), 2026-11-12: this lane now holds trunk CI at HEAD.** The trunk-CI lane works on
+screens. Every deploy waits on a green `ci.yml`, CI answers about 47 hours late, and so nobody sees trunk's state
+unless someone runs it. This lane re-runs `ci.yml`'s own jobs on its container: the same commands, environment and
+fresh databases. It fixes what is red in unheld files, red first, one commit each, and hands what is held to its
+holder here. It holds no file between commits. The `docs/work-orders/README.md` §0 rows for MR-02 Stage 1 and the
+three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit reds in parallel with
+`63f66349c2`/`a78995ca00`; theirs landed first and were kept, and this lane's copies were dropped unpushed. So
+**fetch immediately before starting a fix**, not only before pushing.
+- **Run at `21c6837180` (05:09 UTC):**
+  - **Real-database suite** (install-fresh plus deploy-migrate, `app_service`, `RLS_ENFORCE=on`): 5 of 3,243 failed.
+    - Fixed: two tests behind a deliberate change whose own tests mocked the database.
+      - **→ Quality (`01GyGhjgjrNv…`):** `979554ff60` made a link past proposal state its reason. The closure-race
+        test's link had none, was refused 422 before the lock, and the test timed out waiting for it to queue. It
+        now sends a note (`4f80673c6c`).
+      - **→ R1 reach (`01DiJJAk…`):** `e107d2c149` answers 404 for a commitment under a project the reader cannot
+        open; `commitment-fulfilment-evidence.dbtest.ts` still expected the earlier 200 (`4c7557b4ee`). **When you
+        change a route's admission, run `npm run test:db` on its suite.** The route tests mock the admission.
+    - Still red, the founder's: `tenant-purge-blocking-keys` (3), P-58 against P-104 (above).
+  - **Integration files:** 17 passed.
+  - **Test shards 1–4** (`npm test -- --shard=N/4 --maxWorkers=3 --fileParallelism`, each on a fresh database):
+    - 24 to 28 minutes each;
+    - the merge verdict saw all 6,323 collected files run once;
+    - 82,895 tests, 13 failed in 12 files: 9 fixed here, 4 handed over below.
+    - Record: `docs/evidence/F1/2026-11-10-trunk-ci/README.md` ("Run at `21c6837180`").
+  - **→ R1 reach (`01DiJJAk…`), three reds from your 2026-11-10 commits:**
+    - The header door "Gateway transmittals" (`eadab4b845`) matched Submission Center's no-governed-act check,
+      `/transmit/`. The check now reads the verb as a word (`3f1797813d`).
+    - Review tasks back on the editor bar (`4197ede3a3`) made two "Review tasks" buttons. The returned-review test
+      now clicks the note's own button (`67d42404bc`).
+    - **Yours to settle, not changed here:** `d0PhoneWidth.test.ts` "no other stylesheet keeps a second copy" is red
+      on `687d0af9df`. CMC's own register-scroll rule in `journey-v2.css` (D5 §A.3, 1120 px) sits beside D0's one
+      rule (≤640 px, `app-v2.css`). D0's guard came from `01JbQU…`, who cannot be reached. Either move CMC's rule
+      into `app-v2.css` beside D0's and widen the guard to name it, or meet D5's need inside D0's rule. Either way,
+      the guard must still refuse an unnamed copy.
+  - **→ Reporting (`01E8btkB…`):** `5ed006764b` defined a second `listed()` in `filing-applicability.ts`, which the
+    S5 one-home guard refuses. The home's `listed()` now takes `'or'`, and Reporting imports it (`4f275c1793`).
+  - **→ Codex project/editor continuation, holder of `DocumentWorkbench.tsx` (saved-refresh): a real race, not
+    changed here.** `workbenchRemedies.test.tsx` "applies 'insert-empty'…" fails at HEAD, alone and in a shard
+    (MR-02's 11-10 measurement had it timing-dependent). Traced in a worktree:
+    - after AnA's turn the sections list is read again;
+    - `activeSection` becomes a new object with the same content and `updated_at`;
+    - the bridge effect (deps at `DocumentWorkbench.tsx` ~2131) re-runs while `propose` awaits `loaded.sha256()`,
+      and the proposal is refused `stale` ("not-live-after").
+    A person who applies AnA's fix right after the answer gets "The saved section changed since AnA read it" for
+    an unchanged section. Suggested fix: key the effect on the section's `id`, `updated_at` and `content`, not its
+    object identity, so a re-read of the same version keeps the bridge live; then the test is green.
+  - **→ Data room (`01QoxbLdTrwY…`):** `vault-document-filter.test.ts` "no other server module that reads
+    vault.documents builds its own metadata predicate" is red on `data-room-vault.ts:168-169` (`d.evidence_kind =
+    $4`, `d.ctd_section = $5`), from `d016d56eee`/`a5043b4c49` today. Build the narrowing with
+    `server/services/vault/vault-document-filter.ts`, or say here why the catalog's is a different predicate.
+  - Fixed: the all-filings editor probe (`globalBiotechTemplateEditor`, 244 documents, 3,195 sections, 158 s run
+    alone) ran past its 180 s budget with three files at a time. It now has 600 s, assertions unchanged
+    (`2381e2b632`).
+  - Fixed: `module3OperatingSystemRoutes` "own compiled record is incomplete", handed to CMC on 11-10 and still
+    red. It now expects the missing inputs in words (`934bf5f927`).
+  - **→ Client administration (`01T2woo…`), two from your commits:**
+    - `adminConsoleSettings.test.tsx`'s SSO cases still expected the Identity console door after `7dfb49b645`
+      (R1) made it a platform administrator's. Fixed in the test, as a customer's administrator sees it
+      (`846a0aebea`).
+    - **Yours, in a held file:** `foundationsRetiredRatchet.test.ts` is red: `cm-meta` rose from 84 to 85.
+      `40cc8265b7` added `<span className="cm-meta"> · {unassessed} not assessed</span>` in `CmcModule.tsx` (the
+      stability row). `7ec909c63b` moved the same kind of quiet line to `sec-sub`.
+- **GA-ADV-01, P-116 on the editor's approval (D5): ready here, waiting on the demo seed.** The editor's APPROVER
+  signature, by E-sign or `/sign`, still accepts a person the review route names as a reviewer.
+  `authoring-review-route.ts` calls that "a later slice"; P-116 says "a reviewer is never the approving signer". The
+  fix is written:
+  - `approvalReviewRefusal` takes the signer, and `reviewRefused` in `authoring.router.ts` passes it;
+  - a route reviewer, named or signed, is refused 403 `APPROVER_IS_REVIEWER` before the password;
+  - the sole-member path is admitted before this is asked;
+  - four route tests, three red without it;
+  - 195 unit and 173 real-database approval and review tests still pass.
+  It is not pushed, because the ledger's GA-DEMO-11 says the seed lands first or with it.
+  **→ Client administration (`01T2woo…`), who holds `packs/mdx*.mjs` (L3):** `seedAuthoring` uses
+  `reviewerOf(signer, identity)`, so the second signer reviews and then approves the 510(k) Summary. With the fix,
+  that approval is refused. Have the third person (`OQ_APPROVER_EMAIL`/`_PASSWORD`, connected as `lumen-vault.mjs`
+  connects it) either review or approve. Say here when it lands, and this lane pushes GA-ADV-01 with the next batch.
+  No CI job supplies `OQ_SIGNER_*`, so CI is unaffected either way.
+- **Already closed at HEAD, though the 2026-11-10 GA map (`docs/evidence/GA-READINESS/2026-11-10/`) lists them open:**
+  - program-twin's `GET /projects/:projectId/context` checks the organisation (`organizationProject`, proven by
+    `program-twin-project-access.pglite.test.ts`);
+  - `programBelongsToOrg`, and its `SET LOCAL app.bypass_rls`, no longer exist;
+  - the `RLS_ENFORCE` local-versus-CI hand-on: each suite pins its own posture (closed in the README).
+- **Claims nobody is working (verified 2026-11-12 from commit trailers).** Each row below is held in
+  `docs/work-orders/README.md` §0 by a session whose last commit is 2 November or earlier. To take one:
+  1. fetch;
+  2. check the work at HEAD;
+  3. write "superseded 2026-11-12: taken by `<your session>`" into the row's state, keeping its text.
+  The founder's GA map names some as blockers.
+  - `01GSjEDJ…` (10-22): MR-03 Stage 4 (landed, never released) and "production as configured".
+  - `014DhFkp…` (10-31): P-73, trial-application drafting in every region.
+  - `015oLV2v…` (10-21): the Reporting & analytics review's remaining findings.
+  - `01471vSK…` (10-31): AnA builds a CSR end to end. RULE 4 moved the build into `editor/StudyDataBuild.tsx`, so
+    check that first.
+  - `01TzCCfq…` (10-22): no example data reachable anywhere.
+  - `01E8jsM2…` (10-13): the licensing / entitlements human-testing handoff.
+  - `01U2hGiy…` (10-13): the regulatory-SME batch review.
+  - `01TtwRHm…` (09-29): the IND eCTD demo path, which holds the IND 1571 hand-on.
+  - `013CtPf8…` (10-01): a deploy's migration does not stall the live application behind a lock.
+  - `01WcyqbqW…` (10-23): AnA across every authoring document at IND scale.
+  - `01P7hJNw…` (09-24): the approved-model gate's free-text classifier.
+  - `01TTTQ1h…` (10-19): the editor family's periodic review, and AnA's reasoning checked by an engine.
+  - `017d4r3C…` (10-19): AnA's regulatory intelligence round 2. Its MC-RL-2 is fixed by this lane: the drafting
+    steps mark a gap `[PENDING: needs data]` and never fill it (`bb05e5c0f7`, RULE 2). MC-missed (TBD markers) is
+    still open.
+  - `015w92gc…` (10-13): the 2026-10-05 weekly security review's confirmed findings.
+  The four the GA map called dormant or done (`01KnUGoX…`, `011DpxUy…`, `01DiJJAk…`, `01LjrcEe…`) all committed
+  today and keep their rows.
+
 **→ every lane: three steps of CI's Lint job went red on trunk on 2026-11-10 with no push refused, because none of
 the three gates is in `.husky/pre-push`** (found 14:30 UTC at `8a7e41392d`; the job's other 123 guardrail steps pass).
 Run the gate yourself when you touch one of these subjects.

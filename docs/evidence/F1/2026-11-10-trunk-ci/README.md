@@ -259,3 +259,53 @@ Both were red at `2cdfe99657` and again at trunk `82dfba5042` (re-run 2026-11-12
   across the catalog tool's six suites, the sub-agent toolset and the five source-reading tests above.
 - **Checked for anything that pins the input's name:** the tool register and the launch inventory name the tool, not
   its inputs; no prompt, skill or design document tells AnA to pass `folder`.
+
+## Run at `21c6837180`, 2026-11-12 05:09 UTC (taken by MR-02 Stage 3, `01J935DZ…`)
+
+The trunk-CI lane moved to screens on 2026-11-11, and CI's own verdicts arrive about 47 hours late. So the CI
+throughput lane re-ran `ci.yml`'s jobs here, with the same commands, environment and fresh databases as above. It
+used `npm ci` at that commit, PostgreSQL 16 with pgvector, the Noto fonts, and python-docx/lxml. The job record is
+`run-2026-11-12/steps.txt`; the Test verdict's own summary is `run-2026-11-12/shards.json`.
+
+| Job (ci.yml) | Command | Result at `21c6837180` |
+|---|---|---|
+| Integration Tests: real-database suite | install-fresh, deploy-migrate, `npm run test:db` as `app_service`, `RLS_ENFORCE=on` | 5 of 3,243 failed in 3 files (997 s) |
+| Integration Tests: `RUN_INTEGRATION_TESTS` files | the job's `grep` list, three files | 17 passed, 27 skipped by their own guard |
+| Test (shard 1/4) … (4/4) | `npm test -- --shard=N/4 --maxWorkers=3 --fileParallelism`, each on a fresh GCC database | 4, 1, 3 and 5 failed; 1,463, 1,420, 1,671 and 1,490 s |
+| Test (the merge) | `merge-test-shards.mjs --shards 4` | 6,323 files collected, 6,323 ran, none missing, none twice; 82,895 tests, 13 failed; Jest passed in every shard |
+
+Each shard took 24 to 28 minutes, on this 4-core container, three files at a time. That is what
+`docs/evidence/MR-02/2026-10-30-ci-verdict/` predicted for CI's runners.
+
+**The 18 reds, and what became of each.** Every fix below was shown red at HEAD, then green. Each test was also made
+to fail, by a change made for that run only, on the case it exists to catch. The commit message records that check.
+
+| Red | Cause | Outcome |
+|---|---|---|
+| `tests/db/qms-project-records` (1) | `979554ff60`: a link past proposal states its reason; the test's link had none and was refused before the lock | fixed, `4f80673c6c` |
+| `tests/db/commitment-fulfilment-evidence` (1) | `e107d2c149`: a commitment under a project the reader cannot open answers 404; the test expected the earlier 200 | fixed, `4c7557b4ee` |
+| `tests/db/tenant-purge-blocking-keys` (3) | P-58 against P-104 (`fd04214563`) | the founder's; unchanged |
+| `submissionRequiredDeliverables` | the header door "Gateway transmittals" (`eadab4b845`) matched `/transmit/` | fixed, `3f1797813d` |
+| `authoringReturnedReviewOnOpen` | Review tasks back on the editor bar (`4197ede3a3`): two buttons by that name | fixed, `67d42404bc` |
+| `s5-three-valued-helpers-have-one-home` | a second `listed()` in `filing-applicability.ts` (`5ed006764b`) | fixed, `4f275c1793` |
+| `d0PhoneWidth` "no other stylesheet keeps a second copy" | CMC's own 1120 px register scroll (`687d0af9df`) beside D0's 640 px rule | handed to R1 (`01DiJJAk…`) |
+| `cmdkPlaces` (palette focus rule) | `845a63b2bf` grew D0's composer list; the test pinned the whole list | fixed, `269e57f168` |
+| `workbenchRemedies` "insert-empty" | a real race: the sections re-read after AnA's turn rebuilds the editor bridge during `propose`'s hash | handed to the Codex editor continuation |
+| `globalBiotechTemplateEditor` (all filings) | 244 documents, 3,195 sections: 158 s alone, over 180 s three files at a time | fixed, `2381e2b632` |
+| `vault-document-filter` (one predicate) | `data-room-vault.ts:168-169` builds its own (`d016d56eee`) | handed to the data room lane |
+| `adminConsoleSettings` (2) | the Identity console door is a platform administrator's (`7dfb49b645`) | fixed, `846a0aebea` |
+| `foundationsRetiredRatchet` (`cm-meta` 84 → 85) | `40cc8265b7`, `CmcModule.tsx`, a held file | handed to `01T2woo…` |
+| `homeOpenItems` (approval row) | an approval opens its document (`4c6d882afd`) | fixed, `e35e967605` |
+| `module3OperatingSystemRoutes` (incomplete record) | the refusal names inputs in words (`307d82d2af`); red since 2026-11-10 | fixed, `934bf5f927` |
+
+Of the 15 reds that are not the founder's:
+- **9** were a deliberate change that landed with its own tests updated, while a second test elsewhere still encoded
+  the old behaviour. The new tests had mocked the database or covered only the component, and nobody ran the other
+  suite before pushing. CI would have said so about 47 hours later.
+- **4** were one-home or retired-name guards catching a new copy.
+- **1** was a time budget the suite's size had outgrown.
+- **1** was a real race.
+
+**Not run here, and why:** Production Image Boot and Codespace (no route to npm from a container, as above). The
+Lint job's 130 steps are next: its first 16 passed before the run was paused to push these fixes, since the
+pre-push typecheck and the job's own cannot share this container's memory.
