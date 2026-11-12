@@ -132,6 +132,15 @@ in the stability rows. The count is now written as plain words in its button, an
 
 Nothing is left open on the CMC screens from this walk in files this session holds.
 
+**A citation outside the editor** read as its source's file name in the Document view ("62%C2C-101-biopharmaceutics-
+BP-001.txt"), where the canvas and the filed document print "[1]". The stored link caches the name, and the
+read-only renderer (`editor/AuthoredHtml.tsx`) printed it. The Document view (`DocumentWorkbench.tsx`) now hands the
+renderer the document's numbering, made by the canvas's own reading-order walk (`citationAdmission.ts`
+`admittedPrecedingSources`) and the export's registry (`documentReadCitations`): "62%[1, Study BP-001 summary]", with
+the source's name on hover; a source not admitted to the section is stated, as on the canvas
+(`after-d9-01`, `12-document-view-citation-red-green.txt`). The reviewer's copy (`ReviewDecisionDialog.tsx`, held by
+Wave B) still shows the cached name until its holder passes the same numbering; noted in COORDINATION.
+
 **The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
 author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The
 bar counts recorded origins; a citation marker in a sentence the author wrote does not make its recorded origin a

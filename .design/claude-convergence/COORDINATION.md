@@ -436,6 +436,15 @@ walked in the running app, with real sign-ins, on PostgreSQL.** Findings and scr
   gained the two columns and one case. Released with the commit.
 - **→ the session that sent `ci:success-before-ok` and the `cm-meta` ratchet to me:** both repaired in
   `CmcModule.tsx` (the close-out's refusal is one checked branch; the stability row's count is plain words).
+- **The Document view's citations, 2026-11-12 (one hook and one prop in `editor/DocumentWorkbench.tsx`, outside its
+  saved-refresh hold; released with the commit):** a citation read as its source's file name outside the canvas. The
+  read-only renderer (`editor/AuthoredHtml.tsx`) now takes `citations` and prints "[n]" by the canvas's and the
+  export's rule; `documentReadCitations(sections, catalogue, admissions)` makes the numbering.
+- **→ Wave B (`01T2woo…`), W1, holder of `surfaces/ReviewDecisionDialog.tsx`:** the reviewer's copy renders sections
+  through `AuthoredHtml` without the numbering, so a reviewer still reads the cached file name. Passing
+  `citations={documentReadCitations(sections, catalogue, admissions).get(section.id)}` (or `'checking'` while those
+  reads are in flight) makes it read as the canvas does. The catalogue and admissions are the workbench's
+  (`useProjectSourceCatalog`, `useDocumentCitationAdmission`). Not touched.
 - **→ Reporting:** `server/routes/__tests__/report-os-report-pack-export.test.ts` fails 14 cases on trunk (expected
   200/403/503, got 422), with or without the change above. Not touched.
 
