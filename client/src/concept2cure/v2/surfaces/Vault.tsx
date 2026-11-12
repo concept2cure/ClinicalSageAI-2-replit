@@ -3344,7 +3344,11 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
           <EmptyState
             icon={I.folder}
             title="Choose a project's Vault"
-            hint="Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
+            /* It said "the governed artifacts of every project you can open", and "Open one below" while the page asked
+               which sponsor first: no view spans sponsors (P-107 item 3a). 2026-11-12. */
+            hint={'Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. '
+              + (gate?.ask ? 'Choose a sponsor below, then one of its projects.'
+                : 'Open one below. The governed artifacts of the projects listed follow them.')}
           />
           <ProjectVaults onNav={onNav} read={projectList} gate={gate} onChooseSponsor={setSponsorKey} />
           {gate && !gate.ask ? organizationView : null}

@@ -52,6 +52,21 @@ Nothing a person could do is lost: every control removed here did nothing until 
 The walk read the header's buttons on both pages: none with no project open; "Trial master file", "New folder",
 "Upload a folder" and "Add files" with one open. No console error on either.
 
+## The empty state's sentence (second commit)
+
+The hint under "Choose a project's Vault" read: "Open one below. The governed artifacts of every project you can open
+are listed after them." With several sponsors, no project was below (the page asks which sponsor first), and no view
+lists across sponsors (P-107 item 3a). It now says what the page does in each state:
+
+- asking which sponsor: "Choose a sponsor below, then one of its projects.";
+- one sponsor, or once one is chosen: "Open one below. The governed artifacts of the projects listed follow them."
+
+| File | What it shows |
+|---|---|
+| `06-hint-asking-sponsor.png`, `07-hint-sponsor-chosen.png` | The two states in the running app |
+| `08-hint-red.txt` | The two pins, added to `vaultOrganizationArtifacts.test.tsx`'s sponsor-first cases, against the old sentence: they fail |
+| `09-hint-green.txt` | Every Vault and eTMF client suite: 77 files, 840 tests, all pass |
+
 ## Not done here
 
 **A 510(k)'s Library lists the eSTAR outline twice.** Seen on the same walk (`[Demo · MDX] NeuroPanel-Dx 510(k)`):
