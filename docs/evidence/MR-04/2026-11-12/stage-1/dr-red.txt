@@ -1,0 +1,79 @@
+Success! The configuration is valid.
+
+tests/dr.tftest.hcl... in progress
+  run "the_three_keys_are_multi_region_from_creation"... fail
+
+Error: Test assertion failed
+
+  on tests/dr.tftest.hcl line 163, in run "the_three_keys_are_multi_region_from_creation":
+ 163:     condition     = aws_kms_key.database.multi_region == true
+    ├────────────────
+    │ aws_kms_key.database.multi_region is false
+
+The database key must be multi-Region. It can only be chosen at creation, and
+changing an RDS instance's storage key replaces the instance.
+
+Error: Test assertion failed
+
+  on tests/dr.tftest.hcl line 167, in run "the_three_keys_are_multi_region_from_creation":
+ 167:     condition     = aws_kms_key.vault.multi_region == true
+    ├────────────────
+    │ aws_kms_key.vault.multi_region is false
+
+The vault key must be multi-Region, chosen at creation.
+  run "each_key_has_a_replica_in_the_dr_region"... fail
+
+Error: Reference to undeclared resource
+
+  on tests/dr.tftest.hcl line 180, in run "each_key_has_a_replica_in_the_dr_region":
+ 180:     condition     = aws_kms_replica_key.database.primary_key_arn == aws_kms_key.database.arn
+
+A managed resource "aws_kms_replica_key" "database" has not been declared in
+the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/dr.tftest.hcl line 184, in run "each_key_has_a_replica_in_the_dr_region":
+ 184:     condition     = aws_kms_replica_key.vault.primary_key_arn == aws_kms_key.vault.arn
+
+A managed resource "aws_kms_replica_key" "vault" has not been declared in the
+root module.
+
+Error: Reference to undeclared resource
+
+  on tests/dr.tftest.hcl line 188, in run "each_key_has_a_replica_in_the_dr_region":
+ 188:     condition     = aws_kms_replica_key.release_signing.primary_key_arn == aws_kms_key.release_signing.arn
+
+A managed resource "aws_kms_replica_key" "release_signing" has not been
+declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/dr.tftest.hcl line 192, in run "each_key_has_a_replica_in_the_dr_region":
+ 192:     condition = alltrue([for r in [aws_kms_replica_key.database, aws_kms_replica_key.vault, aws_kms_replica_key.release_signing] :
+
+A managed resource "aws_kms_replica_key" "database" has not been declared in
+the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/dr.tftest.hcl line 192, in run "each_key_has_a_replica_in_the_dr_region":
+ 192:     condition = alltrue([for r in [aws_kms_replica_key.database, aws_kms_replica_key.vault, aws_kms_replica_key.release_signing] :
+
+A managed resource "aws_kms_replica_key" "vault" has not been declared in the
+root module.
+
+Error: Reference to undeclared resource
+
+  on tests/dr.tftest.hcl line 192, in run "each_key_has_a_replica_in_the_dr_region":
+ 192:     condition = alltrue([for r in [aws_kms_replica_key.database, aws_kms_replica_key.vault, aws_kms_replica_key.release_signing] :
+
+A managed resource "aws_kms_replica_key" "release_signing" has not been
+declared in the root module.
+  run "each_replica_carries_its_primarys_policy"... skip
+  run "the_account_may_replicate_the_vault_key"... skip
+  run "a_dr_region_equal_to_the_primary_is_refused"... skip
+tests/dr.tftest.hcl... tearing down
+tests/dr.tftest.hcl... fail
+
+Failure! 0 passed, 2 failed, 3 skipped.

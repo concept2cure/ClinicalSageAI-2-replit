@@ -111,3 +111,33 @@ describe('the readers', () => {
     expect(outputsRead('terraform output -raw a; terraform -chdir=terraform/bootstrap output -raw b\nterraform output c\n`terraform output`; terraform output -json d')).toEqual(['a', 'b', 'c', 'd']);
   });
 });
+
+/**
+ * Each root hands the stack its DR region (MR-04 Stage 1, OPS-14). The stack
+ * declares aws.dr in configuration_aliases, so a root that does not pass it is
+ * refused at validate; these pin which region it is configured from, and that
+ * the region is the founder's input, not a default.
+ */
+describe.each(ENVIRONMENTS)('the %s root passes the stack its DR region', (env) => {
+  const main = read(`terraform/environments/${env}/main.tf`);
+  const block = (re: RegExp) => main.match(re)?.[0] ?? '';
+
+  it('configures aws.dr from the dr_region variable', () => {
+    const dr = block(/^provider\s+"aws"\s*\{(?:(?!^\})[\s\S])*?alias\s*=\s*"dr"[\s\S]*?^\}/m);
+    expect(dr).toMatch(/^\s*region\s*=\s*var\.dr_region\s*$/m);
+  });
+
+  it('passes it to the stack as aws.dr, beside the primary', () => {
+    const stackCall = block(/^module\s+"stack"\s*\{[\s\S]*?^\}/m);
+    const providers = /providers\s*=\s*\{([\s\S]*?)\}/.exec(stackCall)?.[1] ?? '';
+    expect(providers).toMatch(/^\s*aws\s*=\s*aws\s*$/m);
+    expect(providers).toMatch(/^\s*aws\.dr\s*=\s*aws\.dr\s*$/m);
+  });
+
+  it('requires dr_region, with no default: the region is the founder\'s decision (NEW-2)', () => {
+    const variable = read(`terraform/environments/${env}/variables.tf`).match(/^variable\s+"dr_region"\s*\{[\s\S]*?^\}/m)?.[0] ?? '';
+    expect(variable).not.toBe('');
+    expect(variable).not.toMatch(/^\s*default\s*=/m);
+    expect(read(`terraform/environments/${env}/terraform.tfvars.example`)).toMatch(/^dr_region\s*=\s*"[a-z]{2}-[a-z]+-\d"/m);
+  });
+});

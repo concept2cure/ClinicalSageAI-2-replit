@@ -69,6 +69,19 @@ Production needs a custom domain (`domain_aliases`), and both certificates
 (`acm_certificate_arn` on the ALB, `cloudfront_certificate_arn`) must cover it:
 CloudFront checks the ALB's certificate against the domain it forwards.
 
+Both roots also need `dr_region`, the disaster-recovery region, with no
+default: it is the founder's decision (MR-04 NEW-2), and the example recommends
+`us-west-2`, which keeps the data in the US. The first apply makes the database
+and vault keys multi-Region and replicates them, with the release-signing key,
+into that region (MR-04 Stage 1). A KMS key is multi-Region only if it is made
+so, and changing the RDS storage key afterwards replaces the instance. So this
+must be in place before the first apply, not added after it.
+
+Production also needs `alarm_emails`: at least one address the alarm topic pages
+(MR-04 Stage 2). Each address must confirm AWS's subscription email before it
+is paged. What each alarm means, and the first three things to do, is in
+`docs/runbooks/incident-response.md`.
+
 ### 4. After each apply: what the outputs feed
 
 Run `terraform output` in the root you applied. Both roots export the same
@@ -109,8 +122,25 @@ The GitHub environment is `staging` or `production`, named for the root.
   definition that does, until F-27 decides how it is coordinated.
 - **The edge waits 60 seconds.** CloudFront's `origin_read_timeout` and the
   ALB's `idle_timeout` are both 60 s, under the server's 65 s keep-alive
-  (`tests/ci/edge-timeouts.contract.test.ts`). Work that takes longer returns a
-  504 at the edge while the server finishes it (MR-03 Stage 6, open).
+  (`tests/ci/edge-timeouts.contract.test.ts`). The eCTD compile and the test
+  package take about a minute for a 200-leaf IND, so their screens ask with
+  `Prefer: respond-async`: the server answers 202 with a job and the screen
+  polls it (MR-03 Stage 6, `docs/evidence/D1/2026-11-12-edge-timeouts/`).
+- **Keys have replicas in the DR region.** The database, vault and
+  release-signing keys are multi-Region, each with an `aws_kms_replica_key`
+  through the `aws.dr` provider under the same key policy
+  (`terraform/stack/tests/dr.tftest.hcl`). Backups are not yet copied there
+  (MR-04 Stage 6).
+- **One alarm path.** Every CloudWatch alarm (`terraform/stack/monitoring.tf`)
+  notifies one encrypted SNS topic, `c2c-<env>-alarms`, when it fires and when
+  it clears. It covers:
+  - the ALB, the API and embedding services, RDS and CloudFront;
+  - six lines the server writes when something is wrong;
+  - five CloudTrail CIS events;
+  - a nightly sweep with no finished run in a day.
+
+  The runbook is `docs/runbooks/incident-response.md`, and a rollback is
+  `docs/runbooks/rollback.md`.
 - **`/readyz` through CloudFront answers `{ ready }` alone.** The detail goes
   to a caller presenting the `readyz_detail` token in `x-readyz-token`, or to
   one inside the task.

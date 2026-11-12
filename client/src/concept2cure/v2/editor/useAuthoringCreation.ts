@@ -173,7 +173,7 @@ function failedCreation(kind: CreationKind, error: unknown, attempt: object, opt
   }
   const refused = error instanceof ApiRequestError && error.status >= 400 && error.status < 500 && error.status !== 408;
   return { attempt, phase: refused ? 'failed' : 'unknown', message: refused
-    ? `Couldn’t create the ${kind} — ${redactInternals(error.message, 'the server refused it')}. Nothing was created.`
+    ? `Couldn’t create the ${kind} — ${redactInternals(error.message, 'the server refused it').replace(/[.\s]+$/, '')}. Nothing was created.`
     : unknownMessage(kind) };
 }
 

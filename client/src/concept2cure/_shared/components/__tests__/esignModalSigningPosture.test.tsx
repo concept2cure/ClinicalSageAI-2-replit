@@ -92,6 +92,23 @@ describe('EsignModal reads the signing posture the server states', () => {
     expect(document.querySelector('input[type="password"]')).not.toBeNull();
   });
 
+  // GA-D4-12, the production walk (2026-11-12): an enrolled reviewer typed the password, pressed Sign and was only
+  // then shown the code field, because the dialog learned enrolment from the password check alone.
+  it('enrolled: the authenticator code is asked with the password, before any attempt', async () => {
+    serverSays({ status: 200, signing: { authenticatorRequired: false, authenticatorEnrolled: true } });
+    openDialog();
+    expect(await screen.findByPlaceholderText('6-digit code')).toBeTruthy();
+    expect(document.querySelector('input[type="password"]')).not.toBeNull();
+    expect(esig.verifyPassword).not.toHaveBeenCalled();
+  });
+
+  it('not enrolled: no code is asked for', async () => {
+    serverSays({ status: 200, signing: { authenticatorRequired: false, authenticatorEnrolled: false } });
+    openDialog();
+    await waitFor(() => expect(sessionCalls.length).toBe(1));
+    expect(screen.queryByPlaceholderText('6-digit code')).toBeNull();
+  });
+
   it('the posture could not be read: the signing form, and the server decides at signing', async () => {
     serverSays({ status: 500 });
     openDialog();
