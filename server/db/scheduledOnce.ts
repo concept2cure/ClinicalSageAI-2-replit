@@ -136,6 +136,28 @@ export type ScheduledOncePerWindowResult<T> =
   | { ran: false; reason: 'held_elsewhere' | 'already_ran_this_window' };
 
 /**
+ * One CloudWatch embedded-metric-format line on stdout, C2C/Jobs JobSucceeded
+ * by JobName, written once a windowed run has finished and its finish is
+ * recorded (MR-04 Stage 2, OPS-06). The awslogs driver ships it, and the stack
+ * alarms when a day passes without one (terraform/stack/monitoring.tf): a
+ * sweep that stops running logs no error. Never thrown into the job.
+ */
+function reportJobSucceeded(jobName: string): void {
+  try {
+    process.stdout.write(`${JSON.stringify({
+      _aws: {
+        Timestamp: Date.now(),
+        CloudWatchMetrics: [{ Namespace: 'C2C/Jobs', Dimensions: [['JobName']], Metrics: [{ Name: 'JobSucceeded', Unit: 'Count' }] }],
+      },
+      JobName: jobName,
+      JobSucceeded: 1,
+    })}\n`);
+  } catch {
+    // stdout closed: the run still finished; only its metric is lost.
+  }
+}
+
+/**
  * Run `fn` at most once per (organization, job, window) across every server
  * process: under the lease (no overlap), the first process to INSERT the claim
  * row runs it, and every later tick in that window skips.
@@ -198,6 +220,7 @@ export async function runScheduledOncePerWindow<T>(
         WHERE organization_id = $1 AND job_name = $2 AND window_key = $3`,
       [organizationId, jobName, windowKey, opts.storeResult ? JSON.stringify(value ?? null) : null],
     );
+    reportJobSucceeded(jobName);
     return { claimed: true as const, value };
   });
   if (!outcome.ran) return outcome;

@@ -77,6 +77,11 @@ into that region (MR-04 Stage 1). A KMS key is multi-Region only if it is made
 so, and changing the RDS storage key afterwards replaces the instance. So this
 must be in place before the first apply, not added after it.
 
+Production also needs `alarm_emails`: at least one address the alarm topic pages
+(MR-04 Stage 2). Each address must confirm AWS's subscription email before it
+is paged. What each alarm means, and the first three things to do, is in
+`docs/runbooks/incident-response.md`.
+
 ### 4. After each apply: what the outputs feed
 
 Run `terraform output` in the root you applied. Both roots export the same
@@ -126,6 +131,16 @@ The GitHub environment is `staging` or `production`, named for the root.
   through the `aws.dr` provider under the same key policy
   (`terraform/stack/tests/dr.tftest.hcl`). Backups are not yet copied there
   (MR-04 Stage 6).
+- **One alarm path.** Every CloudWatch alarm (`terraform/stack/monitoring.tf`)
+  notifies one encrypted SNS topic, `c2c-<env>-alarms`, when it fires and when
+  it clears. It covers:
+  - the ALB, the API and embedding services, RDS and CloudFront;
+  - six lines the server writes when something is wrong;
+  - five CloudTrail CIS events;
+  - a nightly sweep with no finished run in a day.
+
+  The runbook is `docs/runbooks/incident-response.md`, and a rollback is
+  `docs/runbooks/rollback.md`.
 - **`/readyz` through CloudFront answers `{ ready }` alone.** The detail goes
   to a caller presenting the `readyz_detail` token in `x-readyz-token`, or to
   one inside the task.

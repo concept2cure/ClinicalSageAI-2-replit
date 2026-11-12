@@ -1,0 +1,72 @@
+Success! The configuration is valid.
+
+tests/monitoring.tftest.hcl... in progress
+  run "every_alarm_publishes_to_the_one_topic"... fail
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 128, in run "every_alarm_publishes_to_the_one_topic":
+ 128:     condition     = length(aws_cloudwatch_metric_alarm.this) >= 25
+
+A managed resource "aws_cloudwatch_metric_alarm" "this" has not been declared
+in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 132, in run "every_alarm_publishes_to_the_one_topic":
+ 132:     condition = alltrue([for a in aws_cloudwatch_metric_alarm.this :
+
+A managed resource "aws_cloudwatch_metric_alarm" "this" has not been declared
+in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 133, in run "every_alarm_publishes_to_the_one_topic":
+ 133:     a.alarm_actions == toset([aws_sns_topic.alarms.arn]) && a.ok_actions == toset([aws_sns_topic.alarms.arn])])
+
+A managed resource "aws_sns_topic" "alarms" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 133, in run "every_alarm_publishes_to_the_one_topic":
+ 133:     a.alarm_actions == toset([aws_sns_topic.alarms.arn]) && a.ok_actions == toset([aws_sns_topic.alarms.arn])])
+
+A managed resource "aws_sns_topic" "alarms" has not been declared in the root
+module.
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 137, in run "every_alarm_publishes_to_the_one_topic":
+ 137:     condition     = toset([for s in aws_sns_topic_subscription.alarm_email : s.endpoint]) == toset(["oncall@example.com", "founder@example.com"]) && alltrue([for s in aws_sns_topic_subscription.alarm_email : s.protocol == "email" && s.topic_arn == aws_sns_topic.alarms.arn])
+
+A managed resource "aws_sns_topic_subscription" "alarm_email" has not been
+declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 137, in run "every_alarm_publishes_to_the_one_topic":
+ 137:     condition     = toset([for s in aws_sns_topic_subscription.alarm_email : s.endpoint]) == toset(["oncall@example.com", "founder@example.com"]) && alltrue([for s in aws_sns_topic_subscription.alarm_email : s.protocol == "email" && s.topic_arn == aws_sns_topic.alarms.arn])
+
+A managed resource "aws_sns_topic_subscription" "alarm_email" has not been
+declared in the root module.
+
+Error: Reference to undeclared resource
+
+  on tests/monitoring.tftest.hcl line 137, in run "every_alarm_publishes_to_the_one_topic":
+ 137:     condition     = toset([for s in aws_sns_topic_subscription.alarm_email : s.endpoint]) == toset(["oncall@example.com", "founder@example.com"]) && alltrue([for s in aws_sns_topic_subscription.alarm_email : s.protocol == "email" && s.topic_arn == aws_sns_topic.alarms.arn])
+
+A managed resource "aws_sns_topic" "alarms" has not been declared in the root
+module.
+  run "cloudwatch_can_publish_to_the_encrypted_topic"... skip
+  run "the_service_alarms_watch_the_right_things"... skip
+  run "the_logs_that_mean_trouble_page"... skip
+  run "account_activity_from_cloudtrail_pages"... skip
+  run "a_sweep_that_stops_running_pages"... skip
+  run "production_needs_someone_to_page"... skip
+  run "an_address_must_be_an_address"... skip
+  run "staging_may_have_no_subscribers"... skip
+tests/monitoring.tftest.hcl... tearing down
+tests/monitoring.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed, 8 skipped.

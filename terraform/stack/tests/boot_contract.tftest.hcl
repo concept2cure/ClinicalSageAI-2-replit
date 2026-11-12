@@ -43,6 +43,10 @@ mock_provider "aws" {
   mock_resource "aws_iam_role" {
     defaults = { arn = "arn:aws:iam::123456789012:role/mock" }
   }
+  # The alarm topic (monitoring.tf): alarms and subscriptions validate its ARN.
+  mock_resource "aws_sns_topic" {
+    defaults = { arn = "arn:aws:sns:us-east-1:123456789012:c2c-production-alarms" }
+  }
   mock_resource "aws_kms_key" {
     defaults = { arn = "arn:aws:kms:us-east-1:123456789012:key/mock" }
   }
@@ -168,6 +172,8 @@ variables {
   # records for `local`, which boot_contract now requires.
   # A commit id's shape, not bge-m3's real commit (the stack leaves it unset
   # until one is recorded; warns_while_the_embedding_model_is_unpinned below).
+  # Production refuses to apply with nobody to page (monitoring.tf).
+  alarm_emails             = ["oncall@example.com"]
   embedding_model_revision = "0123456789abcdef0123456789abcdef01234567"
 }
 

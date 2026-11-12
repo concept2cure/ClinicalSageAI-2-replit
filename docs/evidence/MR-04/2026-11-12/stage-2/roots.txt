@@ -1,0 +1,10 @@
+== terraform/environments/production: init -backend=false -lockfile=readonly, validate
+Success! The configuration is valid.
+
+== terraform/environments/staging: init -backend=false -lockfile=readonly, validate
+Success! The configuration is valid.
+
+== terraform/bootstrap: init -backend=false -lockfile=readonly, validate
+Success! The configuration is valid.
+
+exit 0

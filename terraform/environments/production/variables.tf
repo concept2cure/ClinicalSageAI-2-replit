@@ -195,6 +195,17 @@ variable "tags" {
   }
 }
 
+# Who is paged when an alarm fires (MR-04 Stage 2, NEW-1): each address is
+# subscribed to the alarm topic by email and must confirm the subscription.
+variable "alarm_emails" {
+  type = list(string)
+  # No default: production does not apply with nobody to page.
+  validation {
+    condition     = length(var.alarm_emails) >= 1
+    error_message = "Production needs at least one address in alarm_emails."
+  }
+}
+
 variable "sentry_dsn" {
   type    = string
   default = ""

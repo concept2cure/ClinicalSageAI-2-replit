@@ -33,6 +33,10 @@ mock_provider "aws" {
   mock_resource "aws_iam_role" {
     defaults = { arn = "arn:aws:iam::123456789012:role/mock" }
   }
+  # The alarm topic (monitoring.tf): alarms and subscriptions validate its ARN.
+  mock_resource "aws_sns_topic" {
+    defaults = { arn = "arn:aws:sns:us-east-1:123456789012:c2c-production-alarms" }
+  }
   mock_resource "aws_kms_key" {
     defaults = { arn = "arn:aws:kms:us-east-1:123456789012:key/mrk-mock" }
   }
@@ -153,7 +157,9 @@ variables {
   smtp_from                       = "noreply@example.com"
   platform_owner_emails           = ["owner@example.com"]
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
-  embedding_model_revision        = "0123456789abcdef0123456789abcdef01234567"
+  # Production refuses to apply with nobody to page (monitoring.tf).
+  alarm_emails             = ["oncall@example.com"]
+  embedding_model_revision = "0123456789abcdef0123456789abcdef01234567"
 }
 
 run "the_three_keys_are_multi_region_from_creation" {

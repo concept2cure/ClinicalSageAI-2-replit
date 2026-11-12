@@ -118,6 +118,9 @@ module "stack" {
   audit_export_signing_key = var.audit_export_signing_key
   audit_attestation_key    = var.audit_attestation_key
   sentry_dsn               = var.sentry_dsn
+
+  # Who the alarm topic pages (MR-04 Stage 2; monitoring.tf).
+  alarm_emails             = var.alarm_emails
   connector_encryption_key = var.connector_encryption_key
   openai_enabled           = var.openai_enabled
   openai_api_key           = var.openai_api_key

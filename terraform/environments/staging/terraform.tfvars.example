@@ -40,6 +40,9 @@ region          = "us-east-1"
 # Required, with no default: the founder's decision (NEW-2). The recommendation
 # is us-west-2, which keeps the data in the US. It must differ from region.
 dr_region = "us-west-2"
+# Who is paged when an alarm fires (MR-04 Stage 2). Each address receives an
+# AWS confirmation email and is paged only once it confirms. Optional in staging.
+alarm_emails = ["oncall@example.com"]
 vpc_cidr        = "10.9.0.0/16"
 public_subnets  = ["10.9.101.0/24", "10.9.102.0/24"]
 private_subnets = ["10.9.1.0/24", "10.9.2.0/24"]

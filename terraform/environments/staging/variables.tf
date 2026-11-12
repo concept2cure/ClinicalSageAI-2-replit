@@ -195,6 +195,14 @@ variable "tags" {
   }
 }
 
+# Who is paged when an alarm fires (MR-04 Stage 2, NEW-1): each address is
+# subscribed to the alarm topic by email and must confirm the subscription.
+variable "alarm_emails" {
+  type = list(string)
+  # Staging may run without subscribers; its alarms still record state.
+  default = []
+}
+
 variable "sentry_dsn" {
   type    = string
   default = ""

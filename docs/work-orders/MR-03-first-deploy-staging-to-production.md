@@ -106,6 +106,9 @@ The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 faile
      Stage 1 (landed 2026-11-12) makes the database and vault keys multi-Region and replicates all three keys there.
      That stage is a **precondition of this apply**: a key can be made multi-Region only at creation, and changing
      the RDS storage key after the apply replaces the instance.
+   - **who is paged** (MR-04 NEW-1): production's `alarm_emails` has no default and needs at least one address. Each
+     address must confirm AWS's subscription email after the apply. Name the on-call rota in
+     `docs/runbooks/incident-response.md`.
    - the error-reporting route: Sentry under a DPA, or CloudWatch only (NEW-3);
    - how long deleted Vault versions are kept;
    - Anthropic's entry in `ai_provider_placement_approvals` (B4). It is deliberately not defaulted; record the value and
