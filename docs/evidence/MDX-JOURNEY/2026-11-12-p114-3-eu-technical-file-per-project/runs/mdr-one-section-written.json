@@ -1,0 +1,79 @@
+{
+ "nav": "device-cer",
+ "bad": [],
+ "posts": [
+  {
+   "url": "/api/submissions/programs/871d7801-229b-4296-9e5b-71263302a8df/technical-file/export",
+   "sent": {
+    "regulation": "mdr"
+   },
+   "status": 200,
+   "answer": {
+    "ok": true,
+    "regulation": "mdr",
+    "ready": false,
+    "fileCount": 1,
+    "leafCount": 1,
+    "materialized": 1,
+    "unfinalized": 1,
+    "unfinalizedSections": [
+     {
+      "sectionCode": "II.1.a",
+      "status": "drafted"
+     }
+    ],
+    "skipped": 0,
+    "unmappedLeaves": [],
+    "governed": true,
+    "sha256": "4c6d9223fa3cb53e48dee3fa04d9b8f2903a627de50001ba92d0a28eab4bf69e",
+    "sizeBytes": 2878,
+    "filename": "PROG-871D7801-technical-file-mdr.zip",
+    "auditTrail": {
+     "persisted": true,
+     "chained": true
+    }
+   }
+  }
+ ],
+ "url": "/concept2cure/device-cer?program=871d7801-229b-4296-9e5b-71263302a8df",
+ "sectionTitles": [
+  "Clinical Evaluation Report · Helix spinal cage"
+ ],
+ "headerButtons": [
+  "Generate draft",
+  "Assemble technical file"
+ ],
+ "saysEstar": [],
+ "assembleOffered": 1,
+ "assembleTitle": "Assemble a ZIP of this project’s written MDR Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.",
+ "status": "Downloaded PROG-871D7801-technical-file-mdr.zip · not yet a complete technical file: manifest.json in the ZIP lists each required Annex II and III section and whether it is present · 1 of its sections is still in draft or review",
+ "anaAsks": [],
+ "downloaded": "md-written-PROG-871D7801-technical-file-mdr.zip",
+ "zipEntries": [
+  "01-annex-ii-1/device-description/ii-1-a-c2c-document-sections-129.pdf",
+  "checksums.md5.txt",
+  "manifest.json"
+ ],
+ "manifest": {
+  "regulation": "mdr",
+  "framework": "EU MDR (Regulation 2017/745) — Annex II/III technical documentation",
+  "ready": false,
+  "totals": {
+   "sections": 8,
+   "requiredPresent": 1,
+   "requiredMissing": 7
+  },
+  "present": [
+   "device-description ← II.1.a"
+  ],
+  "requiredMissing": [
+   "manufacturer-information",
+   "design-manufacturing",
+   "gspr",
+   "risk-management",
+   "preclinical-clinical",
+   "clinical-evaluation",
+   "pms-plan"
+  ]
+ }
+}

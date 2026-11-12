@@ -1,0 +1,22 @@
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > assembles the project's own IVDR technical file: the per-project route, not an ask to AnA 290ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > is not offered the FDA eSTAR 84ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > still offers the ask to AnA, beside the button (P-122) 84ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > says a file is not yet complete, and how many of its sections are not approved 119ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > says nothing was written when the project has no written IVDR section, and downloads nothing 82ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > gives the server's sentence when a filed copy is not the text its document holds 72ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU IVDR project, on the IVD screen > says the browser blocked a file it was sent 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > a US IVD 510(k) project, on the IVD screen > keeps the FDA eSTAR, and its "Assemble technical file" is unchanged: an ask to AnA 104ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > an EU MDR technical documentation project, on the CER screen > assembles the project's own MDR technical file 74ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > a CER project, on the CER screen > is offered no technical file: its filing is the report 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > technicalFileStatusLine > says a complete, approved, registered file plainly 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > technicalFileStatusLine > never reads an unreported verdict as complete, or an unreported count as approved 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > technicalFileStatusLine > counts one draft section in the singular 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > technicalFileStatusLine > gives a refusal it has no words of its own for as the server gave it 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/euTechnicalFilePerProject.test.tsx > technicalFileStatusLine > says it is assembling while the request is in flight, and nothing before one is made 0ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > docClassForPathway > names the De Novo class as the server records it 1ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > docClassForPathway > leaves the pathways whose class is their own spelling 0ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > euTechnicalFileRegulation > names the regulation for exactly the program types whose document class is an EU technical file 2ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > euTechnicalFileRegulation > reads the type as the programs route sends it 0ms
+ ✓ server/services/c2c/__tests__/pathway-doc-class.test.ts > euTechnicalFileRegulation > is null for a CER, an FDA route, a generic IVD and an unrecorded filing 0ms
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
