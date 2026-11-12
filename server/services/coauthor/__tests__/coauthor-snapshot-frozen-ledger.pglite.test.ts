@@ -139,7 +139,8 @@ describe('a frozen document is placed into its filing', () => {
   it('the request client answers a timestamptz as text, as PostgreSQL does through Drizzle', async () => {
     const client = pgFaithfulRequestClient(pg());
     const typed = await client.query({ text: 'SELECT occurred_at FROM audit_logs LIMIT 1', types: { getTypeParser: () => (v: string) => v } });
-    expect(typeof typed.rows[0].occurred_at).toBe('string');
+    const row = typed.rows[0] as { occurred_at: unknown };
+    expect(typeof row.occurred_at).toBe('string');
   });
 
   it('places a frozen, sealed document whose section creation is chained', async () => {
