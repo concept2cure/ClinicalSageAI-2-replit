@@ -86,8 +86,7 @@ describe('reading a document from its record', () => {
     fireEvent.click(view);
     const drawer = await screen.findByRole('dialog', { name: /^Reading stability-summary-24m/ });
     expect(reads).toEqual([DOWNLOAD]);
-    const frame = drawer.querySelector('iframe') as HTMLIFrameElement;
-    expect(frame.getAttribute('src')).toBe('blob:test/1');
+    expect(drawer.querySelector('iframe')?.getAttribute('src')).toBe('blob:test/1');
     expect(framed[0].type).toBe('application/pdf');
     expect(drawer.textContent).toContain(`SHA-256 ${HASH.slice(0, 16)}`);
     // Closing releases the framed bytes and removes the drawer.
