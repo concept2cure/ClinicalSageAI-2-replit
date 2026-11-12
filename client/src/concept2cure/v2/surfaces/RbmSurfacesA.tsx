@@ -480,6 +480,22 @@ export function RbmRact({ board, onReload }: SubProps) {
 }
 
 /**
+ * An indicator's course at one site across the loads: the line against the indicator's limits, and the same
+ * readings in words for a reader who cannot see it. One reading is not a trend, and says so.
+ */
+function SiteTrend({ reading }: { reading: RbmSiteReading }) {
+  const points = reading.history ?? [];
+  if (points.length < 2) return <span className="mut">One reading</span>;
+  const words = points.map(p => `${p.cutoff ?? 'undated'}: ${p.v}`).join(', ');
+  return (
+    <span className="rbm-kri-trend" title={words}>
+      <Sparkline values={points.map(p => p.v)} amber={reading.amber} red={reading.red} w={96} h={24} />
+      <span className="rbm-sr">Site {reading.site}, {points.length} readings, oldest first: {words}</span>
+    </span>
+  );
+}
+
+/**
  * An indicator's latest reading at each site, worst first. The sites' risk rows carry the readings
  * (rbmBoard.ts siteReadingsFor); this tab showed the study-level value only and said a per-site view was not
  * implemented. Nothing is offered for an indicator no site has read.
@@ -487,19 +503,21 @@ export function RbmRact({ board, onReload }: SubProps) {
 function KriBySite({ name, readings }: { name: string; readings: RbmSiteReading[] }) {
   const [open, setOpen] = useState(false);
   if (readings.length === 0) return null;
+  const anyTrend = readings.some(r => (r.history?.length ?? 0) > 1);
   return (
     <div className="rbm-kri-sub">
       <button className="rbm-linkbtn" aria-pressed={open} aria-expanded={open} onClick={() => setOpen(o => !o)}>{I.network}By site — {readings.length}</button>
       {open && (
         <table className="rbm-kri-sites">
           <caption className="rbm-sr">Latest reading of {name} at each site, with its band</caption>
-          <thead><tr><th scope="col">Site</th><th scope="col">Reading</th><th scope="col">Band</th><th scope="col">Data cut-off</th></tr></thead>
+          <thead><tr><th scope="col">Site</th><th scope="col">Reading</th><th scope="col">Band</th><th scope="col">Data cut-off</th>{anyTrend && <th scope="col">Over the loads</th>}</tr></thead>
           <tbody>{readings.map(r => (
             <tr key={r.site}>
               <th scope="row" className="mono">{r.site}</th>
               <td className="mono">{r.value}{r.unit ? ` ${r.unit}` : ''}</td>
               <td><RbmChip vocab="kri" value={r.status} /></td>
               <td className="mut">{r.cutoff ?? '—'}</td>
+              {anyTrend && <td><SiteTrend reading={r} /></td>}
             </tr>
           ))}</tbody>
         </table>

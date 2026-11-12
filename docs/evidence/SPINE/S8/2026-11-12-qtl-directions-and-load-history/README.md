@@ -67,6 +67,26 @@ before this change.
 
 The two limits created here are in this container's demo database only.
 
+## A third: an indicator's course at each site (added 05:10 UTC)
+
+**What already exists.** A load stores every site row (`rbm_metric_observations`, scope `site`), and
+`site-risk-engine.ts` `readSiteIndicatorReadings` reads the latest of each for the snapshot. The snapshot keeps no
+history, and the Site risk tab said "trend over time is not available"; the earlier readings were in the store and
+read by nothing.
+
+**What changed.** `readSiteIndicatorHistory` (same file, same rows and binding, all of them in order) gives each
+indicator's readings at each site across the loads that have not been superseded. The board attaches the most
+recent 24 to each site reading (`sites[].indicators[].history`); a failed read fails the board, it does not send a
+blank trend. Key risk indicators, "By site", gains "Over the loads": the line against the indicator's limits, and
+the same readings in words; one reading is called one reading. Site risk's note points there. Nothing is banded or
+scored anew.
+
+**Verified.** `site-risk-study-indicators.pglite.test.ts` (2 cases on real PostgreSQL: order, binding, a superseded
+extract, another study, another organization, study rows left out); `mdx-rbm-board-site-indicators.test.ts` (3
+cases); `rbmBoardFindings.test.tsx` (2 cases). In the running app on LMN-201 (`kri-site-trend-1440.png`,
+`-390.png`): Open query aging at site 104 reads 10, 14, 22, 34, 47, 58 across the six monthly loads, against 10 to
+14 at site 103; no page error; no sideways scroll at 390.
+
 ## Still open against CluePoints, and what each needs
 
 Unchanged from the gap map, less the two closed here (QTL kinds; load provenance on screen).
@@ -78,7 +98,7 @@ Unchanged from the gap map, less the two closed here (QTL kinds; load provenance
 | Structured QTL breach record | `rbm_qtls.metadata` could hold it without a new table; it needs the fields decided (participants, estimand impact, effectiveness check, sign-off) and a governed close-out. |
 | Readings by country | Country rows are stored by a load (`rbm_metric_observations`, scope `country`) and read by nothing; reaching them is a board change, not yet done. |
 | Limits derived statistically | An engine change. |
-| Site risk trend over time | Site rows are kept per load, so a site's indicator history can be read; the snapshot table keeps no history. Not yet done. |
+| Composite site risk over time | Each indicator's course at a site is now shown (above). The composite itself has no history: the snapshot table keeps the latest scoring only, and a history of it needs a table. |
 | Duplicate-patient detection, audit-trail review | New engines; no demographic or audit-trail data is loaded for RBM. |
 | Medical & safety review, medical coding, query detection | New modules, which the founder's instruction rules out. |
 | `GET /rbm-patient-profiles`, `GET /rbm-site-oversight/:programId` | The board already delivers both outcomes on the Patient profiles and Site oversight tabs. Retiring a route is a founder decision. |

@@ -199,6 +199,9 @@ export interface RbmBoardSiteIndicator {
   dir: string;
   at: string | null;
   cutoff: string | null;
+  /** The indicator's readings at this site across the loads, oldest first, the latest last. Absent where the
+   *  board carries none. */
+  history?: { v: number; cutoff: string | null }[];
 }
 
 /** One site's reading of one indicator, for an indicator's "by site" list. */

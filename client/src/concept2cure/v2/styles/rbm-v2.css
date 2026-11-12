@@ -253,6 +253,10 @@
   .rbm-kri-sites thead th{border-bottom:1px solid var(--border);}
   .rbm-kri-sites tbody th{color:var(--text-100);}
   .rbm-kri-sites td{padding:3px 6px 3px 0;color:var(--text-200);border-top:1px solid var(--bg-100);}
+  .rbm-kri-trend{display:inline-flex;align-items:center;}
+  /* A reading and its date stay on one line; a narrow card scrolls the list inside itself. */
+  .rbm-kri-sites :is(th,td){white-space:nowrap;}
+  .rbm-kri-sub{max-width:100%;overflow-x:auto;}
   .rbm-act-origin{margin-left:6px;font-size:var(--fs-caption);font-weight:600;color:var(--ai);background:var(--ai-muted);border-radius:var(--radius-sm);padding:0 5px;}
 
   /* KRI trend data-table equivalent */
