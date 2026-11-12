@@ -3,10 +3,10 @@
  * The trial master file section (surfaces/VaultTrialMasterFile.tsx; P-74, P-75;
  * the founder, 2026-11-10: "I don't see the TMF on the vault UI anywhere").
  *
- * The section is the one client of /api/etmf. The `etmf` surface hosts it until
- * the eTMF is admitted to the Vault app (etmfHostsTrialMasterFile.test.tsx);
- * the cases that need it inside the Vault's Required documents view are held
- * with the hook-in (docs/evidence/D2-ETMF/2026-11-10-vault-section/).
+ * The section is the one client of /api/etmf. It is a section of the Vault's
+ * Required documents view since the eTMF's admission (2026-11-12); the cases
+ * that need it inside the Vault are vaultTrialMasterFile.inVault.test.tsx, and
+ * the `etmf` surface, the door to it, is etmfHostsTrialMasterFile.test.tsx.
  *
  * The transport is mocked by a small in-memory server (_vault-tmf-fixtures.ts).
  * What the retired screen showed and the section carries (the scope, the

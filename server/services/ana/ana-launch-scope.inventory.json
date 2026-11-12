@@ -1,6 +1,7 @@
 {
  "$note": "Every AnA tool and platform command, classified against the launch catalog on 2026-09-26 by reading its handler (docs/evidence/D2-API-SCOPE/2026-09-26-ana-tools/). hiddenApp: operates records of surfaces outside the launch catalog only; withheld/refused in production. inScope: operates a launch surface, or no tenant records (knowledge). A new tool or command must be added to one of the two, or ana-launch-scope.test.ts fails. Amended 2026-10-12 (decision P-28): CMC / Module 3 joined the launch catalog, so its 10 tools and 6 commands moved from hiddenApp to inScope. The move is bookkeeping, not the mechanism \u2014 anaCapabilityInLaunchScope re-checks the surface against LAUNCH_SURFACE_IDS rather than trusting this file, so the tools came back the moment the surface did. What this file would otherwise say is that a launch surface is outside the catalog. Amended 2026-10-22: Communication Center joined the launch catalog on 2026-10-16 (327bc9fb6, shared/constants/launch-scope.ts), so create_ha_interaction, which serves it and agency-meetings, moved to inScope by the rule above for a tool that touches a launch surface. It was already offered in production; only this file still called it hidden. Amended 2026-10-26: the device and diagnostics surfaces that joined the launch catalog on 2026-10-23 (62a8d5e7f, shared/constants/launch-scope.ts) took the tools and commands that operate them to inScope, by the same rule (a tool or command that touches a launch surface is inScope, even when it also serves one still outside): device-510k: compose_510k_summary, compose_correspondence_cover_letter, generate_se_matrix, get_predicate_defense_preview, k510_workflow.document_preview, predicate.candidate.set_status, se_matrix.patch, section.approve, section.update, suggest_predicate_devices, write_kit_section; device-cer: analyze_cross_document, assess_stored_cer, generate_clinical_insights, gspr.mapping.upsert, record_literature; device-clinical-studies: create_clinical_study, log_study_ae, log_study_deviation, record_endpoint_result; device-diagnostics: categorize_clia_complexity, classify_ivd_device, create_per_document, pair_companion_diagnostic, record_analytical_performance_study, record_clinical_performance_study, register_ldt; device-postmarket: create_complaint, open_device_capa, post_market.document.approve, post_market.document.create, post_market.document.supersede, post_market.document.update, post_market.document.validate, read_vigilance_timeline, reconcile_device_documents, triage_capa_mdr_queue; device-presub: create_q_sub, pdev.fda_feedback.apply, pdev.fda_feedback.proposals, pdev.program.fda_interactions, q_sub.commitment.set_rolled_in, q_sub.create, update_q_sub_commitment_rolled_in, write_q_sub_section; device-software: create_software_lifecycle_item; device-udi: create_udi_record; device-workstream: evidence_sufficiency.assess, reviewer_simulation.run; labeling: add_labeling_symbol, add_labeling_translation, create_labeling_document, review_label_currency; risk: add_risk_control, create_risk_item. They were already offered in production, because anaCapabilityInLaunchScope re-checks the surface; only this file still called them hidden. A2.10 placement clarification (2026-10-26): evidence_sufficiency.assess and reviewer_simulation.run serve the selected project in project-home, identified by programId. Both already reside in the flat commands.inScope list and have no executable dependency on device-workstream; its historical association above is not a launch claim. The same handlers, ownership verification, confirmation and reason gates, policy and audit behavior remain in force. This clarification grants no additional capability and does not retire the device portfolio shell.",
  "classifiedOn": "2026-09-26",
+ "amended20261112d": "eTMF admission (2026-11-12; P-74 item 1, P-75, P-124 item 6; CMC precedent P-28): the etmf surface joined the launch catalog with the Vault app (shared/constants/launch-scope.ts), so get_tmf_view and classify_tmf_artifact, which read and file a study's trial master file (/api/etmf, tmf_artifact_filings), moved to inScope by the rule above. Admission is the trial master file only. The etmf group also held create_inspection, log_inspection_finding and review_inspection_readiness, which write and read the inspection record (services/inspection/inspection-service.ts, tables inspections and inspection_findings) and not the trial master file. No surface claims their API (/api/inspections is unmapped, so production refuses it) and no screen shows those records, so admitting etmf must not release them. They stay hidden, re-filed under qmp, the quality surface outside the release (inspection readiness and Form 483 responses are quality assurance's), as agency-meetings' hidden tools were re-filed on 2026-10-30. Docs: docs/evidence/D2-ETMF/2026-11-12-admission/.",
  "amended20261112c": "P-127 (2026-11-12): open_support_ticket (drafts a support request for the person to send; writes nothing) and list_my_support_tickets (reads the caller's requests, scoped to the caller's organisation) join inScope. Served on Help & training (training), a launch shell surface.",
  "amended20261112b": "P-127 (2026-11-12): search_help_center and read_help_article join inScope. They read the Help Center corpus (shared/help/), platform reference data with no tenant record, served on Help & training (training), a launch shell surface.",
  "amended20261112": "P-122 reach (founder 2026-11-10; docs/evidence/DESIGN/P-122/reach-map/README.md rows 8 and 45; docs/evidence/DESIGN/P-122/ana-reach/): capabilities withheld only because they were filed under a locked screen are re-filed under the launch screen that owns the job. communication-center (commitments are recorded and listed there, /api/ha-interactions): create_regulatory_commitment, review_commitment_portfolio. Each now answers only for what the person may open or change (commitment-tools-project-scope.pglite.test.ts). fulfill_regulatory_commitment: this lane had left it hidden, because it records a meeting commitment or other as fulfilled itself, which is terminal; R1 re-filed it the day before (the amendment of 2026-11-11 below) on P-41's own words, and the merge of the two keeps R1's re-file. The three obligation tools filed under lifecycle-mgmt were not part of this reach and are unchanged. protocol-dev (a study's design is simulated there, /api/study-design): simulate_study_design, and the commands evaluate_endpoint and recommend_endpoints. They read the caller's organisation's CSR corpus and no project's records, and their figures come from engines (study-design-tools-reach.pglite.test.ts).",
@@ -51,18 +52,6 @@
    },
    {
     "surfaces": [
-     "etmf"
-    ],
-    "names": [
-     "classify_tmf_artifact",
-     "create_inspection",
-     "get_tmf_view",
-     "log_inspection_finding",
-     "review_inspection_readiness"
-    ]
-   },
-   {
-    "surfaces": [
      "lifecycle-mgmt"
     ],
     "names": [
@@ -89,6 +78,16 @@
     "names": [
      "build_sae_line_listing",
      "compose_e2b_icsr"
+    ]
+   },
+   {
+    "surfaces": [
+     "qmp"
+    ],
+    "names": [
+     "create_inspection",
+     "log_inspection_finding",
+     "review_inspection_readiness"
     ]
    },
    {
@@ -409,6 +408,7 @@
    "classify_protocol_deviation",
    "classify_samd",
    "classify_submission_document",
+   "classify_tmf_artifact",
    "classify_tox_findings",
    "clone_protocol_template",
    "code_drug",
@@ -593,6 +593,7 @@
    "get_sterilization_requirements",
    "get_submission_ack",
    "get_submission_requirements",
+   "get_tmf_view",
    "get_usage_and_license_status",
    "global_ri_advanced_therapy",
    "global_ri_bcs_biowaiver",

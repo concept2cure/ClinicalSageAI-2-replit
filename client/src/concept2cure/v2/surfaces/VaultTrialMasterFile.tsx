@@ -1,16 +1,18 @@
 /**
- * The trial master file of a project's study: the section the Vault's Required
- * documents view will hold.
+ * The trial master file of a project's study: a section of the Vault's Required
+ * documents view.
  *
  * The founder, 2026-11-10: "I don't see the TMF on the vault UI anywhere." The
  * eTMF lives inside the Vault and files against the project's protocol-design
  * study (P-74, P-75; docs/design/ETMF_CONVERGENCE_2026-10-30.md). It is a
  * section, split out of the Vault: not a tab, a screen, a card or a surface id
- * (RULE 4). Until the eTMF is admitted to the Vault app the Vault may not call
- * /api/etmf, so the `etmf` surface hosts it (surfaces/Etmf.tsx, one client of
- * these routes). At admission the Vault renders it after VaultCoverage, and
- * its header button calls `revealVaultTrialMasterFile`
- * (docs/evidence/D2-ETMF/2026-11-10-vault-section/).
+ * (RULE 4). The eTMF was admitted to the Vault app on 2026-11-12 (P-124 item
+ * 6): the Vault renders this after VaultCoverage where the organisation can use
+ * the eTMF, its header button asks the section to come into view
+ * (`revealRequest`), and the `etmf` surface (surfaces/Etmf.tsx) is the door
+ * that opens the Vault here (`openVaultTrialMasterFile`). Until then the `etmf` surface hosted it
+ * (docs/evidence/D2-ETMF/2026-11-10-vault-section/,
+ * docs/evidence/D2-ETMF/2026-11-12-admission/).
  *
  * The section carries what the retired eTMF screen showed (P-122, 2026-11-10:
  * a customer seeing their own work wins over minimalism, and nothing a screen
@@ -34,7 +36,7 @@
  * shows a read in flight, never the previous answer under the new name.
  * Nothing is read until the view that holds the section is first on screen.
  */
-import React, { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { TmfCompletenessResult, ZoneCompleteness } from '../../../../../server/services/etmf/tmf-completeness';
 import { useLiveData, type DataState } from '../dataConnect';
 import { I } from '../icons';
@@ -53,17 +55,34 @@ export type { TmfScope, TmfVaultDocument, TmfVerdict } from './vaultTmf';
 export const VAULT_TMF_SECTION_ID = 'vault-trial-master-file';
 
 /**
- * Bring the section into view, for the Vault's header button once the section
- * is in Required documents. Deferred one task, so the view the caller has just
- * asked for is on screen first.
+ * Bring the section into view. Deferred one task, so the view the host has just
+ * opened is on screen first. Called by the section itself, for a host's request
+ * (`revealRequest`), once its read has settled.
  */
-export function revealVaultTrialMasterFile(): void {
+function revealVaultTrialMasterFile(): void {
   setTimeout(() => {
     const section = document.getElementById(VAULT_TMF_SECTION_ID);
     if (!section) return;
     if (typeof section.scrollIntoView === 'function') section.scrollIntoView({ block: 'start' });
     section.focus({ preventScroll: true });
   }, 0);
+}
+
+/* The eTMF's own page (surfaces/Etmf.tsx, the module's path in the Apps catalog) opens the Vault on this section, once:
+   the section lives in the Vault (P-75; admitted 2026-11-12). Browser storage can be unavailable; then the Vault opens
+   on its library and the person opens Required documents. */
+const VAULT_TMF_ASK = 'c2c.vault.openTmf';
+export function openVaultTrialMasterFile(onNav: (id: string) => void): void {
+  try { sessionStorage.setItem(VAULT_TMF_ASK, '1'); } catch { /* the Vault opens on its library */ }
+  onNav('vault');
+}
+/** Whether the Vault was asked to open on this section; the ask is used once. */
+export function takeVaultTmfAsk(): boolean {
+  try {
+    const asked = sessionStorage.getItem(VAULT_TMF_ASK) === '1';
+    sessionStorage.removeItem(VAULT_TMF_ASK);
+    return asked;
+  } catch { return false; }
 }
 
 const NO_DOCUMENTS: readonly TmfVaultDocument[] = [];
@@ -338,7 +357,7 @@ function ProjectTmf({ projectId, headingId, documents }: { projectId: string; he
   );
 }
 
-export function VaultTrialMasterFile({ projectId, active, documents = NO_DOCUMENTS, heading = 'Trial master file', onState, onAsk, onVaultChanged }: {
+export function VaultTrialMasterFile({ projectId, active, documents = NO_DOCUMENTS, heading = 'Trial master file', onState, onAsk, onVaultChanged, revealRequest = 0 }: {
   projectId: string | null;
   /** The view that holds the section is on screen. Nothing is read before it first is. */
   active: boolean;
@@ -351,11 +370,28 @@ export function VaultTrialMasterFile({ projectId, active, documents = NO_DOCUMEN
   onAsk?: (prompt: string) => void;
   /** Told when a filing form put a document into this project's Vault, or may have: for a host that lists the Vault. */
   onVaultChanged?: () => void;
+  /** Bring the section into view: each new number is one request, from the host's header button or because the host
+   *  was opened on the section (openVaultTrialMasterFile). It is honoured once the section's read has settled, so the
+   *  records are on the page; scrolled to before that, the page was too short to bring the section to the top. */
+  revealRequest?: number;
 }) {
   const [opened, setOpened] = useState(active);
   useEffect(() => { if (active) setOpened(true); }, [active]);
+  // The project whose read has settled at least once: a verdict, a refusal, no study, or a choice of studies.
+  const [settledFor, setSettledFor] = useState<string | null>(null);
+  const tell = useCallback((state: TmfSectionState) => {
+    onState?.(state);
+    if (!(state.study === null ? state.studies.loading : state.completeness.loading)) setSettledFor(projectId);
+  }, [onState, projectId]);
+  const settled = projectId !== null && settledFor === projectId;
+  const revealedFor = useRef(0);
+  useEffect(() => {
+    if (!revealRequest || revealedFor.current === revealRequest || !active || !settled) return;
+    revealedFor.current = revealRequest;
+    revealVaultTrialMasterFile();
+  }, [revealRequest, active, settled]);
   const headingId = useId();
-  const host = useMemo(() => ({ heading, onState, onAsk, onVaultChanged }), [heading, onState, onAsk, onVaultChanged]);
+  const host = useMemo(() => ({ heading, onState: tell, onAsk, onVaultChanged }), [heading, tell, onAsk, onVaultChanged]);
   if (!projectId) return null;
   return (
     <HostContext.Provider value={host}>

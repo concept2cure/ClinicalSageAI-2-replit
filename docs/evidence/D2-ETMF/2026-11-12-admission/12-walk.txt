@@ -1,0 +1,17 @@
+1 opens on: Library
+1 views: ["Library","Data catalog","Uploads · 10","Required documents","Governed artifacts","Seals & fixity"]
+1 header button: Trial master file
+1 TMF reads before Required documents opens: 0
+2 header button opens: Required documents
+2 section at the top of the screen: true (top 48px)
+2 url: /concept2cure/vault?program=833164a5-6fca-4bf8-95c4-a2030fed4acb
+3 section heading: Trial master file
+3 after coverage: true
+3 verdict: 2 of 26 essential records are filed. 24 are missing.
+3 zones / records: 11 / 26
+4 /concept2cure/etmf lands on: /concept2cure/vault?program=833164a5-6fca-4bf8-95c4-a2030fed4acb
+4 view: Required documents
+4 section at the top of the screen: true (top 48px)
+5 Vault opened again opens on: Library
+console errors: []
+responses >= 400: []

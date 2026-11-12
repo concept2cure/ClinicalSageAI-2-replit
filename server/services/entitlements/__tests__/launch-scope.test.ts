@@ -202,8 +202,11 @@ describe('the folded Artifacts center and device vault', () => {
        module; an existing grant is kept, deprecated, by the catalogue. */
     const vault = LAUNCH_APPS.find((app) => app.id === 'vault')!;
     const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
-    expect(vault.surfaces).toEqual(['vault']);
+    // The trial master file is a section of the Vault since the eTMF's admission (2026-11-12, P-124 item 6); its
+    // module stays its own, in the professional band (P-75), and is not a launch module.
+    expect(vault.surfaces).toEqual(['vault', 'etmf']);
     expect(vault.modules).toEqual(['vault']);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('etmf');
     expect(projects.surfaces).not.toContain('device-vault');
     expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-vault');
     for (const id of ['artifacts-center', 'device-vault']) {

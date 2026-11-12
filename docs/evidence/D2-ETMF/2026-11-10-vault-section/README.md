@@ -25,6 +25,12 @@ admission. Two things are not restored, each a decision the session records: the
 the ZIP failed, and "Open in Project management". The table below says where each thing is now and the test that
 holds it.
 
+**Applied at admission, 2026-11-12** (`docs/evidence/D2-ETMF/2026-11-12-admission/`). The hook-in is in
+`client/src/concept2cure/v2/surfaces/Vault.tsx`, shown only where the organisation can use the eTMF, and the held suite
+is `client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.inVault.test.tsx` with three more cases (the release
+lock, the plan lock, and the Vault opened by the eTMF's page). The two files under `held/` were deleted in that
+change, so that no later session applies them a second time. What follows describes them as they were.
+
 **Held until the eTMF is admitted to the Vault app.** The hook-in that puts the section in the Vault's Required
 documents view (in `Vault.tsx`: one import, one element after `VaultCoverage`, the header button's handler), and the
 cases that need it (five since the third change). Both are kept in this folder, out of the build:
