@@ -72,3 +72,23 @@ minimum-dates note (`desk-device-*`, `phone-device-*`); a viewer's task sheet (`
 - **The Plan step now has two things called a schedule**: S11's line inside "Program plan", and the "Schedule" section
   (`ProjectSchedule.tsx`: section owners, milestone tasks, the roll-up). They do different jobs; whether they should
   read as one is the design lead's.
+
+## Second pass, 2026-11-12
+
+The founder, 2026-11-12: continue toward GA readiness, "completing what we have, enhancing, hardening". Still S11's own
+work, plus one line in tasking (S9) beside the reschedule this lane added there.
+
+| Found | Done |
+|---|---|
+| **A person whose deadline was moved by someone else was not told.** A reassignment notifies its new owner; the due-date change added on 2026-11-10 did not | After the change commits, the task's owner gets "Due date changed: <task> · Now due <date>" (`task_update`). Their own change is not announced to them; an unconfirmed commit announces nothing; a failed notice never fails the change. |
+| **The global schedule in Reporting & analytics drew hours-only projects like forecasts** (handed to Reporting on 2026-11-11; their hold on S11's files is released, and the chart is in S11's file) | Under the chart: "Earliest possible dates, not a forecast: <projects>. Typical task durations are not on record for this filing type yet…". Nothing is said when no row is hours-only. |
+| `PyramidProject.tsx` passed the 500-line lint limit | The portfolio line and the global schedule are split into `surfaces/PyramidPortfolio.tsx` (same folder, re-exported, so no import changed). |
+
+Proof: `task-assignment.pglite.test.ts` (the owner is told, after the commit; not for their own change; not on an
+unconfirmed commit) and `reportingGlobalSchedule.test.tsx` (the note names the rows; absent when none). 74 client
+suites that mount these surfaces pass (767 tests). ESLint: no rise.
+
+In the running app, as the runtime role with RLS enforced: a colleague moved the owner's "Submit IND" a day earlier;
+the owner's notification reads "Due date changed: Submit IND · Now due 2027-06-02", and the owner's own change back
+produced none. Reporting & analytics, "When does each project file?": four rows, and the note names the 510(k)
+project (`desk-global-schedule.png`, `phone-global-schedule.png`; no horizontal scroll at 390).
