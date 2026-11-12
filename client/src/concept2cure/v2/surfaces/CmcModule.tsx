@@ -982,6 +982,22 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const inReview = secs.filter((s) => s.st === 'review');
   const drafts = secs.filter((s) => s.st === 'draft');
   const nextSec = inReview[0] || drafts[0];
+  /* What the lead under the verdict names (P-122 inventory row A6). `nextSec`
+     above is the next section to WORK ON, and stays the button's subject. The
+     next one to APPROVE is the first the approve route would not refuse: an
+     incomplete or out-of-date section is refused, and naming it as "next to
+     approve" sends a signer to a 409. */
+  const approvable = (s: CmcSection) => !sectionIncomplete(s) && !s.stale;
+  const nextToApprove = inReview.find(approvable) || drafts.find(approvable);
+  const incompleteDrafts = drafts.filter(sectionIncomplete).length;
+  const staleApproved = secs.filter((s) => s.st === 'approved' && s.stale).length;
+  /* "Every section is approved" stood as this reason whenever there was no next
+     section, including on a project with no sections at all. */
+  const noNextReason = secs.length === 0
+    ? 'This project has no Module 3 sections yet'
+    : staleApproved > 0
+      ? `Every section is approved, but ${staleApproved} ${staleApproved === 1 ? 'is' : 'are'} out of date: recompile ${staleApproved === 1 ? 'it' : 'them'} on the Module 3 build board`
+      : 'Every section is approved';
   /* ── BP-W0-3, the same defect as the NDA cockpit ───────────────────────────
      With zero submissions this lead read "Your Module 3 spans 0 submissions --
      preparedness is still computing across the portfolio" over a board that had
@@ -1120,10 +1136,71 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               The earlier CMC question file could not be read; whether it holds open questions is not known.
             </div>
           ) : null}
-          {/* Section approvals first: it is the only content on this page a
-              CMC lead can act on. The portfolio and build-state cards below
-              are reference material, and reference material does not go
-              above the thing you came here to do. */}
+          {/* The export gate's verdict, FIRST (P-122 inventory row A6,
+              2026-11-12). It stood last on this tab as "reference material";
+              walked on the demo programme it sat below a 21-row table, off the
+              first screen, while the lead above spoke of the organisation's
+              submissions. "Is Module 3 ready to file, and if not, what blocks
+              it and what is next?" is the first question a head of CMC opens
+              this tab with, and this block is its answer: the gate's own
+              verdict and reasons (read from the server, never derived here),
+              then the next section a signer can act on. Content unchanged
+              from where it stood, plus that one line. Section approvals
+              follows directly: still the first thing to ACT on. */}
+          {secs.length > 0 && (
+            <div className="pj-card" style={{ marginBottom: 16 }}>
+              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">CTD Module 3</span></div>
+              <div className="pj-card-b">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
+                  <b style={{ fontVariantNumeric: 'tabular-nums' }} title="Sections approved">{readyPct}% approved</b>
+                  {readiness.loading ? (
+                    <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
+                  ) : readiness.error || !readiness.data ? (
+                    /* D0, through `readRefusalWords` rather than a panel: a chip
+                       cannot render ErrorState, and "could not be read" over a
+                       403 says the gate failed when the truth is that the
+                       feature is not licensed for this organization. */
+                    <span className="rd-chip tone-err" role="alert" title={readinessRefusal?.message || readiness.error || 'no readiness verdict was returned'}>
+                      {readinessRefusal ? readinessRefusal.title : 'Export readiness could not be read'}
+                    </span>
+                  ) : readiness.data.exportReady ? (
+                    <span className="rd-chip tone-ok">Export ready</span>
+                  ) : (
+                    <span className="rd-chip tone-warn" title={readinessReasons.join('; ')}>Not export ready</span>
+                  )}
+                </div>
+                <div className="cm-meta">
+                  {approved} of {secs.length} sections approved — {drafts.length} draft
+                  {!readiness.loading && readiness.data && !readiness.data.exportReady && readinessReasons.length > 0
+                    ? <> — export blocked: {readinessReasons.join('; ')}</>
+                    : null}
+                  {!readiness.loading && (readiness.error || !readiness.data)
+                    ? readinessRefusal
+                      ? <> — {readinessRefusal.message} Readiness is not established; this is not a pass.</>
+                      : <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    : null}
+                </div>
+                {/* The next section, on screen. It was the retired banner's
+                    sentence and survived only as a hover title. Counted over
+                    the rows the table below shows, with its own predicate. */}
+                {(inReview.length > 0 || drafts.length > 0) && (
+                  <p className="sec-sub" data-testid="cmc-next-section" style={{ margin: '6px 0 0' }}>
+                    {nextToApprove
+                      /* The path is the section's name where the board has one;
+                         on compiled sections it repeats the number ("§3.1 3.1",
+                         seen in the running app), so it is printed only when it
+                         adds something. */
+                      ? <>Next to approve: §{nextToApprove.key}{nextToApprove.path && nextToApprove.path !== nextToApprove.key ? ` ${nextToApprove.path}` : ''}.</>
+                      : <>No section can be approved as it stands.</>}
+                    {incompleteDrafts > 0
+                      ? <> {incompleteDrafts} {incompleteDrafts === 1 ? 'draft is' : 'drafts are'} incomplete: the table below names what each is missing.</>
+                      : null}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
           <section className="pj-sec" aria-label="Section approvals">
             <div className="pj-sec-h">
               <h2>Section approvals</h2>
@@ -1142,7 +1219,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                     type="button"
                     className="btn ghost small"
                     disabled={!nextSec}
-                    title={nextSec ? `§${nextSec.key} ${nextSec.path}` : 'Every section is approved'}
+                    title={nextSec ? `§${nextSec.key} ${nextSec.path}` : noNextReason}
                     onClick={() => ask(`Prepare §${nextSec ? nextSec.key : ''} ${nextSec ? nextSec.path : ''} for approval`)}
                   >
                     Advance the next section
@@ -1236,43 +1313,6 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               )}
             </>
           </section>
-          {secs.length > 0 && (
-            <div className="pj-card" style={{ marginBottom: 16 }}>
-              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S — §3.2.P</span></div>
-              <div className="pj-card-b">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                  <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
-                  <b style={{ fontVariantNumeric: 'tabular-nums' }} title="Sections approved">{readyPct}% approved</b>
-                  {readiness.loading ? (
-                    <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
-                  ) : readiness.error || !readiness.data ? (
-                    /* D0, through `readRefusalWords` rather than a panel: a chip
-                       cannot render ErrorState, and "could not be read" over a
-                       403 says the gate failed when the truth is that the
-                       feature is not licensed for this organization. */
-                    <span className="rd-chip tone-err" role="alert" title={readinessRefusal?.message || readiness.error || 'no readiness verdict was returned'}>
-                      {readinessRefusal ? readinessRefusal.title : 'Export readiness could not be read'}
-                    </span>
-                  ) : readiness.data.exportReady ? (
-                    <span className="rd-chip tone-ok">Export ready</span>
-                  ) : (
-                    <span className="rd-chip tone-warn" title={readinessReasons.join('; ')}>Not export ready</span>
-                  )}
-                </div>
-                <div className="cm-meta">
-                  {approved} of {secs.length} sections approved — {drafts.length} draft
-                  {!readiness.loading && readiness.data && !readiness.data.exportReady && readinessReasons.length > 0
-                    ? <> — export blocked: {readinessReasons.join('; ')}</>
-                    : null}
-                  {!readiness.loading && (readiness.error || !readiness.data)
-                    ? readinessRefusal
-                      ? <> — {readinessRefusal.message} Readiness is not established; this is not a pass.</>
-                      : <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
-                    : null}
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
       {review && (

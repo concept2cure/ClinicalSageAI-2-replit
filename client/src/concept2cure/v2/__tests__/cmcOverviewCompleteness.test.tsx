@@ -566,3 +566,94 @@ describe('CmOverview — a thrown refusal reads as one sentence', () => {
     expect(toast.textContent).toBe(`Couldn’t approve section 3.2.P.1 — ${why} Nothing was persisted.`);
   });
 });
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * The head of CMC's first question is answered first (P-122 inventory row A6).
+ *
+ * "Is Module 3 ready to file, and if not, what blocks it and what is next?" The
+ * export gate's verdict answers it, and it stood LAST on this tab: on the demo
+ * programme, below a 21-row table, off the first screen at 1440×900 (walked
+ * 2026-11-12). The count of approved sections and the named next section were
+ * at the top of this tab until the D5 layout pass; the next section survived
+ * only as a hover title. P-122 §2: where the calm layout and a customer seeing
+ * their own work conflict, the work wins.
+ * ────────────────────────────────────────────────────────────────────────────*/
+describe('CmOverview — the export gate’s verdict comes before the table it summarises', () => {
+  const precedes = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+  it('prints the verdict and its reasons above Section approvals', async () => {
+    wire(
+      board({ sections: [section('3.2.S.1', 'draft', 100), section('3.2.P.1', 'draft', 75, ['formulation'])] }),
+      undefined,
+      () => res({ success: true, data: readinessOf({ totalSections: 2, approvedSections: 0, exportReady: false }) }),
+    );
+    renderOverview();
+    const chip = await screen.findByText('Not export ready');
+    const approvals = screen.getByRole('heading', { name: 'Section approvals' });
+    expect(precedes(chip, approvals)).toBe(true);
+    expect(precedes(screen.getByText(/export blocked: 2 not approved/), approvals)).toBe(true);
+  });
+
+  it('names the next section that can be approved, on screen and not in a hover title', async () => {
+    wire(
+      board({ sections: [section('3.2.P.1', 'draft', 75, ['formulation']), section('3.2.S.1', 'draft', 100)] }),
+      undefined,
+      () => res({ success: true, data: readinessOf({ totalSections: 2, approvedSections: 0, exportReady: false }) }),
+    );
+    renderOverview();
+    const next = await screen.findByTestId('cmc-next-section');
+    // The first draft is incomplete and the approve route refuses it; the next one a signer can act on is §3.2.S.1.
+    expect(next.textContent).toContain('Next to approve: §3.2.S.1 General Information');
+    expect(next.textContent).toContain('1 draft is incomplete');
+  });
+
+  it('says so when no draft can be approved as it stands, rather than naming one the route refuses', async () => {
+    wire(
+      board({ sections: [section('3.2.P.1', 'draft', 75, ['formulation'])] }),
+      undefined,
+      () => res({ success: true, data: readinessOf({ totalSections: 1, approvedSections: 0, exportReady: false }) }),
+    );
+    renderOverview();
+    const next = await screen.findByTestId('cmc-next-section');
+    expect(next.textContent).toContain('No section can be approved as it stands');
+    expect(next.textContent).not.toContain('Next to approve');
+  });
+
+  it('names no next section when every section is approved', async () => {
+    wire(board({ sections: [section('3.2.S.1', 'approved', 100)] }));
+    renderOverview();
+    await screen.findByText('Export ready');
+    expect(screen.queryByTestId('cmc-next-section')).toBeNull();
+  });
+
+  /* "Every section is approved" stood as the disabled button's reason whenever
+     there was no next section — including when there were no sections at all. */
+  it('gives the disabled "Advance the next section" its true reason', async () => {
+    wire(board({ sections: [] }));
+    renderOverview();
+    const none = await screen.findByRole('button', { name: 'Advance the next section' });
+    expect((none as HTMLButtonElement).disabled).toBe(true);
+    expect(none.getAttribute('title')).toBe('This project has no Module 3 sections yet');
+    cleanup();
+
+    wire(board({ sections: [{ ...section('3.2.S.1', 'approved', 100), stale: true, staleReason: 'specification:7 changed' }] }));
+    renderOverview();
+    const stale = await screen.findByRole('button', { name: 'Advance the next section' });
+    expect(stale.getAttribute('title')).toBe('Every section is approved, but 1 is out of date: recompile it on the Module 3 build board');
+  });
+});
+
+describe('CmOverview — the next section is not named twice', () => {
+  /* Seen in the running app on the demo programme: a compiled section's path
+     repeats its number, and the line read "Next to approve: §3.1 3.1." */
+  it('prints the path only when it adds something to the number', async () => {
+    wire(
+      board({ sections: [{ key: '3.1', path: '3.1', st: 'draft', completeness: 100, missingInputs: [] }] }),
+      undefined,
+      () => res({ success: true, data: readinessOf({ totalSections: 1, approvedSections: 0, exportReady: false }) }),
+    );
+    renderOverview();
+    const next = await screen.findByTestId('cmc-next-section');
+    expect(next.textContent).toBe('Next to approve: §3.1.');
+  });
+});
