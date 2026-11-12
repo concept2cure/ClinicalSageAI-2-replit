@@ -171,7 +171,7 @@ Each is one commit, each check seen failing first, each with evidence under `doc
 
 | # | Slice | Plan / Completes | Holds to ask | Waits on |
 |---|---|---|---|---|
-| N1 | The tox classifier states only what the input states (L2), and is pinned to its references | F1 / `server/services/preclinical/tox-findings-classifier.ts` | none | nothing |
+| N1 | The tox classifier states only what the input states (L2). **Done 2026-11-12**, `docs/evidence/D2-NONCLINICAL/2026-11-12-tox-classifier/`: tumours escalate, the thyroid's own name is said honestly, nothing stated is missed; negation is deliberately not read. Pinning it to published references is still owed | F1 / `server/services/preclinical/tox-findings-classifier.ts` | none | nothing |
 | N2 | One study-type to 4.2.x map (M5); the second NOAEL parser and the second genotoxicity check converge onto the engine's (M3) | F1 / `server/services/nonclinical/nonclinical-logic.ts` | none | nothing |
 | N3 | The mounted routes that compose from the request body or from every study in any status are refused or held to R-1, with the write gate and an audit row (M1, M2) | F1 / `server/routes/nonclinical-summary.routes.ts` | none | nothing |
 | N4 | The dose engine checked against the published worked examples (L3) | F1 / `server/services/preclinical/fih-dose-engine.ts` | none | the guidance text, which this container's network policy may not reach |

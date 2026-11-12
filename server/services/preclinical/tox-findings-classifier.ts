@@ -79,16 +79,22 @@ interface KbEntry {
   escalable: boolean;
 }
 
-// Adverse correlates that escalate an otherwise-adaptive finding.
+// Adverse correlates that escalate an otherwise-adaptive finding. The words the
+// knowledge base's own adverse rules name are added to these below
+// (ADVERSE_WORDS), so this list cannot fall behind them. 2026-11-12: the
+// adjectives ("necrotic", "fibrotic") and the reversed order ("ALT increased")
+// were not read.
 const ADVERSE_CORRELATES =
-  /necrosis|degener|inflammat|fibrosis|hyperplasia|neoplas|tumou?r|single[-\s]?cell death|apoptosis|vacuolation with|impair|dysfunction|increased\s+(alt|ast|alp|alkaline|bilirubin|ggt|creatinine|bun)|elevated\s+(alt|ast|alp|bilirubin)|mortality|moribund/i;
+  /necro(?:sis|ses|tic)|degener|inflammat|fibro(?:sis|tic)|hyperplasia|neoplas|tumou?r|single[-\s]?cell death|apoptosis|vacuolation with|impair|dysfunction|increased\s+(?:alt|ast|alp|alkaline|bilirubin|ggt|creatinine|bun)|elevated\s+(?:alt|ast|alp|bilirubin)|\b(?:alt|ast|alp|bilirubin|ggt|creatinine|bun)\s+(?:increased|elevated)|mortality|moribund/i;
 
 const SEVERE_GRADE = /moderate|marked|severe|grade\s*[4-5]/i;
 
 // Curated knowledge base of well-established toxicologic-pathology calls.
 const KB: KbEntry[] = [
   {
-    pattern: /hepatocellular hypertrophy|hepatocyte hypertrophy|centrilobular hypertrophy|liver.*hypertrophy/,
+    // Hepatocellular only. Until 2026-11-12 the pattern ended in liver.*hypertrophy,
+    // which took a Kupffer cell or stellate cell hypertrophy for enzyme induction.
+    pattern: /(?:hepatocellular|hepatocytes?|hepatocytic|centrilobular)(?:,?\s+\w+)?,?\s+hypertrophy|hypertrophy,?\s+(?:of\s+(?:the\s+)?)?(?:hepatocellular|hepatocytes?|hepatocytic|centrilobular)/,
     baseAdversity: 'adaptive_non_adverse',
     reversibility: 'reversible',
     humanRelevance: 'low',
@@ -108,7 +114,11 @@ const KB: KbEntry[] = [
     escalable: true,
   },
   {
-    pattern: /thyroid.*(follicular|hypertrophy|hyperplasia)/,
+    // Follicular cell hypertrophy or hyperplasia of the thyroid. Until
+    // 2026-11-12 the pattern was thyroid.*(follicular|hypertrophy|hyperplasia):
+    // it took a C-cell hyperplasia, a follicular cell carcinoma, a follicular
+    // cyst and a parathyroid change for this response.
+    pattern: /\bthyroid\b.*(?:\bfollicular\b.*(?:hypertrophy|hyperplasia)|(?:hypertrophy|hyperplasia).*\bfollicular\b)/,
     baseAdversity: 'adaptive_non_adverse',
     reversibility: 'reversible',
     humanRelevance: 'rodent_specific',
@@ -156,7 +166,10 @@ const KB: KbEntry[] = [
     escalable: false,
   },
   {
-    pattern: /hyperplasia|neoplas|tumou?r|carcinoma|adenoma/,
+    // 2026-11-12: the malignancies a report names were not read, so a sarcoma or
+    // a lymphoma beside an adaptive finding left it "not considered to limit the
+    // NOAEL". "Mass" and "nodule" are observations, not diagnoses, and are left out.
+    pattern: /hyperplasia|neoplas|tumou?r|carcinoma|adenoma|sarcoma|lymphoma|leuka?emia|malignan|metasta|cancer|blastoma|melanoma|mesothelioma/,
     baseAdversity: 'adverse',
     reversibility: 'not_reversible',
     humanRelevance: 'likely',
@@ -170,70 +183,187 @@ function normalizeSeverity(s: string | null | undefined): string {
   return (s ?? '').toLowerCase().trim();
 }
 
-/** Classify a single target-organ finding. */
+/**
+ * Every word that marks a change as adverse: the correlates above, and the
+ * words of each rule the knowledge base itself files as adverse, each read to
+ * the end of the word as it is written ("degeneration", "neoplasm"). Until
+ * 2026-11-12 only the correlates were read, and they named "neoplas" and
+ * "tumour" but not "adenoma" or "carcinoma": an adaptive finding with a
+ * follicular cell adenoma beside it stayed "adaptive, non-adverse ... not
+ * considered to limit the NOAEL".
+ */
+const ADVERSE_WORDS = new RegExp(
+  `(?:${[ADVERSE_CORRELATES.source, ...KB.filter((k) => k.baseAdversity === 'adverse').map((k) => k.pattern.source)].join('|')})\\w*`,
+  'gi',
+);
+
+/**
+ * Words of negation. This classifier does NOT read negation: "no necrosis" is
+ * counted as necrosis. Reading it was tried on 2026-11-12 and refused twice in
+ * review: every rule tried for where an absence ends ("with or without
+ * necrosis", "no necrosis, except at the high dose", "no necrosis in any
+ * control animal", "not all animals were free of necrosis") lost adverse
+ * changes the input stated, tens of thousands of generated inputs in all, and
+ * one version hung on a long list. Counting a stated absence as present is the
+ * error this classifier may make; missing a stated adverse change is the one it
+ * must not. So the reason says when a negation is there, and a pathologist
+ * reads it.
+ */
+const NEGATION = /\b(?:no|not|without|absence|absent|free\s+of|negative\s+for|lack\s+of|lacking|neither|nor|none)\b/i;
+
+/**
+ * The whole finding, when it is thyroid follicular hyperplasia and nothing
+ * else. Its own name holds "hyperplasia", an adverse word: until 2026-11-12 it
+ * came back "escalated to adverse due to adverse correlates" with none stated.
+ * It is still adverse (a hyperplastic change is not called adaptive here), and
+ * the reason now says why, and that the adaptive reading is a pathologist's.
+ */
+const THYROID_FOLLICULAR_HYPERPLASIA_ONLY =
+  /^\s*(?:thyroid(?:\s+gland)?\s*:?\s*)?(?:diffuse\s+)?(?:hyperplasia,?\s+)?follicular(?:[\s-]+(?:cells?|epithelial|epithelium))?(?:[\s-]+(?:hypertrophy\s*(?:\/|and|or)\s*)?hyperplasia)?(?:,?\s*diffuse)?\s*$/;
+
+/**
+ * Classify a single target-organ finding.
+ *
+ * It states only what the input states. Until 2026-11-12:
+ *  - thyroid follicular hyperplasia was "escalated to adverse due to adverse
+ *    correlates" with none given, because its own name holds "hyperplasia";
+ *  - a tumour named as a correlate (an adenoma, a carcinoma, a sarcoma) did
+ *    NOT escalate an adaptive finding;
+ *  - an escalation by severity alone was framed "with adverse correlates", and
+ *    an escalated finding kept the adaptive rule's "reversible" and its low
+ *    human relevance, neither of which the input had said;
+ *  - a rule that cannot be escalated (hyaline droplets) stayed "adaptive,
+ *    non-adverse" with a necrosis stated beside it;
+ *  - a correlate that was not text failed the whole batch.
+ * It does not read negation (see NEGATION): a stated absence counts as present.
+ */
 export function classifyToxFinding(input: ToxFindingInput): ClassifiedFinding {
-  const haystack = `${input.organ} ${input.finding}`.toLowerCase();
-  const correlatesText = (input.correlates ?? []).join(' ');
-  // Escalate on an adverse term anywhere in the explicit correlates OR in the
-  // finding/organ text itself — e.g. "hepatocellular hypertrophy with necrosis"
-  // matches the adaptive hypertrophy entry first, but the in-finding "necrosis"
-  // must still escalate it to adverse. (None of the escalable KB patterns
-  // contain an adverse-correlate term, so testing the full text cannot
-  // spuriously escalate a plain adaptive finding.)
-  const hasAdverseCorrelate =
-    ADVERSE_CORRELATES.test(correlatesText) || ADVERSE_CORRELATES.test(haystack);
+  const { text, words, inCorrelates, negated } = adverseWordsOf(input);
+  const entry = KB.find(k => k.pattern.test(text));
+  if (!entry) return unmatched(input, words, negated);
+  if (entry.baseAdversity === 'adverse') return asKnown(input, entry);
+  // A rule that cannot be escalated, with an adverse change stated beside it:
+  // neither "adaptive" nor "adverse" is this classifier's to say.
+  if (!entry.escalable) return words.length ? besideAdverseChange(input, entry, words, negated) : asKnown(input, entry);
+
   const isSevere = SEVERE_GRADE.test(normalizeSeverity(input.severity));
+  if (isThyroidFollicularHyperplasiaOnly(input, entry, inCorrelates.length > 0 || isSevere)) return thyroidFollicularHyperplasia(input, entry);
+  if (!words.length && !isSevere) return asKnown(input, entry);
 
-  const entry = KB.find(k => k.pattern.test(haystack));
-
-  if (!entry) {
-    return {
-      organ: input.organ,
-      finding: input.finding,
-      adversity: 'indeterminate',
-      reversibility: input.reversible == null ? 'unknown' : input.reversible ? 'reversible' : 'not_reversible',
-      humanRelevance: 'unknown',
-      rationale:
-        'No established adaptive/adverse pattern matched; classification requires pathologist judgement in study context.',
-      overviewFraming: `${input.finding} in the ${input.organ} requires case-by-case adversity assessment.`,
-      references: ['STP adversity framework (Kerlin 2016)'],
-      escalated: false,
-    };
-  }
-
-  let adversity = entry.baseAdversity;
-  let escalated = false;
-  let rationale: string;
-
-  if (entry.escalable && entry.baseAdversity !== 'adverse' && (hasAdverseCorrelate || isSevere)) {
-    adversity = 'adverse';
-    escalated = true;
-    rationale = `Normally ${entry.baseAdversity.replace(/_/g, ' ')}, but escalated to adverse due to ${
-      hasAdverseCorrelate ? 'adverse correlates' : 'moderate-or-greater severity'
-    }.`;
-  } else {
-    rationale = `Classified ${adversity.replace(/_/g, ' ')} — ${entry.framing}.`;
-  }
-
-  // Reversibility: explicit recovery-cohort data overrides the default.
-  let reversibility: Reversibility = entry.reversibility;
-  if (input.reversible === true) reversibility = 'reversible';
-  else if (input.reversible === false) reversibility = adversity === 'adverse' ? 'not_reversible' : reversibility;
-
-  const framing = escalated
-    ? `${capitalize(input.finding)} in the ${input.organ}, with adverse correlates, is considered adverse.`
-    : `${capitalize(input.finding)} in the ${input.organ} is ${entry.framing}.`;
-
+  const finding = `${capitalize(input.finding)} in the ${input.organ}`;
+  const why = words.length ? `adverse correlates: ${words.join(', ')}` : 'moderate-or-greater severity';
   return {
     organ: input.organ,
     finding: input.finding,
-    adversity,
-    reversibility,
-    humanRelevance: entry.humanRelevance,
-    rationale,
-    overviewFraming: framing,
+    adversity: 'adverse',
+    // An escalated finding does not inherit the adaptive rule's "reversible", nor its low human relevance: what made
+    // it adverse is not that response.
+    reversibility: statedReversibility(input, 'adverse') ?? 'unknown',
+    humanRelevance: 'uncertain',
+    rationale: `Normally ${entry.baseAdversity.replace(/_/g, ' ')}, but escalated to adverse due to ${why}.${negated ? NEGATION_NOTE : ''}`,
+    overviewFraming: words.length
+      ? `${finding}, with adverse correlates, is considered adverse.`
+      : `${finding}, at moderate or greater severity, is considered adverse.`,
     references: entry.references,
-    escalated,
+    escalated: true,
+  };
+}
+
+/** The adverse words of a finding and its correlates, whole, and whether a word of negation stands beside them. */
+function adverseWordsOf(input: ToxFindingInput): { text: string; words: string[]; inCorrelates: string[]; negated: boolean } {
+  const text = `${input.organ} ${input.finding}`.toLowerCase();
+  const stated = (input.correlates ?? []).filter((c): c is string => typeof c === 'string').map((c) => c.toLowerCase());
+  const inCorrelates = stated.flatMap((c) => c.match(ADVERSE_WORDS) ?? []);
+  const words = [...new Set([...(text.match(ADVERSE_WORDS) ?? []), ...inCorrelates].map((w) => w.replace(/\s+/g, ' ')))];
+  return { text, words, inCorrelates, negated: words.length > 0 && [text, ...stated].some((t) => NEGATION.test(t)) };
+}
+
+/** Whether the finding is thyroid follicular hyperplasia and nothing else, with nothing stated beside it. */
+function isThyroidFollicularHyperplasiaOnly(input: ToxFindingInput, entry: KbEntry, somethingBeside: boolean): boolean {
+  return !somethingBeside && entry.pattern.source.includes('thyroid') && THYROID_FOLLICULAR_HYPERPLASIA_ONLY.test(input.finding.toLowerCase());
+}
+
+const NEGATION_NOTE =
+  ' The text also holds a word of negation; this classifier does not read negation, so the change is counted as present. A pathologist confirms.';
+
+/** What a recovery cohort showed, when the input says: it overrides a rule's default. "Not reversible" is said only of an adverse finding. */
+function statedReversibility(input: ToxFindingInput, adversity: Adversity): Reversibility | null {
+  if (input.reversible === true) return 'reversible';
+  return input.reversible === false && adversity === 'adverse' ? 'not_reversible' : null;
+}
+
+/** The rule's own call, unchanged. */
+function asKnown(input: ToxFindingInput, entry: KbEntry): ClassifiedFinding {
+  return {
+    organ: input.organ,
+    finding: input.finding,
+    adversity: entry.baseAdversity,
+    reversibility: statedReversibility(input, entry.baseAdversity) ?? entry.reversibility,
+    humanRelevance: entry.humanRelevance,
+    rationale: `Classified ${entry.baseAdversity.replace(/_/g, ' ')} — ${entry.framing}.`,
+    overviewFraming: `${capitalize(input.finding)} in the ${input.organ} is ${entry.framing}.`,
+    references: entry.references,
+    escalated: false,
+  };
+}
+
+/**
+ * No rule matched the finding. With an adverse change stated in it or beside it,
+ * that change is adverse; otherwise it is a pathologist's call. (Until 2026-11-12
+ * the adverse words of an unmatched finding were not read at all.)
+ */
+function unmatched(input: ToxFindingInput, adverseWords: string[], negated: boolean): ClassifiedFinding {
+  const reversibility: Reversibility = input.reversible == null ? 'unknown' : input.reversible ? 'reversible' : 'not_reversible';
+  const base = { organ: input.organ, finding: input.finding, reversibility, humanRelevance: 'unknown' as HumanRelevance, escalated: false };
+  if (adverseWords.length) {
+    const words = adverseWords;
+    return {
+      ...base,
+      adversity: 'adverse',
+      rationale: `No established pattern matched the finding, but adverse changes are stated with it: ${words.join(', ')}.${negated ? NEGATION_NOTE : ''}`,
+      overviewFraming: `${capitalize(input.finding)} in the ${input.organ}, with adverse correlates, is considered adverse.`,
+      references: ['STP adversity framework (Kerlin 2016)'],
+    };
+  }
+  return {
+    ...base,
+    adversity: 'indeterminate',
+    rationale:
+      'No established adaptive/adverse pattern matched; classification requires pathologist judgement in study context.',
+    overviewFraming: `${input.finding} in the ${input.organ} requires case-by-case adversity assessment.`,
+    references: ['STP adversity framework (Kerlin 2016)'],
+  };
+}
+
+/** A rule that cannot be escalated, with adverse changes stated beside its finding: a pathologist's call. */
+function besideAdverseChange(input: ToxFindingInput, entry: KbEntry, words: string[], negated: boolean): ClassifiedFinding {
+  return {
+    organ: input.organ,
+    finding: input.finding,
+    adversity: 'indeterminate',
+    reversibility: input.reversible == null ? 'unknown' : input.reversible ? 'reversible' : 'not_reversible',
+    humanRelevance: entry.humanRelevance,
+    rationale: `Normally ${entry.baseAdversity.replace(/_/g, ' ')} (${entry.framing}), but adverse changes are stated beside it: ${words.join(', ')}. Classification requires pathologist judgement in study context.${negated ? NEGATION_NOTE : ''}`,
+    overviewFraming: `${capitalize(input.finding)} in the ${input.organ} requires case-by-case adversity assessment.`,
+    references: entry.references,
+    escalated: false,
+  };
+}
+
+/** Thyroid follicular hyperplasia and nothing else: adverse, and said why. */
+function thyroidFollicularHyperplasia(input: ToxFindingInput, entry: KbEntry): ClassifiedFinding {
+  return {
+    organ: input.organ,
+    finding: input.finding,
+    adversity: 'adverse',
+    reversibility: statedReversibility(input, 'adverse') ?? 'unknown',
+    humanRelevance: 'uncertain',
+    rationale:
+      'Classified adverse: hyperplasia is a proliferative change, and this classifier does not call one adaptive. In rodents, '
+      + `thyroid follicular hypertrophy and hyperplasia are often ${entry.framing}; whether this one is, is a pathologist's judgement.`,
+    overviewFraming: `${capitalize(input.finding)} in the ${input.organ} is classified adverse; whether it is the adaptive rodent response to hepatic enzyme induction is a pathologist's judgement.`,
+    references: entry.references,
+    escalated: false,
   };
 }
 
