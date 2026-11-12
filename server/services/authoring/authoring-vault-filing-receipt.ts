@@ -135,6 +135,30 @@ async function projectReceipt(q: PoolClient, row: Record<string, unknown>, conte
     receipt: { id: header.id, exportCorrelationId: snapshot.exportId, occurredAt: header.occurredAt, chain: 'linked', seal: verdict.seal } };
 }
 
+/**
+ * What a Vault version's record shows of where its file was rendered from
+ * (LX-10): the Authoring document, and the seal when the filing named one.
+ * Null for a version with no filing receipt (a native upload). A receipt that
+ * does not verify, or could not be read, is said to be so and is never shown
+ * as a source.
+ */
+export type VaultRenderedFrom =
+  | { authoringDocumentId: string; sealVersion?: string; sealContentHash?: string; sealUnverified?: string }
+  | { notEstablished: 'unverified' | 'unread' }
+  | null;
+
+export function renderedFromOf(derivation: VaultFilingDerivation): VaultRenderedFrom {
+  if (derivation.status === 'not-recorded') return null;
+  if (derivation.status === 'unverified') return { notEstablished: 'unverified' };
+  if (derivation.status === 'unavailable') return { notEstablished: 'unread' };
+  const { nativeId, sealedVersion, sealUnverified } = derivation.source;
+  return {
+    authoringDocumentId: nativeId,
+    ...(sealedVersion ? { sealVersion: sealedVersion.version, sealContentHash: sealedVersion.contentHash } : {}),
+    ...(sealUnverified ? { sealUnverified } : {}),
+  };
+}
+
 /** Exactly one scoped candidate is required. Never select a source by date,
  * document-code text or current editable content; never smooth a failed read
  * into an empty source history. No-key is recorded, not called HMAC proof. */

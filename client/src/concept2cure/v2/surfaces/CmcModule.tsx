@@ -21,6 +21,8 @@ import {
 } from './cmcSpec';
 import {
   batchRowsFromApi,
+  batchFromReleaseAnswer,
+  dispositionWord,
   batchCreateBody,
   batchReleaseBody,
   batchUpdateBody,
@@ -61,6 +63,8 @@ import {
   stabilityResultForm,
   stabilityResultBody,
   stabilityCloseoutForm,
+  stabilityShelfLifeForm,
+  stabilityShelfLifeBody,
   qualifyBody,
   stabilityCloseoutBody,
   readStabilityResults,
@@ -1807,6 +1811,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      shown is the half of §11.10(e) an inspector reads for a changed record. */
   const [historyFor, setHistoryFor] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
+  const [proposing, setProposing] = useState<StabilityStudyApiRow | null>(null);
   /* ICH Q1E estimates, keyed by study. Held per study rather than globally
      because the estimate belongs to the batch and condition it was fitted from —
      a shelf life is not a property of the programme. */
@@ -2033,6 +2038,33 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
   };
 
   /**
+   * The shelf life a running study proposes, by the ordinary audited edit the
+   * register takes. Until 2026-11-12 the only way to record one was the
+   * close-out below, which ends the study and needs signing authority, so an
+   * author could not complete §3.2.P.8 for a study that is still running.
+   */
+  const proposeShelfLife = async (v: Record<string, string>) => {
+    if (!proposing) return;
+    const study = proposing;
+    try {
+      const res = await apiRequest('PUT', '/api/cmc/stability-studies/' + study.id, {
+        ...stabilityShelfLifeBody(v),
+        ...(projectId ? { projectId } : {}),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
+      if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
+      const row = adopt(json);
+      if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((r) => (r.id === study.id ? row : r)));
+      setProposing(null);
+      fireToast(`Proposed shelf life saved: ${row.shelfLife}. ${row.scope === 'DS' ? '§3.2.S.7' : '§3.2.P.8'} prints it at the next compile.`);
+    } catch (e) {
+      fireToast(cmcWriteThrew('shelf life', e), 'error');
+    }
+  };
+
+  /**
    * The close-out, in the two acts the server governs it as: the shelf life and
    * its basis recorded by an ordinary (audited) edit, then the terminal status
    * under a 21 CFR Part 11 signature.
@@ -2057,7 +2089,19 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
       const recordedJson = await recorded.json().catch(() => null);
       if (!recorded.ok) { fireToast(cmcWriteFailed('shelf life', recordedJson, recorded.status), 'error'); return; }
 
-      const signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
+      /* apiRequest throws on a refusal, so the `!signed.ok` branch below was
+         never reached: an author whose role may not sign was told only
+         "Nothing was signed", although the edit above had saved the shelf
+         life. Both facts are said, and the row shows what was saved. */
+      let signed: Response;
+      try {
+        signed = await apiRequest('POST', `/api/cmc/stability-studies/${study.id}/close-out`, qualifyBody(v));
+      } catch (e) {
+        const partial = adopt(recordedJson);
+        if (partial) setRows((rs) => rs.map((r) => (r.id === study.id ? partial : r)));
+        fireToast(`The shelf life is saved and the study is still running. ${cmcWriteThrew('close-out', e)}`, 'error');
+        return;
+      }
       const signedJson = await signed.json().catch(() => null);
       if (!signed.ok) {
         /* The shelf life IS recorded; only the signature failed. Say both. */
@@ -2168,7 +2212,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                             </button>
                           )}
                         </td>
-                        <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
+                        <StabilityShelfLifeCell study={r} onPropose={setProposing} />
                         {/* The store holds "COMPLETED", "ON-HOLD" and the rest in caps; the
                             chip showed them that way, which is a stored token on screen
                             (§WA.4.2 rule 10) and the uppercase §2 retires. One map, the
@@ -2547,6 +2591,13 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
           onSubmit={recordResult}
         />
       )}
+      {proposing && (
+        <C2CForm
+          config={stabilityShelfLifeForm({ shelfLife: proposing.shelfLife, scope: proposing.scope })}
+          onCancel={() => setProposing(null)}
+          onSubmit={proposeShelfLife}
+        />
+      )}
       {closing && (
         <C2CForm
           config={stabilityCloseoutForm({ shelfLife: closing.shelfLife })}
@@ -2660,11 +2711,14 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.', 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
-      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
-      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...(adopted ?? { ...x, st: 'released' }), _new: true } : x));
-      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
-      fireToast('Batch ' + target.id + ' ' + (adopted?.st ?? 'released') + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      /* The row the server signed, read where the route puts it. The answer was read as `data` when the batch
+         is `data.batchRecord`, so the row showed "undefined" and, with nothing adopted, was called released. */
+      const adopted = batchFromReleaseAnswer(json);
       setReleasing(null);
+      if (!adopted) { fireToast('The disposition was signed, but the answer did not carry the batch. Reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...adopted, _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Batch ' + target.id + ' ' + dispositionWord(adopted.st) + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '.'));
     } catch (e) {
       fireToast('Couldn’t release the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
@@ -2709,7 +2763,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td style={{ textAlign: 'right' }}>
                   <span className="pj-sec-acts" style={{ justifyContent: 'flex-end' }}>
                     <button type="button" className="btn ghost small" onClick={() => setEditing(r)} disabled={batchEditBlocked(r) != null} title={batchEditBlocked(r) ?? 'Correct this batch record, with a reason for the change'}>Edit</button>
-                    {r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Release</button>}
+                    {r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Disposition</button>}
                   </span>
                 </td>
               </tr>))}</tbody></table>
@@ -2735,7 +2789,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: String(editing.dev) },
         { key: 'reason', label: 'Reason for change', type: 'textarea', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. Recorded with the change.`, placeholder: 'What was corrected and why…' },
       ] }} onCancel={() => setEditing(null)} onSubmit={edit} />}
-      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Disposition of batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign the disposition', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
         { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -2755,6 +2809,34 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
  * reads that series, and a button that is live over no data is an action that
  * can only fail.
  */
+/**
+ * The Shelf life cell is its own control: the proposed shelf life is an
+ * ordinary edit any author makes on a running study. Closing the study out,
+ * which fixes it under a signature, is the row's "Close out".
+ */
+function StabilityShelfLifeCell({ study, onPropose }: { study: StabilityStudyApiRow; onPropose: (s: StabilityStudyApiRow) => void }) {
+  const closedOut = String(study.status ?? '').toUpperCase() === 'COMPLETED';
+  const verb = study.shelfLife ? 'Change' : 'Set';
+  return (
+    <td>
+      {study.shelfLife || <span className="cm-meta">not set</span>}
+      {!closedOut && (
+        <>
+          {' '}
+          <button
+            className="cm-linkish"
+            aria-label={`${verb} shelf life`}
+            title="Record the shelf life this study proposes. The study stays open."
+            onClick={() => onPropose(study)}
+          >
+            {verb}
+          </button>
+        </>
+      )}
+    </td>
+  );
+}
+
 function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
   study: StabilityStudyApiRow;
   hasResults: boolean;
@@ -2790,7 +2872,14 @@ function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
       >
         {I.barChart} {busy.trending === study.id ? 'Assessing…' : 'Trend'}
       </button>
-      <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => on.closeOut(study)}>{I.checkCircle} Shelf life</button>
+      <button
+        className="nda-open"
+        style={{ marginLeft: 6 }}
+        title="Close the study out with the shelf life its data support, under your signature"
+        onClick={() => on.closeOut(study)}
+      >
+        {I.checkCircle} Close out
+      </button>
       <button
         className="nda-open"
         style={{ marginLeft: 6 }}
