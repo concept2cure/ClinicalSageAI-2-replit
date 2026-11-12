@@ -157,6 +157,34 @@ describe('the device section of the Reporting overview', () => {
   });
 });
 
+/* S12 biotech sweep, finding 94 (re-checked in the running app 2026-11-12): with a biotech IND open, Reporting
+   showed this section under that project's reports and said nothing about whose figures they were. The read now
+   says whether the open project is one of the device projects it counted, so the screen can say so in words. */
+describe('whether the open project is among the device projects counted', () => {
+  it('says a drug project is not counted, and a device project is', async () => {
+    expect(await readDevicePortfolio(client, ORG, ALL_ORG, NOW, 105)).toMatchObject({ state: 'computed', projectCount: 4, openProjectCounted: false });
+    expect(await readDevicePortfolio(client, ORG, ALL_ORG, NOW, 101)).toMatchObject({ state: 'computed', projectCount: 4, openProjectCounted: true });
+  });
+
+  it('says nothing about an open project when none is open', async () => {
+    expect(await readDevicePortfolio(client, ORG, ALL_ORG, NOW)).not.toHaveProperty('openProjectCounted');
+    expect(await readDevicePortfolio(client, ORG, ALL_ORG, NOW, null)).not.toHaveProperty('openProjectCounted');
+  });
+
+  it('does not count a device project the reader cannot open, a deleted one, or another tenant\u2019s', async () => {
+    expect(await readDevicePortfolio(client, ORG, [102, 105], NOW, 101)).toMatchObject({ projectCount: 1, openProjectCounted: false });
+    expect(await readDevicePortfolio(client, ORG, ALL_ORG, NOW, 109)).toMatchObject({ openProjectCounted: false });
+    expect(await readDevicePortfolio(client, ORG, [...ALL_ORG, 108], NOW, 108)).toMatchObject({ projectCount: 4, openProjectCounted: false });
+  });
+
+  it('refuses an open project id that is not a positive integer, before reading anything', async () => {
+    const spy = { query: vi.fn(client.query) };
+    await expect(readDevicePortfolio(spy, ORG, ALL_ORG, NOW, 1.5)).rejects.toThrow();
+    await expect(readDevicePortfolio(spy, ORG, ALL_ORG, NOW, 0)).rejects.toThrow();
+    expect(spy.query).not.toHaveBeenCalled();
+  });
+});
+
 describe('an unreadable source is unavailable, never zero', () => {
   const failing = (pattern: RegExp, code: string) => ({
     query: async (sql: string, params?: unknown[]) => {

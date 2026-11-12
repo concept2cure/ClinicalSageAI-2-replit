@@ -1,0 +1,550 @@
+{
+  "biotech-1440-light": {
+    "packs": [
+      "Nonclinical readiness pack For confirming Module 4 is submission-grade. It holds the Noncl"
+    ],
+    "headerPrimary": "Build the Nonclinical readiness pack",
+    "section": {
+      "note": "C2C-101 is not counted in these figures, which cover device projects only.",
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "C2C-101 is not counted in these figures, which cover device projects only.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(107, 105, 99)",
+      "submittedColour": null,
+      "background": "rgb(250, 249, 245)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "device-1440-light": {
+    "packs": [
+      "IVD performance & clearance pack For an IVD 510(k) and the claims it rests on. It holds th"
+    ],
+    "headerPrimary": "Build the IVD performance & clearance pack",
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(107, 105, 99)",
+      "submittedColour": null,
+      "background": "rgb(250, 249, 245)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "none-1440-light": {
+    "packs": [],
+    "headerPrimary": null,
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(107, 105, 99)",
+      "submittedColour": null,
+      "background": "rgb(250, 249, 245)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "biotech-1440-dark": {
+    "packs": [
+      "Nonclinical readiness pack For confirming Module 4 is submission-grade. It holds the Noncl"
+    ],
+    "headerPrimary": "Build the Nonclinical readiness pack",
+    "section": {
+      "note": "C2C-101 is not counted in these figures, which cover device projects only.",
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "C2C-101 is not counted in these figures, which cover device projects only.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(176, 174, 165)",
+      "submittedColour": null,
+      "background": "rgb(38, 38, 36)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "device-1440-dark": {
+    "packs": [
+      "IVD performance & clearance pack For an IVD 510(k) and the claims it rests on. It holds th"
+    ],
+    "headerPrimary": "Build the IVD performance & clearance pack",
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(176, 174, 165)",
+      "submittedColour": null,
+      "background": "rgb(38, 38, 36)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "none-1440-dark": {
+    "packs": [],
+    "headerPrimary": null,
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(176, 174, 165)",
+      "submittedColour": null,
+      "background": "rgb(38, 38, 36)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "biotech-390-light": {
+    "packs": [
+      "Nonclinical readiness pack For confirming Module 4 is submission-grade. It holds the Noncl"
+    ],
+    "headerPrimary": "Build the Nonclinical readiness pack",
+    "section": {
+      "note": "C2C-101 is not counted in these figures, which cover device projects only.",
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "C2C-101 is not counted in these figures, which cover device projects only.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(107, 105, 99)",
+      "submittedColour": null,
+      "background": "rgb(250, 249, 245)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "device-390-light": {
+    "packs": [
+      "IVD performance & clearance pack For an IVD 510(k) and the claims it rests on. It holds th"
+    ],
+    "headerPrimary": "Build the IVD performance & clearance pack",
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(107, 105, 99)",
+      "submittedColour": null,
+      "background": "rgb(250, 249, 245)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "none-390-light": {
+    "packs": [],
+    "headerPrimary": null,
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(107, 105, 99)",
+      "submittedColour": null,
+      "background": "rgb(250, 249, 245)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "biotech-390-dark": {
+    "packs": [
+      "Nonclinical readiness pack For confirming Module 4 is submission-grade. It holds the Noncl"
+    ],
+    "headerPrimary": "Build the Nonclinical readiness pack",
+    "section": {
+      "note": "C2C-101 is not counted in these figures, which cover device projects only.",
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "C2C-101 is not counted in these figures, which cover device projects only.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(176, 174, 165)",
+      "submittedColour": null,
+      "background": "rgb(38, 38, 36)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "device-390-dark": {
+    "packs": [
+      "IVD performance & clearance pack For an IVD 510(k) and the claims it rests on. It holds th"
+    ],
+    "headerPrimary": "Build the IVD performance & clearance pack",
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(176, 174, 165)",
+      "submittedColour": null,
+      "background": "rgb(38, 38, 36)"
+    },
+    "overflow": 0,
+    "errors": []
+  },
+  "none-390-dark": {
+    "packs": [],
+    "headerPrimary": null,
+    "section": {
+      "note": null,
+      "summary": [
+        "1 device project you can open, by the status each project's record holds.",
+        "0 submitted in the 24 months to November 2026.",
+        "No AnA draft is recorded against a device project you can open, so there is no rate."
+      ],
+      "months": [
+        "Dec 2024 0",
+        "Jan 2025 0",
+        "Feb 2025 0",
+        "Mar 2025 0",
+        "Apr 2025 0",
+        "May 2025 0",
+        "Jun 2025 0",
+        "Jul 2025 0",
+        "Aug 2025 0",
+        "Sep 2025 0",
+        "Oct 2025 0",
+        "Nov 2025 0",
+        "Dec 2025 0",
+        "Jan 2026 0",
+        "Feb 2026 0",
+        "Mar 2026 0",
+        "Apr 2026 0",
+        "May 2026 0",
+        "Jun 2026 0",
+        "Jul 2026 0",
+        "Aug 2026 0",
+        "Sep 2026 0",
+        "Oct 2026 0",
+        "Nov 2026 0"
+      ],
+      "zeroMonths": 24,
+      "zeroColour": "rgb(176, 174, 165)",
+      "submittedColour": null,
+      "background": "rgb(38, 38, 36)"
+    },
+    "overflow": 0,
+    "errors": []
+  }
+}
