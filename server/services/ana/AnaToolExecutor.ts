@@ -11198,10 +11198,12 @@ async function commitmentWriteRefusal(
   client: PoolClient,
   who: { organizationId: number; userId: number },
   named: { submissionId: number | null; sourceInteractionId: number | null },
+  /** What the person named, when it was neither the submission nor the meeting: a fulfilment names the commitment. */
+  subject?: string,
 ): Promise<string | null> {
   const { projectOfSubmission, submissionOfInteraction } = await import('../ha-interactions/ha-service.js');
   const refuse = (what: string) => JSON.stringify({
-    error: `That ${what} is not one of a project you may change. Nothing was recorded.`, code: 'PROJECT_WRITE_ACCESS_DENIED',
+    error: `That ${subject ?? what} is not one of a project you may change. Nothing was recorded.`, code: 'PROJECT_WRITE_ACCESS_DENIED',
   });
   const mayChange = async (submissionId: number): Promise<boolean> => {
     const projectId = await projectOfSubmission(client, who.organizationId, submissionId);
@@ -13736,13 +13738,25 @@ registerToolHandler('fulfill_regulatory_commitment', async (input, ctx) => {
   if (!Number.isInteger(commitmentId)) return JSON.stringify({ error: 'commitment_id is required.' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { fulfillCommitmentTx, readCommitmentForFulfilment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
+  const { fulfillCommitmentTx, readCommitmentForFulfilment, subjectsOfCommitment, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
   const { fulfilmentRule } = await import('../ha-interactions/ha-logic.js');
   const reason = gatedReason(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    /* 2026-11-12, after the tool was re-filed under Communication (7994dc8f1): a commitment that names a submission,
+       or was made at a meeting on one, is marked fulfilled only by someone who may change that submission's project,
+       as it is recorded (commitmentWriteRefusal) and as the screen's route admits it (routes/ha-interactions.ts
+       admitCommitment). Until then the organisation's editor role was the only check, and the status is terminal.
+       Asked before the type is read, so a refusal confirms nothing about a commitment the person cannot open. */
+    const named = await subjectsOfCommitment(client, ctx.organizationId, commitmentId);
+    const denied = named
+      ? await commitmentWriteRefusal(client, { organizationId: ctx.organizationId, userId: ctx.userId }, named, 'commitment') : null;
+    if (denied) {
+      await client.query('ROLLBACK');
+      return denied;
+    }
     /* P-41 (2026-10-19): a PMR, PMC or REMS is recorded fulfilled only by a
        Part 11 signature naming what met it, and AnA cannot sign. The type is
        read from the record, never taken from the model; for those three the

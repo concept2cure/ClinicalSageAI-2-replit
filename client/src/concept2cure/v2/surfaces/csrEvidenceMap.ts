@@ -16,7 +16,8 @@
  * reviewer's attestations. The server re-verifies every byte.
  */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, numericalText, placeholderIn, quotedPlaceholder, reportedDisplaySpans,
+  CSR_HEADING_ONLY_STATEMENT, CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, csrHeadingOnlySectionIds, csrSectionHoldsText,
+  numericalText, placeholderIn, quotedPlaceholder, reportedDisplaySpans,
   type CsrTableKey, type RetainedScientificRun, type ScientificCellClaim, type ScientificReviewSubmission,
 } from '@shared/authoring/csr-scientific-review';
 import { looksLikeHtml } from '@shared/authoring/plain-text-html';
@@ -114,9 +115,12 @@ export function mapGaps(map: ReviewerMap, occurrences: readonly FigureOccurrence
   const gaps: string[] = [];
   const label = (s: SavedSection) => `${s.code}${s.title ? ` ${s.title}` : ''}`;
   if (!map.runIds.length) gaps.push('Select the retained analysis run whose tables this CSR reports.');
+  // P-126: a heading that holds only its subsections asks nothing of the reviewer; there is no text to check.
+  const headingOnly = csrHeadingOnlySectionIds(map.sections);
   for (const s of map.sections) {
+    if (headingOnly.has(s.id)) continue;
     const held = placeholderIn(s.content);
-    if (!s.content?.trim()) gaps.push(`Section ${label(s)} has no saved text. A CSR is approved only when every section is written.`);
+    if (!csrSectionHoldsText(s.content)) gaps.push(`Section ${label(s)} has no saved text. A CSR is approved only when every section is written.`);
     else if (held) gaps.push(`Section ${label(s)} still holds a data placeholder, ${quotedPlaceholder(held)}. A CSR is approved only when every section states its data.`);
     else if (!map.rationale.get(s.id)?.trim()) gaps.push(`Section ${label(s)} needs your statement of how you checked it.`);
   }
@@ -133,8 +137,14 @@ export async function buildSubmission(map: ReviewerMap, occurrences: readonly Fi
   const gaps = mapGaps(map, occurrences);
   if (gaps.length) throw new Error(gaps[0]);
   const sections = [];
+  const headingOnly = csrHeadingOnlySectionIds(map.sections);
   for (const s of map.sections) {
-    const content = s.content as string;
+    const content = s.content ?? '';
+    if (headingOnly.has(s.id)) {
+      sections.push({ sectionId: s.id, contentSha256: await sha256(content), assessment: 'no-quantitative-results' as const,
+        rationale: CSR_HEADING_ONLY_STATEMENT, claims: [] });
+      continue;
+    }
     const claims: ScientificCellClaim[] = [];
     for (const o of occurrences.filter((x) => x.sectionId === s.id)) {
       const cell = map.choices.get(o.key);
