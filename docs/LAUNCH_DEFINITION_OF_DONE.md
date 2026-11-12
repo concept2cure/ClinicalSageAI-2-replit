@@ -3423,3 +3423,42 @@ that session. Reversible by the founder.
    limiters (`server/middleware/sign-in-limits.ts`), as MR-03 Stage 7 steps 2–3 say. The other categories stay per-task
    ceilings, documented as such. No new `*_ACCEPT_*` override (P-43).
 4. **Nothing else is added:** no screen, no mount, no service file.
+
+### P-130 — Informed consent is the consent document; the structured consent-form store retires
+
+**The question.** P-102 (2026-11-05) decided that informed consent is one record, with its 21 CFR 50.25 checklist as the
+editor's checks for the `informed_consent` type. Slices 1 and 2 (2026-11-12) made that true in the editor. The editor's
+Check reports the elements, and an approval is refused while an element 50.25(a) requires is missing. A second store
+still stands beside it: the consent-form rows behind `/api/protocol-consent` (`consent_forms`, `consent_form_elements`).
+- Its seven routes have no caller.
+- AnA's `create_consent_form` and `update_consent_element` write into it, and AnA's clinical skill tells it to draft
+  consent forms there.
+- The protocol workspace's read-only Consent tab reads it.
+
+So a consent form AnA drafted landed where the editor cannot open, review, approve or file it. P-122 asks for a
+founder decision before a user-facing capability is removed.
+
+**The founder's answer, 2026-11-12.** Session `01SuVLo2…` asked whether to retire the store and point the Consent tab at
+the project's consent document. The founder answered: **"You decide as an sme would"**. Decided by that session under
+that delegation. Reversible by the founder.
+
+**The decision, and why.** An IRB approves a consent document: its version, its wording and its signature page (21 CFR
+50.27, 56.109; ICH E6(R3) Annex 1). It does not approve a set of element rows. A participant signs that document. The
+record a sponsor controls, revises and files is therefore the document, under Part 11. A field store beside it is a
+second copy that drifts from what was approved. So:
+
+1. **The informed-consent form is the `informed_consent` document in the one editor.** A document is of that type by
+   its built-in template (`component:informed_consent`, `registry:ICH_ICF`). AnA's `draft_authoring_document` records
+   its type as `product_code`, so a document recorded with `product_code` `informed_consent` is of that type too. Its
+   check is the editor's Check (P-102 slice 1), and its approval the editor's one signing (slice 2).
+2. **The structured store retires:**
+   - the seven `/api/protocol-consent` routes are unmounted, and their metrics counters retire with them;
+   - AnA's `create_consent_form` and `update_consent_element` retire onto `draft_authoring_document`, with
+     `documentType` `informed_consent` and the consent outline's section codes, and onto the editor;
+   - `review_consent_completeness` keeps its name and reads a consent document by id through the same gate;
+   - AnA's clinical skill says so.
+3. **Nothing regulated is lost.** No screen ever wrote or approved a form in the store: its approve route had no
+   caller. Its tables stay, with no writer. Removing schema is not a DROP (RULE 1); dropping them is a later decision.
+4. **The protocol workspace's Consent tab** reads the protocol's project's consent document through the same gate.
+   It stays read-only and opens the document in the editor.
+5. **Nothing is added:** no screen, route, table, service or AnA tool.
