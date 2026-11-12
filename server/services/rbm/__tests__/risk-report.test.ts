@@ -108,7 +108,9 @@ describe('buildRiskReview', () => {
 describe('renderRiskReviewMarkdown', () => {
   it('renders an inspection-ready document', () => {
     const md = renderRiskReviewMarkdown(buildRiskReview(base));
-    expect(md).toContain('# Risk Review — ICH_E6R3');
+    // The title names the framework as a reader does. It printed the stored code in capitals ("ICH_E6R3").
+    expect(md).toContain('# Risk Review — ICH E6(R3)');
+    expect(md).not.toContain('ICH_E6R3');
     expect(md).toContain('Overall study risk:** HIGH');
     expect(md).toContain('Key Risk Indicators');
     expect(md).toContain('21 CFR Part 11');

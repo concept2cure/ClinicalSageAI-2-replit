@@ -11499,12 +11499,13 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_irb_submission requires tenant context.' });
   const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
   if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
-  const { getPool } = await import('../../db.js');
   const { getCompletenessInput, getLifecycleStatus } = await import('../irb/irb-service.js');
   const { evaluateIrbCompleteness } = await import('../irb/irb-logic.js');
-  const client = await getPool().connect();
   try {
-    const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
+    /* Through the pool, inside the tenant scope. A connection from connect()
+       carries no tenant until BEGIN, so this read found no submission for any
+       organization (2026-11-12). */
+    const inp = await getCompletenessInput(ctx.organizationId, submissionId);
     const gate = evaluateIrbCompleteness(inp);
     /* The three-valued lifecycle, as GET /api/irb/submissions/:id/completeness
        serves it. continuingReviewStatus answered "not required, not expired"
@@ -11530,8 +11531,6 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
     });
   } catch (err) {
     return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
