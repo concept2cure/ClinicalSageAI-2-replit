@@ -2,9 +2,11 @@
  * The Vault's documents in the data catalog (S2, 2026-11-11): graded by the same engine from the Vault's own
  * facts, read only for the caller's verified projects, merged into the catalog's facets, and checked before use.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../db', () => ({ pool: { query: vi.fn() } }));
+const h = vi.hoisted(() => ({ readBytes: vi.fn() }));
+vi.mock('../../../routes/c2c/project-vault.js', () => ({ readVerifiedVaultBytes: h.readBytes }));
 vi.mock('../../vault/vault-filing.service.js', () => ({
   folderLabel: (view: string, folder: string) => (view === 'biotech' && folder === 'module-5' ? 'Module 5 · Clinical' : ''),
   resolveVaultView: async (programId: string) => (programId === P ? 'biotech' : 'device'),
@@ -22,6 +24,7 @@ const row = (over: Record<string, unknown> = {}) => ({
   placement_status: 'confirmed', processing_status: 'COMPLETED', text_available: true, original_file_available: true,
   catalog_state: null, verdict: null, ...over,
 });
+beforeEach(() => { h.readBytes.mockReset(); });
 const answer = (documents: unknown[], facets: unknown[] = []) => ({ rows: [{ total: documents.length, documents, facets }] });
 
 describe('a Vault document\'s grade', () => {
@@ -78,6 +81,51 @@ describe('listVaultForCatalog', () => {
   it('refuses a read that answers a document outside the admitted projects', async () => {
     const query = vi.fn(async () => answer([row({ program_id: OTHER })]));
     await expect(listVaultForCatalog(7, { programId: P, programIds: [P] }, { query })).rejects.toThrow(/outside its admitted projects/);
+  });
+});
+
+describe('a dataset filed in the Vault', () => {
+  const advs = (over: Record<string, unknown> = {}) => row({ file_name: 'advs.csv', mime_type: 'text/csv', file_size: '120', cataloged: true, dataset_profile: null,
+    storage_version_id: 'v1', storage_provider: 'local', s3_key: 'k', ...over });
+  const CSV = Buffer.from('STUDYID,SITEID,USUBJID,TRTP,TRTA,PARAMCD,PARAM,ADT,AVISIT,AVAL,BASE,CHG\nS1,701,S1-001,Drug,Drug,SYSBP,Systolic,2014-01-02,Week 2,120,118,2\n');
+
+  it('is profiled once from the Vault\'s verified bytes, stored on its catalog record, and graded for conformance', async () => {
+    h.readBytes.mockResolvedValue({ ok: true, bytes: CSV });
+    const query = vi.fn(async (sql: string) => (/^UPDATE vault\.document_catalog/.test(sql) ? { rows: [] } : answer([advs()])));
+    const page = await listVaultForCatalog(7, { programId: P, programIds: [P] }, { query });
+    expect(h.readBytes).toHaveBeenCalledWith({ storageVersionId: 'v1', storageKey: 'k', organizationId: 7, storageProvider: 'local' }, 'a'.repeat(64), row().id);
+    const update = query.mock.calls.find(c => /^UPDATE vault\.document_catalog/.test(String(c[0]))) as unknown as [string, unknown[]];
+    expect(update[1].slice(1)).toEqual([row().id, 'a'.repeat(64), 7]);
+    expect(JSON.parse(String(update[1][0]))).toMatchObject({ format: 'csv', tables: [{ cdisc: { standard: 'ADaM', domain: 'BDS' } }] });
+    expect(page.documents[0].grade.basis.find(b => b.criterion === 'conformance'))
+      .toMatchObject({ points: 15, detail: expect.stringMatching(/^1 of 1 table pass the ADaM validator/) });
+  });
+
+  it('reads no bytes for a document already profiled, not a dataset format, with no catalog record, or too large', async () => {
+    const profiled = { format: 'csv', tables: [{ name: 'advs.csv', columns: [{ name: 'USUBJID', type: 'text' }], cdisc: { standard: null, domain: null } }], tableCount: 1 };
+    const query = vi.fn(async () => answer([advs({ dataset_profile: profiled }), advs({ id: 'b', file_name: 'protocol.pdf', mime_type: 'application/pdf' }),
+      advs({ id: 'c', cataloged: false }), advs({ id: 'd', file_size: String(200 * 1024 * 1024) })]));
+    await listVaultForCatalog(7, { programId: P, programIds: [P] }, { query });
+    expect(h.readBytes).not.toHaveBeenCalled();
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it('profiles at most two per read, and a file whose bytes cannot be read stays listed as not read', async () => {
+    h.readBytes.mockResolvedValue({ ok: false, status: 404, error: 'gone' });
+    const query = vi.fn(async () => answer([advs({ id: 'a1', file_name: 'a.xpt' }), advs({ id: 'a2', file_name: 'b.xpt' }), advs({ id: 'a3', file_name: 'c.xpt' })]));
+    const page = await listVaultForCatalog(7, { programId: P, programIds: [P] }, { query });
+    expect(h.readBytes).toHaveBeenCalledTimes(2);
+    expect(page.documents).toHaveLength(3);
+    expect(page.documents[0].grade.basis.find(b => b.criterion === 'conformance')?.detail).toMatch(/structure has not been read here/);
+  });
+
+  it('remembers bytes that are not a dataset, so they are read once', async () => {
+    h.readBytes.mockResolvedValue({ ok: true, bytes: Buffer.from('{"title":"a manifest, not a dataset"}') });
+    const query = vi.fn(async (sql: string) => (/^UPDATE/.test(sql) ? { rows: [] } : answer([advs({ file_name: 'bundle.json', mime_type: 'application/json' })])));
+    const page = await listVaultForCatalog(7, { programId: P, programIds: [P] }, { query });
+    const update = query.mock.calls.find(c => /^UPDATE/.test(String(c[0]))) as unknown as [string, unknown[]];
+    expect(JSON.parse(String(update[1][0]))).toMatchObject({ format: null, tables: [] });
+    expect(page.documents[0].grade.basis.find(b => b.criterion === 'conformance')).toMatchObject({ points: null });
   });
 });
 
