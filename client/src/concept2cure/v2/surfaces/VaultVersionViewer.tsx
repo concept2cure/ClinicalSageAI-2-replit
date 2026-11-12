@@ -41,11 +41,13 @@ export function renditionNote(sourceSha256: string | null): string {
 }
 
 /** View on a version row: a PDF as itself, a Word document as its PDF rendition; nothing for any other. */
-export function VersionViewButton({ version, title, onView, viewingId }: {
+export function VersionViewButton({ version, title, onView, viewingId, className = 'sp-ask' }: {
   version: { id: string; version: string | null; fileName: string | null; contentHash: string | null };
   title: string;
   onView?: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
   viewingId?: string | null;
+  /** The button's class where it sits among other actions (the record's own row of buttons). */
+  className?: string;
 }) {
   const rendition = viewableAsRendition(version);
   if (!onView || (!viewableAsPdf(version) && !rendition)) return null;
@@ -54,7 +56,8 @@ export function VersionViewButton({ version, title, onView, viewingId }: {
   const of = `${version.version ? `version ${version.version} of ` : ''}${title}`;
   return (
     <button
-      className="sp-ask"
+      type="button"
+      className={className}
       disabled={opening}
       onClick={() => onView(version.id, rendition ? `${label} · PDF rendition` : label, version.contentHash, rendition ? 'rendition' : undefined)}
       aria-label={rendition ? `View a PDF rendition of ${of}` : `View ${of}`}
@@ -63,6 +66,33 @@ export function VersionViewButton({ version, title, onView, viewingId }: {
     >
       {I.eye} {opening ? 'Opening…' : rendition ? 'View as PDF' : 'View'}
     </button>
+  );
+}
+
+/** What a record's file can be shown as, by its recorded type: a PDF as itself, a Word document as its PDF rendition. */
+export function recordViewKind(mimeType: string | null | undefined): 'pdf' | 'rendition' | null {
+  const mime = mimeType ?? '';
+  if (/pdf/i.test(mime)) return 'pdf';
+  if (/wordprocessingml\.document/i.test(mime)) return 'rendition';
+  return null;
+}
+
+/**
+ * View on a document's record, beside Download: the current version, without opening the Versions section. The
+ * same button as a version row's, decided by the record's type. The bytes still decide what is framed.
+ */
+export function RecordViewButton({ doc, onView, viewingId }: {
+  doc: { id: string; title: string; mimeType?: string | null; hash?: string | null };
+  onView: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
+  viewingId?: string | null;
+}) {
+  const kind = recordViewKind(doc.mimeType);
+  if (!kind) return null;
+  return (
+    <VersionViewButton
+      version={{ id: doc.id, version: null, fileName: kind === 'pdf' ? 'record.pdf' : 'record.docx', contentHash: doc.hash ?? null }}
+      title={doc.title} onView={onView} viewingId={viewingId} className="btn ghost small"
+    />
   );
 }
 
