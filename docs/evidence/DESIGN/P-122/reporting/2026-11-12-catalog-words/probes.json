@@ -1,0 +1,150 @@
+{
+  "1440-light": {
+    "counts": [
+      "Applicable reports for C2C-101. Availability follows the supported computation, reporting scope and your organization’s plan.",
+      "54 reports apply. 24 are computed in this release, and 20 can be run now.",
+      "0 need a higher plan, 1 needs a record chosen first, 0 are switched off and 0 are not registered.",
+      "25 are not computed in this release, and 5 predictions are not offered. A report that can be run still needs recorded inputs you may read, and its output is checked before it is shown."
+    ],
+    "firstCards": [
+      "IACUC Protocol Status Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · OLAW · For IACUC coordinator, regulatory aff",
+      "IBC Biosafety Registration Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · NIH · For biosafety officer, regulatory",
+      "Compliance & Audit Assurance Pack Runs over a project For quality assurance, regulatory affairs lead, auditor Run"
+    ],
+    "scopeOptions": [
+      "All",
+      "Account",
+      "Document",
+      "Organization-wide records",
+      "Project",
+      "Project group"
+    ],
+    "availabilityOptions": [
+      "All",
+      "Can be run",
+      "Needs a higher plan",
+      "Needs a record chosen first",
+      "Needs the project’s filing recorded",
+      "Does not apply to this filing",
+      "Filing context could not be read",
+      "Switched off",
+      "Not registered",
+      "Not computed in this release",
+      "Prediction not offered"
+    ],
+    "overflow": 0,
+    "errors": [],
+    "http": []
+  },
+  "1440-dark": {
+    "counts": [
+      "Applicable reports for C2C-101. Availability follows the supported computation, reporting scope and your organization’s plan.",
+      "54 reports apply. 24 are computed in this release, and 20 can be run now.",
+      "0 need a higher plan, 1 needs a record chosen first, 0 are switched off and 0 are not registered.",
+      "25 are not computed in this release, and 5 predictions are not offered. A report that can be run still needs recorded inputs you may read, and its output is checked before it is shown."
+    ],
+    "firstCards": [
+      "IACUC Protocol Status Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · OLAW · For IACUC coordinator, regulatory aff",
+      "IBC Biosafety Registration Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · NIH · For biosafety officer, regulatory",
+      "Compliance & Audit Assurance Pack Runs over a project For quality assurance, regulatory affairs lead, auditor Run"
+    ],
+    "scopeOptions": [
+      "All",
+      "Account",
+      "Document",
+      "Organization-wide records",
+      "Project",
+      "Project group"
+    ],
+    "availabilityOptions": [
+      "All",
+      "Can be run",
+      "Needs a higher plan",
+      "Needs a record chosen first",
+      "Needs the project’s filing recorded",
+      "Does not apply to this filing",
+      "Filing context could not be read",
+      "Switched off",
+      "Not registered",
+      "Not computed in this release",
+      "Prediction not offered"
+    ],
+    "overflow": 0,
+    "errors": [],
+    "http": []
+  },
+  "390-light": {
+    "counts": [
+      "Applicable reports for C2C-101. Availability follows the supported computation, reporting scope and your organization’s plan.",
+      "54 reports apply. 24 are computed in this release, and 20 can be run now.",
+      "0 need a higher plan, 1 needs a record chosen first, 0 are switched off and 0 are not registered.",
+      "25 are not computed in this release, and 5 predictions are not offered. A report that can be run still needs recorded inputs you may read, and its output is checked before it is shown."
+    ],
+    "firstCards": [
+      "IACUC Protocol Status Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · OLAW · For IACUC coordinator, regulatory aff",
+      "IBC Biosafety Registration Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · NIH · For biosafety officer, regulatory",
+      "Compliance & Audit Assurance Pack Runs over a project For quality assurance, regulatory affairs lead, auditor Run"
+    ],
+    "scopeOptions": [
+      "All",
+      "Account",
+      "Document",
+      "Organization-wide records",
+      "Project",
+      "Project group"
+    ],
+    "availabilityOptions": [
+      "All",
+      "Can be run",
+      "Needs a higher plan",
+      "Needs a record chosen first",
+      "Needs the project’s filing recorded",
+      "Does not apply to this filing",
+      "Filing context could not be read",
+      "Switched off",
+      "Not registered",
+      "Not computed in this release",
+      "Prediction not offered"
+    ],
+    "overflow": 0,
+    "errors": [],
+    "http": []
+  },
+  "390-dark": {
+    "counts": [
+      "Applicable reports for C2C-101. Availability follows the supported computation, reporting scope and your organization’s plan.",
+      "54 reports apply. 24 are computed in this release, and 20 can be run now.",
+      "0 need a higher plan, 1 needs a record chosen first, 0 are switched off and 0 are not registered.",
+      "25 are not computed in this release, and 5 predictions are not offered. A report that can be run still needs recorded inputs you may read, and its output is checked before it is shown."
+    ],
+    "firstCards": [
+      "IACUC Protocol Status Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · OLAW · For IACUC coordinator, regulatory aff",
+      "IBC Biosafety Registration Summary Runs over a project, a submission, a project group or the account Organization-wide records Counts are not narrowed to the selected project. US · NIH · For biosafety officer, regulatory",
+      "Compliance & Audit Assurance Pack Runs over a project For quality assurance, regulatory affairs lead, auditor Run"
+    ],
+    "scopeOptions": [
+      "All",
+      "Account",
+      "Document",
+      "Organization-wide records",
+      "Project",
+      "Project group"
+    ],
+    "availabilityOptions": [
+      "All",
+      "Can be run",
+      "Needs a higher plan",
+      "Needs a record chosen first",
+      "Needs the project’s filing recorded",
+      "Does not apply to this filing",
+      "Filing context could not be read",
+      "Switched off",
+      "Not registered",
+      "Not computed in this release",
+      "Prediction not offered"
+    ],
+    "overflow": 0,
+    "errors": [],
+    "http": []
+  }
+}
