@@ -1,0 +1,30 @@
+{"level":40,"time":"2026-11-12T03:28:21.374Z","pid":8960,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/p122-device-change-determination.dbtest.ts
+
+stdout | tests/db/p122-device-change-determination.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > before any assessment, the register says the determination applies and none is recorded 23ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the US verdict is the engine's, and is kept on the change with the answers, the rules' version, who and when 42ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the audit trail has a chained row for it, with the answers and the outcome 4ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > a verdict sent by the caller is not kept: the engine decides from the answers 24ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the engine does not classify the change: its classification and state are as they were 1ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > a member who edits a device project assesses a change of it > the register carries both determinations, and the content an approval signs has changed with them 11ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > an unanswered question is refused, by name, and nothing is kept or audited 58ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > a market that is not one of the two is refused 6ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > nothing is recorded by default > assessing again states why, and the audit row keeps the determination it replaced 34ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > another organisation gets 404, and learns nothing 26ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who is not on a private project gets 403 14ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > a colleague who can open the project and does not edit it gets 403 32ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and refused to anyone who may not change the change's project > the private project's owner assesses it 26ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > a drug project's change is refused, and the register says it is not a device's 19ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation-wide change is refused: there is no device to assess 15ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an approved change's content is fixed: nothing is recorded on it 29ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > an organisation with no device project is told so on its rows 7ms
+ ✓ tests/db/p122-device-change-determination.dbtest.ts > and offered only where it applies > what is kept and cannot be read is said to be unreadable, never shown as a verdict or as none 11ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  03:28:19
+   Duration  8.85s (transform 5.23s, setup 68ms, import 7.78s, tests 753ms, environment 0ms)
+

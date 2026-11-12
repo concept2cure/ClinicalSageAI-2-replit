@@ -255,6 +255,22 @@ export async function submissionOfInteraction(client: Queryable, orgId: number, 
 }
 
 /**
+ * The submission and the meeting one of the organisation's own commitments names (project_id IS NULL), for its
+ * admission by project; undefined when there is no such commitment here. Read by the screen's routes
+ * (routes/ha-interactions.ts admitCommitment) and by AnA's fulfilment tool, so both ask the same question.
+ */
+export async function subjectsOfCommitment(client: Queryable, orgId: number, commitmentId: number): Promise<{ submissionId: number | null; sourceInteractionId: number | null } | undefined> {
+  const { rows } = await client.query(
+    `SELECT submission_id, source_interaction_id FROM regulatory_commitments
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND project_id IS NULL`, [commitmentId, orgId]);
+  if (!rows.length) return undefined;
+  return {
+    submissionId: rows[0].submission_id == null ? null : Number(rows[0].submission_id),
+    sourceInteractionId: rows[0].source_interaction_id == null ? null : Number(rows[0].source_interaction_id),
+  };
+}
+
+/**
  * Whether a reader may be answered about this submission's commitments: it is
  * this organisation's, live, and in no program or in one of `programIds`, the
  * reader's verified program scope. One that is not reads as one that does not
@@ -512,6 +528,11 @@ export async function listCommitments(
                SELECT 1 FROM submissions s
                 WHERE s.id = rc.submission_id AND s.organization_id = rc.organization_id
                   AND (s.program_id IS NULL OR s.program_id::text = ANY($4::text[]))))
+         AND ($4::text[] IS NULL OR rc.source_interaction_id IS NULL OR EXISTS (
+               SELECT 1 FROM ha_interactions hi
+                 LEFT JOIN submissions ms ON ms.id = hi.submission_id AND ms.organization_id = hi.organization_id
+                WHERE hi.id = rc.source_interaction_id AND hi.organization_id = rc.organization_id
+                  AND (hi.submission_id IS NULL OR ms.program_id IS NULL OR ms.program_id::text = ANY($4::text[]))))
        ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
         [orgId, scope.projectId, submissionId, readable],
       )
@@ -537,6 +558,11 @@ export async function listCommitments(
                SELECT 1 FROM submissions s
                 WHERE s.id = rc.submission_id AND s.organization_id = rc.organization_id
                   AND (s.program_id IS NULL OR s.program_id::text = ANY($3::text[]))))
+         AND ($3::text[] IS NULL OR rc.source_interaction_id IS NULL OR EXISTS (
+               SELECT 1 FROM ha_interactions hi
+                 LEFT JOIN submissions ms ON ms.id = hi.submission_id AND ms.organization_id = hi.organization_id
+                WHERE hi.id = rc.source_interaction_id AND hi.organization_id = rc.organization_id
+                  AND (hi.submission_id IS NULL OR ms.program_id IS NULL OR ms.program_id::text = ANY($3::text[]))))
        ORDER BY rc.due_date ASC NULLS LAST, rc.id`,
         [orgId, scope.projectId, readable],
       );

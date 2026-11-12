@@ -1134,6 +1134,7 @@ jobs:
       # report, so a green typecheck can never again be indistinguishable from
       # one that was never executed.
       - name: Run ESLint
+        id: eslint
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # JSON to a file so the warning ratchet below reuses THIS run instead
         # of linting the tree twice; the exit code still enforces 0 errors.
@@ -1141,7 +1142,10 @@ jobs:
         run: npx eslint . --format json --output-file eslint-report.json
 
       - name: Render ESLint findings (failure only)
-        if: failure()
+        # Only when ESLint itself failed. `failure()` alone is true after ANY
+        # earlier step's failure, so this re-linted the whole tree (about 2
+        # minutes) on every push while any guardrail above was red.
+        if: "failure() && steps.eslint.outcome == 'failure'"
         run: npm run lint || true
 
       - name: Guardrails — ESLint warning ratchet (may only shrink)
