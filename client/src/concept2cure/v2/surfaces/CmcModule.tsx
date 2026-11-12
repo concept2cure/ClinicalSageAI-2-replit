@@ -82,6 +82,8 @@ import {
   cmcThrownRefusal,
   cmcWriteThrew,
   cmcAssessmentThrew,
+  chainCount,
+  readCount,
 } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
@@ -2937,9 +2939,16 @@ function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
   };
 }) {
   const noSeries = 'Record pull-point results first — there is nothing to ';
+  /* A closed-out study is a signed record: the server refuses a further result
+     (an edit of signed content) and a second close-out. Both buttons stayed
+     live on it, so each ended in a 409 after the form — and, for the close-out,
+     after the signer's password. They say why instead. Estimate, Trend and
+     History are reads and stay. */
+  const closedOut = String(study.status ?? '').trim().toUpperCase() === 'COMPLETED';
+  const closedWhy = 'This study is closed out under signature, so its results and shelf life are closed to changes';
   return (
     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-      <button className="nda-open" onClick={() => on.record(study)}>{I.plus} Result</button>
+      <button className="nda-open" onClick={() => on.record(study)} disabled={closedOut} title={closedOut ? closedWhy : undefined}>{I.plus} Result</button>
       <button
         className="nda-open"
         style={{ marginLeft: 6 }}
@@ -2961,7 +2970,8 @@ function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
       <button
         className="nda-open"
         style={{ marginLeft: 6 }}
-        title="Close the study out with the shelf life its data support, under your signature"
+        title={closedOut ? closedWhy : 'Close the study out with the shelf life its data support, under your signature'}
+        disabled={closedOut}
         onClick={() => on.closeOut(study)}
       >
         {I.checkCircle} Close out
@@ -3359,10 +3369,18 @@ function CmPathway({ nav }: { ask: (text: string) => void; nav?: (id: string) =>
               "Still open" keeps its warning colour: an unresolved
               contradiction is what the export gate refuses on. */}
           <p className="sec-sub" data-testid="cmc-audit-counts">
-            {events.length} governed {events.length === 1 ? 'event' : 'events'}
-            {' · '}{sections.rows.length} {sections.rows.length === 1 ? 'section' : 'sections'} tracked
-            {' · '}{resolved.length} {resolved.length === 1 ? 'contradiction' : 'contradictions'} resolved
-            {' · '}<span data-tone={open.length ? 'warn' : undefined}>{open.length} still open</span>
+            {/* Each figure is stated only over a read that resolved: this
+                line printed "0 contradictions resolved · 0 still open" above
+                "Couldn't load contradiction history". */}
+            {chainCount(sections.error ? 'error' : chainState, chainState === 'ready' && Boolean(chainError), events.length)}
+            {' · '}{readCount(sections, `${sections.rows.length} ${sections.rows.length === 1 ? 'section' : 'sections'} tracked`, 'sections')}
+            {' · '}
+            {contradictions.loading || contradictions.error ? readCount(contradictions, '', 'contradictions') : (
+              <>
+                {resolved.length} {resolved.length === 1 ? 'contradiction' : 'contradictions'} resolved
+                {' · '}<span data-tone={open.length ? 'warn' : undefined}>{open.length} still open</span>
+              </>
+            )}
           </p>
 
 
@@ -3421,7 +3439,7 @@ function CmPathway({ nav }: { ask: (text: string) => void; nav?: (id: string) =>
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">Contradiction history</span>
-              <span className="s">{resolved.length} resolved — {open.length} open</span>
+              <span className="s">{readCount(contradictions, `${resolved.length} resolved — ${open.length} open`, 'contradictions')}</span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {contradictions.rows.length === 0 ? (

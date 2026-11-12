@@ -296,3 +296,29 @@ export function headerMeta<T>(
   if (rows.length > 0 || (!live.loading && !live.error)) return meta(rows);
   return live.error ? 'Not loaded' : 'Loading…';
 }
+
+/**
+ * A figure over a read, or what is true instead of a zero for "not read".
+ *
+ * The Approvals & audit tab printed "0 contradictions resolved · 0 still open"
+ * over a contradictions read that had failed, directly above "Couldn't load
+ * contradiction history" — and "still open" is the figure the export gate
+ * refuses on. The same rule as `headerMeta`: a count is stated only over a
+ * read that resolved.
+ */
+export function readCount(read: { loading: boolean; error?: string | null }, counted: string, what: string): string {
+  if (read.loading) return `reading ${what}…`;
+  if (read.error) return `${what} not read`;
+  return counted;
+}
+
+/**
+ * The audit chain's event count. The chain is read per section and joined, so
+ * it has its own state; a chain with a section whose events could not be read
+ * is a floor, not a total, and says so.
+ */
+export function chainCount(state: 'idle' | 'loading' | 'ready' | 'error', partial: boolean, events: number): string {
+  if (state === 'error') return 'audit chain not read';
+  if (state !== 'ready') return 'reading the audit chain…';
+  return `${partial ? 'at least ' : ''}${events} governed ${events === 1 ? 'event' : 'events'}`;
+}
