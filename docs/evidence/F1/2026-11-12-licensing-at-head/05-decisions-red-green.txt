@@ -1,0 +1,61 @@
+# Owner decisions reach Decisions: module-access-requests + licensing-history real-DB suites
+## RED: writer unchanged, new assertions in place
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H2: the owner approving org B's request writes org B's grant, records it and audits it under org B
+AssertionError: expected { …(7) } to match object { …(5) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "decidedByMasterAdmin": true,
+    "granted": true,
+-   "masterAdminAction": "access_request.approved",
+    "organizationId": 91401,
+    "reason": "dbtd-9954-mwe2gzda owner approves B delta",
+  }
+
+ ❯ tests/db/module-access-requests.dbtest.ts:810:30
+    808|     expect(Number(audit[0].tenant_id)).toBe(ORG_B);
+    809|     expect(Number(audit[0].user_id)).toBe(people.owner.id);
+    810|     expect(audit[0].details).toMatchObject({
+       |                              ^
+    811|       reason,
+    812|       granted: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the owner answering their own workspace's request is not audited as a cross-workspace decision
+AssertionError: expected { …(7) } to match object { …(4) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "decidedByMasterAdmin": false,
+-   "masterAdminAction": "access_request.declined",
+    "organizationId": 91402,
+    "reason": "dbtd-9954-mwe2gzda owner declines own gamma",
+  }
+
+ ❯ tests/db/module-access-requests.dbtest.ts:1071:30
+    1069|     expect(Number(audit[0].tenant_id)).toBe(ORG_OWNER);
+    1070|     expect(Number(audit[0].user_id)).toBe(people.owner.id);
+    1071|     expect(audit[0].details).toMatchObject({
+       |                              ^
+    1072|       reason,
+    1073|       organizationId: ORG_OWNER,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 52 passed (54)
+
+
+## GREEN: with ownerDecisionToken
+ Test Files  2 passed (2)
+      Tests  54 passed (54)
