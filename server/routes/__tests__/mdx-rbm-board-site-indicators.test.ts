@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../db/requestDb', async original => ({ ...(await original<Record<string, unknown>>()), requestDb: () => ({ select: vi.fn() }) }));
 
-import { siteIndicatorReadings } from '../mdx-rbm-board';
+import { siteIndicatorReadings, withSiteHistory } from '../mdx-rbm-board';
 
 const reading = (over: Record<string, unknown> = {}) => ({
   siteNumber: '104', kriName: 'AE reporting lag', unit: 'days', value: 21, amber: 7, red: 10,
@@ -52,5 +52,33 @@ describe('the board passes each site’s indicator readings as the engine stored
     expect(siteIndicatorReadings({ indicators: [reading()] })).toEqual([]);
     expect(siteIndicatorReadings(null)).toEqual([]);
     expect(siteIndicatorReadings([])).toEqual([]);
+  });
+});
+
+describe('the board attaches an indicator’s course at each site', () => {
+  const point = (siteNumber: string, kriName: string, value: number, dataCutoff: string) => ({ siteNumber, kriName, value, observedAt: null, dataCutoff });
+  const readings = siteIndicatorReadings({ source: 'study_indicators', indicators: [reading(), reading({ kriName: 'Open query aging', value: 58 })] });
+
+  it('in the stored order, for that site and that indicator only, and leaves the band alone', () => {
+    const out = withSiteHistory('104', readings, [
+      point('104', 'ae reporting lag', 6, '2026-08-31'), point('104', 'AE reporting lag', 21, '2026-10-31'),
+      point('101', 'AE reporting lag', 3, '2026-10-31'), point('104', 'Open query aging', 58, '2026-10-31'),
+    ]);
+    expect(out[0].history).toEqual([{ v: 6, cutoff: '2026-08-31' }, { v: 21, cutoff: '2026-10-31' }]);
+    expect(out[1].history).toEqual([{ v: 58, cutoff: '2026-10-31' }]);
+    expect(out.map((r) => r.status)).toEqual(['red', 'red']);
+  });
+
+  it('sends the most recent 24 readings', () => {
+    const many = Array.from({ length: 30 }, (_, i) => point('104', 'AE reporting lag', i, `2026-01-${String(i + 1).padStart(2, '0')}`));
+    const history = withSiteHistory('104', readings, many)[0].history!;
+    expect(history).toHaveLength(24);
+    expect(history.at(-1)).toEqual({ v: 29, cutoff: '2026-01-30' });
+  });
+
+  it('adds nothing where no history was read, or the site has no number', () => {
+    expect(withSiteHistory('104', readings, [])[0].history).toBeUndefined();
+    expect(withSiteHistory(null, readings, [point('104', 'AE reporting lag', 6, '2026-08-31')])[0].history).toBeUndefined();
+    expect(withSiteHistory('104', readings, [point('999', 'AE reporting lag', 6, '2026-08-31')])[0].history).toBeUndefined();
   });
 });

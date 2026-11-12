@@ -249,6 +249,46 @@ export async function readSiteIndicatorReadings(
   }));
 }
 
+/** One reading in an indicator's history at a site. */
+export interface SiteIndicatorHistoryPoint {
+  siteNumber: string;
+  kriName: string;
+  value: number;
+  observedAt: string | null;
+  dataCutoff: string | null;
+}
+
+/**
+ * Every site-level reading of the study's KRIs, oldest first within each site and KRI, from extracts that have not
+ * been superseded: an indicator's course at a site across the loads. The same rows and the same binding as
+ * readSiteIndicatorReadings, which keeps only the latest of each; the site-risk snapshot holds no history of its
+ * own, and these rows are where one already exists. Nothing is banded or scored here.
+ */
+export async function readSiteIndicatorHistory(
+  exec: Exec,
+  organizationId: number,
+  programId: string,
+): Promise<SiteIndicatorHistoryPoint[]> {
+  const { rows } = await exec.query(
+    `SELECT o.scope_id AS site_number, k.name AS kri_name, o.value, o.observed_at, o.data_cutoff
+       FROM rbm_metric_observations o
+       JOIN rbm_kris k
+         ON k.organization_id = o.organization_id AND k.program_id = o.program_id AND k.deleted_at IS NULL
+        AND (LOWER(k.name) = LOWER(o.metric_key) OR LOWER(COALESCE(k.metadata->>'metricKey','')) = LOWER(o.metric_key))
+       LEFT JOIN rbm_data_runs r ON r.id = o.run_id AND r.organization_id = o.organization_id
+      WHERE o.organization_id = $1 AND o.program_id = $2 AND o.scope_level = 'site'
+        AND o.scope_id IS NOT NULL AND o.value IS NOT NULL AND r.superseded_at IS NULL
+      ORDER BY o.scope_id, k.id, o.observed_at ASC, o.id ASC
+      LIMIT 20000`,
+    [organizationId, programId],
+  );
+  const text = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
+  return rows.map((row) => ({
+    siteNumber: String(row.site_number), kriName: String(row.kri_name), value: Number(row.value),
+    observedAt: text(row.observed_at), dataCutoff: text(row.data_cutoff)?.slice(0, 10) ?? null,
+  }));
+}
+
 /** Map a pg error to the narrowest failure we can name. */
 function classify(err: unknown): { reason: SiteReadFailure; detail: string } {
   const code = (err as { code?: string })?.code;

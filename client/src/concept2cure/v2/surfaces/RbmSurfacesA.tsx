@@ -21,7 +21,7 @@ import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshnes
 import { frameworkLabel, siteReadingsFor, type RbmSiteReading } from './rbmBoard';
 import {
   RbmChip, RbmScore, RbmWhen, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
-  RbmFormModal, GovernedApprovalDialog, AskAna, type FormField,
+  RbmFormModal, GovernedApprovalDialog, AskAna, toleranceWords, type FormField,
 } from './RbmSurfaces';
 import { ErrorState } from '../dataConnect';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
@@ -55,6 +55,13 @@ const KRI_SOURCE_LABEL: Record<string, string> = {
   central_stats: 'Central statistics', manual: 'Manual entry',
 };
 const SCALE = ['1', '2', '3', '4', '5'];
+/* The rbm_qtls.direction values (rbm-engine QTL_DIRECTIONS), as a monitor reads them. */
+const QTL_DIRECTIONS = ['upper', 'lower', 'two_sided'];
+const QTL_DIRECTION_LABEL: Record<string, string> = {
+  upper: 'at or above the limit (higher is worse)',
+  lower: 'at or below the limit (lower is worse)',
+  two_sided: 'outside a range (either end)',
+};
 
 /* ── Board-row → editable view-model coercions ──
    The board is the source of truth; these map its rows into the surfaces' view
@@ -76,6 +83,7 @@ interface QtlView {
   id: number; parameter: string; rationale: string;
   secondary: number | null; threshold: number | null; current: number | null;
   status: string; breachAction: string | null;
+  direction: string; thresholdLower: number | null; secondaryLower: number | null;
 }
 
 function itemView(it: RbmBoardItem): ItemView {
@@ -98,6 +106,7 @@ function qtlView(q: RbmBoardQtl): QtlView {
     id: q.id, parameter: q.parameter, rationale: q.rationale,
     secondary: q.secondary, threshold: q.threshold, current: q.current,
     status: q.status, breachAction: q.breachActionTaken,
+    direction: q.direction ?? 'upper', thresholdLower: q.thresholdLower ?? null, secondaryLower: q.secondaryLower ?? null,
   };
 }
 
@@ -471,6 +480,22 @@ export function RbmRact({ board, onReload }: SubProps) {
 }
 
 /**
+ * An indicator's course at one site across the loads: the line against the indicator's limits, and the same
+ * readings in words for a reader who cannot see it. One reading is not a trend, and says so.
+ */
+function SiteTrend({ reading }: { reading: RbmSiteReading }) {
+  const points = reading.history ?? [];
+  if (points.length < 2) return <span className="mut">One reading</span>;
+  const words = points.map(p => `${p.cutoff ?? 'undated'}: ${p.v}`).join(', ');
+  return (
+    <span className="rbm-kri-trend" title={words}>
+      <Sparkline values={points.map(p => p.v)} amber={reading.amber} red={reading.red} w={96} h={24} />
+      <span className="rbm-sr">Site {reading.site}, {points.length} readings, oldest first: {words}</span>
+    </span>
+  );
+}
+
+/**
  * An indicator's latest reading at each site, worst first. The sites' risk rows carry the readings
  * (rbmBoard.ts siteReadingsFor); this tab showed the study-level value only and said a per-site view was not
  * implemented. Nothing is offered for an indicator no site has read.
@@ -478,19 +503,21 @@ export function RbmRact({ board, onReload }: SubProps) {
 function KriBySite({ name, readings }: { name: string; readings: RbmSiteReading[] }) {
   const [open, setOpen] = useState(false);
   if (readings.length === 0) return null;
+  const anyTrend = readings.some(r => (r.history?.length ?? 0) > 1);
   return (
     <div className="rbm-kri-sub">
       <button className="rbm-linkbtn" aria-pressed={open} aria-expanded={open} onClick={() => setOpen(o => !o)}>{I.network}By site — {readings.length}</button>
       {open && (
         <table className="rbm-kri-sites">
           <caption className="rbm-sr">Latest reading of {name} at each site, with its band</caption>
-          <thead><tr><th scope="col">Site</th><th scope="col">Reading</th><th scope="col">Band</th><th scope="col">Data cut-off</th></tr></thead>
+          <thead><tr><th scope="col">Site</th><th scope="col">Reading</th><th scope="col">Band</th><th scope="col">Data cut-off</th>{anyTrend && <th scope="col">Over the loads</th>}</tr></thead>
           <tbody>{readings.map(r => (
             <tr key={r.site}>
               <th scope="row" className="mono">{r.site}</th>
               <td className="mono">{r.value}{r.unit ? ` ${r.unit}` : ''}</td>
               <td><RbmChip vocab="kri" value={r.status} /></td>
               <td className="mut">{r.cutoff ?? '—'}</td>
+              {anyTrend && <td><SiteTrend reading={r} /></td>}
             </tr>
           ))}</tbody>
         </table>
@@ -607,6 +634,60 @@ export function RbmKris({ board, onReload, onAsk }: SubProps) {
   );
 }
 
+/* The QTL form, and the body it posts. */
+const QTL_FIELDS: FormField[] = [
+  { key: 'parameter', label: 'Parameter', type: 'text' },
+  { key: 'rationale', label: 'Rationale (required for a QTL)', type: 'textarea' },
+  { key: 'direction', label: 'The limit is breached when the value is', type: 'select', options: QTL_DIRECTIONS, labels: QTL_DIRECTION_LABEL },
+  { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true },
+  { key: 'threshold', label: 'Primary tolerance limit', type: 'number', optional: true, hint: 'For a range, its upper bound.' },
+  { key: 'thresholdLower', label: 'Lower bound (a range only)', type: 'number', optional: true },
+  { key: 'secondaryLower', label: 'Lower early-warning limit (a range only)', type: 'number', optional: true },
+  { key: 'current', label: 'Current value', type: 'number', optional: true, hint: 'Leave blank until the parameter is measured — the QTL then reads "not evaluated" rather than "within".' },
+];
+
+/** The lower bound and its early-warning limit belong to a range only. For the one-sided kinds they are sent as
+ *  null, so a limit changed from a range to one side does not keep a bound that no longer means anything. */
+function qtlBody(f: Record<string, string>) {
+  const range = f.direction === 'two_sided';
+  return {
+    parameter: f.parameter,
+    rationale: f.rationale || null,
+    direction: f.direction,
+    secondaryLimit: optNum(f.secondary),
+    threshold: optNum(f.threshold),
+    thresholdLower: range ? optNum(f.thresholdLower) : null,
+    secondaryLimitLower: range ? optNum(f.secondaryLower) : null,
+    currentValue: optNum(f.current),
+  };
+}
+
+/** A stored limit as the form's starting values; an unset number is an empty field, never a 0. */
+function qtlInitial(q: QtlView): Record<string, string> {
+  const text = (v: number | null) => (v != null ? String(v) : '');
+  return {
+    parameter: q.parameter, rationale: q.rationale ?? '', direction: q.direction,
+    secondary: text(q.secondary), threshold: text(q.threshold),
+    thresholdLower: text(q.thresholdLower), secondaryLower: text(q.secondaryLower), current: text(q.current),
+  };
+}
+
+/** A limit in words, or '' when none is set. */
+function limitWords(q: QtlView): string {
+  return q.threshold != null ? toleranceWords({ ...q, threshold: q.threshold }) : '';
+}
+
+/** Where the value stands against its limits; before it is measured, the limits alone, in words. */
+function QtlLimits({ q }: { q: QtlView }) {
+  if (q.threshold == null || q.current == null) {
+    return <span className="mut">Not yet measured{limitWords(q) ? ` — ${limitWords(q)}` : ''}</span>;
+  }
+  return (
+    <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit=""
+      direction={q.direction} thresholdLower={q.thresholdLower} secondaryLower={q.secondaryLower} status={q.status} />
+  );
+}
+
 /* 5 -- QTLs */
 export function RbmQtls({ board, onReload, onAsk }: SubProps) {
   const qtls = board.qtls.map(qtlView);
@@ -615,13 +696,7 @@ export function RbmQtls({ board, onReload, onAsk }: SubProps) {
   const mut = useRbmMutation(onReload);
 
   const saveCfg = async (f: Record<string, string>) => {
-    const body = {
-      parameter: f.parameter,
-      rationale: f.rationale || null,
-      secondaryLimit: optNum(f.secondary),
-      threshold: optNum(f.threshold),
-      currentValue: optNum(f.current),
-    };
+    const body = qtlBody(f);
     const done = await mut.run(async () => {
       if (cfg?.mode === 'edit' && cfg.qtl) {
         await rbmWrite('PATCH', `/rbm-qtls/${cfg.qtl.id}`, body);
@@ -652,13 +727,6 @@ export function RbmQtls({ board, onReload, onAsk }: SubProps) {
     if (done) setBreach(null);
   };
 
-  const cfgFields: FormField[] = [
-    { key: 'parameter', label: 'Parameter', type: 'text' },
-    { key: 'rationale', label: 'Rationale (required for a QTL)', type: 'textarea' },
-    { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true },
-    { key: 'threshold', label: 'Primary tolerance limit', type: 'number', optional: true },
-    { key: 'current', label: 'Current value', type: 'number', optional: true, hint: 'Leave blank until the parameter is measured — the QTL then reads "not evaluated" rather than "within".' },
-  ];
 
   return (
     <div>
@@ -676,15 +744,13 @@ export function RbmQtls({ board, onReload, onAsk }: SubProps) {
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>
       </div>
       <div className="rbm-card">
-        <table className="rbm-tbl qtl"><thead><tr><th>Parameter</th><th>Rationale</th><th style={{ width: 260 }}>Current vs limits</th><th>Status</th><th></th></tr></thead>
+        <table className="rbm-tbl qtl"><thead><tr><th>Parameter</th><th>Rationale</th><th style={{ width: 220 }}>Current vs limits</th><th>Status</th><th></th></tr></thead>
           <tbody>{qtls.map(q => (
             <tr key={q.id}>
               <td className="fac"><b>{q.parameter}</b></td>
               <td className="mit">{q.rationale}{q.breachAction
                 ? <span className="rbm-control">{I.check}Breach response recorded</span> : null}</td>
-              <td>{q.threshold != null && q.current != null
-                ? <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit="" />
-                : <span className="mut">Not yet measured</span>}</td>
+              <td><QtlLimits q={q} /></td>
               <td><RbmChip vocab="qtl" value={q.status} /></td>
               <td><div className="rbm-qtl-acts">
                 <button className="rbm-rowedit" title="Configure" aria-label="Configure" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
@@ -698,20 +764,15 @@ export function RbmQtls({ board, onReload, onAsk }: SubProps) {
           {qtls.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No quality tolerance limits for this study yet.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> — it has not been shown to be within tolerance. Limits are upper-bound only (higher = worse); lower-bound and two-sided QTLs are not supported yet. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
+      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> — it has not been shown to be within tolerance. A limit can bite at or above its value (a dropout rate), at or below it (endpoint data completeness), or at either end of a range (a randomisation ratio); a range with only one bound is not evaluated. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure QTL' : 'New quality tolerance limit'}
-        intro="A QTL governs a study-level parameter. Rationale is mandatory. Status is computed server-side from the current value against the secondary and primary limits."
-        fields={cfgFields}
-        initial={cfg.qtl ? {
-          parameter: cfg.qtl.parameter, rationale: cfg.qtl.rationale ?? '',
-          secondary: cfg.qtl.secondary != null ? String(cfg.qtl.secondary) : '',
-          threshold: cfg.qtl.threshold != null ? String(cfg.qtl.threshold) : '',
-          current: cfg.qtl.current != null ? String(cfg.qtl.current) : '',
-        } : null}
+        intro="A QTL governs a study-level parameter. Rationale is mandatory. Say which way the limit bites: at or above it, at or below it, or outside a range. The monitoring engine sets the status from the current value against those limits."
+        fields={QTL_FIELDS}
+        initial={cfg.qtl ? qtlInitial(cfg.qtl) : null}
         busy={mut.busy} error={mut.error}
         submitLabel={cfg.mode === 'edit' ? 'Save limit' : 'Create QTL'} onCancel={() => { setCfg(null); mut.clearError(); }} onSubmit={saveCfg} />}
       {breach && <RbmFormModal title={`Document breach — ${breach.parameter}`}
-        intro={`${breach.current ?? '—'} exceeds the ${breach.threshold ?? '—'} tolerance. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
+        intro={`${breach.current ?? '—'} is outside the tolerance${limitWords(breach) ? ` (${limitWords(breach)})` : ''}. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
         fields={[{ key: 'justification', label: 'Root-cause justification', type: 'textarea' }, { key: 'evidence', label: 'Supporting evidence (documents, datasets)', type: 'textarea' }, { key: 'capa', label: 'CAPA / corrective action', type: 'textarea' }]}
         busy={mut.busy} error={mut.error}
         submitLabel="Record breach response" onCancel={() => { setBreach(null); mut.clearError(); }} onSubmit={saveBreach} />}
