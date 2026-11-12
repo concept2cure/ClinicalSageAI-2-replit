@@ -37,8 +37,10 @@ pushes only in its own slot, once an hour, which is also what the batch rule ("W
 | :52, :56 | spare | A session whose slot lost or was missed; a session not listed here |
 
 - **Before your slot:** with your app stopped, fetch, merge and run
-  `TYPECHECK_HEAP_MB=12288 npm run ci:typecheck:no-regression`, so the hook's typecheck is warm. Warm, a whole push
-  took 117 seconds; cold, about 400. In a 15 GB sandbox the typecheck is killed if the app runs beside it.
+  `TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental`, so the hook's typecheck is
+  warm. It must be `--incremental`: that is the cache the hook reads (`node_modules/.cache`). The npm script without
+  it, which this entry and the messages of 03:10 UTC first named, checks the types and warms nothing. Warm, a whole
+  push took 117 seconds; cold, about 400. In a 15 GB sandbox the typecheck is killed if the app runs beside it.
 - **At your minute:** fetch, merge (never rebase), push, once. If it loses, use a spare slot or your next one. Do not
   retry inside another session's slot.
 - **Outside your slot:** commit locally and keep working.
