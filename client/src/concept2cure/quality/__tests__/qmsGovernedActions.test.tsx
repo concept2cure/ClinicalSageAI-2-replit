@@ -98,6 +98,7 @@ vi.mock('../PersonalTrainingReader', () => ({
 import { SopRegister } from '../SopRegister';
 import { ChangeControl } from '../ChangeControl';
 import { CHANGE_ROWS } from './changeRows';
+import { ChangeRecordDetail } from '../ChangeRecordDetail';
 
 const json = (status: number, body: unknown) =>
   ({ ok: status < 400, status, json: async () => body }) as Response;
@@ -328,6 +329,30 @@ describe('Change control — governed actions reach their routes', () => {
       })),
     );
     expect(asked).toEqual([]);
+  });
+
+  /* 2026-11-12: the server removes a link with its reason (DELETE /changes/:id/links/:linkId, MR-12 Stage 8: kept on
+     the record as removed), and no screen offered it, so a wrong link stayed in a change's list. */
+  it('removes a linked record through DELETE /changes/:id/links/:linkId, with its reason', async () => {
+    renderLog();
+    const row = screen.getByRole('button', { name: 'More actions for CC-2026-014' }).closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'Remove DEV-2026-041 from CC-2026-014' }));
+    const d = drawer(/Remove DEV-2026-041 from CC-2026-014/);
+    fireEvent.click(within(d).getByRole('button', { name: 'Remove link' }));
+    expect(H.apiRequest.mock.calls.some(([method]) => method === 'DELETE')).toBe(false);
+    fill(d, /Reason for removing it/, 'Linked to the wrong deviation.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Remove link' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('DELETE', '/api/mdx/qms/changes/1/links/11', { reason: 'Linked to the wrong deviation.' }));
+    expect(asked).toEqual([]);
+  });
+
+  it('shows why a record was linked, and offers no removal where the change takes none', () => {
+    const change = { ...CHANGE_ROWS[0], links: [{ ...CHANGE_ROWS[0].links![0], note: 'The excursion that raised this change.' }] };
+    const { rerender } = render(<ChangeRecordDetail change={change} onAsk={() => {}} onUnlink={() => {}} />);
+    expect(screen.getByText('The excursion that raised this change.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove DEV-2026-041 from CC-2026-014' })).toBeTruthy();
+    rerender(<ChangeRecordDetail change={change} onAsk={() => {}} />);
+    expect(screen.queryByRole('button', { name: /^Remove / })).toBeNull();
   });
 
   // C10: one door, "New controlled document", offering the library's change-control templates; no button per template.

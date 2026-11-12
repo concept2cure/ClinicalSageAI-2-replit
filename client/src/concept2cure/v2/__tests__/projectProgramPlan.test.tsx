@@ -135,7 +135,7 @@ describe("the program plan's owners and due dates", () => {
     expect(line).toMatch(/^Scheduled back from the target submission date, Jun 4, 2027: the work starts by Oct 1, 2026\./);
     // t1 is done; t2 started on Nov 2 and is still To do on Nov 5.
     expect(line).toMatch(/One unfinished task is past its dates\./);
-    expect(line).toMatch(/1 of 3 tasks have an owner\./);
+    expect(line).toMatch(/1 of 3 task has an owner\./);
   });
 
   it("puts each task's owner and due date on its row, with a word when it is behind", async () => {
@@ -266,9 +266,9 @@ describe("the program plan's workstreams and schedule line", () => {
     serveRead({ statuses: { t1: 'done' } });
     render(<ProjectProgramPlan programId={PROGRAM} owners={planAssignments([DANA_T3], PROGRAM, PYRAMID_TASK_ENTITY)} onNav={vi.fn()} onAsk={vi.fn()} />);
     await screen.findByTestId('pj-workstreams');
-    expect(rowOf('Strategy').querySelector('summary')?.textContent).toBe('StrategyNo lead1 of 1 tasks doneCompletedDone');
+    expect(rowOf('Strategy').querySelector('summary')?.textContent).toBe('StrategyNo lead1 of 1 doneCompletedDone');
     // t2 should have started on Nov 2 and is still To do on Nov 5: at risk, said in words.
-    expect(rowOf('Authoring').querySelector('summary')?.textContent).toBe('AuthoringLead Dana Ruiz0 of 2 tasks doneCompletes Jun 4, 2027At risk');
+    expect(rowOf('Authoring').querySelector('summary')?.textContent).toBe('AuthoringLead Dana Ruiz0 of 2 doneCompletes Jun 4, 2027At risk');
     expect(rowOf('Authoring').dataset.status).toBe('at-risk');
     expect(screen.getByText(/A workstream.s lead is the owner of the task that completes it\./)).toBeTruthy();
   });
@@ -297,10 +297,10 @@ describe("the program plan's workstreams and schedule line", () => {
     expect(within(row).queryByText('Task t2')).toBeNull();
   });
 
-  it("says, under a device plan, that its workstreams have no work-breakdown key", async () => {
+  it("says, under a device plan, that its own workstreams are not counted here", async () => {
     serveRead({});
-    render(<ProjectProgramPlan programId={PROGRAM} workstreamNote="The device workstreams above have no work-breakdown key." onNav={vi.fn()} onAsk={vi.fn()} />);
-    expect((await screen.findByTestId('pj-workstreams-note')).textContent).toBe('The device workstreams above have no work-breakdown key.');
+    render(<ProjectProgramPlan programId={PROGRAM} workstreamNote="The device workstreams above are tracked by their own items." onNav={vi.fn()} onAsk={vi.fn()} />);
+    expect((await screen.findByTestId('pj-workstreams-note')).textContent).toBe('The device workstreams above are tracked by their own items.');
   });
 
   it('draws the schedule: phase completions as dots, the submission, the review clock and today, the critical path darker', async () => {
@@ -314,14 +314,18 @@ describe("the program plan's workstreams and schedule line", () => {
       'decision:Study may proceed (day 30) · Jul 4, 2027',
     ]);
     expect(line.querySelectorAll('.py-line-crit')).toHaveLength(2);
+    // Keyboard and screen reader: the track is a named group; each dot is reachable and names itself with its date.
+    expect(line.querySelector('.py-line-track')?.getAttribute('role')).toBe('group');
+    const dot = line.querySelector<HTMLElement>('.py-line-dot')!;
+    expect([dot.getAttribute('role'), dot.tabIndex, dot.getAttribute('aria-label')]).toEqual(['img', 0, 'Strategy complete, Oct 30, 2026']);
     expect(line.querySelector<HTMLElement>('.py-line-today')?.style.left).toMatch(/%$/);
     expect(line.querySelector('figcaption')?.textContent).toMatch(/^Starts Oct 1, 2026 · submission Jun 4, 2027 · Study may proceed by Jul 4, 2027 \(FDA, 21 CFR 312\.40\)\./);
   });
 
-  it('says when the engines hold no review clock for the filing', async () => {
+  it('says when no agency review clock is on record for the filing', async () => {
     serveRead({ reviewClock: null });
     render(<ProjectProgramPlan programId={PROGRAM} onNav={vi.fn()} onAsk={vi.fn()} />);
-    expect((await screen.findByTestId('pj-schedule-line')).querySelector('figcaption')?.textContent).toMatch(/The engines hold no review clock for this filing\./);
+    expect((await screen.findByTestId('pj-schedule-line')).querySelector('figcaption')?.textContent).toMatch(/No agency review clock is on record for this filing type\./);
   });
 });
 
@@ -346,5 +350,48 @@ describe("the client's schedule rule matches the engine's", () => {
       const tasks = ind.tasks.map((t) => ({ id: t.id, phase: t.phaseId, name: t.name, role: '', hours: 0, deps: [], ctd: [], status: statuses[t.id] ?? 'todo' }));
       expect(pyWorkStatus(tasks, sched ? sched.tasks : null, asOf)).toBe(engine.scheduleSummary(ind, sched, statuses, asOf).status);
     }
+  });
+});
+
+// GA: a person who may not change the project (a viewer, an archived project) is shown each status, not offered it.
+describe('the program plan for a person who may not change the project', () => {
+  it('shows each task status without offering to change it, in the rows and in the sheet', async () => {
+    render(<ProjectProgramPlan programId={PROGRAM} canEdit={false} onNav={vi.fn()} onAsk={vi.fn()} />);
+    await openWorkstreams();
+    const select = screen.getByLabelText('Status of Task t2') as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    fireEvent.click(screen.getByText('Task t2'));
+    const sheet = await screen.findByRole('dialog', { name: 'Task t2' });
+    expect((within(sheet).getByLabelText('Status of Task t2') as HTMLSelectElement).disabled).toBe(true);
+    expect(apiRequest.mock.calls.some(([m]) => m === 'PATCH')).toBe(false);
+  });
+
+  it('offers the status to a person who may change it', async () => {
+    render(<ProjectProgramPlan programId={PROGRAM} onNav={vi.fn()} onAsk={vi.fn()} />);
+    await openWorkstreams();
+    expect((screen.getByLabelText('Status of Task t2') as HTMLSelectElement).disabled).toBe(false);
+  });
+});
+
+// GA: hours laid end to end are never shown as a forecast.
+describe('a plan whose dates rest on working hours alone', () => {
+  const SCHEDULE = { target: '2027-06-04', anchorTaskId: 't3', start: '2027-05-20', tasks: {
+    t1: { start: '2027-05-20', due: '2027-05-21', workingDays: 2, basis: 'estimated-hours' },
+    t2: { start: '2027-05-24', due: '2027-05-25', workingDays: 2, basis: 'estimated-hours' },
+    t3: { start: '2027-05-26', due: '2027-06-04', workingDays: 8, basis: 'estimated-hours' } } };
+  const serve = (durations: string) => {
+    reads = { success: true, data: { programId: PROGRAM, type: '510K', label: '510(k)', filing: '510k', pyramid: PYRAMID, statuses: {},
+      target: '2027-06-04', asOf: '2026-11-05', schedule: { ...SCHEDULE, durations }, reviewClock: null } };
+  };
+  it('says the dates are the earliest possible, not a forecast', async () => {
+    serve('hours-only');
+    render(<ProjectProgramPlan programId={PROGRAM} onNav={vi.fn()} onAsk={vi.fn()} />);
+    expect((await screen.findByTestId('pj-program-minimum')).textContent).toMatch(/^These are the earliest possible dates, not a forecast\./);
+  });
+  it('says nothing of the kind where typical durations are on record', async () => {
+    serve('mixed');
+    render(<ProjectProgramPlan programId={PROGRAM} onNav={vi.fn()} onAsk={vi.fn()} />);
+    await screen.findByTestId('pj-program-schedule');
+    expect(screen.queryByTestId('pj-program-minimum')).toBeNull();
   });
 });
