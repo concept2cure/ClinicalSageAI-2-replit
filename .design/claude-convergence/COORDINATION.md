@@ -8,6 +8,46 @@ The coordinating session is `session_01JbQUvBxcGHdBgkgAydQKpx`, "UI and workflow
 `session_011Dpx…`'s plan (the D0–D7 specs, `18261a908`). Send it your package, step and file list before you
 change a file that another package's spec also names.
 
+## The GA run, from 2026-11-12: who manages it, and when each session pushes
+
+The founder, 2026-11-12, to `session_011Dpx…` ("Design continuation"): "You are the manager of this goal. Stay aligned
+with the other sessions that are given this same instructions." The goal is the one every session was given: finish
+what exists, harden it, and bring it to a commercial release, in the UI. Nothing here changes a lane or a rule. Each
+session keeps the lane it holds below and writes its row before it edits outside it.
+
+**Push slots, from 03:30 UTC on 2026-11-12.** Thirteen sessions push to the one branch, and every push runs minutes of
+gates, so an unscheduled push loses ref races for an hour or more (one repair lost twelve; another six). Each session
+pushes only in its own slot, once an hour, which is also what the batch rule ("What every session does", 6) asks.
+
+| Minute of every hour, UTC | Session | Lane |
+|---|---|---|
+| :00 | `011Dpx…` | Manager; the release-shaped checks (launch-scope gate, request limits, the built client under the release's content security policy); cross-lane repairs |
+| :04 | `01QoxbLZjz…` | The CSR path |
+| :08 | `01QoxbLdTr…` | S2, the data catalog |
+| :12 | `01QoxbLZVw…` | Security |
+| :16 | `01QoxbLdJq…` | S11, the plan and schedule |
+| :20 | `01QoxbLcnW…` | The project page |
+| :24 | `01QoxbLdKp…` | R1, reach |
+| :28 | `01SuVLo2QX…` | AnA's runtime |
+| :32 | `01T2wooCZu…` | CSR draft control |
+| :36 | `01J935DZwf…` | Trunk CI |
+| :40 | `01E8btkB8m…` | The screen walk; the device screens |
+| :44 | `01KnUGoX3g…` | Vault |
+| :48 | `01QoxbLbUD…` | RBM's screens (started 2026-11-12 02:55 UTC) |
+| :52, :56 | spare | A session whose slot lost or was missed; a session not listed here |
+
+- **Before your slot:** with your app stopped, fetch, merge and run
+  `TYPECHECK_HEAP_MB=12288 npm run ci:typecheck:no-regression`, so the hook's typecheck is warm. Warm, a whole push
+  took 117 seconds; cold, about 400. In a 15 GB sandbox the typecheck is killed if the app runs beside it.
+- **At your minute:** fetch, merge (never rebase), push, once. If it loses, use a spare slot or your next one. Do not
+  retry inside another session's slot.
+- **Outside your slot:** commit locally and keep working.
+- A session not in the table takes a spare slot and tells `011Dpx…`, which gives it one.
+- The 15-minute window of rule 6 still exists for a push that cannot wait: ask `011Dpx…`.
+
+**Open and held by no session**, as of this entry: phone width and dark across the launch screens. A session that
+takes it writes its row.
+
 ## Decided 2026-11-08 under the founder's delegation (P-107): what each lane does next
 
 The founder delegated the open questions to the coordinating session ("No you decide as the global sme"). The record is
