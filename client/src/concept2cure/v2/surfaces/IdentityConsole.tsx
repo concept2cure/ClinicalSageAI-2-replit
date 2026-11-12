@@ -310,7 +310,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     if (tenantState === 'forbidden') {
       return {
         summary:
-          'This account cannot administer enterprise identity — the SCIM token and allowlist directory is for platform administrators, so nothing is listed.',
+          'This account cannot administer enterprise identity — the SCIM token and allowlist directory requires the super_admin or platform_admin role, so nothing is listed.',
         facts: { access: 'forbidden' },
       };
     }

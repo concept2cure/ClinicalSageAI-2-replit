@@ -147,6 +147,20 @@ function chainSummary(v: ChainVerdictView): string {
    renders real rows, an honest empty state, or an honest error (a 503 when the
    hash-chain schema isn't provisioned surfaces as the error state). */
 
+/**
+ * How many entries the screen asks the ledger for: the most the route serves (its `limit`, capped at 1,000).
+ * The route's own default is 200, and the screen used to present that slice as the whole trail (GA-D5-05).
+ */
+export const AUDIT_LEDGER_WINDOW = 1000;
+const AUDIT_LEDGER_URL = `/api/audit-trail/ledger?limit=${AUDIT_LEDGER_WINDOW}`;
+const entryCount = (n: number) => `${n.toLocaleString('en-US')} ${n === 1 ? 'entry' : 'entries'}`;
+/** The heading's line. A count is stated only for a trail that was read, and never as the whole trail when the list is cut. */
+function auditHeadingSub(read: boolean, listed: number): string {
+  if (!read) return 'Hash-chained — append-only — 21 CFR Part 11 §11.10(e)';
+  const count = listed >= AUDIT_LEDGER_WINDOW ? `Newest ${entryCount(listed)} shown` : entryCount(listed);
+  return `${count} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`;
+}
+
 /** Fetch the signed, hash-verifiable audit export bundle and download it as a
  *  JSON file. GET /api/audit/export/signed is Bearer-gated and returns
  *  { export: { data, manifest, signature, verification } } — the inspection-ready
@@ -205,7 +219,11 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
   // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
   // returns a fresh [] while loading / on error (rendered directly, so no seed
   // loop), and sets `error` only on a genuine fetch failure.
-  const { rows: entries, loading, error, status: readStatus, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+  const { rows: entries, loading, error, status: readStatus, meta } = useLiveRows<AuditEntry>(AUDIT_LEDGER_URL);
+  // The route returns at most the window, newest first. A full window means older entries may exist that the
+  // list, the filters, their counts and the search cannot see; the screen says so and never states the count
+  // as the whole trail. The chain verdicts are computed over the whole chain on the server, not this list.
+  const windowCut = entries.length >= AUDIT_LEDGER_WINDOW;
   // The second chain (audit_events), read on its own: its verdict is stated
   // whatever the ledger read does (AuditEventChain.tsx, folded from part11-console).
   const eventChain = useAuditEventChain();
@@ -290,13 +308,18 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
     const filtered = kind !== 'all' || term.length > 0;
     return {
       summary:
-        `Audit trail: ${entries.length} hash-chained ${entries.length === 1 ? 'entry' : 'entries'}` +
+        (windowCut
+          ? `Audit trail: the newest ${entryCount(entries.length)} are listed; any older entries are not on this screen, and the counts and filters cover the listed entries only`
+          : `Audit trail: ${entries.length} hash-chained ${entries.length === 1 ? 'entry' : 'entries'}`) +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
         `. ${chainSummary(chainStatus)}. ${second.sentence}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
       facts: {
         ...second.facts,
-        totalEntries: entries.length,
+        // A total is stated only when the whole trail is listed.
+        totalEntries: windowCut ? null : entries.length,
+        entriesListed: entries.length,
+        listIsNewestOnly: windowCut,
         shownInList: log.length,
         kindFilter: kind,
         searchTerm: term || null,
@@ -333,7 +356,7 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
         'Export the signed, inspection-ready audit bundle (data + manifest + HMAC signature)',
       ],
     };
-  }, [loading, error, entries, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr, eventChain.read]);
+  }, [loading, error, entries, windowCut, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr, eventChain.read]);
   /* AnA's hands on this screen (wave 7). The audit trail is where the training
      demonstration ends and where an inspector starts, and she had no action
      here at all: she could walk in and then do nothing. Every handler drives
@@ -441,9 +464,7 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
         eyebrow="Admin — compliance"
         title="Audit trail"
         /* A count is stated only for a trail that was read: a refused or failed read is not "0 entries". */
-        sub={loading || error
-          ? 'Hash-chained — append-only — 21 CFR Part 11 §11.10(e)'
-          : `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} — hash-chained — append-only — 21 CFR Part 11 §11.10(e)`}
+        sub={auditHeadingSub(!loading && !error, entries.length)}
         actions={
           <React.Fragment>
             <button
@@ -547,6 +568,14 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
       </div>
       {/* The second verdict: the audit_events chain, which the one above does not cover. */}
       <AuditEventChainBanner read={eventChain.read} onRetry={eventChain.retry} />
+
+      {windowCut && (
+        <p role="status" data-testid="audit-window-note" className="muted" style={{ fontSize: 12.5, margin: '0 0 12px' }}>
+          This list holds the newest {entryCount(entries.length)}. Any older entries are not listed here; the filters,
+          their counts and the search read those entries only. The chain verdicts above cover the whole trail, and
+          the signed export is read from the ledger, not from this list.
+        </p>
+      )}
 
       {/* Filters */}
       <div

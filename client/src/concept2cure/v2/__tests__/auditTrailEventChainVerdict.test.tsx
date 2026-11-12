@@ -33,7 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { AuditTrail } from '../surfaces/AdminSurfaces';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
-const LEDGER = '/api/audit-trail/ledger';
+const LEDGER = '/api/audit-trail/ledger?limit=1000';
 const CHAIN = '/api/part11/audit-trail/chain-integrity';
 
 const ENTRY = {
