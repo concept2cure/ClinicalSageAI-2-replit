@@ -1523,9 +1523,18 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
   status is its document's"). The stage is the one the Library reads for the same document, e.g. "Review:
   Approved.". Readiness is unchanged.
 
+- **With no project open, nothing is offered that needs a project** (F1, `c2670e8ef2`, `e7695ef607`). The header
+  offered Trial master file, three disabled write buttons and three starters about "this filing", above the one
+  question the page asks: which sponsor. Each now returns with the project. The empty state's sentence said "the
+  governed artifacts of every project you can open"; no view spans sponsors, and it now says what the page does
+  while it asks and once a sponsor is chosen. Evidence `docs/evidence/SPINE/S6/2026-11-12-vault-no-project-header/`.
+
 Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
 administration's restoration order); on a phone the first document is below the first screen (the shared page
-header takes four lines).
+header takes four lines); **a 510(k)'s Library lists the eSTAR outline twice**, as the filing binder (the files placed
+against the outline) and as the authored 510(k) document's own sections, with the same headings A to G and different
+counts. Which the tree shows, or how one carries the other's state, is a design decision in S6's binder
+(`server/routes/c2c/project-vault.ts`, `documentFolder` and `filingCabinet`).
 
 **E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
 deployed store as the person who runs it, one project or every project they can open. Each figure is the store's
@@ -1549,7 +1558,14 @@ exist for. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step5-service-schema/`.
 retired verdict's one guard was carried onto the deployed store. A study whose every required record is declared not
 applicable had read "ready" with nothing filed, in AnA, on the inspection package's cover and in the report pack. It
 now has no readiness verdict. "Not applicable" (P-124 item 5) is on the deployed store, so step 3's retirement of
-`update_tmf_artifact_status` has the declaration to point to. Admission waits on the URS and OQ. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+`update_tmf_artifact_status` has the declaration to point to. **The URS and OQ are drafted for Validation for GA**
+(F1, `ed03906b8f`; `docs/evidence/D2-ETMF/2026-11-12-urs-oq-draft/`). Validation holds `docs/validation/**` and
+`tests/validation/**`, and this lane's ask of 2026-11-10 is unanswered. The drafts mirror URS-007 and OQ-008: twenty
+requirements, each traced to its source and to the suites that prove it today, and thirty-seven steps. The proposed
+numbers are URS-009 and OQ-009. Validation numbers, files and runs them; then admission. One question is for the
+founder (URS draft §3): a read-only identity cannot read a trial master file today, because every route requires
+the regulatory-author role. The `etmf` surface's row named an AnA tool that does not exist; it now names its two
+(F1, `fc1f474db4`). The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 
