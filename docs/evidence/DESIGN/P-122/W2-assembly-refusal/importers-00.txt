@@ -1,0 +1,206 @@
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 1368ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 364ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 59ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 38ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 46ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500 19ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 19ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 973ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 35ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 46ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 14ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 59ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status carrying control characters with 400, not a 500 17ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 31ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 33ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 19ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 16ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree 20ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 7ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 15ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 21ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats a verdict stored with trailing whitespace as a verdict — the guard and its normaliser agree 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 14ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 21ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 66ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 15ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 20ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 43ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 128ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 23ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 116ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section) 42ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone) 23ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either 20ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > refuses a content save with no reason, or a short one, with 400 and writes nothing 48ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > keeps the replaced text as version 1 and records who, why, and the text before and after 42ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a second save keeps the first revision as version 2 69ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > withdrawing a verdict states its reason and is recorded; it replaces no text, so it keeps none 40ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a no-op restate needs no reason and records nothing 10ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a refusal for the record’s state is answered before the reason: an approved row is still 409 5ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/coauthor/documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > when the audit event cannot be written, nothing is: no text, no version (500) 17ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > refuses a content save with no reason, or a short one, with 400 and writes nothing 18ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > keeps the replaced text as version 1 and records who, why, and the text before and after 16ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a second save keeps the first revision as version 2 48ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > withdrawing a verdict states its reason and is recorded; it replaces no text, so it keeps none 27ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a no-op restate needs no reason and records nothing 11ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > a refusal for the record’s state is answered before the reason: an approved row is still 409 23ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'PUT /api/ectd-documents/:id' — a save states its reason, keeps the text it replaces, and is recorded > when the audit event cannot be written, nothing is: no text, no version (500) 19ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/ectd-documents/:id — the placement metadata it replaces is recorded > records section and region before and after, and names what changed 8ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > PUT /api/coauthor/documents/:id — the editor is told which rows are read-only (P11-B-3) > marks every verdict row read-only, by the server’s own rule, on the list and on one row 145ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > refuses with 409 DOCUMENT_HAS_HISTORY, and the document and its versions remain 52ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > refuses, not 500s, for a document a batch draft was accepted into (the version row that route writes) 86ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > deletes a document with no history and records the deletion with the stated reason, or none 38ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > refuses a stated reason the one rule refuses (400), and deletes nothing 12ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/coauthor/documents/:id' — a document with saved history is kept > answers 404 for another organization's document and deletes nothing 13ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > refuses with 409 DOCUMENT_HAS_HISTORY, and the document and its versions remain 44ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > refuses, not 500s, for a document a batch draft was accepted into (the version row that route writes) 30ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > deletes a document with no history and records the deletion with the stated reason, or none 33ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > refuses a stated reason the one rule refuses (400), and deletes nothing 7ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > 'DELETE /api/ectd-documents/:id' — a document with saved history is kept > answers 404 for another organization's document and deletes nothing 12ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > editing and template suggestion outcomes reach the JSON caller > actual regulatory audit insert unavailable=true 160ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > editing and template suggestion outcomes reach the JSON caller > actual regulatory audit insert unavailable=false 29ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > editing and template suggestion outcomes reach the JSON caller > does not pass private/foreign project 4 context to retrieval or a provider 124ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > editing and template suggestion outcomes reach the JSON caller > does not pass private/foreign project 5 context to retrieval or a provider 51ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > editing and template suggestion outcomes reach the JSON caller > can use an actually accessible project despite a stale administrator claim 78ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > saved feedback with audit unavailable=true 38ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > saved feedback with audit unavailable=false 87ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > proven insert refusal is not recorded:true and recovery saves a real feedback row 57ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > a lost connection reply does not invent rollback or a confirmed saved identity 29ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > rejects malformed feedback before persistence 25ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > rejects malformed feedback before persistence 10ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > rejects malformed feedback before persistence 37ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > rejects malformed feedback before persistence 12ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > feedback returns evidence of its actual business and audit writes > revoked membership cannot submit feedback using the old session claim 32ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > saved section generation carries its real audit through the actual SSE route > saved draft and done frame with audit unavailable=true 64ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > saved section generation carries its real audit through the actual SSE route > saved draft and done frame with audit unavailable=false 52ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > saved section generation carries its real audit through the actual SSE route > a failed draft insert creates no document or successful audit result 11ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > saved section generation carries its real audit through the actual SSE route > the provider failure is contained in the actual error frame with no done receipt 15ms
+ ✓ server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts > saved section generation carries its real audit through the actual SSE route > the save failure is contained in the actual error frame with no done receipt 42ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > refuses a malformed body or finding id, and dispositions nothing 48ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > hands the sequence, the finding, the disposition and the signature to the service, with the session context 6ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > a missing, wrong-intent or wrong-finding signature is 403 GOVERNED_REQUIRED 8ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the disposition door > a finding that is not disposable is 409 SHADOW_FINDING_NOT_DISPOSABLE, with the reason 4ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the precheck asks the disposition rule before anyone signs > accepts the 'shadow-finding-disposition' step with the finding and the disposition, and answers 200 either way 31ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the precheck asks the disposition rule before anyone signs > a disposition precheck that names no finding or no disposition is 400 33ms
+ ✓ server/routes/__tests__/submissions-shadow-finding-disposition.test.ts > the findings read carries each disposition > returns the findings with who closed each, how, when, why and under which signature 7ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > refuses a removal with no reason, and removes nothing 29ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > passes the trimmed reason to the service and answers 204 15ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > says on a header when the removal returned a Validated sequence to Assembling 4ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > answers the refusal with 200, from the step’s own gates 9ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > hands a finding disposition precheck the finding and the disposition it names (P-35) 5ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > hands a retirement precheck (P-86) to the retirement's own rule, with nothing else from the body 3ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > refuses an unknown step 3ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > refuses a body without the signature or with an outcome it does not know, and settles nothing 70ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > hands only the signature and the outcome to the service, with the session context 3ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > HELD_SEND_NOT_SETTLEABLE is 409, with the sentence 5ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > GOVERNED_REQUIRED is 403, with the sentence 4ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > FORBIDDEN is 403, with the sentence 5ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > VALIDATION is 400, with the sentence 3ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > INVALID_STATE is 409, with the sentence 2ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > sends the step, the outcome, the kind and the document to its own function, never to precheckGovernedStep 9ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > asks the overview with no outcome 2ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > refuses {"step":"held-send-settlement","evidenceDocumentId":"0b000000-0000-4000-8000-000000000001"} (a document without an outcome) 3ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > refuses {"step":"held-send-settlement","outcome":"received"} (received without a kind) 2ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > refuses {"step":"held-send-settlement","outcome":"received","evidenceKind":"ack9"} (a kind it does not know) 2ms
+ ✓ server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > refuses {"step":"held-send-settlement","outcome":"received","evidenceKind":"ack2","evidenceDocumentId":"not-a-uuid"} (a document that is not a Vault id) 2ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > instead of 500 "something went wrong" 29ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > serverError answers a busy converter 503 with Retry-After > leaves every other error a 500 7ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the global error handler answers a busy converter 503 with Retry-After > in production too, where a 5xx message is otherwise replaced by "Internal server error" 16ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId (export) 22ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > GET /:submissionId/preview 4ms
+ ✓ server/services/__tests__/conversion-capacity-http.test.ts > the eCTD export routes answer a busy converter 503 with Retry-After > POST /:submissionId/validate (generate, then validate) 3ms
+ ✓ server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts > eCTD export routes: no user id, no assembly > POST /:submissionId answers 401 and assembles nothing 39ms
+ ✓ server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts > eCTD export routes: no user id, no assembly > GET /:submissionId/preview answers 401 and assembles nothing 4ms
+ ✓ server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts > eCTD export routes: no user id, no assembly > POST /:submissionId/validate (generate-then-validate) answers 401 and assembles nothing 8ms
+ ✓ server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts > eCTD export routes: no user id, no assembly > a user id of 0 is not a user 3ms
+ ✓ server/routes/__tests__/ectd-export-refuses-an-unidentified-user.test.ts > a placed eCTD export: the governed record carries the review assertion > passes the attestation, with the user who made it, to registerExportGovernanceQuick 13ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses with no reason, and anchors nothing 29ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses a project id that is not a uuid, and anchors nothing 6ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service 5ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > answers a refusal with its status and the server’s words 4ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers the projects of the submission’s filing type, from the service 4ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers a refusal with its status 3ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > a type mismatch on the anchor itself is a 409 in the server’s words 3ms
+ ✓ server/routes/__tests__/ectd-export-records-the-review-assertion.test.ts > POST /api/ectd/export/:submissionId — the review assertion is recorded as one > the ectd_export_generated row carries the assertion and the user who made it 74ms
+ ✓ server/routes/__tests__/ectd-export-records-the-review-assertion.test.ts > POST /api/ectd/export/:submissionId — the review assertion is recorded as one > an unplaced export records it on its EXPORT_GENERATED row too 13ms
+ ✓ server/routes/__tests__/ectd-export-records-the-review-assertion.test.ts > POST /api/ectd/export/:submissionId — the review assertion is recorded as one > the response names the approval as caller-asserted, not as an approved review 8ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > refuses a body without the signature or the failed run, and waives nothing 58ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > hands the signature and the failed run to the service, with the session context, and answers the record 12ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > a missing or wrong-intent signature is 403 GOVERNED_REQUIRED 3ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > a sequence with no waiver on offer is 409 SHADOW_WAIVER_NOT_ELIGIBLE, with the reason 3ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the precheck asks the waiver rule before anyone signs > accepts the 'shadow-waiver' step and answers 200 either way 9ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > answers the findings array unchanged, with the recorded row in a header 48ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > says so in headers when the row was not written 6ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > says in a header how many sources shared no figure with the claim 4ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > passes the engine section ids only, and says a supplied text was ignored 3ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > refuses a body that names text instead of saved sections 12ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > asks the sign step's check, for this sequence, organization and user 63ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "author" through unchanged 12ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "independent" through unchanged 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unresolved" through unchanged 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > passes "unverified" through unchanged 4ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > still returns the assessment it was always answering with 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for null 4ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for pending 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for rejected 6ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for transmitting 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for sent 2ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for acknowledged 3ms
+ ✓ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts > dispatch-readiness reports the sign step's own answer for this signer > reports canonical FDA dispatch renewal eligibility for undefined 2ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > refuses a body without the signature, and retires nothing 82ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > refuses an id that is not a sequence id 31ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > hands only the signature to the service, with the session context, and answers the record 5ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > SEQUENCE_NOT_RETIRABLE is 409, with the sentence 5ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > GOVERNED_REQUIRED is 403, with the sentence 3ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > FORBIDDEN is 403, with the sentence 5ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > INVALID_STATE is 409, with the sentence 4ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 60ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 21ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > refuses a request with no application type 3ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline 10ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > passes the exact edit snapshot and normalized values with session identity 45ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {"studyId":"bad/id"} 7ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {"stfFileTag":"wrong\ntag"} 3ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {"stfFileTag":"\tstudy-report-body"} 2ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {"stfFileTag":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} 7ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {"studyId":""} 11ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {"studyTaggingEdit":{}} 5ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {} 5ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {} 9ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > refuses malformed metadata or incomplete edit before the writer: {} 3ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > accepts an advisory document tag absent from the recall list and explicit null clearing 5ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > requires the existing governed reason 8ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > retains authentication and author-role checks 7ms
+ ✓ server/routes/__tests__/submissions-leaf-study-tagging.test.ts > study metadata on the existing governed leaf PUT > reports stale state as conflict 3ms
+ ✓ server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > asks for a dry run, names no identity, and says no package was produced 173ms
+ ✓ server/routes/__tests__/submissions-assemble-dry-run.test.ts > the sequence assemble route is a dry run (P-27) > refuses a body that names the application or the applicant, and assembles nothing 17ms
+ ✓ server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > carries the outcome of a recorded assembly 59ms
+ ✓ server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > says so when the assembly was not recorded 35ms
+ ✓ server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > answers a refused assembly as a refusal, with the record of it 7ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > without programId, keeps the existing bare list shape for admitted records 50ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > with programId, returns admitted submissions without a hidden-row count 22ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > refuses a programId that is not a program uuid, rather than ignoring it and offering everything 11ms
+ ✓ server/routes/__tests__/submissions-leaf-reason.test.ts > the leaf placement route requires its reason > refuses a placement with no reason, and places nothing 75ms
+ ✓ server/routes/__tests__/submissions-leaf-reason.test.ts > the leaf placement route requires its reason > refuses a reason under the floor 8ms
+ ✓ server/routes/__tests__/submissions-leaf-reason.test.ts > the leaf placement route requires its reason > passes the trimmed reason to the service with the placement 8ms
+ ✓ server/routes/__tests__/submissions-create-not-offered.test.ts > POST /api/submissions — a market the platform does not offer > refuses a UK IND with the statement, and creates nothing 136ms
+ ✓ server/routes/__tests__/submissions-create-not-offered.test.ts > POST /api/submissions — a market the platform does not offer > creates a US IND as before 10ms
+ ✓ server/routes/__tests__/submissions-assess-stored-cer-equivalence-claim-unrecorded.test.ts > GET /device/cer/:reportId/assess-stored > passes an absent equivalenceClaimed on as unstated, not "not claimed" 140ms
+ ✓ server/routes/__tests__/submissions-assess-stored-cer-equivalence-claim-unrecorded.test.ts > GET /device/cer/:reportId/assess-stored > reads true/1 as a claim and false/0 as no claim 50ms
+ ✓ server/routes/__tests__/submissions-assess-stored-cer-equivalence-claim-unrecorded.test.ts > GET /device/cer/:reportId/assess-stored > reads anything else as unstated 9ms
+ ✓ server/routes/__tests__/submissions-market-number-route.test.ts > GET /:id/application-number is held to project access > answers the access refusal, and reads no number 47ms
+ ✓ server/routes/__tests__/submissions-market-number-route.test.ts > GET /:id/application-number is held to project access > reads the market's number once the read is admitted 10ms
+ ✓ server/services/__tests__/conversion-capacity-compile-http.test.ts > POST /:projectIdent/compile with every conversion slot busy > answers 503 with Retry-After and writes no compilation row 1752ms
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > refuses an id that is not a clause id with 400, naming it (not 200, and not 500) 123ms
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > refuses an omitted list with 400, instead of assessing no clause as in place 12ms
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > assesses a stated list of clause ids, as before 8ms
+ ✓ server/services/__tests__/conversion-capacity-submissions-http.test.ts > POST /api/submissions/sequences/:seqId/assemble with every conversion slot busy > answers 503 with Retry-After and says the converter is busy 76ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > mounts a non-trivial number of routes 6ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > mounts every route the capabilities index advertises 1ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > has the keystone device + market routes mounted 0ms
+ Test Files  26 passed (26)
+      Tests  204 passed (204)
