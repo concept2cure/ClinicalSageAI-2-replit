@@ -2562,12 +2562,22 @@ them** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`, findings 
   that launch screens lead to (the trial master file, the source tracer) are not shown, and a direct link says "not in
   this release". Every server route was given the gate's verdict and searched for in the client as a relative path
   through a base constant, which is the static gate's blind spot: nothing found.
-- **Not yet run:** the launch screens on the built client under the content security policy a release enforces
-  (`cspwalk.cjs` in the evidence folder); the Lumen account's screens with the gate on.
+- **The Lumen account with the gate on:** 277 of its 307 screens and tabs opened, none refused.
 - **For R1 and RBM's screens:** three RBM routes are built and no screen calls them (the load history, the scored
   patient profiles list, site oversight); a release refuses them, because no launch surface claims their prefix.
-- **2026-11-12, the manager of the GA run** (the founder: "You are the manager of this goal"): thirteen sessions push
-  to the one branch, so each has an hourly push slot (`.design/claude-convergence/COORDINATION.md`, "The GA run").
+- **2026-11-12, push slots.** Fifteen sessions push to the one branch, and a push that carries code holds it for
+  about seven minutes, so unscheduled pushes lost ref races for an hour or more. This session proposed an
+  eight-minute slot for each session on a two-hour cycle (`.design/claude-convergence/COORDINATION.md`, "The GA
+  run"). It first wrote that the founder had made it the manager across the sessions. That was wrong, and is
+  corrected there and by message: the founder's sentence went to every session.
+- **2026-11-12, the built client under the policy a release enforces** (`d08bbd2340`, same evidence folder, findings S
+  and T): all 134 screens open with no error and nothing refused that a screen uses. Two violations were reported on
+  every page and broke nothing; both are repaired (the template's inline style gets the nonce; Zod does not probe for
+  `eval`).
+- **2026-11-12, phone width and dark:** S11's audit is the record
+  (`docs/evidence/HUMAN-TEST/PHONE-DARK/2026-11-12/`). This session duplicated part of it by not reading S11's row,
+  and filed only what its wider measurement adds (`…/CLICK-THROUGH/2026-11-12-phone-dark/`): the admin console
+  (repaired, `98c974321a`) and three RBM tabs scroll sideways at 390 px.
 
 **Open for the founder:**
 - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
