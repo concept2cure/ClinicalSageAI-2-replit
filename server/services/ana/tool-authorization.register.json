@@ -2694,7 +2694,12 @@
   "create_regulatory_commitment": {
    "class": "confirm",
    "writes": "INSERT regulatory_commitments + provenance + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_regulatory_commitment')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_regulatory_commitment')",
+   "present": {
+    "verb": "record",
+    "object": "a regulatory commitment",
+    "source": "project"
+   }
   },
   "create_research_agreement": {
    "class": "confirm",
@@ -5899,7 +5904,12 @@
   "review_commitment_portfolio": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('review_commitment_portfolio')"
+   "site": "AnaToolExecutor.ts registerToolHandler('review_commitment_portfolio')",
+   "present": {
+    "verb": "review",
+    "object": "the commitment portfolio",
+    "source": "project"
+   }
   },
   "review_consent_completeness": {
    "class": "read",
