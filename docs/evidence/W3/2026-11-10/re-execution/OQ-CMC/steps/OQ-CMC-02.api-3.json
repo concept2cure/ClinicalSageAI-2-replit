@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
+    "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=8655492d-c15c-4585-9ed2-6a645fc7c7f6",
     "anonymous": false,
     "identity": "oq-viewer@validation.local",
     "body": null
@@ -9,14 +9,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 28,
+    "durationMs": 22,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": [
         {
-          "id": 17,
-          "methodCode": "AM-20261110130629",
+          "id": 22,
+          "methodCode": "AM-20261112003432",
           "title": "RP-HPLC Assay",
           "technique": "HPLC",
           "purpose": "assay",
@@ -30,11 +30,11 @@
             "linearity": "r >= 0.999 over 50-150% of nominal",
             "range": "50-150% of nominal"
           },
-          "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "projectId": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
           "status": "development",
           "organizationId": 2,
-          "createdAt": "2026-11-10T13:06:30.802Z",
-          "updatedAt": "2026-11-10T13:06:30.802Z"
+          "createdAt": "2026-11-12T00:34:33.946Z",
+          "updatedAt": "2026-11-12T00:34:33.946Z"
         }
       ]
     }

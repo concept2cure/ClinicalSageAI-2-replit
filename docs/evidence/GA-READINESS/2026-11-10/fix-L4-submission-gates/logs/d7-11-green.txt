@@ -1,0 +1,106 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/release-signature-gate.test.ts
+{
+  "timestamp": "2026-11-10T12:09:04.642Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:09:04.644Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/release-signature-gate.test.ts
+{
+  "timestamp": "2026-11-10T12:09:04.644Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/release-signature-gate.test.ts
+[database] Database connection successful
+
+stderr | server/services/ectd/__tests__/release-signature-gate.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/release-signature-gate.test.ts
+{
+  "timestamp": "2026-11-10T12:09:06.281Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > clears a verified signature 3ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on unsigned 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on awaiting 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on revoked 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > blocks on undetermined 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > does not let an undetermined lookup read as an absent requirement 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > distinguishes unsigned from undetermined in its message 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 1: when required, only signed clears > surfaces resolver detail in the blocker message 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 2: invalid blocks unconditionally > blocks a tampered signature even when a signature is NOT required 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — rule 2: invalid blocks unconditionally > blocks a tampered signature when a signature IS required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears unsigned when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears awaiting when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears revoked when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > clears undetermined when no signature is required 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > a not-required unsigned gate says "Not required", never that a signature passed 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > a not-required awaiting gate says "Not required", never that a signature passed 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > a not-required revoked gate says "Not required", never that a signature passed 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > a not-required undetermined gate says "Not required", never that a signature passed 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > a not-required gate with a verified signature on record says both 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > evaluateReleaseSignatureGate — not-required path > a REQUIRED gate never carries the not-required note, signed or blocked 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > release-signature gate composes with the existing dispatch gates > blocks the merged verdict even when every other gate is clean 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > release-signature gate composes with the existing dispatch gates > preserves blocker order across composed gates 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > blocks when ONLY the release-signature gate blocks 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > blocks on a tampered signature even when nothing else objects 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > clears only when every gate clears 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGates — the release-signature gate is actually in the composition > unions blockers from every contributing gate 1ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > does not block a FREEZE for a missing release signature 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > still blocks a DISPATCH for the same missing signature 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > an undetermined lookup does not block a freeze either — it is the transmit re-check that needs certainty 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > a TAMPERED signature blocks both steps — integrity is not a transmit-only concern 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the structural gate governs a freeze exactly as it governs a dispatch 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the external gate governs a freeze exactly as it governs a dispatch 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the shadowPresence gate governs a freeze exactly as it governs a dispatch 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > composeDispatchGatesForStep — the release-signature gate is a transmit control > the dispatch composition is exactly what composeDispatchGates already produced 2ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for IND 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for NDA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for BLA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > requires a signature for MAA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > is case- and whitespace-insensitive 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for 510k 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for PMA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for JNDA 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > does not require one for DeNovo 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > treats a missing type as not-required rather than throwing 0ms
+ ✓ server/services/ectd/__tests__/release-signature-gate.test.ts > isReleaseSignatureRequired > pins the required list so a silent widening fails here 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > clears when there are zero validation errors and zero shadow criticals 3ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > blocks when there is an open error-severity validation finding 2ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > blocks when there is an unacknowledged Shadow Review critical 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > reports both blockers when both counts are positive 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > BLOCKS on a count it could not determine — unknown is not zero 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > still clears on genuine zeros — the gate has not been welded shut 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateDispatchGate > is pure — the same input yields the same result 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > clears only when every composed gate clears 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > blocks (and unions blockers, order-preserved) when any gate blocks 1ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > a clean structural gate is blocked by a failing external gate (P0-4 fail-closed) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > mergeDispatchGates > handles a single gate 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > clears when every leaf's document is approved 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks freeze, dispatch and transmit while any document is not yet approved, and says it is not an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks on a count it could not determine — unknown is not zero 0ms
+
+ Test Files  2 passed (2)
+      Tests  59 passed (59)
+   Start at  12:09:02
+   Duration  9.03s (transform 5.79s, setup 134ms, import 8.36s, tests 42ms, environment 0ms)
+

@@ -14,9 +14,9 @@
  *     a negative `daysToDue`. The "MDRs due ≤72h" card counted it, for ever,
  *     because its `daysToDue <= 3` had no lower bound — the server had already
  *     said it is not overdue. Its row read "-12d left". Fixed here.
- *   - A filed MDR whose due date is still ahead is counted as due. Excluding it
- *     is a server change (deferred); until then the screen says filed MDRs are
- *     counted, and no figure is called a running clock or "open".
+ *   - A filed MDR whose due date is still ahead was counted as due. Since
+ *     GA-DEMO-08 (2026-11-10) the server's queue leaves out filed, acknowledged
+ *     and closed MDRs, and the screen's "not yet excluded" caveat is gone.
  *
  * And a triage read that answered with nothing is a read, not "Not yet read".
  */
@@ -91,20 +91,22 @@ describe('PostmarketSurface — reporting-clock figures say only what the triage
     expect(rowFor(container, 'MDR-SOON')?.getAttribute('data-sev')).toBe('warn');
   });
 
-  it('calls no figure a running clock or "open" while filed MDRs are still counted', async () => {
-    // A filed MDR due in 2 days is in the read (server, deferred). The screen
-    // must say so rather than vouch for it as an open reporting deadline.
-    serve([mdr('MDR-FILED-SOON', 'filed', 2, false)]);
+  it('calls no figure a running clock, and says filed MDRs are left out now that the read leaves them out', async () => {
+    // GA-DEMO-08 (2026-11-10): the triage read asks for open MDRs only
+    // (getTriageQueueTx, proven by triage-queue-open-mdrs.pglite.test.ts), so
+    // the caveat "filed MDRs not yet excluded" is no longer true and is gone.
+    serve([mdr('MDR-PREP-SOON', 'preparing', 2, false)]);
     const { container, getByTestId } = mount();
-    await waitFor(() => expect(text(container)).toMatch(/MDR-FILED-SOON/));
+    await waitFor(() => expect(text(container)).toMatch(/MDR-PREP-SOON/));
 
     expect(text(container)).not.toMatch(/Clock running/);
-    expect(text(container)).not.toMatch(/Open items/);
     expect(text(container)).not.toMatch(/\dd left/);
-    expect(meta(container, 'pm-mdr-due')).toMatch(/filed MDRs not yet excluded/);
+    expect(text(container)).not.toMatch(/not yet excluded/);
+    expect(meta(container, 'pm-mdr-due')).toBe('FDA 5-day · 30-day · EU 15-day');
     const clocksSub = Array.from(container.querySelectorAll('.section-head'))
       .find((h) => /Reporting clocks/.test(h.textContent ?? ''))?.querySelector('.section-sub')?.textContent ?? '';
-    expect(clocksSub.replace(/\s+/g, ' ')).toMatch(/MDR events are listed in every state, filed and closed included/);
+    expect(clocksSub.replace(/\s+/g, ' ')).not.toMatch(/listed in every state/);
+    expect(clocksSub.replace(/\s+/g, ' ')).toMatch(/Filed, acknowledged and closed MDRs are left out/);
     expect(getByTestId('pm-mdr-due').textContent).toBe('1');
   });
 

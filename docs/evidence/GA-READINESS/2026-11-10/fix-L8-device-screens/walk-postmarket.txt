@@ -1,0 +1,30 @@
+[
+ {
+  "w": 1440,
+  "url": "http://127.0.0.1:5240/concept2cure/device-postmarket?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "notYetExcluded": false,
+  "everyState": false,
+  "leftOut": true,
+  "mdrCard": null,
+  "overflowX": 0,
+  "rec": {
+   "http": [],
+   "console": [],
+   "pageErrors": []
+  }
+ },
+ {
+  "w": 390,
+  "url": "http://127.0.0.1:5240/concept2cure/device-postmarket?program=4f047045-425a-4d88-b84b-4695e02af20c",
+  "notYetExcluded": false,
+  "everyState": false,
+  "leftOut": true,
+  "mdrCard": null,
+  "overflowX": 0,
+  "rec": {
+   "http": [],
+   "console": [],
+   "pageErrors": []
+  }
+ }
+]

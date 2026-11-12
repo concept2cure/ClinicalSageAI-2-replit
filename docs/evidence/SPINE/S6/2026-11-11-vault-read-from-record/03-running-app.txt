@@ -1,0 +1,21 @@
+# Reading a document from its record, in the running app (local server on PostgreSQL, the demo's IND project C2C-101).
+# Chromium (the full browser, headless) through Playwright, signed in through the real form.
+
+1440 PDF record offers: View
+1440 reading drawer: 1040px wide; frame 1039x835px
+1440 hash line: SHA-256 44cf3a1bedc69fc4… — verified against the vault record before it was served
+1440 drawer after close: 0
+1440 Word record offers: View as PDF
+1440 Word rendition: A PDF rendition made from the version with SHA-256 c57cc0d2110a…, for reading here. The version in the Vault is the Word file; download it for the original. Close viewer SP-014 stability protocol · PDF rendition
+1440 the uploaded monitoring plan (a PDF) offers: Work on document | Place into filing… | View | Download | Ask AnA | Build in editor
+1440 console errors: []
+1440 responses >= 400: []
+390 PDF record offers: View
+390 reading drawer: 390px wide; frame 390x739px
+390 hash line: SHA-256 44cf3a1bedc69fc4… — verified against the vault record before it was served
+390 drawer after close: 0
+390 console errors: []
+390 responses >= 400: []
+
+# The bytes in the frame, read back from the page: 
+framed: {"src":"blob:http://","bytes":9196,"head":"%PDF-1.4"}

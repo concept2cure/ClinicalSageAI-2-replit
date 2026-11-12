@@ -1,0 +1,7 @@
+GREEN: the test run against the working-tree pack
+ok 1 - C2C-201: every stability result records whether it is within its limit
+ok 2 - C2C-101: every stability result records whether it is within its limit
+ok 3 - C2C-201: exactly one stability result is out of specification, and it is the 6-month accelerated impurity
+ok 4 - C2C-201: DS-2502-R2 is still recorded as a pass at 97.4 % (the phase 4 fixture pins it)
+# pass 4
+# fail 0

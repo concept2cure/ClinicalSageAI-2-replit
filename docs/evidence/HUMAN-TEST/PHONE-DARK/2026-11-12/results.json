@@ -1,0 +1,1094 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-12T03:27:02.213Z",
+  "programs": {
+    "ind": "5a9e8439-be62-4802-a2f0-f9e7e294bc03",
+    "device": "b158f7d9-0254-4ea7-8b6b-73138a193f24"
+  },
+  "screens": {
+    "home": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "landing-mark: 2.96 (needs 3) \"✻\"",
+          "landing-eng-ana: 3.12 (needs 4.5) \"AnA\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "landing-eng-ana: 4.24 (needs 4.5) \"AnA\"",
+          "landing-eng-mode: 3.93 (needs 4.5) \"Standard\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "landing-eng-ana: 4.24 (needs 4.5) \"AnA\"",
+          "landing-eng-mode: 3.93 (needs 4.5) \"Standard\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "projects": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "project-home": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "pj-act-n: 2.11 (needs 4.5) \"Nov 10\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "pj-act-n: 2.76 (needs 4.5) \"Nov 10\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "pj-act-n: 2.76 (needs 4.5) \"Nov 10\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "tasks": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "tb-empty: 2.02 (needs 4.5) \"No tasks\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "tb-empty: 2.58 (needs 4.5) \"No tasks\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "tb-empty: 2.58 (needs 4.5) \"No tasks\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "communication-center": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "vault": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "document-authoring": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "ed-spark: 2.96 (needs 4.5) \"✻\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "review": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "protocol-dev": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "submission-center": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "sp-row-s: 4.23 (needs 4.5) \"·\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "ectd-compile": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "gateway-transmittals": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "ind-checklist": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "indl-h-x: 2.11 (needs 4.5) \"— 21 CFR 312.23(a)(1)\"",
+          "indl-proj: 2.02 (needs 4.5) \"FDA receipt has not been recorde\"",
+          "indl-place: 3.66 (needs 4.5) \"eCTD m1.2\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "indl-h-x: 2.76 (needs 4.5) \"— 21 CFR 312.23(a)(1)\"",
+          "indl-proj: 2.58 (needs 4.5) \"FDA receipt has not been recorde\"",
+          "indl-place: 4.00 (needs 4.5) \"eCTD m1.2\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "indl-h-x: 2.76 (needs 4.5) \"— 21 CFR 312.23(a)(1)\"",
+          "indl-proj: 2.58 (needs 4.5) \"FDA receipt has not been recorde\"",
+          "indl-place: 4.00 (needs 4.5) \"eCTD m1.2\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "dispatch-readiness": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "ped: 4.49 (needs 4.5) \"Registry\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "quality": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "cmc": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "rbm": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "biostatistics": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "insights": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "compliance-reports": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-510k": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "estar-num: 3.90 (needs 4.5) \"§\"",
+          "status-pill: 1.91 (needs 4.5) \"empty\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": [
+          "503 /api/predicate-intelligence/candidates",
+          "503 /api/predicate-intelligence/se-matrix"
+        ]
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "estar-num: 4.29 (needs 4.5) \"§\"",
+          "status-pill: 2.41 (needs 4.5) \"empty\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": [
+          "503 /api/predicate-intelligence/candidates",
+          "503 /api/predicate-intelligence/se-matrix"
+        ]
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "estar-num: 4.29 (needs 4.5) \"§\"",
+          "status-pill: 2.41 (needs 4.5) \"empty\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": [
+          "503 /api/predicate-intelligence/candidates",
+          "503 /api/predicate-intelligence/se-matrix"
+        ]
+      }
+    },
+    "device-pma": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-cer": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-diagnostics": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-clinical-studies": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-software": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-engineering": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-udi": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-postmarket": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "device-presub": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "human-factors": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "labeling": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "apps": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "audit-trail": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "span: 2.02 (needs 4.5) \"--\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "span: 2.58 (needs 4.5) \"--\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "span: 2.58 (needs 4.5) \"--\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "admin-console": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "adm-avatar: 2.96 (needs 4.5) \"F\"",
+          "adm-drawer-avatar: 2.96 (needs 4.5) \"F\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [
+          "adm-avatar: 2.96 (needs 4.5) \"F\"",
+          "adm-drawer-avatar: 2.96 (needs 4.5) \"F\""
+        ],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "usage": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "licensing": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "access-requests": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    },
+    "identity-console": {
+      "390-light": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "390-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      },
+      "1440-dark": {
+        "overflow": 0,
+        "wide": [],
+        "low": [],
+        "locked": false,
+        "errors": [],
+        "failed": []
+      }
+    }
+  },
+  "finishedAt": "2026-11-12T03:33:34.108Z"
+}

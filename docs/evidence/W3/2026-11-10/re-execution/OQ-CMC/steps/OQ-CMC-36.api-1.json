@@ -5,11 +5,11 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "OQ-008 Q1E within 20261110130629",
+      "name": "OQ-008 Q1E within 20261112003432",
       "productName": "Q1E-within",
       "programType": "ind",
       "productType": "drug",
-      "applicationNumber": "7706296",
+      "applicationNumber": "7734326",
       "primaryAgency": "FDA",
       "priority": "high",
       "indication": "Q1E verdict"
@@ -18,21 +18,21 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 210,
+    "durationMs": 162,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "1d4ad7ec-2efd-4a40-9af4-b64fa5299d5c",
-        "title": "OQ-008 Q1E within 20261110130629",
+        "id": "7b6a70be-a800-4013-80ad-b52a0b6626e4",
+        "title": "OQ-008 Q1E within 20261112003432",
         "ws": "Biotech",
         "pathway": "ind",
-        "code": "OQ-008-3YOJ",
+        "code": "OQ-008-6IND",
         "stage": "Planning",
         "status": "active",
         "lead": "oq-runner@validation.local",
         "due": "—",
         "due_date": null,
-        "activity": "Updated Nov 10",
+        "activity": "Updated Nov 12",
         "client_workspace_id": 2,
         "client_name": "Concept2Cure Therapeutics",
         "description": null,
@@ -43,9 +43,9 @@
         "readinessState": "measured"
       },
       "program": {
-        "id": "1d4ad7ec-2efd-4a40-9af4-b64fa5299d5c",
-        "code": "OQ-008-3YOJ",
-        "name": "OQ-008 Q1E within 20261110130629",
+        "id": "7b6a70be-a800-4013-80ad-b52a0b6626e4",
+        "code": "OQ-008-6IND",
+        "name": "OQ-008 Q1E within 20261112003432",
         "program_type": "ind",
         "status": "active",
         "phase": "planning",
@@ -63,9 +63,9 @@
         "approval_date": null,
         "lead_user_id": 1,
         "team_members": [],
-        "created_at": "2026-11-10T13:26:01.554Z",
-        "updated_at": "2026-11-10T13:26:01.554Z",
-        "application_number": "7706296",
+        "created_at": "2026-11-12T00:55:31.559Z",
+        "updated_at": "2026-11-12T00:55:31.559Z",
+        "application_number": "7734326",
         "product_type": "drug",
         "device_class": null,
         "regulatory_path": null,
@@ -82,7 +82,7 @@
         "device_flags": null,
         "readiness": 0,
         "readinessState": "measured",
-        "readinessAsOf": "2026-11-10T13:26:01.717Z"
+        "readinessAsOf": "2026-11-12T00:55:31.683Z"
       },
       "meta": {
         "created": true,
@@ -90,7 +90,7 @@
         "actorUserId": 1,
         "clientWorkspaceId": 2,
         "clientWorkspaceName": "Concept2Cure Therapeutics",
-        "documentId": "doc_f67407e59e724190a6f243e2001b9030",
+        "documentId": "doc_d9f30a0f255a4650b8d7d568a55df3f9",
         "scaffoldedSections": 92,
         "marketSupport": {
           "tier": "build_and_sequence",
@@ -101,9 +101,9 @@
             "US_IND_AMENDMENT"
           ]
         },
-        "submissionId": 91,
+        "submissionId": 106,
         "submissionCreated": true,
-        "projectAnchorId": 86,
+        "projectAnchorId": 101,
         "projectAnchorCreated": true
       }
     }

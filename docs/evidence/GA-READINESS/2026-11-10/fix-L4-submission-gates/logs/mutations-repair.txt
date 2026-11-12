@@ -1,0 +1,16 @@
+R1 (verifier V2) rule-set note pushed before the counts -> KILLED Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True
+R2 rule-set note pushed twice -> KILLED Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True
+R3 (verifier V5) rp.deleted_at IS NULL dropped -> KILLED Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True
+R4 (verifier V6) FORM_CODES guard dropped -> KILLED Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True
+R5 (verifier V6b) FORMS_HEADING guard dropped -> SURVIVED Tests  7 passed (7)
+  sha256 restored True
+R6 (verifier V10) unprovisioned rethrown -> KILLED Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True
+R7 placeVaultLeaf ownership check dropped -> KILLED Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True
+R8 placeVaultLeaf never called -> KILLED Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+  sha256 restored True

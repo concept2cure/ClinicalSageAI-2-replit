@@ -631,6 +631,12 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',
+      /* 2026-11-12 (P-122 inventory B5, Plan: R1): the ICH Q6A/Q6B specification test sets, read under the
+         specification table (CmSpecReference in surfaces/cmcSpecReference.tsx). Claimed at the one route the
+         screen calls; the rest of '/api/global-ri' stays with the locked Global RI screen, so production still
+         refuses it. The route is a reference with no tenant data: it reads no record, takes a product type and a
+         dosage form, and needs a signed-in author role (server/routes/global-ri/cmc.routes.ts). */
+      '/api/global-ri/cmc/specifications',
       // Deferred UI caller; the route itself refuses when launch scope is on.
       '/api/cmc/variations/classify',
       /* 2026-11-10 (P-122, Plan: R1): the same deferred assessment records the

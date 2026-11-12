@@ -107,10 +107,18 @@ const MAX: Record<GradeCriterion, number> = {
 
 const SHA256_RE = /^[0-9a-f]{64}$/i;
 
+/** The item is a Vault document read into the catalog (data-room-vault.ts), not a capture: the same facts, in the Vault's words. */
+const VAULT_ORIGIN = 'vault_filing';
+const inVault = (f: DataRoomGradeFacts): boolean => f.origin === VAULT_ORIGIN;
+
 function provenance(f: DataRoomGradeFacts): GradeBasisLine {
   const hash = Boolean(f.checksum && SHA256_RE.test(f.checksum.trim()));
   const points = (hash ? 10 : 0) + (f.capturedBy !== null ? 5 : 0) + (f.origin ? 5 : 0);
-  const said = [
+  const said = inVault(f) ? [
+    hash ? 'SHA-256 recorded when it was added to Vault' : 'no SHA-256 recorded',
+    f.capturedBy !== null ? 'who added it is recorded' : 'who added it is not recorded',
+    'filed in Vault',
+  ] : [
     hash ? 'SHA-256 recorded at capture' : 'no SHA-256 recorded',
     f.capturedBy !== null ? 'who captured it is recorded' : 'who captured it is not recorded',
     f.origin ? `arrived by ${f.origin.replace(/_/g, ' ')}` : 'how it arrived is not recorded',
@@ -127,7 +135,7 @@ function integrity(f: DataRoomGradeFacts): GradeBasisLine {
   }
   let points = f.originalFileAvailable ? 10 : 0;
   const said = [f.originalFileAvailable ? 'original bytes held' : 'original bytes not available'];
-  if (f.filed) { points += 5; said.push('the same bytes are filed in Vault'); }
+  if (f.filed) { points += 5; said.push(inVault(f) ? 'held under the Vault’s controls' : 'the same bytes are filed in Vault'); }
   else said.push('not filed in Vault');
   if (f.fixity === 'verified') { points += 5; said.push('fixity proven'); }
   else if (f.fixity) said.push(`last fixity check: ${f.fixity}`);
@@ -137,7 +145,7 @@ function integrity(f: DataRoomGradeFacts): GradeBasisLine {
 
 function currency(f: DataRoomGradeFacts): GradeBasisLine {
   return f.isCurrent
-    ? { criterion: 'currency', points: MAX.currency, max: MAX.currency, detail: 'Current: no later capture replaced it.' }
+    ? { criterion: 'currency', points: MAX.currency, max: MAX.currency, detail: inVault(f) ? 'Current: no later version replaced it.' : 'Current: no later capture replaced it.' }
     : { criterion: 'currency', points: 0, max: MAX.currency, detail: 'Superseded by a later capture.' };
 }
 

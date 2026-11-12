@@ -32,6 +32,7 @@ import { readSubmissionPackageIdentity, packageIdentityRefusal, dryRunPackageIde
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
 import { FdaSubmissionIdentityRefusal } from './sequence-spine-fda-identity';
+import { ValidationError } from '../submission-gateways/types';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
 import { toPackagerRegion, type LeafFileResolver } from './core-to-packager';
@@ -210,10 +211,38 @@ export class EctdAssemblyBlockedError extends Error {
   constructor(
     message: string,
     public readonly auditTrail: AuditRowOutcome,
+    /** The packager's findings, when the packager refused (a ValidationError). */
+    public readonly findings?: unknown[],
   ) {
     super(message);
     this.name = 'EctdAssemblyBlockedError';
   }
+}
+
+/**
+ * The publisher refused the sequence: an FDA submission-id that cannot be
+ * declared truthfully (sequence-spine-fda-identity.ts, 2026-10-29), or a
+ * filing rule the packager states in full as a ValidationError (FDA 1789, a
+ * broken cross-reference, a sequence that is not four digits, ...). Either is
+ * a refusal, recorded as one, never an outage.
+ * 2026-11-12 (rehearsal B2, lane W2-assembly-refusal): only the identity
+ * refusal was converted, so the packager's own refusals reached
+ * POST /api/submissions/sequences/:id/assemble as a 500 "Request failed.",
+ * with no ECTD_ASSEMBLE_BLOCKED row. Anything else passes through unchanged.
+ */
+async function refusedByPublisher(
+  err: unknown,
+  ctx: { organizationId: number; userId: number; sequenceId: number },
+): Promise<never> {
+  let details: Record<string, unknown>;
+  if (err instanceof FdaSubmissionIdentityRefusal) details = { reason: 'fda_submission_identity', code: err.code };
+  else if (err instanceof ValidationError) details = { reason: 'package_validation', findings: err.findings.length };
+  else throw err;
+  const auditTrail = await recordAuditRow({
+    organizationId: ctx.organizationId, userId: ctx.userId, action: 'ECTD_ASSEMBLE_BLOCKED',
+    resourceType: 'ectd_sequence', resourceId: ctx.sequenceId, details,
+  });
+  throw new EctdAssemblyBlockedError(err.message, auditTrail, err instanceof ValidationError ? err.findings : undefined);
 }
 
 async function assertLeafPathsSafe(
@@ -324,9 +353,8 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId, leaf.documentUuid)) ?? null;
   };
 
-  // 4. Drive the real publisher off the canonical core. A sequence whose FDA
-  //    submission-id cannot be declared truthfully is a refusal, recorded as
-  //    one (sequence-spine-fda-identity.ts, 2026-10-29).
+  // 4. Drive the real publisher off the canonical core. A sequence the
+  //    publisher refuses is a refusal, recorded as one (refusedByPublisher).
   const result = await packageSequenceFromCore({
     sequenceId,
     organizationId,
@@ -340,14 +368,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     resolveFile,
     emitUnzipped: params.emitUnzipped,
     priorState: params.priorState,
-  }).catch(async (err: unknown) => {
-    if (!(err instanceof FdaSubmissionIdentityRefusal)) throw err;
-    const auditTrail = await recordAuditRow({
-      organizationId, userId, action: 'ECTD_ASSEMBLE_BLOCKED', resourceType: 'ectd_sequence', resourceId: sequenceId,
-      details: { reason: 'fda_submission_identity', code: err.code },
-    });
-    throw new EctdAssemblyBlockedError(err.message, auditTrail);
-  });
+  }).catch((err: unknown) => refusedByPublisher(err, { organizationId, userId, sequenceId }));
 
   if (unresolvedLeaves.length > 0) {
     logger.warn('Assemble dropped no leaf silently, but some sources could not be materialized', {

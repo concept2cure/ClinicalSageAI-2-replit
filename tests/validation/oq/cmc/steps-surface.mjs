@@ -8,9 +8,11 @@
 import { step, state, BROWSERLESS } from './context.mjs';
 import { requireSigner } from '../../lib/credentials.mjs';
 import { serverIsDevelopment } from '../../lib/harness.mjs';
-import { completeUnapprovedKey, dataOf, errCode, errDetail, postAsSigner, runReauth } from './signed-acts.mjs';
+import { approveSection, completeUnapprovedKey, dataOf, errCode, errDetail, postAsSigner, runReauth } from './signed-acts.mjs';
 import { FILING_STEPS } from './steps-filing.mjs';
-import { module3RequirementFindings } from './complete-programme.mjs';
+import {
+  everySectionUnchanged, gateNamesStaleSections, module3RequirementFindings, releaseClears, sectionsOwingApproval,
+} from './complete-programme.mjs';
 
 await step(
   {
@@ -79,43 +81,86 @@ await step(
   },
 );
 
+/**
+ * The product's shelf life changes (OQ-CMC-27): approved sections that cite the study go stale and the gate refuses;
+ * after the compile, what lost its approval is approved again and the gate passes. Returns the gate's answer while
+ * the sections were stale, and the sections re-approved.
+ */
+async function changeShelfLifeAndReapprove(ctx, signer, { projectId, records }) {
+  const { api, expect } = ctx;
+  const gate = () => api('POST', `/api/cmc/module3-os/guard/final-export/${projectId}`, {});
+  const edit = await api('PUT', `/api/cmc/stability-studies/${records.stabilityDrugProduct}`, {
+    shelfLife: '18 months when stored at or below 25 C', reason: 'Shelf life shortened after the 18-month time point.',
+  });
+  expect(edit.status === 200, `the shelf-life edit expected 200, got ${edit.status}`, edit.json);
+  const staleGate = await gate();
+  expect(gateNamesStaleSections(staleGate), `the gate with approved sections made stale expected 409 naming them, got ${staleGate.status}`, staleGate.json);
+  const compile = await api('POST', `/api/cmc/module3-os/compile/${projectId}`, {});
+  expect(compile.status === 200, `the compile expected 200, got ${compile.status}`, compile.json);
+  const owed = await sectionsOwingApproval(api, projectId);
+  expect(owed.length >= 1, 'the edit left every section approved after the compile', owed);
+  const unapproved = await gate();
+  expect(unapproved.status === 409, `the gate with ${owed.length} section(s) to re-approve expected 409, got ${unapproved.status}`, unapproved.json);
+  for (const key of owed) {
+    const r = await approveSection(ctx, signer, { projectId, sectionKey: key, reason: `Section ${key} re-approved after the shelf life changed.` });
+    expect(r.status === 200, `the re-approval of ${key} expected 200, got ${r.status}`, r.json);
+  }
+  const clear = await gate();
+  expect(clear.status === 200, `the gate after re-approval expected 200, got ${clear.status}`, clear.json);
+  const d = staleGate.json.data;
+  return { owed, staleGate: { status: staleGate.status, error: staleGate.json.error, staleSections: d.staleSections, driftedApprovedSections: d.driftedApprovedSections } };
+}
+
 await step(
   {
     id: 'OQ-CMC-27',
     urs: ['URS-CMC-017'],
     title: 'A release signature covers the manifest that would be transmitted',
-    action: 'as the signer, sign the second programme’s sequence for dispatch; read the release verdict; place Module 3 again; read the verdict again',
-    expected: 'signed and bound to the current leaf manifest; after the placement the signature no longer clears the sequence, and the verdict says to sign the current content',
+    action: 'as the signer, sign the second programme’s sequence for dispatch; place Module 3 again unchanged; then change the product’s shelf life, read the gate, compile, re-approve what lost its approval, and place; read the release verdict at each point',
+    expected: 'signed and bound to the current leaf manifest; an unchanged placement leaves it clearing; the edit makes approved sections stale and the gate refuses until they are re-approved; once the changed section is placed the signature no longer clears the sequence, and the verdict says to sign the current content',
     dependsOn: ['OQ-CMC-19'],
-    note: 'v0.13: executed for the first time. Until v0.12 the step posted to /api/submissions/sequences/:id/sign-release, which is no route; a sequence\'s release is a governed signature (POST /api/c2c/actions/sign, intent `dispatch`), as the Submission Center signs it.',
+    note: 'v0.13: executed for the first time; until v0.12 the step posted to /api/submissions/sequences/:id/sign-release, which is no route (a release is a governed signature, POST /api/c2c/actions/sign, intent `dispatch`). v0.14: the content is changed the way a programme changes it. In v0.13 the step placed the same Module 3 again, which then rewrote every filing document; since the 2026-11-11 repair an unchanged placement writes nothing, and the step asserts that too. The gate\'s answer with approved sections made stale is attached (URS-CMC-010\'s stale case).',
   },
   async (ctx) => {
     const { api, expect, attach } = ctx;
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const { projectId, submissionId, sequenceId } = state.complete;
-    const release = async () => {
-      const r = await api('GET', `/api/submissions/sequences/${sequenceId}/dispatch-readiness`);
-      expect(r.status === 200, `the readiness read expected 200, got ${r.status}`, r.json);
-      return r.json?.releaseSignature ?? {};
-    };
+    const release = async () => (await api('GET', `/api/submissions/sequences/${sequenceId}/dispatch-readiness`)).json.releaseSignature;
+    const place = (reason) => postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${projectId}`, { submissionId, sequenceId, reason });
+
     const unsigned = await release();
     expect(unsigned.cleared === false, 'the sequence read as released before anyone signed it', unsigned);
     const sign = await postAsSigner(ctx, signer, '/api/c2c/actions/sign', {
       target: `ectd-sequence:${sequenceId}`, reason: 'Releasing sequence 0001 for transmission.', payload: { intent: 'dispatch', meaning: 'approval' },
     });
-    expect(sign.status === 200 && sign.json?.state === 'executed', `the release signature expected 200 executed, got ${sign.status} ${sign.json?.state}`, sign.json);
+    expect(sign.status === 200, `the release signature expected 200, got ${sign.status}`, sign.json);
     const signed = await release();
-    expect(signed.cleared === true && signed.verdict === 'signed', `the signed sequence expected a clearing release, got ${signed.verdict}`, signed);
+    expect(releaseClears(signed), `the signed sequence expected a clearing release, got ${signed.verdict}`, signed);
 
-    const placed = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${projectId}`, {
-      submissionId, sequenceId, reason: 'Placing Module 3 again after the release was signed.',
-    });
-    expect(placed.status === 200, `the further placement expected 200, got ${placed.status}`, placed.json);
+    // The same Module 3 placed again: nothing is written, so the signature still covers the sequence.
+    const same = await place('Placing Module 3 again; nothing has changed.');
+    expect(everySectionUnchanged(same), 'an unchanged placement was not reported unchanged for every section', same.json);
+    const afterSame = await release();
+    expect(releaseClears(afterSame), `an unchanged placement stopped the signature clearing the sequence (${afterSame.verdict})`, afterSame);
+    expect(afterSame.signatureId === signed.signatureId, 'the release rests on another signature after an unchanged placement', afterSame);
+
+    // A real change, re-approved, then placed: the signed manifest is no longer the sequence's.
+    const { owed, staleGate } = await changeShelfLifeAndReapprove(ctx, signer, state.complete);
+    const placed = await place('Placing the revised Module 3 after the shelf life changed.');
+    expect(placed.status === 200, `the placement of changed content expected 200, got ${placed.status}`, placed.json);
+    const rows = dataOf(placed).placements;
+    const refiled = rows.filter((x) => x.updatedInPlace).map((x) => x.sectionKey);
+    expect(refiled.length >= 1, 'the placement of changed content filed no section again', placed.json);
     const after = await release();
-    attach('release-signature.json', { unsigned, signed, afterFurtherPlacement: after });
-    expect(after.cleared === false && after.verdict !== 'signed', `the signature still clears the sequence after its content changed (${after.verdict})`, after);
-    expect(/sign/i.test(String(after.detail ?? '')), 'the verdict does not say to sign the current content', after);
-    return `unsigned; signed and bound to the current leaf manifest (signature ${signed.signatureId}); after a further placement: ${after.verdict}, not cleared — ${after.detail}`;
+    attach('release-signature.json', {
+      unsigned, signed, afterUnchangedPlacement: afterSame, afterChangedPlacement: after, refiled,
+      unchanged: rows.filter((x) => x.unchanged).length, gateWithStaleSections: staleGate, reapproved: owed,
+    });
+    expect(!releaseClears(after), `the signature still clears the sequence after its content changed (${after.verdict})`, after);
+    expect(/sign/i.test(String(after.detail)), 'the verdict does not say to sign the current content', after);
+    return `signed and bound to the current leaf manifest (signature ${signed.signatureId}); an unchanged placement left it clearing; the shelf-life edit made ` +
+      `${staleGate.staleSections} approved section(s) stale and the gate 409; ${owed.join(', ')} re-approved, gate 200; ${refiled.join(', ')} filed again; ` +
+      `then: ${after.verdict}, not cleared — ${after.detail}`;
   },
 );
 

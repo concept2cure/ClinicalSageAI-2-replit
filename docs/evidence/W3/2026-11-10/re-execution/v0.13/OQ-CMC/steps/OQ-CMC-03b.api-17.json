@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/qc-testing",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sampleId": "QC-DP-20261110130629",
+      "sampleType": "finished-product",
+      "testMethod": "RP-HPLC Assay",
+      "testResults": {
+        "assay": {
+          "value": 99.1,
+          "unit": "%"
+        }
+      },
+      "testDate": "2026-02-15T00:00:00.000Z",
+      "batchNumber": "P2-20261110130629",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 4,
+        "organizationId": 2,
+        "sampleId": "QC-DP-20261110130629",
+        "batchNumber": "P2-20261110130629",
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "sampleType": "finished-product",
+        "testMethod": "RP-HPLC Assay",
+        "testResults": {
+          "assay": {
+            "value": 99.1,
+            "unit": "%"
+          }
+        },
+        "specifications": null,
+        "passFailStatus": null,
+        "certificateOfAnalysis": null,
+        "analyst": null,
+        "reviewedBy": null,
+        "testDate": "2026-02-15T00:00:00.000Z",
+        "releaseDate": null,
+        "createdAt": "2026-11-10T13:06:40.417Z",
+        "updatedAt": "2026-11-10T13:06:40.417Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

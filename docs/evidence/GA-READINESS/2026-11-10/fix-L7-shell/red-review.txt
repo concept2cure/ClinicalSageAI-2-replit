@@ -1,0 +1,1659 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with a review you were named for listed, the claim narrows to the editor queue 5112ms
+   → Unable to find an element with the text: No document from the editor is in this queue. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rv-scopes"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Show reviews"[39m
+          [33mclass[39m=[32m"seg"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mAwaiting my review[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mRequested by me[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+            [33mdata-on[39m=[32m"true"[39m
+          [36m>[39m
+            [0mAll open[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNothing is in review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Reviews you were named for"[39m
+        [33mstyle[39m=[32m"margin-top: 20px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr-seclbl"[39m
+          [33mstyle[39m=[32m"padding: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mReviews you were named for · [0m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"split"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"split-list"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"lrow"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"lrow-top"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mround [0m
+                  [0m1[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"lrow-title"[39m
+              [36m>[39m
+                [0mLane L7-shell 510(k) Summary[0m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Review threads assigned to you"[39m
+        [33mstyle[39m=[32m"margin-top: 20px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-sec-h"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mThreads and change requests assigned to you[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sec-sub"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m thread[0m
+            [0ms[0m
+            [0m · [0m
+            [0m0[0m
+            [0m task[0m
+            [0ms[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo review threads are waiting on you[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mThe review board[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rv-scopes"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Show reviews"[39m
+            [33mclass[39m=[32m"seg"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mAwaiting my review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mRequested by me[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+              [33mdata-on[39m=[32m"true"[39m
+            [36m>[39m
+              [0mAll open[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNothing is in review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Reviews you were named for"[39m
+          [33mstyle[39m=[32m"margin-top: 20px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr-seclbl"[39m
+            [33mstyle[39m=[32m"padding: 0px 0px 8px;"[39m
+          [36m>[39m
+            [0mReviews you were named for · [0m
+            [0m1[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"split"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"split-list"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"lrow"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"lrow-top"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"mono"[39m
+                  [36m>[39m
+                    [0mround [0m
+                    [0m1[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"lrow-title"[39m
+                [36m>[39m
+                  [0mLane L7-shell 510(k) Summary[0m
+                [36m</div>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Review threads assigned to you"[39m
+          [33mstyle[39m=[32m"margin-top: 20px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-sec-h"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mThreads and change requests assigned to you[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m thread[0m
+              [0ms[0m
+              [0m · [0m
+              [0m0[0m
+              [0m task[0m
+              [0ms[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo review threads are waiting on you[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with that list unread, it does not claim nothing is in review 5031ms
+   → Unable to find an element with the text: No document from the editor is in this queue. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rv-scopes"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Show reviews"[39m
+          [33mclass[39m=[32m"seg"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mAwaiting my review[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mRequested by me[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+            [33mdata-on[39m=[32m"true"[39m
+          [36m>[39m
+            [0mAll open[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNothing is in review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't read your review requests[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Review threads assigned to you"[39m
+        [33mstyle[39m=[32m"margin-top: 20px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-sec-h"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mThreads and change requests assigned to you[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sec-sub"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m thread[0m
+            [0ms[0m
+            [0m · [0m
+            [0m0[0m
+            [0m task[0m
+            [0ms[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo review threads are waiting on you[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mThe review board[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rv-scopes"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Show reviews"[39m
+            [33mclass[39m=[32m"seg"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mAwaiting my review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mRequested by me[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+              [33mdata-on[39m=[32m"true"[39m
+            [36m>[39m
+              [0mAll open[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNothing is in review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"assertive"[39m
+          [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-error-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-t"[39m
+            [36m>[39m
+              [0mCouldn't read your review requests[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Review threads assigned to you"[39m
+          [33mstyle[39m=[32m"margin-top: 20px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-sec-h"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mThreads and change requests assigned to you[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m thread[0m
+              [0ms[0m
+              [0m · [0m
+              [0m0[0m
+              [0m task[0m
+              [0ms[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo review threads are waiting on you[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with nothing named and nothing on the board, it still says nothing is in review 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with a review you were named for listed, the claim narrows to the editor queue
+TestingLibraryElementError: Unable to find an element with the text: No document from the editor is in this queue. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rv-scopes"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Show reviews"[39m
+          [33mclass[39m=[32m"seg"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mAwaiting my review[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mRequested by me[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+            [33mdata-on[39m=[32m"true"[39m
+          [36m>[39m
+            [0mAll open[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNothing is in review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Reviews you were named for"[39m
+        [33mstyle[39m=[32m"margin-top: 20px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr-seclbl"[39m
+          [33mstyle[39m=[32m"padding: 0px 0px 8px;"[39m
+        [36m>[39m
+          [0mReviews you were named for · [0m
+          [0m1[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"split"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"split-list"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"lrow"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"lrow-top"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mround [0m
+                  [0m1[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"lrow-title"[39m
+              [36m>[39m
+                [0mLane L7-shell 510(k) Summary[0m
+              [36m</div>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Review threads assigned to you"[39m
+        [33mstyle[39m=[32m"margin-top: 20px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-sec-h"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mThreads and change requests assigned to you[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sec-sub"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m thread[0m
+            [0ms[0m
+            [0m · [0m
+            [0m0[0m
+            [0m task[0m
+            [0ms[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo review threads are waiting on you[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mThe review board[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rv-scopes"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Show reviews"[39m
+            [33mclass[39m=[32m"seg"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mAwaiting my review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mRequested by me[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+              [33mdata-on[39m=[32m"true"[39m
+            [36m>[39m
+              [0mAll open[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNothing is in review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Reviews you were named for"[39m
+          [33mstyle[39m=[32m"margin-top: 20px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr-seclbl"[39m
+            [33mstyle[39m=[32m"padding: 0px 0px 8px;"[39m
+          [36m>[39m
+            [0mReviews you were named for · [0m
+            [0m1[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"split"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"split-list"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"lrow"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"lrow-top"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"mono"[39m
+                  [36m>[39m
+                    [0mround [0m
+                    [0m1[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"lrow-title"[39m
+                [36m>[39m
+                  [0mLane L7-shell 510(k) Summary[0m
+                [36m</div>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Review threads assigned to you"[39m
+          [33mstyle[39m=[32m"margin-top: 20px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-sec-h"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mThreads and change requests assigned to you[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m thread[0m
+              [0ms[0m
+              [0m · [0m
+              [0m0[0m
+              [0m task[0m
+              [0ms[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo review threads are waiting on you[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx:59:11
+     57|     render(<Review {...props()} />);
+     58|     expect(await screen.findByText('Lane L7-shell 510(k) Summary')).to…
+     59|     await waitFor(() => expect(screen.getByText('No document from the …
+       |           ^
+     60|     expect(screen.queryByText('Nothing is in review')).toBeNull();
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx > the board does not say nothing is in review above named reviews (GA-UI-05) > with that list unread, it does not claim nothing is in review
+TestingLibraryElementError: Unable to find an element with the text: No document from the editor is in this queue. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rv-scopes"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Show reviews"[39m
+          [33mclass[39m=[32m"seg"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mAwaiting my review[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+          [36m>[39m
+            [0mRequested by me[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"seg-b"[39m
+            [33mdata-on[39m=[32m"true"[39m
+          [36m>[39m
+            [0mAll open[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNothing is in review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"assertive"[39m
+        [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+        [33mrole[39m=[32m"alert"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-error-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 9v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 17h.01"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-error-body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-t"[39m
+          [36m>[39m
+            [0mCouldn't read your review requests[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Review threads assigned to you"[39m
+        [33mstyle[39m=[32m"margin-top: 20px;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-sec-h"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mThreads and change requests assigned to you[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sec-sub"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m thread[0m
+            [0ms[0m
+            [0m · [0m
+            [0m0[0m
+            [0m task[0m
+            [0ms[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-message-square"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo review threads are waiting on you[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mThe review board[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rv-scopes"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Show reviews"[39m
+            [33mclass[39m=[32m"seg"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mAwaiting my review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+            [36m>[39m
+              [0mRequested by me[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"seg-b"[39m
+              [33mdata-on[39m=[32m"true"[39m
+            [36m>[39m
+              [0mAll open[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNothing is in review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mWhen a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"assertive"[39m
+          [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-error-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-t"[39m
+            [36m>[39m
+              [0mCouldn't read your review requests[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Review threads assigned to you"[39m
+          [33mstyle[39m=[32m"margin-top: 20px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pj-sec-h"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mThreads and change requests assigned to you[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sec-sub"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m thread[0m
+              [0ms[0m
+              [0m · [0m
+              [0m0[0m
+              [0m task[0m
+              [0ms[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-message-square"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo review threads are waiting on you[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mWhen a colleague opens a thread or a change request against a document you review, it lands here — reply, request changes, or resolve it in place.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoardNamedReviews.test.tsx:67:11
+     65|     render(<Review {...props()} />);
+     66|     expect(await screen.findByText("Couldn't read your review requests…
+     67|     await waitFor(() => expect(screen.getByText('No document from the …
+       |           ^
+     68|     expect(screen.queryByText('Nothing is in review')).toBeNull();
+     69|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  12:42:07
+   Duration  12.85s (transform 1.25s, setup 194ms, import 1.59s, tests 10.17s, environment 658ms)
+

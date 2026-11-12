@@ -1,0 +1,90 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/team",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 144,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "3",
+          "userId": 3,
+          "name": "OQ Approver",
+          "email": "oq-approver@validation.local",
+          "role": "admin",
+          "title": null,
+          "department": null,
+          "avatar": null
+        },
+        {
+          "id": "6",
+          "userId": 6,
+          "name": "OQ Member",
+          "email": "oq-member@validation.local",
+          "role": "member",
+          "title": null,
+          "department": null,
+          "avatar": null
+        },
+        {
+          "id": "4",
+          "userId": 4,
+          "name": "OQ Platform",
+          "email": "oq-platform@validation.local",
+          "role": "member",
+          "title": null,
+          "department": null,
+          "avatar": null
+        },
+        {
+          "id": "2",
+          "userId": 2,
+          "name": "OQ Signer",
+          "email": "oq-signer@validation.local",
+          "role": "approver",
+          "title": null,
+          "department": null,
+          "avatar": null
+        },
+        {
+          "id": "5",
+          "userId": 5,
+          "name": "OQ Standing",
+          "email": "oq-standing@validation.local",
+          "role": "member",
+          "title": null,
+          "department": null,
+          "avatar": null
+        },
+        {
+          "id": "7",
+          "userId": 7,
+          "name": "OQ Viewer",
+          "email": "oq-viewer@validation.local",
+          "role": "viewer",
+          "title": null,
+          "department": null,
+          "avatar": null
+        },
+        {
+          "id": "1",
+          "userId": 1,
+          "name": "oq-runner@validation.local",
+          "email": "oq-runner@validation.local",
+          "role": "admin",
+          "title": null,
+          "department": null,
+          "avatar": null
+        }
+      ]
+    }
+  }
+}

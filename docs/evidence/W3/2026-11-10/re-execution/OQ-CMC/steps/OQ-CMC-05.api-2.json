@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/6270d978-aff3-43f0-ad87-1e6726350bf8",
+    "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/8655492d-c15c-4585-9ed2-6a645fc7c7f6",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -15,45 +15,45 @@
       "success": true,
       "data": [
         {
-          "sourceObjectId": "d51e1417-5a2c-43e9-ae4e-c82e37878ee5",
+          "sourceObjectId": "4184dd59-b68e-48b5-9344-5199cf4b2f80",
           "sourceType": "batch",
-          "sourceKey": "batch:9d97fa5b-5393-48f1-af3d-aa49e0130536",
-          "label": "batch B-20261110130629",
+          "sourceKey": "batch:2c35450c-02e7-40d3-a417-b28672a46e72",
+          "label": "batch B-20261112003432",
           "evidence": []
         },
         {
-          "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
+          "sourceObjectId": "96224eb0-0eda-4e4d-b5cc-6868d2b98132",
           "sourceType": "drug_product",
-          "sourceKey": "drug_product:15",
+          "sourceKey": "drug_product:20",
           "label": "drug product BX-701 5 mg film-coated tablet",
           "evidence": []
         },
         {
-          "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
+          "sourceObjectId": "af308a10-cb93-4dc2-9223-376d1e14ef7a",
           "sourceType": "drug_substance",
-          "sourceKey": "drug_substance:50",
+          "sourceKey": "drug_substance:63",
           "label": "drug substance BX-701",
           "evidence": []
         },
         {
-          "sourceObjectId": "be564b58-5dfb-4f9a-91da-ff7d72285535",
+          "sourceObjectId": "2b845480-6c3c-49ee-a690-51df52148124",
           "sourceType": "method",
-          "sourceKey": "method:17",
+          "sourceKey": "method:22",
           "label": "method RP-HPLC Assay",
           "evidence": []
         },
         {
-          "sourceObjectId": "f90535a2-ad9f-458e-9a18-bec9d917d0c1",
+          "sourceObjectId": "265c8e5e-6e01-48ac-b79e-34c2ecade920",
           "sourceType": "specification",
-          "sourceKey": "specification:ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+          "sourceKey": "specification:87b7e7c4-5c82-4941-97ea-5fbdf36fd699",
           "label": "specification BX-701",
           "evidence": []
         },
         {
-          "sourceObjectId": "407d0f6d-2f19-450d-a0b9-a77dd223c7b6",
+          "sourceObjectId": "a1c6185a-cd35-4e97-8178-b4134a67996d",
           "sourceType": "stability",
-          "sourceKey": "stability:64",
-          "label": "stability:64",
+          "sourceKey": "stability:82",
+          "label": "stability:82",
           "evidence": []
         }
       ]

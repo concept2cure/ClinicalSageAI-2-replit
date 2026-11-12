@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+    "url": "http://localhost:5200/api/cmc/stability-studies/95/close-out",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,7 +16,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 391,
+    "durationMs": 357,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

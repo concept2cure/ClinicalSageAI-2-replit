@@ -5,8 +5,8 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
-      "materialName": "OQ excipient 20261110130629b",
+      "projectId": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
+      "materialName": "OQ excipient 20261112003432b",
       "materialRole": "excipient",
       "grade": "USP"
     }
@@ -14,16 +14,16 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 34,
+    "durationMs": 31,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 15,
+        "id": 21,
         "organizationId": 2,
-        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "projectId": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
         "materialRole": "excipient",
-        "materialName": "OQ excipient 20261110130629b",
+        "materialName": "OQ excipient 20261112003432b",
         "functionInFormulation": null,
         "grade": "USP",
         "compendialMonograph": null,
@@ -38,8 +38,8 @@
         "novelExcipient": false,
         "novelExcipientJustification": null,
         "status": "draft",
-        "createdAt": "2026-11-10T13:26:22.244Z",
-        "updatedAt": "2026-11-10T13:26:22.244Z"
+        "createdAt": "2026-11-12T00:55:51.724Z",
+        "updatedAt": "2026-11-12T00:55:51.724Z"
       },
       "module3Linked": true
     }

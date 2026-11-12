@@ -1891,3 +1891,29 @@ Observations for the CMC owner (not dispositioned here):
 - Read from the code, not run: of the eight finding kinds the contradiction engine defines, the sweep can raise four.
   `impurity_exceedance`, `dissolution_failure` and `change_control_open` are not among the records it reads, and
   `comparability_risk` reads a column nothing writes (`cmc_comparability_assessments.regulatory_risk_level`).
+
+### 21.9 2026-11-12: OQ-008 v0.14, after the placement repair
+
+§21.8 recorded, for the CMC owner, that a repeat of an identical placement was not a no-op. It is repaired under F1
+(`server/services/cmc/place-module3-into-submission.ts`; `docs/evidence/F1/2026-11-12-ui-walk/`): a section whose
+leaf already files exactly the text the placement would file is left as it is. No document and no leaf is written,
+and a release signature made before the repeat still clears the sequence.
+
+OQ-008 was re-executed on the repaired code: **41 pass, 0 fail, 2 deviation, 0 not executed, of 43**, as in v0.13.
+The package totals and TM-001 are unchanged (175 / 0 / 6 / 0 of 181; 124 pass, 2 partial, 4 open, 2 uncovered).
+The v0.13 record is kept at `re-execution/v0.13/OQ-CMC/`.
+
+- **OQ-CMC-19** asserts the repeat writes nothing: 21 of 21 sections unchanged, each on its own filing document.
+- **OQ-CMC-27** changes the content the way a programme does. The product's shelf life is edited: two approved
+  sections go stale and the gate answers 409, counting and naming them. After the compile they are re-approved and
+  the gate passes. The changed section is filed again, the other twenty are unchanged, and the release signature no
+  longer clears the sequence. This is the last case OQ-CMC-18's row owed; URS-CMC-010 is now observed in all four.
+- Still owed by OQ-008's rows: clearance by a cross-referenced DMF with its Letter of Authorization (OQ-CMC-28).
+- The server ran at `31047492b7` with the repair applied and not yet committed. The execution for signature
+  (§21.7 item 1) is one run at one commit.
+
+Two further repairs from the same walk change what a compiled section says, and are not exercised by any OQ-008
+step: §3.2.P.3 no longer names a rejected batch as its representative batch or words a rejection as a release, and
+§3.1 names the drug substance from the substance record. The final-export gate now says of stale drafts that they
+need a compile, and "went stale after approval" only of approved sections.
+
