@@ -61,6 +61,42 @@ export interface VaultVersion {
   sectionCitations?: VaultSectionCitation[];
   /** Why this version would not be transmitted (the server's VR-14 rule, verbatim), or null. Absent when the server did not say. */
   transmitRefusal?: string | null;
+  /** Where its file was rendered from (LX-10), from the verified filing receipt; null for a native upload. Absent when the server did not say. */
+  renderedFrom?: VaultRenderedFrom | null;
+}
+
+/** As the server returns it (authoring-vault-filing-receipt.ts renderedFromOf). */
+export type VaultRenderedFrom =
+  | { authoringDocumentId: string; sealVersion?: string; sealContentHash?: string; sealUnverified?: string }
+  | { notEstablished: 'unverified' | 'unread' };
+
+/** Why a sealed document's filing named no seal, in words; the stored code is never shown. */
+const SEAL_NOT_NAMED: Record<string, string> = {
+  SOURCE_NOT_SEALED: 'no sealed record stood behind the document’s status when it was filed',
+  SOURCE_ALTERED_SINCE_SEAL: 'the sealed record was of other text than the text filed',
+  SOURCE_SEAL_INTEGRITY_FAILED: 'the sealed record did not match its own hash when it was filed',
+};
+
+/**
+ * Where a version's file was rendered from, as one clause of its line. A
+ * version filed from Authoring names the sealed version its filing recorded,
+ * so a reader can go from the Vault copy to what was signed. Until 2026-11-12
+ * the record showed the Authoring signatures and nothing of the seal.
+ */
+export function renderedFromText(from: VaultRenderedFrom | null | undefined): string {
+  if (!from) return '';
+  if ('notEstablished' in from) {
+    return from.notEstablished === 'unread'
+      ? ' · where this file was rendered from could not be read'
+      : ' · the record of where this file was rendered from did not verify';
+  }
+  if (from.sealVersion && from.sealContentHash) {
+    return ` · rendered from the Authoring document’s sealed version “${from.sealVersion}” (seal ${from.sealContentHash.slice(0, 12)})`;
+  }
+  if (from.sealUnverified) {
+    return ` · filed from Authoring; ${SEAL_NOT_NAMED[from.sealUnverified] ?? 'the sealed record did not cover the text filed'}`;
+  }
+  return ' · filed from Authoring';
 }
 
 /** An editor section whose live span lineage cites a version, as the server returns it (vault-where-used.ts). */
@@ -408,6 +444,12 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
             <span data-testid={`vault-version-estar-${v.id}`}>{estarText(v.estarUses)}</span>
             <span data-testid={`vault-version-cmc-${v.id}`}>{cmcEvidenceText(v.cmcEvidence)}</span>
             <span data-testid={`vault-version-sections-${v.id}`}>{sectionCitationText(v.sectionCitations)}</span>
+            <span
+              data-testid={`vault-version-rendered-${v.id}`}
+              title={v.renderedFrom && 'sealContentHash' in v.renderedFrom ? v.renderedFrom.sealContentHash : undefined}
+            >
+              {renderedFromText(v.renderedFrom)}
+            </span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <VersionRoute lifecycle={v.lifecycle} title={v.version ? `${title} v${v.version}` : title} current={v.current}

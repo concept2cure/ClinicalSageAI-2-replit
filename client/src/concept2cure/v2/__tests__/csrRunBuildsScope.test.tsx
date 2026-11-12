@@ -31,7 +31,7 @@ const PROGRAM_B = '11111111-2222-4333-8444-000000000002';
 const RUN_A = '8c9530a6-2a76-4189-a74d-2dbd4860a001';
 const RUN_B = '8c9530a6-2a76-4189-a74d-2dbd4860a002';
 const pathFor = (program: string, run: string) =>
-  `/api/csr/jobs?programId=${program}&runId=${run}`;
+  `/api/csr/jobs?programId=${program}&runId=${run}&documentId=11111111-2222-4333-8444-000000000009`;
 const job = (id: number, updatedAt = '2026-10-30T09:00:00.000Z') =>
   ({ jobId: id, studyId: `SYN-${id}`, status: 'complete', progress: 100, updatedAt });
 const heading = (label: string) =>

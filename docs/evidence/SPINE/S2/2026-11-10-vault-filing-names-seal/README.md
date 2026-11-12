@@ -71,3 +71,5 @@ are written in one transaction, so the state arises only from a legacy record or
   vocabulary.
 - `tests/db/*.dbtest.ts` (real PostgreSQL) were not run here.
 - Not walked in the running app. The change adds fields to a record; no screen reads them yet.
+  *2026-11-12:* the Vault's version line reads them, and was used in the running app
+  (`docs/evidence/F1/2026-11-12-ui-walk/README.md`, "Screen repairs, the document path").

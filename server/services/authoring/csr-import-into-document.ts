@@ -94,13 +94,33 @@ async function requireStudyDataBinding(q: Queryable, tenantId: number, programId
   if (!rows.length) fail(409, 'IMPORT_TARGET_STUDY_DATA_MISMATCH', 'This build was not drafted from the study data this document froze. Import it into the document whose study data it was built on. Nothing was imported.');
 }
 
-/** The headings this build already wrote into the document; a build that is not this one refuses the import. */
-async function earlierImports(q: Queryable, tenantId: number, documentId: string, jobId: number): Promise<string[]> {
+/** Each heading a CSR build wrote into this document, with its build: the import's own audit rows. */
+async function buildImportRows(q: Queryable, tenantId: number, documentId: string): Promise<Array<{ job_id: string; code: string | null }>> {
   const { rows } = await q.query(`SELECT DISTINCT metadata->'csrBuildImport'->>'jobId' AS job_id, metadata->'csrBuildImport'->>'sectionNumber' AS code
       FROM authoring_audit_trail WHERE doc_id = $1 AND tenant_id = $2 AND operation_type IN ('UPDATE', 'CSR_IMPORT') AND metadata ? 'csrBuildImport'`, [documentId, tenantId]);
-  const other = (rows as Array<{ job_id: string; code: string | null }>).find(row => row.job_id !== String(jobId));
+  return rows as Array<{ job_id: string; code: string | null }>;
+}
+
+/** The headings this build already wrote into the document; a build that is not this one refuses the import. */
+async function earlierImports(q: Queryable, tenantId: number, documentId: string, jobId: number): Promise<string[]> {
+  const rows = await buildImportRows(q, tenantId, documentId);
+  const other = rows.find(row => row.job_id !== String(jobId));
   if (other) fail(409, 'IMPORT_TARGET_BOUND_TO_OTHER_BUILD', `This document holds sections imported from CSR build ${other.job_id}. A document takes its imported sections from one build. Nothing was imported.`);
-  return (rows as Array<{ code: string | null }>).map(row => row.code).filter((code): code is string => typeof code === 'string');
+  return rows.map(row => row.code).filter((code): code is string => typeof code === 'string');
+}
+
+/**
+ * The build this document holds imported sections from, or null when it holds none (2026-11-12). The same rows
+ * the import refuses a second build by, read for the build section of the CSR document (csr-jobs.ts GET /), which
+ * opened on the newest build: a person reviewed that build's headings and was refused at the import, after the
+ * work. A document outside this organization or this project answers null, as one that holds no import does.
+ */
+export async function csrBuildOfDocument(q: Queryable, tenantId: number, programId: string, documentId: string): Promise<number | null> {
+  const { rows } = await q.query('SELECT client_program_id::text AS program_id FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [documentId, tenantId]);
+  const owner = rows[0] as { program_id: string | null } | undefined;
+  if (!owner || String(owner.program_id ?? '').toLowerCase() !== programId.toLowerCase()) return null;
+  const builds = [...new Set((await buildImportRows(q, tenantId, documentId)).map(row => Number(row.job_id)))];
+  return builds.length === 1 && Number.isSafeInteger(builds[0]) && builds[0] > 0 ? builds[0] : null;
 }
 
 /** The request's approved headings, plus every heading this build already wrote here, so one origin covers them all. */

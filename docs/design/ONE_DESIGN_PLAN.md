@@ -1488,6 +1488,36 @@ founder's permission, P-100; decisions in P-124).
 4. **Admission**: the Vault app gains the `etmf` surface as a professional-tier module, and the held change is
    applied.
 
+**2026-11-11 and 2026-11-12: the Vault shows the work** (the founder, 2026-11-11: "focus entirely on getting what we
+built surfaces correctly on the UI and working for GA"; P-122, P-125). Session `…01KnUGoX3g`, under P-100. Each was
+measured or used in the running app on PostgreSQL, red first; evidence under `docs/evidence/SPINE/S6/2026-11-1*`.
+
+- **Names are read whole** (F1, `2ac13d961e`). At 1440px the Library cut 102 of 118 folder names, 6 of 10 document
+  titles and 5 of 10 field lines to an ellipsis. They wrap, and on a wide screen the Vault's page grows to 1520px.
+  After: none cut at 1280, 1440, 1920 or 390px.
+- **Required documents names each section** (F1, `5c45ed2100`). The view listed what a filing owes by number alone
+  ("1.12.14 No confirmed document"). It now says the heading's name from the filing's outline: 33 of 33 on the
+  demo's IND. Where the outline has no heading, the number alone; no name is made up.
+- **A document is read from its record** (F1, `fd60d97c87`, `b58a2c421c`). The viewer existed and was reached only
+  inside the record's closed Versions section, 328px wide. The record offers View (a PDF) or View as PDF (a Word
+  file's rendition) beside Download, and the same viewer opens in a drawer 1040px wide. Same audited route, same
+  bytes rule.
+- **"Place legal hold" is on the record** (F1, `5319818bad`; P-125 point 8, handed to this lane). For everyone the
+  hold routes admit: the routes' rule is one exported function (`mayManageLegalHolds`), and the Vault read reports
+  it. Lifting, and a project-wide hold, stay in Admin › Settings.
+- **Documents are on the Library's first screen** (F1, `9d80501d23`). The search and the six filters moved, as they
+  are, into a bar across the tree and the list. At 1440 by 900 two documents are wholly visible where none was.
+
+Left open on the Vault's screens, none started: at 1280 by 800 the Library's first document still begins below the
+window; lifting a hold from the record (the notice carries no hold id); the dark theme was not re-checked for these
+changes.
+
+**E4, where it stands.** Steps 1 and 2 were started on 2026-11-11 by two agents that a usage limit cut off. Their
+unfinished edits were not committed and are not in the tree. E4 remains this lane's and is next after the screens
+above, by the plan named above. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+`classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
+`code: null` stands.
+
 #### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
 
 Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just
@@ -1799,6 +1829,15 @@ screens, signed in as real people, on PostgreSQL: `docs/evidence/F1/2026-11-12-u
   are in COORDINATION.
 - **For the founder:** whether the independent checks are required before a review approval (the reviewer's screen
   calls them optional; once run they block); a document edited during review cannot be signed or re-requested.
+- **Screen repairs made from the walk, each used in the running app** (`feea54cae6`, `e523113df9`): a person can
+  record the drug product's proposed shelf life, at registration or on a running study, without closing the study
+  out; a refused close-out says the edit was saved; a signed batch rejection (or release) shows on its row; a
+  placement says what it wrote and keeps saying it; the Vault's version line names the sealed version its file was
+  rendered from. The real-PostgreSQL suites around the Vault, CMC evidence and signing were run on a disposable,
+  deploy-shaped database: 13 files, 188 of 188.
+- **Next, found in the same walk:** a signer whose password or authenticator code is not accepted is told "HTTP 401"
+  or "Sign in again". The sentences exist on the server (`governed-signature-ceremony.ts` `REAUTH_MESSAGE`) and nine
+  routes that verify a signer do not send them. The repair is to send them, not to write them again.
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
