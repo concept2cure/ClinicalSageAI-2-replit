@@ -1527,10 +1527,14 @@ Left open on the Vault's screens: lifting a hold from the record (the notice car
 administration's restoration order); on a phone the first document is below the first screen (the shared page
 header takes four lines).
 
-**E4, where it stands.** Steps 1 and 2 were started on 2026-11-11 by two agents that a usage limit cut off. Their
-unfinished edits were not committed and are not in the tree. E4 remains this lane's and is next, by the plan named
-above; "not applicable" (P-124 item 5) is now on the deployed store, so E4's retirement of
-`update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+**E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
+deployed store as the person who runs it, one project or every project they can open. Each figure is the store's
+own assessment of a study. It counted the retired store's tables organization-wide, and failed on a deployed
+database. The type id is kept; its label is "Trial master file filings and readiness", and its scopes are project
+and account (L-3). It was run in the app on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step1-report-pack/`.
+Steps 2 (AnA's reads) and 3 (AnA's retired write tools) are next, by the plan named above. Step 2's partial patch
+from 2026-11-11 is kept outside the tree and is unverified. "Not applicable" (P-124 item 5) is on the deployed
+store, so step 3's retirement of `update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 
