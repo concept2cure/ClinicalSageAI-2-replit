@@ -89,7 +89,8 @@ describe('TaskTray — approvals come from the authoring approval chain', () => 
     expect(urls.some((u) => u.startsWith('/api/review/board?scope=mine'))).toBe(true);
     expect(urls).not.toContain('/api/approval-workflows/pending');
     fireEvent.click(screen.getByText('Clinical Overview 2.5'));
-    expect(onNav).toHaveBeenCalledWith('review');
+    // GA-UI-04: the row opens its document in the editor, not the Review board.
+    await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
   });
 
   it('a failed board read says the approvals could not be loaded', async () => {

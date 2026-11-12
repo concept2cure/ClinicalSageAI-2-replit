@@ -1,0 +1,40 @@
+import subprocess, hashlib, sys, os
+R='/home/user/ClinicalSageAI-2-replit'
+T_GATE='server/services/ectd/__tests__/release-signature-gate.test.ts'
+T_VAL='server/routes/__tests__/ectd-compile-validate-rule-set.test.ts'
+T_PANEL='client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx'
+T_MAN='client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts'
+T_ASM='server/services/ind-lifecycle/__tests__/ind-checklist-vault-placed.pglite.integration.test.ts'
+T_LC='client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx'
+A='server/services/ind-lifecycle/ind-checklist-view-assembler.ts'
+M=[
+ ('M1 gate drops the not-required note','server/services/ectd/dispatch-gate.ts',"      notRequired:\n","      _notRequired:\n",T_GATE),
+ ('M2 validate drops the rule-set finding','server/routes/ectd-compile.ts',"    results.push(ruleSetFinding());\n","",T_VAL),
+ ('M3 validate drops ruleSet on the response','server/routes/ectd-compile.ts',"      ruleSet: VALIDATE_RULE_SET,\n","",T_VAL),
+ ('M4 panel shows an e-mail reviewer','client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx',"if (EMAIL_LIKE.test(who))","if (false && EMAIL_LIKE.test(who))",T_PANEL),
+ ('M5 manifest carries an address again','templates/forms/acroforms/FDA_3454.pdf.manifest.json','"reviewedBy": "the product owner (regulatory forms review)"','"reviewedBy": "someone@example.com"',T_MAN),
+ ('M6 manifest reviewer emptied (asset untrusted)','templates/forms/acroforms/FDA_356H.pdf.manifest.json','"reviewedBy": "the product owner (regulatory forms review)"','"reviewedBy": ""',T_MAN),
+ ('M7 vault branch removed',A,"    if (l.document_table === 'vault_documents') {","    if (false && l.document_table === 'vault_documents') {",T_ASM),
+ ('M8 tenant check removed',A,"|| !ownedVaultDocs.has(String(l.document_uuid).toLowerCase())","",T_ASM),
+ ('M9 placed reads approved',A,"const VAULT_PLACED = 'placed';","const VAULT_PLACED = 'approved';",T_ASM),
+ ('M10 deleted vault doc counted',A,"          AND d.deleted_at IS NULL\n          AND EXISTS (\n            SELECT 1 FROM regulatory_programs rp\n             WHERE rp.id = d.program_id AND rp.organization_id = $2","          AND EXISTS (\n            SELECT 1 FROM regulatory_programs rp\n             WHERE rp.id = d.program_id AND rp.organization_id = $2",T_ASM),
+ ('M11 placed rank above approved',A,"placed: 2, drafting: 2","placed: 9, drafting: 2",T_ASM),
+ ('M12 screen loses the placed label','client/src/concept2cure/v2/surfaces/IndLifecycle.tsx',", placed: 'Placed, not yet approved' }"," }",T_LC),
+ ('M13 card says required again','client/src/concept2cure/v2/surfaces/IndLifecycle.tsx',"{m.completed}/{m.total} sections approved","{m.completed}/{m.total} required sections approved",T_LC),
+]
+sha=lambda p: hashlib.sha256(open(os.path.join(R,p),'rb').read()).hexdigest()
+out=[]
+for name,f,old,new,test in M:
+    p=os.path.join(R,f); before=sha(f); s=open(p).read()
+    if s.count(old)!=1: out.append(f'{name}: ANCHOR NOT UNIQUE ({s.count(old)})'); continue
+    open(p,'w').write(s.replace(old,new,1))
+    try:
+        r=subprocess.run(['npx','vitest','run',test,'--maxWorkers=1'],cwd=R,capture_output=True,text=True,timeout=600)
+    finally:
+        open(p,'w').write(s)
+    restored=sha(f)==before
+    killed=r.returncode!=0
+    tail=[l for l in r.stdout.splitlines() if 'Tests ' in l]
+    out.append(f"{name} [{f}] -> {'KILLED' if killed else 'SURVIVED'} ({tail[-1].strip() if tail else ''}); restored sha256 match={restored}")
+    print(out[-1],flush=True)
+open(sys.argv[1],'w').write('\n'.join(out)+'\n')

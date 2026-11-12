@@ -1,0 +1,32 @@
+[ci:eslint-warning-ratchet] --since d0103147be20570d92473831600c93b5bafd43a6 (d0103147b) -- 164 lintable file(s) changed; linting both versions of each...
+    +4  client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx  (0 -> 4)
+         client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx:498:1  complexity  Function 'ReceiptSentence' has a complexity of 16. Maximum allowed is 15.
+         client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx:527:8  max-lines-per-function  Function 'DataReturnExport' has too many lines (156). Maximum allowed is 100.
+         client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx:527:8  complexity  Function 'DataReturnExport' has a complexity of 18. Maximum allowed is 15.
+         client/src/concept2cure/v2/surfaces/ComplianceAttestation.tsx:674:1  max-lines  File has too many lines (520). Maximum allowed is 500.
+    +4  client/src/concept2cure/v2/surfaces/LicensingSurface.tsx  (3 -> 7)
+         client/src/concept2cure/v2/surfaces/LicensingSurface.tsx:3:10  @typescript-eslint/no-unused-vars  'EmptyState' is defined but never used.
+         client/src/concept2cure/v2/surfaces/LicensingSurface.tsx:262:1  complexity  Function 'PlanList' has a complexity of 22. Maximum allowed is 15.
+         client/src/concept2cure/v2/surfaces/LicensingSurface.tsx:457:118  complexity  Arrow function has a complexity of 21. Maximum allowed is 15.
+         client/src/concept2cure/v2/surfaces/LicensingSurface.tsx:660:1  max-lines  File has too many lines (666). Maximum allowed is 500.
+    +3  client/src/concept2cure/v2/surfaces/EctdCompile.tsx  (4 -> 7)
+         client/src/concept2cure/v2/surfaces/EctdCompile.tsx:666:10  @typescript-eslint/no-unused-vars  'identityCheckOf' is defined but never used.
+         client/src/concept2cure/v2/surfaces/EctdCompile.tsx:745:10  @typescript-eslint/no-unused-vars  'CompilePrerequisites' is defined but never used.
+         client/src/concept2cure/v2/surfaces/EctdCompile.tsx:789:10  @typescript-eslint/no-unused-vars  'ValidationFindingsCard' is defined but never used.
+    +2  server/routes/module-access-requests.ts  (0 -> 2)
+         server/routes/module-access-requests.ts:361:8  max-lines-per-function  Async function 'decideAccessRequest' has too many lines (147). Maximum allowed is 100.
+         server/routes/module-access-requests.ts:361:8  complexity  Async function 'decideAccessRequest' has a complexity of 26. Maximum allowed is 15.
+    +1  server/routes/billing-dashboard.ts  (3 -> 4)
+         server/routes/billing-dashboard.ts:407:117  complexity  Async arrow function has a complexity of 25. Maximum allowed is 15.
+    +1  server/routes/billing.ts  (1 -> 2)
+         server/routes/billing.ts:258:122  complexity  Async arrow function has a complexity of 16. Maximum allowed is 15.
+    +1  server/services/ectd/__tests__/submission-gate-posture.test.ts  (0 -> 1)
+         server/services/ectd/__tests__/submission-gate-posture.test.ts:353:67  max-lines-per-function  Arrow function has too many lines (105). Maximum allowed is 100.
+    +1  server/services/seat-licensing.ts  (0 -> 1)
+         server/services/seat-licensing.ts:201:8  complexity  Async function 'setSeatsPurchased' has a complexity of 25. Maximum allowed is 15.
+    -1  server/services/ana-biostats/judgment-engine.ts  (8 -> 7)
+    -1  server/services/module3Composer.ts  (19 -> 18)
+[ci:eslint-warning-ratchet] net +15 warning(s) across the files changed since d0103147be20570d92473831600c93b5bafd43a6.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 15 warning(s) (listed above).

@@ -12,9 +12,12 @@
  *   GET    /api/mdx/qms/nonconforming                   list NC products
  *   POST   /api/mdx/qms/nonconforming                   create
  *   PATCH  /api/mdx/qms/nonconforming/:id/disposition   sign the disposition
+ *   POST   /api/mdx/qms/changes/:id/regulatory-impact   device change determination, kept on the change
  *
  * Moved out of mdx-qms.ts unchanged on 2026-10-29, when that file crossed the
- * repository's file-size ceiling (audit:repo-health:ceiling).
+ * repository's file-size ceiling (audit:repo-health:ceiling). The change-control
+ * routes are still there; the determination on a change (P-122, 2026-11-12) is
+ * here because that file stands one line under the ceiling.
  *
  * @module server/routes/mdx-qms-records
  */
@@ -32,8 +35,10 @@ import { SUPPLIER_APPROVAL_CODE_STATUS, SUPPLIER_APPROVAL_DECISIONS, recordSuppl
 import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
-import { getOrgId, getUserId, qmsClient, queryProject } from './mdx-qms-context';
+import { getOrgId, getUserId, qmsClient, queryProject, positiveId, admitProjectWrite, sendProjectRefusal } from './mdx-qms-context';
 import { recordNewNonconformance, recordNewSupplier } from '../services/qms/qms-record-create';
+import { ChangeImpactRefused, recordRegulatoryImpact } from '../services/qms/change-regulatory-impact';
+import { withRiskWrite } from './mdx-risk-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -396,6 +401,42 @@ router.patch('/qms/nonconforming/:id/disposition', requireEditorAccess, signedAc
       return { target, payload: { disposition: parsed.data.disposition, ncNumber: row.nc_number }, body: { data: row } };
     },
   });
+});
+
+/* ─── Change control: the device change determination ─────────────────── */
+
+/* The device change determination on a change of a device project (P-122, reach-map row 37;
+   services/qms/change-regulatory-impact.ts). The body carries the market and the person's answers to its engine's
+   questions; the verdict is computed here, never taken from the caller. One transaction: the record and its audit
+   row commit together. Refusals: 404 outside the organization, 403 for a person who cannot change the change's
+   project, 409 when the change is not a device's or its content is fixed, 422 for an unanswered question, a
+   reassessment with no reason, or the engine's own refusal. */
+const impactBody = z.object({
+  market: z.enum(['us', 'eu']),
+  answers: z.record(z.string(), z.unknown()),
+  reason: z.string().max(4000).optional().nullable(),
+});
+router.post('/qms/changes/:id/regulatory-impact', requireEditorAccess, async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
+  const id = positiveId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = impactBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  try {
+    const recorded = await withRiskWrite(req, (q) => recordRegulatoryImpact(q, orgId, id, { ...parsed.data, actorId: userId },
+      (programId) => admitProjectWrite(req, q, orgId, programId)));
+    return ok(res, { id, change_number: recorded.change.change_number, regulatory_impact: recorded.view },
+      { auditTrail: { persisted: true, chained: true } });
+  } catch (err) {
+    if (err instanceof ChangeImpactRefused) {
+      return err.status === 404 ? notFoundInTenant(res, 'Change') : clientError(res, err.status, err.message, { code: err.code });
+    }
+    if (sendProjectRefusal(res, err)) return res;
+    return serverError(res, log, 'change-regulatory-impact', err);
+  }
 });
 
 export default router;

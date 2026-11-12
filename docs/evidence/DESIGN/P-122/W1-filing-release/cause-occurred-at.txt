@@ -1,0 +1,3 @@
+pg default (Date) vs Drizzle raw text, chained row 2718 of the frozen 2.4 (gademo, read only):
+pg default (Date) object 2026-11-10T11:30:01.754Z linked
+drizzle raw string string 2026-11-10 11:30:01.754+00 BROKEN

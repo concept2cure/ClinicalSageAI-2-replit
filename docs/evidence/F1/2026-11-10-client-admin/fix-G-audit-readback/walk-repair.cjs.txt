@@ -1,0 +1,53 @@
+// G-audit-readback repair (V-2, V-3): the seats row whose before and after are equal, read in the running app (5220),
+// and the signed bundle's reason fields. Passwords come from the walker's mode-600 file; nothing secret is printed or saved.
+const c = require('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/cadmin/walk2/common.cjs');
+const fs = require('fs'), path = require('path');
+const SC = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/cadmin';
+const EV = path.join(c.REPO, 'docs/evidence/F1/2026-11-10-client-admin/fix-G-audit-readback');
+const ACC = { email: 'walk2.owner@example.test', pw: fs.readFileSync(`${SC}/walk2/.walk_pw`, 'utf8').trim() };
+const out = [];
+const note = (s) => { out.push(s); console.log(s); };
+
+(async () => {
+  const browser = await c.chromium.launch();
+  for (const vp of (process.env.VPS || 'desktop,phone').split(',')) {
+    const ctx = await browser.newContext({ viewport: c.VIEWPORTS[vp], deviceScaleFactor: 2, acceptDownloads: true });
+    const page = await ctx.newPage();
+    page.on('console', (m) => { if (m.type() === 'error') note(`console error: ${m.text().slice(0, 200)}`); });
+    await c.signIn(page, ACC.email, ACC.pw);
+    const ledger = await c.api(page, 'GET', '/api/audit-trail/ledger?limit=500');
+    const seats = (ledger.body?.data || []).filter((e) => /Purchased seats/.test(e.event));
+    note(`${vp}: ledger ${ledger.status}; ${seats.length} purchased-seats entries`);
+    for (const e of seats) note(`${vp}:   ${e.id} | ${e.event} | note: ${e.changeNote ?? 'none'} | reason: ${e.reason ?? 'none'}`);
+    const chain = await c.api(page, 'GET', '/api/part11/audit-trail/chain-integrity');
+    note(`${vp}: chain ${JSON.stringify({ s: chain.body?.data?.chainStatus, total: chain.body?.data?.totalEntries, broken: chain.body?.data?.brokenLinks })}`);
+    await page.goto(`${c.BASE}/concept2cure/audit-trail`, { waitUntil: 'networkidle' }); await c.sleep(3000);
+    if (vp === 'desktop') {
+      const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.getByRole('button', { name: /Export signed bundle/ }).click()]);
+      const file = path.join(SC, '..', 'lanes-work', 'G-audit-readback', 'export-download.json');
+      await dl.saveAs(file);
+      const bundle = JSON.parse(fs.readFileSync(file, 'utf8'));
+      fs.unlinkSync(file);
+      const rows = JSON.parse(typeof bundle.data === 'string' ? bundle.data : JSON.stringify(bundle.data ?? []));
+      const s = rows.filter((r) => r.event_type === 'compliance.seats_purchased.update');
+      for (const r of s) note(`export: ${r.id} | reason column: ${r.reason ?? 'null'} | reason_from_values: ${r.reason_from_values ?? 'null'} | ${r.change_summary ?? '-'} | note: ${r.change_note ?? 'none'}`);
+      await page.reload({ waitUntil: 'networkidle' }); await c.sleep(3000);
+      const after = await c.api(page, 'GET', '/api/part11/audit-trail/chain-integrity');
+      note(`after export: chain ${JSON.stringify({ s: after.body?.data?.chainStatus, total: after.body?.data?.totalEntries, broken: after.body?.data?.brokenLinks })}`);
+    }
+    await page.getByLabel('Search audit trail entries').fill('stayed at'); await c.sleep(800);
+    const n = await page.locator('.ctable .ct-row').count();
+    note(`${vp}: search "stayed at": ${n} rows`);
+    if (n > 0) {
+      await page.locator('.ctable .ct-row').first().click(); await c.sleep(800);
+      const detail = await page.locator('text=Entry detail').first().locator('xpath=../..').innerText().catch(() => '');
+      note(`${vp}: detail: ${detail.replace(/SHA-256: [0-9a-f]+/g, 'SHA-256: <hash>').replace(/\n/g, ' | ').slice(0, 700)}`);
+      await page.locator('text=Entry detail').first().scrollIntoViewIfNeeded().catch(() => {});
+      await page.screenshot({ path: path.join(EV, `audit-trail-walk2-${vp}-seats-unchanged.png`) });
+      note(`shot audit-trail-walk2-${vp}-seats-unchanged.png`);
+    }
+    await ctx.close();
+  }
+  await browser.close();
+  fs.writeFileSync(path.join(EV, `walk-repair-${process.env.VPS || 'all'}.txt`), out.join('\n') + '\n');
+})().catch((e) => { console.error('ERR', e.message); process.exit(1); });

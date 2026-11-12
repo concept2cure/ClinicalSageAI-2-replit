@@ -202,6 +202,13 @@ describe('sectionStructureIssues', () => {
     expect(['1', '4.1', '2.7.3', '3.2.S.4.1', ' 6 '].map(sectionNumberLabel)).toEqual(['1', '4.1', '2.7.3', '3.2.S.4.1', '6']);
   });
 
+  /* rB-F13 (sales rehearsal 2026-11-10): an IND form's working field is stored as "<number>:work:<n>"
+     (ind-template-outlines-m1.ts, -m4-m5.ts), and the review dialog showed "1.14.4.1:work:3". */
+  it('shows a working field the number of the section it belongs to, never its stored key', () => {
+    expect(['1.14.4.1:work:3', '1.2:work:10', ' 5.3.5.1:work:1 '].map(sectionNumberLabel)).toEqual(['1.14.4.1', '1.2', '5.3.5.1']);
+    expect(['title_page:work:1', 'qms-purpose:work:2'].map(sectionNumberLabel)).toEqual(['', '']);
+  });
+
   it('still reports numbered sections out of order among themselves, front matter kept in place', () => {
     const r = sectionStructureIssues(['title_page', '2', '1', 'references']);
     expect(r.outOfOrder).toBe(true);
