@@ -2291,7 +2291,7 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
       const reauthResult = await verifyReauth(userId, reauth);
       if (!reauthResult.ok) {
         res.setHeader('WWW-Authenticate', 'ReAuth required');
-        return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+        return res.status(401).json({ error: reauthResult.error, message: reauthResult.message });
       }
       /* What was actually verified, not what was offered: verifyReauth returns
          ok only after bcrypt matched the password, and it checks the TOTP when

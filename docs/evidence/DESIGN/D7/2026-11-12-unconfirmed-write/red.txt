@@ -1,0 +1,80 @@
+                              [0mThe closure and its note are written to the audit trail under your name.[0m
+                            [36m</span>[39m
+                          [36m</div>[39m
+                        [36m</div>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"de-f"[39m
+                        [36m>[39m
+                          [36m<button[39m
+                            [33mclass[39m=[32m"de-btn ghost"[39m
+                          [36m>[39m
+                            [0mCancel[0m
+                          [36m</button>[39m
+                          [36m<button[39m
+                            [33mclass[39m=[32m"de-btn primary"[39m
+                          [36m>[39m
+                            [36m<svg[39m
+                              [33maria-hidden[39m=[32m"true"[39m
+                              [33mclass[39m=[32m"lucide lucide-lock"[39m
+                              [33mfill[39m=[32m"none"[39m
+                              [33mfocusable[39m=[32m"false"[39m
+                              [33mheight[39m=[32m"1em"[39m
+                              [33mstroke[39m=[32m"currentColor"[39m
+                              [33mstroke-linecap[39m=[32m"round"[39m
+                              [33mstroke-linejoin[39m=[32m"round"[39m
+                              [33mstroke-width[39m=[32m"1.5"[39m
+                              [33mviewBox[39m=[32m"0 0 24 24"[39m
+                              [33mwidth[39m=[32m"1em"[39m
+                              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                            [36m>[39m
+                              [36m<rect[39m
+                                [33mheight[39m=[32m"11"[39m
+                                [33mrx[39m=[32m"2"[39m
+                                [33mry[39m=[32m"2"[39m
+                                [33mwidth[39m=[32m"18"[39m
+                                [33mx[39m=[32m"3"[39m
+                                [33my[39m=[32m"11"[39m
+                              [36m/>[39m
+                              [36m<path[39m
+                                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                              [36m/>[39m
+                            [36m</svg>[39m
+                            [0m [0m
+                            [0mClose action[0m
+                          [36m</button>[39m
+                        [36m</div>[39m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+Expected: "Not confirmed — the server could not be reached. Check your connection, then reload to see whether it was recorded before trying again."
+Received: "Not recorded — Failed to fetch"
+
+ ❯ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx:420:102
+    418|     const UNCONFIRMED = 'Not confirmed — the server could not be reach…
+    419|     const said = async () => {
+    420|       await waitFor(() => expect(within(screen.getByRole('dialog')).ge…
+       |                                                                                                      ^
+    421|       expect(screen.getByRole('dialog').textContent).not.toMatch(/Fail…
+    422|     };
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 47 passed (51)
+   Start at  04:09:08
+   Duration  28.32s (transform 878ms, setup 244ms, import 1.40s, tests 25.23s, environment 1.12s)
+

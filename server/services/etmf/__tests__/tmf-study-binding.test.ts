@@ -280,8 +280,8 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     ];
     const rows = await listTmfArtifacts('STUDY-1', CTX);
     expect(rows.map((r) => [r.artifactCode, r.document])).toEqual([
-      ['protocol', { id: 'doc-1', title: 'Protocol v1', version: '1.0', current: false }],
-      ['sap', { id: 'doc-2', title: 'Statistical analysis plan', version: '3.0', current: true }],
+      ['protocol', { id: 'doc-1', title: 'Protocol v1', version: '1.0', current: false, lifecycleStage: null }],
+      ['sap', { id: 'doc-2', title: 'Statistical analysis plan', version: '3.0', current: true, lifecycleStage: null }],
     ]);
     // The filing's own fields are as they were.
     expect(rows[0]).toMatchObject({ id: 'f-protocol', documentRef: 'vault://doc-1', studyRef: 41 });
@@ -311,7 +311,7 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     S.documents = [{ id: 'doc-1', document_title: 'One', file_name: 'one.pdf', version: '1.0', current: true }];
     const rows = await listTmfArtifacts('STUDY-1', CTX);
     expect(Object.fromEntries(rows.map((r) => [r.artifactCode, r.document]))).toEqual({
-      protocol: null, sap: { id: 'doc-1', title: 'One', version: '1.0', current: true }, sample_icf: null, insurance: null, sample_crf: null, tmf_plan: null,
+      protocol: null, sap: { id: 'doc-1', title: 'One', version: '1.0', current: true, lifecycleStage: null }, sample_icf: null, insurance: null, sample_crf: null, tmf_plan: null,
     });
     // Every listed filing carries the field, so a client never reads "absent" as "not asked".
     expect(rows.every((r) => 'document' in r)).toBe(true);
@@ -334,10 +334,10 @@ describe('the list says what each filing\'s document is (E3b)', () => {
     ];
     const rows = await listTmfArtifacts('STUDY-1', CTX);
     expect(rows.map((r) => r.document)).toEqual([
-      { id: 'doc-1', title: 'protocol-v1.pdf', version: '1.0', current: true },
-      { id: 'doc-2', title: null, version: null, current: true },
+      { id: 'doc-1', title: 'protocol-v1.pdf', version: '1.0', current: true, lifecycleStage: null },
+      { id: 'doc-2', title: null, version: null, current: true, lifecycleStage: null },
       // "current" is true only when the database said true.
-      { id: 'doc-3', title: 'Sample CRF', version: null, current: false },
+      { id: 'doc-3', title: 'Sample CRF', version: null, current: false, lifecycleStage: null },
     ]);
   });
 

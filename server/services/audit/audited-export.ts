@@ -166,3 +166,67 @@ export async function sendAuditedExport(
   for (const [k, v] of Object.entries(e.headers ?? {})) res.setHeader(k, v);
   res.send(JSON.stringify(e.body, null, 2));
 }
+
+/**
+ * The organisation a sealed package was issued for, as its manifest states it: a signed audit export seals it in
+ * `queryFilters.organizationId` (signedAuditExport.ts exportFilters), a compliance report at the top of the
+ * manifest (compliance-reports/signed-report.ts). Null when the manifest names no usable organisation. The value
+ * is the caller's claim until the seal verifies. On a version-2 manifest it is under the seal, so changing it makes
+ * the package invalid. A version-1 manifest (issued before the fix in ledger L55) sealed its top-level fields only,
+ * so there the organisation is stated and not sealed, like every other nested claim of that version.
+ */
+export function manifestOrganizationId(manifest: unknown): number | null {
+  if (!manifest || typeof manifest !== 'object') return null;
+  const m = manifest as { organizationId?: unknown; queryFilters?: { organizationId?: unknown } | null };
+  const stated = m.organizationId ?? m.queryFilters?.organizationId;
+  return typeof stated === 'number' && Number.isSafeInteger(stated) && stated > 0 ? stated : null;
+}
+
+/**
+ * Record that a sealed package was put to the platform's seal key, and what the answer was: one chained row, in
+ * its own transaction, written BEFORE the verdict is sent (GA-D6-03). Returns false when the row could not be
+ * written; the caller then sends no verdict.
+ */
+export async function recordExportVerification(
+  pool: ConnectablePool,
+  e: {
+    tenantId: number;
+    userId: number | string | null | undefined;
+    manifest: { exportId?: unknown; kind?: unknown; dataHash?: unknown };
+    verdict: { valid: boolean; errors: string[]; signingKeyId: string | null };
+    ipAddress?: string;
+    userAgent?: string;
+  },
+): Promise<boolean> {
+  const exportId = typeof e.manifest.exportId === 'string' && e.manifest.exportId ? e.manifest.exportId.slice(0, 128) : 'unnamed';
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await writeChainedAuditRow(client, {
+      tenantId: e.tenantId,
+      userId: e.userId ?? undefined,
+      action: 'audit.export_verify',
+      resourceType: 'audit_export',
+      resourceId: exportId,
+      details: {
+        exportId,
+        kind: typeof e.manifest.kind === 'string' ? e.manifest.kind.slice(0, 64) : 'audit-export',
+        dataHash: typeof e.manifest.dataHash === 'string' ? e.manifest.dataHash.slice(0, 128) : null,
+        valid: e.verdict.valid,
+        errors: e.verdict.errors,
+        signingKeyId: e.verdict.signingKeyId,
+        description: `Checked the seal of ${exportId}: ${e.verdict.valid ? 'it verifies' : 'it does not verify'}`,
+      },
+      ipAddress: e.ipAddress,
+      userAgent: e.userAgent,
+    });
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    console.error('[audited-export] verification not recorded:', (err as Error)?.message);
+    return false;
+  } finally {
+    client.release();
+  }
+}

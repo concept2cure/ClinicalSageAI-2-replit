@@ -1,0 +1,26 @@
+# The one-store pins with the change
+      Tests  10 passed (10)
+
+# Every eTMF route and service suite
+ Test Files  13 passed (13)
+      Tests  172 passed (172)
+
+# The metrics endpoint's and the bootstrap's own suites (20 files that read inline-endpoints, register-inline-routes or
+# /api/metrics): first run, 1 failed: smoke.test.ts pinned the old two-family gateway's text. It now pins the one mount.
+# After that change, server/__tests__/routes/smoke.test.ts: 27 passed, 1 failed, "rejects invalid JWT on POST
+# /api/cortex/chat" (a 10 s timeout), which times out identically on HEAD with this change stashed: this host, not eTMF.
+# The other 19 files passed (221 cases).
+
+# Typecheck
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+# Gates
+ci:tenant-resolvers: ok
+ci:unreferenced-modules: ok
+ci:launch-scope-api: ok
+ci:sql-interpolation: ok
+audit-requestdb-coverage --strict-no-regression: ok
+# The lint ratchet first refused one warning: 'express' unused in the bootstrap once the gateway router went. The import
+# is type-only now; then:
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

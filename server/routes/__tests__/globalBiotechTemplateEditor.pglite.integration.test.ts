@@ -310,7 +310,10 @@ describe('every supported active medicinal, device and diagnostics filing and co
       sections: before.sections + sectionCount, revisions: before.revisions + sectionCount,
       audits: before.audits + sectionCount, signatures: before.signatures });
     console.info('Global biotech editor HTTP probe', { filings: listedFilings.length, components: components.length, sections: sectionCount });
-  }, 180_000);
+    /* Its time grows with the registry: at 2026-11-12 it creates and reopens 244 documents (190 filings, 54
+       components), 3,195 sections, in 158 s run alone, and ran past 180 s in CI's Test shard command, which runs
+       three files at a time (ci.yml test-shard, 8a7e41392d). The assertions are unchanged; only the budget is. */
+  }, 600_000);
 
 
   it('loads missing-outline leaflet metadata as an explicitly limited empty preparation worksheet', async () => {

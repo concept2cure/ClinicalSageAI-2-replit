@@ -1,0 +1,13 @@
+# The one-store pins against /api/etmf as it stood at b4d7a775f3 (routes/etmf.ts, etmf-metrics.ts, the bootstrap and the metrics endpoint as they were)
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > the second store's route file and metrics are gone, and the bootstrap mounts the one router 10ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > post /api/etmf/files is not served 31ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > get /api/etmf/files is not served 12ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > post /api/etmf/files/1/seed is not served 9ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > post /api/etmf/files/1/artifacts is not served 7ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > get /api/etmf/files/1/artifacts is not served 4ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > patch /api/etmf/artifacts/1/status is not served 7ms
+ ✓ server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > get /api/etmf/files/1/completeness is not served 13ms
+ × server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > get /api/etmf/classify?artifactName=Protocol is not served 4ms
+ ✓ server/routes/__tests__/etmf-one-store.routes.test.ts > /api/etmf serves the deployed trial master file store only > the deployed store's routes still answer 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 2 passed (10)

@@ -1,0 +1,39 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx client/src/concept2cure/v2/__tests__/vaultHoldNotice.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > is offered when the Vault read says this reader may place one, and records the hold through the governed route 57
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > is not offered to a reader the server does not allow, or when the server does not say 431ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > says what the server said when it refuses, and keeps what was typed 457ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > placing a legal hold from the record > does not report a hold the server did not confirm 394ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceHold.test.tsx > the hold form’s bounds are the route’s > asks for a reference of 1 to 200 characters and a reason of 3 to 2,000 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHoldNotice.test.tsx > a document on legal hold says so > a project hold covers every document; a document hold only the version it names 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHoldNotice.test.tsx > a document on legal hold says so > shows the hold on the document it covers, and nothing on one it does not 239ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHoldNotice.test.tsx > a document on legal hold says so > shows a project hold on every document 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHoldNotice.test.tsx > a document on legal hold says so > says the holds could not be read, rather than nothing 78ms
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+
+$ npx vitest run server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts server/routes/__tests__/vault-legal-holds.test.ts
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a owner may 37ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a admin may 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a manager may 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a approver may 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a member may not 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a viewer may not 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a editor may not 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a  may not 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > reads a role the session lists among its roles, in any cas
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a platform administrator may, whatever the organisation ro
+ ✓ server/routes/c2c/__tests__/project-vault-legal-hold-authority.test.ts > the Vault read reports who may place a legal hold, by the hold routes’ own rule > a request with no user may not 0ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > a member may not (403), and nothing is written 28ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > owner places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 9ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > admin places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > manager places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 3ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a program the organisation does not own (404) and writes nothing 3ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > fails closed with an honest response when ownership cannot be read, without opening a transaction 8ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a body that names no target or no reason (400) 10ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed 3ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > records who lifted it and why, with its chained audit row (200) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > needs a reason (400), and a hold that is not active in this organisation is 404 with nothing committed 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > a member may not (403) 2ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > listing holds > lists the organisation's holds for the same roles, and refuses a member 5ms
+ Test Files  2 passed (2)
+      Tests  23 passed (23)

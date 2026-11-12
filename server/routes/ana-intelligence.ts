@@ -43,6 +43,7 @@ import { recordModelProvenance, unavailableModelProvenance } from './ana-model-p
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { refuseInvalidBatchInput } from './ana-intelligence-batch-input.js';
 import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from '../services/ana/batch-draft-concurrency';
+import { openSseStream } from '../utils/sse-stream';
 
 const router = Router();
 
@@ -197,14 +198,9 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     }
 
     const scope = draftProjectOptions(req, projectId);
-    // Set up SSE headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no',
-    });
+    // SSE headers, and a heartbeat while the model has not answered yet: the
+    // edge closes a connection silent for 60 s (server/utils/sse-stream.ts).
+    openSseStream(req, res);
 
     const service = getAnaDraftingService();
 

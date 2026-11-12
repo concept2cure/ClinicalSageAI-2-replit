@@ -92,6 +92,15 @@ describe('the prompts that ask for an ana-action block say a person confirms it'
     expect(buildDocumentGenerationContext(doc!)).toMatch(/propose saving it as a governed artifact/);
     expect(buildDocumentGenerationContext(doc!)).toMatch(PERSON_CONFIRMS);
   });
+
+  // MC-RL-2 (RULE 2: the model narrates): a draft turn marks what the sources do not hold and never fills it, as the
+  // persona's drafting steps say (bb05e5c0f7). "submission-ready … not placeholders" told the model to fill it.
+  it('document-routing.ts: the draft request marks a gap the sources do not fill, rather than forbidding placeholders', () => {
+    const context = buildDocumentGenerationContext(doc!);
+    expect(context).not.toMatch(/submission-ready|not placeholders/i);
+    expect(context).toMatch(/\[PENDING: needs data\]/);
+    expect(context).toMatch(/do not supply one/);
+  });
 });
 
 describe('the platform-command bridge tells the model a proposal ran nothing', () => {

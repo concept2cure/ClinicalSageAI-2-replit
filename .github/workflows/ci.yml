@@ -438,6 +438,16 @@ jobs:
           npm run ci:client-ip-single-source:selftest
           npm run ci:client-ip-single-source
 
+      # Behind CloudFront and the ALB, 60 s without a byte closes a connection.
+      # Every server-sent event stream is opened by server/utils/sse-stream.ts,
+      # which writes a heartbeat every 15 s; until 2026-11-12 eight of ten
+      # streams had none (MR-03 Stage 6, OPS-17).
+      - name: Guardrails — every event stream has a heartbeat (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:sse-heartbeat:selftest
+          npm run ci:sse-heartbeat
+
       - name: Guardrails — validation traceability resolves (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |

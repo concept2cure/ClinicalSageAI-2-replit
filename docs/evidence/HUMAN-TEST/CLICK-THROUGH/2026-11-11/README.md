@@ -90,6 +90,22 @@ Three places where a whole working area scrolls sideways, which is not the desig
 Not walked at phone width: the other demo people, dark mode outside the device screens, and any control beyond a
 screen's tabs and steps.
 
+**P3 is fixed** (D8 slice 2b, `docs/evidence/DESIGN/D8/slice-2b/`): the three pages are 390 px wide at 390 px. The
+phone and dark audit of the same day (`../../PHONE-DARK/2026-11-12/`) reads the document's width, so it does not
+see P1 or P2.
+
+## A second person, 2026-11-12
+
+LMN-201's 26 screens were walked again at 1440 px as the Lumen reviewer, with trunk at `21c6837180`.
+- No request failed and the console was clean on all 26.
+- Every screen drew the same headings as for the lead. The reviewer's access level in this demo organisation is
+  Admin, as the lead's and the approver's are (Administration lists all three as Admin), so this walk says nothing
+  about what a member with less access is shown or refused. That needs a demo person who is not an Admin; the
+  demo pack has none.
+- Two screens have no top heading: Compile and export (`ectd-compile`, whose first heading is "Sequence QC", a
+  second-level one) and Gateway transmittals (`gateway-transmittals`, no heading at all). A person using a screen
+  reader lands on a page with no title. Both are Submission Center's.
+
 ## A mistake during the work
 
 The first push of these fixes was refused by the pre-push warning ratchet: `TypeCard` had gone one branch over the

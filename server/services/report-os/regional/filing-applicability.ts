@@ -4,6 +4,7 @@ import { getApplicationType } from '../../../../shared/regulatory/global-documen
 import { resolveToRegistryId } from '../../../../shared/regulatory/submission-type-bridge';
 import { MODELED_JURISDICTIONS, REGIONAL_MODULE1, type ApplicationKind, type ModeledJurisdiction } from '../../../../shared/regulatory/regional-module1';
 import { REGIONAL_FILING_TYPES, REGION_TO_JURISDICTION, REGISTRY_TO_KIND } from './filing-types';
+import { listed } from '../../immunogenicity/immunogenicity-reference';
 
 export type RegionalAvailabilityState = 'available' | 'filing-context-required' | 'not-applicable' | 'context-unavailable';
 export interface RecordedRegionalFiling {
@@ -84,8 +85,6 @@ const KIND_WORD: Partial<Record<ApplicationKind, string>> = { ind: 'IND', nda: '
 /** Kinds said with a vowel sound: "an IND", "an NDA", "an ANDA", "an MAA"; "a BLA", "a J-NDA". */
 const KIND_TAKES_AN = new Set<ApplicationKind>(['ind', 'nda', 'anda', 'maa']);
 const kindWord = (kind: ApplicationKind): string => KIND_WORD[kind] ?? kind.toUpperCase();
-const listed = (words: readonly string[], last: 'and' | 'or'): string =>
-  words.length <= 1 ? words.join('') : `${words.slice(0, -1).join(', ')} ${last} ${words[words.length - 1]}`;
 /** "an NDA or BLA": the article is the first kind's. */
 const aKindOf = (kinds: readonly ApplicationKind[]): string =>
   `${kinds.length && KIND_TAKES_AN.has(kinds[0]) ? 'an' : 'a'} ${listed(kinds.map(kindWord), 'or')}`;

@@ -216,6 +216,50 @@ describe('P-95: the APPROVER e-signature on the editor\'s document', () => {
   });
 });
 
+/**
+ * P-95 question 1, answered by P-116 (2026-11-10): a reviewer is never the approving signer. The approver
+ * is refused when the route names them as a reviewer, signed or not, before the credential; the
+ * organisation's only member is admitted before this is asked (below).
+ */
+describe('P-116: a reviewer on the route is never the approving signer', () => {
+  const expectReviewerRefused = (res: request.Response) => {
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body?.error?.code).toBe('APPROVER_IS_REVIEWER');
+    expect(res.body?.error?.message).toMatch(/reviewer on this document’s review[\s\S]*Another member approves it\. Nothing was signed\.$/);
+    expect(signed(), 'a refused approval wrote a signature').toBe(false);
+    expect(approved(), 'a refused approval approved the document').toBe(false);
+    expect(h.comparePassword).not.toHaveBeenCalled();
+  };
+
+  it('the E-sign is refused when the approver signed the review, though the review is complete', async () => {
+    h.route = routeRow('complete');
+    h.members = [reviewer(APPROVER_ID, CURRENT), reviewer(13, CURRENT)];
+    expectReviewerRefused(await approve('wrong-password'));
+  });
+
+  it('the E-sign is refused when the approver is named on the route and has not signed', async () => {
+    h.route = routeRow('open');
+    h.members = [reviewer(REVIEWER_ID, CURRENT), reviewer(APPROVER_ID, null)];
+    expectReviewerRefused(await approve());
+  });
+
+  it('the workflow /sign as APPROVER is refused the same way', async () => {
+    h.route = routeRow('complete');
+    h.members = [reviewer(APPROVER_ID, CURRENT), reviewer(13, CURRENT)];
+    expectReviewerRefused(await request(makeApp())
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
+      .set('Authorization', await bearer())
+      .send({ meaning: 'APPROVER', reason: 'final approval', password: 'right-password' }));
+  });
+
+  it('the only member, where the rules allow it, still approves alone', async () => {
+    h.orgMembers = [APPROVER_ID];
+    h.route = routeRow('complete');
+    h.members = [reviewer(APPROVER_ID, CURRENT)];
+    expect((await approve()).status).toBe(200);
+  });
+});
+
 describe('P-95: the workflow /sign as APPROVER', () => {
   it('is refused the same way when the document was never reviewed', async () => {
     const res = await request(makeApp())

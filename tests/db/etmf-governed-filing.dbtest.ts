@@ -334,6 +334,41 @@ describe('the inspection package is a recorded download', () => {
   });
 });
 
+describe('a record declared not applicable (P-124 item 5)', () => {
+  const NA = 'No investigational product is imported for this single-country study.';
+
+  it('is written with who, when and why, by the audit row\'s own transaction, and listed with the declarer\'s name', async () => {
+    const res = await (await api()).post(`${trial()}/artifacts`).send({ artifactCode: 'monitoring_plan', notApplicable: true, reason: NA });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const row = (await owner.query(
+      `SELECT study_ref, document_ref, created_by, not_applicable_reason, removed_at, xmin::text AS tx
+         FROM tmf_artifact_filings WHERE id = $1`, [res.body.id])).rows[0];
+    expect(row).toMatchObject({ study_ref: study.id, document_ref: null, created_by: userId, not_applicable_reason: NA, removed_at: null });
+    const audit = await auditRows('tmf_artifact', res.body.id);
+    expect(audit).toHaveLength(1);
+    expect(audit[0]).toMatchObject({ action: 'TMF_ARTIFACT_DECLARED_NOT_APPLICABLE', user_id: userId, reason: NA });
+    expect(audit[0].details).toMatchObject({ artifactCode: 'monitoring_plan', outcome: 'declared', study: { id: study.id } });
+    expect(audit[0].tx).toBe(row.tx);
+    const named = (await (await api()).get(`${trial()}/artifacts`)).body.find((f: { id: string }) => f.id === res.body.id);
+    // public.actor_name, under the app's own role and the organization's row security.
+    expect(named).toMatchObject({ notApplicableReason: NA, filedByName: 'TMF Filer', document: null });
+    const completeness = (await (await api()).get(`${trial()}/completeness`)).body;
+    expect(completeness.summary.totalNotApplicable).toBe(1);
+    expect(completeness.zones.some((z: { missing: string[] }) => z.missing.includes('monitoring_plan'))).toBe(false);
+  });
+
+  it('is refused over a live filing, and the database refuses one that names a document', async () => {
+    const filed = await file('sample_crf', docA, FILED_BECAUSE);
+    expect(filed.status).toBe(201);
+    const res = await (await api()).post(`${trial()}/artifacts`).send({ artifactCode: 'sample_crf', notApplicable: true, reason: NA });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ error: 'RECORD_FILED' });
+    expect((await filingRow(filed.body.id))).toMatchObject({ document_ref: `vault://${docA}`, removed_at: null });
+    await expect(owner.query('UPDATE tmf_artifact_filings SET not_applicable_reason = $2 WHERE id = $1', [filed.body.id, NA]))
+      .rejects.toThrow(/tmf_artifact_filings_not_applicable_chk/);
+  });
+});
+
 describe('the audit trail these acts wrote is one intact chain', () => {
   it('verifies the organization\'s chain after filings, a removal, a re-filing and a download', async () => {
     const q = await owner.connect();

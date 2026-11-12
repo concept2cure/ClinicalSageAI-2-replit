@@ -118,8 +118,58 @@ the second person; `shots/after-*.png`. Tests red first: `06-cmc-screens-red-gre
 | A signed batch rejection never showed | The row reads the signed decision (`release_status`) before the working status, and adopts the answer where the route puts it (`data.batchRecord`). A released batch, whose status becomes `completed`, had read "Pending" too. The control is named "Disposition" and its button "Sign the disposition" (`cmcBatch.ts`, `CmcModule.tsx`) | Rejected under signature by the second person: "Batch … rejected · signed 2efad9f6a080…"; the row reads Rejected with no disposition control, and the same after a reload (`after-b2-*`) |
 | A placement showed no result | The verdict is kept with the sequence it was made into and shown again when the board remounts the control. It says what was written: "Already placed. Nothing was written. All 21 sections in sequence 0001 are unchanged."; "1 section filed again; 20 unchanged, in sequence 0001" (`CmcPlaceIntoSubmission.tsx`) | On the fully approved programme of the OQ run, a repeat from the board (`after-b3-01`) |
 
-Still open on the CMC screens, in files this session holds: the method form's per-characteristic ICH Q2 evidence; the
-wording when an authenticator code is missing; a hint on the QC sample type; stale sections on the Overview. In
+| The QC sample type offered tokens ("raw-material", "in-process"…) and no word said which is drug substance evidence | Each option says where a result of it is filed, read from the shared rule the write-through applies (`qcSampleTypeOptions`, `cmcRegisterForms.ts`); the stored values are unchanged, and the field is full width so the words fit | "Finished product (drug product, §3.2.P.5.4)", "Raw material (drug substance, §3.2.S.4.4)", "Reference standard (not a batch analysis)" (`after-b12-01`; `09-qc-sample-type-red-green.txt`) |
+
+The wording when an authenticator code is missing or wrong is repaired below ("A refused signature says why").
+
+| The ICH Q2 check named every method "missing validation evidence: specificity, linearity / range, accuracy, precision", and nothing on the form could clear it | The register's table keeps the Q2 record in one JSON column and has no column per characteristic, so the write-through always sent null for the four values the check reads. The method form records each characteristic's result in the Q2 record (`evidence`), and the write-through reads it from there (`cmcRegisterForms.ts`, `cmc-write-through.ts` `q2Evidence`). No column, table or route | A new method added with its four results is not named missing evidence; the older, signed method still is, because its record is closed to edits under its signature (`after-b9-*`, `10-method-q2-evidence-red-green.txt`) |
+
+| Stale sections read "Draft" (or "approved") with a live "Approve section" on the Overview; the approve route refused them as out of date | The board's section read sends each section's stale flag and recorded reason (`server/routes/cmc-module3-board.routes.ts`); the approvals table shows "Stale" with the reason, withholds the approval, and offers "Recompile on the build board". An approved section that went stale says it owes a new approval (`CmcModule.tsx` `SectionApprovalAction`) | BX-733 after a method was added: 3.2.P.5, 3.2.S.4, 3.2.P.8 read "Approved · Stale … recompile, then approve again"; a stale draft elsewhere has its approval withheld (`after-b6-*`, `11-stale-sections-red-green.txt`) |
+| A close-out refused with a returned 401 (a password or code not accepted) did not take the refusal branch the thrown ones did; `ci:success-before-ok` named it | One refusal branch, checked before anything is said, for both | A wrong authenticator code: "The shelf life is saved and the study is still running. Couldn't save the close-out — The authenticator code was not accepted. Nothing was signed." (`after-b8-02`) |
+
+The retired-name ratchet (`foundationsRetiredRatchet.test.ts`) was red on trunk: `40cc8265b7` added a `cm-meta` span
+in the stability rows. The count is now written as plain words in its button, and the ratchet is green.
+
+| After a section was approved on screen the card still said "export blocked: 1 not approved" until a reload | The gate's verdict is read again when an approval lands (`CmcModule.tsx`, the readiness read's re-read counter) | As the second person: "0 of 21 … 21 not approved" became "1 of 21 … 20 not approved" with no reload (`after-b7-01`, `13-…`) |
+| A thrown refusal read "… must sign.."; a signed toast ended "…e25e3d60402d…." | Every thrown CMC refusal is worded by one helper (`cmcShared.tsx` `cmcThrownRefusal`), which ends the sentence once and never shows a browser-native error as the reason; the signed toasts end once | "Couldn't approve section 3.1 — Separation of duties: … A different, authorized user must sign. Nothing was persisted." |
+
+Nothing is left open on the CMC screens from this walk in files this session holds.
+
+**The Builder's leaf source** (B11): every Module 3 leaf read "Source evidence not yet determined — The retained
+source has no verified project relationship". A placed section is filed as a filing copy that records its CMC project
+and section key (`place-module3-into-submission.ts`, marked by `module3-placement-marker.ts`); the evidence reader
+(`server/services/ectd/submission-leaf-source-evidence.ts`) looked only for an Authoring document behind a filing
+copy. A copy carrying the placement marker is now traced to its CMC section in this project; its pinned text and
+approved status are judged as before. A copy naming another project is refused; one whose section the project does not
+hold stays undetermined. In the running app both Module 3 sequences went from 21 undetermined to 21 resolved, and the
+Builder reads "Source verified" (`after-b11-01`, `14-builder-module3-leaf-source-red-green.txt`). The Vault leaf of
+the walked document read "substantive source text is not established": its file is a PDF. Its chained filing receipt
+names the sealed version the PDF was rendered from (LX-10), and that record holds the text; the reader now establishes
+the text from it when the record still matches its own seal (`sealedRenditionText`), and a PDF with no receipt, or a
+receipt naming a seal the record does not hold, stays not established. In the running app the walked document's Vault
+leaf went to resolved and reads "Vault document · Source verified" (`after-b11-02`).
+
+**A citation outside the editor** read as its source's file name in the Document view ("62%C2C-101-biopharmaceutics-
+BP-001.txt"), where the canvas and the filed document print "[1]". The stored link caches the name, and the
+read-only renderer (`editor/AuthoredHtml.tsx`) printed it. The Document view (`DocumentWorkbench.tsx`) now hands the
+renderer the document's numbering, made by the canvas's own reading-order walk (`citationAdmission.ts`
+`admittedPrecedingSources`) and the export's registry (`documentReadCitations`): "62%[1, Study BP-001 summary]", with
+the source's name on hover; a source not admitted to the section is stated, as on the canvas
+(`after-d9-01`, `12-document-view-citation-red-green.txt`). The reviewer's copy (`ReviewDecisionDialog.tsx`, held by
+Wave B) still shows the cached name until its holder passes the same numbering; noted in COORDINATION.
+
+**The editor's paused-attribution note** said "paused while you edit" on a frozen section nobody can edit. On a
+read-only section the painting stops because the text shown differs from the text the origins were recorded against
+(a citation shows as "[1]"); the note now says that there (`RichSectionEditor.tsx` `attributionPausedNote`; red first in
+`15-editor-note-and-real-postgres.txt`, with the real-PostgreSQL runs of the leaf evidence changes: 41 of 41, and the
+deliverables suite 38 of 38).
+
+**The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
+author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The
+bar counts recorded origins; a citation marker in a sentence the author wrote does not make its recorded origin a
+source, so the text is counted as the author's either way. The row now says "a person stands behind it, cited or
+not" (red first in `10-…`). Whether a citation should move the sentence into "From sources" is the lineage
+lane's question, not decided here. In
 `CmcModule3Build.tsx` (held by the screen-work session): the remount itself, "21 ready to compile" after a compile,
 and finding types shown as stored tokens.
 
@@ -135,6 +185,35 @@ the versions read, which already attaches each version's lifecycle, placements a
 which already prints them. One projection, one field on the read, one clause on the line. No route, table or screen
 was added. `07-vault-seal-line-red-green.txt`: 10 new cases red on the committed code, then 45 of 45; the Vault's 70
 client suites, 790 of 790.
+
+## A refused signature says why (2026-11-12)
+
+Seen in the CMC walk: a signer whose authenticator code was not accepted read "Couldn’t approve section … — The server
+did not accept the change (HTTP 401).. Nothing was persisted."; a blank code was not caught by the form, which cannot
+know whether the signer has one enrolled.
+
+**What already exists.** `verifyReauth` (`server/routes/c2c/actions.ts`) is the one re-verification every high-risk
+route uses, and it answered a `REAUTH_*` code. The sentences a signer is told for each code already existed, but only
+inside the signature ceremony (`server/services/part11/governed-signature-ceremony.ts`, `REAUTH_MESSAGE`), so the
+ceremony's routes said why and the nine routes that call `verifyReauth` directly sent the code alone. The CMC screens
+read the server's sentence through `serverMessage`, and fell back to "HTTP 401" when there was none.
+
+**The repair.** The sentences moved from the ceremony to `verifyReauth`, which now returns the sentence with the
+code; the ceremony uses it, and the nine routes send it as `message` beside the unchanged code
+(`api/cmc/{routes,specificationRoutes,batchRecordRoutes,module3OperatingSystemRoutes}.ts`,
+`routes/c2c/{actions,documents}.ts`, `routes/510k-estar-routes.ts`, `routes/mdx-submission-gateway.ts` twice,
+`routes/financial-disclosures.ts`). A client that reads the code is unchanged. On the CMC screens the sentence is
+shown once, with one full stop (`cmcShared.tsx` `cmcRefusal`, used by `cmcWriteFailed` and the Overview), and the
+specification and batch dispositions no longer write their own "re-authentication failed".
+
+**Used in the running app** (`after-d2-01`, `after-d2-02`), as the run identity on an approvable §3.1: with the right
+password and a wrong code, "Couldn’t approve section 3.1 — The authenticator code was not accepted. Nothing was
+signed."; with no code, "… Your account has an authenticator enrolled: enter its current code to sign. Nothing was
+signed." Both answered 401 with the code and the sentence, and the section stayed Draft.
+
+`08-signature-refusal-red-green.txt`: 21 red on the committed code (one of them already red on trunk), 4 more on the
+screen's half; then 142 of 143 with the change, the one being that trunk-red case; 3,504 of 3,521 across the 221
+suites around it, where the other 14 are the report-pack export suite, which fails the same way on trunk.
 
 ## Not done
 

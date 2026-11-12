@@ -61,6 +61,7 @@ import { C2CToast, useToast } from './toast';
 import { useSurfaceAvailable } from './surfaceAvailable';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { askSupport } from './surfaces/help/supportEntry';
 
 export interface ShellSurfaceRef {
   id: string;
@@ -70,10 +71,9 @@ export interface ShellSurfaceRef {
 }
 
 
-/** Where "Get help" goes, from the account menu and the top bar's Help alike: AnA, which
- *  answers questions about the product in the governed conversation. The bar's Help went
- *  in D1-2 and came back under P-122 (2026-11-10); both go here. */
-const HELP_SURFACE = 'conversation-thread';
+/* "Get help", from the account menu and the top bar's Help alike, opens the conversation asked as Concept2Cure
+   support (P-127, surfaces/help/supportEntry.ts): AnA answers from the Help Center and drafts a support request when
+   it does not answer. The bar's Help went in D1-2 and came back under P-122 (2026-11-10); both go there. */
 
 /** New conversation: Home's composer, where a question starts one (C2C_CONVO =
  *  { id: 'new', seed }). The sidebar's action and the top bar's phone button share
@@ -453,6 +453,12 @@ export function Rail({
               setAcct(false);
               setRemembersOpen(true);
             }}
+            onSupport={() => {
+              if (!canLeave()) return;
+              setAcct(false);
+              closeOnPhone();
+              askSupport(onNav);
+            }}
             onSegment={(id) => {
               if (!canLeave()) return;
               setAcct(false);
@@ -501,7 +507,7 @@ export function Rail({
   return <>{rail}{leaveNotice}</>;
 }
 
-type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' | 'remembers' } | { sep: true } | { clientType: true };
+type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' | 'remembers' | 'support' } | { sep: true } | { clientType: true };
 
 /**
  * The account menu: settings, the client type, help and sign-out
@@ -637,6 +643,7 @@ function AccountMenu({
   onGo,
   onAccount,
   onRemembers,
+  onSupport,
   onSegment,
   onLogout,
 }: {
@@ -658,6 +665,8 @@ function AccountMenu({
   onAccount: () => void;
   /** Open "What AnA remembers" (WhatAnaRemembers.tsx). */
   onRemembers: () => void;
+  /** Get help: the conversation asked as support, behind the leave guard. */
+  onSupport: () => void;
   onSegment: (id: string) => void;
   onLogout: () => void;
 }) {
@@ -719,7 +728,7 @@ function AccountMenu({
       : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
     { label: 'Help & training', ic: 'book', to: 'training' },
-    { label: 'Get help', ic: 'help', to: HELP_SURFACE },
+    { label: 'Get help', ic: 'help', action: 'support' },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
   ];
@@ -804,6 +813,7 @@ function AccountMenu({
                 if (it.action === 'logout') onLogout();
                 else if (it.action === 'account') onAccount();
                 else if (it.action === 'remembers') onRemembers();
+                else if (it.action === 'support') onSupport();
                 else if (it.to) onGo(it.to);
               }}
             >
@@ -939,7 +949,7 @@ export function TopBar({
       <TaskTray onNav={onNav} onAsk={onAsk} />
       {/* Help: where the account menu's "Get help" goes, behind the bar's leave guard (P-122 §3.4). */}
       <button type="button" className="tb-btn" aria-label="Get help" title="Get help"
-        onClick={() => go(HELP_SURFACE)}>{I.help}</button>
+        onClick={() => { if (onNav && canLeave()) askSupport(onNav); }}>{I.help}</button>
       {/* At phone width (only there, app-v2.css): the sidebar's New conversation. */}
       <button type="button" className="tb-btn tb-new" aria-label="New conversation" title="New conversation"
         onClick={() => { if (onNav && canLeave()) openNewConversation(onNav); }}>{I.plus}</button>

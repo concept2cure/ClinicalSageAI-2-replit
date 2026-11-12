@@ -100,7 +100,7 @@ describe('buildTmfInspectionPackage', () => {
     const csv = await zip.file('inspection-index.csv')!.async('string');
     const lines = csv.trim().split('\n');
     // document_evidence added 2026-10-15: the index now says whether each filing's document was verified.
-    expect(lines[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence');
+    expect(lines[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence,not_applicable_reason');
     // Two data rows, deterministic order (stable across runs).
     expect(lines).toHaveLength(3);
   });
@@ -123,5 +123,19 @@ describe('buildTmfInspectionPackage', () => {
     const zip = await JSZip.loadAsync(pkg.zip);
     const readme = await zip.file('README.txt')!.async('string');
     expect(readme).toMatch(/Inspection ready: NO/);
+  });
+
+  /* 2026-11-12 (eTMF E4 step 5): a study whose every required record is declared not applicable has no verdict. The
+     cover says so, never "YES" and never the off-platform reason "NOT DETERMINED" stands for. */
+  it('a study with no required record left to check says no verdict, and why', async () => {
+    tmfIs('TRIAL-4', {
+      ...READY_ASSESSMENT,
+      ready: null,
+      summary: { zoneCount: 11, zonesComplete: 11, totalRequired: 0, totalMissing: 0, totalUnverified: 0, totalNotApplicable: 26 },
+    }, []);
+    const pkg = await buildTmfInspectionPackage({ trialId: 'TRIAL-4', organizationId: 7, userId: 5, generatedAt: '2026-11-12T00:00:00Z' });
+    expect(pkg.ready).toBeNull();
+    const readme = await (await JSZip.loadAsync(pkg.zip)).file('README.txt')!.async('string');
+    expect(readme).toMatch(/Inspection ready: NO VERDICT \(every required record is declared not applicable\)/);
   });
 });

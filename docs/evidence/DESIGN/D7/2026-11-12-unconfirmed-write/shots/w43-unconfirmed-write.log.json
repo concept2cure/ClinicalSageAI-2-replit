@@ -1,0 +1,24 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "capa-move",
+      "movedTo": "investigation",
+      "line": "Not confirmed — the server could not be reached. Check your connection, then reload to see whether it was recorded before trying again.",
+      "drawerStillOpen": true,
+      "browserWords": false
+    },
+    {
+      "name": "change-move",
+      "movedTo": "under_assessment",
+      "line": "Not confirmed — the server could not be reached. Check your connection, then reload to see whether it was recorded before trying again.",
+      "drawerStillOpen": true,
+      "browserWords": false
+    },
+    {
+      "name": "w43-unconfirmed-write",
+      "ok": true
+    }
+  ]
+}

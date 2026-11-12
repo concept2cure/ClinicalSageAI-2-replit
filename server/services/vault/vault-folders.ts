@@ -380,6 +380,21 @@ async function inFolderTransaction(
 
 type FolderAuditAction = 'vault.folder.create' | 'vault.folder.rename' | 'vault.folder.move' | 'vault.folder.remove';
 
+/**
+ * A folder change in a sentence, from the facts the row already carries. The ledger shows it as the event; without
+ * it the row read "Folder renamed" against the target `vault_folder:uf:9`, which names no folder (walked 2026-11-11).
+ */
+function describeFolderChange(action: FolderAuditAction, d: Record<string, unknown>): string {
+  const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  const part = (v: unknown) => (v && typeof v === 'object' ? (v as Record<string, unknown>) : {});
+  const place = (label: unknown) => text(label) ?? 'the top of the cabinet';
+  const name = text(d.name) ?? 'a folder';
+  if (action === 'vault.folder.create') return `Folder made: ${name}, ${text(d.parentLabel) ? `in ${text(d.parentLabel)}` : 'at the top of the cabinet'}`;
+  if (action === 'vault.folder.rename') return `Folder renamed: ${text(part(d.from).name) ?? 'a folder'} -> ${text(part(d.to).name) ?? 'a new name'}`;
+  if (action === 'vault.folder.move') return `Folder moved: ${name}, from ${place(part(d.from).parentLabel)} to ${place(part(d.to).parentLabel)}`;
+  return `Folder removed: ${name}, from ${place(d.parentLabel)}`;
+}
+
 /** The chained audit row of a folder change: who, what, and the person's reason on the row's own column. */
 export function folderAuditEntry(base: FolderWriteBase, action: FolderAuditAction, folderId: string, details: Record<string, unknown>) {
   const reason = base.reason.trim();
@@ -395,7 +410,7 @@ export function folderAuditEntry(base: FolderWriteBase, action: FolderAuditActio
     // does), and in the details, which the chain's hash covers.
     reason,
     // The agent's provenance first, so the write's own facts below are never overwritten by it.
-    details: { ...(base.agent ?? {}), programId: base.programId, ...details, reason },
+    details: { ...(base.agent ?? {}), programId: base.programId, ...details, description: describeFolderChange(action, details), reason },
   };
 }
 

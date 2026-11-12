@@ -1,6 +1,6 @@
 /** The cabinet's folders as the Vault lists them (S6, 2026-11-06). */
 import { describe, expect, it } from 'vitest';
-import { binderFolderFor, cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, planTasksForFolder } from '../vaultFolders';
+import { binderFolderFor, cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, planTasksForFolder, vaultShowsCabinet } from '../vaultFolders';
 
 const cabinet = {
   id: 'cabinet', code: '', label: 'Filing binder',
@@ -66,5 +66,22 @@ describe('where a folder sits, and which one an action opens', () => {
     expect(openFolderMatches(found, 'bn:5.3.5', '5.3').map((f) => f.folder.id)).toEqual(['cab-bn:5.3']);
     expect(openFolderMatches(found, 'bn:4.2', '5.3')).toEqual([]);
     expect(openFolderMatches(found, '', '5.3 notes').map((f) => f.folder.id)).toEqual(['cab-uf:4']);
+  });
+});
+
+describe('when the Vault shows its cabinet instead of the empty state', () => {
+  const person = { id: 'uf:9', label: 'Pivotal study', depth: 0, kind: 'person' as const };
+  const binder = { id: 'bn:5.3', label: '5.3 Clinical study reports', depth: 1, kind: 'binder' as const };
+  it('an empty Vault with only the binder and presets is the empty state', () => {
+    expect(vaultShowsCabinet(0, [binder], false)).toBe(false);
+  });
+  it('New folder opens its form in an empty Vault (walked 2026-11-11: the button did nothing)', () => {
+    expect(vaultShowsCabinet(0, [binder], true)).toBe(true);
+  });
+  it('a folder a person made is shown before any document is filed', () => {
+    expect(vaultShowsCabinet(0, [binder, person], false)).toBe(true);
+  });
+  it('a Vault with documents shows its cabinet', () => {
+    expect(vaultShowsCabinet(3, [], false)).toBe(true);
   });
 });

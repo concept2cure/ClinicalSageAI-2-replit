@@ -47,6 +47,16 @@ export function cabinetFolderOptions(cabinet: VaultFolder | null | undefined): C
   return out;
 }
 
+/**
+ * Whether the Vault shows its cabinet (the folder tree and the list) or the empty state. The empty state is for a
+ * Vault with nothing in it and nothing being made: once the folder form is open, or a person has made a folder,
+ * the cabinet is where the form and that folder are. Until 2026-11-11 the rule was "no documents", so New folder
+ * did nothing in a new project's Vault, and a folder made before any document was never shown.
+ */
+export function vaultShowsCabinet(documentCount: number, folders: readonly CabinetFolderOption[], folderFormOpen: boolean): boolean {
+  return documentCount > 0 || folderFormOpen || folders.some((f) => f.kind === 'person');
+}
+
 /** An option's text in a native select: indented by depth, since a select cannot nest. */
 export function indentedLabel(o: Pick<CabinetFolderOption, 'label' | 'depth'>): string {
   return `${'  '.repeat(Math.min(o.depth, 8))}${o.label}`;

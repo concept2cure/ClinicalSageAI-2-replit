@@ -493,3 +493,76 @@ describe('CmOverview — a stored state is shown as a word, never as its token',
     expect(chips).toEqual(expect.arrayContaining(['Approved', 'Draft', 'In review']));
   });
 });
+
+/* Walked 2026-11-12: a section whose source records changed after its compile read "Draft" with a live "Approve
+   section" on the Overview, and the approve route refused it as out of date. The board now says which sections are
+   stale and why; the table says so, offers the build board, and withholds the approval. */
+describe('CmOverview — a stale section says so, and is not offered for approval', () => {
+  const stale = (key: string, st: string, reason: string) => ({ ...section(key, st, 100), stale: true, staleReason: reason });
+
+  it('a stale draft names why, withholds approval and offers the build board', async () => {
+    wire(board({ sections: [stale('3.2.S.1', 'draft', 'specification:3 changed after compile'), section('3.2.P.1', 'draft', 100)] }));
+    const setTab = vi.fn();
+    (window as unknown as CmWindow).__cmSetTab = setTab;
+    renderOverview();
+    await screen.findByText('3.2.S.1', { selector: 'td' });
+
+    const s1 = row('3.2.S.1');
+    const chip = within(s1).getByText('Stale', { selector: '.rd-chip' });
+    expect(chip.getAttribute('title')).toMatch(/specification:3 changed after compile/);
+    expect((within(s1).getByRole('button', { name: /Approve section/ }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(within(s1).getByRole('button', { name: /Recompile on the build board/ }));
+    expect(setTab).toHaveBeenCalledWith('build');
+
+    // Control: a current draft is still offered.
+    expect((within(row('3.2.P.1')).getByRole('button', { name: /Approve section/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('an approved section that went stale says it owes a re-approval', async () => {
+    wire(board({ sections: [stale('3.2.P.5', 'approved', 'method:21 changed after compile')] }));
+    renderOverview();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    const p5 = row('3.2.P.5');
+    expect(within(p5).getByText('Stale', { selector: '.rd-chip' })).toBeTruthy();
+    expect(p5.textContent).toMatch(/approved before its sources changed: recompile, then approve again/i);
+  });
+});
+
+/* Walked 2026-11-12: after a section was approved on screen the card still said "export blocked: 1 not approved"
+   until a reload. The gate's verdict is read again after an approval lands. */
+describe('CmOverview — the export verdict after an approval', () => {
+  it('is read again, so the blocked line clears without a reload', async () => {
+    let signed = false;
+    wire(
+      board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.1', 'draft', 100)] }),
+      () => { signed = true; return res({ success: true, versionNumber: 1 }); },
+      () => res({ success: true, data: signed ? readinessOf({ totalSections: 2, approvedSections: 2 })
+        : readinessOf({ totalSections: 2, approvedSections: 1, exportReady: false }) }),
+    );
+    renderOverview();
+    await screen.findByText(/export blocked: 1 not approved/);
+    await openSignatureFor();
+    fireEvent.change(screen.getByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed as compiled.' } });
+    fireEvent.change(screen.getByPlaceholderText('Re-enter your password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+    await screen.findByText('Export ready');
+    expect(screen.queryByText(/export blocked/)).toBeNull();
+  });
+});
+
+/* Walked 2026-11-12: a separation-of-duties refusal of a section approval read "… A different, authorized user must
+   sign.." — the thrown refusal's sentence, then a second full stop. */
+describe('CmOverview — a thrown refusal reads as one sentence', () => {
+  it('ends the server’s sentence once and says nothing was persisted', async () => {
+    const { ApiRequestError } = await import('@/lib/queryClient');
+    const why = 'Separation of duties: you are an author of this record and cannot approve it. A different, authorized user must sign.';
+    wire(board({ sections: [section('3.2.P.1', 'draft', 100)] }), () => { throw new ApiRequestError(why, 403); });
+    renderOverview();
+    await openSignatureFor();
+    fireEvent.change(screen.getByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed as compiled.' } });
+    fireEvent.change(screen.getByPlaceholderText('Re-enter your password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+    const toast = await screen.findByText(/Separation of duties/);
+    expect(toast.textContent).toBe(`Couldn’t approve section 3.2.P.1 — ${why} Nothing was persisted.`);
+  });
+});

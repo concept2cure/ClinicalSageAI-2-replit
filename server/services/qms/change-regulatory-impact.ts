@@ -257,9 +257,12 @@ export async function recordRegulatoryImpact(q: RequestSqlClient, orgId: number,
   }
   const answers = readableAnswers(market, input.answers) as Record<string, boolean>;
   const result = determine(market, answers);
+  // Named only as a member of this organization: a user of another one is never named on its record.
   const actor = (await sql.query<{ name: string | null }>(
-    `SELECT COALESCE(NULLIF(BTRIM(u.name), ''), u.email) AS name FROM users u WHERE u.id = $1`, [input.actorId])).rows[0];
-  if (!actor || !isText(actor.name)) throw new Error('The person recording the determination could not be read');
+    `SELECT COALESCE(NULLIF(BTRIM(u.name), ''), u.email) AS name
+       FROM users u JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $2
+      WHERE u.id = $1`, [input.actorId, orgId])).rows[0];
+  if (!actor || !isText(actor.name)) throw new Error('The person recording the determination could not be read as a member of this organization');
   const determination: ChangeImpactDetermination = {
     engine: ENGINES[market].engine, ruleVersion: ENGINES[market].ruleVersion, inputs: answers, result,
     by: { id: input.actorId, name: actor.name }, at: new Date().toISOString(),

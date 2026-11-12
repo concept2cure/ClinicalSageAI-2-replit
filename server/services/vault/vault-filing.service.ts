@@ -382,18 +382,36 @@ function reconcileDeclaredType(
 type TmfMatch = Extract<ReturnType<typeof classifyTmfArtifact>, { confidence: 'matched' }>;
 
 /**
- * The TMF classifier's answer for a document. Its file name and its title are read apart: ingest always passes
- * a title and the Data Room passes the file name as the title, and together ("Monitoring-Plan-v2.pdf Monitoring
- * Plan v2") they are no artifact's name. An answer that names the artifact is preferred to one that names only
- * the zone. A name that points to two zones, or a name and a title that point to different ones, is 'two zones':
- * a clean title does not settle a name that disagrees with itself.
+ * The TMF classifier's answer for a document, from its file name and its title.
+ *
+ * Ingest always passes a title, and the Data Room passes the file name as the
+ * title. Read together ("Monitoring-Plan-v2.pdf Monitoring Plan v2") they are
+ * no artifact's name, so each is first read alone, to see whether either names
+ * a record:
+ *  - one does: that record, unless the other reading says what else the
+ *    document is, in another zone. A reading that only says whose document it
+ *    is ("Site 101", "Protocol ABC-123") does not count against it. Until
+ *    2026-11-12 it did, and a third of the names that file alone were refused
+ *    because of their title.
+ *  - neither does: the two are read together, as they were before 2026-11-11,
+ *    and the earliest rule decides across both.
+ * A name or a title that itself points to two zones is 'two zones': a clean
+ * title does not settle a name that disagrees with itself.
  */
 function classifyTmfDocument(name: string, title: string): TmfMatch | 'two zones' | null {
-  const read = [...new Set([name, title].filter(Boolean))].map((text) => classifyTmfArtifact(text.replace(/[-_]+/g, ' ')));
+  const texts = [...new Set([name, title].filter(Boolean))].map((text) => text.replace(/[-_]+/g, ' '));
+  const read = texts.map((text) => classifyTmfArtifact(text));
   if (read.some((c) => c.confidence === 'unclassified' && c.conflict)) return 'two zones';
   const matched = read.filter((c): c is TmfMatch => c.confidence === 'matched');
-  if (new Set(matched.map((c) => c.zone)).size > 1) return 'two zones';
-  return matched.find((c) => c.code) ?? matched[0] ?? null;
+  const named = matched.filter((c) => c.code);
+  if (named.length) {
+    const [record] = named;
+    const elsewhere = matched.some((c) => c.zone !== record.zone && !c.qualifierOnly);
+    return elsewhere ? 'two zones' : record;
+  }
+  const together = classifyTmfArtifact(texts.join(' '));
+  if (together.confidence === 'matched') return together;
+  return together.conflict ? 'two zones' : null;
 }
 
 /** The service view's proposal from the TMF classifier, or null when the name and title say nothing of a zone. */

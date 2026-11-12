@@ -50,6 +50,10 @@ import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
+/** Reads go through the pool, which sets the tenant for each statement. A connection from connect() carries
+ *  no tenant before BEGIN, so a read on one found no row for any organization (2026-11-12). */
+const scopedReads = { query: (sql: string, params?: unknown[]) => pool.query(sql, params as unknown[]) };
+
 const router = Router();
 const log = createScopedLogger('financial-disclosures');
 
@@ -188,16 +192,13 @@ router.get('/disclosures/:id', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const client = await pool.connect();
   try {
-    const snap = await loadDisclosureSnapshot(client, orgId, id);
+    const snap = await loadDisclosureSnapshot(scopedReads, orgId, id);
     const validation = validateDisclosureCompleteness(snap);
     const { row, ...rest } = snap;
     res.json({ disclosure: row, snapshot: rest, validation });
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 
@@ -331,7 +332,7 @@ router.post('/disclosures/:id/certify', async (req, res) => {
 
   // Re-authenticate even with an active session (21 CFR 11 signing).
   const reauth = await verifyReauth(userId, parsed.data.reauth);
-  if (!reauth.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: reauth.error ?? 'Re-authentication required.' } });
+  if (!reauth.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: reauth.message } });
 
   const client = await pool.connect();
   try {
@@ -394,9 +395,8 @@ router.post('/disclosures/:id/ai-review', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
 
-  const client = await pool.connect();
   try {
-    const snap = await loadDisclosureSnapshot(client, orgId, id);
+    const snap = await loadDisclosureSnapshot(scopedReads, orgId, id);
     // Deterministic 21 CFR 54 gate is the floor.
     const gate = validateDisclosureCompleteness(snap);
     let aiFindings: unknown[] = [];
@@ -431,8 +431,6 @@ router.post('/disclosures/:id/ai-review', async (req, res) => {
     res.json({ riskLevel: gate.riskLevel, findings: gate.findings, aiFindings, recommendations: aiRecommendations });
   } catch (err) {
     fail(res, err);
-  } finally {
-    client.release();
   }
 });
 

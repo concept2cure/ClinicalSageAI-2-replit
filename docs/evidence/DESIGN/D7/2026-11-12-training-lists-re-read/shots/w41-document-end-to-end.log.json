@@ -1,0 +1,198 @@
+{
+  "apiErrors": [
+    {
+      "who": "author",
+      "width": 1440,
+      "status": 503,
+      "url": "/api/c2c/projects/5d669ca3-055f-48b1-9c34-364eb33ecb95/sources?limit=200&offset=0",
+      "at": "/concept2cure/quality?program=5d669ca3-055f-48b1-9c34-364eb33ecb95",
+      "code": "SOURCE_READ_ACCESS_CHANGED",
+      "message": "Current source access changed during the read."
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "figures-before",
+      "line": "5 documents in force · 0 due for review within 120 days · 10 open changes · 101 open CAPAs · 0 nonconformances awaiting disposition · 3 open complaints · 0 MDR reports overdue · 1 critical supplier not approved · 1 open internal audit · 0 lapsed acknowledgements"
+    },
+    {
+      "name": "new-document-drawer",
+      "project": "5d669ca3-055f-48b1-9c34-364eb33ecb95",
+      "templates": [
+        "Standard controlled-document sections",
+        "Quality manual (QM-)",
+        "Policy (POL-)",
+        "Standard operating procedure (SOP-)",
+        "Work instruction (WI-)",
+        "Form (FORM-)",
+        "Validation protocol (VP-)",
+        "Change-control procedure (SOP-CC-)",
+        "Change-request form (CC-)",
+        "Training curriculum (TC-)"
+      ]
+    },
+    {
+      "name": "created",
+      "inEditor": 1,
+      "alerts": [],
+      "url": "/concept2cure/quality?program=5d669ca3-055f-48b1-9c34-364eb33ecb95"
+    },
+    {
+      "name": "written",
+      "alerts": []
+    },
+    {
+      "name": "draft-row",
+      "facts": [
+        "QM-006",
+        "Walk 41 complaint intake 47279",
+        "Quality manual",
+        "1.0",
+        "Draft",
+        "—",
+        "—"
+      ],
+      "actions": [
+        "Send for review",
+        "Open",
+        "Ask AnA about this document",
+        "More actions for QM-006"
+      ]
+    },
+    {
+      "name": "sent",
+      "offered": [
+        "Theo Trainee"
+      ],
+      "chose": "Theo Trainee",
+      "notOffered": "One member is not offered, and whyAda Author is not designated as a QMS approver in this organization. An administrator designates QMS approvers in Admin and access.",
+      "refused": null
+    },
+    {
+      "name": "in-review-row-author",
+      "facts": [
+        "QM-006",
+        "Walk 41 complaint intake 47279",
+        "Quality manual",
+        "1.0",
+        "Under reviewWaiting for Theo Trainee.",
+        "—",
+        "—"
+      ],
+      "actions": [
+        "Review route",
+        "Open",
+        "Ask AnA about this document",
+        "More actions for QM-006"
+      ],
+      "figures": "5 documents in force · 0 due for review within 120 days · 10 open changes · 101 open CAPAs · 0 nonconformances awaiting disposition · 3 open complaints · 0 MDR reports overdue · 1 critical supplier not approved · 1 open internal audit · 0 lapsed acknowledgements"
+    },
+    {
+      "name": "in-review-row-approver",
+      "facts": [
+        "QM-006",
+        "Walk 41 complaint intake 47279",
+        "Quality manual",
+        "1.0",
+        "Under reviewYour turn: approve.",
+        "—",
+        "—"
+      ],
+      "actions": [
+        "Approve",
+        "Review route",
+        "Ask AnA about this document",
+        "More actions for QM-006"
+      ]
+    },
+    {
+      "name": "signature-dialog",
+      "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingQM-006 Walk 41 complaint intake 47279v1.0 becomes effective when you sign. The author cannot approve their own document.TTTheo Traineetrainee@qs.testSignature meaning · §11.50ApprovalYou approve this content for useEffective from (UTC day)Signed with the approval. A later day leaves the version in force until then.Reading who is assigned to train on this document…Reason for this actionMinimum 8 characters.Password · §1"
+    },
+    {
+      "name": "signed",
+      "dialog": "Signature appliedApproval signature recorded against QM-006 Walk 41 complaint intake 47279. The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionApprove controlled documentSigned byTheo Trainee · trainee@qs.testMeaningApprovalReasonWalk 41: approved for use.When2026-11-12 03:59:45 UTCNov 12, 2026, 03:59 · UTCChain …"
+    },
+    {
+      "name": "effective-row",
+      "facts": [
+        "QM-006",
+        "Walk 41 complaint intake 47279v1.0 · Approved by Theo Trainee · 2026-11-12 03:59:45 UTC · ",
+        "Quality manual",
+        "1.0",
+        "Effective",
+        "2026-11-12",
+        "—"
+      ],
+      "actions": [
+        "Read and acknowledge",
+        "Revise",
+        "Ask AnA about this document",
+        "More actions for QM-006"
+      ],
+      "figures": "6 documents in force · 0 due for review within 120 days · 10 open changes · 101 open CAPAs · 0 nonconformances awaiting disposition · 3 open complaints · 0 MDR reports overdue · 1 critical supplier not approved · 1 open internal audit · 0 lapsed acknowledgements"
+    },
+    {
+      "name": "assigned",
+      "people": [
+        "Choose a person",
+        "Ada Author",
+        "Quinn Approver",
+        "Theo Trainee"
+      ],
+      "refusal": [],
+      "listed": [
+        "Quinn Approver assigned by Theo Trainee on 2026-11-12Withdraw",
+        "Quinn Approver by name, since 2026-11-12"
+      ]
+    },
+    {
+      "name": "due-after-assigning",
+      "dueOnIt": [
+        "Quinn ApproverQM-006 Walk 41 complaint intake 47279 · v1.0 · due 2026-11-26 (in 14 days), 14 days after they were assigned"
+      ]
+    },
+    {
+      "name": "trainee-row",
+      "facts": [
+        "QM-006",
+        "Walk 41 complaint intake 47279v1.0 · Approved by Theo Trainee · 2026-11-12 03:59:45 UTC · ",
+        "Quality manual",
+        "1.0",
+        "Effective",
+        "2026-11-12",
+        "—"
+      ],
+      "actions": [
+        "Read and acknowledge",
+        "Revise",
+        "Ask AnA about this document",
+        "More actions for QM-006"
+      ],
+      "dueOnIt": [
+        "Quinn ApproverQM-006 Walk 41 complaint intake 47279 · v1.0 · due 2026-11-26 (in 14 days), 14 days after they were assigned"
+      ]
+    },
+    {
+      "name": "reader",
+      "text": "PurposeReceive the complaint, log it within one working day, and assess it for reportability."
+    },
+    {
+      "name": "acknowledged",
+      "drawer": "Read and acknowledgeQM-006 · Walk 41 complaint intake 47279 · Revision 1.0 · EffectiveYour personal acknowledgement was recorded with its audit record.PurposeReceive the complaint, log it within one working day, and assess it for reportability.My acknowledgementYou acknowledged revision 1.0. This personal attestation records reading and understanding; it does not assess competency.Receipt8Acknowle",
+      "alerts": []
+    },
+    {
+      "name": "after",
+      "dueOnIt": [],
+      "figures": "6 documents in force · 0 due for review within 120 days · 10 open changes · 101 open CAPAs · 0 nonconformances awaiting disposition · 3 open complaints · 0 MDR reports overdue · 1 critical supplier not approved · 1 open internal audit · 0 lapsed acknowledgements",
+      "coverage": "QM-006 Walk 41 complaint intake 47279 · v1.01 of 1 acknowledgedLatest 2026-11-12You are current on the version in force.My acknowledgement",
+      "expiry": "Training overdue, due or lapsingOverdue, or due or lapsing in the next 60 days, for the people assigned to trainTheo TraineeQS-SOP-001 Handling of customer complaints · v1.0 · due 2026-11-24 (in 12 days), 14 days after they were assigned"
+    },
+    {
+      "name": "w41-document-end-to-end",
+      "ok": true
+    }
+  ]
+}

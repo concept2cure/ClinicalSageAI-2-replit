@@ -1,0 +1,27 @@
+# A method's per-characteristic ICH Q2 evidence reaches the check, and the attribution legend's author row. 2026-11-12.
+# Red first, on the committed code:
+$ npx vitest run server/services/cmc/__tests__/method-q2-evidence.test.ts client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts client/src/concept2cure/lineage/__tests__/DocumentAttributionBar.test.tsx
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > the method form records each characteristic’s result > offers the four characteristics the check reads, prefilled from the record 
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > the method form records each characteristic’s result > sends only what was written, inside the Q2 record 4ms
+ × client/src/concept2cure/lineage/__tests__/DocumentAttributionBar.test.tsx > DocumentAttributionBar — the author-asserted row on a cited section > does not say nothing is cited 12ms
+ × server/services/cmc/__tests__/method-q2-evidence.test.ts > the Q2 record’s evidence, as the ICH check reads it > each characteristic’s recorded result reaches the method source 5ms
+ × server/services/cmc/__tests__/method-q2-evidence.test.ts > the Q2 record’s evidence, as the ICH check reads it > a method whose record carries all four is not reported missing evidence 4ms
+ × server/services/cmc/__tests__/method-q2-evidence.test.ts > the Q2 record’s evidence, as the ICH check reads it > control: a characteristic with no recorded result is still named missing 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  6 failed | 116 passed (122)
+
+# With the change:
+ Test Files  3 passed (3)
+      Tests  122 passed (122)
+
+# Around it: the method mapper, the ICH checks, the CMC client suites and the lineage bar:
+ Test Files  42 passed (42)
+      Tests  680 passed (680)
+
+# In the running app, project BX-733 (the walked IND), Quality by design, Run ICH compliance check:
+#  before: Q2_INCOMPLETE_VALIDATION  Method "RP-HPLC Assay" is missing validation evidence: specificity, linearity / range, accuracy, precision.
+#  Add method, with the four results written on the form (status: validation), saved: "Analytical method saved."
+#  after: the new method is not named missing evidence; it is named as not yet validated (Q2_UNVALIDATED_METHODS).
+#  The validated method is still named: its record is closed to edits under its signature, so its evidence is
+#  recorded by retiring it and signing a new one, as the screen says.
