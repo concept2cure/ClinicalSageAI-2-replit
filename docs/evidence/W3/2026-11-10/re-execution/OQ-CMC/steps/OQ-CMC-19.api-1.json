@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/analytical-methods/18/validate",
+    "url": "http://localhost:5200/api/cmc/analytical-methods/23/validate",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
@@ -16,15 +16,15 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 346,
+    "durationMs": 395,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 18,
+        "id": 23,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
-        "methodCode": "AM2-20261110130629",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "methodCode": "AM2-20261112003432",
         "title": "RP-HPLC Assay",
         "purpose": "assay",
         "analyte": "BX-702",
@@ -41,15 +41,15 @@
         "systemSuitability": null,
         "acceptance_criteria": null,
         "robustness_data": null,
-        "validationDate": "2026-11-10T13:08:30.663Z",
+        "validationDate": "2026-11-12T00:36:30.705Z",
         "developedBy": null,
         "validatedBy": 2,
-        "createdAt": "2026-11-10T13:06:36.716Z",
-        "updatedAt": "2026-11-10T13:08:30.663Z"
+        "createdAt": "2026-11-12T00:34:39.750Z",
+        "updatedAt": "2026-11-12T00:36:30.705Z"
       },
       "governance": {
-        "actionId": "act_14aed0db886f4bd69a739df5c57d09eb",
-        "sha256Chain": "97d1f5cf73922955d34b671084eec6a7dda623b5e00d9c503df537f795a778eb"
+        "actionId": "act_c55b8825c39247f795fd32d59178960f",
+        "sha256Chain": "0cffacd30a8824b4aa5dbef57ebaed2ef9f33b67f350c9d5bc5d71410059b802"
       },
       "module3Linked": true
     }

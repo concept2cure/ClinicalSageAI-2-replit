@@ -173,6 +173,8 @@ export interface PlacedSection {
   tableCount: number;
   /** The section already had a leaf in this sequence, and that leaf was updated rather than duplicated. */
   updatedInPlace?: boolean;
+  /** The section's leaf in this sequence already files exactly this text, so nothing was written. */
+  unchanged?: boolean;
 }
 
 export interface SkippedSection {
@@ -308,20 +310,34 @@ async function fileSectionAsLeaf(params: {
   tables: GeneratedTable[];
   /** The same section's leaf in an earlier sequence, when it has one. */
   prior?: { id: number };
-  /** The same section's leaf already in THIS sequence, when it has one. */
-  existing?: { id: number };
+  /** The same section's leaf already in THIS sequence, when it has one, with the filing document it points at. */
+  existing?: CurrentLeaf;
 }): Promise<PlacedSection> {
   const { pool, input, sectionKey, label, narrative, tables, prior, existing } = params;
   const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
   const leafSectionCode = toLeafSectionCode(sectionKey);
   const title = `Module 3 — ${label} (§${sectionKey})`;
+  const content = renderComposedSectionMarkdown(label, narrative, tables);
+
+  /* A repeat that would file exactly what the leaf already files writes
+     nothing (URS-CMC-011: idempotent on retry). Until 2026-11-11 it wrote a
+     new filing document for every section and pointed each leaf at it: the
+     earlier documents stayed, unreferenced, and a release signature bound to
+     the leaf manifest stopped clearing the sequence although no content had
+     changed (OQ-CMC-19 and -27 as executed, VSR-001 §21.8). */
+  if (existing && (await filesTheSame(pool, orgId, existing, { title, content }))) {
+    return {
+      sectionKey, leafSectionCode, title, coauthorDocumentId: existing.documentId as number, leafId: existing.id,
+      tableCount: tables.length, updatedInPlace: false, unchanged: true,
+    };
+  }
 
   const [snapshot] = await db
     .insert(coauthorDocuments)
     .values({
       organizationId: orgId,
       title,
-      content: renderComposedSectionMarkdown(label, narrative, tables),
+      content,
       status: 'approved',
       moduleNumber: leafSectionCode,
       /* The IND checklist reads coauthor_documents.module_name, not title, and
@@ -415,14 +431,38 @@ async function priorModule3Leaves(
   return prior;
 }
 
+/** A section's live leaf in this sequence, and the placement snapshot it points at when it points at one. */
+interface CurrentLeaf { id: number; documentId: number | null }
+
 /** The live Module 3 leaf per section code already in this sequence. */
-async function currentModule3Leaves(sequenceId: number, organizationId: number): Promise<Map<string, { id: number }>> {
-  const current = new Map<string, { id: number }>();
+async function currentModule3Leaves(sequenceId: number, organizationId: number): Promise<Map<string, CurrentLeaf>> {
+  const current = new Map<string, CurrentLeaf>();
   for (const leaf of await listLeaves(sequenceId, { organizationId })) {
     if (leaf.documentType !== 'cmc_module3_section' || leaf.lifecycleOp === 'delete') continue;
-    if (!current.has(leaf.sectionCode)) current.set(leaf.sectionCode, { id: leaf.id });
+    const snapshot = leaf.documentTable === 'coauthor_documents' && Number.isInteger(leaf.documentId) ? Number(leaf.documentId) : null;
+    if (!current.has(leaf.sectionCode)) current.set(leaf.sectionCode, { id: leaf.id, documentId: snapshot });
   }
   return current;
+}
+
+/**
+ * Whether the leaf's filing document is, to the character, the title and
+ * text this placement would file. A document that cannot be read is never
+ * assumed the same: the section is then filed again.
+ */
+async function filesTheSame(
+  pool: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  orgId: number,
+  leaf: CurrentLeaf,
+  next: { title: string; content: string },
+): Promise<boolean> {
+  if (leaf.documentId === null) return false;
+  const read = (await pool.query(
+    'SELECT title, content FROM coauthor_documents WHERE id = $1 AND organization_id = $2',
+    [leaf.documentId, orgId],
+  )) as { rows?: Array<{ title?: unknown; content?: unknown }> };
+  const filed = read.rows?.[0];
+  return Boolean(filed) && filed!.title === next.title && filed!.content === next.content;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

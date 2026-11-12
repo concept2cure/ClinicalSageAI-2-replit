@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "9b904c0e-bd26-4d05-b3b1-4135b9221b0a",
+      "projectId": "443e12ca-9d00-4d2a-aef0-06870e02bccc",
       "productName": "Q1E-planned",
       "batchNumber": "B-1",
       "dosageForm": "tablet",
@@ -35,14 +35,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 41,
+    "durationMs": 34,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 74,
+        "id": 92,
         "organizationId": 2,
-        "projectId": "9b904c0e-bd26-4d05-b3b1-4135b9221b0a",
+        "projectId": "443e12ca-9d00-4d2a-aef0-06870e02bccc",
         "studyTitle": null,
         "productName": "Q1E-planned",
         "batchNumber": "B-1",
@@ -75,8 +75,8 @@
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T13:26:08.441Z",
-        "updatedAt": "2026-11-10T13:26:08.441Z"
+        "createdAt": "2026-11-12T00:55:38.177Z",
+        "updatedAt": "2026-11-12T00:55:38.177Z"
       },
       "module3Linked": true
     }

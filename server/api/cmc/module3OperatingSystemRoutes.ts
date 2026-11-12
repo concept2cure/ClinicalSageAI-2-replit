@@ -408,6 +408,8 @@ router.get('/readiness/:projectId', async (req, res) => {
         totalSections: state.totalSections,
         approvedSections: state.approvedSections,
         staleSections: state.staleSections,
+        // Of those, the approved ones: they owe a re-approval. A stale draft owes a compile.
+        staleApprovedSections: state.staleApprovedSections,
         openCriticalContradictions: state.openCriticalContradictions,
         sectionsWithoutProvenance: state.sectionsWithoutProvenance,
         // Approved sections whose own compiled record says they are not
