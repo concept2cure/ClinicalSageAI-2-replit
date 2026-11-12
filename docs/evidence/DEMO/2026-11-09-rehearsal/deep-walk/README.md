@@ -68,8 +68,151 @@ Ids are `area.index` into `findings.json`. GA ids are items of `docs/evidence/GA
 | 0.5, 2.1, 2.2 † | Device walkthrough §4 and §5 | partly | `d92eeea15` (six leaves again) | The script still says an eSTAR id is refused and describes six UNRESOLVED_DOCUMENT errors | `01T2woo…`, lane L3 |
 
 **What this lane may take.** Nothing in the table is free: every remaining item is held or was handed to a lane. The
-125 unverified findings (GA-DEMO-18) are this lane's own and unheld. A verifier pass over them in a freshly seeded
-app at `592233d61` was started on 2026-11-12 and stopped before any finding was judged; it is still owed.
+125 unverified findings (GA-DEMO-18) are verified in the next section.
+
+## The 125 unverified findings, verified at trunk on 2026-11-12 (GA-DEMO-18)
+
+Verified in the running app: trunk `592233d61`, a database built from empty and seeded with the biotech and device
+packs (a second signer designated QMS approver, a third person), no model provider. One verifier per batch of four or
+five findings followed each finding's steps in a browser. A second verifier then tried to reproduce every finding the
+first cleared or set aside; it changed 2 verdicts from cleared to still wrong (0.u19, 4.u0). Each finding's quoted
+screen, code path at HEAD, GA item, holder and smallest fix are in `unverified-verified-2026-11-12.json`.
+
+**Result: 82 reproduced, 36 changed but still wrong, 7 no longer seen.** Of the 118 still wrong: 96 product, 11
+stale walkthrough, 9 seed data, 1 environment (the "DEV ONLY" label on a development build), 1 not a defect. Severity
+now: 58 medium, 57 low, 3 none. None was judged high.
+
+The holder column is the verifier's reading of `.design/claude-convergence/COORDINATION.md` and is a lead, not a ruling.
+In particular the demo seed packs and both walkthroughs sit under the client administration session's lane L3
+(row 121), whatever a single row below says.
+
+| Id | Finding | State | Kind | Severity | Holder (verifier's reading) |
+|---|---|---|---|---|---|
+| 0.u0 | Signed-version notifications in the bell fail with 'Retry linked record' (422) | reproduced | product-defect | medium | Wave B lane W6-review-and-tasks |
+| 0.u1 | Periodic-review tasks 'Assigned to you' on Home but 'Unassigned' on the project; Team card counts wrong | reproduced | product-defect | medium | periodic-review-task.ts and unified-work-view.ts unheld |
+| 0.u2 | 'What this IND needs' says '0 started' though drafts exist; 'Due for you: Nothing' above own tasks; raw 'SOURCE-DEPENDENT' | reproduced | product-defect | medium | IndDocumentLibrary.tsx unheld |
+| 0.u3 | Review stage 'Open change controls 0' though C2C-CC-001 (proposed) is in the project's data room | reproduced | seed-data | low | biotech-qms.mjs: no hold row (Codespace setup row 116 holds nothing) |
+| 0.u4 | Raw codes shown: 'FROZEN', 'APPROVED', '510k', '(510K, FDA)', 'k510' (protocol status now fixed) | changed | product-defect | low | ProjectRecords.tsx |
+| 0.u5 | A Home question is silently scoped to the last project opened | reproduced | product-defect | medium | unheld |
+| 0.u6 | No-provider AnA turn is not saved, yet copy says it is kept and listed on the project | reproduced | product-defect | low | stream.ts and useAnaChat.ts unheld |
+| 0.u7 | Sign-in card shows a 'DEV ONLY' divider above 'Demo access' | reproduced | environment | low | unheld |
+| 0.u8 | Demo programs have no objective | not-reproduced | — | — | unheld |
+| 0.u9 | Four different denominators for C2C-101 readiness on adjacent screens | reproduced | product-defect | medium | ProjectDossier.tsx: Project page (session_01FTWcmXm7At3ZXBE5VWn6oS) |
+| 0.u10 | Review stage shows the approved row's reviewer as a raw email beside a display-named reviewer | changed | product-defect | medium | Client administration and screen work (01T2woo…) |
+| 0.u11 | Biotech script says the top bar has segment and organisation controls; it does not | reproduced | stale-walkthrough | medium | Client administration and screen work (01T2woo…) |
+| 0.u12 | MDX script disclaims the device taxonomy (F9) that the About panel shows; Product shows the project title | reproduced | stale-walkthrough | medium | Client administration and screen work (01T2woo…) |
+| 0.u13 | Submit market row: sentence fragments, 'Planning' twice, duplicated MDX title | reproduced | product-defect | low | ProjectMarkets.tsx: D3 Project page (01FTWcmX…) |
+| 0.u14 | Respond letter card: 'Your Team And Concept2Cure' title-cased by CSS; monospace jargon meta line | reproduced | product-defect | low | Client administration and screen work (01T2woo…) |
+| 0.u15 | Projects empty-state copy names filters that do not exist; Pathway filter can hide while applied | changed | product-defect | low | Project page D3 (session_01FTWcmXm7At3ZXBE5VWn6oS) |
+| 0.u16 | About 'Edit' opens Project settings, where no About field is editable; the sharing drawer is jargon | reproduced | product-defect | low | Project page D3 (session_01FTWcmXm7At3ZXBE5VWn6oS) |
+| 0.u17 | Demo tenant shows unfinished setup ('Record your company details · To do'), leading to a dev-server notice | reproduced | seed-data | low | HomeSetup.tsx: Client administration (01T2woo…) |
+| 0.u18 | State disagreements: Cybersecurity Summary Draft in Author vs In review; vault folder counts vs sequence/letters | reproduced | product-defect | low | ProjectHome.tsx: Project page D3 (session_01FTWcmXm7At3ZXBE5VWn6oS) |
+| 0.u19 | Raw field keys and a garbled origin sentence in the CMC section completeness column | changed | product-defect | none | unheld |
+| 1.u0 | Two 'Review' signatures by the same person 2 s apart (freeze seal not told apart); signer was a validation fixture | changed | product-defect | low | Client administration session (01T2woo…) |
+| 1.u1 | Walkthrough says the product 'refuses to freeze while a comment is open'; Freeze is offered and an audited override exists | reproduced | stale-walkthrough | medium | Client administration session (01T2woo…) |
+| 1.u2 | Review board opens on SOP-003 ('No review requested yet', red 'No approval chain') even from Module 2.5; QA workflow labelled by raw UUID and 'user: <email> · sign' | reproduced | product-defect | medium | Client administration session (01T2woo…) |
+| 1.u3 | Protocol Synopsis card: 'Reviewers signed, sign-off pending', red 'No approval chain' banner, program name wraps one word per line, numeric date | reproduced | product-defect | low | Client administration session (01T2woo…) |
+| 1.u4 | 'Check' on the frozen synopsis fails with a red error toast containing a raw status | reproduced | product-defect | medium | unheld (COORDINATION.md:105 gives the Codex editor lane only DocumentW |
+| 1.u5 | Access panel shows 'Document access could not be read' on the frozen synopsis | reproduced | product-defect | medium | unheld (no COORDINATION.md row names server/routes/authoring-permissio |
+| 1.u6 | Two stacked lock banners on the frozen synopsis, the first showing the raw status 'FROZEN' | reproduced | product-defect | low | unheld (COORDINATION.md:105 holds authoring-document-read.ts for count |
+| 1.u7 | Internal codes like '1.20:work:3' shown as section numbers; false 'stored order differs' warning on Form 1571 | changed | product-defect | low | section-code.ts: Client administration and screen work (`01T2woo…`) |
+| 1.u8 | Revision history shows raw HTML markup, a cramped header, and Revert on the genesis revision | reproduced | product-defect | medium | unheld (COORDINATION row 105 holds DocumentWorkbench.tsx only for the  |
+| 1.u9 | Changing the editor rail's status filter switches the open document | reproduced | product-defect | medium | unheld (row 105's DocumentWorkbench.tsx hold is saved-refresh only |
+| 1.u10 | Truncated rail titles make the four SOPs indistinguishable; QMS SOPs are mixed into the filing list and offer Place into filing | reproduced | product-defect | medium | unheld (row 105's DocumentWorkbench.tsx hold is saved-refresh only) |
+| 1.u11 | Opening several documents within a minute trips the 20-per-minute limiter ('This document's review could not be read') | not-reproduced | — | — | unheld |
+| 1.u12 | Module 2.5's review request reason says 'send the synopsis for scientific review' | reproduced | seed-data | medium | unheld (no COORDINATION row holds biotech-authoring.mjs |
+| 1.u13 | Editor audit panel cramped, raw role codes, duplicate 'Accessed frozen document' rows on top | reproduced | product-defect | low | DocumentWorkbench.tsx: Codex project/editor continuation (COORDINATION |
+| 1.u14 | A document 'In review' is fully editable with Freeze and E-sign offered, and no notice | reproduced | product-defect | low | DocumentWorkbench.tsx: unheld for this region (the Codex row :105 hold |
+| 1.u15 | Amber review dots on all-resolved sections; edit and lock affordances on a sealed document | changed | product-defect | low | DocumentWorkbench.tsx: unheld for these lines (the Codex row :105 hold |
+| 1.u16 | Fully author-written seeded sections report 'No recorded origin — 1–2%' | reproduced | product-defect | low | DocumentAttributionBar.tsx held 2026-11-12 by the screen-repair sessio |
+| 1.u17 | Place into filing opens with an invalid pre-filled code and an immediate red error | reproduced | product-defect | low | unheld |
+| 1.u18 | 'Reviewed and signed in Quality' beside a disabled Freeze on a Draft SOP; SOPs offer Place into filing | reproduced | product-defect | low | unheld for reviewTaskState.ts |
+| 1.u19 | Search cannot find documents; 'Open the queue' appears to do nothing | reproduced | product-defect | low | Review.tsx: GA map lane L7 (shell) of the Client administration/GA ses |
+| 1.u20 | Frozen synopsis v1.0 already contains the Week 2 PK sampling that Amendment 1 / CC-001 proposes to add | reproduced | seed-data | low | GA map lane L3 (packs/biotech*.mjs |
+| 2.u0 | Vault Uploads data room: 'Captured 14 … 14 need review' beside 'Nothing captured for this project yet.' | changed | product-defect | medium | unheld (COORDINATION.md:115 gives J2 01QoxbLb… Vault.tsx for row copy  |
+| 2.u1 | Evidence step's data room is 14 QMS projection records with 'original file unavailable'; no device evidence listed | changed | product-defect | medium | unheld (R1 01QoxbLdKp… 'holds nothing' |
+| 2.u2 | Walkthrough §1: code DMN5 (screen NEUR), missing badges, no Lifecycle stage, no workstream, stale F9 note, 36 eSTAR sections | reproduced | stale-walkthrough | medium | Client administration session 01T2woo… (COORDINATION.md:121 names docs |
+| 2.u3 | Walkthrough §2 'Source files · filing cabinet' does not exist; approved 510(k) Summary not in the governed tree, readiness 0% | changed | stale-walkthrough | medium | Client administration session 01T2woo… for docs/demo (COORDINATION.md: |
+| 2.u4 | Approved, frozen 510(k) Summary shows 'Unbound working copy', raw 'status is APPROVED', edit affordances | changed | product-defect | medium | unheld (COORDINATION row :105 holds DocumentWorkbench.tsx for the save |
+| 2.u5 | Signature claims differ from screen (Approval/Password vs APPROVER/PIN); 'Covers frozen version approved'; two display names | changed | stale-walkthrough | medium | docs/demo: unheld by row (GA-DEMO-16) |
+| 2.u6 | Walkthrough §3 'close the program' step, F2 note and 'open query blocks freeze' are stale | reproduced | stale-walkthrough | medium | unheld by row (GA-DEMO-16: the lead's rehearsal intends to correct doc |
+| 2.u7 | Cybersecurity Summary: 'Draft' in editor and Author step, 'In review' on Review step; review reason names 510(k) Summary | reproduced | product-defect | medium | mdx.mjs: unheld (011Dpx… holds no file now |
+| 2.u8 | Device 510(k) described with drug/eCTD rules in Planner, Validation and Dispatch | reproduced | product-defect | medium | SubmissionCenter.tsx held by Client administration and screen work (01 |
+| 2.u9 | Raw rule codes, table names and UUIDs shown as reason text | reproduced | product-defect | medium | unheld (dispatch-readiness.ts released by RIM |
+| 2.u10 | Market card repeats itself and its blocker count disagrees with its list | reproduced | product-defect | low | Project page (session_01FTWcmXm7At3ZXBE5VWn6oS) |
+| 2.u11 | Review step says 'Open change controls 0' while MDX-CC-2026-001 is open | reproduced | seed-data | low | unheld (device demo pack owner 011Dpx… holds no file now |
+| 2.u12 | Change-control linked records labelled by raw UUIDs; title truncated; pharma (ICH Q10/Annex 15) framing; F7 note stale | changed | seed-data | low | ChangeRecordDetail.tsx: Quality and training (01GyGhjgjrNv… |
+| 2.u13 | Audit trail: raw event names/targets; 200-row window filling with rehearsal and System noise | changed | product-defect | medium | audit-trail-ledger.routes.ts event names: J2 human test (01QoxbLb… |
+| 2.u14 | Session ended by the server: Submission Center tabs show garbled 'didn't respond … Sign in again..' instead of a sign-in prompt | reproduced | product-defect | medium | sessionEnd.ts / queryClient.ts: unheld |
+| 2.u15 | Analytical Performance report: tiny 319x320 viewer; PDF subtitle and provenance footer run off the page | changed | seed-data | low | unheld (no COORDINATION row names scripts/demo/launch-demo/lib.mjs |
+| 2.u16 | Raw tokens and identity inconsistencies across the device screens (510k, 510K, k510, Ivd, demo-pack rationale, two manufacturer names) | reproduced | product-defect | low | ProjectHome.tsx / ProjectRecords.tsx / projectWords.ts: Project page ( |
+| 3.u0 | With no AI provider, 'Explain the findings' blames invalid JSON instead of the missing provider | reproduced | product-defect | low | submission-ai-service.ts and SubmissionSeqWorkspaces.tsx: unheld. gate |
+| 3.u1 | Walkthrough 'Open Dispatch readiness' has no rail item; Search's 'Orchestration & readiness' says '0 blockers' | reproduced | product-defect | medium | Orchestration.tsx and biotech-walkthrough.md: Client administration (0 |
+| 3.u2 | Walkthrough §5 navigation stale; widening to the org's submissions changes the selected submission under the C2C-101 breadcrumb | changed | product-defect | medium | SubmissionCenter.tsx: Wave B W3-compile-in-words |
+| 3.u3 | On the Submit stage the whole app shell scrolls, hiding the top bar and leaving a band at the bottom | changed | product-defect | medium | unheld (D3's Project*.tsx and project-home-v2.css were released |
+| 3.u4 | C2C-201 is 'Biotech' on its project page but 'Pharma' in Submission Center | reproduced | product-defect | medium | unheld |
+| 3.u5 | Every seeded leaf reads 'Vault document · not yet determined' above 'Source evidence not yet determined for 6 leaves' | reproduced | product-defect | medium | unheld (COORDINATION.md:475 marks submission-leaf-source-evidence.ts u |
+| 3.u6 | Internal table names, UUIDs, record keys and gate codes appear in client-facing findings | changed | product-defect | medium | unheld (DispatchReadiness.tsx |
+| 3.u7 | Developer-facing copy shown to the client (Sequences, Validation, Forms and letters) | reproduced | product-defect | low | IndLifecycle.tsx and SubmissionCenter.tsx: Client administration and s |
+| 3.u8 | Form field check shows raw snake_case keys | changed | product-defect | low | Client administration (01T2woo…) |
+| 3.u9 | Seeded failed Shadow Review Run #1: copy contradicts itself and Dispatch counts | reproduced | product-defect | medium | ShadowRunCoverage.tsx and shadow-review-waiver.ts unheld |
+| 3.u10 | 'Draft' regresses sequence 0000 from Assembling in one click, no confirm or reason | reproduced | product-defect | medium | SubmissionCenter.tsx held by Wave B (01T2woo… |
+| 3.u11 | Required deliverables tab is empty for an IND | reproduced | product-defect | medium | SubmissionRequiredDeliverables.tsx unheld (no row) |
+| 3.u12 | Identity-difference table has no layout; raw field keys and 'ind' | reproduced | product-defect | medium | unheld |
+| 3.u13 | Compile shows Module 5 green 'Ready' for unapproved documents, plus rule-pack and orchestrator jargon | reproduced | product-defect | medium | EctdCompile.tsx: Client administration and screen work (01T2woo…) |
+| 3.u14 | Planner lists eSTAR for an IND; gateway rules are bare codes; form list disagrees with the Submit stage | changed | product-defect | medium | SubmissionCenter.tsx: Client administration and screen work (01T2woo…) |
+| 3.u15 | Validation finding header stacks code, a lone dot and the section on three lines | reproduced | product-defect | low | unheld (COORDINATION.md:1091 lists SubmissionSeqWorkspaces.tsx BT-F4 a |
+| 3.u16 | Question chips leave Submission Center for a prefilled project conversation (honest with no provider) | reproduced | not-a-defect | none | Client administration and screen work (01T2woo…) |
+| 4.u0 | Org-level governed-artifact table shows no artifact names (title column collapses to 0 px) | changed | product-defect | none | unheld |
+| 4.u1 | Walkthrough Vault navigation and numbers are stale ('Uploaded files', '92 sections', 'Source files · filing cabinet') | reproduced | stale-walkthrough | medium | unheld (GA-DEMO-16: 'unheld by row' |
+| 4.u2 | Governed CTD section says the IB is 'Not started — no content yet' while IB v3.0 is filed at the same section | changed | product-defect | low | project-vault.ts partly held by Vault parity (01KnUG…) |
+| 4.u3 | PDF viewer squeezed into ~320x320 side panel; title bar shows a blob UUID | changed | product-defect | low | vaultPdfViewer.tsx unheld |
+| 4.u4 | FDA loop says 'No submission items yet' for a program that has IND sequence 0000 | reproduced | product-defect | medium | Wave B W5-agency-communication (COORDINATION.md row 122 names v2/surfa |
+| 4.u5 | Story conflict: FDA IR 'We are reviewing your submission' on an undispatched IND; no Pre-IND meeting recorded | changed | seed-data | low | unheld (demo packs: no COORDINATION row for packs/biotech*.mjs |
+| 4.u6 | Vault chips 'What is missing for this filing?' / 'not yet effective' go to AnA though the screen answers deterministically | reproduced | product-defect | low | unheld for the starter row (Vault.tsx is held only for row copy by J2 |
+| 4.u7 | Inspection readiness: CRO/service view, no trial prefilled, urgent verdict, output credited to AnA | not-reproduced | — | — | eTMF inside the Vault lane (COORDINATION row 130: Etmf.tsx |
+| 4.u8 | 'Mark the tasks that gate the milestone' opens 'Start a workflow' (Create 6 tasks); marks nothing | reproduced | product-defect | medium | Wave B W6-review-and-tasks (COORDINATION row 122 names v2/surfaces/Tas |
+| 4.u9 | 'Approvals pending 0' beside open approval tasks; 'has the most open work' stated over a tie | reproduced | product-defect | medium | Wave B lane W6 (COORDINATION.md line 122: 'v2/surfaces/TaskBoard.tsx . |
+| 4.u10 | MDX filing-cabinet documents numbered 39.1, 39.2, 40.1...: a global folder counter that reads like section numbers | reproduced | product-defect | medium | unheld (the eTMF row |
+| 4.u11 | Prefilled 'Draft response with AnA' prompt shows an internal id and promises an attachment that is not shown | reproduced | product-defect | low | Wave B lane W5-agency-communication (COORDINATION.md line 122 lists v2 |
+| 4.u12 | Task cards truncate the project to '[Demo · …', so biotech and device tasks look the same | reproduced | product-defect | low | Wave B lane W6 (COORDINATION.md line 122 |
+| 4.u13 | Seeded task states contradict their records; Team card disagrees with the board on assignees | reproduced | product-defect | low | ProjectHome.tsx: Project page D3 (session_01FTWcmXm7At3ZXBE5VWn6oS |
+| 4.u14 | New task Module dropdown lists duplicate raw values; Priority is lowercase | reproduced | product-defect | low | Client administration and screen work (01T2woo…) |
+| 4.u15 | Required-document rows show bare codes and a raw rule-pack line; required set inconsistent with Library | changed | product-defect | low | Vault parity (01KnUG…) |
+| 4.u16 | Copy rough edges on the FDA letter card (capitalised visibility, non-link 'letter in the data room', '5 C', truncated Q2) | reproduced | product-defect | low | AgencyInbox.tsx and commcenter-v2.css: Client administration and scree |
+| 4.u17 | Classification/type labels a reviewer would question; uploaded-files rows misaligned | changed | product-defect | low | Vault.tsx: Vault parity (01KnUG…) |
+| 5.u0 | 'Open document' on draft/under-review SOPs opened an empty 'Read and acknowledge' box | not-reproduced | — | — | Quality and training (01GyGhjgjrNv…) |
+| 5.u1 | Version history headings show raw section codes ('qms-purpose Purpose') | reproduced | product-defect | medium | Quality and training (01GyGhjgjrNv…) |
+| 5.u2 | Change control linked records lead with raw Vault UUIDs instead of the record title | changed | product-defect | low | Quality and training (01GyGhjgjrNv…) |
+| 5.u3 | 'Approve' offered to the founder on MDX-CC-2026-001, a change the founder proposed | not-reproduced | — | — | Quality and training (01GyGhjgjrNv…) |
+| 5.u4 | Audit rows show raw internal codes as events and targets | changed | product-defect | medium | audit-trail-ledger.routes.ts: J2 human test |
+| 5.u5 | Newest audit entries are rehearsal noise; the scripts point at the top rows | changed | stale-walkthrough | medium | Client administration (`01T2woo…`) |
+| 5.u6 | Second chain banner says some services write to another chain 'instead of the ledger' | reproduced | product-defect | medium | unheld (no COORDINATION.md row names AuditEventChain.tsx) |
+| 5.u7 | Report catalog shows raw enum codes for regions, roles, families and availability | changed | product-defect | low | Reporting analytics (`011HLkY…`) |
+| 5.u8 | Long lists of reports that cannot run (30 on Reports, 25 not computed on Catalog) | reproduced | product-defect | low | Reporting analytics (011HLkY...) |
+| 5.u9 | Biotech report page shows a 'Device projects' block with a 24-row grid of zeros | reproduced | product-defect | medium | Insights.tsx: Reporting analytics (011HLkY...) |
+| 5.u10 | Risk-based monitoring is empty for the biotech demo; AnA starters speak of 'this study' | reproduced | seed-data | low | Rbm*.tsx: the coordinating session (01JbQU...) |
+| 5.u11 | Walkthrough says the change record and the protocol amendment are 'the same event'; C2C-CC-001 links only to SOP-002 | reproduced | stale-walkthrough | low | GA readiness lane L3 (packs/biotech*.mjs |
+| 5.u12 | Stale walkthrough details: 'Quality & Assurance', 'four SOPs', F7 'log column shows 0', APPROVED vs 'Meaning: Approval' | reproduced | stale-walkthrough | low | unheld (GA-DEMO-16: 'unheld by row |
+| 5.u13 | Design calculators: rail highlight, raw 'effectSize' error, button enabled with empty field, lowercase enums, raw result labels | changed | product-defect | low | unheld |
+| 5.u14 | Biostatistics copy: 'org-scoped' badge, 'NoteRandomisation', "psoriasis's design" subtitle | reproduced | product-defect | low | unheld |
+| 5.u15 | Audit trail 'digitally signed', empty Validation filter with no message, Compliance reports 'audit_events store' | reproduced | product-defect | low | AdminSurfaces.tsx: security lane (011Dpx…) |
+| 5.u16 | SOP register rows cramped: truncated titles, actions stacked six deep | not-reproduced | — | — | Quality and training (01GyGhjgjrNv…) |
+| 6.u0 | Raw camelCase field keys shown as 'missing' inputs | changed | product-defect | medium | unheld (the CMC lane 01GJidg5 'Holds nothing' |
+| 6.u1 | §3.2.A.3 missing input is a garbled paragraph ('0 of 0 have none recorded'); lactose not flagged | not-reproduced | — | — | unheld |
+| 6.u2 | Lineage/provenance show raw JSON, user id '1', record keys/UUIDs; §3.2.S.4 lineage includes drug-product records | changed | product-defect | medium | CmcModule3Build.tsx: Client administration and screen work 01T2woo |
+| 6.u3 | Composed Module 3 narrative states things the records do not support | reproduced | product-defect | medium | unheld (CMC lane 01GJidg5 holds nothing |
+| 6.u4 | ICH check contradicts the register's 'Validated' methods, counts DS+DP batches together, derives 0 CQAs from 6 specs | changed | product-defect | medium | unheld (qbd-analyzer.ts listed 'Unheld |
+| 6.u5 | Second-person QC review drawer defaults to 'pass' and hides the result being verified | reproduced | product-defect | medium | Validation for GA (01QoxbLcnW…) holds v2/surfaces/cmcRegisterForms.ts  |
+| 6.u6 | Incomplete composed Module 3 sections cannot be read from the CMC screen | reproduced | product-defect | medium | CmcModule.tsx Overview approvals table: Validation for GA (01QoxbLcnW… |
+| 6.u7 | AnA says 'Prior turns are preserved' but a question asked with no provider is saved nowhere | reproduced | product-defect | medium | useAnaChat.ts and routes/ana-ri/stream.ts: unheld (no row |
+| 6.u8 | Drug substance row is bare ('--' formula, MW, CAS) and shows raw enum 'phase_2' | changed | product-defect | low | cmcRegisters.tsx: no explicit hold. The CMC session (01GJidg5…) names  |
+| 6.u9 | Plan says Module 3 has '21 documents · 0 started' and readiness 0% while 21 Module 3 sections are composed | reproduced | product-defect | medium | ProjectHome.tsx: Project page D3 (session_01FTWcmXm7At3ZXBE5VWn6oS) |
+| 6.u10 | Chips only prefill; CMC chips land in an earlier, unrelated conversation | reproduced | product-defect | low | unheld |
+| 6.u11 | Conversation chrome advertises agent capabilities with no provider and shows jargon | reproduced | product-defect | low | unheld |
+| 6.u12 | C2C-101 biologic refusal honest but surrounding screens and seed inconsistent | reproduced | product-defect | low | unheld |
+| 6.u13 | Change control opens with deployment-flag jargon | reproduced | product-defect | low | unheld |
+| 6.u14 | Tables overflow their cards; minor layout and console noise | changed | product-defect | low | unheld |
 
 ## Method, and its limits
 
@@ -78,4 +221,4 @@ app at `592233d61` was started on 2026-11-12 and stopped before any finding was 
 - **No model provider.** AnA's answers were not exercised beyond its honest "No AI provider is configured" reply.
 - **Screens.** The walkers' screenshots (1,113 PNGs, 210 MB) stayed on the rehearsal machine. `findings.json` names
   each finding's screenshots by their local path, and the steps to reproduce each one are in the finding itself.
-- **Not verified is not cleared.** The 125 unverified findings are leads for the next walk, not a pass.
+- **Read from code, then walked.** The 36 were re-checked from code and tests; the 125 were walked in the app.

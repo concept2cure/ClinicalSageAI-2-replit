@@ -1,0 +1,20 @@
+# Builtin authoring template snapshots: trunk f5d0d417a vs "a US biotech filing identity drafts from its own lifecycle record", 2026-11-12
+# 449 templates before, 449 after; 0 added, 0 removed.
+# 17 changed; every other snapshot is byte-identical. Columns: entry, snapshot before -> after, kind before -> after, name after.
+registry:US_BLA_ANNUAL	d422c449649efc2c… -> e5eb1f9d826be644…	preparation -> narrative	US · BLA Annual Report of Minor Changes (21 CFR 601.12(d))
+registry:US_BLA_CBE0	b1ede1e121891676… -> d80ff2e1447cc8b5…	preparation -> preparation	US · BLA Supplement — Changes Being Effected (CBE-0) — preparation worksheet
+registry:US_BLA_CBE30	5f2a7af04940900d… -> 093fdf5078a6c0c1…	preparation -> preparation	US · BLA Supplement — Changes Being Effected in 30 Days (CBE-30) — preparation worksheet
+registry:US_BLA_DISTRIBUTION	df442cf1d7f1e7f4… -> 8348c8ffbc6a4e87…	preparation -> narrative	US · BLA Distribution Report (21 CFR 600.81)
+registry:US_BLA_PAE_REPORT	f43c54310aef1a73… -> 376790adc51dd916…	preparation -> narrative	US · BLA Periodic Adverse Experience Report (21 CFR 600.80(c)(2))
+registry:US_BLA_PEDIATRIC_ANNUAL	eb2dcd8dedfa0862… -> 51c907dff105b96e…	preparation -> narrative	US · BLA Pediatric Annual Report (21 CFR 601.28)
+registry:US_BLA_PMR_ANNUAL	30cf2f1be2cf6972… -> 5b7829fe544ccc08…	preparation -> narrative	US · BLA Postmarketing Requirement and Commitment Status Report (21 CFR 601.70)
+registry:US_BLA_SUPP	444ea83f000a5d15… -> 81d9d6bb76265913…	preparation -> preparation	US · BLA Supplement (sBLA) — preparation worksheet
+registry:US_BPDR	3996902e8265d64e… -> 0564f8d02ce9d59c…	preparation -> narrative	US · Biological Product Deviation Report (BPDR)
+registry:US_CBER_LOT_RELEASE	f46284edee6e6438… -> bf19650689577acd…	preparation -> narrative	US · CBER Lot Release Protocol and Samples (21 CFR 610.2)
+registry:US_CBER_MASTER_FILE	857588a6430629d9… -> f9b052a3de8f0a42…	preparation -> narrative	US · CBER Biologics Master File
+registry:US_EUA_THERAPEUTIC	7a9f6c911ed9ebc4… -> 382c7559bad60cfa…	preparation -> narrative	US · Emergency Use Authorization Request (Drug or Biologic)
+registry:US_EXPANDED_ACCESS_INDIVIDUAL	9c5a95f4932f58f6… -> 1dcc47294af9315c…	preparation -> narrative	US · Individual Patient Expanded Access (Emergency and Non-Emergency)
+registry:US_EXPANDED_ACCESS_INTERMEDIATE	9fa35b5a3e47227d… -> 035022009f7f1c4f…	preparation -> narrative	US · Intermediate-Size Patient Population Expanded Access
+registry:US_EXPANDED_ACCESS_TREATMENT	6ee53612ab3bc377… -> 8b42f2e3d54b5d5f…	preparation -> narrative	US · Treatment IND / Treatment Protocol (Widespread Expanded Access)
+registry:US_INTERACT	5d623bf66a21f5a8… -> 09bf97627709a136…	preparation -> narrative	US · INTERACT Meeting
+registry:US_TYPE_D_MEETING	f4302290013bffe3… -> 1956b40f5a451287…	preparation -> narrative	US · Type D Meeting

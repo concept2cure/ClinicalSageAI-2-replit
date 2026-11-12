@@ -24,6 +24,7 @@ import {
   US_BIOTECH_LIFECYCLE_RECORD_BY_REGISTRY_ID,
 } from '../ind/ctd/lifecycle-document-types';
 import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings';
+import { usBiotechLifecycleRecordSections } from './us-biotech-lifecycle-templates';
 
 /** The shown basis is the one rendering of the structured basis (as document-template-library.ts withBasis). */
 function withBasis(t: Omit<DocumentTemplateStructure, 'regulatoryBasis'> & { basis: RegulatoryBasis }): DocumentTemplateStructure {
@@ -88,6 +89,20 @@ function recordShortName(label: string): string {
   return (m ? m[1] : label).split(',')[0].trim();
 }
 
+/**
+ * A US biotech identity reads one record, and that record is also a draftable
+ * component (us-biotech-lifecycle-templates.ts). Its parts come from that one
+ * projection, each with its mode and limit: a form, dataset or table stays manual
+ * and the rest is source-supported narrative (2026-11-12). Only when the parts
+ * are the same parts; otherwise the outline is left as it was.
+ */
+function oneRecordParts(recordIds: readonly string[], merged: TemplateSection[]): TemplateSection[] {
+  const recordSections = recordIds.length === 1 ? usBiotechLifecycleRecordSections(recordIds[0]) ?? [] : [];
+  const sameParts = recordSections.length === merged.length
+    && recordSections.every((s, i) => s.number === merged[i].number && s.heading === merged[i].heading);
+  return sameParts ? recordSections.map((s) => ({ ...s })) : merged;
+}
+
 function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]): DocumentTemplateStructure {
   const entry = getApplicationType(registryId);
   const records = recordIds.map((id) => {
@@ -112,7 +127,7 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
       });
     }
   }
-  const sections: TemplateSection[] = [...parts.values()].map((p) => ({
+  const merged: TemplateSection[] = [...parts.values()].map((p) => ({
     number: p.code,
     heading: variants && p.in.length < records.length ? `${p.heading} (${p.in.join(', ')})` : p.heading,
     purpose: p.purpose,
@@ -120,6 +135,7 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
     // A heading a correction replaced still names this part (2026-10-19).
     ...(p.formerTitles.length ? { formerTitles: [...new Set(p.formerTitles)] } : {}),
   }));
+  const sections = oneRecordParts(recordIds, merged);
   // The record's Module 1 codes name where its own parts file (1.2 the cover
   // letter, 1.14.1 the labeling); Modules 2–5 are the content the change updates.
   const updated = [...new Set(records.flatMap((r) => r.ctdSectionCodes ?? []))]

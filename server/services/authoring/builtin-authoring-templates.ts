@@ -5,7 +5,7 @@ import type { IndAuthoringTemplateRef } from '../../../shared/authoring/ind-docu
 import { GLOBAL_REGISTRY, isDeviceRegistryEntry, isSharedPlanningRegistryEntry } from '../../../shared/regulatory/global-document-registry';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
 import {
-  DOCUMENT_TEMPLATES, componentTemplateIdForRegistry, getDocumentTemplate, getRegistryDocumentTemplate,
+  DOCUMENT_TEMPLATES, draftingComponentIdForRegistry, getDocumentTemplate, getRegistryDocumentTemplate,
   type DocumentTemplateStructure,
 } from '../market-specs/document-template-library';
 import { documentComponentContext, documentComponentRegion } from '../market-specs/document-preparation';
@@ -83,7 +83,7 @@ async function registryTemplate(entry: RegulatoryApplicationType): Promise<Built
   return projectOutline({
     entryId: `registry:${entry.id}`, outline,
     filingContext: { registryId: entry.id, region: entry.region as RecordedTemplateFilingContext['region'], agency: entry.agency },
-    metadata: exactComponentMetadata(componentTemplateIdForRegistry(entry.id)),
+    metadata: exactComponentMetadata(draftingComponentIdForRegistry(entry.id)),
     originalFormat: entry.submissionFormat ?? entry.dossierStandard,
     ...(sharedPlanning ? { description: `${outline.title}. Internal planning outline for device, diagnostics, biotech, pharma, laboratory and research work; confirm its actual purpose and sources.` } : {}),
     limitations: [

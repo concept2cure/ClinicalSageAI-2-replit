@@ -1,5 +1,5 @@
 /** Exact working-document starts derived from the existing FDA lifecycle records. */
-import { LIFECYCLE_DOCUMENT_TYPES } from '../ind/ctd/lifecycle-document-types';
+import { LIFECYCLE_DOCUMENT_TYPES, US_BIOTECH_LIFECYCLE_RECORD_BY_REGISTRY_ID } from '../ind/ctd/lifecycle-document-types';
 import type { LifecycleComponent } from '../ind/ctd/types';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import type { CatalogTemplateEntry } from '../regulatory/templateCatalog';
@@ -81,4 +81,24 @@ export const US_BIOTECH_LIFECYCLE_METADATA: CatalogTemplateEntry[] = US_BIOTECH_
 /** Exact membership is the authority; a similar-looking arbitrary ID acquires no US scope. */
 export function isUsBiotechLifecycleComponent(id: string): boolean {
   return IDS.has(id);
+}
+
+/**
+ * The component read from the one record a registry identity names
+ * (US_TYPE_D_MEETING → us_lifecycle_us_type_d_meeting), or undefined. The record's
+ * own registry id is the link, so the two cannot be paired by hand (2026-11-12).
+ */
+export function usBiotechLifecycleComponentIdForRegistry(registryId: string): string | undefined {
+  const recordId = US_BIOTECH_LIFECYCLE_RECORD_BY_REGISTRY_ID[registryId];
+  return recordId && IDS.has(PREFIX + recordId) ? PREFIX + recordId : undefined;
+}
+
+/**
+ * A record's parts as this projection gives them: each with its mode (an original
+ * form, dataset or table is manual) and its drafting or retain-the-original limit.
+ * The registry identity that reads the same record takes its parts from here, so a
+ * part cannot be manual in one place and draftable in the other.
+ */
+export function usBiotechLifecycleRecordSections(recordId: string): DocumentTemplateStructure['sections'] | undefined {
+  return US_BIOTECH_LIFECYCLE_TEMPLATES.find(outline => outline.id === PREFIX + recordId)?.sections;
 }
