@@ -1624,9 +1624,13 @@ function impurityRendering(
               ? `within the ICH Q3C Class ${a.solventClass} limit (${a.limitPpm} ppm)`
               : `above the ICH Q3C Class ${a.solventClass} limit (${a.limitPpm} ppm)`
           : a.basis === 'ICH Q3D(R2)'
-            ? a.withinLimit
-              ? `within the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
-              : `above the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
+            /* An exposure derived from a concentration and the daily dose is
+               this material's contribution; the filed sentence says so and
+               gives the figure, since the PDE is the whole product's. */
+            ? (a.exposureBasis ? `${a.observedMicrogramsPerDay} µg/day from this material (${a.observedAsRecorded} at the recorded maximum daily dose), ` : '') +
+              (a.withinLimit
+                ? `within the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
+                : `above the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`)
           : a.basis === 'ICH M7(R2)'
             ? a.disposition === 'non-mutagenic-control'
               ? `ICH M7 Class ${a.impurityClass} — controlled as a non-mutagenic impurity`
