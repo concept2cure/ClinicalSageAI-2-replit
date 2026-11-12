@@ -25,6 +25,8 @@ const stamp = helpers.stamp();
  * reviewer's (./steps-review-route.mjs).
  */
 const signerCredential = runCredential();
+/* A supported writing region (shared/authoring/writing-regions.ts); the run's sections record none (OQ-AUTH-15, v0.6). */
+const DRAFT_REGION = 'US';
 
 await step(
   { id: 'OQ-AUTH-00', urs: [], kind: 'prerequisite', title: 'Prerequisite: a program', action: 'POST /api/c2c/projects', expected: '201' },
@@ -246,13 +248,14 @@ await step(
     id: 'OQ-AUTH-15',
     urs: ['URS-AUTH-012'],
     title: 'AI drafting fails closed when no provider is configured',
-    action: 'POST /api/authoring/sections/:id/ai/draft {prompt}',
+    action: 'POST /api/authoring/sections/:id/ai/draft {prompt, region:"US"}',
     expected: 'No draft content is returned; the request is refused with a provider-unavailable status (5xx) — never a fabricated draft',
     dependsOn: ['OQ-AUTH-04'],
-    note: 'Executed BEFORE the freeze (OQ-AUTH-11a/11): once the document is FROZEN every edit-class route is refused 409 AUTHORING_DOCUMENT_IMMUTABLE, which would answer this step for the wrong reason and mask F-10.',
+    note: 'Executed BEFORE the freeze (OQ-AUTH-11a/11): once the document is FROZEN every edit-class route is refused 409 AUTHORING_DOCUMENT_IMMUTABLE, which would answer this step for the wrong reason and mask F-10. ' +
+      'v0.6: the request names its writing region. Since 8013c94575 (2026-10-30) a draft of a section with no recorded receiving jurisdiction is refused 409 DRAFT_REGION_REQUIRED before the provider is asked, which answered this step before the check it exists for.',
   },
   async ({ api, expect }) => {
-    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
+    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.', region: DRAFT_REGION });
     const txt = JSON.stringify(r.json ?? r.text);
     expect(r.status !== 200 || !/draft|content/i.test(txt), 'a draft was returned without a provider', r.json);
     expect(r.status >= 400, `expected a refusal, got ${r.status}`, r.json);
@@ -275,10 +278,10 @@ await step(
        pass. A 5xx is still the deviation (no provider in this environment);
        a 200 is now held to the provenance the door returns. Re-execute with a
        PQ-passed model configured. */
-    note: 'The turn record (services/ana/turn-record-draft.ts) holds the prompt sent, the model, the gateway request and the check; the parked candidate names it, and the accept\'s trail row carries both ids (generator.turnRecordId, generator.requestId).',
+    note: 'The turn record (services/ana/turn-record-draft.ts) holds the prompt sent, the model, the gateway request and the check; the parked candidate names it, and the accept\'s trail row carries both ids (generator.turnRecordId, generator.requestId). v0.6: the request names its writing region, as OQ-AUTH-15\'s does.',
   },
   async ({ api, expect, deviation }) => {
-    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
+    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.', region: DRAFT_REGION });
     if (r.status >= 500) deviation('AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.', r.json);
     const d = r.status === 200 ? r.json?.draft : undefined;
     const seen = { status: r.status, draftId: d?.draftId, model: d?.metadata?.model, record: d?.turnRecord?.status, check: d?.check?.engine };
@@ -374,16 +377,19 @@ await step(
     id: 'OQ-AUTH-18',
     kind: 'ad-hoc',
     urs: ['URS-AUTH-014'],
-    title: 'Template stores answer',
-    action: 'GET /api/c2c/templates (organisation); GET /api/authoring/templates (global reference)',
-    expected: 'Both HTTP 200 with list payloads (empty organisation store is honest for a new organisation)',
+    title: 'The template library is outside this release; the global reference answers',
+    action: 'GET /api/c2c/templates (organisation template library); GET /api/authoring/templates (global reference)',
+    expected: 'The library 403 LAUNCH_SCOPE; the global reference 200 with a list payload',
+    note: 'v0.6: the template library left the launch scope by the CPO decision of 2026-10-08 (bcc457edb8, docs/SURFACE_DECISIONS_2026-10-08.md): a saved template formats no authored document. Until v0.5 the step expected 200 from both stores. URS-AUTH-014\'s organisation store is withdrawn from this release; its revision is owed through change control.',
   },
   async ({ api, expect }) => {
     const a = await api('GET', '/api/c2c/templates');
     const b = await api('GET', '/api/authoring/templates');
-    expect(a.status === 200 && b.status === 200, `expected 200/200, got ${a.status}/${b.status}`, { a: a.json, b: b.json });
-    const gl = b.json?.templates ?? b.json?.data ?? [];
-    return `org templates: ${a.json?.meta?.count ?? (a.json?.data ?? []).length}; global templates: ${Array.isArray(gl) ? gl.length : '?'}`;
+    const code = a.json?.error?.code ?? a.json?.code;
+    expect(a.status === 403 && code === 'LAUNCH_SCOPE', `the library: expected 403 LAUNCH_SCOPE, got ${a.status} ${code}`, a.json);
+    const gl = b.json?.templates ?? b.json?.data;
+    expect(b.status === 200 && Array.isArray(gl), `the global reference: expected 200 with a list, got ${b.status}`, b.json);
+    return `library ${a.status} ${code}; global templates: ${gl.length}`;
   },
 );
 

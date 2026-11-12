@@ -5,7 +5,7 @@
  * What a unit test can prove of D6 §C.6 (BUILD_ORDER §4 D6: C 3, C 4, C 6),
  * plus the markup contract of D5 §WA.4.2 that the page now follows:
  *   - the back link, D0's header with ONE primary ("Add files"), three starters,
- *     and the five views as tabs, the Library first; no retired chrome
+ *     and the six views as tabs, the Library first, the Data catalog (S2) beside it; no retired chrome
  *     (`sp-primary`, `sp-ask`, the eyebrow, "Open project", "later release");
  *   - AnA's `vault.search`, asked from another view, shows the Library with the
  *     query in the box; `vault.focus-document` opens the record (C.6 3);
@@ -75,7 +75,7 @@ afterEach(() => {
 });
 
 describe('the Vault is one work area, the library first (D6 §C.3)', () => {
-  it('has the back link, one header with one primary, three starters and five views, Library first', async () => {
+  it('has the back link, one header with one primary, three starters and six views, Library first', async () => {
     const p = props();
     render(<Vault {...p} />);
     await screen.findByRole('tablist', { name: 'Vault views' });
@@ -116,7 +116,7 @@ describe('the Vault is one work area, the library first (D6 §C.3)', () => {
     expect(p.onAsk).toHaveBeenCalledWith(CONNECTED);
 
     const tabs = within(screen.getByRole('tablist', { name: 'Vault views' })).getAllByRole('tab');
-    expect(tabs.map((t) => t.textContent)).toEqual(['Library', 'Uploads · 1', 'Required documents', 'Governed artifacts', 'Seals & fixity']);
+    expect(tabs.map((t) => t.textContent)).toEqual(['Library', 'Data catalog', 'Uploads · 1', 'Required documents', 'Governed artifacts', 'Seals & fixity']);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(panelOf(tabs[0]).hidden).toBe(false);
     for (const t of tabs.slice(1)) expect(panelOf(t).hidden).toBe(true);
@@ -125,15 +125,26 @@ describe('the Vault is one work area, the library first (D6 §C.3)', () => {
     expect(panelOf(tabs[0]).querySelectorAll('.vd-rows .vd-row').length).toBeGreaterThan(0);
   });
 
+  it('opens on the Data catalog when the project page asked it to, once (S2)', async () => {
+    sessionStorage.setItem('c2c.vault.openView', 'catalog');
+    const first = render(<Vault {...props()} />);
+    await screen.findByRole('tablist', { name: 'Vault views' });
+    expect(tab('Data catalog').getAttribute('aria-selected')).toBe('true');
+    first.unmount();
+    render(<Vault {...props()} />);
+    await screen.findByRole('tablist', { name: 'Vault views' });
+    expect(tab('Library').getAttribute('aria-selected')).toBe('true');
+  });
+
   it('moves between views with the arrow keys, Home and End, one tab stop', async () => {
     render(<Vault {...props()} />);
     const list = await screen.findByRole('tablist', { name: 'Vault views' });
     const library = tab('Library');
     expect(library.tabIndex).toBe(0);
-    expect(tab(/^Uploads/).tabIndex).toBe(-1);
+    expect(tab('Data catalog').tabIndex).toBe(-1);
     fireEvent.keyDown(list, { key: 'ArrowRight' });
-    expect(tab(/^Uploads/).getAttribute('aria-selected')).toBe('true');
-    expect(document.activeElement).toBe(tab(/^Uploads/));
+    expect(tab('Data catalog').getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(tab('Data catalog'));
     fireEvent.keyDown(list, { key: 'End' });
     expect(tab('Seals & fixity').getAttribute('aria-selected')).toBe('true');
     fireEvent.keyDown(list, { key: 'ArrowRight' });

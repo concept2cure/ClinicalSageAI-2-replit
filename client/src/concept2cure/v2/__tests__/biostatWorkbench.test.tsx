@@ -692,3 +692,30 @@ describe('BP-W2-4 — with no project open, Insert into document files nothing (
     expect(screen.getByText('0.7')).toBeTruthy();
   });
 });
+
+describe('Statistical defensibility: a field not yet filled', () => {
+  beforeEach(() => { apiRequest.mockReset(); });
+  afterEach(() => cleanup());
+
+  // 2026-11-10, the Codespace click-through: pressing "Assess defensibility" on the untouched form showed a red error
+  // toast in developer words ("the inputs listed in errors are missing or invalid … Missing or invalid: effectSize").
+  // A field not yet filled is not an error: the section says which field to enter, by the label on the screen.
+  it('an unfilled field is named by its label beside the button, not shown as an error', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/statistical-defensibility/assess') {
+        throw Object.assign(new Error('The statistics engine could not assess this design: the inputs listed in errors are missing or invalid. No verdict was formed. Missing or invalid: effectSize.'), {
+          name: 'ApiRequestError', status: 422, code: 'NEEDS_PARAMETERS',
+          payload: { code: 'NEEDS_PARAMETERS', data: { status: 'needs_parameters', errors: [{ field: 'effectSize', message: 'Effect size is required. Provide directly or via controlRate/treatmentRate.', required: true }] } },
+        });
+      }
+      return ok({});
+    });
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
+    const note = await screen.findByText('To assess this design, enter: Effect size (standardized).');
+    expect(note.getAttribute('role')).toBe('status');
+    expect(screen.queryByText(/effectSize/)).toBeNull();
+    expect(screen.queryByText(/listed in errors/)).toBeNull();
+    expect(screen.queryByText('Verdict')).toBeNull();
+  });
+});

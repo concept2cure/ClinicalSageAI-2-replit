@@ -1,0 +1,65 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > marks a change's target date as a date
+AssertionError: expected undefined to be '2026-09-15' // Object.is equality
+
+- Expected:
+"2026-09-15"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx:181:44
+    179|     const row = screen.getByText('CC-2026-014').closest('tbody') as HT…
+    180|     const when = row.querySelector('time');
+    181|     expect(when?.getAttribute('datetime')).toBe('2026-09-15');
+       |                                            ^
+    182|     expect(when?.textContent).toMatch(/2026/);
+    183|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > shows how a change is raised under the log, open, with no AnA button of its own
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx:189:22
+    187|     const { container } = render(<Harness onAsk={onAsk} />);
+    188|     const how = screen.getByText('How a change is raised').closest('de…
+    189|     expect(how.open).toBe(true);
+       |                      ^
+    190|     expect(how.textContent).toMatch(/Route for independent approval, i…
+    191|     expect(screen.queryByRole('button', { name: /Explain the procedure…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx:254:105
+    252|     expect(screen.getByRole('button', { name: 'Job roles' }).querySele…
+    253|     // P-122 rule 2 (2026-11-12): the method was a line on the screen …
+    254|     expect((screen.getByText('How coverage is counted').closest('detai…
+       |                                                                                                         ^
+    255|   });
+    256|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 26 passed (29)
+   Start at  02:57:36
+   Duration  15.51s (transform 2.52s, setup 458ms, import 3.92s, tests 2.37s, environment 7.25s)
+

@@ -96,6 +96,9 @@ export async function foreignProgramRefusal(
   return null;
 }
 
+/** A project (the integer-keyed `projects` row) is the caller's organization's. */
+const PROJECT_IN_ORGANIZATION_SQL = 'SELECT 1 FROM projects WHERE id = $1 AND organization_id = $2';
+
 /**
  * Record ids other than programs, per tool, with the query that proves the
  * record is the caller's organization's. Keyed by tool AND field because the
@@ -117,7 +120,12 @@ export const RECORD_SCOPES: Readonly<Record<string, ReadonlyArray<{ field: strin
   ],
   simulate_reviewer_challenges: [{ field: 'assessment_id', sql: assessmentInOrganizationSql() }],
   assemble_briefing_book: [{ field: 'assessment_id', sql: assessmentInOrganizationSql() }],
-  approve_import: [{ field: 'project_id', sql: 'SELECT 1 FROM projects WHERE id = $1 AND organization_id = $2' }],
+  approve_import: [{ field: 'project_id', sql: PROJECT_IN_ORGANIZATION_SQL }],
+  // 2026-11-10: the grants service checks the opportunity and the proposal
+  // against the organization and took project_id as given; the foreign key to
+  // projects is checked past row-level security, so it did not stop it either.
+  create_grant_proposal: [{ field: 'project_id', sql: PROJECT_IN_ORGANIZATION_SQL }],
+  record_grant_award: [{ field: 'project_id', sql: PROJECT_IN_ORGANIZATION_SQL }],
 };
 
 /** A readiness assessment has no organization column; it is its package's. */

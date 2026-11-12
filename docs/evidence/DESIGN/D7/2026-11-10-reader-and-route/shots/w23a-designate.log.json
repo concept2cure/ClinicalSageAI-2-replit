@@ -1,0 +1,25 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "who",
+      "orgId": "5",
+      "userId": "2"
+    },
+    {
+      "name": "designated",
+      "status": 200,
+      "body": {
+        "ok": true,
+        "designated": true,
+        "actionId": "act_d1425352abb447418a809e63553f2aff",
+        "name": "Theo Trainee"
+      }
+    },
+    {
+      "name": "w23a-designate",
+      "ok": true
+    }
+  ]
+}

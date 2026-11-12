@@ -138,7 +138,8 @@ export function PeoplePicker({ name, options, selected, onChange, multiple, sear
         data-testid={`${testIdPrefix}-search`}
       />
       <div className="rf-opts" style={{ maxHeight }} role="group" aria-label={searchLabel}>
-        {shown.length === 0 ? <div className="de-desc" role="status">No one matches “{query.trim()}”.</div> : shown.map(o => {
+        {/* With no one to offer at all, "No one matches “”" read as a search that found nobody (Quality walk, 2026-11-10). */}
+        {shown.length === 0 ? <div className="de-desc" role="status">{options.length === 0 ? 'No one can be chosen.' : `No one matches “${query.trim()}”.`}</div> : shown.map(o => {
           const noteId = o.note ? `${noteIdPrefix ?? `${testIdPrefix}-note`}-${o.id}` : undefined;
           return (
             <div key={o.id}>

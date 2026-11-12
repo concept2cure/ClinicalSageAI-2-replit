@@ -1,0 +1,112 @@
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the exact notification record even when the register has no matching row 398ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the training reader, not the editor, for a training notice (qmsIntent read) 215ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > preserves a refused exact notification target without opening a different register row 129ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a notification target that is not there was not found, and offers no Try again 48ms
+   → expected 'Not found in your organizationThis co…' to contain 'This controlled document was not foun…'
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a version history that is not there was not found, naming the document 131ms
+   → expected 'Not found in your organizationThis do…' to contain 'This controlled document was not foun…'
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > queues a new notification target while the current canonical editing copy remains open 93ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > shows the exact unbound controlled record before offering its explicit authored revision 51ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 120ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 127ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads 116ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 57ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says an editor read refused for this role as that, and offers the controlled text in the reader 58ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens a legacy entry under review to its inline controlled text, not to an editor with no copy 37ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 73ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > Send for review opens the review route form; nothing is sent until it is complete (RR4) 54ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 103ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content 109ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 88ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 40ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 111ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 401ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 78ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a project the organization does not own (404) is not-found 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an ownership check that could not run (503 VERIFICATION_UNAVAILABLE) is unchecked 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > the module gate (403 MODULE_NOT_LICENSED) is not-enabled 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > launch scope (403 LAUNCH_SCOPE) is out-of-release 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the route could not confirm (403 ORG_REQUIRED) is no-organization 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the IVD route could not confirm (403 IVD_NO_TENANT) is no-organization 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a role refusal (403, no code) is role 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a signature the act requires (428) is signature 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a server error (500) is failed 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a store that is not there (503 PENDING_STORE) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a 503 with no code is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a rejected request (400) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > no response at all (0) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > no status is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a genuine failure is no refusal 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names each refusal by what it is, and none of them as a failed read 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > only a genuine failure is "could not be read", and it can be tried again 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > offers a retry only where trying again can change the answer 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names the record that was not found when it is not the project 0ms
+ × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names the record once when it is what was not read 8ms
+   → expected 'This controlled document was not foun…' to be 'This controlled document was not foun…' // Object.is equality
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 404 is not-found, with its status and code 69ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 503 VERIFICATION_UNAVAILABLE is unchecked, with its status and code 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 MODULE_NOT_LICENSED is not-enabled, with its status and code 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 LAUNCH_SCOPE is out-of-release, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 ORG_REQUIRED is no-organization, with its status and code 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 is role, with its status and code 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 428 is signature, with its status and code 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 500 is failed, with its status and code 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a body that is not JSON is classified by its status alone 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > no response at all is a failure with status 0 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > an answer with data has no failure, and neither does an idle read 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a refetch clears the previous failure while it is in flight 106ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/IvdReadinessBoard.tsx classifies no refusal itself 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/Labeling.tsx classifies no refusal itself 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/HumanFactors.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/presub/PreSubManager.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/surfaces/UdiSurface.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/usePresub.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/useUdi.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/projectScopedRead.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/useEngineering.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > announces assertively as an alert 195ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > offers a retry that runs, and reports its busy state 65ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > is dismissible only when a dismiss handler is given 25ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > shows the correlation id as the support handle 15ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a missing relation 13ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a Drizzle failed query 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render raw SQL 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an API route 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an env var 14ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a file path 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a source location 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a stack frame 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an enum token 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a driver code 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > still renders a legitimate server sentence 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > renders the shared ErrorState, filter included 15ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > leaves the idle tone a polite status, not an alert 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a plan without the feature': its own title and words, and no retry 13ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a part not in this release': its own title and words, and no retry 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a role': its own title and words, and no retry 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'an unconfirmed organization': its own title and words, and no retry 10ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a record not in this organization': its own title and words, and no retry 11ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'an expired session': its own title and words, and no retry 12ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a plan without the feature' 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a part not in this release' 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a role' 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'an unconfirmed organization' 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a record not in this organization' 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'an expired session' 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a server failure' keeps the caller's words and its retry 13ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'no response at all' keeps the caller's words and its retry 15ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'no read given' keeps the caller's words and its retry 12ms
+ × client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > names the record that was not found when given its subject, and keeps the project as the default 16ms
+   → expected 'Not found in your organizationThis pr…' to contain 'This CAPA was not found in your organ…'
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > an unavailable ownership check keeps a retry, with the classifier's words 14ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Not found in your organizationThis co…' to contain 'This controlled document was not foun…'
+ ❯ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx:103:32
+AssertionError: expected 'Not found in your organizationThis do…' to contain 'This controlled document was not foun…'
+ ❯ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx:116:32
+AssertionError: expected 'Not found in your organizationThis pr…' to contain 'This CAPA was not found in your organ…'
+ ❯ client/src/concept2cure/v2/__tests__/errorState.test.tsx:180:51
+AssertionError: expected 'This controlled document was not foun…' to be 'This controlled document was not foun…' // Object.is equality
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts:129:8
+ Test Files  3 failed (3)
+      Tests  4 failed | 93 passed (97)

@@ -44,3 +44,26 @@ describe('the same strict current filing validator feeds overview and engine', (
     expect(readRecordedRegionalFiling({ registryId: 'EU_MAA', title: 'FDA IND candidate' })).toMatchObject({ state: 'recorded', filing: { registryId: 'EU_MAA', agency: 'EMA', kind: 'maa', jurisdiction: 'EU' } });
   });
 });
+
+/* The reason is shown to the person in Reporting's catalog (ONE_DESIGN_PLAN §2: no stored values on
+   screen). It read "assesses a EU filing", "a JP filing" and "a nda or bla filing". */
+describe('a refusal names the market and the filing kind in words, never as stored', () => {
+  const said = (typeId: string, declaredRegion: string, registryId: string) =>
+    regionalFilingApplicability(typeId, { region: declaredRegion, label: 'The report' }, readRecordedRegionalFiling({ registryId })).availabilityReason ?? '';
+
+  it('another market', () => {
+    expect(said('ema.maa_readiness_assessment', 'EU_EMA', 'US_IND')).toMatch(/^The report assesses an EU filing\. /);
+    expect(said('japan_pmda.jnda_shonin_readiness', 'JP_PMDA', 'US_IND')).toMatch(/^The report assesses a Japanese filing\. /);
+    expect(said('usa_fda.ind_safety_readiness', 'USA_FDA', 'EU_MAA')).toMatch(/^The report assesses a US filing\. /);
+  });
+
+  it('another kind of filing in the same market', () => {
+    expect(said('usa_fda.nda_bla_filing_readiness', 'USA_FDA', 'US_IND')).toMatch(/^The report assesses an NDA or BLA filing\. /);
+    expect(said('usa_fda.ind_safety_readiness', 'USA_FDA', 'US_NDA')).toMatch(/^The report assesses an IND filing\. /);
+  });
+
+  it('a filing that has no Module 1 record', () => {
+    expect(said('usa_fda.ind_safety_readiness', 'USA_FDA', 'US_510K')).toMatch(
+      /^The Module 1 record covers US IND, NDA, BLA and ANDA filings, EU MAA filings and Japanese J-NDA filings\. This project is recorded as .+, which has no Module 1 record here/);
+  });
+});

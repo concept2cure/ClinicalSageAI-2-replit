@@ -1,0 +1,2089 @@
+# The committed test, run against HEAD (d9a57a857) ProjectSchedule.tsx: both copied to temporary files beside the originals, run, and removed. Paths below are rewritten to the committed names.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > records it with its name, due date and linked sections, for this project, and reads the list again 289ms
+   → Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > keeps the list, and the button that opened the drawer, on screen while the list is read again 80ms
+   → Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > sends no linked sections when none are given, and needs a name and a due date 54ms
+   → Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > refuses a linked section that is not a CTD section number, and sends nothing 61ms
+   → Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > a refused record keeps the drawer open, says why, and says nothing was recorded 50ms
+   → Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > moves an open milestone's date 23ms
+   → expected 'Pre-IND meetingMilestone · On trackDe…' to contain 'Sections 1.2, 2.5'
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > marks it done 62ms
+   → Unable to find an accessible element with the role "button" and name "Update Pre-IND meeting"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > a done milestone and a section deadline offer no update 45ms
+   → Unable to find an accessible element with the role "button" and name `/^Update /`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > a person who may not change the project > is offered neither control 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > records it with its name, due date and linked sections, for this project, and reads the list again
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:78:36
+     76|     const module = await sections();
+     77|     const before = timelineReads();
+     78|     fireEvent.click(within(module).getByRole('button', { name: 'Record…
+       |                                    ^
+     79|     expect(field('Name')).toBeTruthy();
+     80|     type('Name', 'Pre-IND briefing package sent');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > keeps the list, and the button that opened the drawer, on screen while the list is read again
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:97:36
+     95|     let release = () => {};
+     96|     hold = new Promise<void>((resolve) => { release = resolve; });
+     97|     fireEvent.click(within(module).getByRole('button', { name: 'Record…
+       |                                    ^
+     98|     type('Name', 'IND submitted');
+     99|     type('Due date', '2027-05-09');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > sends no linked sections when none are given, and needs a name and a due date
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:111:36
+    109|   it('sends no linked sections when none are given, and needs a name a…
+    110|     const module = await sections();
+    111|     fireEvent.click(within(module).getByRole('button', { name: 'Record…
+       |                                    ^
+    112|     fireEvent.click(within(dialog()).getByRole('button', { name: /Reco…
+    113|     expect(within(dialog()).getByRole('alert').textContent).toContain(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > refuses a linked section that is not a CTD section number, and sends nothing
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:123:36
+    121|   it('refuses a linked section that is not a CTD section number, and s…
+    122|     const module = await sections();
+    123|     fireEvent.click(within(module).getByRole('button', { name: 'Record…
+       |                                    ^
+    124|     type('Name', 'Module 2 drafted');
+    125|     type('Due date', '2027-02-01');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > a refused record keeps the drawer open, says why, and says nothing was recorded
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Record a milestone"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:136:36
+    134|     const module = await sections();
+    135|     refuse = json(403, { error: 'Your current role and project permiss…
+    136|     fireEvent.click(within(module).getByRole('button', { name: 'Record…
+       |                                    ^
+    137|     type('Name', 'Module 2 drafted');
+    138|     type('Due date', '2027-02-01');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > moves an open milestone's date
+AssertionError: expected 'Pre-IND meetingMilestone · On trackDe…' to contain 'Sections 1.2, 2.5'
+
+Expected: "Sections 1.2, 2.5"
+Received: "Pre-IND meetingMilestone · On trackDec 1, 2026"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:149:29
+    147|     const module = await sections();
+    148|     const row = within(module).getAllByRole('listitem').find((r) => r.…
+    149|     expect(row.textContent).toContain('Sections 1.2, 2.5');
+       |                             ^
+    150|     fireEvent.click(within(row).getByRole('button', { name: 'Update Pr…
+    151|     expect(field('Due date').value).toBe('2026-12-01');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > marks it done
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Update Pre-IND meeting"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:160:36
+    158|   it('marks it done', async () => {
+    159|     const module = await sections();
+    160|     fireEvent.click(within(module).getByRole('button', { name: 'Update…
+       |                                    ^
+    161|     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Done'…
+    162|     fireEvent.click(within(dialog()).getByRole('button', { name: /Save…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > a done milestone and a section deadline offer no update
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Update /`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Section owners and deadlines":
+  [36m<h3 />[39m
+
+  --------------------------------------------------paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------list:
+
+  Name "Deadlines and milestones":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"pj-act"[39m
+    [33mrole[39m=[32m"listitem"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"pj-tracking-module"[39m
+  [33mdata-testid[39m=[32m"pj-schedule-sections"[39m
+[36m>[39m
+  [36m<h3>[39m
+    [0mSection owners and deadlines[0m
+  [36m</h3>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"pj-card-note"[39m
+  [36m>[39m
+    [0m1[0m
+    [0m of [0m
+    [0m2 sections have[0m
+    [0m an owner · [0m
+    [0m0[0m
+    [0m complete[0m
+  [36m</p>[39m
+  [36m<div[39m
+    [33maria-label[39m=[32m"Deadlines and milestones"[39m
+    [33mclass[39m=[32m"pj-acts"[39m
+    [33mrole[39m=[32m"list"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mm2.5: Clinical overview[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mSection deadline · Raj Patel[0m
+        [0m · [0m
+        [0mDrafting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mNov 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mPre-IND meeting[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mOn track[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 1, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-act"[39m
+      [33mrole[39m=[32m"listitem"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-w"[39m
+      [36m>[39m
+        [0mBriefing package sent[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-t"[39m
+      [36m>[39m
+        [0mMilestone[0m
+        [0m · [0m
+        [0mCompleted[0m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"pj-act-n"[39m
+      [36m>[39m
+        [0mDec 20, 2026[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx:170:27
+    168|     expect(within(module).queryByRole('button', { name: 'Update Briefi…
+    169|     expect(within(module).queryByRole('button', { name: /Update m2\.5/…
+    170|     expect(within(module).getAllByRole('button', { name: /^Update / })…
+       |                           ^
+    171|   });
+    172| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  16:41:13
+   Duration  2.00s (transform 309ms, setup 154ms, import 403ms, tests 684ms, environment 607ms)
+

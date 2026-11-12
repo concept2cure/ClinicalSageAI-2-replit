@@ -1,0 +1,122 @@
+Success! The configuration is valid.
+
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... pass
+  run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket"... pass
+  run "the_site_is_served_with_security_headers"... pass
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "task_grants_and_secret_recovery_are_what_they_say"... pass
+  run "staging_secrets_can_be_recreated_after_a_teardown"... pass
+  run "every_bucket_name_carries_the_account_id"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
+  run "provision_workflow_names_are_the_ones_terraform_creates"... pass
+  run "the_api_task_holds_no_owner_credential"... pass
+  run "the_one_off_database_task_alone_holds_it"... pass
+  run "production_never_builds_and_promotes_from_staging"... pass
+  run "staging_builds_and_lets_production_read_its_images"... pass
+  run "refuses_an_account_id_that_is_not_one"... pass
+  run "refuses_a_deployment_without_an_owner"... pass
+  run "refuses_an_owner_address_that_could_never_match"... pass
+  run "refuses_an_api_task_too_small_for_the_scanner"... pass
+  run "refuses_a_production_api_task_below_two_vcpu"... pass
+  run "staging_may_run_a_one_vcpu_api_task"... pass
+  run "the_api_container_stops_cleanly_and_bounds_its_heap"... pass
+  run "the_api_service_scales_on_cpu_and_requests"... pass
+  run "refuses_a_max_count_below_the_desired_count"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_a_short_audit_export_key"... pass
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... pass
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_a_zero_retention_approval_that_names_no_agreement"... pass
+  run "refuses_a_zero_retention_approval_this_stack_sets_no_flag_for"... pass
+  run "refuses_an_agreement_with_a_blank_reference"... pass
+  run "refuses_an_agreement_date_that_is_not_a_date"... pass
+  run "refuses_an_agreement_date_in_another_format"... pass
+  run "accepts_a_well_formed_agreement"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+  run "every_container_can_send_login_codes"... pass
+  run "refuses_an_smtp_port_without_required_tls"... pass
+  run "every_container_can_reach_the_drafting_provider"... pass
+  run "refuses_a_key_that_is_not_anthropics"... pass
+  run "refuses_placement_approvals_that_omit_the_drafting_provider"... pass
+  run "openai_is_absent_unless_a_tenant_elected_it"... pass
+  run "openai_is_a_secret_when_a_tenant_elected_it"... pass
+  run "refuses_an_openai_election_without_a_key"... pass
+  run "refuses_an_openai_key_without_an_election"... pass
+  run "refuses_an_anthropic_key_as_the_openai_key"... pass
+  run "refuses_a_short_attestation_key"... pass
+  run "refuses_an_attestation_key_equal_to_the_audit_export_key"... pass
+  run "error_reporting_is_absent_unless_configured"... pass
+  run "error_reporting_reaches_both_containers_when_configured"... pass
+  run "refuses_a_sentry_dsn_that_is_not_https"... pass
+  run "refuses_a_pinned_rds_minor_version"... pass
+  run "rds_is_gp3_with_tagged_snapshots_and_database_insights"... pass
+  run "one_service_and_one_repository_no_worker"... pass
+  run "refuses_a_burstable_production_database"... pass
+  run "staging_may_run_a_burstable_database"... pass
+  run "the_api_embeds_through_the_self_hosted_lane"... pass
+  run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address"... pass
+  run "the_embedding_service_admits_the_application_tasks_alone"... pass
+  run "the_embedding_server_is_pinned_and_serves_bge_m3"... pass
+  run "the_embedding_logs_are_kept_as_the_application_logs_are"... pass
+  run "refuses_an_embedding_image_by_tag"... pass
+  run "refuses_a_model_revision_that_is_not_a_commit"... pass
+  run "warns_while_the_embedding_model_is_unpinned"... pass
+  run "the_embedding_server_loads_the_pinned_commit"... pass
+  run "an_openai_election_does_not_move_the_embedding_lane"... pass
+  run "refuses_placement_approvals_without_the_embedding_lane"... pass
+  run "refuses_a_local_approval_that_does_not_name_embedding"... pass
+  run "the_environment_examples_show_the_decided_embedding_approval"... pass
+  run "database_level_audit_is_loaded_and_required"... pass
+  run "the_database_tier_is_under_customer_managed_keys"... pass
+  run "each_key_is_used_where_it_belongs_and_the_passwords_rotate_on_the_marker"... pass
+  run "refuses_an_empty_rotation_marker"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... pass
+tests/detective_controls.tftest.hcl... in progress
+  run "the_vpc_records_all_traffic_under_the_environments_name"... pass
+  run "every_request_the_load_balancer_takes_is_logged"... pass
+  run "the_alb_log_bucket_is_private_encrypted_and_bounded"... pass
+  run "only_the_regions_load_balancers_may_write_and_only_their_prefix"... pass
+  run "a_shorter_access_log_retention_is_refused"... pass
+  run "cloudfront_and_the_buckets_log_to_the_access_log_bucket"... pass
+  run "the_access_log_bucket_admits_only_its_writers"... pass
+tests/detective_controls.tftest.hcl... tearing down
+tests/detective_controls.tftest.hcl... pass
+tests/dr.tftest.hcl... in progress
+  run "the_three_keys_are_multi_region_from_creation"... pass
+  run "each_key_has_a_replica_in_the_dr_region"... pass
+  run "each_replica_carries_its_primarys_policy"... pass
+  run "the_account_may_replicate_the_vault_key"... pass
+  run "a_dr_region_equal_to_the_primary_is_refused"... pass
+tests/dr.tftest.hcl... tearing down
+tests/dr.tftest.hcl... pass
+tests/monitoring.tftest.hcl... in progress
+  run "every_alarm_publishes_to_the_one_topic"... pass
+  run "cloudwatch_can_publish_to_the_encrypted_topic"... pass
+  run "the_service_alarms_watch_the_right_things"... pass
+  run "the_logs_that_mean_trouble_page"... pass
+  run "account_activity_from_cloudtrail_pages"... pass
+  run "a_sweep_that_stops_running_pages"... pass
+  run "production_needs_someone_to_page"... pass
+  run "an_address_must_be_an_address"... pass
+  run "staging_may_have_no_subscribers"... pass
+  run "every_alarm_has_a_runbook_section"... pass
+tests/monitoring.tftest.hcl... tearing down
+tests/monitoring.tftest.hcl... pass
+
+Success! 106 passed, 0 failed.

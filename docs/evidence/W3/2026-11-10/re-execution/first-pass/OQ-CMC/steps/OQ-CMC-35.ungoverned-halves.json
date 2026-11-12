@@ -1,0 +1,20 @@
+[
+  {
+    "register": "analytical-methods",
+    "noReason": 400,
+    "noReauth": 401,
+    "reauthCode": "REAUTH_PASSWORD_REQUIRED"
+  },
+  {
+    "register": "process-validation",
+    "noReason": 400,
+    "noReauth": 401,
+    "reauthCode": "REAUTH_PASSWORD_REQUIRED"
+  },
+  {
+    "register": "comparability-studies",
+    "noReason": 400,
+    "noReauth": 401,
+    "reauthCode": "REAUTH_PASSWORD_REQUIRED"
+  }
+]

@@ -21,7 +21,7 @@ import React, { useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
-import { catalogCapabilityCounts, isRowList, PanelHead, rowsOf, type LibraryReportType } from './insightsLibraryShared';
+import { catalogCapabilityCounts, isRowList, PanelHead, regionWords, reportingRoleLabel, reportingRoleWords, rowsOf, type LibraryReportType } from './insightsLibraryShared';
 import { useCatalogReportingRole } from '../reportingPersona';
 
 /** Family ids to the words a client reads; anything unlisted shows its id. */
@@ -87,6 +87,15 @@ function RunUnavailableNote({ reason }: { reason?: string }) {
   return <div className="rl-card-meta">{reason}</div>;
 }
 
+/** Where a report applies and who it is for, in words: "US · OLAW · For IACUC coordinator, quality assurance". */
+function TypeAudience({ type }: { type: LibraryReportType }) {
+  const said = [
+    type.region ? regionWords(type.region) : null,
+    type.allowedPersonas?.length ? `For ${type.allowedPersonas.map(reportingRoleWords).join(', ')}` : null,
+  ].filter(Boolean);
+  return said.length ? <div className="rl-card-meta">{said.join(' · ')}</div> : null;
+}
+
 function TypeCard({
   type,
   canRun,
@@ -114,7 +123,7 @@ function TypeCard({
             : 'Scope not declared'}
       </div>
       {type.computedScope === 'organization' && <OrganizationCountsNote className="rl-card-meta" />}
-      {(type.region || type.allowedPersonas?.length) && <div className="rl-card-meta">{[type.region, type.allowedPersonas?.map(readable).join(', ')].filter(Boolean).join(' · ')}</div>}
+      <TypeAudience type={type} />
       {type.availabilityReason && <div className="rl-card-meta">{type.availabilityReason}</div>}
       {type.entitled !== false && <RunUnavailableNote reason={unavailableReason} />}
       {type.entitled === false ? (
@@ -243,15 +252,15 @@ export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, progr
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <CatalogFilter label="Region" value={region} onChange={setRegion} options={regions} />
-        <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} />
+        <CatalogFilter label="Region" value={region} onChange={setRegion} options={regions} labelOf={regionWords} />
+        <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} labelOf={reportingRoleLabel} />
         <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
         <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed', 'prediction-unavailable']} />
         {planControl}
       </div>
       <ReportingPersonaError profile={profile} />
 
-      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(type)} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {type.label} — {type.availabilityReason || 'This report is unavailable in the current context.'}</div>)}
+      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(type)} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {unavailableNote(type)}</div>)}
 
       {byFamily.length === 0 && notComputed.length === 0 && needsContext.length === 0 && predictions.length === 0 ? (
         <EmptyState
@@ -284,6 +293,11 @@ export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, progr
 }
 
 const readable = (value: string) => value.replace(/[._-]/g, ' ');
+/** Why a report is not offered. A reason that opens with the report's own name is shown as it is, so the name is said once. */
+function unavailableNote(type: LibraryReportType): string {
+  const reason = type.availabilityReason || 'This report is unavailable in the current context.';
+  return reason.startsWith(type.label) ? reason : `${type.label} — ${reason}`;
+}
 function catalogAvailability(type: LibraryReportType): string {
   if (type.family === 'prediction' && !type.runnable && (!type.availabilityState || type.availabilityState === 'not-computed')) return 'prediction-unavailable';
   if (!type.runnable) return type.availabilityState || (type.computedScopes.length ? 'unavailable' : 'not-computed');
@@ -301,9 +315,12 @@ function ReportingPersonaError({ profile }: { profile: ReturnType<typeof useCata
   return <ErrorState variant="inline" title="Your saved reporting role could not be read." message={profile.error?.message} retry={() => void profile.refetch()} />;
 }
 
-function CatalogFilter({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+/** `labelOf` words a stored value for the reader; the value itself is still what filters. Options are in the order read. */
+function CatalogFilter({ label, value, options, onChange, labelOf = readable }: { label: string; value: string; options: string[]; onChange: (v: string) => void; labelOf?: (v: string) => string }) {
   const id = React.useId();
-  return <div className="rl-filter"><label className="gov-label" htmlFor={id}>{label}</label><select id={id} className="rl-input" value={value} onChange={e => onChange(e.target.value)}><option value="">All</option>{options.map(option => <option key={option} value={option}>{readable(option)}</option>)}</select></div>;
+  const shown = labelOf === readable ? options.map(option => ({ option, text: readable(option) }))
+    : options.map(option => ({ option, text: labelOf(option) })).sort((a, b) => a.text.localeCompare(b.text));
+  return <div className="rl-filter"><label className="gov-label" htmlFor={id}>{label}</label><select id={id} className="rl-input" value={value} onChange={e => onChange(e.target.value)}><option value="">All</option>{shown.map(({ option, text }) => <option key={option} value={option}>{text}</option>)}</select></div>;
 }
 
 interface TraceArtifact { id: string; title: string; status?: string }

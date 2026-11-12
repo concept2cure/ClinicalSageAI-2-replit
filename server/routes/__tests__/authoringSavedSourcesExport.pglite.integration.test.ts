@@ -78,6 +78,13 @@ beforeAll(async () => {
   // Vault document read now selects: the real migration, as the other PGlite
   // harnesses apply it.
   await harness.pg.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20261008e_document_catalog_attribution.sql'), 'utf8'));
+  // audit_logs.chain_seq, as production has it: every release (freeze, sign,
+  // export) reads the independent-check ledger, which orders the chained rows
+  // by chain_seq (workflow-import-governance.ts independentLedger, b8cee0745c),
+  // and the shared harness's hand-written audit_logs has no such column, so
+  // the read failed and every export was refused INDEPENDENT_CHECK_REQUIRED.
+  // The real migration, not a transcribed column.
+  await harness.pg.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20260921_audit_logs_chain_seq.sql'), 'utf8'));
   const query = async (sql: string, params?: unknown[]) => {
     h.sql.push(sql);
     // Isolated mutation proof of the actual old projection. The shared route
@@ -109,7 +116,12 @@ beforeEach(() => {
 
 async function sealed(f: DispositionFixture, provenance?: unknown) {
   const docId = randomUUID();
-  const stored = provenance ?? { source: 'ana', projectSourceReferences: [{
+  // Not AnA-drafted: since bb999f25b6 (2026-11-06) an AnA draft's release also needs its retained creation receipt
+  // and qualified generation, and a hand-inserted one is rightly refused WORKFLOW_ORIGIN_UNVERIFIED. The AnA
+  // source-linked export, made the way production makes it, is held by draft-source-identity.pglite.integration
+  // .test.ts. A seeded document saved with selected sources (from-draft admits 'seed' with sourceReferences)
+  // carries the same projectSourceReferences receipt, which is what this suite's source reservation reads.
+  const stored = provenance ?? { source: 'seed', projectSourceReferences: [{
     sectionCode: '12', qualification: 'unassessed', verification: 'current_at_save',
     sources: [{ documentId: f.vault, programId: f.program, contentHash: SOURCE_HASH,
       span: { start: 0, end: ORIGINAL_TEXT.length, totalChars: ORIGINAL_TEXT.length } }],

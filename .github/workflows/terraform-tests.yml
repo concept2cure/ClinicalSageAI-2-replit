@@ -76,9 +76,18 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: terraform init -backend=false -input=false
 
+      # terraform/stack takes the DR region's provider, aws.dr, from its caller
+      # (configuration_aliases, MR-04 Stage 1), so on its own it validates only
+      # with one configured. The file is written for this step and removed; the
+      # roots, which pass the real one, are validated in environments-validate.
       - name: validate
         working-directory: ${{ matrix.dir }}
-        run: terraform validate
+        run: |
+          if [ "${{ matrix.dir }}" = terraform/stack ]; then
+            printf 'provider "aws" {\n  alias  = "dr"\n  region = "us-west-2"\n}\n' > ci_validate_dr_provider.tf
+          fi
+          terraform validate
+          rm -f ci_validate_dr_provider.tf
 
       - name: test
         working-directory: ${{ matrix.dir }}

@@ -175,3 +175,99 @@ output "private_subnet_ids" {
 output "rds_sg_id" {
   value = aws_security_group.rds_part11.id
 }
+
+# ── Flow logs (MR-04 Stage 3 step 4; OPS-15, SEC-11, CIS 3.7) ───────────────
+#
+# Every accepted and rejected connection in the VPC, to a CloudWatch log group
+# kept a year and encrypted under its own key. Without it an exfiltration, or a
+# scan of the private subnets, leaves nothing to investigate.
+# tests/flow_logs.tftest.hcl asserts it.
+
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+
+locals {
+  flow_log_group     = "/aws/vpc/${var.name}/flow-logs"
+  flow_log_group_arn = "arn:${data.aws_partition.current.partition}:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${local.flow_log_group}"
+}
+
+resource "aws_kms_key" "flow_logs" {
+  description             = "${var.name}: VPC flow logs"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AccountAdministersAndGrantsThroughIam"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root" }
+        Action    = "kms:*"
+        Resource  = "*"
+      },
+      {
+        Sid       = "CloudWatchLogsEncryptsTheFlowLogGroupOnly"
+        Effect    = "Allow"
+        Principal = { Service = "logs.${var.region}.amazonaws.com" }
+        Action    = ["kms:Encrypt*", "kms:Decrypt*", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:Describe*"]
+        Resource  = "*"
+        Condition = { ArnEquals = { "kms:EncryptionContext:aws:logs:arn" = local.flow_log_group_arn } }
+      },
+    ]
+  })
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "flow_logs" {
+  name              = local.flow_log_group
+  retention_in_days = var.flow_log_retention_days
+  kms_key_id        = aws_kms_key.flow_logs.arn
+  tags              = var.tags
+}
+
+resource "aws_iam_role" "flow_logs" {
+  name = "${var.name}-vpc-flow-logs"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "vpc-flow-logs.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+      Condition = { StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id } }
+    }]
+  })
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "flow_logs" {
+  name = "deliver-to-the-flow-log-group"
+  role = aws_iam_role.flow_logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"]
+      Resource = [aws_cloudwatch_log_group.flow_logs.arn, "${aws_cloudwatch_log_group.flow_logs.arn}:*"]
+    }]
+  })
+}
+
+resource "aws_flow_log" "this" {
+  vpc_id                   = aws_vpc.this.id
+  traffic_type             = "ALL"
+  log_destination_type     = "cloud-watch-logs"
+  log_destination          = aws_cloudwatch_log_group.flow_logs.arn
+  iam_role_arn             = aws_iam_role.flow_logs.arn
+  max_aggregation_interval = 60
+  tags                     = merge(var.tags, { Name = "${var.name}-vpc-flow-log" })
+}
+
+# The stack's detective-controls test reads it (terraform/stack/tests/detective_controls.tftest.hcl).
+output "flow_log" {
+  value = {
+    id                = aws_flow_log.this.id
+    traffic_type      = aws_flow_log.this.traffic_type
+    log_group         = aws_cloudwatch_log_group.flow_logs.name
+    retention_in_days = aws_cloudwatch_log_group.flow_logs.retention_in_days
+  }
+}

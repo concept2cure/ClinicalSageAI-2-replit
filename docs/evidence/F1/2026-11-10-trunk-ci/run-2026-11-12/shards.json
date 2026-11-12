@@ -1,0 +1,48 @@
+{
+  "total": 4,
+  "collected": 6323,
+  "ran": 6323,
+  "missing": 0,
+  "extra": 0,
+  "shardJobsResult": "success",
+  "shards": [
+    {
+      "shard": 1,
+      "delivered": true,
+      "files": 1581,
+      "vitestSuccess": false,
+      "jestSuccess": true,
+      "failedTests": 4
+    },
+    {
+      "shard": 2,
+      "delivered": true,
+      "files": 1581,
+      "vitestSuccess": false,
+      "jestSuccess": true,
+      "failedTests": 1
+    },
+    {
+      "shard": 3,
+      "delivered": true,
+      "files": 1581,
+      "vitestSuccess": false,
+      "jestSuccess": true,
+      "failedTests": 3
+    },
+    {
+      "shard": 4,
+      "delivered": true,
+      "files": 1580,
+      "vitestSuccess": false,
+      "jestSuccess": true,
+      "failedTests": 5
+    }
+  ],
+  "problems": [
+    "shard 1/4: Vitest reports failure (4 failed test(s))",
+    "shard 2/4: Vitest reports failure (1 failed test(s))",
+    "shard 3/4: Vitest reports failure (3 failed test(s))",
+    "shard 4/4: Vitest reports failure (5 failed test(s))"
+  ]
+}

@@ -403,7 +403,7 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     expect(screen.getByText('ready to compile')).toBeTruthy();
     expect(screen.getByText('no sources')).toBeTruthy();
     // The missing input is named, not summarised away.
-    expect(screen.getAllByText(/impurity_profile/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/an impurity profile record/).length).toBeGreaterThan(0);
   });
 
   it('refuses to build a section that no source data feeds, and says why', async () => {

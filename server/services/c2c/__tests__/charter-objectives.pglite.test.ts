@@ -194,3 +194,46 @@ describe("the charter's classification of a program", () => {
     expect(() => charterClassification({ programType, primaryAgency, productName: 'X' })).toThrow(new RegExp(missing));
   });
 });
+
+// The regulatory strategy (S11, THE_PROGRAM §8 item 1): how the project means to reach its objective. Part of the
+// objective of record, so it takes the same versions, reasons and audit rows.
+describe("the objective of record carries the project's regulatory strategy", () => {
+  const STRATEGY = '505(b)(2) on the reference product, one pivotal study, rolling submission; priority review requested.';
+  const stored = async () => (await pg.query<{ content: string; content_hash: string; version: number }>(
+    "SELECT s.content, s.content_hash, s.version FROM charter_sections s JOIN project_charters c ON c.id = s.charter_id WHERE c.project_id = 10 AND s.section_key = 'objectives'")).rows[0];
+
+  it('leaves a version recorded without one exactly as it was: no key, the same hash', async () => {
+    const before = await stored();
+    expect(before.content).not.toContain('strategy');
+    const read = await readProjectObjectives(db as never, { orgId: 1, projectId: 10 });
+    expect(read.current?.content.strategy).toBeNull();
+    // The same words again, still with no strategy, are still the same version.
+    const again = await recordProjectObjectives(db as never, { orgId: 1, userId: 8, projectId: 10, program,
+      body: body(read.current!.content.objective, 'Again'), now });
+    expect(again).toMatchObject({ unchanged: true, contentHash: before.content_hash });
+  });
+
+  it('records a stated strategy as the next version, with its reason, and reads it back', async () => {
+    const before = await stored();
+    const objective = (await readProjectObjectives(db as never, { orgId: 1, projectId: 10 })).current!.content.objective;
+    const r = await recordProjectObjectives(db as never, { orgId: 1, userId: 8, projectId: 10, program,
+      body: objectivesBodySchema.parse({ ...body(objective, 'Agreed at the pre-NDA meeting'), strategy: `  ${STRATEGY}  ` }), now });
+    expect(r).toMatchObject({ version: before.version + 1, unchanged: false });
+    const read = await readProjectObjectives(db as never, { orgId: 1, projectId: 10 });
+    expect(read.current?.content.strategy).toBe(STRATEGY);
+    expect(read.history[0]).toMatchObject({ version: before.version + 1, reason: 'Agreed at the pre-NDA meeting' });
+    expect(read.history[0].content?.strategy).toBe(STRATEGY);
+    expect(read.history[1].content?.strategy).toBeNull();
+  });
+
+  it('gives AnA the strategy with the objective', async () => {
+    const block = objectivesContextBlock(await readProjectObjectives(db as never, { orgId: 1, projectId: 10 }));
+    expect(block).toContain(`Regulatory strategy:\n${STRATEGY}`);
+  });
+
+  it('reads the same strategy on a caller-owned executor, and refuses one too long', async () => {
+    const q = { query: async (text: string, values?: unknown[]) => pg.query<Record<string, unknown>>(text, values) };
+    expect((await readProjectObjectivesOnExecutor(q, { orgId: 1, projectId: 10 })).current?.content.strategy).toBe(STRATEGY);
+    expect(objectivesBodySchema.safeParse({ objective: 'O', reason: 'r', strategy: 'x'.repeat(8001) }).success).toBe(false);
+  });
+});

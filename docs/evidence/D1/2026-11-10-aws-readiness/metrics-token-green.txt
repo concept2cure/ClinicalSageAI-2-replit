@@ -1,0 +1,52 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403)
+{
+  "timestamp": "2026-11-10T02:01:24.579Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/metrics"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403) 46ms
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401)
+{
+  "timestamp": "2026-11-10T02:01:24.998Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/ai-gateway/health/detail"
+  }
+}
+
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller
+{
+  "timestamp": "2026-11-10T02:01:25.009Z",
+  "level": "warn",
+  "message": "[inline-endpoints] ai-gateway health probe failed",
+  "context": {
+    "error": "provider openai rejected key sk-live-0000 (401)"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a platform administrator reads them 381ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > the scrape token reads them (the Prometheus path, unchanged) 7ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > an anonymous caller is refused (401) 4ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a wrong scrape token of the same length is refused 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > compares the scrape token in constant time, never with === 1ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > answers an anonymous caller with a status word and nothing about the providers 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > gives a platform administrator the provider detail, at /detail 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401) 8ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > a tenant user's session gets the same answer as an anonymous caller 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller 3ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  02:01:23
+   Duration  1.32s (transform 575ms, setup 97ms, import 478ms, tests 472ms, environment 0ms)
+

@@ -1,0 +1,21 @@
+
+=== submission-center ===
+  OQ-SUBC-00  pass
+  OQ-SUBC-01  pass
+  OQ-SUBC-02  pass
+  OQ-SUBC-03  pass
+  OQ-SUBC-04  pass
+  OQ-SUBC-05  pass
+  OQ-SUBC-06  pass
+  OQ-SUBC-07  pass
+  OQ-SUBC-08  pass
+  OQ-SUBC-09  pass
+  OQ-SUBC-10  pass
+  OQ-SUBC-11  pass
+  OQ-SUBC-12  pass
+  OQ-SUBC-13  pass
+  OQ-SUBC-14  pass
+  OQ-SUBC-15  pass
+  OQ-SUBC-16  deviation  (not executed — this is a development server (its CSP is report-only), which allows inline run inputs by design (it answered 400 invalid_request and 400 invalid_request). The refusal is a production control; observe it on a production build.)
+
+OQ-004 Submission Center: 16 pass, 0 fail, 1 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-SUBMISSION-CENTER

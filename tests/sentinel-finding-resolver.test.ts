@@ -13,12 +13,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const state = vi.hoisted(() => ({ calls: [] as unknown[][] }));
+const state = vi.hoisted(() => ({ calls: [] as unknown[][], named: [7] as number[], readable: [7] as number[] }));
 
 vi.mock('../server/db', () => ({ getPool: () => ({ query: vi.fn() }), pool: { query: vi.fn() } }));
 vi.mock('../server/services/sentinel/scheduler', () => ({
   getSentinelScheduler: () => ({
     getSentinel: () => ({
+      /* The projects the finding names, and (below) the ones the caller can open (P-122). */
+      findingProjectIds: vi.fn(async () => state.named),
       updateFindingStatus: vi.fn(async (...args: unknown[]) => {
         state.calls.push(args);
         return { finding_id: args[0], status: args[2] };
@@ -26,6 +28,12 @@ vi.mock('../server/services/sentinel/scheduler', () => ({
     }),
   }),
 }));
+
+vi.mock('../server/services/c2c/current-program-access', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  readCurrentProgramActor: vi.fn(async (_q: unknown, input: { userId?: number }) => ({ userId: input.userId, role: 'member' })),
+}));
+vi.mock('../server/services/report-os/project-access', () => ({ getAccessibleReportProjectIds: vi.fn(async () => state.readable) }));
 
 import sentinelRouter from '../server/routes/sentinel-routes';
 
@@ -50,9 +58,18 @@ const patch = (body: Record<string, unknown>, user?: Record<string, unknown>) =>
 
 beforeEach(() => {
   state.calls = [];
+  state.named = [7];
+  state.readable = [7];
 });
 
 describe('a Sentinel finding is resolved by the session user (L195)', () => {
+  it('a finding naming a project the caller cannot open is answered as missing, and nothing is written (P-122)', async () => {
+    state.named = [7, 8];
+    const res = await patch({ status: 'acknowledged' });
+    expect(res.status).toBe(404);
+    expect(state.calls).toEqual([]);
+  });
+
   it('a body naming another resolver is refused, and nothing is written', async () => {
     const res = await patch({ status: 'resolved', resolvedById: SOMEONE_ELSE });
     // Leak assertion first: what would have been recorded.

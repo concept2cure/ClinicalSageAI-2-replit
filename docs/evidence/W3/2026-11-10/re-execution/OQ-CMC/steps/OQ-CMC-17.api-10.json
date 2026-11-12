@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/be3eb6b1-332b-4968-a0d3-4570d8ff479f/resolve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "resolutionNote": "The rejected batch was destroyed under deviation DV-0042 and is used in no filed data."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "be3eb6b1-332b-4968-a0d3-4570d8ff479f",
+        "status": "resolved"
+      }
+    }
+  }
+}

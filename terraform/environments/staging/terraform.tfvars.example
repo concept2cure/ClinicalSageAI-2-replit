@@ -36,6 +36,13 @@
 #   TF_VAR_ai_provider_placement_approvals='{"anthropic":{...},"local":{"region":"on_prem","zeroRetentionApproved":true,"approvedDataClasses":["pii","phi"],"approvedIntendedUses":["embedding"]}}'
 
 region          = "us-east-1"
+# The disaster-recovery region, where the key replicas live (MR-04 Stage 1).
+# Required, with no default: the founder's decision (NEW-2). The recommendation
+# is us-west-2, which keeps the data in the US. It must differ from region.
+dr_region = "us-west-2"
+# Who is paged when an alarm fires (MR-04 Stage 2). Each address receives an
+# AWS confirmation email and is paged only once it confirms. Optional in staging.
+alarm_emails = ["oncall@example.com"]
 vpc_cidr        = "10.9.0.0/16"
 public_subnets  = ["10.9.101.0/24", "10.9.102.0/24"]
 private_subnets = ["10.9.1.0/24", "10.9.2.0/24"]
@@ -55,6 +62,20 @@ cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLA
 # Required: the API is reachable through CloudFront alone, and CloudFront checks
 # the ALB's certificate against these names, so acm_certificate_arn must cover them too.
 domain_aliases             = ["staging.example.com"] # REPLACE_ME
+
+# After apply, create the GitHub environment "staging" (its jobs are the only
+# ones the deploy role trusts) and set its secrets from the outputs (the roles
+# are created by terraform/modules/github-deploy-roles; no stored keys):
+#   AWS_DEPLOY_ROLE_ARN          = terraform output -raw github_deploy_role_arn
+#   AWS_BUILD_ROLE_ARN           = terraform output -raw github_build_role_arn
+#   CLOUDFRONT_DISTRIBUTION_ID   = terraform output -raw cloudfront_distribution_id
+# and its variable (not a secret) the frontend is published to; its name
+# carries the account id, so deploy-aws.yml refuses to run without it:
+#   FRONTEND_BUCKET              = terraform output -raw frontend_bucket
+# Optional, in the same environment: the secret READYZ_TOKEN, so a failed
+# deploy's smoke test prints which dependency was not ready. Its value is in
+# Secrets Manager; this prints where and how to read it:
+#   READYZ_TOKEN                 = terraform output readyz_detail
 
 # Login OTP is the mandatory second factor: without working SMTP no one can sign
 # in. Port 465 (implicit TLS) is the only one accepted. The sender's domain must

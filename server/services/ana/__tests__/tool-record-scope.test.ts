@@ -160,6 +160,44 @@ describe('foreignRecordRefusal — record ids other than programs', () => {
     expect(out?.code).toBe('RECORD_CHECK_UNAVAILABLE');
   });
 
+  // 2026-11-10: both grant writes took the model's project_id on trust. The
+  // service checks the opportunity and the proposal against the organization,
+  // not the project, and the foreign key (grant_proposals.project_id,
+  // grant_awards.project_id REFERENCES projects) is checked past row-level
+  // security, so the row could point at another tenant's project and the
+  // foreign-key error told the model whether a project id exists.
+  it.each(['create_grant_proposal', 'record_grant_award'])("%s: another tenant's project_id is refused, by the projects query", async tool => {
+    const query = vi.fn(async () => none);
+    const out = await foreignRecordRefusal(tool, { title: 'R01', award_number: 'A-1', funding_agency: 'nih', project_id: 99 }, 7, query);
+    expect(out?.code).toBe('RECORD_NOT_IN_ORGANIZATION');
+    expect(JSON.parse(out!.result).error).toMatch(/project_id does not name one of this organization's records/);
+    expect(out?.result).not.toContain('99');
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledWith(RECORD_SCOPES.approve_import[0].sql, [99, 7]);
+  });
+
+  it.each(['create_grant_proposal', 'record_grant_award'])("%s: the caller's own project, or none, goes through", async tool => {
+    const query = vi.fn(async () => found);
+    expect(await foreignRecordRefusal(tool, { title: 'R01', project_id: 4 }, 7, query)).toBeNull();
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(await foreignRecordRefusal(tool, { title: 'R01' }, 7, query)).toBeNull();
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  // Through the registry wrapper, so the handler (and its INSERT) never runs.
+  // No database is reachable here: the ownership check either finds no such
+  // project or cannot run, and both refuse. Before the scope existed the
+  // handler ran and answered "<tool> failed: ..." with no code.
+  it.each([
+    ['create_grant_proposal', { title: 'R01', project_id: 2147483000, reason: 'Opening the R01 proposal under its project' }],
+    ['record_grant_award', { award_number: 'A-1', funding_agency: 'nih', project_id: 2147483000, reason: 'Recording the notice of award' }],
+  ] as const)('%s is refused by the wrapper before its handler runs', async (tool, input) => {
+    const out = JSON.parse(await getToolHandler(tool)!({ ...input }, { organizationId: 7, userId: 3, humanConfirmed: true } as never));
+    expect(out.code).toMatch(/^RECORD_(NOT_IN_ORGANIZATION|CHECK_UNAVAILABLE)$/);
+    expect(out.error).toMatch(/nothing was read or changed/);
+    expect(out.error).not.toMatch(/failed:/);
+  });
+
   it('every scoped tool is registered and still declares the field it scopes', () => {
     for (const [tool, scopes] of Object.entries(RECORD_SCOPES)) {
       expect(getToolHandler(tool), tool).toBeTypeOf('function');

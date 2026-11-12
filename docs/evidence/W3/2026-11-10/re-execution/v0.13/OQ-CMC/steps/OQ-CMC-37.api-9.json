@@ -1,0 +1,57 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/stability-studies/76",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "PAUSED"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 34,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 76,
+        "organizationId": 2,
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "studyTitle": null,
+        "productName": "OQE-20261110130629",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "12"
+        ],
+        "stabilityData": null,
+        "notes": null,
+        "shelfLife": null,
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "PAUSED",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-10T13:26:10.716Z",
+        "updatedAt": "2026-11-10T13:26:11.576Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

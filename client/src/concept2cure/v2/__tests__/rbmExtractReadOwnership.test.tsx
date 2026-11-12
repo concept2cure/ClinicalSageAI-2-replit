@@ -4,8 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const request = vi.hoisted(() => vi.fn());
+/* The dialog now lists the study's earlier loads (rbmLoadHistory.test.tsx), a GET. This file is about the load
+   itself, so `request` stays the write it has always counted and the history read is answered apart, as empty. */
 vi.mock('@/lib/queryClient', async original => ({
-  ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: request,
+  ...(await original<typeof import('@/lib/queryClient')>()),
+  apiRequest: (...args: unknown[]) => (args[0] === 'GET'
+    ? Promise.resolve(new Response(JSON.stringify({ success: true, data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    : request(...args)),
 }));
 import { RbmIngestDialog } from '../surfaces/RbmIngest';
 

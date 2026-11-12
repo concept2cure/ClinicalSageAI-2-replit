@@ -1,4 +1,5 @@
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import type { AuthDoc } from '../v2/editor/DocumentWorkbench';
 import type { DocType } from './data';
 import {adaptDoc,type ServerDoc} from './qmsDocumentRecord';
@@ -25,9 +26,16 @@ export interface QmsSignedVersion {
 }
 interface MutationRow { id: number; authoring_document_id: string }
 
+/** A failed QMS read or write, with the status and the server's code, so a refusal can be said as one. */
+export class QmsRequestError extends Error {
+  constructor(message: string, readonly status: number, readonly code?: string) { super(message); }
+}
 async function payloadOf(response: Response, fallback: string): Promise<unknown> {
   const payload = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(serverMessage(payload) ?? fallback);
+  if (!response.ok) {
+    const code = payload && typeof payload === 'object' && typeof (payload as { code?: unknown }).code === 'string' ? (payload as { code: string }).code : undefined;
+    throw new QmsRequestError(serverMessage(payload) ?? fallback, response.status, code);
+  }
   return payload && typeof payload === 'object' ? (payload as { data?: unknown }).data : null;
 }
 async function mutate(path: string, body: unknown): Promise<MutationRow> {
@@ -36,6 +44,7 @@ async function mutate(path: string, body: unknown): Promise<MutationRow> {
       typeof (data as MutationRow).authoring_document_id !== 'string') {
     throw new Error('The server did not return the editing copy. Reload the register to see whether the change was recorded.');
   }
+  qualityWritten();
   return data as MutationRow;
 }
 export function createQmsDocument(input: {

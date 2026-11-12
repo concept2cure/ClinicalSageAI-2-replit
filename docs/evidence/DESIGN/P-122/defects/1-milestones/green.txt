@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-10T14:41:55.738Z","pid":10010,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T14:41:55.740Z","pid":10010,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T14:41:55.740Z","pid":10010,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-project-management-reads.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-project-management-reads.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section owners and deadlines (/api/project-sections/summary) 117ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section deadlines and milestones in date order (/api/project-sections/timeline) 27ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project task list and its summary, and the milestone catalogue 108ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy 74ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it 34ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them 24ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers 48ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days 57ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the section list 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the milestone list (writes share its path) 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > Sentinel's status 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > submission-ops' workload 4ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the project cockpit read model 4ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the unified task dashboard 4ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing 16ms
+{"level":30,"time":"2026-11-10T14:42:02.632Z","pid":10055,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T14:42:02.633Z","pid":10055,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T14:42:02.634Z","pid":10055,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-project-milestones.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > project_milestones.project_id references projects 3ms
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > a member records one on a regulatory project of their organization, and the Schedule's timeline lists it 103ms
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > another organization's project is refused as one that does not exist, and nothing is written 27ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  14:41:53
+   Duration  9.05s (transform 4.41s, setup 100ms, import 7.77s, tests 778ms, environment 0ms)
+

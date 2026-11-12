@@ -1,0 +1,16 @@
+# docs/runbooks/incident-response.md with '### rds-connections' renamed '### rds-connection-count'
+Success! The configuration is valid.
+  run "every_alarm_publishes_to_the_one_topic"... pass
+  run "cloudwatch_can_publish_to_the_encrypted_topic"... pass
+  run "the_service_alarms_watch_the_right_things"... pass
+  run "the_logs_that_mean_trouble_page"... pass
+  run "account_activity_from_cloudtrail_pages"... pass
+  run "a_sweep_that_stops_running_pages"... pass
+  run "production_needs_someone_to_page"... pass
+  run "an_address_must_be_an_address"... pass
+  run "staging_may_have_no_subscribers"... pass
+  run "every_alarm_has_a_runbook_section"... fail
+  on tests/monitoring.tftest.hcl line 338, in run "every_alarm_has_a_runbook_section":
+Each alarm needs a '### <name>' section in
+docs/runbooks/incident-response.md: rds-connections
+Failure! 9 passed, 1 failed.

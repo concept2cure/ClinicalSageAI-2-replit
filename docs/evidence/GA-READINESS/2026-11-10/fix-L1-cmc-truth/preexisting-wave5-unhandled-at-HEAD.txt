@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > opens the validation tab WITHOUT starting the run the human button would, and says so 638ms
+stderr | client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane
+An error occurred in the <CmImpurityProfiles> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > REFUSES to leave the document tab over unsaved edits (the editor unmounts) 203ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 133ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > SubmissionCenter — select/workspace/sequence via the "submissions" alias > drives the real portfolio: select a submission, open its sequences, select one — with honest misses 82ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with a project open, the stage rail really moves 644ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with no project open, the refusal is honest 20ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: (read.data ?? []).map is not a function
+ ❯ client/src/concept2cure/v2/surfaces/cmcRegisterEngines.tsx:88:62
+     86|     '/api/cmc/impurity-profiles/assessment' + (projectId ? `?projectId…
+     87|   );
+     88|   const byId = React.useMemo(() => new Map((read.data ?? []).map((r) =…
+       |                                                              ^
+     89|   return { byId, loading: read.loading, error: read.error ?? null };
+     90| }
+ ❯ updateMemo node_modules/react-dom/cjs/react-dom-client.development.js:8795:19
+ ❯ Object.useMemo node_modules/react-dom/cjs/react-dom-client.development.js:26484:18
+ ❯ Object.process.env.NODE_ENV.exports.useMemo node_modules/react/cjs/react.development.js:1251:34
+ ❯ useImpurityAssessments client/src/concept2cure/v2/surfaces/cmcRegisterEngines.tsx:88:22
+ ❯ CmImpurityProfiles client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1461:20
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+This error originated in "client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "registers under "cmc"; open-tab mounts the named pane". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+     Errors  1 error
+   Start at  00:32:30
+   Duration  12.22s (transform 6.79s, setup 299ms, import 8.59s, tests 1.73s, environment 1.18s)
+

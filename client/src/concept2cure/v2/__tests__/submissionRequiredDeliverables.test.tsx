@@ -45,7 +45,8 @@ describe('required deliverables — native coverage and scope', () => {
     expect(within(screen.getByText('Known excluded requirement').closest('tr')!).getByText('Not applicable')).toBeTruthy();
     expect(screen.getByText(/does not approve.*clear.*dispatch/i)).toBeTruthy();
     // No governed act here. AnA's starters ("What blocks dispatch?") are questions, not acts, so they are left out.
-    expect(screen.queryAllByRole('button', { name: /freeze|dispatch|transmit/i }).filter((b) => !b.closest('[aria-label="Ask AnA"]'))).toEqual([]);
+    // The act is the verb as a word: the header's "Gateway transmittals" opens the transmission log (eadab4b845).
+    expect(screen.queryAllByRole('button', { name: /\b(?:freeze|dispatch|transmit)\b/i }).filter((b) => !b.closest('[aria-label="Ask AnA"]'))).toEqual([]);
     expect(document.body.textContent).not.toMatch(/full CTD complete|100%|filing ready/i);
   });
 

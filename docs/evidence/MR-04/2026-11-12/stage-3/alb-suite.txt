@@ -1,0 +1,17 @@
+Success! The configuration is valid.
+
+tests/alb_timeouts.tftest.hcl... in progress
+  run "the_alb_idles_for_exactly_the_edge_timeout"... pass
+  run "access_logs_are_written_when_a_bucket_is_given"... pass
+  run "no_bucket_no_access_logs"... pass
+tests/alb_timeouts.tftest.hcl... tearing down
+tests/alb_timeouts.tftest.hcl... pass
+tests/cloudfront_only.tftest.hcl... in progress
+  run "nothing_but_https_from_cloudfront_reaches_it"... pass
+  run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener"... pass
+  run "a_short_secret_is_refused"... pass
+  run "a_wildcard_secret_is_refused"... pass
+tests/cloudfront_only.tftest.hcl... tearing down
+tests/cloudfront_only.tftest.hcl... pass
+
+Success! 7 passed, 0 failed.

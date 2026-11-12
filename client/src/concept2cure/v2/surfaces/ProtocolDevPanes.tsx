@@ -60,7 +60,7 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
             {/* Section completion was this dot's colour alone, in the outline
                 a protocol author navigates by. */}
             <span className="pd-tree-dot" data-status={str(s.status)} aria-hidden="true" />
-            <span className="sr-only">{str(s.status)}</span>
+            <span className="sr-only">{PG.inWords(s.status)}</span>
             <span className="pd-tree-num">{str(s.num)}</span>
             <span className="pd-tree-t">{str(s.title)}</span>
             {!s.required && <span className="pd-tree-opt">opt</span>}
@@ -352,7 +352,7 @@ export function DeviationsTab({ doc, onAdd, onEdit, onCloseDeviation }: ListPane
             <PG.StatusBadge status={str(d.status)} />
           </div>
           <div className="pd-card-sum">
-            {str(d.cat) && <span className="pd-chip">{str(d.cat)}</span>}
+            {str(d.cat) && <span className="pd-chip">{PG.inWords(d.cat)}</span>}
             {onEdit && d.status !== 'closed' && (
               <button type="button" className="pde-rowbtn"
                 onClick={() => onEdit('deviation-assess', { id: Number(d.id), label: str(d.title) })}>

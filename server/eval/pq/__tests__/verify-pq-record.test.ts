@@ -15,6 +15,8 @@ function fixture() {
   protocol.approvedOn = '2026-10-06';
   protocol.components.generation.criteria.minTasksPerDocType = 1;
   protocol.components.extraction.criteria.minTasksPerDocType = 1;
+  // The CSR drafting component (P-118) cannot be executed yet. The fixture measures the three that can.
+  delete protocol.components.csrDrafting;
   protocol.components.rag.executable = true;
   protocol.components.rag.criteria.minScoredItems = 1;
   const bank = { version: 'fixture', tasks: [{ id: 'g1', docType: 'ind', taskType: 'generation', input: 'Fixture source' },
@@ -61,15 +63,18 @@ function fixture() {
 const verify = ({ evidence, record }: ReturnType<typeof fixture>, claim = entry) => verifyCanonicalPqClaim(claim, () => record, rules, evidence);
 
 describe('offline qualification prerequisite diagnostics', () => {
-  it('reports the actual draft protocol and unreviewed source bank without establishing qualification', () => {
+  it('reports the actual protocol, approved (P-118), and its unreviewed source bank without establishing qualification', () => {
     const result = qualificationPreflight();
     expect(result).toMatchObject({ status: 'blocked', readyToEvaluate: false, qualifiesModel: false,
-      protocol: { status: 'draft', approved: false }, counts: { ragPositiveItems: 18, ragNegativeControls: 2,
+      protocol: { status: 'approved', approved: true }, counts: { ragPositiveItems: 18, ragNegativeControls: 2,
         ragRequiredPositiveItems: 30, reviewedSources: 0, reviewedPublisherTerms: 0 } });
     expect(result.blockers.map(blocker => blocker.code)).toEqual(expect.arrayContaining([
-      'PROTOCOL_NOT_APPROVED', 'RAG_SAMPLE_SHORTFALL', 'RAG_KEYS_PROVISIONAL', 'RAG_GOLD_OPEN_CHECKS',
+      'REQUIRED_COMPONENT_UNAVAILABLE', 'RAG_SAMPLE_SHORTFALL', 'RAG_KEYS_PROVISIONAL', 'RAG_GOLD_OPEN_CHECKS',
       'RAG_GOLD_EVIDENCE_MISSING', 'SOURCE_REVIEW_INCOMPLETE', 'PUBLISHER_TERMS_UNVERIFIED',
     ]));
+    // Approval (P-118) removed one blocker and nothing else: the approved protocol's CSR drafting component cannot
+    // be executed yet, and that blocks the run in its place.
+    expect(result.blockers.map(blocker => blocker.code)).not.toContain('PROTOCOL_NOT_APPROVED');
   });
 
   it('can establish that a complete synthetic fixture is ready to evaluate, without asserting a PQ PASS', () => {
@@ -238,5 +243,44 @@ describe('canonical evidence integrity and verdict recomputation', () => {
       }
       expect(verify(f)).not.toEqual([]);
     }
+  });
+});
+
+describe('a record made for a named use is verified on what that use needs (P-118)', () => {
+  const SOURCE_USE = 'source-based-drafting';
+  const CSR_USE = 'evidence-bound-csr-drafting';
+  const forUse = (use: string, intendedUses: string[] = [use]) => {
+    const f = fixture();
+    Object.assign(f.record, { use, intendedUses });
+    return f;
+  };
+
+  it('accepts a source-based run, judged on generation, extraction and retrieval, that carries exactly that use', () => {
+    expect(verify(forUse(SOURCE_USE))).toEqual([]);
+  });
+
+  it('refuses a record whose intended uses are not exactly the use it was made for: a narrow pass is never carried as a wider one', () => {
+    for (const uses of [['document_drafting'], [SOURCE_USE, 'document_drafting'], []]) {
+      expect(verify(forUse(SOURCE_USE, uses)).join(' ')).toMatch(/must carry exactly that use/);
+    }
+  });
+
+  it('refuses a use the canonical protocol does not declare', () => {
+    expect(verify(forUse('anything-else')).join(' ')).toMatch(/declares no use "anything-else"/);
+  });
+
+  it('cannot verify a pass that rests on CSR drafting yet: that record has no canonical evidence check', () => {
+    const f = forUse(CSR_USE);
+    const protocol = JSON.parse(f.evidence.protocolText);
+    protocol.components.csrDrafting = { required: true, executable: true, criteriaSource: 'fixture',
+      criteria: { minHeadingsAttemptedShare: 1, minAcceptedDraftShare: 0.85, maxUnclaimedFiguresInAcceptedText: 0, maxForbiddenHits: 0 } };
+    f.evidence.protocolText = JSON.stringify(protocol);
+    Object.assign(f.record, { protocolSha256: hash(f.evidence.protocolText), csrDrafting: {
+      study: { studyId: 'CDISCPILOT01', sourceSha256: 'a'.repeat(64) }, plannedHeadings: ['9.1'],
+      headings: [{ sectionNumber: '9.1', servedModel: entry.pinnedVersion, servedModelVerified: true, firstDraft: 'accepted', unclaimedFigures: 0, forbiddenHits: 0 }] } });
+    // The verdict itself would pass this record. The registry claim still cannot be verified on it.
+    expect(rules.computeVerdict(protocol, f.record.generation as never, f.record.extraction as never, f.record.rag as never,
+      { use: CSR_USE, csrDrafting: (f.record as { csrDrafting?: never }).csrDrafting }).verdict).toBe('PASS');
+    expect(verify(f).join(' ')).toMatch(/CSR drafting record has no canonical evidence check yet/);
   });
 });

@@ -1,0 +1,31 @@
+# Replaying the amended creator, db/migrations/20260220_ind_section_tracking.sql, on the provisioned database c2c_p122_defects (2026-11-10T14:41:22Z)
+## 0. As provisioned (install-fresh push from the amended shared/schema.ts, then deploy-migrate)
+project_milestones_project_id_projects_id_fk -> projects validated=true
+## 1. Put the baseline key back, with a row recorded against a cer_projects id that is no project
+ALTER TABLE
+INSERT 0 1
+INSERT 0 1
+ALTER TABLE
+INSERT 0 1
+project_milestones_project_id_cer_projects_id_fk -> cer_projects validated=true
+rows naming no project: 1
+## 2. Apply the file: the cer_projects key goes; the projects key is added NOT VALID, because a row names no project
+applied db/migrations/20260220_ind_section_tracking.sql, exit 0
+project_milestones_project_id_projects_id_fk -> projects validated=false
+## 3. Apply it again (every deploy re-runs it): no change, no failure
+applied db/migrations/20260220_ind_section_tracking.sql, exit 0
+project_milestones_project_id_projects_id_fk -> projects validated=false
+## 4. New rows are checked although the key is not yet validated
+  ERROR:  insert or update on table "project_milestones" violates foreign key constraint "project_milestones_project_id_projects_id_fk"
+  DETAIL:  Key (project_id)=(987654) is not present in table "projects".
+## 5. Once a person resolves the stray row, the next apply validates the key
+DELETE 1
+DELETE 1
+DELETE 1
+applied db/migrations/20260220_ind_section_tracking.sql, exit 0
+project_milestones_project_id_projects_id_fk -> projects validated=true
+## 6. The set as a whole, again (deploy-migrate): green, and the key is unchanged
+  ✓ applied: db/migrations/20260220_ind_section_tracking.sql
+  ✓ applied: migrations/20261110_projects_risk_level_not_defaulted.sql
+✅ Schema migration complete — safe to roll services.
+project_milestones_project_id_projects_id_fk -> projects validated=true

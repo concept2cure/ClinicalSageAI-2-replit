@@ -141,7 +141,13 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // Communication (508b2b7a8, P-39 step 4), whose own publish states the
 // meetings; that change left this baseline at 101 over 100 publishers, so the
 // gate failed at its head. Both are counted here: 100 - 1 (F4) - 1 (F6) = 98.
-const ID_BASELINE = 98;
+// 2026-11-09 (3baa7fb79b): biostat-workbench, which published its own context,
+// merged into biostatistics, which publishes and now carries the workbench's
+// facts (availableCalculators) and its select-calculator action. The retired id
+// is no longer routable, so it publishes nowhere: 98 - 1 = 97. That commit
+// moved ci:one-product's baseline and not this one, so this gate failed at its
+// head until this line.
+const ID_BASELINE = 97;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

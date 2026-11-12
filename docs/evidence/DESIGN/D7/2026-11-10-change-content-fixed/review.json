@@ -1,0 +1,119 @@
+[
+  {
+    "lens": "callers",
+    "refuted": false,
+    "summary": "The fix stands: I found no code path that legitimately edits a change's signed content after approval. The only change needed is one dbtest the patch does not update, which will fail in CI.\n\nupdateChange has one caller in the shipped code, PATCH /api/mdx/qms/changes/:id. Nothing else reaches it:\n- **Client:** never calls it. qmsWrites.ts only POSTs create, transition and links, and ChangeControl.tsx has no edit form.\n- **AnA:** has no tool that edits a change; the three tools create, move and link.\n- **Scripts:** the demo packs, the GA seed and the OQ script never PATCH a change.\n\nEvery other writer of the table touches only fields the approval digest leaves out: status and lifecycle stamps, the effectiveness review, metadata.approval, and updated_at for links. updateChange does not accept metadata, so learning promotion, reviewed learning and effectiveness never go through it. The learning-promotion metadata is written at creation, before any approval. No designed flow moves the target date during implementation; it is set only when the change is raised.\n\nEvidence for the fix: readReviewedLearningChangeApproval recomputes the content digest from the live row for a change that is approved, in implementation, in verification or closed. Today, an edit after approval would quietly make that reviewed-learning library version unreadable.\n\n**What must change:** tests/db/qms-project-records.dbtest.ts:115-127 ('a waiting closure cannot overwrite a concurrent content change') edits a change in verification through updateChange and expects the waiting closure to get 409. Under the fix that edit changes nothing, so the closure succeeds with 200 and the test fails. Drop the 'content' case there, as the patch already does in the pglite integration test.\n\nSmaller notes:\n- An overdue approved or in-implementation change can no longer have its target date moved. That is consistent with the signature, and the refusal tells the user to raise a new change request.\n- Review L-2 also asked for a reason with before and after values on edits, and a status check on DELETE. Neither is in this fix.",
+    "findings": [
+      {
+        "path": "tests/db/qms-project-records.dbtest.ts",
+        "line": 115,
+        "severity": "adjust",
+        "what": "The patch leaves a CI-run dbtest broken (vitest.db.config.ts includes tests/db/**/*.dbtest.ts; .github/workflows/ci.yml runs it). `it.each(['content','requirement'])('a waiting closure cannot overwrite a concurrent %s change')` calls `service.updateChange(orgA.id, id, { implementationPlan: 'Revised while the verifier was closing.' }, blocker)` at line 127 on a change in `verification`. With the fix, that UPDATE matches no row, returns null and leaves updated_at unchanged. The blocked closure's compare-and-set (`updated_at::text = record_revision`) therefore succeeds and returns 200, but the test expects 409 and `status: 'verification'`. The sibling test at :143 shows the same fixture closing with 200 when nothing interleaves. Drop 'content' from this it.each, as the patch does for changeControl.pglite.integration.test.ts. Package F1's paths are '**', so this file is in scope."
+      },
+      {
+        "path": "server/services/qms/changeControl.service.ts",
+        "line": 280,
+        "severity": "note",
+        "what": "Writer inventory: nothing legitimate writes a digest-bound field after approval. Every UPDATE of qms_change_controls in server/scripts/client was checked. (1) updateChange: only caller is PATCH /api/mdx/qms/changes/:id (mdx-qms.ts:1274). (2) transitionChange (:421) writes status, implemented_at, verified_by/at, closed_at and effectiveness_review; none is in computeQmsChangeContentDigest. (3) approveQmsChangeSigned writes status, approved_by/at and metadata.approval, which the digest excludes. (4) addLink/removeLink (:552/:576) touch updated_at only. (5) deleteChange is a soft delete. (6) createChange is the only metadata writer besides approval, including registerLearningChange in controlled-document-service.ts:147, which sets metadata.learningPromotion at creation, before any approval. updateChange does not accept metadata at all, so learning promotion, reviewed learning and effectiveness never pass through it. AnA has no content-update tool: AnaToolExecutor.ts:14879-14995 registers only qms_change_create, qms_change_transition and qms_change_link, and no qms_change_update exists in the tool defs or register. The client never PATCHes a change: qmsWrites.ts only POSTs create, transition and links; ChangeControl.tsx has no edit form; the only mention is a comment at changeData.ts:192. Demo packs (lumen-qms.mjs, mdx-qms.mjs, biotech-qms.mjs), the GA seed (123-qms-quality.mjs, which INSERTs directly) and the OQ script (tests/validation/oq/qms/run.mjs) never PATCH a change. Two places were already failing by design under the fix and are covered: the pglite 'content' case, which the patch removes, and the closed-state null at :441."
+      },
+      {
+        "path": "server/services/qms/change-approval-signature.ts",
+        "line": 335,
+        "severity": "note",
+        "what": "Supports the fix. readReviewedLearningChangeApproval recomputes computeQmsChangeContentDigest(change) on the live row for a change in approved, in_implementation, verification or closed, and refuses on mismatch. Today, a PATCH to a reviewed-learning change after its approval silently makes loadReviewedLearningLibraryArtifact refuse that library version. No designed flow needs that edit, and the fix closes it."
+      },
+      {
+        "path": "server/services/qms/changeControl.service.ts",
+        "line": 239,
+        "severity": "note",
+        "what": "Target date during implementation: no designed flow moves target_implementation_date after approval. There is no client control, no AnA tool and no demo step; the date is set only on create, in the ChangeControl.tsx 'Raise change request' form. Under the fix, an approved or in-implementation change whose target has passed stays 'overdue' (IMPLEMENTATION_UNFINISHED_STATES) until it reaches verification, or is cancelled and re-raised. That is the honest outcome, and moving the date would in any case break the signed digest. A future extension feature would need its own signed amendment, not PATCH. Likewise, the verification -> in_implementation loop-back (CHANGE_TRANSITIONS) cannot revise the plan in place; the 409 text says to raise a new change request, matching review L-2 (docs/evidence/reviews/2026-10-19/part11-ux.md)."
+      },
+      {
+        "path": "server/routes/mdx-qms.ts",
+        "line": 1266,
+        "severity": "note",
+        "what": "Outside this fix, for the record. Review L-2 also asked for three things the patch does not do. An edit in proposed or under_assessment still takes no reason and records no before or after values; the audit row has no details. DELETE /qms/changes/:id still soft-deletes an approved or closed change, because deleteChange has no status predicate. And PATCH stamps assessed_by on every call, even an empty body. The fix now stops that overwrite on a change past assessment."
+      }
+    ]
+  },
+  {
+    "lens": "design",
+    "refuted": false,
+    "summary": "The design is not refuted; it carries out decisions already on record. The founder's decision P-63 (docs/LAUNCH_DEFINITION_OF_DONE.md:1171, 2026-10-29) says signed content is not edited in place and a change is a new version or a reopening (21 CFR 11.10(e), 11.70; 820.40; ISO 13485 \u00a74.2.4). The 2026-10-19 Part 11 review, finding L-2 (docs/evidence/reviews/2026-10-19/part11-ux.md:40-55), prescribes this exact fix: 409 unless proposed or under assessment, with the route and the service changed together. The route's own comment says PATCH is for 'draft edits' (mdx-qms.ts:1265). The D7 change-control evidence (docs/evidence/DESIGN/D7/2026-11-10-change-control/README.md:48-50) plans 'Edit assessment (while proposed or under assessment)'. No design record, URS, AnA skill, demo pack or client caller relies on editing after approval. The client never PATCHes a change, and there is no designed amend, revise, reassess or supersede path for an approved change. Every PATCH field is inside computeQmsChangeContentDigest, so no field written only during implementation is blocked. Implementation evidence goes through links, which stay writable until the change is terminal. The reviewed-learning library re-derives that digest in approved, in-implementation, verification and closed (change-approval-signature.ts:327-335), so edits before the fix silently broke it. Under ICH Q10 \u00a73.2.3 and EU GMP Annex 15 \u00a711.5, approved content may change only under a new authorisation, so refusing the edit is correct. The editable set {proposed, under_assessment} is right, because the assessment is written while the change is under assessment. The remaining gap there is that the approver may sign content edited after they read it (no expected digest on /approve); that is a follow-up. One blocker in the patch itself: tests/db/qms-project-records.dbtest.ts:115-141 still edits content during verification and expects the closure to be refused with 409. After the fix that edit changes nothing, the closure succeeds with 200, and CI's real-database job fails. The patch must update that case as it does the pglite one. The other findings are notes: the refusal wording, the lack of an extension or reopen remedy (adding one would be a new act needing a founder decision), and the remaining L-2 items (delete, edit reason and prior values, a detector for changes edited before the rule, and segregation of duties).",
+    "findings": [
+      {
+        "path": "tests/db/qms-project-records.dbtest.ts",
+        "line": 115,
+        "severity": "blocker",
+        "what": "The patch leaves this case in place, so the real-database CI job (`npm run test:db`, ci.yml 'Run real-database tests') will fail. The case `it.each(['content','requirement'])('a waiting closure cannot overwrite a concurrent %s change')` calls `service.updateChange(orgA.id, id, { implementationPlan: ... }, blocker)` at line 127 on a change in `verification`, then expects the waiting closure to answer 409 with the row still in verification. After the fix that UPDATE matches no row (`status IN ('proposed','under_assessment')`). `updated_at` is not bumped, so the closure's compare-and-set passes and the closure returns 200 `closed`. The patch drops the matching 'content' case only from the pglite test. It must do the same here: remove 'content' from the it.each and its branch, or turn the case into an assertion that the concurrent edit returns null and the closure succeeds. This makes the patch incomplete. It does not show the design is wrong."
+      },
+      {
+        "path": "server/routes/mdx-qms.ts",
+        "line": 1347,
+        "severity": "note",
+        "what": "Keeping `under_assessment` editable is right. The assessment is written in that state: FLOW_STEPS calls it 'Impact & risk assessed', changeData.ts:191 says the impact assessment is PATCHed, and the D7 change-1 plan is 'Edit assessment (while proposed or under assessment)'. Locking it would make an assessment impossible to record. The cost is a sign-what-you-read gap under \u00a711.50/\u00a711.70. A QMS document is frozen once it is in review (QMS_DOCUMENT_CONTROLLED). A change has no frozen 'submitted for approval' state, and POST /approve carries no expected content digest. So an editor's PATCH between the approver reading the change and signing it is signed unseen, because the digest is taken under FOR UPDATE at sign time. Follow-up, not in this fix: add an expected content digest to the approve body and refuse on mismatch. The same route already does this for `learningReview.expectedArtifactSha256` (mdx-qms.ts:647)."
+      },
+      {
+        "path": "server/services/qms/changeControl.service.ts",
+        "line": 104,
+        "severity": "note",
+        "what": "No designed way exists to amend an approved change. CHANGE_TRANSITIONS has no approved\u2192under_assessment move. No AnA tool edits a change (only qms_change_create, _transition and _link). No doc or decision record says content may be edited after approval. So 'raise a new change request' is the only remedy that adds no new act under RULE 6, and it matches P-63's 'a new version or a reopening'. Two operational gaps follow, and neither refutes the fix. (1) A routine target-date extension or a plan revision during rework (verification\u2192in_implementation) now needs a cancel plus a new change request, and approved or in-implementation changes past their date stay flagged overdue (IMPLEMENTATION_UNFINISHED_STATES). (2) LINK_TYPES has no 'change' type, so the amending request can reference the original only as a free-text 'other' link. A signed reopen or extension, like the hazard reopen P-63 added, would be a new act and needs a founder decision."
+      },
+      {
+        "path": "server/routes/mdx-qms.ts",
+        "line": 1275,
+        "severity": "note",
+        "what": "Wording and convention of the refusal. The 409 text says 'its content is what the approval signed' for every state that cannot be edited. That includes rejected changes, changes cancelled before approval, and changes approved before DP-31 (approved by a transition stamp, with no signature row), and none of those carry an approval signature. Unlike P-63's one refusal (signed-content-lock.ts:121, SIGNED_CONTENT_LOCKED), the message does not say 'Nothing was saved.' and does not name the bound fields. A QMS-specific code is in line with QMS_DOCUMENT_CONTROLLED. Consider making the text depend on the state and adding 'Nothing was saved.'"
+      },
+      {
+        "path": "server/routes/mdx-qms.ts",
+        "line": 1403,
+        "severity": "note",
+        "what": "Out of scope, same family as the 2026-10-19 review's L-2. (a) DELETE /qms/changes/:id still soft-deletes an approved or closed change with no reason, and its signature row is left orphaned. (b) Edits in the states that stay editable still record no reason and no prior or new values (the `mdx.qms.change.update` audit row has no details), which is a \u00a711.10(e) gap that L-2's fix also asked to close. (c) Nothing detects changes that were edited after approval before this fix. P-63 keeps 'changed since it was signed' as the detector for records from before the rule, and for changes only readReviewedLearningChangeApproval recomputes the digest. (d) Only the proposer is barred from approving (change-approval-signature.ts:202), so an approver can rewrite the assessment while the change is under assessment and then sign it. This is the same co-author gap as L-1 for documents."
+      }
+    ]
+  },
+  {
+    "lens": "tests",
+    "refuted": false,
+    "summary": "The fix is correct, and its new tests are well built. But as written it would fail one CI test it never touches, and the pre-push hook would refuse it. I applied f1-change.py only to a scratch copy (<scratchpad>/repo); the real repo is unchanged.\n\nPatched, these 4 files pass (86 tests): qms-changes.test.ts, qms-change-project.test.ts, changeControl.pglite.integration.test.ts and qms-change-approval-signature.test.ts. Against the old service and route, 8 of the new tests fail, so they do test the fix. The changed files type-check cleanly.\n\nChecks you asked for:\n- Mock order matches the route: the update runs first and returns nothing, then getChange runs the SELECT.\n- clientError returns {error, details} (server/lib/api-response.ts:87-95), so res.body.details.code works.\n- qms_change_controls has no CHECK constraints and no triggers, either in the test's own table definition or in db/migrations/20260724_qms_change_control_store.sql / migrations/20261029l. So setting status directly breaks nothing.\n- `sequence` is a module-level `let` (line 297) and is only read inside the test bodies, so it is in scope.\n\nExisting tests that call PATCH /api/mdx/qms/changes/:id or updateChange:\n- qms-changes.test.ts, the viewer gets 403 (line 225): not affected.\n- qms-change-project.test.ts:123 \"PATCH writes no program_id\": the update now gets a follow-up SELECT and a 404, but the test only checks the UPDATE text. Not affected.\n- changeControl.pglite.integration.test.ts:417 'content' case: breaks, and the patch removes it. Line 441 (edit after closure returns null) still passes.\n- tests/db/qms-project-records.dbtest.ts:115-141 'content' case: breaks, and the patch does not touch it.\n\nNothing in the client, e2e, tests/validation/oq/qms/run.mjs, the demo packs or AnA tools calls PATCH on a change. AnA has no tool that edits a change. No test relied on the old 404 for a refused edit.",
+    "findings": [
+      {
+        "path": "tests/db/qms-project-records.dbtest.ts",
+        "line": 115,
+        "severity": "blocker",
+        "what": "The `it.each(['content', 'requirement'])` 'content' case will fail in CI's 'Run real-database tests' step (npm run test:db, vitest.db.config.ts includes tests/db/**/*.dbtest.ts). The blocker connection calls `service.updateChange(orgA.id, id, {implementationPlan: ...}, blocker)` (line 127) on a change in `verification`. After the patch that update matches 0 rows and changes nothing on the row, so the waiting closure's updated_at compare-and-set succeeds. The test gets 200 and status 'closed' where it expects 409 and status 'verification' (lines 133-135). I reproduced the same mechanism in PGlite: the original 'content' stale-closure case run against the patched service fails with 'promise resolved ... instead of rejecting'. Fix: drop 'content' (leave 'requirement' and remove the branch at lines 126-128), with a comment pointing to the new pglite per-state tests. Or turn it into a check that `updateChange` returns null inside the blocker transaction and that the closure then succeeds (200). F1's paths are '**', so editing this file is within the package."
+      },
+      {
+        "path": "server/services/qms/changeControl.service.ts",
+        "line": 306,
+        "severity": "blocker",
+        "what": "`AND status IN (${CHANGE_EDITABLE_STATES.map(...)})` adds a value interpolated into SQL text. Run on the patched copy, `npm run ci:sql-interpolation` (in .husky/pre-push ~line 406) fails: 'changeControl.service.ts: 9 value(s) interpolated into SQL text, baseline allows 8'. Option A: raise scripts/ci/sql-interpolation-baseline.json for this file from 8 to 9, giving the reason in the commit (the value is a fixed code constant). Option B, which the gate prefers and I checked: bind the states. Initialise `const args: unknown[] = [id, orgId, [...CHANGE_EDITABLE_STATES]]`, remove `args.push(id, orgId)`, and use `WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = ANY($3::text[])`. That drops the file to 6 (the gate then requires lowering the baseline from 8 to 6), and all pglite cases pass. Under B, the route test's regex `/status IN \\('proposed','under_assessment'\\)/` fails and must change, for example to `toMatch(/status = ANY\\(\\$3::text\\[\\]\\)/)` plus `expect(query.mock.calls[0][1].slice(0, 3)).toEqual([1, 9, ['proposed', 'under_assessment']])`."
+      },
+      {
+        "path": "server/routes/mdx-qms.ts",
+        "line": 1275,
+        "severity": "adjust",
+        "what": "The 409 message ('From approval on, its content is what the approval signed: raise a new change request to amend it') is also sent for a `cancelled` or `rejected` change, which may never have been approved: proposed can go to cancelled, and under_assessment to rejected. Make the wording neutral about the state, or vary it by `existing.status`. The route test's it.each covers only approved, in_implementation, verification and closed. Add 'rejected' and 'cancelled' so the message for those states is pinned too (the service side already covers all six in pglite)."
+      },
+      {
+        "path": "server/routes/__tests__/qms-changes.test.ts",
+        "line": 54,
+        "severity": "note",
+        "what": "The 409 cases do not check that the second query was the tenant read. The 409 depends on the mocked order, so adding `expect(String(query.mock.calls[1][0])).toMatch(/SELECT \\* FROM qms_change_controls WHERE id = \\$1 AND organization_id = \\$2/)` would make that explicit. Optionally, add a bullet to the file's header contract list (lines 4-10): 'PATCH: 409 QMS_CHANGE_CONTENT_FIXED past assessment, 404 only when absent'."
+      },
+      {
+        "path": "server/services/qms/changeControl.service.ts",
+        "line": 301,
+        "severity": "note",
+        "what": "The `if (sets.length === 0) return getChange(...)` early return still gives back the row for an approved, closed or other locked change. No write happens, and the route always passes `assessedBy`, so it never takes this path. But a direct service caller would get a row instead of null for an edit with no fields. That is harmless, though the CHANGE_EDITABLE_STATES doc comment could say so."
+      },
+      {
+        "path": "server/routes/mdx-qms.ts",
+        "line": 28,
+        "severity": "note",
+        "what": "The route index comment ('PATCH /api/mdx/qms/changes/:id  partial update') and the inline comment at line 1265 ('Partial update (draft edits ...)') could say it is limited to proposed and under_assessment and answers 409 QMS_CHANGE_CONTENT_FIXED otherwise. The contract has no other consumer: there is no client PATCH caller and no OpenAPI entry for this route."
+      }
+    ]
+  }
+]

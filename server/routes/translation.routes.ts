@@ -94,9 +94,16 @@ import type {
   TranslationSegment,
   TranslationStatus,
 } from '@shared/types/translation';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('translation-routes');
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   create projects, post-edit and approve segments and change the glossary
+   (same repair as biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
 
 // One tenant-scoped repository for the router; every call passes organizationId.
 const repo: TranslationRepository = createDrizzleTranslationRepository();

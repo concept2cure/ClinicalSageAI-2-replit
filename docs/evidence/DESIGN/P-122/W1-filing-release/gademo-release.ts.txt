@@ -1,0 +1,25 @@
+// Read-only on gademo: the release rule on the 2.4's ledger, through a Drizzle transaction as app_service under RLS, rolled back.
+import pg from '/home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/index.js';
+import { drizzle } from '/home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/index.js';
+import { queryableFromDrizzle } from '/home/user/ClinicalSageAI-2-replit/server/db/drizzle-queryable';
+import { assertWorkflowImportRelease } from '/home/user/ClinicalSageAI-2-replit/server/services/authoring/workflow-import-governance';
+const DOC = '223c3c16-b2a5-49bc-b0da-0ec5a573b118';
+(async () => {
+  const client = new pg.Client({ host: '127.0.0.1', user: 'postgres', database: 'gademo' });
+  await client.connect();
+  await client.query('BEGIN READ ONLY');
+  await client.query("SET LOCAL ROLE app_service");
+  await client.query("SELECT set_config('app.rls_enforce','on',true), set_config('app.current_tenant_id','2',true)");
+  const db = drizzle(client as any);
+  const q = queryableFromDrizzle(db as any);
+  const details = await q.query(`SELECT d.*, to_jsonb(d)->'provenance' AS provenance, to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=2`, [DOC]);
+  const sections = await q.query(`SELECT id::text, code, title, content FROM authoring_sections WHERE doc_id=$1 AND tenant_id=2`, [DOC]);
+  let outcome = 'accepted';
+  try {
+    await assertWorkflowImportRelease(q as any, { organizationId: 2, doc: { ...details.rows[0], id: DOC } as any,
+      sections: sections.rows.map((s: any) => ({ id: s.id, code: s.code, title: s.title, content: s.content })),
+      actor: { id: String(details.rows[0].created_by), email: 'ana.author@concept2cure.pro' } });
+  } catch (e: any) { outcome = `refused ${e.status} ${e.code}`; }
+  console.log(`release rule on the frozen 2.4 (Drizzle transaction, app_service, RLS on): ${outcome}; sections ${sections.rows.length}`);
+  await client.query('ROLLBACK'); await client.end();
+})();

@@ -13,6 +13,11 @@
  * "Nothing in this package is fabricated".
  *
  * The real persistence and package code run here; only the database is mocked.
+ *
+ * 2026-11-10 (eTMF convergence E2): a TMF is a study's, so the read first
+ * resolves the study and admits the caller to its project (both doubled here;
+ * tmf-study-binding.test.ts and tests/db/etmf-study-binding.dbtest.ts hold
+ * them), and a reference is verified against the study's own project.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createHash } from 'node:crypto';
@@ -23,8 +28,10 @@ const S = vi.hoisted(() => ({
   query: vi.fn(),
 }));
 
+const STUDY = { id: 41, study_id: 'T-1', program_id: 'prog-1', protocol_id: 'P-1', protocol_title: 'A study' };
 vi.mock('../../../db', () => ({
-  pool: { query: S.query },
+  // The study lookup answers the study; every other statement is the vault lookup under test.
+  pool: { query: (sql: string, params?: unknown[]) => (/FROM cdisc_prm_studies/.test(sql) ? Promise.resolve({ rows: [STUDY] }) : S.query(sql, params)) },
   db: {
     select: () => ({
       from: () => ({
@@ -33,14 +40,19 @@ vi.mock('../../../db', () => ({
     }),
   },
 }));
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn() } }));
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn() }, writeChainedAuditRow: vi.fn() }));
+vi.mock('../../c2c/current-program-access', () => {
+  class ProgramReadAccessError extends Error {}
+  return { ProgramReadAccessError, requireCurrentProgramAccess: vi.fn(async () => ({})) };
+});
+vi.mock('../../vault/vault-write-authority', () => ({ requireCurrentVaultProgramWrite: vi.fn() }));
 
 import { getTrialTmfCompleteness } from '../tmf-artifact-persistence';
 import { buildTmfInspectionPackage } from '../tmf-inspection-package';
 import { TMF_REFERENCE_MODEL } from '../tmf-completeness';
 
 const ESSENTIAL = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.filter((a) => a.essential).map((a) => a.code));
-const CTX = { organizationId: 7 };
+const CTX = { organizationId: 7, userId: 5 };
 
 function filing(artifactCode: string, documentRef: string | null) {
   return { id: `f-${artifactCode}`, organizationId: 7, trialId: 'T-1', artifactCode, zoneNumber: null, documentRef, filedAt: new Date('2026-10-01T00:00:00Z') };
@@ -89,7 +101,10 @@ describe('a vault reference is re-verified when readiness is computed', () => {
     const [sql, params] = S.query.mock.calls[0];
     expect(sql).toMatch(/rp\.organization_id = \$2/);
     expect(sql).toMatch(/d\.deleted_at IS NULL/);
+    // … and in the study's own project (E2): another project's document does not verify a filing.
+    expect(sql).toMatch(/d\.program_id::text = \$3/);
     expect(params[1]).toBe(7);
+    expect(params[2]).toBe('prog-1');
     expect(new Set(params[0])).toEqual(new Set(ESSENTIAL.map(vaultId)));
   });
 
@@ -129,7 +144,7 @@ describe('an off-platform reference this service cannot check', () => {
 describe('the inspection package', () => {
   it('does not say "Inspection ready: YES" over filings with no documents, and its index says which', async () => {
     S.filings = ESSENTIAL.map((c) => filing(c, null));
-    const pkg = await buildTmfInspectionPackage({ trialId: 'T-1', organizationId: 7, generatedAt: '2026-10-15T00:00:00Z' });
+    const pkg = await buildTmfInspectionPackage({ trialId: 'T-1', organizationId: 7, userId: 5, generatedAt: '2026-10-15T00:00:00Z' });
     expect(pkg.ready).toBe(false);
     const zip = await JSZip.loadAsync(pkg.zip);
     const readme = await zip.file('README.txt')!.async('string');
@@ -137,16 +152,19 @@ describe('the inspection package', () => {
     expect(readme).toMatch(/Inspection ready: NO/);
     expect(readme).toMatch(/without a verified document: 26/);
     const csv = (await zip.file('inspection-index.csv')!.async('string')).trim().split('\n');
-    expect(csv[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence');
-    expect(csv.find((l) => l.split(',')[1] === 'protocol')).toMatch(/,no_document$/);
+    expect(csv[0]).toBe('zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence,not_applicable_reason');
+    expect(csv.find((l) => l.split(',')[1] === 'protocol')).toMatch(/,no_document,$/);
     const manifest = JSON.parse(await zip.file('manifest.json')!.async('string'));
     expect(manifest.ready).toBe(false);
     expect(manifest.basis).toBe('verified_documents');
+    // The package says which study it is about.
+    expect(manifest.study).toEqual({ id: 41, studyId: 'T-1', protocolId: 'P-1', title: 'A study', programId: 'prog-1' });
+    expect(readme).toMatch(/Study:\s+T-1/);
   });
 
   it('says NOT DETERMINED, not YES or NO, when the only gaps are references it cannot check', async () => {
     S.filings = ESSENTIAL.map((c) => filing(c, 'https://sponsor.example/tmf/' + c + '.pdf'));
-    const pkg = await buildTmfInspectionPackage({ trialId: 'T-1', organizationId: 7, generatedAt: '2026-10-15T00:00:00Z' });
+    const pkg = await buildTmfInspectionPackage({ trialId: 'T-1', organizationId: 7, userId: 5, generatedAt: '2026-10-15T00:00:00Z' });
     expect(pkg.ready).toBeNull();
     const readme = await (await JSZip.loadAsync(pkg.zip)).file('README.txt')!.async('string');
     expect(readme).toMatch(/Inspection ready: NOT DETERMINED/);

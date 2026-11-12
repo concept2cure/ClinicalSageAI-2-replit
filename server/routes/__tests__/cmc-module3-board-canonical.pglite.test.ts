@@ -9,7 +9,7 @@ vi.mock('../../db.js',()=>({query:(...args:unknown[])=>h.query(...args)}));
 vi.mock('../../utils/tenantContext.js',()=>({getSecureOrgId:(req:any)=>req.user?.organizationId}));
 import createRoutes from '../cmc-module3-board.routes';
 let db:PGlite;
-const P1='00000000-0000-4000-8000-000000000011',P2='00000000-0000-4000-8000-000000000012';
+const P1='00000000-0000-4000-8000-000000000011',P2='00000000-0000-4000-8000-000000000012',P3='00000000-0000-4000-8000-000000000013';
 const app=(orgId=1)=>{const a=express();a.use((req,_res,next)=>{(req as any).user={id:7,organizationId:orgId};next();});a.use('/api/cmc/module3-board',createRoutes());return a;};
 beforeAll(async()=>{
   db=new PGlite();
@@ -19,7 +19,7 @@ beforeAll(async()=>{
     INSERT INTO regulatory_programs VALUES('${P1}',1,'Program one',NULL),('${P2}',2,'Program two',NULL);`);
   await db.exec(await readFile('migrations/20260604_submission_core_canonical.sql','utf8'));
   await db.exec(`ALTER TABLE submissions ADD COLUMN program_id uuid;
-    CREATE TABLE cmc_module3_sections(organization_id int,project_id text,section_key text,section_path text,approval_state text,deterministic_json jsonb);
+    CREATE TABLE cmc_module3_sections(organization_id int,project_id text,section_key text,section_path text,approval_state text,deterministic_json jsonb,stale boolean NOT NULL DEFAULT false,stale_reason text);
     INSERT INTO submissions(id,title,product_name,application_type,client_type,primary_region,organization_id,created_by,program_id,deleted_at) VALUES
       (1,'Live filing','Product one','ind','pharma','fda',1,7,'${P1}',NULL),
       (2,'Foreign filing','Other product','nda','pharma','eu',2,7,'${P2}',NULL),
@@ -32,6 +32,13 @@ beforeAll(async()=>{
       (1,'m3s1','Deleted leaf',1,7,NOW()),(4,'m3s1','Foreign filing leaf',2,7,NULL);
     INSERT INTO cmc_module3_sections VALUES(1,'${P1}','M3S1','3.2.S.1','approved','{"completeness":100,"missingInputs":[]}'),
       (2,'${P1}','M3S2','3.2.S.2','approved','{"completeness":100,"missingInputs":[]}');`);
+  /* A second tenant-1 program whose sections went stale (walked 2026-11-12: the Overview read "Draft" with a live
+     "Approve section" on a section the approve route refuses as out of date). */
+  await db.exec(`INSERT INTO regulatory_programs VALUES('${P3}',1,'Program three',NULL);
+    INSERT INTO cmc_module3_sections VALUES
+      (1,'${P3}','3.2.S.4','3.2.S.4','draft','{"completeness":100,"missingInputs":[]}',true,'specification:3 changed after compile'),
+      (1,'${P3}','3.2.P.5','3.2.P.5','approved','{"completeness":100,"missingInputs":[]}',true,'method:21 changed after compile'),
+      (1,'${P3}','3.2.P.8','3.2.P.8','draft','{"completeness":100,"missingInputs":[]}',false,NULL);`);
   h.query.mockImplementation((sql:string,args:unknown[])=>db.query(sql,args));
 });
 afterAll(async()=>{await db?.close();});
@@ -59,5 +66,16 @@ describe('canonical CMC board with no legacy reg_submissions registry',()=>{
     const res=await request(app()).get('/api/cmc/module3-board');
     expect(res.status).toBe(200);expect(res.body.data.meta.portfolioUnreadable).toBe(true);
     expect(res.body.data.kpis.submissions).toBeNull();expect(res.body.data.kpis.rpiAverage).toBeNull();
+  });
+});
+
+describe('a section that went stale says so on the board (2026-11-12)',()=>{
+  it('carries the stale flag and the reason, for drafts and approved sections alike',async()=>{
+    const res=await request(app()).get(`/api/cmc/module3-board?projectId=${P3}`);
+    expect(res.status).toBe(200);
+    const byKey=Object.fromEntries(res.body.data.sections.map((s:any)=>[s.key,s]));
+    expect(byKey['3.2.S.4']).toMatchObject({st:'draft',stale:true,staleReason:'specification:3 changed after compile'});
+    expect(byKey['3.2.P.5']).toMatchObject({st:'approved',stale:true,staleReason:'method:21 changed after compile'});
+    expect(byKey['3.2.P.8']).toMatchObject({st:'draft',stale:false,staleReason:null});
   });
 });

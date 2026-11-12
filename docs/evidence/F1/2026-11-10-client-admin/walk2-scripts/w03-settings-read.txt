@@ -1,0 +1,25 @@
+// Walk 2, flow 1c: the Settings tab read in full, as the seeded administrator (read-only).
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'owner', 'jm.smith@concept2cure.pro');
+  await c.step('Settings tab in full', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(3500);
+    const t = await c.mainText(page, 30000);
+    s.notes.push(t.slice(t.indexOf('Org settings')));
+    await page.setViewportSize({ width: 1440, height: 7000 }); await c.sleep(1500);
+    const main = page.locator('main').first();
+    const box = await main.boundingBox();
+    s.notes.push('main box ' + JSON.stringify(box));
+    // split the tall capture into pieces under 400 kB
+    for (let i = 0; i < 5; i += 1) {
+      await page.screenshot({ path: `${c.SHOTS}/w2-01-admin-settings-1440-part${i + 1}.png`, clip: { x: 264, y: i * 1400, width: 1176, height: 1400 } });
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
+    s.notes.push('inputs: ' + JSON.stringify(await page.locator('main input:visible, main select:visible, main textarea:visible').evaluateAll(els => els.map(e => `${e.tagName}:${e.getAttribute('type') || ''}:${e.getAttribute('aria-label') || e.getAttribute('placeholder') || e.id || e.getAttribute('name') || ''}=${e.type === 'checkbox' ? e.checked : e.value}`))));
+    s.notes.push('buttons: ' + JSON.stringify(await page.locator('main button:visible').evaluateAll(els => els.map(e => (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 60) + (e.disabled ? ' [disabled]' : '')).filter(Boolean))));
+  });
+  c.report(); c.save('w2-03-settings-read');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

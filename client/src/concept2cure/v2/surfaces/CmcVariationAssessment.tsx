@@ -5,6 +5,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import type { VariationClassification, VariationInput } from '../../../../../server/services/cmc/supac-classifier';
+import { cmcProjectUuid } from './cmcShared';
 
 const FAMILIES = ['immediate_release_oral_solid', 'modified_release_oral_solid', 'nonsterile_semisolid', 'sterile_injectable', 'biologic', 'inhalation', 'transdermal', 'other'] as const;
 const CATEGORIES = ['components_composition', 'manufacturing_site', 'scale_up', 'manufacturing_process', 'equipment', 'container_closure', 'specifications', 'analytical_method', 'stability_protocol'] as const;
@@ -30,6 +31,67 @@ function isClassification(value: unknown): value is VariationClassification {
   return !!v && typeof v.fdaReportingCategory === 'string' && typeof v.emaVariationCategory === 'string' && Array.isArray(v.rationale) && Array.isArray(v.validationRequirements) && Array.isArray(v.impactedCtdSections) && Array.isArray(v.citations);
 }
 
+/**
+ * The body POST /api/cmc-changes takes: the classifier's own inputs, so the
+ * recorded change is projected on read through the same classifier
+ * (server/routes/cmc-changes.routes.ts, `projectCmcChanges`). Its title is the
+ * description's first line, as typed. The CMC project in context goes with it,
+ * so the route files the change's Module 3 source and marks the sections it
+ * touches stale.
+ */
+export function proposedChangeBody(input: Partial<VariationInput>, critical: string, projectId: string | undefined): Record<string, unknown> {
+  const description = (input.description ?? '').trim();
+  return {
+    title: description.split('\n')[0].slice(0, 160),
+    description,
+    dosageFormFamily: input.dosageFormFamily,
+    changeCategory: input.changeCategory,
+    affects: input.affects,
+    touchesCriticalStep: critical === 'yes',
+    ...(input.scaleChangeFactor ? { scaleChangeFactor: input.scaleChangeFactor } : {}),
+    ...(input.excipientLevelChange ? { excipientLevelChange: input.excipientLevelChange } : {}),
+    ...(input.siteChangeKind ? { siteChangeKind: input.siteChangeKind } : {}),
+    ...(input.processChangeKind ? { processChangeKind: input.processChangeKind } : {}),
+    ...(projectId ? { cmcProjectId: projectId } : {}),
+  };
+}
+
+/** What recording the change did about Module 3, from the route's own `meta.module3WriteThrough`. */
+function recordedSentence(linked: unknown): string {
+  const tail =
+    linked === 'recorded' ? ' The Module 3 sections it touches are marked for rebuild.'
+      : linked === 'failed' ? ' It could not be linked to Module 3; the change itself is saved.'
+        : ' No project is open, so it is not linked to a Module 3.';
+  return 'Recorded as a proposed change, with this classification.' + tail;
+}
+
+/**
+ * POST /api/cmc-changes (P-122: it had no caller). The proposed-change store
+ * the Lifecycle "CMC change control" card lists; the route audits the proposal
+ * and, with a project, writes it through to Module 3. Recorded once per
+ * assessment: `reset` clears it when an input changes.
+ */
+function useProposedChange(onError: (message: string) => void) {
+  const [recorded, setRecorded] = React.useState<string | null>(null);
+  const record = async (body: Record<string, unknown>) => {
+    try {
+      const response = await apiRequest('POST', '/api/cmc-changes', body);
+      const json = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(serverMessage(json) ?? 'The proposed change was refused.');
+      setRecorded(recordedSentence(json?.meta?.module3WriteThrough));
+    } catch (err) { onError(err instanceof Error ? err.message : 'The proposed change could not be recorded.'); }
+  };
+  return { recorded, record, reset: () => setRecorded(null) };
+}
+
+/** The record control and what recording did, under the classification it records. */
+function RecordProposedChange({ busy, recorded, onRecord }: { busy: boolean; recorded: string | null; onRecord: () => void }) {
+  return <>
+    <button type="button" className="btn ghost small" disabled={busy || recorded != null} onClick={onRecord}>Record this proposed change</button>
+    {recorded && <p role="status" style={{ marginTop: 8 }}>{recorded}</p>}
+  </>;
+}
+
 export function CmcVariationAssessment({ nav, followup }: { nav?: (id: string) => void; followup?: (sections: string[]) => React.ReactNode }) {
   const handoff = useAuthoringHandoff();
   const [input, setInput] = React.useState<Partial<VariationInput>>({});
@@ -37,8 +99,9 @@ export function CmcVariationAssessment({ nav, followup }: { nav?: (id: string) =
   const [result, setResult] = React.useState<VariationClassification | null>(null);
   const [note, setNote] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const proposed = useProposedChange(setNote);
   const category = input.changeCategory;
-  const patch = (key: keyof VariationInput, value: string) => { setInput((old) => ({ ...old, [key]: value })); setResult(null); };
+  const patch = (key: keyof VariationInput, value: string) => { setInput((old) => ({ ...old, [key]: value })); setResult(null); proposed.reset(); };
   const complete = variationReady(input, critical);
 
   const select = (label: string, key: keyof VariationInput, options: readonly string[]) => (
@@ -55,6 +118,11 @@ export function CmcVariationAssessment({ nav, followup }: { nav?: (id: string) =
       setResult(json.data);
     } catch (err) { setNote(err instanceof Error ? err.message : 'The variation assessment could not be run.'); }
     finally { setBusy(false); }
+  };
+  const record = async () => {
+    if (!result || busy || proposed.recorded) return;
+    setBusy(true); setNote(null);
+    try { await proposed.record(proposedChangeBody(input, critical, cmcProjectUuid())); } finally { setBusy(false); }
   };
   const openEditor = async () => {
     if (!result || busy || handoff.blocked) return;
@@ -93,6 +161,8 @@ export function CmcVariationAssessment({ nav, followup }: { nav?: (id: string) =
         <ul>{result.validationRequirements.map((item) => <li key={item}>{item}</li>)}</ul>
         <p>Sources: {result.citations.join('; ')}</p>
         <button type="button" className="nda-open" disabled={busy || handoff.blocked} onClick={() => void openEditor()}>Open draft assessment in editor</button>
+        {' '}
+        <RecordProposedChange busy={busy} recorded={proposed.recorded} onRecord={() => void record()} />
       </div>}
     </div>
   </div>;

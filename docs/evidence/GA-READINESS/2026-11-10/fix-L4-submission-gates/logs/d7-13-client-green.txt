@@ -1,0 +1,11 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx > the IND checklist reads a placed section as placed > a section placed from the Vault reads "Placed, not yet approved", never "Not started" or a raw value 242ms
+ ✓ client/src/concept2cure/v2/__tests__/indChecklistVaultPlaced.test.tsx > the IND checklist reads a placed section as placed > a module card names the set it counts: sections approved, not "required sections approved" 97ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  12:15:01
+   Duration  6.66s (transform 3.86s, setup 598ms, import 4.23s, tests 343ms, environment 1.13s)
+

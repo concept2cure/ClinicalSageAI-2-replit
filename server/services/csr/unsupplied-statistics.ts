@@ -154,6 +154,12 @@ export function acceptModelDraft(
 // "Table 14.3.1", "Listing 16.2.7", "ICH E3". Never followed by a percent sign.
 const REFERENCE = /(?:\b(?:sections?|tables?|figures?|listings?|appendi(?:x|ces)|ICH\s+E)|§)\s*\d+(?:\.\d+)*(?![\d.]*\s*%)/gi;
 
+// A number with two or more points ("16.2.8", "12.4.2.1") is a report part even with no word before it: no clinical
+// figure is written that way. ICH E3's own title of §12.4.1 carries two ("… by Patient (16.2.8) and Each Abnormal
+// Laboratory Value (14.3.4)"), and the builder tells the model to head the section with that title. Read as the
+// figures 16.2, 0.8, 14.3 and 0.4, they refused every draft of §12.4.1 that obeyed (2026-11-10). Never a percentage.
+const PART_NUMBER = /(?<![\d.])\d+(?:\.\d+){2,}(?!\.?\d)(?!\s*%)/g;
+
 /**
  * Every number in an evidence-bound draft that neither a reconciled claim nor
  * the study information carries. The statistic patterns above recognise how a
@@ -170,7 +176,7 @@ export function findUnclaimedNumbers(prose: string, supplied: unknown, format: N
   // Exempt only visibly structured UPPERCASE identifiers, not bare metadata
   // digits or quantitative phrases such as "300 patients" or "300mg".
   const identifiers = /\b(?:NCT\d{8}|[A-Z]{2,}[A-Z0-9_-]*[-_][A-Z0-9_-]*\d[A-Z0-9_-]*)\b/g;
-  const text = renderedCsrText(prose, format).replace(REFERENCE, ' ').replace(identifiers, ' ');
+  const text = renderedCsrText(prose, format).replace(REFERENCE, ' ').replace(PART_NUMBER, ' ').replace(identifiers, ' ');
   for (const figure of numericalFigures(text, 'text')) {
     if (known.has(figure.identity)) continue;
     // Keep the established caller-facing number field; the admission above

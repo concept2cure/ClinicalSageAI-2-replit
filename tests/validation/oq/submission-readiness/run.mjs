@@ -142,17 +142,19 @@ await step(
   {
     id: 'OQ-SRDY-04',
     urs: ['URS-SRDY-004'],
-    title: 'Readiness review template is registered and execute validates inputs',
+    title: 'The readiness review\'s orchestration is outside this release',
     action: 'GET /api/orchestration/templates; POST /api/orchestration/execute {templateId} without projectId',
-    expected: 'submission_readiness_review listed with 5 steps; execute without projectId → 400',
+    expected: 'Both 403 LAUNCH_SCOPE: the template list and the execution are not served in this release',
+    note: 'v0.8: /api/orchestration/templates and /execute were claimed by the AnA command surface, which left the launch scope by the CPO decision of 2026-10-08 (bcc457edb8, docs/SURFACE_DECISIONS_2026-10-08.md), and by the Orchestration board, which the founder decision of 2026-10-17 (P-33) keeps out of this release. ' +
+      'Submission Readiness is the per-sequence dispatch verdict in Submission Center (OQ-SRDY-03, OQ-SRDY-07). Until v0.7 the step expected the template with 5 steps and a 400. URS-SRDY-004 is withdrawn from this release; its revision is owed through change control.',
   },
   async ({ api, expect }) => {
     const t = await api('GET', '/api/orchestration/templates');
-    const tpl = (t.json?.templates ?? []).find((x) => x.templateId === 'submission_readiness_review');
-    expect(tpl && tpl.stepCount === 5, 'template missing or wrong step count', t.json);
     const e = await api('POST', '/api/orchestration/execute', { templateId: 'submission_readiness_review' });
-    expect(e.status === 400, `expected 400, got ${e.status}`, e.json);
-    return `template present (${tpl.stepCount} steps); execute w/o projectId → 400`;
+    const code = (r) => r.json?.error?.code ?? r.json?.code;
+    expect(t.status === 403 && code(t) === 'LAUNCH_SCOPE', `templates: expected 403 LAUNCH_SCOPE, got ${t.status} ${code(t)}`, t.json);
+    expect(e.status === 403 && code(e) === 'LAUNCH_SCOPE', `execute: expected 403 LAUNCH_SCOPE, got ${e.status} ${code(e)}`, e.json);
+    return `templates ${t.status} ${code(t)}; execute ${e.status} ${code(e)}`;
   },
 );
 
@@ -202,13 +204,13 @@ await step(
   {
     id: 'OQ-SRDY-05b',
     urs: ['URS-SRDY-005'],
-    title: 'The readiness review names the project it assessed',
+    title: 'The readiness review of the anchored project is outside this release',
     action:
       'When intake anchored the program to a project (meta.projectAnchorId): POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the anchored project>, module:"ind"}',
     expected:
-      'The run completes, and its first step (inspect_project_state), read from the execution the response returns, names the program. A program intake did not anchor is a deviation naming the reason intake gave',
+      '403 LAUNCH_SCOPE and no run: the review is not served in this release, for a project it can read as for one it cannot (OQ-SRDY-05). A program intake did not anchor is a deviation naming the reason intake gave',
     dependsOn: ['OQ-SRDY-00'],
-    note: 'The review reads the integer project spine. A program reaches it only through the anchor intake writes (services/c2c/program-project-anchor.ts), and intake writes one only when the organisation has exactly one client workspace. Signup creates none.',
+    note: 'v0.8: the execution route left the release with the AnA command surface (bcc457edb8, 2026-10-08) and the Orchestration board (P-33, 2026-10-17); see OQ-SRDY-04. Until v0.7 the step expected a completed run naming the program. URS-SRDY-005 is withdrawn from this release; its revision is owed through change control.',
   },
   async ({ api, expect, deviation }) => {
     if (state.projectAnchorId == null) {
@@ -222,13 +224,10 @@ await step(
       projectId: state.projectAnchorId,
       module: 'ind',
     });
-    expect(e.status === 200 && e.json?.status === 'completed', `expected a completed run, got HTTP ${e.status}`, e.json);
-    const project = inspected(e.json);
-    expect(project.name === state.programName, `the review assessed "${project.name}", not the program "${state.programName}"`, e.json.steps?.[0]);
-    // v0.6: the execution history (GET /api/orchestration/executions/:id) is the
-    // Orchestration board's, locked by launch scope at the API (OQ-SRDY-08). The
-    // status and steps are read from the execution the response returns.
-    return `run ${e.json.executionId} completed for "${project.name}" (${project.documents} document(s)), status and steps read from the execution returned`;
+    const code = e.json?.error?.code ?? e.json?.code;
+    expect(e.status === 403 && code === 'LAUNCH_SCOPE', `expected 403 LAUNCH_SCOPE, got HTTP ${e.status} ${code}`, e.json);
+    expect(!e.json?.executionId, 'a run was started', e.json);
+    return `the anchored project ${state.projectAnchorId}: ${e.status} ${code}, no run`;
   },
 );
 

@@ -60,8 +60,9 @@ async function walk(page, programId, width) {
   const due = plan.getByTestId('pj-due-for-you');
   await due.waitFor();
   await due.locator('.pj-due-row').first().waitFor({ timeout: 15000 });
-  const first = await plan.evaluate((el) => el.firstElementChild?.getAttribute('data-testid'));
-  expect(first === 'pj-due-for-you', `Due for you is first (${first})`);
+  // The strategy opens the step since 2026-11-10 (THE_PROGRAM §8 item 1); what is due for the person follows it.
+  const first = await plan.evaluate((el) => [...el.children].slice(0, 2).map((c) => c.getAttribute('data-testid')).join(','));
+  expect(first === 'pj-plan-strategy,pj-due-for-you', `the strategy, then Due for you (${first})`);
   const rows = await due.locator('.pj-due-row').allInnerTexts();
   expect(rows.some((r) => r.includes('Submit IND')), `Submit IND is due for the person (${rows})`);
   await due.scrollIntoViewIfNeeded();

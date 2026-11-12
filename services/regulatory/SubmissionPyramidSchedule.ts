@@ -41,6 +41,9 @@ export interface BackSchedule {
   anchorTaskId: string;
   /** The earliest start of any task: when the work must begin to make the target. */
   start: string;
+  /** What the task lengths rest on: typical durations, estimated hours only, or both. With hours only the dates are
+   *  the earliest possible (the work's hours laid end to end), not a forecast, and the screens say so. */
+  durations: 'typical' | 'hours-only' | 'mixed';
   tasks: Record<string, ScheduledTask>;
 }
 
@@ -148,7 +151,9 @@ export function backSchedule(pyramid: SubmissionPyramid, target: string): BackSc
     place(t, start, addWorkdays(start, days - 1), days, basis);
   }
   const first = Math.min(...pyramid.tasks.filter(t => !after.has(t.id)).map(t => startT.get(t.id)!));
-  return { target, anchorTaskId: anchorId, start: dayIso(first), tasks: out };
+  const typical = Object.values(out).filter(t => t.basis === 'typical-duration').length;
+  const durations = typical === 0 ? 'hours-only' : typical === pyramid.tasks.length ? 'typical' : 'mixed';
+  return { target, anchorTaskId: anchorId, start: dayIso(first), durations, tasks: out };
 }
 
 // ─── Where the work stands against its schedule (S11: workstreams, portfolio line) ─

@@ -24,11 +24,11 @@ import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject, reopenLastProject } from './shellProject';
+import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject, reopenLastProject, noteRecentProject } from './shellProject';
 import { destinationFor } from './routing';
 import { OPEN_PROGRAM_SURFACE } from './programAction';
 import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
-import { openPaletteProject, paletteProjectResults, usePaletteProjects, type PaletteProject, type PaletteProjectsRead } from './paletteProjects';
+import { openPaletteProject, paletteProjectResults, shellProjectOfPalette, usePaletteProjects, type PaletteProject, type PaletteProjectsRead } from './paletteProjects';
 
 import {
   AI_ACTIONS,
@@ -61,6 +61,7 @@ import { C2CToast, useToast } from './toast';
 import { useSurfaceAvailable } from './surfaceAvailable';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { askSupport } from './surfaces/help/supportEntry';
 
 export interface ShellSurfaceRef {
   id: string;
@@ -70,10 +71,9 @@ export interface ShellSurfaceRef {
 }
 
 
-/** Where the account menu's "Get help" goes: AnA, which answers questions about the
- *  product in the governed conversation. The top bar's own Help button went in D1-2
- *  (D1.md §D1.B step 4); this is its one place now. */
-const HELP_SURFACE = 'conversation-thread';
+/* "Get help", from the account menu and the top bar's Help alike, opens the conversation asked as Concept2Cure
+   support (P-127, surfaces/help/supportEntry.ts): AnA answers from the Help Center and drafts a support request when
+   it does not answer. The bar's Help went in D1-2 and came back under P-122 (2026-11-10); both go there. */
 
 /** New conversation: Home's composer, where a question starts one (C2C_CONVO =
  *  { id: 'new', seed }). The sidebar's action and the top bar's phone button share
@@ -185,6 +185,7 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const { canLeave, notify, leaveNotice } = useShellLeaveGuard();
+  const recentProjects = useRailRecentProjects();
   /* The organisation's name, or none (P-25): the account's second line, as
      Claude's sidebar shows the organisation under the person (D1.md §D1.A step 2). */
   const org: string | null = useTenant()?.currentOrganization?.name?.trim() || null;
@@ -387,6 +388,7 @@ export function Rail({
           </div>
         )}
         {!collapsed && <RailRecents
+          projects={recentProjects}
           onOpen={(id) => {
             if (!canLeave()) return;
             closeOnPhone();
@@ -451,6 +453,12 @@ export function Rail({
               setAcct(false);
               setRemembersOpen(true);
             }}
+            onSupport={() => {
+              if (!canLeave()) return;
+              setAcct(false);
+              closeOnPhone();
+              askSupport(onNav);
+            }}
             onSegment={(id) => {
               if (!canLeave()) return;
               setAcct(false);
@@ -499,13 +507,13 @@ export function Rail({
   return <>{rail}{leaveNotice}</>;
 }
 
-type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' | 'remembers' } | { sep: true } | { clientType: true };
+type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' | 'account' | 'remembers' | 'support' } | { sep: true } | { clientType: true };
 
 /**
  * The account menu: settings, the client type, help and sign-out
  * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The client type
  * moved here from the rail's list on 2026-10-08; the module catalog is here as
- * "Subscription & features", for organization administrators, since 2026-10-25
+ * "Subscription & features", for every member since P-122 (2026-11-10; for organization administrators only from 2026-10-25)
  * (named so on 2026-10-26: "Plan" is the project's first step, the
  * subscription is "subscription", section 9 of
  * .design/client-journey/INFORMATION_ARCHITECTURE.md). Each entry carries its
@@ -572,14 +580,27 @@ function useRecentThreads(limit: number, enabled = true): RecentThreadsRead {
  * the list route Home and the palette read; a failed project read shows no
  * project rows and never blocks the conversations (D1.md §D1.A step 4).
  */
-function RailRecents({ onOpen, onOpenProject }: { onOpen: (id: string) => void; onOpenProject: (p: PaletteProject) => void }) {
+/**
+ * The account's most recent projects, newest-updated first, from the list route
+ * Home and the palette read; none when the read fails. Read by the rail itself,
+ * collapsed or not, because a project screen chosen with no project open
+ * reopens the first of them when this account never opened one here
+ * (shellProject.ts noteRecentProject).
+ */
+function useRailRecentProjects(): PaletteProject[] {
+  const { data, error } = useLiveData<unknown[]>(RAIL_PROJECTS_URL, [], isRows);
+  const projects = React.useMemo(() => (error || !Array.isArray(data)
+    ? []
+    : data.map(railProjectOf).filter((p): p is PaletteProject => p !== null).slice(0, RAIL_RECENT_PROJECTS)), [data, error]);
+  const first = projects[0] ?? null;
+  React.useEffect(() => { noteRecentProject(first ? shellProjectOfPalette(first) : null); }, [first]);
+  return projects;
+}
+
+function RailRecents({ projects, onOpen, onOpenProject }: { projects: PaletteProject[]; onOpen: (id: string) => void; onOpenProject: (p: PaletteProject) => void }) {
   const headId = React.useId();
   const read = useRecentThreads(RAIL_RECENTS);
   const { threads } = read;
-  const projectsRead = useLiveData<unknown[]>(RAIL_PROJECTS_URL, [], isRows);
-  const projects = projectsRead.error || !Array.isArray(projectsRead.data)
-    ? []
-    : projectsRead.data.map(railProjectOf).filter((p): p is PaletteProject => p !== null).slice(0, RAIL_RECENT_PROJECTS);
   return (
     <div className="rail-nav rail-group rail-recents" role="group" aria-labelledby={headId} data-testid="rail-recents">
       <div className="rail-group-h" id={headId}>Recents</div>
@@ -622,6 +643,7 @@ function AccountMenu({
   onGo,
   onAccount,
   onRemembers,
+  onSupport,
   onSegment,
   onLogout,
 }: {
@@ -643,6 +665,8 @@ function AccountMenu({
   onAccount: () => void;
   /** Open "What AnA remembers" (WhatAnaRemembers.tsx). */
   onRemembers: () => void;
+  /** Get help: the conversation asked as support, behind the leave guard. */
+  onSupport: () => void;
   onSegment: (id: string) => void;
   onLogout: () => void;
 }) {
@@ -663,9 +687,11 @@ function AccountMenu({
        catalog), on the rail and in this menu for everyone, and it read as
        dozens of separate applications: a client testing the product could not
        tell what to use or when (docs/design/CLIENT_JOURNEY_2026-10-25.md).
-       Features open from inside a project; this page is the administrator's
-       licensing view of them. */
-    ...(isOrgAdmin ? [{ label: 'Subscription & features', ic: 'grid', to: 'apps' }] : []),
+       From 2026-10-25 it was an administrator's only, and a member had no list
+       of the features built for them (P-122, 2026-11-10). It is every member's
+       again: a member sees the features they may open, an administrator also
+       the locked ones and the switches (WorkflowCatalog.tsx). */
+    { label: 'Subscription & features', ic: 'grid', to: 'apps' },
     // Platform licensing is the PLATFORM operator's console, not the customer's
     // subscription page (that is "Compare subscriptions" below). It is offered only when the server
     // says its guard admits this viewer — `platformAdmin` is that guard's own
@@ -701,7 +727,8 @@ function AccountMenu({
       ? { label: 'Subscription & billing', ic: 'creditCard', to: 'licensing' }
       : { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
-    { label: 'Get help', ic: 'help', to: HELP_SURFACE },
+    { label: 'Help & training', ic: 'book', to: 'training' },
+    { label: 'Get help', ic: 'help', action: 'support' },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
   ];
@@ -786,6 +813,7 @@ function AccountMenu({
                 if (it.action === 'logout') onLogout();
                 else if (it.action === 'account') onAccount();
                 else if (it.action === 'remembers') onRemembers();
+                else if (it.action === 'support') onSupport();
                 else if (it.to) onGo(it.to);
               }}
             >
@@ -849,19 +877,23 @@ function openLauncher(mode: 'task' | 'collab') {
  * (`ProjectChip`, deleted in D1-2), which named the project a second time beside the
  * crumbs. A project opened by id alone has no name in the channel yet, and the crumb
  * does not invent one. The brand is the sidebar's wordmark and the place is its
- * active row, so there is no root or category crumb. The search box, the
- * organisation label and Help left the bar for the sidebar's Search and ⌘K, the
- * account's second line, and the account menu's "Get help" (D1-1).
+ * active row, so there is no root or category crumb. The organisation label is the
+ * account's second line (D1-1).
+ *
+ * Search and Help are back in the bar (P-122 §3.4, 2026-11-10). D1-2 had moved them
+ * to the sidebar's Search row, ⌘K and the account menu's "Get help", where a new
+ * client did not find them. Search opens the same palette as ⌘K and the sidebar's
+ * Search; Help goes where "Get help" goes. Both stay in those places too.
  */
 export function TopBar({
   surface,
+  onPalette,
   onNav,
   onAsk,
   onOpenRail,
 }: {
   surface: ShellSurfaceRef;
-  /** Not read since the top bar's search box went (D1.md §D1.B step 4): the
-   *  sidebar's Search and ⌘K open the palette. Kept so call sites are unchanged. */
+  /** Opens the command palette: the bar's Search, as ⌘K and the sidebar's Search do. */
   onPalette?: () => void;
   /** Not read here since the top bar stopped setting the client type
    *  (FILING_SPINE F8): it is chosen in the account menu, which the rail
@@ -901,6 +933,13 @@ export function TopBar({
         {here && <span className="here">{here}</span>}
       </div>
       <div className="tb-spacer" />
+      {/* Search: the command palette, by click as by ⌘K (P-122 §3.4). At phone width, its icon. */}
+      <button type="button" className="tb-search" aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)"
+        onClick={() => onPalette?.()}>
+        <span className="ico" aria-hidden="true">{I.search}</span>
+        <span className="lbl">Search</span>
+        <kbd aria-hidden="true">⌘K</kbd>
+      </button>
       {/* Collaborate and New task open the launcher with this screen's context (at
           phone width they are in ⌘K); Your work is the live "what needs me" panel. */}
       <button type="button" className="tb-btn tb-collab" aria-label="Collaborate on this screen" title="Collaborate on this screen"
@@ -908,6 +947,9 @@ export function TopBar({
       <button type="button" className="tb-btn tb-newtask" aria-label="New task from this screen" title="New task from this screen"
         onClick={() => openLauncher('task')}>{I.checkSquare}</button>
       <TaskTray onNav={onNav} onAsk={onAsk} />
+      {/* Help: where the account menu's "Get help" goes, behind the bar's leave guard (P-122 §3.4). */}
+      <button type="button" className="tb-btn" aria-label="Get help" title="Get help"
+        onClick={() => { if (onNav && canLeave()) askSupport(onNav); }}>{I.help}</button>
       {/* At phone width (only there, app-v2.css): the sidebar's New conversation. */}
       <button type="button" className="tb-btn tb-new" aria-label="New conversation" title="New conversation"
         onClick={() => { if (onNav && canLeave()) openNewConversation(onNav); }}>{I.plus}</button>
@@ -1017,10 +1059,12 @@ function projectItems(read: PaletteProjectsRead, term: string): CmdKItem[] {
  */
 export const ADMIN_AUDIENCE: Readonly<Record<string, 'org-admin' | 'platform-admin'>> = {
   'admin-console': 'org-admin',
-  apps: 'org-admin',
+  // No `apps`: Subscription & features is every member's (P-122), as the account menu offers it.
   'access-requests': 'org-admin',
   'master-licensing': 'platform-admin',
   coverage: 'platform-admin',
+  // Its reads need a platform administrator (GA walk, 2026-11-12): for anyone else the page is a refusal.
+  'identity-console': 'platform-admin',
 };
 
 function offeredTo(id: string, viewer: { isOrgAdmin: boolean; platformAdmin: boolean }): boolean {

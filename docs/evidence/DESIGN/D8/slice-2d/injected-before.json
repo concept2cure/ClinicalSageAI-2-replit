@@ -1,0 +1,42 @@
+{
+ "light": {
+  ".dd-doc-hint": {
+   "ratio": 2.11,
+   "colour": "#b0aea5",
+   "on": "#faf9f5",
+   "size": "11px"
+  },
+  ".dd-att-drop-sub": {
+   "ratio": 2.11,
+   "colour": "#b0aea5",
+   "on": "#faf9f5",
+   "size": "10.5px"
+  },
+  ".ftp-trunc": {
+   "ratio": 2.02,
+   "colour": "#b0aea5",
+   "on": "#f5f4ee",
+   "size": "11px"
+  }
+ },
+ "dark": {
+  ".dd-doc-hint": {
+   "ratio": 2.76,
+   "colour": "#6b6963",
+   "on": "#262624",
+   "size": "11px"
+  },
+  ".dd-att-drop-sub": {
+   "ratio": 2.76,
+   "colour": "#6b6963",
+   "on": "#262624",
+   "size": "10.5px"
+  },
+  ".ftp-trunc": {
+   "ratio": 2.58,
+   "colour": "#6b6963",
+   "on": "#2b2b29",
+   "size": "11px"
+  }
+ }
+}

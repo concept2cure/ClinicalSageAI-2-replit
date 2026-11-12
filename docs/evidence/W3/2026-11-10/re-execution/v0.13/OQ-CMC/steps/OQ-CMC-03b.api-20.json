@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/material-specs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "materialRole": "excipient",
+      "materialName": "Gelatin",
+      "compendialMonograph": "Ph. Eur. 0330 / USP-NF",
+      "origin": "bovine",
+      "tseCertificate": "EDQM CEP R1-CEP 2001-332 (TSE)",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 14,
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "materialRole": "excipient",
+        "materialName": "Gelatin",
+        "functionInFormulation": null,
+        "grade": null,
+        "compendialMonograph": "Ph. Eur. 0330 / USP-NF",
+        "compendialCompliance": null,
+        "supplier": null,
+        "manufacturerSite": null,
+        "origin": "bovine",
+        "originDetail": null,
+        "tseCertificate": "EDQM CEP R1-CEP 2001-332 (TSE)",
+        "testParameters": null,
+        "analyticalProcedures": null,
+        "novelExcipient": false,
+        "novelExcipientJustification": null,
+        "status": "draft",
+        "createdAt": "2026-11-10T13:06:41.268Z",
+        "updatedAt": "2026-11-10T13:06:41.268Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

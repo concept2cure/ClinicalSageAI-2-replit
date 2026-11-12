@@ -1,0 +1,30 @@
+{
+  "read": [
+    {
+      "register": "analytical-methods",
+      "id": 25,
+      "acts": [
+        "Recorded",
+        "Changed"
+      ]
+    },
+    {
+      "register": "stability-studies",
+      "id": 94,
+      "acts": [
+        "Recorded",
+        "Changed"
+      ]
+    },
+    {
+      "register": "comparability-studies",
+      "id": "3b39be8e-0c1c-4ca7-8981-3bc7b22fa121",
+      "acts": [
+        "Recorded",
+        "Changed"
+      ]
+    }
+  ],
+  "unserved": 404,
+  "specificationsHistory": 200
+}

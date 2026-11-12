@@ -74,6 +74,10 @@ function app() {
   for (const r of ['reviews', 'comments', 'tracked-change-decisions']) a.get(`/api/authoring/documents/:id/${r}`, ok);
   a.post('/api/authoring/documents/:id/reviews', ok);
   a.get('/api/data-origins/document', ok);
+  a.get('/api/c2c/project-vault/:id/documents/:docId/catalog', ok);
+  a.get('/api/mdx/qms/documents', ok);
+  a.get('/api/mdx/qms/documents/review-due', ok);
+  a.get('/api/mdx/qms/documents/:id', ok);
   return a;
 }
 
@@ -145,6 +149,55 @@ describe('the editor and a project are not refused their record reads (defect 3)
   });
 });
 
+/*
+ * 4. The same class again (2026-11-11, the GA click-through, measured at a person's pace in the running app). Three
+ *    more reads a screen makes as it opens were counted in `documents`: a selected Vault document's catalog record,
+ *    and the controlled-document register and its review-due list, which the project page and Quality both read.
+ *    One project page, five Vault documents and one Quality visit used the bucket up, and the Download that
+ *    followed was refused ("Too many document requests. Please wait.").
+ */
+describe('browsing the Vault, the project page and Quality does not use up the download limit (defect 4)', () => {
+  /** What the screens read: the project page and Quality (the register, review-due), then a Vault document selected. */
+  const browse = async (a: ReturnType<typeof app>, auth: string, documents: number) => {
+    const statuses: number[] = [];
+    const get = async (path: string) => statuses.push((await request(a).get(path).set('Authorization', auth)).status);
+    for (let visit = 0; visit < 4; visit++) { await get('/api/mdx/qms/documents'); await get('/api/mdx/qms/documents/review-due'); }
+    for (let d = 0; d < documents; d++) await get(`${docPath(d % 8)}/catalog`);
+    return statuses;
+  };
+
+  it('a person who visits the project page and Quality and selects sixteen Vault documents is not refused a read', async () => {
+    const statuses = await browse(app(), newUser(), 16);
+    expect(statuses, 'a register or catalog-record read was refused as a document request').toEqual(Array(24).fill(200));
+  });
+
+  it('after that browsing, a Download is still accepted', async () => {
+    const a = app();
+    const auth = newUser();
+    await browse(a, auth, 16);
+    expect((await request(a).get(`${docPath(0)}/download`).set('Authorization', auth)).status).toBe(200);
+  });
+
+  it('a controlled document itself keeps the 20-a-minute ceiling: the 21st in a minute is refused', async () => {
+    const a = app();
+    const auth = newUser();
+    const statuses: number[] = [];
+    for (let i = 0; i < 21; i++) statuses.push((await request(a).get(`/api/mdx/qms/documents/${docId(i % 8)}`).set('Authorization', auth)).status);
+    expect(statuses.slice(0, 20)).toEqual(Array(20).fill(200));
+    expect(statuses[20]).toBe(429);
+  });
+
+  it('the bucket each is counted in', () => {
+    expect(getCategory(`${docPath(1)}/catalog`, 'GET')).toBe('document_metadata');
+    expect(getCategory('/api/mdx/qms/documents', 'GET')).toBe('document_metadata');
+    expect(getCategory('/api/mdx/qms/documents/review-due', 'GET')).toBe('document_metadata');
+    // The catalog record's review acts, a new controlled document and the document itself stay document requests.
+    expect(getCategory(`${docPath(1)}/catalog/confirm`, 'POST')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents', 'POST')).toBe('documents');
+    expect(getCategory(`/api/mdx/qms/documents/${docId(1)}`, 'GET')).toBe('documents');
+  });
+});
+
 describe('document downloads and document writes keep the 20-a-minute ceiling', () => {
   it('the 21st download in a minute is refused', async () => {
     const a = app();
@@ -212,6 +265,34 @@ describe('the bucket each path is counted in', () => {
     expect(getCategory(`/authoring/documents/${docId(0)}/reviews`, 'POST')).toBe('documents');
     expect(getCategory(`/authoring/documents/${docId(0)}/comments`, 'POST')).toBe('documents');
     expect(getCategory('/c2c/documents', 'POST')).toBe('documents');
+  });
+
+  // Walked 2026-11-10 (CSR path): since 2026-11-09 the editor reads the open document's review route when it opens,
+  // and Send for review reads who the route admits. Both were metered as document content, 20 a minute. Opening the
+  // CSR a few times in a minute spent that, and POST …/request-review answered 429 "Too many document requests":
+  // the same refusal the two entries above record, for the third time.
+  it('the review route of the open document and who it admits are record reads; sending for review stays a write', () => {
+    for (const read of ['review-route', 'route-candidates']) {
+      expect(getCategory(`/api/authoring/documents/${docId(0)}/${read}`, 'GET'), read).toBe('document_metadata');
+      expect(getCategory(`/authoring/documents/${docId(0)}/${read}`, 'GET'), read).toBe('document_metadata');
+    }
+    expect(getCategory(`/api/authoring/documents/${docId(0)}/request-review`, 'POST')).toBe('documents');
+    expect(getCategory(`/api/authoring/documents/${docId(0)}/review-route/reassign`, 'POST')).toBe('documents');
+    expect(getCategory(`/api/authoring/documents/${docId(0)}/review-route/hand-back`, 'POST')).toBe('documents');
+  });
+
+  // Walked 2026-11-10 (Quality, D7 C17): the same two reads on a QMS controlled document were still metered as document
+  // content. An author wrote the procedure in the editor, sent it for review and opened Reassign within the minute:
+  // GET …/route-candidates?for=reassign answered 429, so the sheet said who may take it over could not be read.
+  it("a QMS controlled document's review route and who it admits are record reads too; its route acts stay writes", () => {
+    for (const read of ['review-route', 'route-candidates']) {
+      expect(getCategory(`/api/mdx/qms/documents/31/${read}`, 'GET'), read).toBe('document_metadata');
+      expect(getCategory(`/mdx/qms/documents/31/${read}`, 'GET'), read).toBe('document_metadata');
+    }
+    expect(getCategory('/api/mdx/qms/documents/31/review-route/reassign', 'POST')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents/31/review-route', 'POST')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents/31', 'PATCH')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents/31/versions', 'GET')).toBe('documents');
   });
 
   it('chat uploads are upload reads', () => {

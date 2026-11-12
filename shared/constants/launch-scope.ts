@@ -104,7 +104,13 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // catalogue row is deprecated, never deleted (CLAUDE.md Rule 1;
     // db/migrations/20260810_reconcile_module_catalog.sql). The Vault is free at
     // the same tier, so no organisation loses a function.
-    surfaces: ['vault'],
+    //
+    // 2026-11-12 (P-74 item 1, P-75, P-124 item 6): the trial master file is admitted as a feature of the Vault. Its
+    // surface `etmf` is the Vault's, so the Vault's Required documents view may call /api/etmf, and the eTMF's page
+    // opens the Vault there. Its module is professional-tier and is NOT in `modules`, which would grant it to every
+    // organisation (P-75); `available_modules` carries the tier (db/migrations/20261112_etmf_module_professional_tier.sql).
+    // Admitted as CMC was (P-28): with its URS, its OQ drafted and not yet executed, so it is not described as validated.
+    surfaces: ['vault', 'etmf'],
     modules: ['vault'],
   },
   {
@@ -291,15 +297,17 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   'master-licensing': 'platform-owner administration',
   'access-requests': 'how a member asks for a locked app',
   'identity-console': 'SSO / SCIM; a security reviewer expects it (D6)',
+  training: 'Help & training: the Help Center, training courses and support requests, for every member (P-127)',
 };
 
 // CPO decision, 2026-10-08: three shell entries left. AnA Command answers
 // only enterprise organisations and tells a client two of its runs are
 // recorded to the audit trail when they are not. AnA memory lists a store
 // nothing writes instead of the memory AnA loads each turn, so it tells a
-// client AnA remembers nothing; it returns reading that memory. Training has
+// client AnA remembers nothing; it returns reading that memory. Training had
 // no path, lesson or certification behind it; training of record is the QMS
-// read-and-understood record.
+// read-and-understood record. It returned as Help & training (P-127, 2026-11-12):
+// the Help Center, courses and support requests, which are not GxP training.
 
 /** Every surface id in the launch scope: the seven apps plus the shell set. */
 export const LAUNCH_SURFACE_IDS: ReadonlySet<string> = new Set([

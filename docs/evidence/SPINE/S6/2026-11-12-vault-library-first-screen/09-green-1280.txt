@@ -1,0 +1,22 @@
+# The same pins with the change
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > the header counts what awaits confirmation, as the server counted it 128ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > the control reads "Confirm…" beside the sentence that names its folder; its name keeps the whole phrase 227ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > holds the action back until a reason is given, sends one reason for the set, and answers per document 258ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > a refused request says nothing was confirmed, with the reason 151ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > which documents are offered > only uploads suggested into a folder; unfiled, confirmed and folderless suggestions are not 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > holds the search, saved views, the two scopes and every filter, outside the list’s column 413ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFindBar.test.tsx > the Library’s find bar > spans the grid, and its filters share the row (the stylesheet; jsdom applies none) 2ms
+      Tests  7 passed (7)
+
+# Every Vault client suite (client/src/concept2cure/v2/__tests__/vault*), 06:03 UTC
+ Test Files  73 passed (73)
+      Tests  803 passed (803)
+
+# Gates
+ci:undefined-css-classes: ok
+ci:check-css-selector-shadowing: ok
+ci:class-vocabulary: ok
+ci:surface-text-ramp: ok
+ci:design-system: ok
+ci:one-product: ok
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

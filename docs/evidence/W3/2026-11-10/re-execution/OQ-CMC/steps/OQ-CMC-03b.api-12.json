@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/characterization-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "studyType": "physicochemical",
+      "studyTitle": "Physicochemical properties of BX-702",
+      "technique": "DSC, TGA, XRPD, pH-solubility profile, pKa by potentiometry",
+      "result": "Melting point 182 C; pKa 6.4; one polymorph (Form I) across screening",
+      "conclusion": "Form I is the stable form and is the form manufactured",
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 11,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "scope": "drug_substance",
+        "studyType": "physicochemical",
+        "studyTitle": "Physicochemical properties of BX-702",
+        "technique": "DSC, TGA, XRPD, pH-solubility profile, pKa by potentiometry",
+        "attribute": null,
+        "result": "Melting point 182 C; pKa 6.4; one polymorph (Form I) across screening",
+        "resultUnit": null,
+        "acceptanceReference": null,
+        "conclusion": "Form I is the stable form and is the form manufactured",
+        "studyReference": null,
+        "performedBy": null,
+        "performedDate": null,
+        "supportingData": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-12T00:34:42.030Z",
+        "updatedAt": "2026-11-12T00:34:42.030Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

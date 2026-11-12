@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/drug-products",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "productName": "BX-701 5 mg film-coated tablet",
+      "dosageForm": "Film-coated tablet",
+      "strength": "5 mg",
+      "routeOfAdministration": "oral",
+      "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+      "status": "development",
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 1,
+        "organizationId": 2,
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "productName": "BX-701 5 mg film-coated tablet",
+        "dosageForm": "Film-coated tablet",
+        "strength": "5 mg",
+        "routeOfAdministration": "oral",
+        "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+        "manufacturingProcess": null,
+        "batchFormula": null,
+        "processControls": null,
+        "specifications": null,
+        "packagingMaterials": null,
+        "stability": null,
+        "status": "development",
+        "createdAt": "2026-11-10T02:07:04.300Z",
+        "updatedAt": "2026-11-10T02:07:04.300Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

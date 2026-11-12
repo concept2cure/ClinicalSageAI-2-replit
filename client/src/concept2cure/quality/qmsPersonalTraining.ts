@@ -6,6 +6,7 @@ import {
   type QmsTrainingContext,
 } from '@shared/qms/training';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import { capturedActorHeaders } from '@/utils/authToken';
 
 export interface PersonalTrainingScope {
@@ -136,5 +137,6 @@ export async function acknowledgePersonalTraining(scope: PersonalTrainingScope, 
   }
   const parsed = qmsTrainingAcknowledgementResponseSchema.safeParse(body);
   if (!parsed.success || !receiptMatches(parsed.data.data, scope, context)) throw new PersonalTrainingError(UNCONFIRMED, true);
+  qualityWritten();
   return { receipt: parsed.data.data, alreadyAcknowledged: parsed.data.meta.alreadyAcknowledged === true };
 }

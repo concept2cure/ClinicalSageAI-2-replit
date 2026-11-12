@@ -69,15 +69,24 @@ import {
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { syncQualityProjectSources } from '../../services/clinical-regulatory-evidence/record-source.js';
+import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access.js';
 import { sourceReadView } from '../../../shared/data-room-processing-status.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import {
-  binderFolderId, buildFolderIndex, createProgramFolder, personFolderId, readProgramFolderIndex, renameProgramFolder,
+  binderFolderId, buildFolderIndex, createProgramFolder, moveProgramFolder, personFolderId, readProgramFolderIndex,
+  removeProgramFolder, renameProgramFolder,
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
+import { placeAuthoredSectionsInBinder } from '../../services/vault/vault-binder-outline.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
+import {
+  estarDeviceAnswers, estarFilingType, estarOutlineRequirements,
+  type EstarDeviceAnswers, type EstarOutlineSectionAnswer,
+} from '../../services/pathway-engines/estar/estar-outline-requirements.js';
+import { loadProgramDeviceFlags } from '../../services/pathway-engines/estar/program-device-flags.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
@@ -100,12 +109,18 @@ import {
   artifactCtdSection,
   artifactGovernance,
   artifactRegistryStatus,
+  askedSponsorScope,
+  ClientRequiredError,
   formatContentBytes,
   readArtifactRegistry,
+  sponsorChoices,
+  sponsorRefusal,
   type ArtifactRegistryRow,
+  type SponsorAsk,
 } from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
+import { mayManageLegalHolds } from '../vault-legal-holds';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import {
   ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
@@ -147,6 +162,9 @@ interface VaultDoc {
   artifact?: ArtifactLeafFacts;
   /** Exact governed section key, or null for a whole-document fallback leaf. */
   filingSectionKey?: string | null;
+  /** An authored section placed in the binder (P-123 item 8): the filing document it is a section of, and its type. */
+  filingDocumentId?: string;
+  filingFamily?: string;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
@@ -341,6 +359,9 @@ interface VaultDisplayShape {
    *  (MR-08 Stage 5): reference and date, never the reason. Absent, with an
    *  `unavailable` entry, when the holds could not be read. */
   legalHolds?: import('../../services/vault/vault-hold-notice.js').VaultHoldNotice[];
+  /** Whether this reader may place a legal hold (P-125 point 8): the hold routes' own rule
+   *  (`mayManageLegalHolds`), so a record offers "Place legal hold" to the people those routes admit. */
+  mayPlaceLegalHold?: boolean;
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -443,6 +464,8 @@ export async function recordVaultDownload(
     fileName: string | null;
     fileSize: string | number | null;
     contentHash: string | null;
+    /** Set when what left was the version's PDF rendition (P-107): its own hash, beside the source's. */
+    renditionSha256?: string;
   },
 ): Promise<boolean> {
   let client: PoolClient | undefined;
@@ -452,7 +475,7 @@ export async function recordVaultDownload(
     await writeChainedAuditRow(client, {
       tenantId: d.orgId,
       userId: governedActorId(req) ?? undefined,
-      action: 'vault.document.download',
+      action: d.renditionSha256 ? 'vault.document.rendition' : 'vault.document.download',
       resourceType: 'vault_document',
       resourceId: d.documentId,
       ipAddress: req.ip,
@@ -466,6 +489,7 @@ export async function recordVaultDownload(
         // caller, so the trail records WHICH edition left rather than only
         // that one did.
         contentHash: d.contentHash,
+        ...(d.renditionSha256 ? { renditionSha256: d.renditionSha256, renditionOf: d.contentHash } : {}),
       },
     });
     await client.query('COMMIT');
@@ -480,6 +504,34 @@ export async function recordVaultDownload(
   } finally {
     client?.release();
   }
+}
+
+/**
+ * Serve a version's PDF rendition (P-107 item 3): made from its verified bytes through the one converter
+ * (vault-rendition.ts), audited as a rendition with both hashes, served under its own name, and never stored. A
+ * rendition is not filed in place of its source.
+ */
+async function sendVaultRendition(req: Request, res: Response, v: {
+  orgId: number; programId: string; documentId: string; bytes: Buffer;
+  doc: { file_name: string | null; document_title: string | null; mime_type: string | null; content_hash: string | null };
+}): Promise<Response> {
+  const { renderVaultRendition, renditionFileName } = await import('../../services/vault/vault-rendition.js');
+  const made = await renderVaultRendition({ bytes: v.bytes, fileName: v.doc.file_name, mimeType: v.doc.mime_type, contentHash: v.doc.content_hash });
+  if (!made.ok) return res.status(made.status).json({ success: false, error: made.code, message: made.message });
+  const noted = await recordVaultDownload(req, {
+    orgId: v.orgId, programId: v.programId, documentId: v.documentId, documentTitle: v.doc.document_title, fileName: v.doc.file_name,
+    fileSize: made.pdf.length, contentHash: made.sourceSha256, renditionSha256: made.sha256,
+  });
+  if (!noted) {
+    return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+      message: 'The rendition was not served because it could not be recorded in the audit trail. Nothing was sent.' });
+  }
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${renditionFileName(v.doc.file_name)}"`);
+  res.setHeader('Content-Length', String(made.pdf.length));
+  res.setHeader('X-Content-SHA256', made.sha256);
+  res.setHeader('X-Rendition-Of-SHA256', made.sourceSha256);
+  return res.send(made.pdf);
 }
 
 /** The prepared archive is bound to the exact current actor and project admitted before building. */
@@ -583,13 +635,6 @@ function normalizeFolderId(raw: unknown): string | null | undefined {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** The library's `sameClientAs`: a project id, none, or a value that is not a project id. */
-function sameClientAsOf(raw: unknown): string | null | 'invalid' {
-  const value = typeof raw === 'string' ? raw.trim() : '';
-  if (!value) return null;
-  return UUID_RE.test(value) ? value : 'invalid';
-}
-
 /** Two narrowings of the verified accessible set, applied together; neither ever widens it. */
 function bothNarrowings(byProject: string[] | undefined, bySponsor: string[] | undefined): string[] | undefined {
   if (!byProject || !bySponsor) return bySponsor ?? byProject;
@@ -609,11 +654,17 @@ type LibrarySponsor = { id: number; name: string };
  * narrowing only ever removes projects from the verified accessible set. A project that is not in that set is not
  * found. Every hit names its own sponsor, or none when its project has no client workspace; a sponsor whose name
  * cannot be read fails the search rather than show the hit as having none.
+ *
+ * One sponsor at a time (P-107 item 3, 2026-11-08: "No cross-sponsor library view for a CRO ... Search never spans
+ * sponsors."). Asked with no project open, the search is inside the client asked for (`client`). With none asked for,
+ * the projects searched (those named by `programId`, or every accessible one) must belong to one sponsor; when they
+ * belong to more, nothing is searched and the clients to choose from are named (ClientRequiredError). A client none
+ * of whose projects the caller can open is not found, as one that does not exist is.
  */
 async function librarySponsors(
   identity: { organizationId: number; userId: number | undefined },
   scope: CurrentAccessibleProgramScope,
-  sameClientAs: string | null,
+  ask: SponsorAsk & { programIds: readonly string[] },
 ): Promise<{ allowed?: string[]; client?: LibrarySponsor | null; sponsorOf: (programId: string) => LibrarySponsor | null }> {
   const anchors = verifiedProgramAnchors(pool, identity, scope);
   const workspaceOf = new Map(anchors.map((a) => [a.programId, a.clientWorkspaceId]));
@@ -633,17 +684,54 @@ async function librarySponsors(
     return { id, name };
   };
   const sponsorOf = (programId: string) => named(workspaceOf.get(programId.toLowerCase()));
-  if (!sameClientAs) return { sponsorOf };
-  const own = anchors.find((a) => a.programId === sameClientAs.toLowerCase());
-  if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
-  return {
-    allowed: anchors.filter((a) => a.clientWorkspaceId === own.clientWorkspaceId).map((a) => a.programId),
-    client: named(own.clientWorkspaceId),
-    sponsorOf,
-  };
+  const projectsOf = (workspace: number | null) => anchors.filter((a) => a.clientWorkspaceId === workspace).map((a) => a.programId);
+  if (ask.sameClientAs) {
+    const open = ask.sameClientAs.toLowerCase();
+    const own = anchors.find((a) => a.programId === open);
+    if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    return { allowed: projectsOf(own.clientWorkspaceId), client: named(own.clientWorkspaceId), sponsorOf };
+  }
+  if (ask.client !== undefined) {
+    const workspace = ask.client === 'none' ? null : ask.client;
+    const allowed = projectsOf(workspace);
+    if (!allowed.length) throw new ProgramReadAccessError(404, 'CLIENT_NOT_FOUND', 'Client not found.');
+    return { allowed, client: named(workspace), sponsorOf };
+  }
+  const searched = ask.programIds.map((id) => id.toLowerCase());
+  const within = searched.length ? anchors.filter((a) => searched.includes(a.programId)) : anchors;
+  const workspaces = [...new Set(within.map((a) => a.clientWorkspaceId))];
+  if (workspaces.length > 1) throw new ClientRequiredError(sponsorChoices(workspaces.map(named)));
+  return { sponsorOf };
+}
+
+/** The library's refusals. One that names a sponsor is sent as it is: every other 404 is answered as a project not found. */
+function sendLibraryAccessFailure(res: Response, err: ProgramReadAccessError): Response {
+  const sponsor = sponsorRefusal(err);
+  return sponsor ? res.status(sponsor.status).json(sponsor.body) : sendProjectAccessFailure(res, err);
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+
+/** The project's Quality records are captured as data-room sources. One that changed after its capture (an approval,
+ *  say) is refreshed first, as the data room's own search does (data-room-search.ts), so the list reads the current
+ *  record: unrefreshed, it refused the list and the Vault answered 500 (2026-11-10). A refresh that cannot be verified
+ *  leaves the Vault up and says why its data room is not listed; it is never shown as an empty room. */
+async function refreshQualitySources(req: Request, organizationId: number, programId: string,
+  unavailable: Array<{ branch: string; reason: string }>): Promise<boolean> {
+  const userId = governedActorId(req);
+  if (!userId) return true;
+  try {
+    await syncQualityProjectSources({ organizationId, programId, userId });
+    return true;
+  } catch (err) {
+    if (!(err instanceof SourceReadAccessError)) throw err;
+    unavailable.push({
+      branch: 'Data room',
+      reason: "The project's Quality records could not be verified as current, so its data room is not listed. The documents are unaffected.",
+    });
+    return false;
+  }
+}
 
 /** Org id from tenant/user context (integer — c2c tables key on numeric org). */
 /** The program's active hold notices, or an `unavailable` entry saying they could not be read. */
@@ -964,6 +1052,9 @@ function nameLeafFolders(index: ProgramFolderIndex, nodes: Array<VaultFolder | V
   }
 }
 
+/** The device view's presets that are themselves a filing's submission folder; a binder stands in for them. */
+const SUBMISSION_PRESETS = new Set(['k510', 'pma']);
+
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?: ProgramFolderIndex): VaultFolder {
   const index = folders ?? buildFolderIndex(view, { binder: null, reason: '' }, []);
   const { unfiled, byFolder, otherView } = sortUploads(index, uploads);
@@ -978,7 +1069,10 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?:
       children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
     },
     ...build.binderRoots(),
-    ...index.presets.map(build.presetNode),
+    // Once the filing has its binder, a submission-type preset of another filing ('510(k) submissions' on an EU
+    // MDR file) is shown only while something is filed in it: its documents are never hidden.
+    ...index.presets.filter((f) => !index.binder || !SUBMISSION_PRESETS.has(f.id) || (byFolder.get(f.id)?.length ?? 0) > 0
+      || index.person.some((pf) => pf.parentKey === f.id)).map(build.presetNode),
     ...build.personNodes(''),
   ];
   if (otherView.length > 0) {
@@ -1036,24 +1130,36 @@ function liveSectionPresentation(
   };
 }
 
-/** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
-function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined): VaultDoc {
+/**
+ * A rule-pack section spec merged with its live row → a VaultDoc leaf.
+ *
+ * `estar` is given for a filing an eSTAR applies to (510(k), De Novo): the
+ * mark, the reason and the blocker are then the one answer filing readiness
+ * also reads (estar-outline-requirements, P-107 item 3), decided by the device.
+ * For every other filing they are the pack's flag, as before.
+ */
+function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined, estar?: EstarOutlineSectionAnswer): VaultDoc {
   const hasContent = live?.has_content ?? false;
   const mandatory = spec.mandatory ?? false;
   const docTitle = doc.title || doc.doc_type || 'Document';
   const label = spec.label ?? spec.key;
+  const rule = estar ?? {
+    mark: mandatory ? 'Required' : 'Optional',
+    reason: mandatory ? 'mandatory section' : '',
+    blocker: mandatory && !hasContent ? 'Mandatory section — no content yet' : null,
+  };
   const leaf: VaultDoc = {
     id: `sec-${doc.id}-${spec.key}`,
     filingSectionKey: spec.key,
     num: spec.key,
     title: label,
-    type: mandatory ? 'Required' : 'Optional',
+    type: rule.mark,
     ...liveSectionPresentation(live, hasContent),
-    preview: `${docTitle} · ${spec.key} · ${label}${mandatory ? ' · mandatory section' : ''}`,
+    preview: `${docTitle} · ${spec.key} · ${label}${rule.reason ? ` · ${rule.reason}` : ''}`,
   };
-  if (mandatory && !hasContent) {
+  if (rule.blocker) {
     leaf.blocker = true;
-    leaf.flag = 'Mandatory section — no content yet';
+    leaf.flag = rule.blocker;
   }
   return leaf;
 }
@@ -1079,11 +1185,13 @@ function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   };
 }
 
-/** Build the nested VaultFolder/VaultDoc tree for one document's sections. */
+/** Build the nested VaultFolder/VaultDoc tree for one document's sections.
+ *  `estar`: each section's answer when an eSTAR applies to the filing (see leafDoc). */
 function sectionsToNodes(
   doc: DocRow,
   specs: SectionSpec[],
   live: Map<string, LiveSection>,
+  estar?: ReadonlyMap<string, EstarOutlineSectionAnswer>,
 ): Array<VaultFolder | VaultDoc> {
   const sorted = [...specs].sort(
     (a, b) => (a.path_order ?? 0) - (b.path_order ?? 0),
@@ -1106,7 +1214,7 @@ function sectionsToNodes(
         children: n.children.map(toNode),
       };
     }
-    return leafDoc(doc, n.spec, live.get(n.spec.key));
+    return leafDoc(doc, n.spec, live.get(n.spec.key), estar?.get(n.spec.key));
   };
   return roots.map(toNode);
 }
@@ -1115,14 +1223,35 @@ function sectionsToNodes(
  *  (F22) holds only its own part of the filing, Module 1 and 3.2.R, so its
  *  folder is that part of its pack; the home filing holds the rest. It was the
  *  whole market pack, which showed every Module 2-5 section of an MAA as
- *  "Mandatory section — no content yet" (F23 7/9). */
-function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolder {
+ *  "Mandatory section — no content yet" (F23 7/9).
+ *
+ *  A 510(k) or De Novo is filed as an eSTAR, and which of its sections a device
+ *  owes turns on the device. For those two the whole outline is put to the one
+ *  rule (estar-outline-requirements, P-107 item 3) with the project's device
+ *  answers; `device` is not read for any other filing. */
+function documentFolder(
+  doc: DocRow,
+  live: Map<string, LiveSection>,
+  device: EstarDeviceAnswers,
+): VaultFolder {
   const pack = Array.isArray(doc.required_sections)
     ? (doc.required_sections as SectionSpec[])
     : [];
   const specs = doc.filing_scope === 'market' ? regionalSubtree<SectionSpec>(pack) : pack;
+  const estarType = estarFilingType(doc.doc_type, doc.agency);
+  const estar = estarType
+    ? estarOutlineRequirements({
+        type: estarType,
+        variant: device.variant,
+        flags: device.flags,
+        sections: pack.map((s) => ({
+          key: s.key, label: s.label, parentKey: s.parent_key, mandatory: s.mandatory,
+          hasContent: live.get(s.key)?.has_content,
+        })),
+      }).byKey
+    : undefined;
   const children = specs.length > 0
-    ? sectionsToNodes(doc, specs, live)
+    ? sectionsToNodes(doc, specs, live, estar)
     : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
@@ -1683,15 +1812,13 @@ export default function createProjectVaultRoutes(): Router {
     if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
     const { filters, programIds } = parsed;
     const narrowed: { allowedProgramIds?: string[]; programIds?: string[] } = programIds.length ? { allowedProgramIds: programIds, programIds } : {};
-    const sameClientAs = sameClientAsOf(req.query.sameClientAs);
-    if (sameClientAs === 'invalid') {
-      return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the library is scoped by must be a project id.' });
-    }
+    const asked = askedSponsorScope(req.query, 'library');
+    if ('refusal' in asked) return res.status(400).json({ success: false, ...asked.refusal });
     try {
       const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined };
       const currentScope = await getCurrentAccessibleProgramScope(pool, identity);
-      const sponsors = await librarySponsors(identity, currentScope, sameClientAs);
-      const scoped = sameClientAs ? { client: sponsors.client } : {};
+      const sponsors = await librarySponsors(identity, currentScope, { ...asked, programIds });
+      const scoped = sponsors.client === undefined ? {} : { client: sponsors.client };
       if (!q && !hasVaultFilters(filters)) {
         return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs', ...scoped } });
       }
@@ -1709,7 +1836,7 @@ export default function createProjectVaultRoutes(): Router {
         },
       });
     } catch (err) {
-      if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
+      if (err instanceof ProgramReadAccessError) return sendLibraryAccessFailure(res, err);
       logger.error('vault library search failed', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({
         success: false,
@@ -1805,10 +1932,15 @@ export default function createProjectVaultRoutes(): Router {
           forDoc.set(r.section_key, r);
         }
       }
+      // The device answers a 510(k)'s or De Novo's required sections turn on
+      // (P-107 item 3): read once, and only when the project holds such a
+      // filing. A read that fails fails this read; it is never shown as
+      // "not answered".
+      const estarDevice = await estarDeviceAnswers(docsRes.rows as DocRow[], view, () => loadProgramDeviceFlags(orgId, id));
       for (const doc of docsRes.rows as DocRow[]) {
         // A document with no rows in the result has no live sections — the same
         // empty map the per-document query produced for it.
-        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>()));
+        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>(), estarDevice));
       }
 
       // 5) Derived branches: what the pipelines file for this program. ONE
@@ -1934,7 +2066,12 @@ export default function createProjectVaultRoutes(): Router {
         };
         // The project's folders: its filing's binder, the view's presets, the folders people made.
         const folders = await readProgramFolderIndex(pool, id, orgId, view, project);
-        tree.push(filingCabinet(view, uploads, folders));
+        /* First in the tree, as a Veeva binder is: the Vault opens on the filing's binder, not on an
+           authored document's draft outline (S6, 2026-11-10). */
+        tree.unshift(filingCabinet(view, uploads, folders));
+        /* One outline per filing (P-123 item 8, 2026-11-12): the authored filing document's sections go into the
+           binder's headings, and its folder keeps only what the binder has no heading for. */
+        placeAuthoredSectionsInBinder(tree, docsRes.rows as DocRow[]);
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         uploadsStoreMissing = true;
@@ -1956,7 +2093,7 @@ export default function createProjectVaultRoutes(): Router {
           branch: 'Data room',
           reason: "The 'filed' stage joins captured sources against the uploads store, which is not provisioned — pipeline stages cannot be derived.",
         });
-      } else {
+      } else if (await refreshQualitySources(req, orgId, id, unavailable)) {
         try {
           /* Current sources only: a re-upload retires its predecessor
              (is_current = false), and counting both made one file two. One
@@ -2073,6 +2210,7 @@ export default function createProjectVaultRoutes(): Router {
         unfiledCount,
         ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
         ...(legalHolds ? { legalHolds } : {}),
+        mayPlaceLegalHold: mayManageLegalHolds(req),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
@@ -2285,8 +2423,17 @@ export default function createProjectVaultRoutes(): Router {
       // is not refused on it; freeze, dispatch and transmit are. An unreadable
       // verdict fails the read, as the stage does.
       const refusals = await Promise.all(family.map((v) => vaultVersionNotTransmittable(pool, orgId, v.id, v.contentHash ?? '')));
+      // Where each version was rendered from (LX-10): the Authoring document and
+      // the sealed version its filing named, read from the verified filing
+      // receipt. Null for a native upload; an unverified or unread receipt is
+      // said to be so, never shown as a source.
+      const { readAuthoringVaultFilingReceipt, renderedFromOf } = await import('../../services/authoring/authoring-vault-filing-receipt.js');
+      const renderedFrom = await Promise.all(family.map(async (v) => (v.contentHash
+        ? renderedFromOf(await readAuthoringVaultFilingReceipt(pool, { organizationId: orgId, programId: id, vaultDocumentId: v.id, artifactSha256: v.contentHash }))
+        : null)));
       const versions = family.map((v, i) => ({
         ...v,
+        renderedFrom: renderedFrom[i],
         lifecycle: lifecycles.get(v.id) ?? null,
         placements: placements.get(v.id) ?? [],
         estarUses: estarUses.get(v.id) ?? [],
@@ -2502,6 +2649,9 @@ export default function createProjectVaultRoutes(): Router {
       }
       const bytes = read.bytes;
 
+      // ?rendition=pdf (P-107 item 3): the version's PDF rendition, made from the bytes just verified.
+      if (req.query.rendition === 'pdf') return await sendVaultRendition(req, res, { orgId, programId: id, documentId, bytes, doc });
+
       const recorded = await recordVaultDownload(req, {
         orgId,
         programId: id,
@@ -2659,19 +2809,28 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
-  router.post('/:id/folders/:folderId/rename', requireEditorAccess, async (req: Request, res: Response) => {
+  /* Rename, move or remove a folder a person made: one handler shape, three governed writers (vault-folders.ts).
+     Move takes the folder's subfolders and documents with it; remove takes only an empty folder. */
+  const changeFolder = (what: 'rename' | 'move' | 'remove') => async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
     const folderId = Array.isArray(req.params.folderId) ? (req.params.folderId[0] ?? '') : req.params.folderId;
-    const body = (req.body ?? {}) as { name?: unknown; reason?: unknown };
+    const body = (req.body ?? {}) as { name?: unknown; parentFolderId?: unknown; reason?: unknown };
+    const base = { ...folderWriteBase(req, orgId, id, body.reason), folderId };
     try {
-      const outcome = await renameProgramFolder({ ...folderWriteBase(req, orgId, id, body.reason), folderId, name: body.name });
+      const outcome = what === 'rename' ? await renameProgramFolder({ ...base, name: body.name })
+        : what === 'move' ? await moveProgramFolder({ ...base,
+          parentFolderId: typeof body.parentFolderId === 'string' && body.parentFolderId.trim() ? body.parentFolderId.trim() : null })
+          : await removeProgramFolder(base);
       return sendFolderOutcome(res, outcome);
     } catch (err) {
-      return folderStorePending(res, err, 'rename');
+      return folderStorePending(res, err, what);
     }
-  });
+  };
+  router.post('/:id/folders/:folderId/rename', requireEditorAccess, changeFolder('rename'));
+  router.post('/:id/folders/:folderId/move', requireEditorAccess, changeFolder('move'));
+  router.post('/:id/folders/:folderId/remove', requireEditorAccess, changeFolder('remove'));
 
   /* POST /:id/data-room/file — File into Vault (VR-11, D2).
      Captured sources, chosen in the data room, each filed through the one

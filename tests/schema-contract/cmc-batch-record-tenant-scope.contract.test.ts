@@ -207,6 +207,20 @@ beforeEach(async () => {
   await pg.exec(BASE_DDL);
   await pg.exec(TENANT_COLUMN_DDL);
   await pg.exec(parityBatchDdl());
+  // Since 77d8fb1183 a batch edit writes its audit row on the tenant's chain in
+  // the edit's own transaction (services/cmc/register-edit-audit.ts), so the
+  // owner's update needs the trail production has: audit_logs as its columns
+  // are typed there (actor_id integer, as _filing-write-harness.ts has it) and
+  // the chain-order migration from the deployed set, applied as written.
+  await pg.exec(`CREATE TABLE audit_logs (
+    id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
+    table_name text, record_id text, actor_id integer, target text,
+    target_type text, target_id text, reason text, payload_hash text,
+    ana_action_id text, sha256_chain text,
+    occurred_at timestamptz DEFAULT now(), hmac_seal text,
+    old_values json, new_values json, ip_address text, user_agent text
+  );`);
+  await pg.exec(read('migrations/20260921_audit_logs_chain_seq.sql'));
   // Since 88f27b53d a release is signed over the batch's recorded QC results
   // (services/cmc/batch-release-evidence.ts) by the session's own account. The
   // columns those two reads select, and one reviewed passing result per batch
@@ -320,6 +334,11 @@ describe('cmc_batch_records is scoped to the caller organization, and only to it
       .send({ productName: 'Owned product rev B' });
     expect(res.status).toBe(200);
     expect((await batchRow(ownedId)).product_name).toBe('Owned product rev B');
+    // The edit is on the owner's chain, and only there (77d8fb1183).
+    const trail = await h.holder.pg.query<{ tenant_id: number; record_id: string }>(
+      `SELECT tenant_id, record_id FROM audit_logs WHERE sha256_chain IS NOT NULL`,
+    );
+    expect(trail.rows).toEqual([{ tenant_id: 1, record_id: ownedId }]);
   }, 60_000);
 });
 

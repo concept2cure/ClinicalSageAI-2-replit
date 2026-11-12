@@ -367,6 +367,31 @@ export async function checkAgainstSeal(
 }
 
 /**
+ * The seal a document's rendition names (LX-10, 2026-11-10). For a sealed
+ * document (snapshotStatusFor: approved or finalized): the seal's version and
+ * content hash when its saved sections and title are the sealed ones
+ * (checkAgainstSeal, over the rows the canonical assembler reads on `q`),
+ * else the check's own refusal code. For a working draft: nothing. For a
+ * caller that records what it rendered and does not refuse on it: the Vault
+ * filing (authoring-file-to-vault.ts recordFiling), which calls this inside
+ * its recording transaction, under its lock on the sections.
+ */
+export async function sealNamedBy(
+  q: DrizzleQueryable,
+  args: { sourceId: string; organizationId: number; status: string | null },
+): Promise<{ sealVersion: string; sealContentHash: string } | { sealUnverified: string } | Record<string, never>> {
+  const verdict = snapshotStatusFor(args.status);
+  if (verdict === 'draft') return {};
+  const { sourceId, organizationId } = args;
+  const body = await defaultAuthoringBridgeDeps().loadDocumentSnapshot(sourceId, organizationId, q);
+  if (!body) return { sealUnverified: 'SOURCE_NOT_FOUND' };
+  const held = await checkAgainstSeal(q, { sourceId, organizationId, live: body.sections ?? [], title: body.title, verdict });
+  return held.ok
+    ? { sealVersion: held.seal.version, sealContentHash: held.seal.contentHash }
+    : { sealUnverified: String(held.body.error) };
+}
+
+/**
  * The source as it will be filed, read on the placement's transaction `q`:
  * locked, still in `readState`, carrying some saved text, and — for a verdict
  * copy — held to its seal. Refuses, writing nothing, otherwise.

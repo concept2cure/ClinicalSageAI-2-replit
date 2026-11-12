@@ -1,0 +1,42 @@
+// Walk 2, flow 2d: with mfaRequired=false, an IP restriction and an 8-character password policy stored (own org),
+// what does sign-in do? Then the session policy is restored on the card, and the stored extras neutralised.
+const c = require('./lib.cjs');
+const ORG = 7;
+const sec = () => c.psql(`select settings->'security' from organizations where id=${ORG}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  await c.step('sign-in while the record says: no second factor, only 203.0.113.7, 8-character passwords', async (s) => {
+    s.notes.push('stored: ' + sec());
+    const ctx = await browser.newContext({ viewport: c.VIEWPORTS.desktop }); const page = await ctx.newPage();
+    await c.signIn(page, 'walk2.viewer@example.test', process.env.WALK_PASSWORD, { shotPrefix: 'w2-23-unenforced' });
+    s.notes.push('signed in from 127.0.0.1: ' + !/\/login/.test(page.url()) + ' (' + page.url() + ')');
+    const claims = await page.evaluate(() => { const t = localStorage.getItem('trialsage_access_token') || sessionStorage.getItem('trialsage_access_token'); const p = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return { idl: p.idl }; });
+    s.notes.push('idle window in the new session (stored "abc"): ' + JSON.stringify(claims));
+    const weak = await c.api(page, 'POST', '/api/auth/password/change', { currentPassword: process.env.WALK_PASSWORD, newPassword: 'Abcdef1x' });
+    s.notes.push('change password to an 8-character one: ' + weak.status + ' ' + JSON.stringify(weak.body).slice(0, 300));
+    await ctx.close();
+  });
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  await c.step('the Settings tab while the record says the second factor is off', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200);
+    await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(3000);
+    const t = await c.mainText(page, 20000);
+    s.notes.push(t.slice(t.indexOf('Second factor at sign-in'), t.indexOf('Organization\n', t.indexOf('Second factor at sign-in'))).replace(/\n+/g, ' | '));
+  });
+  await c.step('restore: idle 15, concurrent 5, on the card, with a reason', async (s) => {
+    const card = page.locator('section[aria-label="Session security policy"]'); await card.scrollIntoViewIfNeeded();
+    // the card shows 15 / 1 (clamped); 15 equals what it shows, so the idle field must be changed away and back
+    await card.getByLabel('Idle sign-out in minutes').fill('16'); await card.getByLabel('Maximum concurrent sessions').fill('5');
+    await card.getByLabel('Reason for session policy change').fill('F1 walk 2: step toward restoring the platform defaults');
+    await card.getByRole('button', { name: 'Save session policy' }).click(); await c.sleep(2000);
+    s.notes.push('note: ' + await card.locator('[role=status]').last().innerText() + ' | stored ' + sec());
+    await card.getByLabel('Idle sign-out in minutes').fill('15');
+    await card.getByLabel('Reason for session policy change').fill('F1 walk 2: restore the platform defaults after the enforcement check');
+    await card.getByRole('button', { name: 'Save session policy' }).click(); await c.sleep(2000);
+    s.notes.push('note: ' + await card.locator('[role=status]').last().innerText() + ' | stored ' + sec());
+    const r = await c.api(page, 'PATCH', `/api/tenant-config/${ORG}/settings`, { security: { mfaRequired: true, ipRestrictions: [], passwordPolicy: { minLength: 12, requireSpecialChars: true } } });
+    s.notes.push('neutralise the unenforced keys: ' + r.status + ' | stored ' + sec());
+  });
+  c.report(); c.save('w2-13-unenforced-restore');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

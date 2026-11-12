@@ -4,6 +4,7 @@ import { getApplicationType } from '../../../../shared/regulatory/global-documen
 import { resolveToRegistryId } from '../../../../shared/regulatory/submission-type-bridge';
 import { MODELED_JURISDICTIONS, REGIONAL_MODULE1, type ApplicationKind, type ModeledJurisdiction } from '../../../../shared/regulatory/regional-module1';
 import { REGIONAL_FILING_TYPES, REGION_TO_JURISDICTION, REGISTRY_TO_KIND } from './filing-types';
+import { listed } from '../../immunogenicity/immunogenicity-reference';
 
 export type RegionalAvailabilityState = 'available' | 'filing-context-required' | 'not-applicable' | 'context-unavailable';
 export interface RecordedRegionalFiling {
@@ -76,6 +77,17 @@ export function readRecordedRegionalFiling(raw: unknown): RegionalFilingContext 
 }
 type RegionalRefusal = Extract<RegionalFilingApplicability, { runnable: false }>;
 const refusal = (availabilityState: Exclude<RegionalAvailabilityState, 'available'>, reasonCode: string, availabilityReason: string): RegionalRefusal => ({ availabilityState, runnable: false, reasonCode, availabilityReason });
+/* A market and a filing kind as a reader says them. These reasons are shown in Reporting's catalog, and
+   ONE_DESIGN_PLAN §2 keeps stored values off the screen: "a EU filing" and "a nda or bla filing" were both. */
+const MARKET_WORD: Record<ModeledJurisdiction, string> = { US: 'US', EU: 'EU', JP: 'Japanese' };
+const MARKET_ARTICLE: Record<ModeledJurisdiction, 'a' | 'an'> = { US: 'a', EU: 'an', JP: 'a' };
+const KIND_WORD: Partial<Record<ApplicationKind, string>> = { ind: 'IND', nda: 'NDA', bla: 'BLA', anda: 'ANDA', maa: 'MAA', jnda: 'J-NDA' };
+/** Kinds said with a vowel sound: "an IND", "an NDA", "an ANDA", "an MAA"; "a BLA", "a J-NDA". */
+const KIND_TAKES_AN = new Set<ApplicationKind>(['ind', 'nda', 'anda', 'maa']);
+const kindWord = (kind: ApplicationKind): string => KIND_WORD[kind] ?? kind.toUpperCase();
+/** "an NDA or BLA": the article is the first kind's. */
+const aKindOf = (kinds: readonly ApplicationKind[]): string =>
+  `${kinds.length && KIND_TAKES_AN.has(kinds[0]) ? 'an' : 'a'} ${listed(kinds.map(kindWord), 'or')}`;
 /** The type's own declaration against its binding, before any program record is
  * read: a drifted or unmodeled type is refused without reading tenant metadata,
  * and a failed metadata read cannot displace this refusal (precedence of the
@@ -96,10 +108,10 @@ export function regionalFilingApplicability(typeId: string, declared: { region?:
   if (context.state !== 'recorded') return refusal(context.state, context.reasonCode, context.availabilityReason);
   const ctx = context.filing;
   if (!ctx.kind || !ctx.jurisdiction) {
-    const modeled = MODELED_JURISDICTIONS.map(market => `${market} ${REGIONAL_MODULE1[market].kinds.join('/')}`).join(', ');
-    return refusal('not-applicable', 'REGIONAL_FILING_NOT_MODELED', `The Module 1 record models ${modeled}. This project is recorded as ${ctx.entryLabel}, which has no Module 1 record here, so its Module 1 content was not assessed.`);
+    const modeled = listed(MODELED_JURISDICTIONS.map(market => `${MARKET_WORD[market]} ${listed(REGIONAL_MODULE1[market].kinds.map(kindWord), 'and')} filings`), 'and');
+    return refusal('not-applicable', 'REGIONAL_FILING_NOT_MODELED', `The Module 1 record covers ${modeled}. This project is recorded as ${ctx.entryLabel}, which has no Module 1 record here, so its Module 1 content was not assessed.`);
   }
-  if (ctx.jurisdiction !== binding.jurisdiction) return refusal('not-applicable', 'REGIONAL_REPORT_MARKET_MISMATCH', `${label} assesses a ${binding.jurisdiction} filing. This project is recorded as ${ctx.entryLabel}, so its readiness for that market was not assessed under this market’s name.`);
-  if (!binding.kinds.includes(ctx.kind)) return refusal('not-applicable', 'REGIONAL_REPORT_KIND_MISMATCH', `${label} assesses a ${binding.kinds.join(' or ')} filing. This project is recorded as ${ctx.entryLabel}, so it was not assessed under this report’s name.`);
+  if (ctx.jurisdiction !== binding.jurisdiction) return refusal('not-applicable', 'REGIONAL_REPORT_MARKET_MISMATCH', `${label} assesses ${MARKET_ARTICLE[binding.jurisdiction]} ${MARKET_WORD[binding.jurisdiction]} filing. This project is recorded as ${ctx.entryLabel}, so its readiness for that market was not assessed under this market’s name.`);
+  if (!binding.kinds.includes(ctx.kind)) return refusal('not-applicable', 'REGIONAL_REPORT_KIND_MISMATCH', `${label} assesses ${aKindOf(binding.kinds)} filing. This project is recorded as ${ctx.entryLabel}, so it was not assessed under this report’s name.`);
   return { availabilityState: 'available', runnable: true, availabilityReason: null, reasonCode: null, filing: { ...ctx, kind: ctx.kind, jurisdiction: ctx.jurisdiction } };
 }

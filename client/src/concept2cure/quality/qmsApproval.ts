@@ -21,6 +21,7 @@
  * @module client/src/concept2cure/quality/qmsApproval
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import { stableStringify } from '@shared/canonical-json';
 import type { C2CFormConfig } from '../v2/C2CForm';
 
@@ -128,6 +129,8 @@ export async function postQmsApproval(
   /** For a document approval: the day it is effective from (YYYY-MM-DD, not before today), bound in the signature (CAT2-19). */
   effectiveDate?: string,
   learningReview?: { expectedArtifactSha256: string; invariantAccepted: true },
+  /** For a change: the digest of the content the approver read (the register's `content_digest`). */
+  expectedContentDigest?: string,
 ): Promise<EsigSignedManifest> {
   const res = await apiRequest('POST', `/api/mdx/qms/${SIGNED_PATH[target.kind](target.id)}`, {
     password: input.password,
@@ -136,6 +139,7 @@ export async function postQmsApproval(
     reason: input.reason,
     ...(target.kind === 'document' && effectiveDate ? { effectiveDate } : {}),
     ...(target.kind === 'change' && learningReview ? { learningReview } : {}),
+    ...(target.kind === 'change' && expectedContentDigest ? { expectedContentDigest } : {}),
   });
   const json = (await res.json().catch(() => null)) as {
     meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };
@@ -149,6 +153,7 @@ export async function postQmsApproval(
   if (!sig?.signedAt) {
     throw new Error('The server did not return the signature record. Reload the register to see whether the approval was recorded.');
   }
+  qualityWritten();
   return {
     meaning: SIGNED_MEANING[target.kind].id,
     reason: input.reason,
@@ -250,6 +255,7 @@ async function sendSignedAct(
     throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
   if (!json?.signedAt) throw new Error(unconfirmed);
+  qualityWritten();
   return { meaning: input.meaning, reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
 const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';

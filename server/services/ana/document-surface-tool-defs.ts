@@ -18,8 +18,8 @@ import { STATED_REASON_INPUT } from './stated-reason-input';
 // platform holds: vault artifacts (concept2cure_artifacts + versions),
 // governed C2C documents (c2c_documents + sections), and the eTMF index.
 // All read-only, all tenant-scoped via ToolContext.organizationId. These
-// complement the existing write tools (create_tmf, classify_tmf_artifact,
-// section drafting) and the upload-file readers (search_large_document).
+// complement the existing write tools (classify_tmf_artifact, section
+// drafting) and the upload-file readers (search_large_document).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const LIST_VAULT_DOCUMENTS: AnaTool = {
@@ -103,11 +103,19 @@ export const READ_GOVERNED_DOCUMENT: AnaTool = {
 export const GET_TMF_VIEW: AnaTool = {
   name: 'get_tmf_view',
   description:
-    "View a Trial Master File's index and completeness: every artifact grouped by DIA TMF Reference Model zone with its status (expected/received/in_review/final/missing/not_applicable), plus the completeness gap-check (percent, per-zone gaps, inspection-readiness verdict). Omit tmf_file_id to list the organization's TMF files instead. Read-only counterpart of create_tmf / classify_tmf_artifact. Tenant-scoped.",
+    "View a study's Trial Master File, read from the filings stored for the study. A trial master file belongs to a protocol-design study of a project and exists with it. With study_id: the study, its readiness as the platform assessed it (ready, not ready, or not determined, with the basis and the counts it rests on; no percentage is computed), each DIA TMF Reference Model zone with its required, present and missing records and the ones filed without a document that could be verified, and every live filing with the Vault document it is filed against. Without study_id: the studies of the projects the person can open, each with its project; a project with no study has no trial master file. A study that is not in a project the person can open is answered as not found. Report the readiness and counts as returned; do not derive a percentage. Read-only.",
   input_schema: {
     type: 'object',
     properties: {
-      tmf_file_id: { type: 'number', description: 'The TMF file id. Omit to list all TMF files.' },
+      study_id: {
+        type: 'string',
+        description: "The study's own id (the studyId this tool lists when called with no study_id). Omit to list the studies of the projects the person can open.",
+      },
+      scope: {
+        type: 'string',
+        enum: ['essential', 'all'],
+        description: "Which records readiness is assessed against: 'essential' (the default) for the essential records, 'all' for every record of the reference model.",
+      },
     },
     required: [],
   },
@@ -225,45 +233,10 @@ export const COMPARE_VAULT_VERSIONS: AnaTool = {
   },
 };
 
-export const SEED_TMF: AnaTool = {
-  name: 'seed_tmf',
-  description:
-    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R3) Appendix C essential records). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_file_id: { type: 'number', description: 'The TMF file id (from create_tmf or get_tmf_view).' },
-      scope: { type: 'string', enum: ['essential', 'all'], description: "Seed scope. Default 'all'." },
-      reason: STATED_REASON_INPUT,
-    },
-    required: ['tmf_file_id', 'reason'],
-  },
-};
-
-export const UPDATE_TMF_ARTIFACT_STATUS: AnaTool = {
-  name: 'update_tmf_artifact_status',
-  description:
-    "Move a TMF artifact through its lifecycle: expected → received → in_review → final (or missing / not_applicable). Use after documents arrive or pass QC so the completeness gap-check reflects reality. GOVERNED: reason required, audited, tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_artifact_id: { type: 'number', description: 'The TMF artifact id (from get_tmf_view / classify_tmf_artifact).' },
-      status: {
-        type: 'string',
-        enum: ['expected', 'received', 'in_review', 'final', 'missing', 'not_applicable'],
-        description: 'The new lifecycle status.',
-      },
-      document_date: { type: 'string', description: 'Optional document date (YYYY-MM-DD).' },
-      reason: STATED_REASON_INPUT,
-    },
-    required: ['tmf_artifact_id', 'status', 'reason'],
-  },
-};
-
 export const SEARCH_ALL_DOCUMENTS: AnaTool = {
   name: 'search_all_documents',
   description:
-    "One search across every document store: vault artifacts, governed submission documents, and TMF artifacts — matched by title/name, returned as typed hits with ids ready for the read tools (read_vault_document, read_governed_document, get_tmf_view). Tenant-scoped, read-only.",
+    "One search across the document stores of the projects the person can open: vault artifacts and governed submission documents, matched by title, and records filed in a study's Trial Master File, matched by the record's reference-model name or code or by the title of the document it is filed against. Returned as typed hits with ids ready for the read tools: read_vault_document, read_governed_document, and for a TMF hit get_tmf_view with the hit's study_id. A store that could not be searched is named in unavailable_stores; its missing results are not evidence that nothing exists. Read-only.",
   input_schema: {
     type: 'object',
     properties: {

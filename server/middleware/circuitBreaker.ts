@@ -22,6 +22,13 @@ export interface CircuitBreakerOptions {
   monitorInterval: number; // Time in ms between internal health checks
   maxTimeout: number; // Maximum timeout for requests in ms
   maxQueueSize?: number; // Maximum size of request queue during recovery
+  /**
+   * Middleware only. Reads (GET, HEAD, OPTIONS) are neither refused nor
+   * counted. For a breaker that guards a provider only writes call: a read's
+   * outcome says nothing about that provider, and refusing reads takes the
+   * person's history away while the provider is down (GA-DEMO-04).
+   */
+  passReads?: boolean;
 }
 
 const DEFAULT_OPTIONS: CircuitBreakerOptions = {
@@ -192,6 +199,20 @@ export class CircuitBreaker {
   }
 
   /**
+   * Record a success. The count is of CONSECUTIVE failures: before 2026-11-12
+   * (GA-DEMO-04) nothing reset it, so ten failures in the life of the process
+   * opened the circuit, and a success while half-open never closed it.
+   */
+  recordSuccess() {
+    if (this.state === CircuitState.HALF_OPEN) {
+      this.close();
+      this.processQueue();
+    } else if (this.state === CircuitState.CLOSED) {
+      this.failures = 0;
+    }
+  }
+
+  /**
    * Transition to OPEN state
    */
   private open() {
@@ -306,6 +327,20 @@ export class CircuitBreaker {
   }
 }
 
+const EXPECTED_UNAVAILABLE = 'circuitBreakerExpectedUnavailable';
+
+/**
+ * Mark a 5xx response as a known, configured state and not a failure of the
+ * guarded service: for example "no AI provider is configured". The breaker
+ * does not count it, so the person keeps getting that honest answer and not
+ * "temporarily unavailable" (GA-DEMO-04). Call it before sending.
+ */
+export function markExpectedUnavailable(res: Response): void {
+  res.locals[EXPECTED_UNAVAILABLE] = true;
+}
+
+const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 /**
  * Circuit breaker middleware factory
  */
@@ -321,6 +356,11 @@ export function createCircuitBreakerMiddleware(
   const logger = createContextLogger(`circuit-breaker-middleware:${name}`);
 
   return function circuitBreakerMiddleware(req: Request, res: Response, next: NextFunction) {
+    if (options.passReads && READ_METHODS.has(req.method)) {
+      next();
+      return;
+    }
+
     if (breaker.isCircuitOpen()) {
       logger.warn('Circuit open, fast failing request', {
         path: req.path,
@@ -340,10 +380,13 @@ export function createCircuitBreakerMiddleware(
     // streaming, the error pipeline — so it observes failures that an
     // `res.json` wrapper would silently miss.
     res.on('finish', () => {
+      if (res.locals[EXPECTED_UNAVAILABLE]) return;
       if (res.statusCode >= 500) {
         breaker.recordFailure(
           new Error(`Server error ${res.statusCode} on ${req.method} ${req.path}`),
         );
+      } else {
+        breaker.recordSuccess();
       }
     });
 

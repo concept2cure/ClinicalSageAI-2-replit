@@ -123,14 +123,20 @@ describe('module3OperatingSystemRoutes', () => {
      it, contradiction-lifecycle.pglite.test.ts what it records. */
 
   it('section approve fails closed with 401 when re-authentication fails — before any DB write', async () => {
-    mockVerifyReauth.mockResolvedValueOnce({ ok: false, error: 'REAUTH_REQUIRED' });
+    mockVerifyReauth.mockResolvedValueOnce({
+      ok: false,
+      error: 'REAUTH_TOTP_INVALID',
+      message: 'The authenticator code was not accepted. Nothing was signed.',
+    });
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
       .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'wrong' } });
 
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('REAUTH_REQUIRED');
+    expect(res.body.error).toBe('REAUTH_TOTP_INVALID');
+    // The signer is told why, in words (2026-11-12): the screen had only the code and showed "HTTP 401".
+    expect(res.body.message).toBe('The authenticator code was not accepted. Nothing was signed.');
     // The gate runs before the contradiction check and any write — no SQL ran.
     expect(mockQuery).not.toHaveBeenCalled();
   });
@@ -242,8 +248,9 @@ describe('module3OperatingSystemRoutes', () => {
     // The refusal names the section, its completeness and every missing input.
     expect(res.body.error).toContain('3.2.P.6');
     expect(res.body.error).toMatch(/0% complete/);
-    expect(res.body.error).toContain('containerClosureDescription');
-    expect(res.body.error).toContain('suitabilityJustification');
+    // Every missing input is named, in words rather than the composer's field names (307d82d2af).
+    expect(res.body.error).toContain('Missing required inputs: container closure description; suitability justification.');
+    expect(res.body.error).not.toMatch(/containerClosureDescription|suitabilityJustification/);
     expect(res.body.data).toEqual({
       completeness: 0,
       missingInputs: ['containerClosureDescription', 'suitabilityJustification'],

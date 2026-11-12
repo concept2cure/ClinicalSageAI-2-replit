@@ -280,6 +280,10 @@ async function refusalStep(step, state) {
       // The meaning is refused before the credentials are checked, so no code is spent.
       const c = await api('POST', path, { password: run.password, meaning: 'WHATEVER', intent: 'OQ bad meaning' });
       expect(c.status === 400, `bad meaning expected 400, got ${c.status}`, c.json);
+      // (d) answers at the object gate only for a reviewer who is not an organisation admin: an admin passes it as
+      // on every object route, and is answered by the meaning check instead (OQ-003 v0.6, §2).
+      const signerRoles = state.signer.session.user?.roles ?? [];
+      expect(!signerRoles.includes('admin'), `the named reviewer is an organisation admin (${signerRoles.join(', ')}); OQ-003 §2 needs an approver or reviewer for (d)`, signerRoles);
       const d = await asSigner('POST', path, { password: state.signer.password, meaning: 'WHATEVER', intent: 'OQ bad meaning' });
       expectRefusal(expect, d, 403, 'AUTHORING_OBJECT_FORBIDDEN', 'a meaning other than REVIEWER from the named reviewer');
       // The one signature on record is the OQ-AUTH-11 freeze's own (DP-35); the refusals added none.

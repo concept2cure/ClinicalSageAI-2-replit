@@ -92,9 +92,10 @@ describe('existing project analysis commands after portfolio convergence', () =>
 describe('governedToolsetFor, the one toolset every chat door composes', () => {
   // write_kit_section and create_clinical_study were hidden examples until the
   // device surfaces joined the launch catalog (62a8d5e7f); they are kept now.
-  // prepare_meeting_package (agency-meetings) and create_tmf (etmf), still outside
-  // the catalog, take their places.
-  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'prepare_meeting_package', 'create_tmf', 'build_sae_line_listing'];
+  // prepare_meeting_package (agency-meetings) and create_inspection (qmp), still outside
+  // the catalog, take their places. get_tmf_view (etmf) held the second place until the eTMF was admitted
+  // (2026-11-12, P-124 item 6); the inspection tools it was filed beside stayed hidden.
+  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'prepare_meeting_package', 'create_inspection', 'build_sae_line_listing'];
   const KEPT = [
     'run_rbm_assessment', // existing RBM central service, founder P-76
     'search_literature', // knowledge
@@ -103,7 +104,15 @@ describe('governedToolsetFor, the one toolset every chat door composes', () => {
     'write_kit_section', // device-510k (launch since 62a8d5e7f)
     'create_clinical_study', // device-clinical-studies (launch since 62a8d5e7f)
     'list_vault_documents', // vault (launch)
+    'get_tmf_view', // etmf, in the Vault app since its admission (2026-11-12, P-124 item 6)
+    'classify_tmf_artifact', // etmf, the same
     'update_protocol_section', // protocol-dev (launch)
+    // Agency commitments are Communication's records (/api/ha-interactions; launch since 327bc9fb6). The three
+    // tools write and read that same store, and were withheld only because the inventory still filed them under
+    // lifecycle-mgmt (reach map of 2026-11-11, section 4 rank 7).
+    'create_regulatory_commitment',
+    'fulfill_regulatory_commitment',
+    'review_commitment_portfolio',
     'navigate_to', // AnA's hands
     'execute_platform_command', // the bridge; commands are judged at dispatch
   ];

@@ -18,6 +18,10 @@ describe('parseVaultFilters', () => {
     expect(parseVaultFilters({ folderId: 'module-3' }, { view: 'pharma' })).toEqual({ filters: { folderIds: ['module-3'] } });
     expect(parseVaultFilters({ folderId: 'module-3' })).toMatchObject({ refusal: { parameter: 'folderId' } });
     expect(parseVaultFilters({ folderId: 'module-9' }, { view: 'pharma' })).toMatchObject({ refusal: { error: 'INVALID_FILTER', parameter: 'folderId' } });
+    // A binder heading and a person's folder are folders of the project too (S6, vault-folders.ts).
+    expect(parseVaultFilters({ folderId: 'bn:3.2.S.4,uf:12' }, { view: 'pharma' })).toEqual({ filters: { folderIds: ['bn:3.2.S.4', 'uf:12'] } });
+    expect(parseVaultFilters({ folderId: 'uf:0' }, { view: 'pharma' })).toMatchObject({ refusal: { parameter: 'folderId' } });
+    expect(parseVaultFilters({ folderId: 'bn:3.2 S' }, { view: 'pharma' })).toMatchObject({ refusal: { parameter: 'folderId' } });
   });
 
   it('refuses more than twenty values in one dimension rather than truncating', () => {
@@ -45,6 +49,13 @@ describe('vaultFilterSql', () => {
     const sql = vaultFilterSql({ ctdSections: ['3.2.P'] }, params, 'd', { ctdMatch: 'exact' });
     expect(sql).toBe(' AND d.ctd_section = ANY($2::text[])');
     expect(params).toEqual([1, ['3.2.P']]);
+  });
+
+  it('keeps the data catalog\'s match: the section as recorded or beneath it by whole segment, unnormalised', () => {
+    const params: unknown[] = [1];
+    const sql = vaultFilterSql({ evidenceKinds: ['protocol'], ctdSections: ['5.3'] }, params, 'd', { ctdMatch: 'exactWithin' });
+    expect(sql).toBe(' AND d.evidence_kind = ANY($2::text[]) AND (d.ctd_section = ANY($3::text[]) OR d.ctd_section LIKE ANY($4::text[]))');
+    expect(params).toEqual([1, ['protocol'], ['5.3'], ['5.3.%']]);
   });
 });
 

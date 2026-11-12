@@ -1,0 +1,512 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx > the Section approvals table says what a section still needs in words > names §3.2.P.1's and §3.2.P.2's missing inputs as a reader says them 136ms
+   → Unable to find an element with the text: /a current formulation with its named components/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<tr>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"mono"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m>[39m
+    [0m3.2.P.1[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [0mDescription and Composition[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<b[39m
+      [33mclass[39m=[32m"sp-tone-warn"[39m
+      [33mstyle[39m=[32m"font-variant-numeric: tabular-nums;"[39m
+    [36m>[39m
+      [0m75[0m
+      [0m%[0m
+    [36m</b>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-meta"[39m
+    [36m>[39m
+      [0mmissing: [0m
+      [0mformulationCompositionComplete[0m
+    [36m</div>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rd-chip tone-dim"[39m
+    [36m>[39m
+      [0mDraft[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rd-chip tone-err"[39m
+      [33mstyle[39m=[32m"margin-left: 6px;"[39m
+      [33mtitle[39m=[32m"§3.2.P.1 is 75% complete and cannot be approved. Missing required inputs: formulationCompositionComplete. Record the inputs on the Module 3 build board and recompile."[39m
+    [36m>[39m
+      [0mIncomplete[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mstyle[39m=[32m"text-align: right;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"nda-open"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtitle[39m=[32m"§3.2.P.1 is 75% complete and cannot be approved. Missing required inputs: formulationCompositionComplete. Record the inputs on the Module 3 build board and recompile."[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mry[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"11"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m Approve section[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"cm-linkish"[39m
+        [33mtitle[39m=[32m"Record the missing inputs and recompile on the Module 3 build board"[39m
+      [36m>[39m
+        [0mOpen the build board[0m
+      [36m</button>[39m
+    [36m</span>[39m
+  [36m</td>[39m
+[36m</tr>[39m
+ × client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx > the Module 3 build board says what a section still needs in words > names a missing field and a missing source record as a reader says them 26ms
+   → Unable to find an element with the text: /the drug substance’s acceptance criteria/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<tr>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"mono"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m>[39m
+    [0m3.2.S.4[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [0mControl of Drug Substance[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [0m4[0m
+    [0m canonical[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-projbar cm-projbar-sm"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"fill"[39m
+        [33mstyle[39m=[32m"width: 25%; background: var(--warning);"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"cm-meta"[39m
+    [36m>[39m
+      [0m25[0m
+      [0m%[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"sp-tone-warn"[39m
+      [33mtitle[39m=[32m"acceptanceCriteria, drugSubstanceBatchAnalyses, impurity_profile"[39m
+    [36m>[39m
+      [0macceptanceCriteria, drugSubstanceBatchAnalyses[0m
+      [0m +1[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rd-chip tone-warn"[39m
+      [33mtitle[39m=[32m"Canonical source data exists for this section. Compile to draft it."[39m
+    [36m>[39m
+      [0mready to compile[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"cm-meta"[39m
+    [36m>[39m
+      [0mnot started[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mstyle[39m=[32m"text-align: right; white-space: nowrap;"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mtitle[39m=[32m"Compile this section and place it as a governed artifact"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-zap"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mBuild[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mstyle[39m=[32m"margin-left: 6px;"[39m
+      [33mtitle[39m=[32m"Nothing has been compiled for this section yet"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-history"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 3v5h5"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 7v5l4 2"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m History[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mstyle[39m=[32m"margin-left: 6px;"[39m
+      [33mtitle[39m=[32m"The Vault documents this section’s records were taken from"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-paperclip"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m Evidence[0m
+    [36m</button>[39m
+  [36m</td>[39m
+[36m</tr>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx > the Section approvals table says what a section still needs in words > names §3.2.P.1's and §3.2.P.2's missing inputs as a reader says them
+TestingLibraryElementError: Unable to find an element with the text: /a current formulation with its named components/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<tr>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"mono"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m>[39m
+    [0m3.2.P.1[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [0mDescription and Composition[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<b[39m
+      [33mclass[39m=[32m"sp-tone-warn"[39m
+      [33mstyle[39m=[32m"font-variant-numeric: tabular-nums;"[39m
+    [36m>[39m
+      [0m75[0m
+      [0m%[0m
+    [36m</b>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-meta"[39m
+    [36m>[39m
+      [0mmissing: [0m
+      [0mformulationCompositionComplete[0m
+    [36m</div>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rd-chip tone-dim"[39m
+    [36m>[39m
+      [0mDraft[0m
+    [36m</span>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rd-chip tone-err"[39m
+      [33mstyle[39m=[32m"margin-left: 6px;"[39m
+      [33mtitle[39m=[32m"§3.2.P.1 is 75% complete and cannot be approved. Missing required inputs: formulationCompositionComplete. Record the inputs on the Module 3 build board and recompile."[39m
+    [36m>[39m
+      [0mIncomplete[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mstyle[39m=[32m"text-align: right;"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"nda-open"[39m
+        [33mdisabled[39m=[32m""[39m
+        [33mtitle[39m=[32m"§3.2.P.1 is 75% complete and cannot be approved. Missing required inputs: formulationCompositionComplete. Record the inputs on the Module 3 build board and recompile."[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mry[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"11"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m Approve section[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"cm-linkish"[39m
+        [33mtitle[39m=[32m"Record the missing inputs and recompile on the Module 3 build board"[39m
+      [36m>[39m
+        [0mOpen the build board[0m
+      [36m</button>[39m
+    [36m</span>[39m
+  [36m</td>[39m
+[36m</tr>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx:82:23
+     80|     const p1 = row('3.2.P.1');
+     81|     const p2 = row('3.2.P.2');
+     82|     expect(within(p1).getByText(/a current formulation with its named …
+       |                       ^
+     83|     expect(within(p2).getByText(/the drug product’s manufacturing proc…
+     84|     expect(within(p2).getByText(/the drug product’s container closure …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx > the Module 3 build board says what a section still needs in words > names a missing field and a missing source record as a reader says them
+TestingLibraryElementError: Unable to find an element with the text: /the drug substance’s acceptance criteria/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<tr>[39m
+  [36m<td[39m
+    [33mclass[39m=[32m"mono"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m>[39m
+    [0m3.2.S.4[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [0mControl of Drug Substance[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [0m4[0m
+    [0m canonical[0m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"cm-projbar cm-projbar-sm"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"fill"[39m
+        [33mstyle[39m=[32m"width: 25%; background: var(--warning);"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"cm-meta"[39m
+    [36m>[39m
+      [0m25[0m
+      [0m%[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"sp-tone-warn"[39m
+      [33mtitle[39m=[32m"acceptanceCriteria, drugSubstanceBatchAnalyses, impurity_profile"[39m
+    [36m>[39m
+      [0macceptanceCriteria, drugSubstanceBatchAnalyses[0m
+      [0m +1[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rd-chip tone-warn"[39m
+      [33mtitle[39m=[32m"Canonical source data exists for this section. Compile to draft it."[39m
+    [36m>[39m
+      [0mready to compile[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"cm-meta"[39m
+    [36m>[39m
+      [0mnot started[0m
+    [36m</span>[39m
+  [36m</td>[39m
+  [36m<td[39m
+    [33mstyle[39m=[32m"text-align: right; white-space: nowrap;"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mtitle[39m=[32m"Compile this section and place it as a governed artifact"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-zap"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mBuild[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mdisabled[39m=[32m""[39m
+      [33mstyle[39m=[32m"margin-left: 6px;"[39m
+      [33mtitle[39m=[32m"Nothing has been compiled for this section yet"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-history"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 3v5h5"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 7v5l4 2"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m History[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"nda-open"[39m
+      [33mstyle[39m=[32m"margin-left: 6px;"[39m
+      [33mtitle[39m=[32m"The Vault documents this section’s records were taken from"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-paperclip"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m Evidence[0m
+    [36m</button>[39m
+  [36m</td>[39m
+[36m</tr>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx:99:28
+     97|     render(<CmModule3Build ask={() => {}} />);
+     98|     const r = (await screen.findByText('3.2.S.4', { selector: 'td' }))…
+     99|     const cell = within(r).getByText(/the drug substance’s acceptance …
+       |                            ^
+    100|     expect(cell.getAttribute('title')).toMatch(/batch analysis results…
+    101|     expect(r.textContent).not.toMatch(FIELD_NAME);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  14:45:11
+   Duration  3.17s (transform 1.79s, setup 188ms, import 2.13s, tests 167ms, environment 495ms)
+

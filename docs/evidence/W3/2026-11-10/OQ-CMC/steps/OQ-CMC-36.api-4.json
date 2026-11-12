@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/ich-compliance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "00841ef3-cc70-4e8a-8e3e-ae2a198d8dd8"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "code": "CMC_MODALITY_NOT_ESTABLISHED",
+      "error": "This project records no drug substance, so whether its Module 3 is composable here is not established. Record the drug substance in the CMC registers, then compile again.",
+      "hint": "Author its quality content in Document editor & authoring, keep the evidence in Vault (DMS), and file it through the Submission center."
+    }
+  }
+}

@@ -1,0 +1,319 @@
+{
+  "report": {
+    "home-1440-light": {
+      "composer": {
+        "top": 135,
+        "bottom": 277,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 512,
+        "bottom": 533,
+        "aboveFold": true
+      },
+      "firstProject": {
+        "top": 551,
+        "bottom": 596,
+        "aboveFold": true
+      },
+      "openItems": {
+        "top": 510,
+        "bottom": 531,
+        "aboveFold": true
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-1440-light": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": {
+        "top": 129,
+        "bottom": 150,
+        "aboveFold": true
+      },
+      "firstCard": {
+        "top": 214,
+        "bottom": 390,
+        "aboveFold": true
+      },
+      "topbarSearch": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027Dossier readiness 0% · Planni",
+      "figuresText": "8 active projects · 0 filings due within 60 days"
+    },
+    "projects-list-1440-light": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": {
+        "top": 129,
+        "bottom": 150,
+        "aboveFold": true
+      },
+      "firstCard": null,
+      "topbarSearch": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "cardText": "",
+      "figuresText": "8 active projects · 0 filings due within 60 days"
+    },
+    "projects-list-remembered-1440-light": "List",
+    "projects-at-risk-1440-light": "Which projects are at risk this weekAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.Risks Sentinel found11 open findings, most severe first.Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10High · Quality driftQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion8/26 ",
+    "projects-archived-1440-light": "Archived projectsBack to projectsNo archived projects.",
+    "home-390-light": {
+      "composer": {
+        "top": 174,
+        "bottom": 316,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 671,
+        "bottom": 692,
+        "aboveFold": true
+      },
+      "firstProject": {
+        "top": 710,
+        "bottom": 817,
+        "aboveFold": true
+      },
+      "openItems": {
+        "top": 1223,
+        "bottom": 1244,
+        "aboveFold": false
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-390-light": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": {
+        "top": 196,
+        "bottom": 217,
+        "aboveFold": true
+      },
+      "firstCard": {
+        "top": 401,
+        "bottom": 614,
+        "aboveFold": true
+      },
+      "topbarSearch": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027Dossier readiness 0% · Planni",
+      "figuresText": "8 active projects · 0 filings due within 60 days"
+    },
+    "projects-at-risk-390-light": "Which projects are at risk this weekAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.Risks Sentinel found11 open findings, most severe first.Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10High · Quality driftQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion8/26 ",
+    "projects-archived-390-light": "Archived projectsBack to projectsNo archived projects.",
+    "home-1440-dark": {
+      "composer": {
+        "top": 135,
+        "bottom": 277,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 512,
+        "bottom": 533,
+        "aboveFold": true
+      },
+      "firstProject": {
+        "top": 551,
+        "bottom": 596,
+        "aboveFold": true
+      },
+      "openItems": {
+        "top": 510,
+        "bottom": 531,
+        "aboveFold": true
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-1440-dark": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": {
+        "top": 129,
+        "bottom": 150,
+        "aboveFold": true
+      },
+      "firstCard": {
+        "top": 214,
+        "bottom": 390,
+        "aboveFold": true
+      },
+      "topbarSearch": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027Dossier readiness 0% · Planni",
+      "figuresText": "8 active projects · 0 filings due within 60 days"
+    },
+    "projects-list-1440-dark": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": {
+        "top": 129,
+        "bottom": 150,
+        "aboveFold": true
+      },
+      "firstCard": null,
+      "topbarSearch": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 8,
+        "bottom": 40,
+        "aboveFold": true
+      },
+      "cardText": "",
+      "figuresText": "8 active projects · 0 filings due within 60 days"
+    },
+    "projects-list-remembered-1440-dark": "List",
+    "projects-at-risk-1440-dark": "Which projects are at risk this weekAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.Risks Sentinel found11 open findings, most severe first.Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10High · Quality driftQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion8/26 ",
+    "projects-archived-1440-dark": "Archived projectsBack to projectsNo archived projects.",
+    "home-390-dark": {
+      "composer": {
+        "top": 174,
+        "bottom": 316,
+        "aboveFold": true
+      },
+      "yourProjects": {
+        "top": 671,
+        "bottom": 692,
+        "aboveFold": true
+      },
+      "firstProject": {
+        "top": 710,
+        "bottom": 817,
+        "aboveFold": true
+      },
+      "openItems": {
+        "top": 1223,
+        "bottom": 1244,
+        "aboveFold": false
+      },
+      "figures": null,
+      "firstCard": null,
+      "topbarSearch": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "cardText": "",
+      "figuresText": ""
+    },
+    "projects-390-dark": {
+      "composer": null,
+      "yourProjects": null,
+      "firstProject": null,
+      "openItems": null,
+      "figures": {
+        "top": 196,
+        "bottom": 217,
+        "aboveFold": true
+      },
+      "firstCard": {
+        "top": 401,
+        "bottom": 614,
+        "aboveFold": true
+      },
+      "topbarSearch": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "topbarHelp": {
+        "top": 2,
+        "bottom": 46,
+        "aboveFold": true
+      },
+      "cardText": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)IND · FDA · Travelers' diarrhea and acute gastroenteritisOn schedule · Planning by May 10, 2027Dossier readiness 0% · Planni",
+      "figuresText": "8 active projects · 0 filings due within 60 days"
+    },
+    "projects-at-risk-390-dark": "Which projects are at risk this weekAnswered by Sentinel’s analyzers and the submission operations register, for the projects you can open.Risks Sentinel found11 open findings, most severe first.Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion1/5 tasks done, 0 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion0/5 tasks done, 1 blocked, 0 overdue. · Found Nov 10Critical · Quality driftQuality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion0/12 tasks done, 0 blocked, 0 overdue. · Found Nov 10High · Quality driftQuality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion8/26 ",
+    "projects-archived-390-dark": "Archived projectsBack to projectsNo archived projects."
+  },
+  "errors": []
+}

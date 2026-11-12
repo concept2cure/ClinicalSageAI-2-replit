@@ -22,6 +22,9 @@ export const STEP_DOORS = {
   vault: 'Add or find files in Vault',
   /** Author: the editor's own view, with no document named. */
   editor: 'Find or start a document in the editor',
+  /** Author: the dossier on the same step, below the documents: its readiness card and module completion (P-122). Named
+   *  for the job: "dossier" is the folded screen's name (8b192f1e7), which section 9 keeps out of a door. */
+  dossier: 'See readiness and completion by CTD module',
   /** Author: the protocol workspace, which lists the open project's protocols. */
   protocol: 'Write the protocol in the protocol workspace',
   /** Author, and Plan's phase 3: CMC / Module 3, within its composition boundary. */

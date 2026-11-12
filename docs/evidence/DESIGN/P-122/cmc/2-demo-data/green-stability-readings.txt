@@ -1,0 +1,7 @@
+ok 1 - C2C-201: each of the eleven registers ensureCmc did not write gets a row
+ok 2 - C2C-201: the impurities cover every class the assessment routes, and dissolution can be compared
+ok 3 - C2C-201: a second run creates nothing
+ok 4 - C2C-201: each stability result carries the condition it was pulled at and its reading
+ok 5 - C2C-201: an earlier run’s results are re-recorded with their condition and reading, and only the seed’s own
+# pass 5
+# fail 0

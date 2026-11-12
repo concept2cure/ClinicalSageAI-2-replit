@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import config from '../../vitest.config';
 import { readWorkflow, stepNamed } from './workflow-harness';
+import { evaluateIf } from './workflow-expression';
 
 const root = path.resolve(__dirname, '..', '..');
 const scripts = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).scripts;
@@ -28,14 +29,15 @@ describe('bounded test execution and retained CI evidence', () => {
     expect(scripts.test).not.toMatch(/\|\|\s*true|exit\s+0/);
   });
 
-  // MR-02 Stage 3 (2026-10-30): the suite runs in eight shards, each the same
-  // `npm test` with Vitest's --shard, and the `test` job is their one verdict.
+  // MR-02 Stage 3: the suite runs in four shards, each the same `npm test` with
+  // Vitest's --shard (and, since 2026-11-10, three files at a time in CI only:
+  // the config above stays one at a time), and the `test` job is their verdict.
   it('each Test shard runs npm test on its shard and saves results even when it fails', () => {
     const shard = workflow.jobs['test-shard'];
-    expect(shard.strategy?.matrix?.shard).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(shard.strategy?.matrix?.shard).toEqual([1, 2, 3, 4]);
     expect(shard.strategy?.['fail-fast']).toBe(false);
     const run = stepNamed(workflow, 'test-shard', 'Run tests');
-    expect(run.run).toBe('npm test -- --shard=${{ matrix.shard }}/8');
+    expect(run.run).toBe('npm test -- --shard=${{ matrix.shard }}/4 --maxWorkers=3 --fileParallelism');
     expect(run['continue-on-error']).not.toBe(true);
     const upload = stepNamed(workflow, 'test-shard', 'Upload shard test results');
     expect(upload.if).toBe('always()');
@@ -49,10 +51,11 @@ describe('bounded test execution and retained CI evidence', () => {
     expect(job.name).toBe('Test');
     expect(job.needs).toEqual(expect.arrayContaining(['lint', 'test-shard']));
     const merge = stepNamed(workflow, 'test', 'Every collected file ran once and every shard passed');
-    expect(merge.run).toBe('node scripts/ci/merge-test-shards.mjs --shards 8 --dir shards --out test-results');
+    expect(merge.run).toBe('node scripts/ci/merge-test-shards.mjs --shards 4 --dir shards --out test-results');
     expect(merge.env?.SHARD_JOBS_RESULT).toBe('${{ needs.test-shard.result }}');
     expect(merge['continue-on-error']).not.toBe(true);
-    expect(workflow.jobs['test-shard'].strategy.matrix.shard).toHaveLength(8);
+    // The merge's --shards must equal the matrix, or a shard is never read.
+    expect(merge.run).toContain(`--shards ${workflow.jobs['test-shard'].strategy.matrix.shard.length} `);
     const upload = stepNamed(workflow, 'test', 'Upload core test results');
     expect(upload.if).toBe('always()');
     expect(upload.with?.name).toBe('test-results');
@@ -71,6 +74,23 @@ describe('bounded test execution and retained CI evidence', () => {
     expect(upload.if).toBe('always()');
     expect(upload.with?.name).toBe('integration-tests-results');
     expect(upload.with?.path).toBe('test-results/');
+  });
+
+  // MR-02 Stage 3, 2026-11-12: the re-render re-lints the whole tree (about 2
+  // minutes), and with `if: failure()` it ran whenever ANY earlier Lint step
+  // had failed — on every push while any guardrail was red.
+  it('re-renders ESLint findings only when ESLint itself failed', () => {
+    const eslint = stepNamed(workflow, 'lint', 'Run ESLint');
+    const render = stepNamed(workflow, 'lint', 'Render ESLint findings (failure only)');
+    expect(eslint.id).toBe('eslint');
+    const at = (anyFailed: boolean, eslintOutcome: string) =>
+      evaluateIf(render.if, {
+        status: { success: !anyFailed, failure: anyFailed, cancelled: false },
+        contexts: { steps: { eslint: { outcome: eslintOutcome, conclusion: eslintOutcome } } },
+      });
+    expect(at(true, 'failure')).toBe(true);
+    expect(at(true, 'success')).toBe(false);
+    expect(at(false, 'success')).toBe(false);
   });
 
   it('retains coverage test verdicts while leaving the coverage ratchet strict', () => {

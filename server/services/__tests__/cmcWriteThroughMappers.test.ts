@@ -686,6 +686,50 @@ describe('§3.2.P.3 — the change history and the governed release decision rea
     expect(p3.narrativeDraft).not.toMatch(/L2026-099 disposition: released/);
   });
 
+  /* 2026-11-12 (CMC walked in the running app): with a batch rejected under signature, the compiled §3.2.P.3 read
+     "Representative batch: B3 … disposition: rejected, released by <signer>". A rejected batch represents nothing,
+     and a rejection is not a release. */
+  describe('a rejected batch', () => {
+    const rejected = mapBatchRecordPayload({
+      batch_number: 'R-2026-003', product_name: 'BX-204 injection', status: 'in-progress', release_status: 'rejected',
+      released_by: 'qa.signer@example.test', released_at: '2026-05-02T10:00:00Z',
+    });
+    const inProgress = mapBatchRecordPayload({ batch_number: 'L2026-020', product_name: 'BX-204 injection', status: 'in-progress' });
+    const p3 = (...sources: ReturnType<typeof src>[]) =>
+      composeModule3FromCanonicalSources(sources).find((s) => s.sectionKey === '3.2.P.3')!.narrativeDraft;
+
+    it('is never the representative batch, whichever order the records arrive in', () => {
+      for (const narrative of [p3(src('batch', rejected), src('batch', inProgress)), p3(src('batch', inProgress), src('batch', rejected))]) {
+        expect(narrative).toMatch(/Representative batch: L2026-020/);
+        expect(narrative).not.toMatch(/R-2026-003/);
+      }
+    });
+
+    it('is not described as released, and its signer is not named as a releaser', () => {
+      const narrative = p3(src('batch', rejected), src('batch', inProgress));
+      expect(narrative).not.toMatch(/released by/);
+      expect(narrative).not.toMatch(/disposition: rejected/);
+    });
+
+    it('alone, leaves the section naming no representative batch', () => {
+      const narrative = p3(src('batch', rejected));
+      expect(narrative).not.toMatch(/Representative batch/);
+      expect(narrative).not.toMatch(/R-2026-003|released by/);
+    });
+
+    it('beside a released batch, the released one is the representative and carries its own release', () => {
+      const narrative = p3(src('batch', rejected), src('batch', batch));
+      expect(narrative).toMatch(/Representative batch: L2026-014/);
+      expect(narrative).toMatch(/Batch L2026-014 disposition: released, released by qp\.olsen@example\.test on 2026-04-01/);
+      expect(narrative).not.toMatch(/R-2026-003/);
+    });
+
+    it('a batch with no decision yet is not given a disposition', () => {
+      const pending = mapBatchRecordPayload({ batch_number: 'L2026-021', product_name: 'BX-204 injection', status: 'in-progress', release_status: 'pending' });
+      expect(p3(src('batch', pending))).not.toMatch(/disposition/);
+    });
+  });
+
   it('free text with newlines and pipes cannot shatter the governed markdown table', () => {
     const messy = mapChangeControlPayload({
       changeNumber: 'CC-2026-050', changeType: 'process',
@@ -2381,5 +2425,27 @@ describe('mapStabilityPayload — the scope the register captures reaches the co
     const s7 = composed.find((s) => s.sectionKey === '3.2.S.7')!;
     expect(tablesToMarkdown(s7.tables)).toContain('5C ± 3C');
     expect(tablesToMarkdown(s7.tables)).not.toContain('40C/75%RH');
+  });
+});
+
+
+/* 2026-11-12 (CMC walked in the running app): §3.1 read "The drug substance is BX-733 5 mg film-coated tablet."
+   Both records carry `name`, and the first match across every source was the product's. */
+describe('§3.1 names the drug substance from the substance record', () => {
+  const substance = mapDrugSubstancePayload({ substanceName: 'BX-733', inn: 'bexanistat' });
+  const product = mapDrugProductPayload({ productName: 'BX-733 5 mg film-coated tablet', dosageForm: 'Film-coated tablet' });
+  const toc = (...sources: ReturnType<typeof src>[]) =>
+    composeModule3FromCanonicalSources(sources).find((s) => s.sectionKey === '3.1')!.narrativeDraft;
+
+  it('whichever record comes first', () => {
+    for (const narrative of [toc(src('drug_substance', substance), src('drug_product', product)), toc(src('drug_product', product), src('drug_substance', substance))]) {
+      expect(narrative).toMatch(/The drug substance is BX-733\. /);
+      expect(narrative).not.toMatch(/The drug substance is BX-733 5 mg film-coated tablet/);
+      expect(narrative).toMatch(/formulated as a Film-coated tablet/);
+    }
+  });
+
+  it('with no substance record, does not call the product the substance', () => {
+    expect(toc(src('drug_product', product))).not.toMatch(/The drug substance is/);
   });
 });

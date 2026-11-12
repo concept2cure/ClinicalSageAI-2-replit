@@ -87,6 +87,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
+import { MoreReviewGroups, WorkbenchInspectorDoors } from './WorkbenchInspectorDoors';
 import { StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { StudyDataBuild } from './StudyDataBuild';
@@ -148,7 +149,9 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
-import { AuthoredHtml } from './AuthoredHtml';
+import { AuthoredHtml, documentReadCitations } from './AuthoredHtml';
+import { ConsentElementsCheck, type ConsentElementsCheckData } from './ConsentElementsCheck';
+import { noFlagsSentence, notRunSentence, type SkippedCheck } from './sectionCheckSentences';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
 
@@ -708,6 +711,8 @@ interface ScanResults {
   record_requirements?: RecordRequirements;
   /** Whether the open document's own figures agree with each other, across its sections. */
   document_figure_consistency?: DocumentFigureConsistency;
+  /** P-102: an informed-consent document's 21 CFR 50.25 required elements. Absent for any other type. */
+  consent_elements?: ConsentElementsCheckData;
   quality_score?: number;
   status?: string;
   deficiencies: ScanDeficiency[];
@@ -717,6 +722,8 @@ interface ScanResults {
    *  cannot drift from the checks the handler actually runs. */
   checks_run?: number;
   checks_passed?: number;
+  /** Checks the server did not run on this section, each with its reason. */
+  checks_skipped?: SkippedCheck[];
   scanned_at?: string;
 }
 
@@ -3208,6 +3215,9 @@ export function DocumentWorkbench({
     [projectSources, citationAdmission.admissions, readableSourceSectionId]);
   const precedingCitations = useMemo(() => admittedPrecedingSources(sections, readableSourceSectionId, projectSources, citationAdmission.admissions),
     [sections, readableSourceSectionId, projectSources, citationAdmission.admissions]);
+  /* The Document view numbers citations as the canvas and the export do (walked 2026-11-12: it showed the source's file name). */
+  const readCitations = useMemo(() => documentReadCitations(sections, projectSources, citationAdmission.admissions),
+    [sections, projectSources, citationAdmission.admissions]);
   const citationChoices = useMemo(() => projectSources.filter(sourceCitationEligible).map(source => ({ id: String(source.id), title: source.title })), [projectSources]);
   const citationResolutionState = projectSourcesState === 'error' || citationAdmission.state === 'error' ? 'error'
     : projectSourcesState === 'loading' || citationAdmission.state === 'loading' ? 'loading' : 'ready';
@@ -4907,6 +4917,14 @@ export function DocumentWorkbench({
             >
               {I.messageSquare}{cc > 0 && <span className="ed-n" aria-hidden="true">{cc}</span>}
             </button>
+            {/* P-122: the inspector's doors, back on the bar from More (WorkbenchInspectorDoors.tsx). */}
+            {activeDoc && (
+              <WorkbenchInspectorDoors open={rail} onToggle={(id, from) => { if (rail === id) setRail(null); else openRail(id, from); }}
+                sendRefusal={actRefusal(docAccess.assignReview)}
+                vaultRefusal={actRefusal(docAccess.fileToVault) ?? (dirty ? 'Save the open section first — the vault files the saved document.' : null)}
+                onSend={() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); }}
+                onFile={() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); }} />
+            )}
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
@@ -4945,39 +4963,14 @@ export function DocumentWorkbench({
                       {/* The section's citation count, as the old toggle said it ("Sources 3"). */}
                       <MenuItem label={`Sources${citations > 0 ? ` ${citations}` : ''}`} onChoose={fromMore('sources')} testId="sources-rail-open" />
                       <MenuItem label="Vault" onChoose={fromMore('vault')} testId="vault-rail-open" />
-                      <MenuItem label="Versions" onChoose={fromMore('history')} />
                       <MenuItem label="Exports" onChoose={fromMore('exports')} testId="exports-rail-open" />
-                      <MenuItem label="Review tasks" onChoose={fromMore('tasks')} testId="tasks-rail-open" />
-                      <MenuItem label="Signatures" onChoose={fromMore('signatures')} />
-                      <MenuItem label="Audit trail" onChoose={fromMore('audit')} />
                       <MenuItem label="Access" onChoose={fromMore('access')} testId="access-rail-open" />
                     </div>
-                    {activeDoc && (
-                      <div role="group" aria-label="Review and file" className="dlm-group">
-                        {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
-                            will refuse this caller — the reason is the item's note.
-                            Send for review records the review request the board
-                            lists, and each reviewer's task with it, as one act. */}
-                        <MenuItem
-                          label="Send for review…"
-                          disabled={!!assignRefusal}
-                          note={assignRefusal ?? undefined}
-                          onChoose={choose(() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); })}
-                          testId="send-for-review-open"
-                        />
-                        <MenuItem
-                          label="File to vault…"
-                          disabled={dirty || !!vaultRefusal}
-                          note={vaultRefusal ?? (dirty
-                            ? 'Save the open section first — the vault files the saved document.'
-                            : !programId
-                              ? 'This document is not filed under a project; the vault is project-scoped.'
-                              : 'Export this document and file the file into the project vault, with its SHA-256 recorded.')}
-                          onChoose={choose(() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); })}
-                          testId="file-to-vault-open"
-                        />
-                      </div>
-                    )}
+                    {/* On the bar wider than a phone (P-122); here at phone width. */}
+                    <MoreReviewGroups fromMore={fromMore} documentOpen={!!activeDoc} assignRefusal={assignRefusal}
+                      vaultRefusal={vaultRefusal} dirty={dirty} filedUnderProject={!!programId}
+                      onSend={choose(() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); })}
+                      onFile={choose(() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); })} />
                     <div role="group" aria-label="Create" className="dlm-group">
                       <MenuItem label="New document…" onChoose={choose(() => setCreateRequests(r => ({ ...r, document: r.document + 1 })))} />
                       {activeDoc && (
@@ -5194,7 +5187,11 @@ export function DocumentWorkbench({
                              showed a DIFFERENT document from the canvas when
                              a section carried one. Same audited sanitiser
                              module, authoring variant, auth-resolved refs. */
-                          <AuthoredHtml className="ed-full-sec-body" html={html} />
+                          <AuthoredHtml
+                            className="ed-full-sec-body"
+                            html={html}
+                            citations={citationResolutionState === 'ready' ? readCitations.get(sec.id) : 'checking'}
+                          />
                         ) : (
                           /* Not "empty" as a finding — nothing has been written
                              here yet, and the document view says which. */
@@ -5390,13 +5387,7 @@ export function DocumentWorkbench({
                       </button>
                     </div>
                     {check.deficiencies.length === 0 ? (
-                      <span style={{ fontSize: 12 }}>
-                        {typeof check.checks_run === 'number' && check.checks_run > 0
-                          ? `No flags. The section passed all ${check.checks_run} mechanical checks `
-                          : 'No flags. The section passed the mechanical checks '}
-                        (length, module keywords, CTD elements where defined, tables,
-                        placeholders, structure) — this is not a review.
-                      </span>
+                      <span style={{ fontSize: 12 }}>{noFlagsSentence(check.checks_run, check.checks_skipped)}</span>
                     ) : (
                       [...check.deficiencies]
                         .sort(
@@ -5527,6 +5518,10 @@ export function DocumentWorkbench({
                         when the server sent it — a failed read of the sections is not "it agrees" —
                         and it never says the figures are consistent, only that none of the pairs it
                         compared disagree, with the count it compared beside it. */}
+                    {notRunSentence(check.checks_skipped) && (
+                      <span data-testid="section-check-not-run" style={{ fontSize: 12, opacity: 0.75 }}>{notRunSentence(check.checks_skipped)}</span>
+                    )}
+                    {check.consent_elements && <ConsentElementsCheck check={check.consent_elements} />}
                     {check.document_figure_consistency && (
                       <div
                         data-testid="section-check-consistency"

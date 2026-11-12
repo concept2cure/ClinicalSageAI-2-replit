@@ -101,7 +101,10 @@ export class ComputationEngine {
           // Before 2026-10-05 it was sized as a sensitivity/specificity study instead.
           throw this.kappaRefusal();
         }
-        if (input.studyType === 'diagnostic_accuracy') {
+        // An ROC design is sized on its AUC on this track too (computeStandard routes auc_roc to computeAUC).
+        // Until 2026-11-10 the track sent every diagnostic-accuracy study here to the sensitivity/specificity
+        // method, which refused a complete AUC design for want of `sensitivity`: the page's own ROC example.
+        if (input.studyType === 'diagnostic_accuracy' && input.endpointType !== 'auc_roc') {
           return this.computeDiagnostic(input);
         }
         return this.computeStandard(input);
@@ -985,49 +988,41 @@ export class ComputationEngine {
 
     const effectiveN = Math.floor(baseResult.sampleSize.total * (1 - missingRate));
 
-    // Estimate power reduction from missing data
+    /*
+     * The power after missing data is stated only where it follows from the design: complete-case analysis, whose
+     * power is the same test's at the evaluable N, recomputed. For LOCF, MMRM, multiple imputation and pattern
+     * mixture it depends on the missingness mechanism and the correlation structure, which this engine does not
+     * model, so it is null and said so. Until 2026-11-12 it was the design's power times a fixed constant per method
+     * (0.95; 1 - 0.3r; 1 - 0.25r; 1 - 0.5r), printed in the SAP as an estimate and used to dock the judgment (RULE 2).
+     */
     const basePower = baseResult.power;
-    let adjustedPower: number;
+    let adjustedPower: number | null = null;
     let biasRisk: 'low' | 'moderate' | 'high';
 
     switch (method) {
       case 'complete_case':
-        // Complete case: simple power reduction proportional to data loss
-        adjustedPower = this.estimatePowerAtN(input, effectiveN);
+        adjustedPower = Math.max(0, Math.min(1, this.estimatePowerAtN(input, effectiveN)));
         biasRisk = missingRate > 0.20 ? 'high' : missingRate > 0.10 ? 'moderate' : 'low';
         break;
-
       case 'LOCF':
-        // LOCF: preserves N but may bias towards/against treatment
-        adjustedPower = basePower * 0.95; // slight power reduction
-        biasRisk = 'moderate'; // LOCF always has some bias risk
+        // LOCF holds N but carries the last value forward, which can bias either way.
+        biasRisk = 'moderate';
         break;
-
       case 'MMRM':
-        // MMRM: efficient use of available data, moderate power preservation
-        adjustedPower = basePower * (1 - missingRate * 0.3); // less power loss than CC
         biasRisk = missingRate > 0.30 ? 'moderate' : 'low';
         break;
-
       case 'multiple_imputation':
-        // MI: good power preservation, depends on MAR assumption
-        adjustedPower = basePower * (1 - missingRate * 0.25);
         biasRisk = missingRate > 0.25 ? 'moderate' : 'low';
         break;
-
       case 'pattern_mixture':
-        // Pattern mixture: explicitly models MNAR, may reduce power more
-        adjustedPower = basePower * (1 - missingRate * 0.5);
-        biasRisk = 'low'; // explicitly addresses non-random missingness
+        // Models missing-not-at-random explicitly.
+        biasRisk = 'low';
         break;
-
       default:
-        adjustedPower = this.estimatePowerAtN(input, effectiveN);
         biasRisk = missingRate > 0.15 ? 'moderate' : 'low';
     }
 
-    adjustedPower = Math.max(0, Math.min(1, adjustedPower));
-    const powerReduction = basePower - adjustedPower;
+    const powerReduction = adjustedPower === null ? null : basePower - adjustedPower;
 
     const methodLabels: Record<string, string> = {
       complete_case: 'Complete case analysis',
@@ -1040,6 +1035,8 @@ export class ComputationEngine {
     let recommendation: string;
     if (biasRisk === 'high') {
       recommendation = `Missing rate of ${(missingRate * 100).toFixed(0)}% is high. ${methodLabels[method] ?? method} may yield biased estimates. Consider MMRM or multiple imputation as primary analysis with sensitivity analysis.`;
+    } else if (powerReduction === null) {
+      recommendation = `The power under ${methodLabels[method] ?? method} is not computed here: it depends on the missingness mechanism and the correlation structure. Size the study so it keeps its power on the ${effectiveN} subjects expected to complete, or simulate the power under the assumed mechanism. Include sensitivity analysis for MNAR scenarios.`;
     } else if (powerReduction > 0.10) {
       recommendation = `Power reduction of ${(powerReduction * 100).toFixed(1)}% due to missing data. Consider increasing sample size or using more efficient missing data methods.`;
     } else {

@@ -1,0 +1,3 @@
+ × client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx > the eCTD view checks a sequence before dispatch > shows what changed since the previous sequence of the submission, leaf by leaf 235ms
+   → expected 'What changed since sequence 0000 Comp…' to contain '1 leaf added, 1 changed or not compar…'
+      Tests  1 failed | 5 passed (6)

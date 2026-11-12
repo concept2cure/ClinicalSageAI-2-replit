@@ -64,6 +64,8 @@ async function fixture(t) {
     }
     if (url.startsWith('/api/cmc/module3-os/sections/')) return ok({ data: [] });
     if (url === '/api/c2c/project-vault/demo-program') return ok({ data: { documentCount: 0 } });
+    // P-122: with no second signer the pack looks for its synthetic reviewer (lib.mjs ensureSyntheticReviewer).
+    if (method === 'GET' && /^\/api\/tenant-users\/\d+$/.test(url)) return ok([{ id: 9, email: 'demo-reviewer@example.test' }]);
     throw new Error(`Unexpected test request: ${method} ${url}`);
   };
   state.login = async (base, email) => {
@@ -91,6 +93,7 @@ export const makePdfBuffer = () => { throw new Error('PDF generation is not part
   await write('scripts/demo/launch-demo/packs/biotech-work-content.mjs', `
 export const BIOTECH_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_SM = { molecule: 'C2C-201', programName: 'C2C-201', productName: 'C2C-201', indication: 'Fictional test indication' };
+export const C2C201_OBJECTIVE = { objective: 'Fictional test objective' };
 export const BIOTECH_SM_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_STUDY_DESIGN = {};
 export const BIOTECH_ADAPTIVE_PLAN = { title: 'stub', designType: 'group_sequential', adaptations: [], interimLooks: [], stoppingRules: [], snapshots: [] };
@@ -110,12 +113,17 @@ export async function ensureAgencyLetter() { state.downstream.push('ensureAgency
   await write('scripts/demo/launch-demo/packs/biotech-content.mjs', `
 export const INDICATION = 'Fictional test indication', MOLECULE = 'C2C-101', PRODUCT_NAME = 'C2C-101', PROGRAM_NAME = 'C2C-101';
 export const PROVENANCE = { fictional: true }, SOPS = [], CHANGE = {}, VAULT_DOCS = [];
+export const C2C101_IDENTITY = { applicationNumber: '999101', sponsor: { name: 'Fictional test sponsor' } };
+export const C2C101_OBJECTIVE = { objective: 'Fictional test objective' };
 export const T = name => '[Demo · Biotech] ' + name;
 export const findDemoByTitle = (rows, name) => rows.find(row => row.title === T(name));
 export const inDays = () => '2027-04-30';
 `);
   await write('scripts/demo/launch-demo/packs/biotech-shared.mjs', `
+import { state } from '../../../../state.mjs';
 export const NOT_EXECUTED_NO_SIGNER = 'not executed — signer credential not supplied';
+export async function ensureApplicantIdentity() { state.downstream.push('ensureApplicantIdentity'); }
+export async function ensureObjective() { state.downstream.push('ensureObjective'); }
 export const asArray = (body, key) => body[key] ?? [];
 export function makeTally() { const tally = { created: {}, found: {} }; return { tally,
 created(key) { tally.created[key] = (tally.created[key] ?? 0) + 1; },
@@ -363,5 +371,21 @@ for (const args of [
       encoding: 'utf8', env: { ...process.env, DEMO_SEED_EMAIL: '', DEMO_SEED_TOKEN: '' },
     });
     assert.equal(result.status, 2);
+  });
+}
+
+// 2026-11-10: with a second sponsor in the organisation (the Lumen pack's), C2C-201 was created with no client
+// named, the intake refused it (409 AMBIGUOUS_CLIENT_WORKSPACE) and the biotech pack stopped: no demo programme's
+// Module 3 composed. C2C-201 is created under C2C-101's own client workspace.
+{
+  const { sameSponsor } = await import('./packs/biotech.mjs');
+  test('biotech: C2C-201 is created under C2C-101\'s client workspace when the run named none', () => {
+    const ctx = { api: () => undefined, clientWorkspaceId: undefined };
+    assert.equal(sameSponsor(ctx, { clientWorkspaceId: 2 }).clientWorkspaceId, 2);
+    assert.equal(sameSponsor(ctx, { clientWorkspaceId: 2 }).api, ctx.api);
+  });
+  test('biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none', () => {
+    assert.equal(sameSponsor({ clientWorkspaceId: 9 }, { clientWorkspaceId: 2 }).clientWorkspaceId, 9);
+    assert.equal(sameSponsor({ clientWorkspaceId: undefined }, { clientWorkspaceId: null }).clientWorkspaceId, undefined);
   });
 }

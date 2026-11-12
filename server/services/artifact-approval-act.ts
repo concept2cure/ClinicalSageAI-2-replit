@@ -51,7 +51,14 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 import { concept2cureArtifacts } from '../../shared/schema';
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
-import { assertSignerIsNotAuthor, resolveTargetAuthors, separationOfDutiesRefusal } from './governance/separation-of-duties';
+import {
+  assertSignerIsNotAuthor, organizationReviewPolicy, resolveTargetAuthors, separationOfDutiesRefusal, soleMemberMayApprove,
+  SOLE_MEMBER_RECORD,
+  type SeparationOfDutiesResult,
+} from './governance/separation-of-duties';
+
+/** Re-exported for the signed act, which records it (services/artifact-signed-act.ts). */
+export { SOLE_MEMBER_RECORD };
 
 /**
  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
@@ -72,7 +79,9 @@ export interface ApprovalActQueryable {
  * reviewer was named, or every one was withdrawn. The doors answer it 409, as
  * the editor's door answers its own (authoring.router.ts, 2026-11-09).
  */
-export type ReviewQuorumVerdict = { met: true } | { met: false; message: string; code?: 'REVIEW_REQUIRED' };
+export type ReviewQuorumVerdict =
+  | { met: true; /** P-116: admitted with no independent review, because the signer is the only member. */ soleMember?: true }
+  | { met: false; message: string; code?: 'REVIEW_REQUIRED' };
 
 /** Where a reviewer is named: the Review step of the artifact's card (ConversationArtifactReview.tsx). */
 const NAME_A_REVIEWER = "Name a reviewer in the artifact's Review section; once every named reviewer has approved this version, it can be approved.";
@@ -105,6 +114,23 @@ export async function reviewQuorumVerdict(
   organizationId: number,
   currentVersion: number,
   /** Who would sign the approval. Both approval doors pass it (P-95 Q1). */
+  signerId?: number
+): Promise<ReviewQuorumVerdict> {
+  // P-116, P-117: the signer is the organisation's only member, so no
+  // independent review can exist, and its review rules admit that. The
+  // approval is admitted and recorded as unreviewed.
+  if (signerId !== undefined && (await soleMemberMayApprove(q, organizationId, signerId))) {
+    return { met: true, soleMember: true };
+  }
+  return recordedReviewQuorum(q, artifactPk, organizationId, currentVersion, signerId);
+}
+
+/** The quorum as the review records show it, for an organisation with someone to review. */
+async function recordedReviewQuorum(
+  q: ApprovalActQueryable,
+  artifactPk: number,
+  organizationId: number,
+  currentVersion: number,
   signerId?: number
 ): Promise<ReviewQuorumVerdict> {
   // Invalid scope/version must not become an empty query and a clearance.
@@ -266,12 +292,12 @@ async function reviewIndependenceVerdict(
       message: `Cannot approve: ${authorReviewers.length} reviewer(s) in the latest review round wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`,
     };
   }
-  const floor = reviewFloor(artifact);
+  const floor = reviewFloor(artifact, (await organizationReviewPolicy(q, organizationId)).independentReviewersRequired);
   if (active.length < floor.reviewers) {
     return {
       met: false,
       code: 'REVIEW_REQUIRED',
-      message: `Cannot approve: this document needs ${floor.reviewers} independent reviewers, because ${floor.because}; ${active.length} has approved this version. ${NAME_A_REVIEWER}`,
+      message: `Cannot approve: this document needs ${floor.reviewers} independent reviewer${floor.reviewers === 1 ? '' : 's'}, because ${floor.because}; ${active.length} has approved this version. ${NAME_A_REVIEWER}`,
     };
   }
   return { met: true };
@@ -290,21 +316,23 @@ function placedSection(ctdSection: string | null): string | null {
 }
 
 /**
- * P-95 Q2 (ruled 2026-11-09 by the coordinating session under P-107,
- * COORDINATION.md): how many independent reviewers must approve this version.
- * Two where the contract names regulated_dual_review, read only from fields
- * no request can lower: a CTD section is set, in any module (a placed
- * artifact is a submission_component, which documentClassSemantics.ts makes
- * dual), or the type is 'section' (type is never updated). Every other
- * artifact keeps one, as the single classes (memos, summaries) do. The class
- * re-resolved per request (metadata.harness.documentClass) is not read: any
- * writer can lower it (docs/evidence/W5/2026-11-01/p95-q2/README.md).
+ * How many independent reviewers must approve this version: the number the
+ * organisation's administrator set in its security settings, one unless they
+ * raised it (founder decisions P-116, "Doesn't need two", and P-117, "set by
+ * the client super admin", both 2026-11-10). From 2026-11-09 a placed artifact
+ * or a dossier section needed two (P-95 Q2, ruled under delegation); the
+ * founder overruled that. The refusal still says what the document is, from
+ * fields no request can lower.
  */
-export function reviewFloor(artifact: { type: string | null; ctd_section: string | null }): { reviewers: number; because: string } {
+export function reviewFloor(
+  artifact: { type: string | null; ctd_section: string | null }, required = 1,
+): { reviewers: number; because: string } {
+  const reviewers = Math.max(1, Math.floor(required));
+  const rule = reviewers === 1 ? '' : ", and your organisation's review rules ask for that many";
   const section = placedSection(artifact.ctd_section);
-  if (section) return { reviewers: 2, because: `it is placed in CTD ${section}` };
-  if (artifact.type === 'section') return { reviewers: 2, because: 'it is a dossier section' };
-  return { reviewers: 1, because: 'it is not placed in a filing' };
+  if (section) return { reviewers, because: `it is placed in CTD ${section}${rule}` };
+  if (artifact.type === 'section') return { reviewers, because: `it is a dossier section${rule}` };
+  return { reviewers, because: `it is not placed in a filing${rule}` };
 }
 
 /**
@@ -468,11 +496,14 @@ export interface ArtifactActSubject {
 export async function assertArtifactSignerIndependent(
   q: ApprovalActQueryable,
   act: { organizationId: number; signerId: number; artifactId: string; status: 'approved' | 'locked' },
-): Promise<void> {
-  await assertSignerIsNotAuthor(`artifact:${act.artifactId}`, act.organizationId, act.signerId, {
+): Promise<SeparationOfDutiesResult> {
+  // P-116: a sole member may sign their own artifact; the signed act records
+  // that no independent review took place (services/artifact-signed-act.ts).
+  return assertSignerIsNotAuthor(`artifact:${act.artifactId}`, act.organizationId, act.signerId, {
     command: act.status === 'locked' ? 'lock' : 'sign',
     meaning: ARTIFACT_ACT_MEANING[act.status],
     client: q,
+    soleMember: 'admit-and-record',
   });
 }
 

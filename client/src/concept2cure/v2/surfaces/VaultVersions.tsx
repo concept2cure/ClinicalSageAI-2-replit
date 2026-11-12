@@ -22,7 +22,7 @@ import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/l
 import { I } from '../icons';
 import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { VaultVersionCompare } from './VaultVersionCompare';
-import { VaultVersionViewer, VersionViewButton, useVaultVersionViewer } from './VaultVersionViewer';
+import { VersionViewButton, useSectionReader, type HostReader } from './VaultVersionViewer';
 import { useVaultCanWrite } from './VaultViewOnly';
 import { RestoreVersionButton } from './VaultVersionRestore';
 import { downloadBlob, safeFileName } from '../download';
@@ -61,6 +61,42 @@ export interface VaultVersion {
   sectionCitations?: VaultSectionCitation[];
   /** Why this version would not be transmitted (the server's VR-14 rule, verbatim), or null. Absent when the server did not say. */
   transmitRefusal?: string | null;
+  /** Where its file was rendered from (LX-10), from the verified filing receipt; null for a native upload. Absent when the server did not say. */
+  renderedFrom?: VaultRenderedFrom | null;
+}
+
+/** As the server returns it (authoring-vault-filing-receipt.ts renderedFromOf). */
+export type VaultRenderedFrom =
+  | { authoringDocumentId: string; sealVersion?: string; sealContentHash?: string; sealUnverified?: string }
+  | { notEstablished: 'unverified' | 'unread' };
+
+/** Why a sealed document's filing named no seal, in words; the stored code is never shown. */
+const SEAL_NOT_NAMED: Record<string, string> = {
+  SOURCE_NOT_SEALED: 'no sealed record stood behind the document’s status when it was filed',
+  SOURCE_ALTERED_SINCE_SEAL: 'the sealed record was of other text than the text filed',
+  SOURCE_SEAL_INTEGRITY_FAILED: 'the sealed record did not match its own hash when it was filed',
+};
+
+/**
+ * Where a version's file was rendered from, as one clause of its line. A
+ * version filed from Authoring names the sealed version its filing recorded,
+ * so a reader can go from the Vault copy to what was signed. Until 2026-11-12
+ * the record showed the Authoring signatures and nothing of the seal.
+ */
+export function renderedFromText(from: VaultRenderedFrom | null | undefined): string {
+  if (!from) return '';
+  if ('notEstablished' in from) {
+    return from.notEstablished === 'unread'
+      ? ' · where this file was rendered from could not be read'
+      : ' · the record of where this file was rendered from did not verify';
+  }
+  if (from.sealVersion && from.sealContentHash) {
+    return ` · rendered from the Authoring document’s sealed version “${from.sealVersion}” (seal ${from.sealContentHash.slice(0, 12)})`;
+  }
+  if (from.sealUnverified) {
+    return ` · filed from Authoring; ${SEAL_NOT_NAMED[from.sealUnverified] ?? 'the sealed record did not cover the text filed'}`;
+  }
+  return ' · filed from Authoring';
 }
 
 /** An editor section whose live span lineage cites a version, as the server returns it (vault-where-used.ts). */
@@ -261,6 +297,9 @@ interface Props {
   onOpenSection?: (documentId: string, sectionCode: string | null) => void;
   /** The Versions list starts open (a search hit on an earlier version); its next step shows either way. */
   open?: boolean;
+  /** The host's reader (Vault.tsx): a version's View opens in its wide reading drawer, as the record's own View does.
+   *  Without it, the section frames the version itself, under the list. */
+  reader?: HostReader;
 }
 
 interface ExportManifestSummary {
@@ -378,7 +417,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
   onDownload: Props['onDownload'];
   downloadingId: string;
   /** Show a version in the page (VaultVersionViewer.tsx), through the same audited download. */
-  onView?: (versionId: string, label: string, hash: string | null) => void;
+  onView?: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
   viewingId?: string | null;
   onLifecycleChanged?: () => void;
   /** Compare an earlier version with the current one (plan critique 15). */
@@ -408,6 +447,12 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
             <span data-testid={`vault-version-estar-${v.id}`}>{estarText(v.estarUses)}</span>
             <span data-testid={`vault-version-cmc-${v.id}`}>{cmcEvidenceText(v.cmcEvidence)}</span>
             <span data-testid={`vault-version-sections-${v.id}`}>{sectionCitationText(v.sectionCitations)}</span>
+            <span
+              data-testid={`vault-version-rendered-${v.id}`}
+              title={v.renderedFrom && 'sealContentHash' in v.renderedFrom ? v.renderedFrom.sealContentHash : undefined}
+            >
+              {renderedFromText(v.renderedFrom)}
+            </span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <VersionRoute lifecycle={v.lifecycle} title={v.version ? `${title} v${v.version}` : title} current={v.current}
@@ -497,7 +542,7 @@ function NewVersionButton({ uploading, onPick }: { uploading: boolean; onPick: (
 }
 
 export function VaultVersions({
-  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged, onOpenSection, open,
+  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged, onOpenSection, open, reader,
 }: Props) {
   const path = versionsPath(projectId, documentId);
   const st = useLiveData<VersionsShape>(path, [path], isVersionsShape);
@@ -507,7 +552,7 @@ export function VaultVersions({
   const versions = confirmed?.versions ?? [];
   const currentId = versions.find((v) => v.current)?.id;
   const [comparing, setComparing] = useState<string | null>(null);
-  const viewer = useVaultVersionViewer(projectId);
+  const viewer = useSectionReader(projectId, reader);
 
   let body: React.ReactNode;
   if (st.loading) body = <div className="vd-d-idx">Loading versions…</div>;
@@ -525,7 +570,7 @@ export function VaultVersions({
         title={title}
         onDownload={onDownload}
         downloadingId={downloadingId}
-        onView={(id, label, hash) => void viewer.view(id, label, hash)}
+        onView={viewer.view}
         viewingId={viewer.viewing}
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}
@@ -545,7 +590,7 @@ export function VaultVersions({
         <div className="vd-d-idx">Submission placements, eSTAR exports, CMC evidence and citing sections are limited to records you can currently access.</div>
       ) : null}
       {body}
-      <VaultVersionViewer state={viewer} />
+      {viewer.panel}
       {comparing && currentId ? (
         <VaultVersionCompare projectId={projectId} documentId={currentId} againstId={comparing} onClose={() => setComparing(null)} />
       ) : null}

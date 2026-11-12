@@ -40,12 +40,17 @@ if [[ ! -s "$C2C_CODESPACE_STATE/owner.env" || ! -s "$C2C_CODESPACE_STATE/app.en
   NEED_ACCOUNTS=1
 fi
 c2c_start_postgres || c2c_blocked "PostgreSQL did not start."
+c2c_ensure_attestation_key
 c2c_ensure_database || c2c_blocked "the owner role or database could not be ensured."
 # Idempotent: over a complete database this is deploy-migrate + the readiness
 # contract, so migrations committed since the last start are applied.
 c2c_provision || c2c_blocked "database provisioning failed."
 if [[ "${NEED_ACCOUNTS:-0}" == "1" ]] || ! c2c_accounts_current; then
   c2c_seed_accounts || c2c_blocked "sign-in accounts could not be created."
+fi
+# The Lumen account (post-create.sh). It is not required for the rest of the demo, so a failure is logged, not fatal.
+if ! c2c_lumen_accounts_current; then
+  c2c_seed_lumen_accounts || c2c_log "The Lumen account was not created; the rest of the demo still starts."
 fi
 
 # The forwarded origin the browser uses; the CSRF origin check refuses others.
@@ -115,6 +120,10 @@ c2c_start_app() {
   c2c_log "Starting the app (npm run dev) on port $C2C_PORT; log: $C2C_APP_LOG"
   (
     set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
+    # "Demo access" signs in as the Lumen account's lead once that account exists (the founder's landing account).
+    if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then VITE_DEV_LOGIN_EMAIL="$(c2c_lumen_person lead)"; fi
+    # The people "Demo access" offers to choose from, by account and role (c2c_demo_accounts).
+    export VITE_DEMO_ACCOUNTS="$(c2c_demo_accounts)"
     exec env "${C2C_UNSET[@]}" NODE_ENV=development PORT="$C2C_PORT" ALLOWED_ORIGINS="$C2C_ORIGINS" \
       setsid nohup npm run dev >"$C2C_APP_LOG" 2>&1 </dev/null
   ) &
@@ -168,14 +177,65 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 
 # Demo packs through the product's own API. They run again when scripts/demo
 # changes on the branch (the packs are idempotent by title), so a Codespace
-# made earlier gets new demo data on its next start. Without a second signer
-# (OQ_SIGNER_*) the two-person steps are recorded as not executed; the reviewer
-# becomes that signer once the QMS packs route a draft to review before
-# approving it (the server refuses a draft's approval with QMS_INVALID_STATE).
+# made earlier gets new demo data on its next start. The approver is the second
+# signer (OQ_SIGNER_*): without one, every two-person step (QMS approvals,
+# method validation, the RACT's approval, review requests) was recorded as not
+# executed. The reviewer is the third person (OQ_APPROVER_*): the Vault's review
+# route refuses one person in two roles, so without a third the Lumen packs'
+# Vault reviews and approvals (25 steps) were recorded as not executed here. The QMS packs route a draft to review with the signer as its
+# approver (158323d776), and in an organisation that has designated no QMS
+# approver only the Approver role approves; every demo person is an
+# administrator. So the approver is first designated as the organisation's QMS
+# approver, once, through the governed route an administrator uses in Admin and
+# access (PUT /api/tenant-users/:org/:user/qms-approver, with a reason, audited).
+c2c_designate_qms_approver() {
+  local admin="$1" approver="$2" marker="$C2C_CODESPACE_STATE/qms-approver.done"
+  grep -qx "$admin=$approver" "$marker" 2>/dev/null && return 0
+  if C2C_BASE="http://127.0.0.1:$C2C_PORT" C2C_ADMIN="$admin" C2C_APPROVER="$approver" node -e '
+    (async () => {
+      const base = process.env.C2C_BASE, approver = process.env.C2C_APPROVER;
+      const l = await (await fetch(base + "/api/auth/dev-login", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: process.env.C2C_ADMIN }) })).json();
+      const org = l?.user?.organizationId, auth = { Authorization: "Bearer " + l?.accessToken };
+      if (!l?.accessToken || !org) process.exit(1);
+      try {
+        const members = await (await fetch(base + "/api/tenant-users/" + org, { headers: auth })).json();
+        const person = Array.isArray(members) ? members.find((m) => m.email === approver) : null;
+        if (!person) process.exit(1);
+        const r = await fetch(base + "/api/tenant-users/" + org + "/" + person.id + "/qms-approver", { method: "PUT",
+          headers: { "Content-Type": "application/json", ...auth },
+          body: JSON.stringify({ designated: true, reason: "Codespace demonstration: the approver approves its controlled documents." }) });
+        const j = await r.json().catch(() => null);
+        process.exitCode = r.status === 200 && j?.designated === true ? 0 : 1;
+      } finally {
+        await fetch(base + "/api/auth/logout", { method: "POST", headers: auth }).catch(() => {});
+      }
+    })().catch(() => process.exit(1));' 2>/dev/null; then
+    echo "$admin=$approver" >>"$marker"
+    c2c_log "QMS approver for $admin's organisation: $approver."
+  else
+    c2c_log "Could not designate $approver as the QMS approver; the demo's QMS approvals are recorded as not executed."
+  fi
+}
+
 C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
+# The Lumen account first: it is where "Demo access" lands.
+# Its reviewer is the Lumen pack's second signer, who approves its SOPs (lumen-qms.mjs), so the reviewer is the
+# Lumen organisation's QMS approver: without one its SOPs stay draft and its training stays empty.
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
+  c2c_designate_qms_approver "$(c2c_lumen_person lead)" "$(c2c_lumen_person reviewer)"
+  c2c_seed_lumen_org "$C2C_DEMO_VERSION"
+fi
+# After the Lumen account, before the long development-organisation seed: what the document exports need (report
+# PDF fonts, the Word-to-PDF converter, xmllint; post-create.sh). An existing Codespace never re-runs post-create, so
+# the check is here too. Never fatal.
+c2c_install_export_tools
+c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
   if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
+      OQ_SIGNER_EMAIL="$DEMO_APPROVER_EMAIL" OQ_SIGNER_PASSWORD="$DEMO_SIGNER_PASSWORD" \
+      OQ_APPROVER_EMAIL="$DEMO_REVIEWER_EMAIL" OQ_APPROVER_PASSWORD="$DEMO_SIGNER_PASSWORD" \
       npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
       >"$C2C_CODESPACE_STATE/demo-seed.log" 2>&1; then
     echo "$C2C_DEMO_VERSION" >"$C2C_CODESPACE_STATE/demo-seed.done"
@@ -213,6 +273,7 @@ c2c_set_idle_window() {
   fi
 }
 c2c_set_idle_window "$DEMO_SEED_EMAIL" 120
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_set_idle_window "$(c2c_lumen_person lead)" 120; fi
 
 # The CSR study (CDISCPILOT01), prepared once: the public CDISC pilot ADaM
 # files are fetched OUTSIDE the repository (CDISC's terms forbid committing or
@@ -267,6 +328,20 @@ else
         : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the key check did not run")}})'
   )"
   c2c_log "ANTHROPIC_API_KEY: $C2C_ANTHROPIC_LINE"
+  # The model list above is answered for an account with no credit, and for a key whose workspace cannot call a
+  # model it can see: this start said "key accepted" while every drafting call was refused (2026-11-10). One small
+  # billable request (about 60 tokens) to an approved drafting model says whether the key can draft, and if not, why.
+  if [[ "$C2C_ANTHROPIC_LINE" == "key accepted"* ]]; then
+    C2C_DRAFTING_LINE="$(
+      set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
+      env "${C2C_UNSET[@]}" node scripts/ops/codespaces-doctor.mjs --json --probe-anthropic-usage \
+        "--expect-anthropic-models=$C2C_DRAFTING_MODELS" 2>/dev/null |
+      node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("{"),s.lastIndexOf("}")+1)).anthropicDrafting;
+        console.log(a.status==="passed" ? "answered by " + a.model + ((a.modelsRefused||[]).length ? " (not offered to this key: " + a.modelsRefused.join(", ") + ")" : "")
+          : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the check did not run")}})'
+    )"
+    c2c_log "A drafting call with this key (one small billable request): $C2C_DRAFTING_LINE"
+  fi
 fi
 if [[ -z "${OPENAI_API_KEY:-}" ]]; then
   c2c_log "No OPENAI_API_KEY secret: search (Vault, knowledge base, AnA's project memory) uses OpenAI embeddings and will fail."
@@ -281,14 +356,33 @@ case "$C2C_APP_ANA" in
       c2c_log "This start has no ANTHROPIC_API_KEY. A Codespaces secret reaches a Codespace when it starts:"
       c2c_log "after adding one, stop and start the Codespace (Codespaces menu: Stop Current Codespace), not just reload the page."
     fi ;;
+  embedding_lane_down|no_embedding_lane)
+    # /readyz is red for search only. Read as "AnA is down", it sent a person holding a working Anthropic key
+    # looking for a fault in that key.
+    # Said only when the drafting call above was answered: with a refused key this line followed "BLOCKED
+    # ANTHROPIC_KEY_INVALID" and told the person holding that key that AnA drafts (2026-11-10).
+    if [[ "${C2C_DRAFTING_LINE:-}" == "answered by"* ]]; then
+      c2c_log "AnA in the running app answers and drafts with the Anthropic key (see the drafting call above)."
+    else
+      c2c_log "AnA in the running app cannot answer or draft yet: see the ANTHROPIC_API_KEY lines above."
+    fi
+    c2c_log "Search is off ($C2C_APP_ANA): Vault search, the knowledge base and AnA's project memory need OPENAI_API_KEY for embeddings." ;;
   *) c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)" ;;
 esac
 
+C2C_DEMO_ACCESS_EMAIL="$DEMO_SEED_EMAIL"
+C2C_LUMEN_PEOPLE="not created (see accounts.log)"
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
+  C2C_DEMO_ACCESS_EMAIL="$(c2c_lumen_person lead)"
+  C2C_LUMEN_PEOPLE="$(c2c_lumen_roster | awk -F'|' '{ print $2 " <" $1 ">" }' | paste -sd, - | sed 's/,/, /g')"
+fi
 cat <<EOF
 
 ============================================================================
  Concept2Cure is running: $C2C_PUBLIC_URL
- Sign in: press "Demo access" on the sign-in page (signs in as $DEMO_SEED_EMAIL).
+ Sign in: press "Demo access" on the sign-in page; choose who under "Sign in as" (default $C2C_DEMO_ACCESS_EMAIL).
+ Lumen account: $C2C_LUMEN_ORG_NAME, with $C2C_LUMEN_PEOPLE.
+ Development organisation: $DEMO_SEED_EMAIL (password sign-in), with the CDISC CSR study.
  Password sign-in for the three demo people: see $C2C_CODESPACE_STATE/app.env
    (DEMO_SIGNER_PASSWORD). App log: $C2C_APP_LOG
  Restart the app: bash .devcontainer/post-start.sh (restarts it when it lacks a key this

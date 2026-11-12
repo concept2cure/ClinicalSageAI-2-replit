@@ -1,0 +1,59 @@
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > creates a controlled document through POST /documents, then opens it 522ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the template field of New controlled document sets the type, as the library card did 118ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the document number opens the document, not a chat 68ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > Revise opens a reason-for-change dialog and posts the reason to /revise 183ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a periodic-review row opens the document instead of asking AnA to "schedule" it 67ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the register carries no AnA request of its own above its rows 60ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 318ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 190ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > edits the assessment through PATCH /changes/:id, starting from the recorded one 387ms
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > keeps a drawer open while its write is in flight 1084ms
+   → Unable to find an accessible element with the role "dialog" and name `/Assess CC-2026-014/`
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 254ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > opens the one New controlled document door with the change-control templates to choose from 143ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > creates a change-control document with the selected program and reason, then opens its bound editing copy 119ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the log carries no AnA request of its own above its rows 98ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a failed read says so, never "No job roles yet" 53ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a verified empty list says there are none; while loading it says so 159ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > lists each role and its holders; someone who is not an administrator is offered no change 43ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > an administrator creates a role with its reason, through the governed route, and the list is read again 169ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a refused change shows the server's sentence and keeps the form 110ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a role assigned to a document cannot be deleted, and says why; removing a holder sends a DELETE with its reason 80ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > reads this document's assignments; a failed read says so, never "Nobody is assigned" 8ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > a verified empty list says nobody is assigned, and that training opens with the version in force 7ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > an assigner sees every person and how each is covered 11ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > anyone else sees the count and their own line, not the names (P-50) 16ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > when whether you may change them could not be checked, it says so and offers nothing 19ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > a version approved for a later day is named 7ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > assigns a job role not yet assigned, with its reason; the role already assigned is not offered 71ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > withdraws an assignment with its reason; a refusal is shown in the server's words 79ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > when the roles and people cannot be read, nothing can be assigned, and it says so 37ms
+ × client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > cannot be dismissed while its act is saving 109ms
+   → expected "vi.fn()" to not be called at all, but actually been called 2 times
+ × client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > moves focus into an act when it opens, and back to the button that opened it when it closes 22ms
+   → expected 'Rename' to be 'Rename QA reviewer' // Object.is equality
+ × client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > says beside a disabled Delete why it is unavailable 16ms
+   → expected undefined to be 'Delete is unavailable while it is ass…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > cannot be dismissed while its act is saving
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 2 times
+ ❯ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx:236:25
+ FAIL  client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > moves focus into an act when it opens, and back to the button that opened it when it closes
+AssertionError: expected 'Rename' to be 'Rename QA reviewer' // Object.is equality
+ ❯ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx:245:49
+ FAIL  client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > says beside a disabled Delete why it is unavailable
+AssertionError: expected undefined to be 'Delete is unavailable while it is ass…' // Object.is equality
+ ❯ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx:255:8
+ FAIL  client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > keeps a drawer open while its write is in flight
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ drawer client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx:144:41
+ ❯ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx:307:12
+ Test Files  2 failed (2)
+      Tests  4 failed | 28 passed (32)
+
+# Found by the walk (w28), then written as a test: under React.StrictMode, before the opener was read at first render
+ × TrainingAssignments.test.tsx > the drawer and its act > gives focus back to the footer button that opened the act, under StrictMode
+AssertionError: expected <div class="de" role="dialog" …(3)>…(3)</div> to be <button type="button" …(1)>…(1)</button> // Object.is equality

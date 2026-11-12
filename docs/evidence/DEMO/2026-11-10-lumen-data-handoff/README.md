@@ -1,0 +1,144 @@
+# Handoff: the Lumen demonstration data and the Lumen account (R1 session, 2026-11-06 to 11-10)
+
+Session `session_01QoxbLdKp1MgbXvCfgSkkJr` (R1, then DATA at the founder's request) stops here. Everything below is on
+`concept2cure-v2`. This note is for whoever picks it up: what exists, how to run it, what is open, and who to ask.
+
+## What the founder asked (2026-11-06)
+
+1. "Make sure everything has faux seeded demo examples with data, users, full story in data and use case examples
+   built. RBM, QMS and more. Vault must have faux client data across it, and tasking too."
+2. "Create an account for Lumen … use my email as the user and my name … a full account built out with use cases
+   all across the board, specifically CSR report for their phase 2 study results … a biotech with multiple users …
+   a user for Brian Finrow and Carl … and myself. And make sure when I launch my Codespace environment … all of
+   that data and all those users … loads easily and simply."
+
+Item 1 is done. Item 2 is half done: the seed can build the account, but the Codespace does not create it yet. See
+"Open, in order".
+
+## What exists (RULE 3), all through the product's own routes
+
+The Lumen pack is `scripts/demo/launch-demo/packs/lumen.mjs`. It is idempotent: a second run finds everything except
+the Vault filing below. It runs inside `--pack all`.
+
+| Area | Module | What a person sees on LMN-201 |
+|---|---|---|
+| Tasks | `work-areas.mjs` `ensureTasks` (now takes `assignee`, `criticalPath` and `'completed'`), `lumen-content.mjs` `TASKS` | 16 tasks across To do, In progress, Blocked, In review and Done; "5 tasks stand between you and Database lock readiness checklist, and 1 task is overdue"; 3–5 tasks on each other project |
+| People on tasks | `lumen.mjs` `castOf` / `castTasks` | The story's personas by name where the organisation has them; otherwise by role: author (who seeds), reviewer (`OQ_SIGNER_*`), approver (`OQ_APPROVER_*`) |
+| Review | `lumen.mjs` `ensureIbReview` | The Investigator's Brochure out for review with the second person (needs `OQ_SIGNER_*`) |
+| Communication and Respond | `lumen-content.mjs` `INFORMATION_REQUEST` | A FICTIONAL FDA information request: "1 agency communication needs a response", 3 questions |
+| Submission Center | `lumen.mjs`, through `biotech-submission.mjs` `ensureSubmission`; `ensureApplicantIdentity`, `ensureStudyTags` | Sequence 0000 on LMN-201, assembling, with the approved Vault documents placed as 5 leaves, tagged to their studies; a fictional IND number and sponsor record; Validation and Dispatch say what is missing, and Compile builds the package |
+| Protocol | `lumen-protocol.mjs`, through `biotech-protocol.mjs` `ensureProtocol` | Protocol LMN-201-CDI-02 (synthetic) in the protocol workspace: sections, objectives, its own eligibility criteria, schedule, risks, amendment 2, two deviations with a CAPA, a review |
+| Team | `lumen.mjs` `ensureProjectTeam` | Each Lumen project shared with the reviewer and the approver, so the Team card lists all three with their work |
+| Reporting | `lumen.mjs` `ensureLumenReports`, `ensureLumenReportPack` | 4 computed reports run: executive digest, commitment register, IND safety readiness, eTMF completeness; a bundle of the four; two in-platform schedules |
+| The CSR | `lumen-csr.mjs` | LMN-201's Phase 2 CSR document with its study data frozen, ready for "Build CSR draft" |
+| Quality | `lumen-qms.mjs`, `lumen-qms-content.mjs` | 3 SOPs; 4 deviations; 4 CAPAs with 6 actions, linked to their sources; 5 suppliers; 3 nonconformances; 4 internal audits; a change control linked to its SOP, deviation and CAPA; 2 management reviews |
+| Risk-based monitoring | `lumen-rbm.mjs`, `lumen-rbm-content.mjs` | RACT (approved with a second person), 8 KRIs over six monthly extracts, 3 QTLs, 6 signals, the plan and site-104 actions. Subject profiles now load: the 42P10 constraint was fixed in `e10d5e962` |
+| Vault | `lumen-vault.mjs`, `lumen-vault-content.mjs` | 25 synthetic PDFs across the four projects, filed to CTD sections (Required documents counts them), reviewed, approved and sealed where the story says, with governed artifacts |
+| A named organisation | `scripts/seed-admin.mjs` `ADMIN_ORG_NAME` | On this machine only, creates the organisation for `ADMIN_ORG_SLUG` if it does not exist |
+
+Commits: `4fad016a5` (tasks, review, letter, sequence, reports), `dff867c6f` (Quality), `91d6a97da` (RBM), `893451f02`
+(Vault, third person, owners by role), `98e664c40` (seed-admin).
+Earlier: the demo-day UI sweep `f05919e54` (`docs/evidence/D2-CSR/2026-11-06-demo-day-ui-sweep/`).
+
+## How to run it
+
+Development organisation, as the Codespace does today:
+
+```
+npm run demo:seed -- --pack all --base-url http://127.0.0.1:5000 --email "$DEMO_SEED_EMAIL"
+```
+
+With no second or third person, every two-person step says "not executed" and nothing fails.
+
+**A dedicated Lumen organisation.** This was tested on a local mirror; the Codespace does not do it yet.
+
+1. Create the organisation and its three people. Run seed-admin.mjs three times as the database owner, with the same
+   `ADMIN_ORG_SLUG=lumen-bioscience-demo` and `ADMIN_ORG_NAME="Lumen Bioscience (demo)"` each time. Names and
+   addresses come from the environment, never from the repository.
+2. Seed it as the author:
+
+   ```
+   OQ_SIGNER_EMAIL=<reviewer> OQ_SIGNER_PASSWORD=<pw> OQ_APPROVER_EMAIL=<approver> OQ_APPROVER_PASSWORD=<pw> \
+     npm run demo:seed -- --pack lumen --base-url http://127.0.0.1:5000 --email <author>
+   ```
+
+   On the mirror this ran twice with exit 0. LMN-201 read back 16 uploads, 5 of 36 required sections, 3 governed
+   artifacts and 1 seal. Tasks were split across the three people.
+
+## Open, in order
+
+1. **Done (2026-11-10): the Lumen account in the Codespace.** The commit subject is "L1: the Codespace sets up the
+   Lumen account, seeds it, and 'Demo access' lands there".
+   - `post-create.sh` holds `c2c_seed_lumen_accounts` and `c2c_seed_lumen_org`.
+   - `post-start.sh` does four things:
+     - creates the account;
+     - seeds it before `--pack all`;
+     - points "Demo access" at the Lumen lead;
+     - sets the lead's 120-minute idle window.
+   - The people come from the Codespaces secrets `C2C_FOUNDER_EMAIL`, `C2C_FOUNDER_NAME`, `C2C_LUMEN_REVIEWER_NAME`
+     and `C2C_LUMEN_APPROVER_NAME`. Without them the people are the fictional Lumen Lead, Lumen Reviewer and Lumen
+     Approver. Changing a secret re-creates the people and re-seeds on the next start. Everyone's password is
+     `DEMO_SIGNER_PASSWORD` in `~/.concept2cure-codespace/app.env`.
+   - Since P-95 (2026-11-09) an artifact is approved only after its reviewers approve it, and a placed one needs two
+     independent reviewers. The Lumen organisation has one reviewer besides its author and approver, so its placed
+     artifacts stay in review with the review recorded, and the step says so. A fourth person in the organisation,
+     added to the roster as a second reviewer, would let them be approved.
+   - **"Demo access" chooses who** (2026-11-10). Under "Sign in as" the login screen lists every demo person by
+     account and role: Lumen's three, then the development organisation's seven. Each signs in through the same dev
+     login and readiness check (`client/src/concept2cure/components/concept2cure-auth/DemoAccounts.tsx`). The
+     Codespace passes the list as `VITE_DEMO_ACCOUNTS` (`post-create.sh` `c2c_demo_accounts`, roles in
+     `c2c_demo_role`). With no list, the single button is as it was.
+2. **Done (2026-11-10): the Vault no longer re-files on every run.** The Vault now hangs a filed upload under a
+   binder node (`cab-bn:1.14.4.1`), so the seed's folder check never matched. `readCabinet` in `lumen-vault.mjs` reads
+   each document's own filing record instead. A second run in the Lumen organisation: "created 0, found 208", no
+   filing repaired.
+3. **Done (2026-11-10): the Lumen account's SOPs go effective.** The Codespace designates the Lumen reviewer as the
+   QMS approver before the seed (`a3ab5b826`). In the running app, LMN-SOP-201 and 202 read "Effective", approved
+   by the reviewer, with training assigned.
+4. **biotech and mdx QMS with a signer.** `biotech-qms.mjs` `settleStatus` (and mdx's equivalent) approves a draft
+   directly, and with `OQ_SIGNER_*` set the server answers 409 `QMS_INVALID_STATE`. It needs the author's
+   `in_review` step first. Until that is fixed, the Codespace keeps the signer off `--pack all` (Codespace session's
+   finding).
+5. **RBM product defects still open** (handed over; not demo data):
+   - Site risk and Site oversight read `site_intel.sites`, whose writer `server/api/site-intel/routes.ts` is mounted
+     nowhere;
+   - "New KRI" answers 500 (42P08, `CASE WHEN $11 IS NULL` in `server/routes/mdx-rbm.ts`).
+6. **The CSR study's package identity** (asked by the lead `011Dpx…`). On "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+   Dispatch's inspection copy answers 409 `PACKAGE_IDENTITY_MISSING`. Record a fictional applicant identity through
+   the product's routes: application number, sponsor record and FDA contact. Do it in the demo data, or in the
+   Codespace's CSR preparation (`walk-prepare.cjs`, Codespace session).
+7. **R1's remaining reach list.** `docs/evidence/DESIGN/R1/2026-11-01-inventory/` has 186 served-but-uncalled
+   routes in no package. They need a reach-or-retire decision per route.
+
+## The showcase pass (2026-11-10, after the founder's "get everything ready for a sales showcase")
+
+The run of show for the Lumen account, by person and scene, with what was found and fixed, is
+`docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`. In short:
+
+- Three sweeps of the Lumen account (lead, reviewer, approver): no failed request except the Module 3 refusals for a
+  biologic.
+- Completed: the protocol workspace, the sequence's leaves, the project teams, Reporting's bundle and schedules.
+- A defect of this session's own, found by reading the screen and fixed (`34ecd2981`): the Lumen protocol carried
+  the psoriasis study's eligibility criteria.
+- The Codespace now installs what the document exports need: the report PDF fonts, LibreOffice and `xmllint`
+  (`4a473cffe`, `01a5f04db`). Before, Reporting's PDF exports and a document's "Download, PDF" answered 503 there.
+- LMN-201 has a fictional applicant identity (IND 194021) and study tagging, so Compile builds its package
+  (`52d1c629c`).
+- Open: that install has not run in a real Codespace; see that note's "Open".
+
+## Who to ask
+
+- **Codespace setup** (`.devcontainer/**`, `scripts/ops/codespaces-*`): `session_01QoxbLaF89iYd7wC96owa7t`.
+- **Design lead and CSR lane:** `session_011DpxUyQmE1enma4gTjcfBy`.
+- **The CSR build in the Lumen account** (from "Build CSR draft" to the sequence): `session_01QoxbLZjzhMwaBj2BdVmUUR`.
+- **The sweep of every screen and the presenter's scripts in `docs/demo/`:** `session_01QoxbLdTrwYyiaSgLDxgHQJ`.
+- **The presenter's rehearsal with the launch gate on:** `session_01T2wooCZu46W7msw4TJuuzr`.
+- **Coordination row:** `.design/claude-convergence/COORDINATION.md`. R1 and DATA hold nothing now.
+
+## Data rules kept
+
+- Nothing is real Lumen data.
+- Every record carries the `[Demo · Lumen]` prefix or says FICTIONAL or SYNTHETIC.
+- Letters say "NOT ISSUED BY FDA".
+- Companies, sites and investigators are invented.
+- No real person's identity is committed.

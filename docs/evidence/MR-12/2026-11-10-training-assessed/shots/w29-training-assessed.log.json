@@ -1,0 +1,100 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "section-approver",
+      "status": 200,
+      "meta": {
+        "count": 1,
+        "withinDays": 60,
+        "scope": "everyone",
+        "truncated": false,
+        "unassessed": 0,
+        "documentsCapped": false
+      },
+      "heading": "Training overdue, due or lapsing",
+      "sub": "Overdue, or due or lapsing in the next 60 days, for the people assigned to train",
+      "rows": [
+        "Theo TraineeQS-SOP-001 Handling of customer complaints · v1.0 · due 2026-11-24 (in 14 days), 14 days after they were assigned"
+      ],
+      "empty": null,
+      "unassessed": null,
+      "capped": null
+    },
+    {
+      "name": "section-author",
+      "status": 200,
+      "meta": {
+        "count": 1,
+        "withinDays": 60,
+        "scope": "everyone",
+        "truncated": false,
+        "unassessed": 0,
+        "documentsCapped": false
+      },
+      "heading": "Training overdue, due or lapsing",
+      "sub": "Overdue, or due or lapsing in the next 60 days, for the people assigned to train",
+      "rows": [
+        "Theo TraineeQS-SOP-001 Handling of customer complaints · v1.0 · due 2026-11-24 (in 14 days), 14 days after they were assigned"
+      ],
+      "empty": null,
+      "unassessed": null,
+      "capped": null
+    },
+    {
+      "name": "section-trainee",
+      "status": 200,
+      "meta": {
+        "count": 1,
+        "withinDays": 60,
+        "scope": "everyone",
+        "truncated": false,
+        "unassessed": 0,
+        "documentsCapped": false
+      },
+      "heading": "Training overdue, due or lapsing",
+      "sub": "Overdue, or due or lapsing in the next 60 days, for the people assigned to train",
+      "rows": [
+        "Theo TraineeQS-SOP-001 Handling of customer complaints · v1.0 · due 2026-11-24 (in 14 days), 14 days after they were assigned"
+      ],
+      "empty": null,
+      "unassessed": null,
+      "capped": null
+    },
+    {
+      "name": "theo-member",
+      "roleStatus": 200,
+      "designationStatus": 200
+    },
+    {
+      "name": "section-trainee-own",
+      "status": 200,
+      "meta": {
+        "count": 1,
+        "withinDays": 60,
+        "scope": "own",
+        "truncated": false,
+        "unassessed": 0,
+        "documentsCapped": false
+      },
+      "heading": "Training overdue, due or lapsing",
+      "sub": "Your training: overdue, or due or lapsing in the next 60 days",
+      "rows": [
+        "Theo TraineeQS-SOP-001 Handling of customer complaints · v1.0 · due 2026-11-24 (in 14 days), 14 days after they were assigned"
+      ],
+      "empty": null,
+      "unassessed": null,
+      "capped": null
+    },
+    {
+      "name": "theo-admin-designated",
+      "roleStatus": 200,
+      "designationStatus": 200
+    },
+    {
+      "name": "w29-training-assessed",
+      "ok": true
+    }
+  ]
+}

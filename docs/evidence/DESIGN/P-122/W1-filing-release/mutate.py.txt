@@ -1,0 +1,35 @@
+# One mutation at a time: apply, run the named test, restore, check sha256. Fresh checksums taken at start.
+import hashlib, subprocess, sys, json
+R='/home/user/ClinicalSageAI-2-replit/'
+G='server/services/authoring/workflow-import-governance.ts'
+SC='shared/regulatory/section-code.ts'
+D='client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx'
+TS='server/services/coauthor/__tests__/coauthor-snapshot-frozen-ledger.pglite.test.ts'
+TC='shared/regulatory/__tests__/section-code.test.ts'
+TD='client/src/concept2cure/v2/surfaces/__tests__/reviewDecisionWords.test.tsx'
+M=[
+ ('M1 occurred_at read raw again', G, "to_char(a.occurred_at AT TIME ZONE 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') AS occurred_at,", "a.occurred_at,", TS),
+ ('M2 catch-all back to 409', G, "} catch (error) { return ledgerReadRefused(error); }", "} catch { return independentRefused(); }", TS),
+ ('M3 every ledger failure 503 (refusal not rethrown)', G, "  if (error instanceof WorkflowImportGovernanceError) throw error;\n  throw new WorkflowImportGovernanceError(503", "  throw new WorkflowImportGovernanceError(503", TS),
+ ('M4 section number keeps the stored key', SC, "String(code ?? '').trim().split(':')[0].trim()", "String(code ?? '').trim()", TC),
+ ('M5 dialog says (optional) again', D, "<h3>Independent checks</h3>\n    {!check && <p>Not required for this document. They are required when AnA drafted any of its text.</p>}", "<h3>Independent checks{!check ? ' (optional)' : ''}</h3>", TD),
+ ('M6 section heading shows the stored code', D, "<h4>{sectionHeading(section, ' · ')}</h4>", "<h4>{section.code}{section.title ? ` · ${section.title}` : ''}</h4>", TD),
+ ('M7 finding names the stored code', D, "return section ? ` · ${sectionHeading(section, ' — ')}` : '';", "return section ? ` · ${section.code}${section.title ? ` — ${section.title}` : ''}` : '';", TD),
+]
+sha=lambda p: hashlib.sha256(open(R+p,'rb').read()).hexdigest()
+fresh={p:sha(p) for p in {G,SC,D}}
+out=[]
+for name,path,old,new,test in M:
+    src=open(R+path).read(); assert src.count(old)==1, name
+    open(R+path,'w').write(src.replace(old,new,1))
+    try:
+        r=subprocess.run(['npx','vitest','run',test,'--maxWorkers=2'],cwd=R,capture_output=True,text=True,timeout=900)
+        txt=r.stdout+r.stderr
+        line=[l for l in txt.splitlines() if 'Tests ' in l]
+        caught = r.returncode!=0
+    finally:
+        open(R+path,'w').write(src)
+    ok = sha(path)==fresh[path]
+    out.append({'mutation':name,'test':test,'caught':caught,'tests':line[-1].strip() if line else '','restored_sha_ok':ok})
+    print(json.dumps(out[-1]),flush=True)
+print('ALL CAUGHT' if all(o['caught'] for o in out) else 'SOME SURVIVED', 'ALL RESTORED' if all(o['restored_sha_ok'] for o in out) else 'RESTORE MISMATCH')

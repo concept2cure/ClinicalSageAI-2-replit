@@ -1,0 +1,60 @@
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 7ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 3ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "out-of-scope /api/global-ri/cmc/specifications/:p ← cmc",
++ ]
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:504:93
+    502|     expect(cmcCalls.length).toBeGreaterThan(40);
+    503|     expect(cmcCalls.filter(([, e]) => e.verdict !== 'launch').map(([p,…
+    504|     expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.su…
+       |                                                                                             ^
+    505|   });
+    506|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "out-of-scope /api/global-ri/cmc/specifications/:p ← cmc",
++ ]
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:618:93
+    616|     expect(ind.map(([p]) => p)).toContain('/api/ind-lifecycle/clock');
+    617|     expect(ind.filter(([, e]) => e.verdict !== 'launch').map(([p, e]) …
+    618|     expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.su…
+       |                                                                                             ^
+    619|     // No launch or shell screen reaches the agency-questions API.
+    620|     expect([...walk.all].filter(([p]) => p.startsWith('/api/haq-manage…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 41 passed (43)
+   Start at  03:55:24
+   Duration  1.99s (transform 289ms, setup 88ms, import 1.53s, tests 113ms, environment 0ms)
+

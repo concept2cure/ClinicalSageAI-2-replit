@@ -1,0 +1,14 @@
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > K510Surface: the clearance lookup says why it could not run, in words > does not print the raw "fetch failed" reason the rehearsal app showed 212ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: fetch failed" reads as words 2ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: getaddrinfo ENOTFOUND api.fda.gov" reads as words 1ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json timed out after 10000ms" reads as words 1ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json responded 500" reads as words 1ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA unavailable" reads as words 1ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "" reads as words 1ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > keeps a reason already written as a sentence for a person 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > K510Surface: the clearance lookup says why it could not run, in words > does not print the raw "fetch failed" reason the rehearsal app showed
+AssertionError: expected 'WorkspacePredicate · SE · eSTARAudit …' not to match /fetch failed/i
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: fetch failed" reads as words
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json unreachable: getaddrinfo ENOTFOUND api.fda.gov" reads as words
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.fallbackReason.test.tsx > fallbackReasonInWords > "openFDA device/510k.json timed out after 10000ms" reads as words

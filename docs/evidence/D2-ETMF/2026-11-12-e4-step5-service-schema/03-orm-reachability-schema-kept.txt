@@ -1,0 +1,17 @@
+
+[ci:orm-reachability] FAIL — 2 Drizzle model(s) nothing can create:
+
+  shared/schema/etmf.ts::tmf_artifacts
+  shared/schema/etmf.ts::tmf_files
+
+  A model here exists in TypeScript, is read by production code, and has
+  never existed in a database. The endpoint reading it answers 500 with
+  "relation ... does not exist" the first time anyone opens the surface.
+
+  Give it a provisioning path — either:
+    · add `export * from './schema/<module>';` to shared/schema.ts, so
+      drizzle-kit push creates it (check for export-name collisions first); or
+    · add a migration under migrations/ with the CREATE TABLE, and list it
+      in scripts/db/migration-set.mjs so a DEPLOY applies it too. Creating
+      the file is not enough: deploy-migrate applies only that array.
+

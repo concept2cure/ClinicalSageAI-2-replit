@@ -1,0 +1,41 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/8c05d32c-f5b2-4a79-87d5-ddd208dfb428/data-room/file",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sourceIds": [
+        157,
+        999999999
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 173,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "complete": false,
+      "items": [
+        {
+          "sourceId": 157,
+          "outcome": "filed",
+          "documentId": "acd2124d-41b1-4b79-a175-4ec51a7a8858",
+          "version": "1.0",
+          "placementStatus": "unfiled",
+          "folderLabel": "",
+          "needsReview": true
+        },
+        {
+          "sourceId": 999999999,
+          "outcome": "refused",
+          "code": "NOT_FOUND",
+          "message": "No captured file with this id is in this project’s data room."
+        }
+      ]
+    }
+  }
+}

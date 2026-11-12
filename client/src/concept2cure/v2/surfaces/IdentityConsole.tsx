@@ -344,7 +344,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     return (
       <div className="cm-body" style={{ padding: 24 }}>
         <EmptyState icon={I.lock} title="Platform administrator required"
-          hint="SCIM token and allowlist administration requires the super_admin or platform_admin role. Sign in with a platform-administrator account to manage enterprise identity." />
+          hint="Single sign-on, SCIM provisioning tokens and the allowed addresses are managed by Concept2Cure's platform administrators. To add or change them for your organisation, ask your Concept2Cure contact." />
       </div>
     );
   }

@@ -1,0 +1,10 @@
+After the top bar change (working tree on 81d5e9363)
+stderr | client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > a visible Search control, with its words and the ⌘K hint, opens the command palette
+stderr | client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > Help goes where the account menu’s "Get help" goes
+stderr | client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > on Home too, with no project open: Search first among the controls, Help after Your work
+ ✓ client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > a visible Search control, with its words and the ⌘K hint, opens the command palette 200ms
+ ✓ client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > Help goes where the account menu’s "Get help" goes 50ms
+ ✓ client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > on Home too, with no project open: Search first among the controls, Help after Your work 9ms
+ ✓ client/src/concept2cure/v2/__tests__/p122TopBarSearchHelp.test.tsx > the top bar shows Search and Help (P-122 §3.4) > both stay visible at phone width: Search as its icon, Help as it is 17ms
+ Test Files  14 passed (14)
+      Tests  212 passed (212)

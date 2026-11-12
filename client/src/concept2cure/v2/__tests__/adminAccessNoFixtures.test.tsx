@@ -207,6 +207,8 @@ describe('AdminAccess — honest error state', () => {
 
     expect(await screen.findByText('Organization admin access required')).toBeTruthy();
     expect(screen.queryByText("Couldn't load admin and access")).toBeNull();
+    // An action only an administrator can take is not offered to an account that is not one (role walk, 2026-11-12).
+    expect(screen.queryByTestId('admin-invite-member')).toBeNull();
     await waitFor(() => expect(kpiValue('Members')).toBe('--'));
     for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
   });

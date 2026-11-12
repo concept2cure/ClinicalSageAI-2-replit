@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/sequences/11/shadow-review",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 503,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 433,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "message": "No AI provider is configured on this deployment, so no review was performed."
+      }
+    }
+  }
+}

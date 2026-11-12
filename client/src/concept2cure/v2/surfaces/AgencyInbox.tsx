@@ -191,6 +191,13 @@ export function draftResponseWithAna(c: CommRow, onAsk: (q: string) => void): vo
  * The project's agency communications: the live read, seeded into local state
  * so a logged or advanced row shows the server's record without a re-read.
  */
+/** "Not advanced — <why>. Nothing was stored." with one full stop: the server's reason usually ends its own sentence,
+ *  and appending another read "…with a reason.. Nothing was stored." (2026-11-10). */
+export function notAdvancedLine(reason: string): string {
+  const why = reason.trim();
+  return `Not advanced — ${/[.!?…]$/.test(why) ? why : `${why}.`} Nothing was stored.`;
+}
+
 export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?: 'ok' | 'error') => void) {
   const path = agencyCommsPath(projectId);
   const live = useLiveRows<CommRow>(path);
@@ -243,7 +250,7 @@ export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?
         const res = await apiRequest('PATCH', `${path}/${encodeURIComponent(id)}/advance`);
         const body = await res.json().catch(() => null);
         if (!res.ok) {
-          fire('Not advanced — ' + (serverMessage(body) ?? `the server refused the change (HTTP ${res.status})`) + '. Nothing was stored.', 'error');
+          fire(notAdvancedLine(serverMessage(body) ?? `the server refused the change (HTTP ${res.status})`), 'error');
           return;
         }
         const row = (body as { data?: { humanReviewStatus?: string; closureStatus?: string } } | null)?.data;
@@ -260,7 +267,7 @@ export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?
         );
         fire(`Advanced to ${String(row.humanReviewStatus).replace('_', ' ')} — recorded with an audit entry.`);
       } catch (e) {
-        fire('Not advanced — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was stored.', 'error');
+        fire(notAdvancedLine(e instanceof Error ? e.message : String(e)), 'error');
       }
     },
     [path, fire],
@@ -423,8 +430,9 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
               {I.checkSquare} {c.taskId}
             </button>
           )}
+          {/* Quiet, not primary (plan §2, one primary per view): this list is in Communication, HAQ and Respond. */}
           {c.responseRequired && c.closureStatus !== 'closed' && (
-            <button className="cc-btn sm primary" onClick={() => draftResponseWithAna(c, onAsk)}>
+            <button className="cc-btn sm" onClick={() => draftResponseWithAna(c, onAsk)}>
               {I.penLine} Draft response with AnA
             </button>
           )}

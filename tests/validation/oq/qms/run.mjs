@@ -8,7 +8,7 @@ import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 import {
   inDays, errCode, dataOf, isApprovalRow, isQmsSignatureRow, isRetirementStamp, signatureRowsFor,
-  postSigned, approveSigned, retireSigned, retirementDigestReport,
+  postSigned, approveSigned, retireSigned, retirementDigestReport, RETIREMENT_MEANING,
 } from './signed-acts.mjs';
 import { asSigned, createAuthoredSop, expectRouteCompleteOn, qmsProgramId, qualifyRoutedSend, sendOnRoute, signerRoute } from './controlled-sop.mjs';
 
@@ -394,8 +394,8 @@ await step(
     id: 'OQ-QMS-10',
     urs: ['URS-QMS-007'],
     title: 'CREDENTIALED: the signer retires SOP B as an electronic signature; the retirement is stamped, audited and signed; a second retirement is refused',
-    action: 'as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:"APPROVED", reason}; read the signatures by target; recompute the §11.70 digest from the stored row; retire again',
-    expected: 'HTTP 200: status retired, metadata.retired {reason, meaning APPROVED, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE',
+    action: 'as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:"retirement", reason} (v0.10; "APPROVED" until P-51); read the signatures by target; recompute the §11.70 digest from the stored row; retire again',
+    expected: 'HTTP 200: status retired, metadata.retired {reason, meaning retirement, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning retirement, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE',
     dependsOn: ['OQ-QMS-06d'],
     note: 'Security review 2026-09-24, DP-32 / P1-29. Retiring is the terminal transition of an effective procedure and a signed record (§11.50, §11.200), taken with the same ceremony as the approval: signing authority, password and enrolled second factor re-verified, the meaning, one electronic_signatures row bound to the version content, the UPDATE and the chained audit row in one transaction (server/services/qms/document-approval-signature.ts retireQmsDocumentSigned).',
   },
@@ -414,7 +414,7 @@ await step(
     const report = retirementDigestReport(await asSigned(asSigner, expect, dataOf(await asSigner('GET', `/api/mdx/qms/documents/${d.id}`))), sig, retired, row);
     attach('retirement-digest-recomputation.json', report);
     expect(report.match, 'recomputed §11.70 retirement digest does not match the signature / the stored document', report);
-    const again = await postSigned(ctx, `/api/mdx/qms/documents/${d.id}/retire`, { reason: 'OQ-006 step 10: second retirement must be refused' });
+    const again = await postSigned(ctx, `/api/mdx/qms/documents/${d.id}/retire`, { reason: 'OQ-006 step 10: second retirement must be refused', meaning: RETIREMENT_MEANING });
     expect(again.status === 409 && errCode(again) === 'QMS_INVALID_STATE', `second retire expected 409 QMS_INVALID_STATE, got ${again.status}`, again.json);
     state.docB = d;
     return `retired by ${retired.by} (${signer.session.user.email}) from ${retired.fromStatus} at ${retired.at}; signature ${sig.id} meaning ${sig.meaning}, ${sig.authenticationMethod}, digest ${String(sig.boundPayloadDigest).slice(0, 12)}… (recomputed match ${report.match}); 2 rows for docB; auditTrail=${JSON.stringify(response.json.meta.auditTrail)}; re-retire → 409 QMS_INVALID_STATE`;
@@ -441,27 +441,20 @@ await step(
   {
     id: 'OQ-QMS-12',
     urs: ['URS-QMS-011'],
-    title: 'Quality Management Plan create and list (governed: reason required)',
-    action: 'POST /api/quality/plans {name, description} with no reason; again with a reason of at least 8 characters; GET /api/quality/plans',
-    expected: 'Without a reason: HTTP 400 REASON_REQUIRED and no plan created. With it: HTTP 201; plan listed with status draft',
+    title: 'Quality management plans are outside this release',
+    action: 'POST /api/quality/plans {name, description, reason}; GET /api/quality/plans',
+    expected: 'Both 403 LAUNCH_SCOPE: no plan is created or listed in this release',
+    note: 'v0.9: quality-management plans left the launch scope by the CPO decision of 2026-10-08 (bcc457edb8, docs/SURFACE_DECISIONS_2026-10-08.md, shared/constants/launch-scope.ts): a plan\'s gates and CTQ factors cannot be authored anywhere, and nothing reads them. ' +
+      'Until v0.8 the step created and listed a plan (v0.5: with a governed reason). URS-QMS-011 is withdrawn from this release; its revision is owed through change control.',
   },
   async ({ api, expect }) => {
     const name = `OQ-006 QMP ${stamp}`;
-    // v0.5: creating a plan is a governed change (D5, 2026-09-23); a plan
-    // posted without a reason is refused and nothing is created.
-    const refused = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise' });
-    expect(refused.status === 400, `expected 400 without a reason, got ${refused.status}`, refused.json);
-    expect(refused.json?.error === 'REASON_REQUIRED', 'expected REASON_REQUIRED', refused.json);
-    const before = await api('GET', '/api/quality/plans');
-    const beforeArr = Array.isArray(before.json) ? before.json : before.json?.data ?? [];
-    expect(!beforeArr.some((p) => p.name === name), 'a refused plan was created', beforeArr.map((p) => p.name));
-    const r = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise', reason: 'OQ-006 validation exercise: QMP create' });
-    expect(r.status === 201, `expected 201, got ${r.status}`, r.json);
-    const l = await api('GET', '/api/quality/plans');
-    const arr = Array.isArray(l.json) ? l.json : l.json?.data ?? [];
-    expect(arr.some((p) => p.name === name), 'plan not listed', arr.map((p) => p.name));
-    state.qmpName = name;
-    return `plan ${r.json?.id} status ${r.json?.status}; ${arr.length} plans listed`;
+    const code = (r) => r.json?.error?.code ?? r.json?.code;
+    const made = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise', reason: 'OQ-006 validation exercise: QMP create' });
+    const listed = await api('GET', '/api/quality/plans');
+    expect(made.status === 403 && code(made) === 'LAUNCH_SCOPE', `create: expected 403 LAUNCH_SCOPE, got ${made.status} ${code(made)}`, made.json);
+    expect(listed.status === 403 && code(listed) === 'LAUNCH_SCOPE', `list: expected 403 LAUNCH_SCOPE, got ${listed.status} ${code(listed)}`, listed.json);
+    return `create ${made.status} ${code(made)}; list ${listed.status} ${code(listed)}`;
   },
 );
 
@@ -513,17 +506,17 @@ await step(
     id: 'OQ-QMS-15',
     kind: 'unscripted',
     urs: ['URS-QMS-011', 'URS-QMS-012'],
-    title: 'QMP surface renders the plan',
+    title: 'The QMP surface shows it is outside this release',
     action: 'Open /concept2cure/qmp',
-    expected: 'The plan name is visible',
-    dependsOn: ['OQ-QMS-12'],
+    expected: 'The page explains the surface is not in this release (no plan content, no upsell)',
+    note: 'v0.9: quality-management plans left the release (bcc457edb8, 2026-10-08); see OQ-QMS-12. Until v0.8 the step expected the plan created in OQ-QMS-12 on the page.',
   },
   async (ctx) => {
     await ctx.newPage(null);
     await ctx.goto('/concept2cure/qmp');
-    await ctx.expectText(state.qmpName);
+    await ctx.expectText(/not in this release/i);
     await ctx.screenshot();
-    return 'plan visible';
+    return 'launch-scope gate rendered';
   },
 );
 

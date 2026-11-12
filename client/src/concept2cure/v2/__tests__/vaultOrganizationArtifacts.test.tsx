@@ -78,6 +78,8 @@ function mockApi(extra: Route = () => undefined) {
       if (hit instanceof Error) throw hit;
       return hit;
     }
+    // The projects the person can open (P-107 item 3): none here, so there is no sponsor to ask about.
+    if (method === 'GET' && url === '/api/c2c/projects?limit=200') return ok({ success: true, data: [] });
     if (method === 'GET' && url === ORG) return ok(orgBody());
     if (method === 'GET' && url.startsWith('/api/artifacts-center/')) {
       return { ok: true, status: 200, headers: new Headers({ 'Content-Disposition': 'attachment; filename="IND_cover_letter.docx"' }), blob: async () => new Blob(['docx']) } as unknown as Response;
@@ -134,7 +136,8 @@ describe('with no project open, the Vault lists the governed artifacts of the pr
   it('says the signature on the current version in words, four states', async () => {
     mockApi(() => undefined);
     apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === ORG ? ok(orgBody([...ORG_ROWS(), orgRow({ id: 'artifact_12', name: 'Unknown cover', sigVersion: null, sigStale: null })])) : ok({}));
+      url === ORG ? ok(orgBody([...ORG_ROWS(), orgRow({ id: 'artifact_12', name: 'Unknown cover', sigVersion: null, sigStale: null })]))
+        : url === '/api/c2c/projects?limit=200' ? ok({ success: true, data: [] }) : ok({}));
     render(<Vault {...props()} />);
     const panel = await orgPanel();
     await within(panel).findByText('IND cover letter');
@@ -437,3 +440,87 @@ describe("a CRO's sponsors never mix in the governed artifacts listing", () => {
   });
 });
 
+
+/* P-107 item 3 (2026-11-08): "With no project open, the Vault first asks which sponsor; every view is inside one
+   sponsor." */
+describe('with no project open and several sponsors, the Vault asks which sponsor first', () => {
+  const PROJECTS = [
+    { id: 'p-lumen-1', title: 'LMN-201', ws: 'Biotech', client_workspace_id: 3, client_name: 'Lumen' },
+    { id: 'p-acme-1', title: 'ACM-7', ws: 'Biotech', client_workspace_id: 9, client_name: 'Acme' },
+    { id: 'p-lumen-2', title: 'LMN-301', ws: 'Biotech', client_workspace_id: 3, client_name: 'Lumen' },
+  ];
+  const sponsored: Route = (method, url) => {
+    if (method !== 'GET') return undefined;
+    if (url === '/api/c2c/projects?limit=200') return ok({ success: true, data: PROJECTS });
+    if (url.startsWith(`${ORG}?sameClientAs=`)) return ok(orgBody([orgRow({ prog: 'LMN-201' })]));
+    return undefined;
+  };
+
+  it('lists the sponsors, and reads and shows nothing of any sponsor until one is chosen', async () => {
+    mockApi(sponsored);
+    render(<Vault {...props()} />);
+    const choice = await screen.findByTestId('vault-sponsor-choice');
+    expect(within(choice).getByText(/Acme/)).toBeTruthy();
+    expect(within(choice).getByText(/Lumen/)).toBeTruthy();
+    expect(screen.queryByTestId('vault-project-list')).toBeNull();
+    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
+    expect(urls().some((u) => u.startsWith(ORG))).toBe(false);
+    /* 2026-11-12: the hint above said "Open one below. The governed artifacts of every project you can open are listed
+       after them": no project was below, and no view spans sponsors. */
+    expect(screen.getByText(/Choose a sponsor below, then one of its projects\./)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/every project you can open/);
+  });
+
+  it('once chosen, lists that sponsor\'s projects only and reads its artifacts by one of its projects', async () => {
+    mockApi(sponsored);
+    render(<Vault {...props()} />);
+    const choice = await screen.findByTestId('vault-sponsor-choice');
+    fireEvent.click(within(choice).getByRole('button', { name: 'Show the Vaults of Lumen' }));
+    const list = await screen.findByTestId('vault-project-list');
+    expect(within(list).getByText('LMN-201')).toBeTruthy();
+    expect(within(list).getByText('LMN-301')).toBeTruthy();
+    expect(within(list).queryByText('ACM-7')).toBeNull();
+    expect(screen.getByText(/Open one below\. The governed artifacts of the projects listed follow them\./)).toBeTruthy();
+    await orgPanel();
+    await waitFor(() => expect(urls()).toContain(`${ORG}?sameClientAs=p-lumen-1`));
+    expect(urls()).not.toContain(ORG);
+    fireEvent.click(screen.getByTestId('vault-sponsor-change'));
+    expect(await screen.findByTestId('vault-sponsor-choice')).toBeTruthy();
+    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
+  });
+});
+
+/* The server's half of P-107 item 3: a listing with no project that would span clients is refused with
+   CLIENT_REQUIRED (server/services/artifact-registry-read.ts). The page asks which sponsor before it reads, so it
+   meets the refusal only when its project list did not show the second client (an archived project, a list that is
+   not complete). It is then said as what it is, never as a failed read or an empty registry. */
+describe('a listing the server refuses until a client is chosen', () => {
+  const refused = () => new ApiRequestError('Your projects belong to more than one client.', 409,
+    { success: false, error: 'CLIENT_REQUIRED', message: 'Your projects belong to more than one client.', meta: { clients: [{ id: 9, name: 'Acme' }, { id: 3, name: 'Lumen' }] } },
+    'CLIENT_REQUIRED');
+  const oneListed: Route = (method, url) => {
+    if (method !== 'GET') return undefined;
+    if (url === '/api/c2c/projects?limit=200') return ok({ success: true, data: [] });
+    return url.startsWith(ORG) && !url.startsWith(`${ORG}/`) ? refused() : undefined;
+  };
+
+  it('says the artifacts are listed one client at a time, with no retry and no claim that the read failed', async () => {
+    mockApi(oneListed);
+    render(<Vault {...props()} />);
+    const panel = await orgPanel();
+    const said = await within(panel).findByText(/Your projects belong to more than one client/);
+    expect(said.textContent).toMatch(/listed one client at a time/);
+    expect(within(panel).queryByRole('alert')).toBeNull();
+    expect(within(panel).queryByRole('button', { name: /Try again/ })).toBeNull();
+    expect(panel.textContent).not.toMatch(/could not be read|No governed artifacts|not an empty registry/);
+  });
+
+  it('tells AnA the same, not that a read failed', async () => {
+    mockApi(oneListed);
+    let latest: SurfaceContext | null = null;
+    render(<><Vault {...props()} /><ContextProbe onContext={(c) => { latest = c; }} /></>);
+    await waitFor(() => expect(String((latest as SurfaceContext | null)?.facts?.organizationArtifacts)).toMatch(/a client must be chosen first/));
+    expect(String((latest as unknown as SurfaceContext).summary)).toMatch(/listed one client at a time/);
+    expect(String((latest as unknown as SurfaceContext).summary)).not.toMatch(/could not be read/);
+  });
+});

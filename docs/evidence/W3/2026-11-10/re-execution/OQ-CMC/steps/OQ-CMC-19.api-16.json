@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/689b2e11-9727-43af-9aae-1369322b42cc/3.2.P.7/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "reason": "Section 3.2.P.7 reviewed against its source records and approved for filing.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 359,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "sectionKey": "3.2.P.7",
+      "versionNumber": 1,
+      "approvedVersionId": "2777482d-b672-4732-b736-bacfdefe92c1",
+      "governance": {
+        "actionId": "act_9210feb90e8b4ba7869a8f503506d978",
+        "sha256Chain": "679a00f3a930aae68792b6cc34c8f7e9199d37c72d8832f01f3fc9f513de1627"
+      }
+    }
+  }
+}

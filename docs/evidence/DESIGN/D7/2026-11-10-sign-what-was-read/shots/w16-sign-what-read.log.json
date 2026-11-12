@@ -1,0 +1,45 @@
+{
+  "apiErrors": [
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 409,
+      "url": "/api/mdx/qms/changes/23/approve",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "raised",
+      "status": 201,
+      "moved": 200
+    },
+    {
+      "name": "dialog-read",
+      "record": "What you approveCurrent state → proposed stateNot recorded yet.Reason for the changeWalk: the approval binds the content read.RiskNot recorded yet.Impact assessmentAs first assessed.Implementation planAs first planned."
+    },
+    {
+      "name": "edited-meanwhile",
+      "status": 200
+    },
+    {
+      "name": "signed-stale",
+      "dialog": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingCC-SIGN-873701 Walk: sign what was readApproves the change for implementation. The person who proposed it cannot approve it.QAQuinn Approverapprover@qs.testSignature meaning · §11.50ApprovalYou approve this content for useWhat you approveCurrent state → proposed stateNot recorded yet.Reason for the changeWalk: the approval binds the content read.RiskNot recorded yet.Impact assessmentAs first assessed.Implementation planAs first planned.Reason for this actionWalk: approved as read.Minimum 8 characters.Password · §11.200This change was edited after you opened it, so it is not what you read. Nothing was signed. Read it again, then approve.CancelSign and commit",
+      "state": "under_assessment"
+    },
+    {
+      "name": "dialog-reread",
+      "record": "What you approveCurrent state → proposed stateNot recorded yet.Reason for the changeWalk: the approval binds the content read.RiskNot recorded yet.Impact assessmentEdited while the approver was reading.Implementation planAs first planned."
+    },
+    {
+      "name": "signed-reread",
+      "state": "approved",
+      "impact": "Edited while the approver was reading."
+    },
+    {
+      "name": "w16-sign-what-read",
+      "ok": true
+    }
+  ]
+}

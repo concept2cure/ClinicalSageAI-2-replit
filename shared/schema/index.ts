@@ -456,8 +456,9 @@ export * from './ind-icsr-transmissions';
 // migration: migrations/20260615_regulatory_assessments.sql.
 export * from './regulatory-assessments';
 
-// TMF artifact filings — durable per-trial log of filed reference-model artifact
-// codes (powers the code-based completeness checker; distinct from etmf.ts).
+// TMF artifact filings — the trial master file: per study, each reference-model
+// record filed against a Vault document, declared not applicable, or removed, with
+// who, when and why. The one TMF store (eTMF convergence E4, 2026-11-12).
 // Service: etmf/tmf-artifact-persistence;
 // migration: migrations/20260615_tmf_artifact_filings.sql.
 export * from './tmf-artifacts';
@@ -528,12 +529,6 @@ export * from './controlled-substances';
 // ICH E2C. Service: server/services/lifecycle-obligations; migration:
 // migrations/20260610_lifecycle_obligations.sql.
 export * from './lifecycle';
-
-// AI-native eTMF (C2C-08): Trial Master File against the DIA TMF Reference Model
-// — per-study container + classified artifacts + completeness gap-check feeding
-// inspection readiness. ICH E6(R3) Appendix C. Service: server/services/etmf; migration:
-// migrations/20260610_etmf.sql.
-export * from './etmf';
 
 // Research-compliance shared foundation: personnel roster + training/clearance
 // records that gate committee approvals ("no index until trained"), feeding the

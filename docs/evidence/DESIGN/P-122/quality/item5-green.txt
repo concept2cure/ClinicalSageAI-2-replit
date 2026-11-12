@@ -1,0 +1,30 @@
+# Item 5 green
+# base 7952824e7 2026-11-10T13:11:45Z
+## The new tab's suite
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > is a tab of Quality beside CAPA, and AnA can open it 9ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > lists the organisation's complaints and MDR reports, with the server's reportability and reporting clock 413ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > narrowed to the project, reads its complaints and reports only 14ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > says a failed read is a failure, never an empty register 11ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records a complaint in the open project, every event fact stated, through the audited route 328ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > refuses to record a complaint with no project open, and sends nothing 107ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > moves a complaint only along the server lifecycle, with its reason 131ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records the MDR decision a complaint needs, in the complaint's project, linked to it 230ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > opens a complaint's vigilance timeline under its row 117ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > tells AnA both registers as read, and that a failed read is a failure 69ms
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+## Quality's suites and every test that names capa-mdr, the CAPA/complaint/MDR lifecycles or the surface-action registry (55 files)
+ Test Files  86 passed (86)
+      Tests  1026 passed (1026)
+## The DB test (app_service, RLS_ENFORCE=on): the complaint, MDR and vigilance reads the tab makes
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > answers a member with their organisation's complaints and MDR events, and never another's 12
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > reads a complaint's vigilance timeline for its member, and refuses another organisation's 45
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > refuses another organisation's project on the complaint list 21ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+## Production verdict for the tab's reads (launchScopeApiVerdict)
+/api/capa-mdr/complaints launch device-postmarket
+/api/capa-mdr/mdr-events launch device-postmarket
+/api/capa-mdr/vigilance launch device-postmarket
+/api/capa-mdr/capa launch quality
+/api/capa-mdr/triage launch device-postmarket

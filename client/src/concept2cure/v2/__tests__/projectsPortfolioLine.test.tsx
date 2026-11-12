@@ -23,6 +23,9 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 import { portfolioWords } from '../surfaces/PyramidProject';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
@@ -96,5 +99,8 @@ describe('the portfolio line on Projects', () => {
     expect(portfolioWords({ summary: summary({ status: 'at-risk', lateToStart: 1, next: null }) as never })?.text).toBe('1 task should have started');
     expect(portfolioWords({ unreadable: true })?.text).toBe('The plan could not be read.');
     expect(portfolioWords({ unavailable: true })).toBeNull();
+    // Hours laid end to end are a floor: "on schedule" is said against minimum dates, never as a forecast.
+    expect(portfolioWords({ durations: 'hours-only', summary: summary({}) as never })?.text).toBe('On schedule against minimum dates · Pre-IND Engagement by Jan 12, 2027');
+    expect(portfolioWords({ durations: 'mixed', summary: summary({}) as never })?.text).toBe('On schedule · Pre-IND Engagement by Jan 12, 2027');
   });
 });

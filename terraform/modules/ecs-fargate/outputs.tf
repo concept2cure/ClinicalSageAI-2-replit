@@ -111,6 +111,12 @@ output "api_log_group_arn" {
   value = aws_cloudwatch_log_group.api.arn
 }
 
+# Where the API, and every scheduler it runs, writes: the stack's log metric
+# filters read it (terraform/stack/monitoring.tf, MR-04 Stage 2).
+output "api_log_group_name" {
+  value = aws_cloudwatch_log_group.api.name
+}
+
 output "service_names" {
   description = "Every ECS service this module creates, so the stack's tests can say which exist."
   value       = [aws_ecs_service.api.name]

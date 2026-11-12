@@ -228,7 +228,8 @@ function withIvdReadiness(base: ScreenContext, report: IvdReadinessReport | null
 }
 
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
-  if (nav === 'device-postmarket') return 'Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project';
+  /* P-122: the surveillance read takes the project (mdx-postmarket.ts), so the panels are this project's. */
+  if (nav === 'device-postmarket') return 'Reporting clocks, signals and the CAPA board are for this project; PMS plan execution and vigilance trends are not tracked yet';
   return null;
 }
 

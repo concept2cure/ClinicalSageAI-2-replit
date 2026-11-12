@@ -4,7 +4,7 @@
  * with the window's authority, and "owed, no date" when none exists.
  */
 import { describe, expect, it } from 'vitest';
-import { clockLine } from '../surfaces/AgencyInbox';
+import { clockLine, notAdvancedLine } from '../surfaces/AgencyInbox';
 
 describe('clockLine', () => {
   it("shows a derived due date with its window and citation, and the agency's date as it stands", () => {
@@ -21,5 +21,16 @@ describe('clockLine', () => {
       .toBe(' · response owed; the letter states no date and none is codified for its class');
     expect(clockLine({ dueDate: '2099-02-02', responseClock: { state: 'untracked', reason: 'class_asks_nothing' } })).toMatch(/^ · due 2099-02-02/);
     expect(clockLine({})).toBe('');
+  });
+});
+
+// 2026-11-10, the Codespace click-through: "Close letter" on a letter that still owes a response read
+// "…mark it as needing no response, with a reason.. Nothing was stored." The server's sentence already ends itself.
+describe('notAdvancedLine', () => {
+  it('joins the reason and "Nothing was stored." with one full stop, however the reason ends', () => {
+    expect(notAdvancedLine('This letter requires a response. If the letter asks nothing, mark it as needing no response, with a reason.'))
+      .toBe('Not advanced — This letter requires a response. If the letter asks nothing, mark it as needing no response, with a reason. Nothing was stored.');
+    expect(notAdvancedLine('the server refused the change (HTTP 500)')).toBe('Not advanced — the server refused the change (HTTP 500). Nothing was stored.');
+    expect(notAdvancedLine('Stopped…  ')).toBe('Not advanced — Stopped… Nothing was stored.');
   });
 });

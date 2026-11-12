@@ -156,7 +156,6 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'create_regulatory_commitment',
   'create_research_agreement',
   'create_rim_product',
-  'create_tmf',
   'establish_governed_fact',
   'fulfill_regulatory_commitment',
   'generate_schedule_of_events',
@@ -164,6 +163,7 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'log_cs_transaction',
   'log_inspection_finding',
   'open_grant_closeout',
+  'place_project_document',
   'qms_change_create',
   'qms_change_transition',
   'record_cost_share_contribution',
@@ -180,7 +180,6 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'save_document_as_template',
   'save_document_to_vault',
   'screen_subaward',
-  'seed_tmf',
   'set_coverage_qualifying_determination',
   'set_funding_profile',
   'set_grant_milestone_status',
@@ -198,6 +197,33 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
   'update_invention_disclosure',
   'update_protocol_section',
   'update_research_agreement',
-  'update_tmf_artifact_status',
   'update_vault_document',
 ]);
+
+/**
+ * Tools that record a reason for change on only some of their calls. A call
+ * the predicate does not match writes no reason, so it is put to the person as
+ * a plain yes; one it matches is held at the reason tier like every other
+ * entry of REASON_REQUIRED_TOOLS.
+ *
+ * place_project_document: suggesting a folder, or unfiling, records AnA's
+ * rationale as her note on a suggestion a person later confirms in the Vault.
+ * Making a folder first (new_folder) is a governed write of its own
+ * (vault-folders.ts createProgramFolder -> vault.folder.create), whose reason
+ * is the person's, as it is when they make the folder in the Vault.
+ */
+const REASON_REQUIRED_WHEN: Readonly<Record<string, (input: Record<string, unknown>) => boolean>> = {
+  place_project_document: (input) => input.new_folder !== undefined && input.new_folder !== null,
+};
+
+/**
+ * Whether this call of `tool` records the person's reason for change, and so
+ * is asked for it before confirmation. The one reading of REASON_REQUIRED_TOOLS
+ * for a call (the gate's tier, the pre-handler refusal, the confirmation route).
+ */
+export function reasonRequiredFor(tool: string, input: unknown): boolean {
+  if (!REASON_REQUIRED_TOOLS.has(tool)) return false;
+  const when = REASON_REQUIRED_WHEN[tool];
+  if (!when) return true;
+  return typeof input === 'object' && input !== null && when(input as Record<string, unknown>);
+}

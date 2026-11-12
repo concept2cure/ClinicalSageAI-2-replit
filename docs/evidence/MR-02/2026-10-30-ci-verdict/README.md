@@ -1,6 +1,6 @@
 # MR-02 Stage 3 — bring the CI verdict inside the deploy window (OPS-25)
 
-**Row:** D1 (via MR-02 Stage 3). **Date:** 2026-10-30. **Status:** in progress — the change is pushed; CI confirmation pending.
+**Row:** D1 (via MR-02 Stage 3). **Date:** 2026-10-30. **Status:** in progress — the change is pushed; the first two runs with it are measured (2026-11-12); 20 runs pending.
 
 ## What already exists
 
@@ -93,10 +93,86 @@ wrote both reports. A two-shard blob run merged into one coverage summary.
 shards of about 40 minutes with the 23 October slowdown still in, about 20 without it), and a
 longest job of about 40 minutes.
 
+## A week later: measured, and the second change (2026-11-10)
+
+`ci-usage-2026-11-03-to-11-10.json`: every push run from 3 to 10 November, after the sharding.
+
+- **Each `ci.yml` run cost less:** a median of **268 runner-minutes**, down from 958. The shards
+  took a median of 25 minutes each (p90 35); 35 of 2,808 reached the 90-minute limit.
+- **Every completed run had a Test verdict.** The merge ran in all 472 and failed in all 472,
+  because tests fail in the shards. That is a real red, and MR-02 Stage 1 owns it.
+- **The queue still decided the time to a verdict.** Pushes rose to **627 in the week**, about 90
+  a day, from 430. Push to verdict was a median of 46 hours, nearly all of it queueing, and 1,003
+  shard jobs were cancelled before they started. The account runs at most **20 jobs at once**,
+  and it was at 20 for 90 of the 160 hours. Demand, about 90 pushes × about 310 runner-minutes,
+  is the whole of that capacity.
+- **Pushes that change only documentation are 21%** (132 of 626). Skipping heavy jobs for them is
+  **not done**. `deploy-aws.yml`'s `ci-verdict` reads only the run's overall conclusion, so a
+  skipped Test would let a documentation commit deploy on top of code that failed on the commit
+  before it. A safe skip has to carry the last code commit's verdict forward, which is design
+  work, not a path filter.
+
+**The second change: four shards, three files at a time.** The eight shards were 200 of the about
+310 runner-minutes a push. Each ran one file at a time on a 4-core runner. Before deciding,
+three of the eight shards were run both ways on a 4-core, 15 GB machine, on a fresh database
+with npm ci to the lockfile (`parallel-shards-2026-11-10.txt`):
+
+- 2,333 files, 30,662 tests.
+- **No test failed three at a time that passed one at a time.** Three timing-sensitive tests did
+  the reverse. A first attempt, with dependencies older than the lockfile, also agreed on all
+  8,480 tests of one shard.
+- Each shard ran **2.4–2.5× faster** (shard 3: 1,508 s against 629 s; shard 1: 1,704 against
+  717; shard 6: 1,876 against 742).
+- Memory peaked at **4.8 GB**.
+
+So `test-shard` is now four shards, each running `npm test -- --shard=N/4 --maxWorkers=3
+--fileParallelism`. `vitest.config.ts` stays one file at a time for any other machine, with a
+comment pointing here. The merge reads four shards. The contract now also ties the merge's
+`--shards` to the matrix: it was shown red with the merge set to 8 against a 4-shard matrix.
+Coverage is unchanged: nightly, eight shards, one file at a time.
+
+**Expected:** about 100 runner-minutes a push for Test instead of about 230, so about 210 in
+all, or about 68% of the account's capacity at 90 pushes a day. A Test shard should take about
+25 minutes.
+
+## The first two runs with four shards (2026-11-12)
+
+Two trunk pushes from after the change finished all four shards on 12 November: run
+[42842510749](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42842510749)
+(`4e77f48479`, pushed 10 November 15:15 UTC) and run
+[42841814706](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42841814706)
+(`2b0c842d9d`, pushed 15:11). Job times come from the jobs API, each job's start to finish, rounded up.
+
+| | 42842510749 | 42841814706 | Expected |
+|---|---|---|---|
+| Test shards 1–4, job minutes | 25, 27, 34, 26 | 33, 31, 33, 29 | about 25 each |
+| Vitest's own duration (s) | 1,358, 1,451, 1,895, 1,445 | not read | |
+| A shard at the 90-minute limit | none | none | |
+| Test, runner-minutes (four shards) | 112 | 126 | about 100 (was about 200) |
+| The run, runner-minutes (every job that ran) | 204 | 247 | about 210 (median was 268) |
+| Push to the shards' end | 48 h 16 min | 48 h 26 min | |
+
+- **The shards did what was measured locally.** Each took 25–34 minutes, and each ran to its own verdict.
+  Run 42842510749's four shards ran 6,251 files and 82,121 tests. The slowest shard is the third in both runs. It holds the
+  editor's full-catalog PGlite test, which ran past its timeout here and has since been given ten minutes on trunk.
+- **The runner-minutes fell as expected; the time to a verdict did not.** 42841814706 is 247 rather than about 210
+  only because its Codespace job built the image (29 minutes, against under 1 when cached). Lint ran 23 hours
+  after each push and the rest of each run 47 hours after.
+  At 15:31 UTC on 12 November, 212 `ci.yml` runs were queued and 6 were in progress. The runs finishing that hour
+  included pushes from 10 November 01:37, which carry the eight-shard `ci.yml`. The queue therefore still holds
+  both shapes. The 20-run measurement below waits for runs pushed after `8a7e41392d` (10 November 13:58) to drain.
+- **The verdicts are red, and not because of the sharding.** At these two-day-old commits the first run's shards failed 15
+  tests in 8 files. Its merge job was created when the last shard ended and was queued behind the 20-job limit at
+  15:31. Of those 8 files, only `d0PhoneWidth` and `workbenchRemedies`
+  still failed in the pinned replay of trunk at `ef0472c7b8`
+  (`docs/evidence/F1/2026-11-10-trunk-ci/README.md`), where both are held by their owners.
+
 ## Next
 
-- Root-cause the fork-worker exits that began at `40aa75d90`. They cost about half of every
-  serial run.
-- Measure 20 trunk runs that start after this change: runner-minutes per push and push-to-verdict.
+- The fork-worker exits that began at `40aa75d90`: not reproduced locally. The 177-file sample
+  took 418 s before the merge and 416 s after, and the merge's own 78 test files took 525 s and
+  693 s, the difference being one new file failing 25 tests at 5 s each, which passes at head.
+  In CI the shards now bound any such stall to 90 minutes and name the shard.
+- Measure 20 trunk runs that start after this change: runner-minutes per push and push-to-verdict. Two of the 20 are above.
   The 187 runs already queued carry the old `ci.yml` and will still spend six hours each on these
   jobs.

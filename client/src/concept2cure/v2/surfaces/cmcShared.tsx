@@ -17,6 +17,7 @@
 
 import React from 'react';
 import { serverMessage } from '@/lib/queryClient';
+import { joinSentence } from './cmcSpec';
 
 /* ── Project in context ─────────────────────────────────────────────────── */
 
@@ -98,9 +99,21 @@ export function cmcWriteError(json: unknown, status: number): string {
   return serverMessage(json) ?? `The server did not accept the change (HTTP ${status}).`;
 }
 
-/** The message shown when a write did not land. Always says nothing was saved. */
+/**
+ * The message shown when a write did not land. Always says nothing was saved.
+ *
+ * The server's reasons are sentences, so the full stop is added only when one
+ * is missing ("…(HTTP 401).. Nothing was persisted." was on screen,
+ * 2026-11-12). A refused signature's own sentence already says nothing was
+ * signed, so it is not followed by a second sentence saying the same.
+ */
 export function cmcWriteFailed(subject: string, json: unknown, status: number): string {
-  return `Couldn’t save the ${subject} — ${cmcWriteError(json, status)}. Nothing was persisted.`;
+  return cmcRefusal(`Couldn’t save the ${subject} — `, cmcWriteError(json, status));
+}
+
+/** A refusal's sentence after its lead, by the rule above: one full stop, and "Nothing was persisted." unless the reason already says nothing was signed. */
+export function cmcRefusal(lead: string, why: string): string {
+  return joinSentence(lead, why, /Nothing was signed\.$/.test(why) ? '' : 'Nothing was persisted.');
 }
 
 /**
@@ -128,6 +141,19 @@ export function cmcAssessmentThrew(action: string, e: unknown): string {
   return known
     ? `Couldn’t ${action} — ${(e as { message: string }).message}`
     : `Couldn’t ${action}. Check your connection and try again.`;
+}
+
+/**
+ * A thrown refusal after its lead, by the cmcRefusal rule: the request
+ * helper's message (user copy by construction) ended once, or, for a
+ * browser-native throw, that the request did not reach the server. Walked
+ * 2026-11-12: "… A different, authorized user must sign.." — each catch
+ * appended its own full stop.
+ */
+export function cmcThrownRefusal(lead: string, e: unknown): string {
+  const known = typeof e === 'object' && e !== null && (e as { name?: unknown }).name === 'ApiRequestError'
+    ? String((e as { message?: unknown }).message ?? '').trim() : '';
+  return cmcRefusal(lead, known || 'the request did not reach the server. Check your connection and try again');
 }
 
 export function cmcWriteThrew(subject: string, e: unknown): string {

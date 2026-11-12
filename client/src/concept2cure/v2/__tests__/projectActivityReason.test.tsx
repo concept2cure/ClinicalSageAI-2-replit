@@ -47,10 +47,12 @@ describe('the Project home feed names a governed act and its reason', () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     const reason = await screen.findByTestId('pj-act-reason');
     expect(reason.textContent).toBe('. Reason: The EU filing starts this quarter');
-    /* D3-2b: the feed is the Records card's last disclosure, "Activity", in Project knowledge on every step. */
-    const disclosure = reason.closest('details[data-records-section="activity"]');
-    expect(disclosure?.querySelector('summary')?.textContent).toBe('Activity');
-    expect(disclosure?.closest('aside.pj-side')).toBeTruthy();
+    /* P-122 (2026-11-10): the feed is its own open card, "Activity", in Project knowledge on every step (D3-2b had
+       made it the Records card's last closed disclosure). */
+    const card = reason.closest('section[data-records-section="activity"]');
+    expect(card?.querySelector('h3')?.textContent).toBe('Activity');
+    expect(card?.closest('details')).toBeNull();
+    expect(card?.closest('aside.pj-side')).toBeTruthy();
     expect(document.querySelector('.pj-main')?.textContent ?? '').not.toMatch(/No recorded activity yet|Loading activity/);
     expect(reason.closest('.pj-act')?.textContent).toContain('Market added · EMA');
     expect(screen.getAllByTestId('pj-act-reason')).toHaveLength(1);

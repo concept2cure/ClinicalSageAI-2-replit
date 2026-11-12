@@ -1,0 +1,35 @@
+# Item 3 red: the figures-line tests against HEAD (no QualityFigures.tsx; no line under the header)
+# 177427772 2026-11-10T12:11:56Z
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > reads the whole organisation with a project open, narrows to the project and back 411ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > narrowed to the project, lists for periodic review only the project's documents, and says training is the organisation's 49ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open 75ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > says the quality system's figures in one line under its header 29ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > has one title, the rail label, and no second topbar or eyebrow 47ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > puts the registers as tabs below the header, with no icons, and keeps arrow keys 88ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > asks AnA through at most three starters, one of them the pre-inspection check 69ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > shows no stat tiles and no per-document-type cards (RULE 4) 16ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps the document types in "New controlled document", each with its number prefix and description 104ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > opens "New controlled document" in the one drawer, and holds AnA off the screen while it is open 82ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out 105ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > a register row shows its state's actions inline, and More reveals every other action in the row 126ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > does not offer its author an approval the server refuses: the author's next step is the review route 34ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box 86ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > is a table with column headers, one body per document 60ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > states the register in one sentence above its rows 31ms
+ FAIL  client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx [ client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx ]
+Error: Failed to resolve import "../QualityFigures" from "client/src/concept2cure/quality/__tests__/QualityFigures.test.tsx". Does the file exist?
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > says the quality system's figures in one line under its header
+TestingLibraryElementError: Unable to find an element by: [data-testid="quality-figures"]
+ Test Files  2 failed (2)
+      Tests  1 failed | 15 passed (16)
+
+# Item 3 red, server: production refuses the readiness read the line needs (launch-scope-api.ts LAUNCH_EXCLUDED_API)
+ × server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves the QMS readiness read under Quality, no longer excluded as dead 6ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/mdx/qms/documents/review-due, which the line also reads 1ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/mdx/qms/changes/summary, which the line also reads 0ms
+ ✓ server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts > Quality's figure line is served in production > serves /api/capa-mdr/triage, which the line also reads 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '/api/mdx/qms/readiness', …(10) ] to not include '/api/mdx/qms/readiness'
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)

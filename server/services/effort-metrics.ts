@@ -1,7 +1,7 @@
 /**
  * Effort-certification metrics (add-on, 2 CFR 200.430) — in-memory counters
  * surfaced via the central /api/metrics endpoint. Mirrors the suite's metrics
- * convention (see etmf-metrics.ts).
+ * convention (see lifecycle-metrics.ts).
  *
  * @module server/services/effort-metrics
  */

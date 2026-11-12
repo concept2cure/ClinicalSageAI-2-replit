@@ -7,6 +7,7 @@
  * and test values of a demonstration product, not data from any real study.
  */
 import { T } from './biotech-content.mjs';
+import { BIOTECH_SM_REGISTERS } from './biotech-sm-registers.mjs';
 
 export const BIOTECH_TASKS = [
   { title: 'Finalise drug substance specification for the IND (§3.2.S.4.1)', moduleType: 'CMC', priority: 'high', status: 'in-progress', dueInDays: 10,
@@ -164,6 +165,19 @@ export const BIOTECH_SM = {
   indication: 'Moderate-to-severe atopic dermatitis in adults',
 };
 
+/**
+ * C2C-201's objective of record (GA-DEMO-15). The pack holds no protocol for it: it is the CMC-only programme whose
+ * Module 3 the product composes (biotech.mjs PROGRAMS). So the objective states what the programme is, and its
+ * source says there is no protocol, rather than giving it a clinical objective nobody wrote.
+ */
+export const C2C201_OBJECTIVE = {
+  label: BIOTECH_SM.molecule,
+  objective: `Open a US IND for ${BIOTECH_SM.productName} in ${BIOTECH_SM.indication.toLowerCase()}, with its Module 3 quality section composed from the programme's CMC records.`,
+  successCriteria: 'Module 3 (3.2.S and 3.2.P) composed from approved CMC records and placed in the original IND sequence.',
+  sources: [{ kind: 'other', title: 'C2C-201 programme description (fictional demo sponsor); no protocol is written for this programme yet' }],
+  reason: 'Demo seed: the objective the programme description states.',
+};
+
 /** C2C-201's CMC registers: a small molecule, so §3.2.S and §3.2.P compose. */
 export const BIOTECH_SM_CMC = {
   substance: {
@@ -223,34 +237,34 @@ export const BIOTECH_SM_CMC = {
       studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 36, monthsRunning: 12, timePoints: ['0', '3', '6', '9', '12', '18', '24', '36'],
       parameters: ['Assay', 'Total impurities', 'Water content'], notes: 'Primary registration lot, double polyethylene bag in a fibre drum.',
       results: [
-        { timePoint: '0', parameter: 'Assay', result: '99.8', specification: '98.0 - 102.0 %' },
-        { timePoint: '6', parameter: 'Assay', result: '99.4', specification: '98.0 - 102.0 %' },
-        { timePoint: '12', parameter: 'Assay', result: '99.1', specification: '98.0 - 102.0 %' },
-        { timePoint: '0', parameter: 'Total impurities', result: '0.11', specification: 'NMT 0.5 %' },
-        { timePoint: '6', parameter: 'Total impurities', result: '0.18', specification: 'NMT 0.5 %' },
-        { timePoint: '12', parameter: 'Total impurities', result: '0.24', specification: 'NMT 0.5 %' },
+        { timePoint: '0', parameter: 'Assay', result: '99.8', specification: '98.0 - 102.0 %', withinSpecification: true },
+        { timePoint: '6', parameter: 'Assay', result: '99.4', specification: '98.0 - 102.0 %', withinSpecification: true },
+        { timePoint: '12', parameter: 'Assay', result: '99.1', specification: '98.0 - 102.0 %', withinSpecification: true },
+        { timePoint: '0', parameter: 'Total impurities', result: '0.11', specification: 'NMT 0.5 %', withinSpecification: true },
+        { timePoint: '6', parameter: 'Total impurities', result: '0.18', specification: 'NMT 0.5 %', withinSpecification: true },
+        { timePoint: '12', parameter: 'Total impurities', result: '0.24', specification: 'NMT 0.5 %', withinSpecification: true },
       ] },
     { title: 'C2C-201 tablets — long-term, 25°C/60% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP', shelfLife: '18 months',
       studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 24, monthsRunning: 9, timePoints: ['0', '3', '6', '9', '12', '18', '24'],
       parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'HDPE bottle, 30 count, with desiccant.',
       results: [
-        { timePoint: '0', parameter: 'Assay', result: '100.2', specification: '95.0 - 105.0 %' },
-        { timePoint: '6', parameter: 'Assay', result: '99.1', specification: '95.0 - 105.0 %' },
-        { timePoint: '9', parameter: 'Assay', result: '98.6', specification: '95.0 - 105.0 %' },
-        { timePoint: '0', parameter: 'Dissolution', result: '94', specification: 'NLT 80 %' },
-        { timePoint: '9', parameter: 'Dissolution', result: '88', specification: 'NLT 80 %' },
+        { timePoint: '0', parameter: 'Assay', result: '100.2', specification: '95.0 - 105.0 %', withinSpecification: true },
+        { timePoint: '6', parameter: 'Assay', result: '99.1', specification: '95.0 - 105.0 %', withinSpecification: true },
+        { timePoint: '9', parameter: 'Assay', result: '98.6', specification: '95.0 - 105.0 %', withinSpecification: true },
+        { timePoint: '0', parameter: 'Dissolution', result: '94', specification: 'NLT 80 %', withinSpecification: true },
+        { timePoint: '9', parameter: 'Dissolution', result: '88', specification: 'NLT 80 %', withinSpecification: true },
       ] },
     { title: 'C2C-201 tablets — accelerated, 40°C/75% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP',
       studyType: 'accelerated', storage: ['ACC', '40°C ± 2°C / 75% ± 5% RH'], duration: 6, monthsRunning: 6, timePoints: ['0', '1', '3', '6'],
       parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'Supports the ICH Q1A(R2) accelerated package.',
       results: [
-        { timePoint: '0', parameter: 'Total impurities', result: '0.12', specification: 'NMT 0.5 %' },
-        { timePoint: '3', parameter: 'Total impurities', result: '0.38', specification: 'NMT 0.5 %' },
+        { timePoint: '0', parameter: 'Total impurities', result: '0.12', specification: 'NMT 0.5 %', withinSpecification: true },
+        { timePoint: '3', parameter: 'Total impurities', result: '0.38', specification: 'NMT 0.5 %', withinSpecification: true },
         /* Out of specification at six months accelerated, as happens. The
            composed §3.2.P.8 reports it, withholds the stability conclusion and
            names the point — which is the behaviour phase 4's acceptance
            fixture pins, shown here on demo data a person can click through. */
-        { timePoint: '6', parameter: 'Total impurities', result: '0.61', specification: 'NMT 0.5 %' },
+        { timePoint: '6', parameter: 'Total impurities', result: '0.61', specification: 'NMT 0.5 %', withinSpecification: false },
       ] },
   ],
   /**
@@ -275,6 +289,10 @@ export const BIOTECH_SM_CMC = {
     { number: 'C2C201-DP-2503', product: 'C2C-201 tablets', yieldPercent: 94, openDeviations: 0 },
     { number: 'C2C201-DP-2601', product: 'C2C-201 tablets', yieldPercent: 92, openDeviations: 1 },
   ],
+  /* The other eleven registers (P-122, 2026-11-10): reference standards,
+     impurities, dissolution, characterisation, processes, process validation,
+     formulation, materials, container closure, change control, comparability. */
+  registers: BIOTECH_SM_REGISTERS,
 };
 
 /**
@@ -411,6 +429,17 @@ export const BIOTECH_IR_LETTER = {
     responseRequired: true,
   },
   expect: { commitments: [], questions: 3 },
+  /* The three questions, recorded as a person records them from the letter's
+     proposals (P-122): with the CTD section each concerns, so CMC / Module 3
+     lists them and they can be answered there, on this letter's controls. */
+  record: [
+    { questionRef: '1', discipline: 'CMC', ctdSection: '3.2.S.4.4', severity: 'major',
+      questionText: 'Provide the batch analysis data for each drug substance lot used in the 26-week cynomolgus toxicology study, including host cell protein and SEC monomer results.' },
+    { questionRef: '2', discipline: 'CMC', ctdSection: '3.2.P.5.6', severity: 'major',
+      questionText: 'Justify the proposed potency acceptance criterion for drug product release: state the assay\'s intermediate precision, and describe how the criterion relates to the lots used in the toxicology study.' },
+    { questionRef: '3', discipline: 'CMC', ctdSection: '3.2.P.8.3', severity: 'major',
+      questionText: 'Submit the 6-month stability results for drug product lot C2C101-DP-2501 at 5 C and 25 C/60% RH, with the shelf-life trending.' },
+  ],
   text: `DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
 
 Food and Drug Administration

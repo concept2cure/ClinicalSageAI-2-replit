@@ -8,6 +8,7 @@ import {
 } from '@shared/qms/training';
 import { canGovernedWrite } from '@shared/constants/permissions';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
 import type { AuthUser } from '@/services/portal/authService';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../v2/editor/RichSectionEditor';
@@ -113,6 +114,7 @@ async function writeControlledText(scope: PersonalTrainingScope, input: QmsContr
     throw new ControlledTextSaveError(serverMessage(body) ?? REFUSED, response.status === 409);
   }
   if (!isConfirmedSave(body, scope, input)) throw new ControlledTextSaveError(UNCONFIRMED, true);
+  qualityWritten();
 }
 
 function useControlledTextSave(props: ControlledTextEditorProps, sections: ControlledSection[] | null, handles: EditorHandles,
@@ -261,9 +263,9 @@ function EditorView({ props, sections, reason, setReason, dirty, discardEpoch, s
       register={handle => { if (handle) handles.current.set(section.key, handle); else handles.current.delete(section.key); }}
       persist={serialized => saving.persist(section.key, serialized)} />)}
     <div className="qms-controlled-actions">
-      <button type="button" className="qms-btn primary" disabled={disabled || !dirty || reason.trim().length < 8}
+      <button type="button" className="btn primary small" disabled={disabled || !dirty || reason.trim().length < 8}
         onClick={() => void save()}>{saving.busy ? 'Saving controlled text…' : 'Save controlled text'}</button>
-      {saving.reloadRequired && props.onReload && <button type="button" className="qms-btn" disabled={saving.busy}
+      {saving.reloadRequired && props.onReload && <button type="button" className="btn ghost small" disabled={saving.busy}
         onClick={() => void props.onReload?.()}>Reload record</button>}
     </div>
     {close.open && <DiscardControlledText dialogRef={close.dialogRef} finish={close.finish} />}
@@ -278,8 +280,8 @@ function DiscardControlledText({ dialogRef, finish }: {
     <h3 id={titleId}>Discard unsaved controlled text?</h3>
     <p>Your unsaved text and reason will be discarded. The stored document will remain unchanged.</p>
     <div className="qms-controlled-actions">
-      <button type="button" className="qms-btn" onClick={() => finish(false)}>Keep editing</button>
-      <button type="button" className="qms-btn" onClick={() => finish(true)}>Discard changes</button>
+      <button type="button" className="btn ghost small" onClick={() => finish(false)}>Keep editing</button>
+      <button type="button" className="btn ghost small" onClick={() => finish(true)}>Discard changes</button>
     </div>
   </div>;
 }

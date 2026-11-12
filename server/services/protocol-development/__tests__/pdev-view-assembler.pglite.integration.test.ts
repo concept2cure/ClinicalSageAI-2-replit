@@ -46,8 +46,8 @@ CREATE TABLE protocol_review_comments (id serial PRIMARY KEY, organization_id in
 CREATE TABLE protocol_soa_assessments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, category text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_soa_cells (id serial PRIMARY KEY, organization_id int, protocol_document_id int, assessment_id int, visit_id int, required boolean);
 CREATE TABLE protocol_team_members (id serial PRIMARY KEY, organization_id int, protocol_document_id int, member_name text, role text, responsibilities text, deleted_at timestamptz);
-CREATE TABLE consent_forms (id serial PRIMARY KEY, organization_id int, protocol_document_id int, title text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
-CREATE TABLE consent_form_elements (id serial PRIMARY KEY, organization_id int, consent_form_id int, element_key text, title text, required boolean, present boolean, order_index int);
+CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id int, client_program_id uuid, template_id uuid, product_code text, title text, version text, status text, updated_at timestamptz DEFAULT now());
+CREATE TABLE authoring_sections (id uuid PRIMARY KEY, doc_id uuid, tenant_id int, code text, content text, order_index int);
 `;
 
 beforeAll(async () => {
@@ -276,5 +276,69 @@ describe('protocol assessment and qualified detail assembly', () => {
     // Not 'met'. Nobody recorded that this study excludes children; passing
     // `false` for an unrecorded flag would manufacture that claim.
     for (const f of subparts) expect(f.status).toBe('not-assessed');
+  });
+
+});
+
+describe('the protocol\'s informed consent (P-130)', () => {
+  /* P-130 (2026-11-12). The Consent tab read the consent-form rows behind
+     /api/protocol-consent, a store the editor cannot open or approve. It now
+     reads the protocol's project's consent document and the editor's gate on
+     its text (consentDocumentGate), which the Check and the approval run. */
+  const PROJECT = '6f1d2c3b-4a59-4e6f-8a7b-9c0d1e2f3a4b';
+  const CONSENT_TEMPLATE = '7386a0c6-57e7-5b2e-a07a-ffe07c4b0996';
+  async function consentDocument(org: number, opts: { id: string; template?: string | null; productCode?: string | null; updated: string; sections: Record<string, string> }) {
+    await pglite.query(
+      `INSERT INTO authoring_documents (id, tenant_id, client_program_id, template_id, product_code, title, version, status, updated_at) VALUES ($1,$2,$3,$4,$5,$6,'0.2','draft',$7)`,
+      [opts.id, org, PROJECT, opts.template ?? null, opts.productCode ?? null, `ICF ${opts.id.slice(0, 4)}`, opts.updated],
+    );
+    let i = 0;
+    for (const [code, text] of Object.entries(opts.sections)) {
+      await pglite.query(`INSERT INTO authoring_sections (id, doc_id, tenant_id, code, content, order_index) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [`${opts.id.slice(0, 30)}${String(i).padStart(6, '0')}`, opts.id, org, code, `<p>${text}</p>`, i]);
+      i += 1;
+    }
+  }
+
+  it('the consent figure is the editor\'s gate on the project\'s consent document', async () => {
+    const id = await seedFullProtocol(ORG);
+    await pglite.exec(`DELETE FROM authoring_sections; DELETE FROM authoring_documents;`);
+    await pglite.query(`UPDATE protocol_documents SET program_id = $1 WHERE id = $2`, [PROJECT, id]);
+    // Risks drafted; confidentiality never says FDA may inspect; the rest not drafted.
+    await consentDocument(ORG, { id: 'a1111111-1111-4111-8111-111111111111', template: CONSENT_TEMPLATE, updated: '2026-11-12T10:00:00Z',
+      sections: { '3': 'You may have headache.', '6': 'Your records are confidential.' } });
+    const doc = (await assembleOrgPdevDocs(ORG)).find((d) => String(d.id) === String(id)) as any;
+    expect(doc.consentForm).toMatchObject({ documentId: 'a1111111-1111-4111-8111-111111111111', programId: PROJECT, formsLinked: 1 });
+    expect(doc.consentGate.requiredTotal).toBe(11);
+    expect(doc.consentGate.requiredComplete).toBe(1);
+    expect(doc.consentGate.readyToApprove).toBe(false);
+    expect(doc.consent.find((c: any) => c.key === 'risks')).toMatchObject({ complete: true, section: '3' });
+    expect(doc.consent.find((c: any) => c.key === 'confidentiality')).toMatchObject({ complete: false, section: '6' });
+    // A person reads the element's title, never its key.
+    expect(doc.consentGate.findings.join(' ')).toMatch(/"Extent of confidentiality of records, noting that FDA may inspect the records" does not state/);
+    expect(doc.consentGate.findings.join(' ')).not.toMatch(/"confidentiality"|clinicaltrials_gov/);
+  });
+
+  it('reads a consent form AnA drafted (recorded by type), shows the newest, and never another project or tenant', async () => {
+    const id = await seedFullProtocol(ORG);
+    await pglite.exec(`DELETE FROM authoring_sections; DELETE FROM authoring_documents;`);
+    await pglite.query(`UPDATE protocol_documents SET program_id = $1 WHERE id = $2`, [PROJECT, id]);
+    await consentDocument(ORG, { id: 'b2222222-2222-4222-8222-222222222222', template: CONSENT_TEMPLATE, updated: '2026-11-10T10:00:00Z', sections: {} });
+    await consentDocument(ORG, { id: 'c3333333-3333-4333-8333-333333333333', productCode: 'informed_consent', updated: '2026-11-12T10:00:00Z', sections: { '3': 'Risks.' } });
+    await consentDocument(OTHER, { id: 'd4444444-4444-4444-8444-444444444444', productCode: 'informed_consent', updated: '2026-11-13T10:00:00Z', sections: {} });
+    await consentDocument(ORG, { id: 'e5555555-5555-4555-8555-555555555555', productCode: 'clinical_overview', updated: '2026-11-14T10:00:00Z', sections: {} });
+    const doc = (await assembleOrgPdevDocs(ORG)).find((d) => String(d.id) === String(id)) as any;
+    expect(doc.consentForm).toMatchObject({ documentId: 'c3333333-3333-4333-8333-333333333333', formsLinked: 2 });
+    expect(doc.consentGate.requiredComplete).toBe(1);
+  });
+
+  it('a protocol with no project, or a project with no consent document, has no consent view and no figure', async () => {
+    const id = await seedFullProtocol(ORG);
+    await pglite.exec(`DELETE FROM authoring_sections; DELETE FROM authoring_documents;`);
+    let doc = (await assembleOrgPdevDocs(ORG)).find((d) => String(d.id) === String(id)) as any;
+    expect([doc.consentForm, doc.consentGate, doc.consent]).toEqual([null, null, []]);
+    await pglite.query(`UPDATE protocol_documents SET program_id = $1 WHERE id = $2`, [PROJECT, id]);
+    doc = (await assembleOrgPdevDocs(ORG)).find((d) => String(d.id) === String(id)) as any;
+    expect([doc.consentForm, doc.consentGate, doc.consent]).toEqual([null, null, []]);
   });
 });

@@ -1,0 +1,27 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > runs as many project admissions for eight sources as for two
+AssertionError: expected 10 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 10
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:208:26
+    206|     queryTrace = [];
+    207|     expect((await scope()).sourceIds).toHaveLength(8);
+    208|     expect(admissions()).toBe(forTwo);
+       |                          ^
+    209|   });
+    210|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  03:27:22
+   Duration  5.27s (transform 1.03s, setup 97ms, import 1.75s, tests 3.16s, environment 0ms)
+

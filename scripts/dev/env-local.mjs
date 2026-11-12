@@ -15,6 +15,19 @@ export function envLocalContents({ appUrl, ownerUrl, port }) {
     // mode (off) is a posture no customer runs, and in it the vault.* policies
     // admit no write (VSR-001 F-15, decision (a)).
     'RLS_ENFORCE=on',
+    ...ownOrigin(port),
     '',
   ].join('\n');
+}
+
+/**
+ * The server allows localhost:5000 and :3000 as development origins
+ * (server/middleware/enterprise-security.ts). On any other port it refused its
+ * own page's requests and the app rendered blank, so the port's own origin is
+ * written here (2026-11-12, F1).
+ */
+function ownOrigin(port) {
+  const p = String(port);
+  if (p === '5000' || p === '3000') return [];
+  return [`ALLOWED_ORIGINS=http://localhost:${p},http://127.0.0.1:${p}`];
 }

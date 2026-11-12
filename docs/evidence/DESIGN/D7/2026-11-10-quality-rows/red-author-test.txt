@@ -1,0 +1,3 @@
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > does not offer its author an approval the server refuses: the author's next step is the review route 241ms
+AssertionError: expected <button type="button" …(2)></button> to be null
+      Tests  1 failed | 8 skipped (9)

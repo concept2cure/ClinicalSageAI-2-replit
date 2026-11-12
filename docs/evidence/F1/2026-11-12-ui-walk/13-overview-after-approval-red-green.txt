@@ -1,0 +1,22 @@
+# The Overview's export verdict after an approval, and refusals worded once. 2026-11-12.
+# Red first, on the committed CmcModule.tsx:
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the export verdict after an approval > is read again, so the blocked line clears without a reload 5153ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a thrown refusal reads as one sentence > ends the server’s sentence once and says nothing was persisted 120ms
+   → expected 'Couldn’t approve section 3.2.P.1 — Se…' to be 'Couldn’t approve section 3.2.P.1 — Se…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+
+# With the change:
+$ npx vitest run the 34 CMC client suites and the ratchet
+ Test Files  34 passed (34)
+      Tests  490 passed (490)
+
+# In the running app, an OQ-008 project's Overview:
+#  as the run identity (an author of these records): 'Couldn’t approve section 3.1 — Separation of duties: … A different, authorized user must sign. Nothing was persisted.' (was '…must sign..')
+#  as the second person: before '0 of 21 sections approved — 21 draft — export blocked: 21 not approved; 5 without source lineage'
+#                         toast 'Section 3.1 approved and signed · v1 · e25e3d60402d…' (was '….')
+#                         after, no reload: '1 of 21 sections approved — 20 draft — export blocked: 20 not approved; 5 without source lineage'

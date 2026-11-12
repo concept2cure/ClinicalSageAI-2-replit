@@ -58,6 +58,151 @@ C2C runs in two AWS environments the founder controls, staging and production, e
 - One vCPU carries Node, clamd, LibreOffice, OCR and veraPDF with no cap on converters. One large submission package can fail the container health check, and ECS then replaces the task mid-job and drops every session on it (OPS-13).
 - A GxP buyer's computer-system-validation reviewer asks two questions: is what runs in production what you tested, and how do you roll back? Today production rebuilds from source with unpinned apt packages, there is no staging, and rollback is a comment (OPS-10, OPS-23).
 
+## Re-confirmed at head, 2026-11-10 (session `…01QoxbLaF`): what stands between this repository and AWS
+
+The table below is from `94b4f9238`. Since then Stages 1–4 have landed (`docs/work-orders/README.md`, MR-03 rows). Measured
+today, at `59dc4f9f58` plus the WAF change below; evidence `docs/evidence/D1/2026-11-10-aws-readiness/`.
+
+**Green, measured**
+- **Terraform:** 121 offline tests pass (`stack` 84, `cloudfront` 15, `github-deploy-roles` 10, `compliance-evidence` 5, `alb` 4,
+  `vpc-secure` 3). Every root validates, and both environments validate with `-lockfile=readonly`. Terraform 1.11.4, `aws`
+  5.100.0, `random` 3.6.3, from a checksum-verified local mirror.
+- **The deploy's own preflight** (`scripts/ops/terraform-preflight-proof.mjs`) holds, including:
+  - the API task refuses `DATABASE_URL` and `APP_SERVICE_DB_PASSWORD` (OPS-16, done);
+  - the pinned revisions;
+  - the 54 job×action IAM pairs.
+- **The deploy contracts** `deploy-refuses-unproven-sha`, `deploy-staging-promote` and `deploy-rollback` pass. So Stage 4's
+  staging target, promote-by-digest and rollback are on trunk.
+- **CI on GitHub's runners** (run `42538903005`): Production Image Boot, Blank DB Provisioning + Deploy Migration,
+  Production Boot Smoke, Security Scan, and the Codespace job all pass. The Codespace job runs post-create and post-start in
+  the devcontainer image.
+
+**Landed today: P-11, the WAF.** `terraform/modules/cloudfront` now carries an `aws_wafv2_web_acl` on the distribution:
+- IP reputation and known bad inputs block;
+- a per-IP rate rule blocks (2000 per 5 minutes);
+- the common rule set counts, with `waf_common_rule_set_action = "block"` after two weeks;
+- its 8 KB body-size rule counts in both modes, because it would refuse uploads, AnA turns and editor saves;
+- any region other than `us-east-1` is refused.
+
+The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 failed. Then green: 15 of 15. Trivy over
+`terraform/` before and after: AWS-0011 gone, nothing new.
+
+**Blocks a deploy today, in order**
+1. **Trunk CI is red, and `deploy-aws.yml` deploys only a SHA whose whole `ci.yml` run concluded success**
+   (`ci-verdict`, `deploy-aws.yml:179`).
+   - Red on the latest finished run: Secret scan (8 findings; 3 credentials recorded as live in `.gitleaksignore`), Lint (a
+     proof tier and several guardrails), Integration Tests, and Test (447 of 79,560 failing across all 8 shards).
+   - A run also takes about a day from push to verdict.
+   - The MR-02 lanes own this (Stage 1 `…01471vSK`, Stage 3 `…01J935DZ`).
+   - No deploy, staging or production, can run until one trunk SHA is green.
+2. **The founder's inputs and decisions.** Nothing below can be done from this repository; the checklist follows.
+
+**Founder checklist for the first apply (Stage 5, in order)**
+1. **Decide:**
+   - the region: `us-east-1` is hard-coded in `deploy-aws.yml` and `provision-database.yml` (F-25);
+   - separate staging and production AWS accounts (F-4);
+   - the domain;
+   - **the DR region** (MR-04 NEW-2; `us-west-2` recommended). Each root's `dr_region` has no default. MR-04
+     Stage 1 (landed 2026-11-12) makes the database and vault keys multi-Region and replicates all three keys there.
+     That stage is a **precondition of this apply**: a key can be made multi-Region only at creation, and changing
+     the RDS storage key after the apply replaces the instance.
+   - **who is paged** (MR-04 NEW-1): production's `alarm_emails` has no default and needs at least one address. Each
+     address must confirm AWS's subscription email after the apply. Name the on-call rota in
+     `docs/runbooks/incident-response.md`.
+   - the error-reporting route: Sentry under a DPA, or CloudWatch only (NEW-3);
+   - how long deleted Vault versions are kept;
+   - Anthropic's entry in `ai_provider_placement_approvals` (B4). It is deliberately not defaulted; record the value and
+     date in the D1 evidence.
+2. **Revoke and rotate** the three credentials `.gitleaksignore` records as live (security plan P0-17). They stay readable
+   in history until revoked.
+3. **Per account:**
+   - certificates: an ACM certificate for the ALB in the region, and one for CloudFront in `us-east-1`, both covering the
+     domain;
+   - SES (or another SMTP provider on port 465): production access, with DKIM, SPF and DMARC on the sending domain;
+   - an Anthropic API key under the BAA.
+4. **Bootstrap** each account's state bucket: `terraform -chdir=terraform/bootstrap init && … apply`. Commit each root's
+   `backend.hcl` naming it (README step 1).
+5. **Fill** `terraform/environments/<env>/terraform.tfvars` from its `.example` (never committed), and export every `TF_VAR_`
+   secret the example lists. Eight are `openssl rand -hex 32`, and the noted pairs must differ. The others are
+   `smtp_user`/`smtp_pass`, `anthropic_api_key`, `cloudfront_origin_secret` and `ai_provider_placement_approvals`.
+6. **Staging first:**
+   - `terraform plan -out tfplan`, then `apply`, then a second `plan` that must say "No changes";
+   - point DNS at `cloudfront_domain`;
+   - set the GitHub `staging` environment's `AWS_DEPLOY_ROLE_ARN`, `AWS_BUILD_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID`,
+     and the variable `FRONTEND_BUCKET`, from `terraform output` (the table in `terraform/README.md` §4 says which
+     output feeds which);
+   - optional: the environment's `READYZ_TOKEN` secret, read as `terraform output readyz_detail` says, so a failed
+     deploy names the dependency that was not ready;
+   - dispatch `provision-database.yml` with its confirmation phrase;
+   - tag a green SHA `rc-<x.y.z>`.
+7. **Production:** the same, with required reviewers on the GitHub `production` environment. Then tag the same SHA
+   `v<x.y.z>`, which promotes staging's digest and builds nothing.
+8. **After the first boot:**
+   - one `POST /api/setup/initialize` with the token `terraform output first_run_setup` points at;
+   - `npm run pilot:verify-otp -- <real inbox>`;
+   - sign in through the CloudFront alias;
+   - file the apply logs, both no-change plans and the run URLs under `docs/evidence/D1/<date>-first-apply/`.
+
+**Landed later the same day, Stage 7 steps 5 and 6:**
+- **OPS-22**, `5e8a7317ce`: `/readyz`'s database query and Vault-store probe run at most once per 5 s (at most 10 s), coalesced; the rest is read per hit. In production the public body
+  is `{ ready }` alone; the detail goes to a `READYZ_TOKEN` holder (`x-readyz-token`) or a loopback peer.
+- **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
+
+**Landed 2026-11-11 (session `…01QoxbLbx`), evidence `docs/evidence/D1/2026-11-11-aws-readiness/`.** Code and offline
+proof only; nothing was applied.
+- **`READYZ_TOKEN` is wired (the rest of OPS-22), `29acce365`.** The stack generates it (`random_password.readyz_token`), keeps it in
+  Secrets Manager and gives it to the API task alone. The deploy's smoke test presents it from the GitHub environment's
+  `READYZ_TOKEN` secret, so a failed deploy prints which dependency was not ready. The secret is optional: without it
+  the verdict is checked the same and no detail is printed. The token decides nothing else.
+- **Both roots export what the checklist below reads, `8fcfad502`.** The staging root exported neither deploy role nor the
+  distribution id, so step 6 could not be done from `terraform output` on the environment that is applied first.
+  Neither root exported `first_run_setup` (step 8) or `engine_version_actual` (Stage 5 step 13). Both now export the
+  same outputs; `tests/ci/terraform-root-outputs.contract.test.ts` holds them to each other and to every
+  `terraform output <name>` this file, the README and the tfvars examples name.
+- **Stage 7 step 8, the topology (OPS-20), `107530707`.** `terraform/README.md` states it: Postgres coordinates, there is no Redis,
+  and live co-editing is off. The stack sets no `ENABLE_COLLAB_CRDT`, and the deploy preflight refuses a task definition
+  that turns it on, as a value or from a secret.
+- **Stage 7 step 4, the readiness half (SEC-08), `26e81b20d`.** In production `/readyz` reads `session_activity` as the session
+  service does, with the cached round trips, and reports `sessions: down` (503) when it cannot. Shown on a real
+  PostgreSQL as the runtime role with RLS enforcing: the table present, renamed away, and unreadable. **Not changed:**
+  a request is still judged from the task's memory while the store is unreachable. Refusing every request then would
+  turn a database blip into a sign-out for everyone, which is a product decision, not a readiness one.
+- **Stage 6 step 3, the ALB half (OPS-17), `7310d3083`.** `terraform/modules/alb/tests/alb_timeouts.tftest.hcl` pins
+  `idle_timeout = 60` (fails at 59), and `tests/ci/edge-timeouts.contract.test.ts` holds CloudFront = ALB <
+  keep-alive < headers timeout, and refuses a task definition that overrides either server value.
+
+**Landed 2026-11-12 (same session), evidence `docs/evidence/D1/2026-11-12-edge-streams/`.** Code only; nothing applied.
+- **Stage 6 steps 7 and 8, `333802662`.** One SSE helper, `server/utils/sse-stream.ts` (`openSseStream`): the headers,
+  and a `: heartbeat` every 15 s that stops on the response's finish or close. All ten producers open their streams
+  with it, and their private copies are deleted. `ci:sse-heartbeat` (with a self-test, in `ci.yml`'s lint job and
+  `.husky/pre-push`) refuses any other server file that names `text/event-stream`.
+- **Stage 6 step 9, `fac4a391c`.** The connector's tool runtime sends `notifications/progress` every 15 s to a call
+  carrying a progress token. A tool that writes nothing governed is answered at 50 s with an error result, never a
+  partial one. A governed tool has no deadline. The agency-response draft's model call takes the call's signal.
+
+**Still open in this order, engineering:**
+- **Stage 6, done in code 2026-11-12** (`docs/evidence/D1/2026-11-12-edge-timeouts/`).
+  - **Step 2 measured** on the production code and toolchain. The image could not be built in the cloud session, so it
+    ran on a 4-core host. A 200-leaf IND of 80-page documents compiles in p95 59.3 s and assembles in p95 56.0 s.
+  - **Steps 4–6, compile (`37e55e96a`) and the test package (`114773a67`).** Asked with `Prefer: respond-async`,
+    each answers 202 with a job once its refusals are decided. The work goes on in the request's scope, and the full
+    answer is stored on a row of `artifact_compute_jobs`. `GET …/jobs/:jobId` reads it for the session's organization
+    only. `EctdCompile.tsx` and `SequenceAssembleTestPackage.tsx` poll every 2 s and show the seconds elapsed. A sweep
+    marks a job abandoned when its task stopped.
+  - **Live, at 200 × 80 pages:** 202 in 19–36 ms, and the job complete in 49–59 s.
+  - **Package assemble is not changed.** No screen calls it: Gateway Transmittals became read-only on 2026-10-17
+    (LX-13), and transmitting happens on the sequence's Dispatch tab.
+  - **Found and fixed on the way (`3a99c6ce2`):** an undefined STF tag made the test package answer 500. It now
+    answers the recorded 422.
+  - **Left for Stage 5:** the staging acceptance, a 200-leaf compile behind CloudFront with no 504.
+- Stage 7 steps 2–3 (shared rate-limit counters in Postgres). **This now waits for the founder:** the step creates
+  `public.rate_limit_counters`, and since RULE 6 (P-80) a new table needs an `approvedAdditions` entry in
+  `docs/design/one-design-plan.json` under a founder decision. NEW-2 (confirm B6 for rate limits) is the same decision.
+  Until then the sign-in and document limits are per task: a client gets each task's allowance.
+- Stage 7 step 7 waits for NEW-3.
+- Stage 8 (OPS-12: a second NAT and interface endpoints) is a founder budget decision.
+- The switch of the WAF's common rule set to block, two weeks after the first apply.
+
 ## State at head
 
 | Finding | Status at head | Severity (pilot) | Tester impact | Evidence at head |

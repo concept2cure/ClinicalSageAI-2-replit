@@ -192,7 +192,7 @@ export function buildDocumentGenerationContext(doc: DetectedDocument): string {
   if (doc.basis) parts.push(`**Placement basis:** ${doc.basis}`);
   parts.push(`**Description:** ${doc.description}`);
 
-  parts.push(`\nGenerate this document NOW. Write complete, submission-ready content — not an outline, not a summary, not placeholders. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an \`\`\`ana-action block so the platform can propose saving it as a governed artifact; the person confirms before it is saved.`);
+  parts.push(`\nGenerate this document NOW. Write complete prose, not an outline or a summary, for everything the sources support. Where a fact, figure or result is not in the sources, mark the gap (the template's [PLACEHOLDER] token, or [PENDING: needs data]) and do not supply one. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an \`\`\`ana-action block so the platform can propose saving it as a governed artifact; the person confirms before it is saved.`);
 
   return '\n\n' + parts.join('\n');
 }

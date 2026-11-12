@@ -361,14 +361,18 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     truthfulnessRules: { allowPartial: true, requireBlockers: true, requireConfidence: true },
   },
   {
-    // eTMF completeness + gap pack (DIA TMF RM; ICH E6 §8; C2C-08).
+    // The trial master file's filings and readiness, per study of the projects the person who runs it can open
+    // (DIA TMF Reference Model; ICH E6(R3) Appendix C; C2C-08). Computed by report-os/trial-master-file-pack.ts from
+    // the deployed store since 2026-11-12 (eTMF convergence E4 step 1, L-3): it counted the retired store's tables and
+    // statuses a person typed, organization-wide. The type id is kept (report_runs and report_subscriptions hold it).
+    // `study` was runnable nowhere and `submission` would compute something wider than its name.
     typeId: 'etmf.completeness_pack',
-    label: 'eTMF Artifact Lifecycle Summary',
+    label: 'Trial master file filings and readiness',
     family: 'etmf',
-    allowedScopes: ['study', 'submission', 'project', 'account'],
+    allowedScopes: ['project', 'account'],
     allowedPersonas: ['clinical_ops', 'tmf_lead', 'qa'],
     allowedClientSegments: ['pharma', 'biotech', 'cro', 'ivd', 'academic', 'government'],
-    dataDependencies: ['tmf_files', 'tmf_artifacts'],
+    dataDependencies: ['tmf_artifact_filings', 'cdisc_prm_studies', 'vault.documents'],
     artifactDependencies: ['concept2cure_artifacts'],
     workflowDependencies: ['governance_boundary'],
     anaModules: ['ana-ri'],

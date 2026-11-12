@@ -6,6 +6,7 @@ const {
   state, expect, sleep, saveState, shot, toTop, step, api, retrying, waitFor,
   openNewDocument, csrEntries, openCsr, checkCsrCatalog, openVersions,
 } = require('./walk-common.cjs');
+const { prepareIdentity } = require('./walk-identity.cjs');
 
 // ---------------------------------------------------------------- prepare: project
 
@@ -290,7 +291,10 @@ async function buildsOf(page) {
   return r.body.jobs;
 }
 
-const terminal = (job) => job && ['completed', 'failed', 'cancelled'].includes(job.status);
+// The build list states a finished build as 'complete' (csr_build_jobs.status). Until 2026-11-10 no walk had seen one:
+// this read 'completed' only, and would have waited out its whole limit on the first build that finished.
+const finished = (job) => job && ['complete', 'completed'].includes(job.status);
+const terminal = (job) => job && (finished(job) || ['failed', 'cancelled'].includes(job.status));
 
 async function startBuild(page) {
   const panel = await openCsr(page);
@@ -314,8 +318,8 @@ async function prepareBuild() {
   saveState();
   const panel = await openCsr(page);
   await panel.getByText(new RegExp(`CSR build ${job.jobId} · `)).first().scrollIntoViewIfNeeded().catch(() => {});
-  const blocked = job.status !== 'completed';
-  return { outcome: blocked ? 'blocked' : started ? 'pass' : 'skipped', blockedBy: blocked ? 'no model key (demo-mode replies are refused)' : undefined,
+  const blocked = !finished(job);
+  return { outcome: blocked ? 'blocked' : started ? 'pass' : 'skipped', blockedBy: blocked ? (job.failure || 'the build did not finish') : undefined,
     jobId: job.jobId, status: job.status, progress: job.progress, failure: job.failure, waitedMs: Date.now() - t0, screenshot: await shot(page, '10-build-finished.png') };
 }
 
@@ -327,6 +331,7 @@ async function headingsOf(page) {
   return r.body.headings;
 }
 
+const HEADING_PACE_MS = Number(process.env.DEMO_HEADING_PACE_MS || 5000);
 const reviewable = (h) => !h.placeholder && !h.integrityFailure;
 const headingRow = (panel, num) => panel.locator(`section[aria-label="Section review"] li:has(span.mono:text-is("${num}"))`).first();
 
@@ -338,6 +343,7 @@ async function sendHeadings(page, nums) {
     await row.scrollIntoViewIfNeeded();
     await row.getByRole('button', { name: /Send for review/ }).click();
     await row.getByRole('button', { name: /Approve/ }).or(row.getByText('In review')).first().waitFor({ timeout: 30_000 }).catch(() => {});
+    await sleep(HEADING_PACE_MS / 2);
   }
   return shot(page, '11-headings-sent-for-review.png');
 }
@@ -354,6 +360,9 @@ async function approveHeadings(page, nums) {
     if (!readShot) readShot = await shot(page, '12-heading-saved-text-read.png');
     await row.getByRole('button', { name: /Approve/ }).click();
     await waitFor(async () => (await headingsOf(page)).find((h) => h.num === num)?.state === 'approved', 30_000, 1000);
+    // A person reads a heading before approving it. Unpaced, 69 headings in under a minute spent the API's
+    // per-minute limit (2026-11-10: 429 on the approver's reads), which no reader would.
+    await sleep(HEADING_PACE_MS);
   }
   return readShot;
 }
@@ -361,10 +370,13 @@ async function approveHeadings(page, nums) {
 async function prepareHeadingReview() {
   let heads = await headingsOf(PEOPLE.author.page);
   const toSend = heads.filter((h) => h.state === 'draft' && reviewable(h)).map((h) => h.num);
-  if (toSend.length) await retrying(PEOPLE.author.page, () => sendHeadings(PEOPLE.author.page, toSend));
+  // Each attempt reads what is still to do: a retry that began again from the first heading waited 30 s on a
+  // button the first attempt had already pressed (2026-11-10, after a dev reload interrupted the first attempt).
+  const still = async (page, state) => (await headingsOf(page)).filter((h) => h.state === state && reviewable(h)).map((h) => h.num);
+  if (toSend.length) await retrying(PEOPLE.author.page, async () => sendHeadings(PEOPLE.author.page, await still(PEOPLE.author.page, 'draft')));
   heads = await headingsOf(PEOPLE.author.page);
   const toApprove = heads.filter((h) => h.state === 'in_review' && reviewable(h)).map((h) => h.num);
-  const readShot = toApprove.length ? await retrying(PEOPLE.approver.page, () => approveHeadings(PEOPLE.approver.page, toApprove)) : null;
+  const readShot = toApprove.length ? await retrying(PEOPLE.approver.page, async () => approveHeadings(PEOPLE.approver.page, await still(PEOPLE.approver.page, 'in_review'))) : null;
   heads = await headingsOf(PEOPLE.author.page);
   const count = (f) => heads.filter(f).length;
   const panel = await openCsr(PEOPLE.approver.page);
@@ -401,11 +413,13 @@ async function importApproved(page) {
 
 async function prepareImport() {
   const page = PEOPLE.author.page;
-  if (state.data.importedIntoCsr) return { outcome: 'skipped', written: state.data.importedIntoCsr };
+  // A later build's approved headings are imported too: the skip holds only for the build already imported.
+  if (state.data.importedIntoCsr && (state.data.importedFromJob ?? state.data.jobId) === state.data.jobId) return { outcome: 'skipped', written: state.data.importedIntoCsr };
   const approved = (await headingsOf(page)).filter((h) => h.state === 'approved');
   if (!approved.length) return { outcome: 'blocked', blockedBy: 'no approved heading to import (no model key)' };
   const r = await retrying(page, () => importApproved(page), 1);
   state.data.importedIntoCsr = r.written;
+  state.data.importedFromJob = state.data.jobId;
   saveState();
   // The documents in the project: the import created none (RULE 4: one document for one CSR).
   const docs = await api(page, 'GET', `/api/authoring/docs?programId=${state.data.programId}`);
@@ -544,6 +558,7 @@ async function prepareCompile() {
 
 async function prepare() {
   await step('project: found or created through New project', prepareProject, { critical: true, page: PEOPLE.author.page });
+  await step('IND: the open IND\'s number and its sponsor, recorded (fictional; P-115)', prepareIdentity, { page: PEOPLE.author.page });
   await step('Vault: upload the study files and the manifest (POST /api/vault/ingest)', prepareUploads, { critical: true, page: PEOPLE.author.page });
   await step('Vault: send, review-sign and approve each of the seven files (three people)', prepareApprovals, { critical: true, page: PEOPLE.author.page });
   await step('Editor: New document → M5 lists the CSR once (F1)', checkCsrCatalog, { page: PEOPLE.author.page });

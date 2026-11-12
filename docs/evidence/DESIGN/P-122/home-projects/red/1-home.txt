@@ -1,0 +1,15 @@
+HEAD 98d2f1975 (the test file is the only change in the tree from this session)
+ × client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > puts Your projects and Your open items side by side in one row, after the composer 87ms
+   → one row holds the work: expected null to be truthy
+ × client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > starts Home near the top: no viewport-height pad above the greeting 2ms
+   → the 22vh pad pushed the work below the fold: expected 'align-items:flex-start;padding-top:ma…' not to match /\d+(\.\d+)?vh/
+ × client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > lays the row out in two columns wherever two fit, and one on a phone 1ms
+   → expected '' to match /display:\s*grid/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > puts Your projects and Your open items side by side in one row, after the composer
+AssertionError: one row holds the work: expected null to be truthy
+ FAIL  client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > starts Home near the top: no viewport-height pad above the greeting
+AssertionError: the 22vh pad pushed the work below the fold: expected 'align-items:flex-start;padding-top:ma…' not to match /\d+(\.\d+)?vh/
+ FAIL  client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > lays the row out in two columns wherever two fit, and one on a phone
+AssertionError: expected '' to match /display:\s*grid/
+      Tests  3 failed (3)

@@ -1,0 +1,35 @@
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > a limit in words > says each kind the way a monitor would
+   → toleranceWords is not a function
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > puts a lower limit’s breach zone at the low end and marks the value with the engine’s status
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > never tones the mark from the numbers: the status is the engine’s
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > draws a range with a breach zone at each end
+ ✓ client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > leaves an upper limit drawn as it always was
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > draws each limit in its own direction
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > no longer says lower-bound and two-sided limits are unsupported
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > creates a lower limit
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > opens a range for editing with all four of its limits, and saves them
+ × client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > shows the server’s refusal of a range that is not one, and keeps the form open
+ × client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > reads the study’s own runs and lists them as recorded
+ × client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > says a study has no loads, in words
+ × client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > reports a read that failed, or came back malformed, as a failure and not as an empty history
+ × client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > is claimed by the monitoring screen, so a release does not refuse it
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlRangeError > accepts upper/lower limits with a single threshold (or none yet)
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlRangeError > rejects a two-sided limit missing a bound, or inverted
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > seed libraries > ship non-empty, well-formed catalogs
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > reads the study’s own runs and lists them as recorded
+ FAIL  client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > says a study has no loads, in words
+ FAIL  client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > reports a read that failed, or came back malformed, as a failure and not as an empty history
+ FAIL  client/src/concept2cure/v2/__tests__/rbmLoadHistory.test.tsx > the load history > is claimed by the monitoring screen, so a release does not refuse it
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > a limit in words > says each kind the way a monitor would
+TypeError: toleranceWords is not a function
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > puts a lower limit’s breach zone at the low end and marks the value with the engine’s status
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > never tones the mark from the numbers: the status is the engine’s
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the bar for a lower limit and for a range > draws a range with a breach zone at each end
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > draws each limit in its own direction
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > no longer says lower-bound and two-sided limits are unsupported
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > creates a lower limit
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > opens a range for editing with all four of its limits, and saves them
+ FAIL  client/src/concept2cure/v2/__tests__/rbmQtlDirections.test.tsx > the quality tolerance limits tab > shows the server’s refusal of a range that is not one, and keeps the form open
+ Test Files  2 failed | 1 passed (3)
+      Tests  13 failed | 21 passed (34)

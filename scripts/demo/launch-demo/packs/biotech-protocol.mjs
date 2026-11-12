@@ -9,7 +9,13 @@ import { must } from '../lib.mjs';
 import { PROTOCOL, STUDY, T, findDemoByTitle } from './biotech-content.mjs';
 import { asArray } from './biotech-shared.mjs';
 
-const reason = (what) => `Launch demo seed: ${what} for ${STUDY}.`;
+/**
+ * The protocol being seeded. The biotech pack's by default; another pack passes its own to ensureProtocol
+ * (lumen-protocol.mjs), so one seeding path serves both and neither copies the other.
+ */
+const BIOTECH = { PROTOCOL, STUDY, T, find: findDemoByTitle, phase: 'Phase 2', therapeuticArea: 'Dermatology — plaque psoriasis' };
+
+const reason = (rec, what) => `Launch demo seed: ${what} for ${rec.spec.STUDY}.`;
 
 /**
  * Add every item of `wanted` that `have` does not already hold (matched by
@@ -31,19 +37,19 @@ async function ensureEach({ tally }, kind, wanted, have, { same, post }) {
 
 async function ensureDocument({ api, tally }, rec) {
   const list = must(await api('GET', '/api/protocol-development/documents?kind=clinical'), 200, 'list protocol documents');
-  let doc = findDemoByTitle(asArray(list, 'data', 'documents'), PROTOCOL.name);
+  let doc = rec.spec.find(asArray(list, 'data', 'documents'), rec.spec.PROTOCOL.name);
   if (doc) tally.found('protocol-document');
   else {
     doc = must(await api('POST', '/api/protocol-development/documents', {
       protocolKind: 'clinical',
       programId: rec.programId,
-      title: T(PROTOCOL.name),
-      protocolNumber: STUDY,
+      title: rec.spec.T(rec.spec.PROTOCOL.name),
+      protocolNumber: rec.spec.STUDY,
       designType: 'interventional',
-      phase: 'Phase 2',
-      therapeuticArea: 'Dermatology — plaque psoriasis',
-      synopsis: PROTOCOL.synopsis,
-      reason: reason('create the Phase 2 protocol document'),
+      phase: rec.spec.phase,
+      therapeuticArea: rec.spec.therapeuticArea,
+      synopsis: rec.spec.PROTOCOL.synopsis,
+      reason: reason(rec, 'create the Phase 2 protocol document'),
     }), 201, 'create protocol document');
     tally.created('protocol-document');
   }
@@ -62,28 +68,28 @@ async function ensureSections(ctx, rec) {
   };
   // "Found" = the template-seeded section already carries content.
   const filled = (s, [key]) => (s.section_key ?? s.sectionKey) === key && String(s.content ?? '').trim() !== '';
-  const written = await ensureEach(ctx, 'protocol-section', Object.entries(PROTOCOL.sections), sections, { same: filled, post: async ([key, content]) => {
-    must(await ctx.api('PATCH', `/api/protocol-development/sections/${byKey(key).id}`, { content, status: 'complete', reason: reason(`write the ${key} section`) }), 201, `write section ${key}`);
+  const written = await ensureEach(ctx, 'protocol-section', Object.entries(rec.spec.PROTOCOL.sections), sections, { same: filled, post: async ([key, content]) => {
+    must(await ctx.api('PATCH', `/api/protocol-development/sections/${byKey(key).id}`, { content, status: 'complete', reason: reason(rec, `write the ${key} section`) }), 201, `write section ${key}`);
   } });
-  return `${Object.keys(PROTOCOL.sections).length} sections (${written} written)`;
+  return `${Object.keys(rec.spec.PROTOCOL.sections).length} sections (${written} written)`;
 }
 
 async function ensureComponents(ctx, rec) {
   const { api } = ctx;
   const d = await readDoc(ctx, rec);
   const base = `/api/protocol-development/documents/${rec.id}`;
-  const objectives = await ensureEach(ctx, 'protocol-objective', PROTOCOL.objectives, asArray(d, 'objectives'), { same: (x, o) => x.objective === o.objective, post: async (o) => {
-    must(await api('POST', `${base}/objectives`, { ...o, reason: reason('add an objective') }), 201, 'add objective');
+  const objectives = await ensureEach(ctx, 'protocol-objective', rec.spec.PROTOCOL.objectives, asArray(d, 'objectives'), { same: (x, o) => x.objective === o.objective, post: async (o) => {
+    must(await api('POST', `${base}/objectives`, { ...o, reason: reason(rec, 'add an objective') }), 201, 'add objective');
   } });
-  const criteria = [...PROTOCOL.inclusion.map((criterion) => ({ kind: 'inclusion', criterion })), ...PROTOCOL.exclusion.map((criterion) => ({ kind: 'exclusion', criterion }))];
+  const criteria = [...(rec.spec.PROTOCOL.inclusion ?? []).map((criterion) => ({ kind: 'inclusion', criterion })), ...(rec.spec.PROTOCOL.exclusion ?? []).map((criterion) => ({ kind: 'exclusion', criterion }))];
   const eligibility = await ensureEach(ctx, 'protocol-criterion', criteria, asArray(d, 'eligibility', 'eligibilityCriteria'), { same: (x, c) => x.criterion === c.criterion && x.kind === c.kind, post: async (c) => {
-    must(await api('POST', `${base}/eligibility`, { ...c, reason: reason(`add an ${c.kind} criterion`) }), 201, `add ${c.kind} criterion`);
+    must(await api('POST', `${base}/eligibility`, { ...c, reason: reason(rec, `add an ${c.kind} criterion`) }), 201, `add ${c.kind} criterion`);
   } });
-  const visits = await ensureEach(ctx, 'protocol-visit', PROTOCOL.visits, asArray(d, 'visits', 'scheduleVisits'), { same: (x, v) => (x.visit_name ?? x.visitName) === v.visitName, post: async (v) => {
-    must(await api('POST', `${base}/visits`, { ...v, reason: reason('add a schedule visit') }), 201, `add visit ${v.visitName}`);
+  const visits = await ensureEach(ctx, 'protocol-visit', rec.spec.PROTOCOL.visits, asArray(d, 'visits', 'scheduleVisits'), { same: (x, v) => (x.visit_name ?? x.visitName) === v.visitName, post: async (v) => {
+    must(await api('POST', `${base}/visits`, { ...v, reason: reason(rec, 'add a schedule visit') }), 201, `add visit ${v.visitName}`);
   } });
-  const team = await ensureEach(ctx, 'protocol-team-member', PROTOCOL.team, asArray(d, 'team', 'teamMembers'), { same: (x, m) => (x.member_name ?? x.memberName) === m.memberName, post: async (m) => {
-    must(await api('POST', `${base}/team`, { ...m, reason: reason('add a study team member') }), 201, `add team member ${m.memberName}`);
+  const team = await ensureEach(ctx, 'protocol-team-member', rec.spec.PROTOCOL.team, asArray(d, 'team', 'teamMembers'), { same: (x, m) => (x.member_name ?? x.memberName) === m.memberName, post: async (m) => {
+    must(await api('POST', `${base}/team`, { ...m, reason: reason(rec, 'add a study team member') }), 201, `add team member ${m.memberName}`);
   } });
   return `added objectives ${objectives}, criteria ${eligibility}, visits ${visits}, team ${team}`;
 }
@@ -98,12 +104,12 @@ async function ensureSoaCells(ctx, rec, visitId) {
   const { api } = ctx;
   const rows = asArray(await readMatrix(ctx, rec), 'rows');
   let added = 0;
-  for (const a of PROTOCOL.assessments) {
+  for (const a of rec.spec.PROTOCOL.assessments) {
     const row = rows.find((r) => r.name === a.name);
     if (!row) throw new Error(`SoA: assessment "${a.name}" missing after create`);
     const present = (row.cells ?? []).filter((c) => c.present).map((c) => Number(c.visitId));
     added += await ensureEach(ctx, 'protocol-soa-cell', a.visits.map(visitId), present, { same: (vid, want) => vid === want, post: async (vid) => {
-      must(await api('POST', '/api/protocol-soa/cells', { assessmentId: Number(row.assessmentId), visitId: vid, required: true, reason: reason('mark an assessment at a visit') }), 201, `SoA cell ${a.name} @ visit ${vid}`);
+      must(await api('POST', '/api/protocol-soa/cells', { assessmentId: Number(row.assessmentId), visitId: vid, required: true, reason: reason(rec, 'mark an assessment at a visit') }), 201, `SoA cell ${a.name} @ visit ${vid}`);
     } });
   }
   return added;
@@ -118,9 +124,9 @@ async function ensureSoa(ctx, rec) {
     return Number(v.id);
   };
   const rows = asArray(await readMatrix(ctx, rec), 'rows');
-  const addedRows = await ensureEach(ctx, 'protocol-soa-assessment', PROTOCOL.assessments, rows, { same: (r, a) => r.name === a.name, post: async (a) => {
-    const orderIndex = PROTOCOL.assessments.indexOf(a);
-    must(await api('POST', `/api/protocol-soa/documents/${rec.id}/assessments`, { name: a.name, category: a.category, orderIndex, reason: reason('add a schedule-of-assessments row') }), 201, `add assessment ${a.name}`);
+  const addedRows = await ensureEach(ctx, 'protocol-soa-assessment', rec.spec.PROTOCOL.assessments, rows, { same: (r, a) => r.name === a.name, post: async (a) => {
+    const orderIndex = rec.spec.PROTOCOL.assessments.indexOf(a);
+    must(await api('POST', `/api/protocol-soa/documents/${rec.id}/assessments`, { name: a.name, category: a.category, orderIndex, reason: reason(rec, 'add a schedule-of-assessments row') }), 201, `add assessment ${a.name}`);
   } });
   const addedCells = await ensureSoaCells(ctx, rec, visitId);
   const matrix = await readMatrix(ctx, rec);
@@ -134,8 +140,8 @@ async function ensureRisks(ctx, rec) {
   const { api } = ctx;
   const url = `/api/protocol-risks/documents/${rec.id}/register`;
   const have = registerRows(must(await api('GET', url), 200, 'read risk register'));
-  const added = await ensureEach(ctx, 'protocol-risk', PROTOCOL.risks, have, { same: (x, r) => x.description === r.description, post: async (r) => {
-    must(await api('POST', `/api/protocol-risks/documents/${rec.id}/risks`, { ...r, reason: reason('register a protocol risk with its mitigation') }), 201, `add risk ${r.description.slice(0, 40)}`);
+  const added = await ensureEach(ctx, 'protocol-risk', rec.spec.PROTOCOL.risks, have, { same: (x, r) => x.description === r.description, post: async (r) => {
+    must(await api('POST', `/api/protocol-risks/documents/${rec.id}/risks`, { ...r, reason: reason(rec, 'register a protocol risk with its mitigation') }), 201, `add risk ${r.description.slice(0, 40)}`);
   } });
   rec.risks = registerRows(must(await api('GET', url), 200, 'read risk register')).length;
   return `${rec.risks} risks (${added} added)`;
@@ -147,8 +153,8 @@ async function ensureMilestones(ctx, rec) {
   const { api } = ctx;
   const url = `/api/protocol-milestones/documents/${rec.id}/milestones`;
   const have = milestoneRows(must(await api('GET', url), 200, 'read milestones'));
-  const added = await ensureEach(ctx, 'protocol-milestone', PROTOCOL.milestones, have, { same: (x, m) => x.name === m.name, post: async (m) => {
-    must(await api('POST', url, { ...m, reason: reason('plan a study milestone') }), 201, `add milestone ${m.name}`);
+  const added = await ensureEach(ctx, 'protocol-milestone', rec.spec.PROTOCOL.milestones, have, { same: (x, m) => x.name === m.name, post: async (m) => {
+    must(await api('POST', url, { ...m, reason: reason(rec, 'plan a study milestone') }), 201, `add milestone ${m.name}`);
   } });
   rec.milestones = milestoneRows(must(await api('GET', url), 200, 'read milestones')).length;
   return `${rec.milestones} milestones (${added} added)`;
@@ -156,13 +162,13 @@ async function ensureMilestones(ctx, rec) {
 
 async function ensureAmendment({ api, tally }, rec) {
   const list = must(await api('GET', `/api/protocol-amendments/amendments?protocolDocumentId=${rec.id}`), 200, 'list amendments');
-  let am = asArray(list, 'amendments', 'rows', 'data').find((x) => x.title === PROTOCOL.amendment.title) || null;
+  let am = asArray(list, 'amendments', 'rows', 'data').find((x) => x.title === rec.spec.PROTOCOL.amendment.title) || null;
   if (am) tally.found('protocol-amendment');
   else {
-    const { change, ...body } = PROTOCOL.amendment;
-    const r = must(await api('POST', '/api/protocol-amendments/amendments', { ...body, protocolDocumentId: rec.id, reason: reason('open a protocol amendment') }), 201, 'create amendment');
+    const { change, ...body } = rec.spec.PROTOCOL.amendment;
+    const r = must(await api('POST', '/api/protocol-amendments/amendments', { ...body, protocolDocumentId: rec.id, reason: reason(rec, 'open a protocol amendment') }), 201, 'create amendment');
     am = { id: r.id, title: body.title };
-    must(await api('POST', `/api/protocol-amendments/amendments/${am.id}/changes`, { ...change, reason: reason('record the amendment change') }), 201, 'add amendment change');
+    must(await api('POST', `/api/protocol-amendments/amendments/${am.id}/changes`, { ...change, reason: reason(rec, 'record the amendment change') }), 201, 'add amendment change');
     tally.created('protocol-amendment');
   }
   rec.amendment = { id: Number(am.id), title: am.title };
@@ -177,7 +183,7 @@ async function ensureVersion(ctx, rec) {
     rec.versions = versions.length;
     return `found ${versions.length} version(s)`;
   }
-  const r = must(await api('POST', `/api/protocol-development/documents/${rec.id}/versions`, { changeSummary: 'Initial complete draft of Protocol C2C-101-201 for the IND (demo seed).', reason: reason('snapshot the initial draft') }), 201, 'snapshot version');
+  const r = must(await api('POST', `/api/protocol-development/documents/${rec.id}/versions`, { changeSummary: `Initial complete draft of Protocol ${rec.spec.STUDY} for the IND (demo seed).`, reason: reason(rec, 'snapshot the initial draft') }), 201, 'snapshot version');
   tally.created('protocol-version');
   rec.versions = 1;
   return `snapshot ${r.version}`;
@@ -204,12 +210,12 @@ async function readPdev({ api }, rec) {
   return `#${mine.id}: objectives ${rec.pdev.objectives}, risks ${rec.pdev.risks}, milestones ${rec.pdev.milestones}, amendments ${rec.pdev.amendments}`;
 }
 
-export async function ensureProtocol(ctx, program) {
+export async function ensureProtocol(ctx, program, spec = BIOTECH) {
   const { run } = ctx;
   // The protocol document belongs to the demo program (the server requires programId).
-  const rec = { title: T(PROTOCOL.name), protocolNumber: STUDY, programId: program?.id ?? null };
+  const rec = { spec, title: spec.T(spec.PROTOCOL.name), protocolNumber: spec.STUDY, programId: program?.id ?? null };
   run.record('protocol', rec);
-  await run.step(`Protocol development: ${STUDY} document`, () => ensureDocument(ctx, rec));
+  await run.step(`Protocol development: ${spec.STUDY} document`, () => ensureDocument(ctx, rec));
   await run.step('Protocol development: section content', () => ensureSections(ctx, rec));
   await run.step('Protocol development: objectives, eligibility, visits, team', () => ensureComponents(ctx, rec));
   await run.step('Protocol development: schedule of assessments matrix', () => ensureSoa(ctx, rec));

@@ -1,0 +1,30 @@
+# One change per run; each file restored and its sha256 checked.
+M1 platform check removed (a client admin passes): KILLED; 2 failing; restored sha256 ok
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a client's own administrator 403 with a plain sentence, and changes no
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses a federated session whose e-mail is on the allowlist (the IdP asserted
+M2 reason check removed in the service: KILLED; 2 failing; restored sha256 ok
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > refuses platform staff without a reason 400, and changes nothing 16ms
+    × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > refuses a missing or too-short reason before any write 20ms
+M3 publish audit row not written: KILLED; 4 failing; restored sha256 ok
+    × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > writes one sealed audit row with the reason, the superseded version and the new one, before COMMIT 26ms
+    × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > an audit row that cannot be written rolls the publish back: the old version stays active 29ms
+    × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > a first version (nothing superseded) is audited with before: [] 14ms
+M4 superseded version not returned to the audit: KILLED; 1 failing; restored sha256 ok
+    × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > writes one sealed audit row with the reason, the superseded version and the new one, before COMMIT 41ms
+M5 existing tables re-created (no existence check): KILLED; 3 failing; restored sha256 ok
+    × server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts > publishAgreement > writes one sealed audit row with the reason, the superseded version and the new one, before COMMIT 124ms
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > tables that exist are read without a
+    × server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts > agreement reads fail closed > tables that exist are used without any DDL (2026-11-10: the runtime role 
+M6 creation failure rethrown raw (no not-set-up refusal): KILLED; 7 failing; restored sha256 ok
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NO
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMEN
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_N
+M7 route does not answer not-set-up: KILLED; 6 failing; restored sha256 ok
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > active agreements: 503 AGREEMENTS_NO
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > outstanding agreements: 503 AGREEMEN
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > the agreement records do not exist: an honest refusal, not a 500 and not an empty list > acceptance history: 503 AGREEMENTS_N
+M8 gate does not tell not-set-up apart: KILLED; 1 failing; restored sha256 ok
+    × server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts > requireLicenseAcceptance > says plainly that agreements are not set up when their records do not exist (F1, 2026-11-10, 
+M9 actor not passed to the audit: KILLED; 1 failing; restored sha256 ok
+    × server/routes/__tests__/licensing-agreements-publish-and-store.test.ts > POST /agreements is an act of platform staff > publishes for platform staff with a reason, and audits before and after in the
+9/9 killed

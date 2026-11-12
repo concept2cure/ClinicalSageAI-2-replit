@@ -10,7 +10,8 @@
  *     GET   /api/mdx/rbm-data-runs            ingestion history + provenance
  *
  *   Engine runs over that data
- *     POST  /api/mdx/rbm-site-risk/recompute      site risk from Site Intelligence
+ *     POST  /api/mdx/rbm-site-risk/recompute      site risk from Site Intelligence, or, where it holds no site
+ *                                                 for the study, from the study's own site-level indicator readings
  *     POST  /api/mdx/rbm-central-monitoring/run   cross-site outlier scan
  *     POST  /api/mdx/rbm-patient-profiles/score   cohort anomaly scoring
  *     GET   /api/mdx/rbm-site-oversight/:programId
@@ -33,8 +34,8 @@ import {
 import { pool } from '../db';
 import { recomputeSiteRisk, SITE_READ_MESSAGE, type Exec as SiteExec } from '../services/rbm/site-risk-engine';
 import {
-  detectSiteOutliers, scorePatientCohort,
-  type SiteMetric, type PatientMetric,
+  detectSiteOutliers, detectSiteIndicatorOutliers, scorePatientCohort,
+  type SiteMetric, type PatientMetric, type SiteOutlierFinding, type SiteIndicatorFinding,
 } from '../services/rbm/central-statistical-monitoring';
 import { ingestMetrics, METRIC_SOURCES } from '../services/rbm/metric-ingestion';
 
@@ -67,6 +68,30 @@ function num(v: unknown): number | null {
 /** Every route here is scoped to one program. */
 const seedProgramBody = z.object({ programId: z.string().regex(UUID_RE) });
 
+/** The request-scoped client when tenant context installed one; otherwise the engine takes a pool client. */
+function siteExecOf(req: Request): SiteExec | undefined {
+  const reqDb = (req as unknown as { dbClient?: SiteExec | null }).dbClient;
+  return reqDb && typeof reqDb.query === 'function' ? reqDb : undefined;
+}
+
+/**
+ * Rescore the study's sites after an extract that carried site-level rows has been committed, so Site risk never
+ * shows the previous extract's sites beside this one's readings. The load has already succeeded and stands either
+ * way: the answer says whether the sites were rescored, and if not, why.
+ */
+async function rescoreSitesAfterLoad(req: Request, orgId: number, programId: string):
+Promise<{ rescored: number; source: string } | { notRescored: string }> {
+  try {
+    const out = await recomputeSiteRisk(orgId, programId, siteExecOf(req));
+    if (out.ok) return { rescored: out.snapshots.length, source: out.source };
+    log.warn('site risk was not rescored after an extract load', { reason: out.reason, programId, detail: out.detail });
+    return { notRescored: SITE_READ_MESSAGE[out.reason] };
+  } catch (err) {
+    log.warn('site risk was not rescored after an extract load', { programId, detail: err instanceof Error ? err.message : String(err) });
+    return { notRescored: SITE_READ_MESSAGE.source_error };
+  }
+}
+
 router.post('/rbm-site-risk/recompute', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -77,11 +102,7 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
     // pinned connection carrying the RLS session, so the read is scoped by the
     // database as well as by the ownership check); otherwise the engine takes a
     // dedicated pool client. Either way the replace runs in one transaction.
-    const reqDb = (req as unknown as { dbClient?: SiteExec | null }).dbClient;
-    const out = await recomputeSiteRisk(
-      orgId, parsed.data.programId,
-      reqDb && typeof reqDb.query === 'function' ? reqDb : undefined,
-    );
+    const out = await recomputeSiteRisk(orgId, parsed.data.programId, siteExecOf(req));
     if (!out.ok) {
       // A failed source read is reported as a failure, never as a study with no
       // sites. The prior snapshot is intact, and the message says so.
@@ -94,13 +115,48 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
       // `reason` is machine-readable so the surface can say which.
       return clientError(res, 502, SITE_READ_MESSAGE[out.reason], { reason: out.reason });
     }
-    return ok(res, out.snapshots, { count: out.snapshots.length });
+    // `source` says where the figures came from, so the screen never credits Site Intelligence for a snapshot
+    // derived from the study's own indicators, or the reverse.
+    return ok(res, out.snapshots, { count: out.snapshots.length, source: out.source });
   } catch (err) { return serverError(res, log, 'recompute-site-risk', err); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════
 // CENTRAL STATISTICAL MONITORING (CluePoints SMART-style cross-site outliers)
 // ════════════════════════════════════════════════════════════════════════════
+
+type ScanFinding = SiteOutlierFinding | SiteIndicatorFinding;
+const isIndicatorFinding = (f: ScanFinding): f is SiteIndicatorFinding => 'cohortMedian' in f;
+
+/** Which scan a snapshot gets, and what it found. */
+function scanSites(rows: Array<Record<string, unknown>>, cohort: SiteMetric[]): { basis: 'study_indicators' | 'site_intelligence'; findings: ScanFinding[] } {
+  const fromIndicators = rows.filter((r) => (r.metadata as { source?: unknown } | null)?.source === 'study_indicators');
+  if (fromIndicators.length === 0) return { basis: 'site_intelligence', findings: detectSiteOutliers(cohort) };
+  const indicatorRows = fromIndicators.map((r) => ({
+    siteId: r.site_id == null ? null : String(r.site_id), siteNumber: r.site_number == null ? null : String(r.site_number),
+    indicators: (Array.isArray((r.metadata as { indicators?: unknown }).indicators) ? (r.metadata as { indicators: unknown[] }).indicators : [])
+      .map((i) => i as { kriName?: unknown; value?: unknown; unit?: unknown; direction?: unknown })
+      .filter((i) => typeof i.kriName === 'string' && typeof i.value === 'number')
+      .map((i) => ({ kriName: i.kriName as string, value: i.value as number, unit: typeof i.unit === 'string' ? i.unit : null,
+        direction: i.direction === 'lower_worse' ? 'lower_worse' as const : 'higher_worse' as const })),
+  }));
+  return { basis: 'study_indicators', findings: detectSiteIndicatorOutliers(indicatorRows) };
+}
+
+/** The signal a finding raises: type, severity, title, detail and the statistic behind it, in that order. */
+function signalWords(f: ScanFinding): [string, string, string, string, string] {
+  const site = f.siteNumber ?? f.siteId ?? '?';
+  if (!isIndicatorFinding(f)) {
+    return [`outlier_${f.dimension}`, f.severity, `Site ${site} is a ${f.dimension}-risk outlier`,
+      `Central statistical monitoring flagged this site: ${f.dimension} risk score ${f.value} is an outlier vs the study cohort (robust z ${f.score}).`,
+      JSON.stringify({ dimension: f.dimension, value: f.value, score: f.score })];
+  }
+  const unit = f.unit ? ` ${f.unit}` : '';
+  return ['outlier_indicator', f.severity, `Site ${site} stands apart on ${f.dimension}`,
+    `Central statistical monitoring: at site ${site}, ${f.dimension} is ${f.value}${unit} against a study median of ${f.cohortMedian}${unit} across ${f.cohortSize} sites (robust score ${f.score}). ${f.direction === 'lower_worse' ? 'Lower' : 'Higher'} is worse for this indicator.`,
+    JSON.stringify({ basis: 'study_indicators', dimension: f.dimension, value: f.value, unit: f.unit, score: f.score,
+      direction: f.direction, cohortMedian: f.cohortMedian, cohortSize: f.cohortSize })];
+}
 
 /**
  * Run unsupervised cross-site outlier detection over the program's site-risk
@@ -116,7 +172,7 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
   const { programId } = parsed.data;
   try {
     const { rows: sites } = await pool.query(
-      `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk
+      `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk, metadata
          FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
       [orgId, programId],
     );
@@ -130,7 +186,11 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
         operational: num(s.operational_risk),
       },
     }));
-    const findings = detectSiteOutliers(cohort);
+    // A snapshot scored from the study's own site-level indicators is scanned indicator by indicator, on the
+    // readings each row records (site-risk-engine.ts). Its composite is a three-level roll-up of those readings and
+    // cannot be told apart statistically; one from Site Intelligence is scanned on its four risk scores, as before.
+    const scan = scanSites(sites, cohort);
+    const findings = scan.findings;
 
     const client = await pool.connect();
     try {
@@ -146,17 +206,12 @@ router.post('/rbm-central-monitoring/run', async (req, res) => {
         const { rows } = await client.query(
           `INSERT INTO rbm_signals (organization_id, program_id, site_id, source, signal_type, severity, title, detail, statistic, status)
            VALUES ($1,$2,$3,'central_stat',$4,$5,$6,$7,$8,'new') RETURNING *`,
-          [
-            orgId, programId, f.siteId, `outlier_${f.dimension}`, f.severity,
-            `Site ${f.siteNumber ?? f.siteId ?? '?'} is a ${f.dimension}-risk outlier`,
-            `Central statistical monitoring flagged this site: ${f.dimension} risk score ${f.value} is an outlier vs the study cohort (robust z ${f.score}).`,
-            JSON.stringify({ dimension: f.dimension, value: f.value, score: f.score }),
-          ],
+          [orgId, programId, f.siteId, ...signalWords(f)],
         );
         inserted.push(rows[0]);
       }
       await client.query('COMMIT');
-      return ok(res, { findings, signals: inserted }, { cohortSize: cohort.length, flagged: findings.length });
+      return ok(res, { findings, signals: inserted }, { cohortSize: cohort.length, flagged: findings.length, basis: scan.basis });
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
       throw err;
@@ -369,7 +424,12 @@ router.post('/rbm-metric-ingest', async (req, res) => {
         { reason: result.reason, priorRun: p });
     }
     await client.query('COMMIT');
-    return created(res, result, {
+    const siteRisk = result.projection.siteObservations > 0
+      ? await rescoreSitesAfterLoad(req, orgId, parsed.data.programId) : undefined;
+    // On the result as well as in meta: the load's own outcome panel reads the result, and says what became of
+    // the site rows it stored.
+    return created(res, siteRisk ? { ...result, siteRisk } : result, {
+      ...(siteRisk ? { siteRisk } : {}),
       runId: result.runId,
       status: result.status,
       accepted: result.accepted,

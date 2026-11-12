@@ -1,0 +1,49 @@
+// Flow 6b: a person in two organizations. The seeded administrator invites Avery Lind (administrator of Northgate
+// Biologics GmbH) into Concept2Cure Therapeutics as a Member. jm.smith is not changed.
+const L = require('./lib.cjs');
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const AVERY = 'avery.lind@northgate-bio.example.test';
+(async () => {
+  const browser = await L.chromium.launch();
+  const stage = process.argv[3] || 'all';
+  if (stage === 'all' || stage === 'invite') {
+    const { page, context } = await L.signedIn(browser, 'jm.smith@concept2cure.pro', { who: 'jm.smith' });
+    await page.goto(L.BASE + '/concept2cure/admin-console', { waitUntil: 'networkidle' }); await L.sleep(1500);
+    L.drain(page);
+    const dialog = page.getByRole('dialog');
+    await page.getByTestId('admin-invite-member').click(); await dialog.waitFor();
+    await dialog.getByLabel('Full name').fill('Avery Lind'); await dialog.getByLabel('Email').fill(AVERY); await dialog.getByLabel('Role').selectOption('member');
+    await dialog.getByRole('button', { name: 'Send invite' }).click(); await L.sleep(2500);
+    note('seeded admin invites an existing account: writes', L.drain(page).map(x => x.replace(/token=[A-Za-z0-9._%-]+/g, 'token=<redacted>').slice(0, 700)));
+    note('toasts', await page.locator('[role=status], [role=alert]').evaluateAll(els => [...new Set(els.map(e => e.textContent.trim()).filter(t => t && t.length < 500))]));
+    note('handover', (await page.locator('section', { hasText: 'Invitation handover' }).last().innerText().catch(() => '')).slice(0, 700));
+    await L.shot(page, 'w1-85-invite-existing-account-pending.png');
+    note('member list (is Avery listed before accepting?)', await page.locator('.ctable-row .ctable-strong').allInnerTexts());
+    await context.close();
+  }
+  if (stage === 'all' || stage === 'accept') {
+    const { page, context } = await L.signedIn(browser, AVERY);
+    await page.goto(L.BASE + '/concept2cure', { waitUntil: 'networkidle' }); await L.sleep(1500);
+    await L.shot(page, 'w1-86-invited-person-home.png');
+    note('Home: anything about the invitation?', /invit/i.test(await L.textOf(page, 'body')));
+    const orgBtn = page.getByRole('button', { name: 'Organizations and invitations' });
+    note('rail button badge/text', await orgBtn.evaluate(e => ({ text: e.textContent.trim(), html: e.outerHTML.slice(0, 300) })));
+    await orgBtn.click(); await L.sleep(1200);
+    const panel = page.getByRole('dialog').first();
+    note('panel', await panel.innerText());
+    await L.shot(page, 'w1-87-organizations-and-invitations.png');
+    L.drain(page);
+    await panel.getByRole('button', { name: /Accept invitation from/ }).click(); await L.sleep(800);
+    const confirm = page.getByRole('dialog').last();
+    note('accept confirmation', await confirm.innerText());
+    await L.shot(page, 'w1-88-accept-invitation-confirm.png');
+    await confirm.getByRole('button', { name: 'Accept invitation' }).click(); await L.sleep(2500);
+    note('accept writes', L.drain(page).map(x => x.slice(0, 500)));
+    note('toasts', await page.locator('[role=status], [role=alert]').evaluateAll(els => [...new Set(els.map(e => e.textContent.trim()).filter(t => t && t.length < 500))]));
+    note('panel after accept', await page.getByRole('dialog').first().innerText().catch(() => '(closed)'));
+    await L.shot(page, 'w1-89-after-accept.png');
+    await context.storageState({ path: L.stateFile(AVERY) });
+    await context.close();
+  }
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

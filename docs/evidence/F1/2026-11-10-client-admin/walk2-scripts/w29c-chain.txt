@@ -1,0 +1,16 @@
+// Walk 2, flow 1f: the audit trail's second chain after a signed export was taken: what the screen says and why.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const seen = []; page.on('response', async (r) => { if (/\/api\/audit/.test(r.url())) { let b = ''; try { b = (await r.text()).slice(0, 700); } catch {} seen.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '').slice(0, 90)} -> ${b}`); } });
+  await c.step('audit trail header after three signed exports', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/audit-trail`, { waitUntil: 'networkidle' }); await c.sleep(3500);
+    const t = await c.mainText(page, 1500); s.notes.push(t.slice(0, 900).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-71-audit-chain-verification-failed.png');
+    s.notes.push('reads: ' + JSON.stringify(seen.filter((x) => /verify|chain|integrity/i.test(x))));
+    s.notes.push('db audit_events (org 7): ' + c.psql(`select id, event_type, sequence_number, left(record_hash,12), left(coalesce(previous_hash,'(none)'),12), hmac_seal is not null from audit_events where organization_id=7 order by id`));
+  });
+  c.report(); c.save('w2-29c-chain');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

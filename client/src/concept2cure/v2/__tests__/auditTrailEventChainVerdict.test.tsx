@@ -33,7 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { AuditTrail } from '../surfaces/AdminSurfaces';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
-const LEDGER = '/api/audit-trail/ledger';
+const LEDGER = '/api/audit-trail/ledger?limit=1000';
 const CHAIN = '/api/part11/audit-trail/chain-integrity';
 
 const ENTRY = {
@@ -248,6 +248,10 @@ describe('Audit trail — the audit-event verdict does not depend on the ledger 
     expect(await screen.findByText('The audit-event chain is not available to your role')).toBeTruthy();
     expect(screen.queryByText('Couldn’t verify the audit-event chain')).toBeNull();
     expect(region().textContent).not.toMatch(/intact/);
+    // A refused read is not an empty trail: no "0 entries" in the heading, and no export this role cannot run
+    // (role walk, 2026-11-12: a member and a viewer read "0 entries — hash-chained — append-only").
+    expect(document.body.textContent).not.toMatch(/\b0 entries\b/);
+    expect(screen.queryByRole('button', { name: /Export signed bundle/ })).toBeNull();
     await waitFor(() => expect(eventFacts(seen)?.auditEventChainUnavailable).toMatch(/cannot read the audit-event chain/));
     expect(eventFacts(seen)?.auditEventChain).toBeNull();
   });

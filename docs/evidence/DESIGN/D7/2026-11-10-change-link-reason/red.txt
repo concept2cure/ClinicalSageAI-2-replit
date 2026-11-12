@@ -1,0 +1,83 @@
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > creates a controlled document through POST /documents, then opens it 502ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the template field of New controlled document sets the type, as the library card did 64ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the document number opens the document, not a chat 37ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > Revise opens a reason-for-change dialog and posts the reason to /revise 89ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a periodic-review row opens the document instead of asking AnA to "schedule" it 37ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the register carries no AnA request of its own above its rows 28ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 245ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 175ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > edits the assessment through PATCH /changes/:id, starting from the recorded one 336ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > keeps a drawer open while its write is in flight 300ms
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 304ms
+   → Unable to find a label with the text of: /Why it is linked/
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > opens the one New controlled document door with the change-control templates to choose from 178ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > creates a change-control document with the selected program and reason, then opens its bound editing copy 139ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the log carries no AnA request of its own above its rows 122ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links the CAPA chosen from the register, with its own number and title 291ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links a deviation chosen from the deviation register (P-57) 80ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > says so when the register could not be read, and keeps the typed reference 83ms
+ × client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > asks why the record is linked when the change is past proposal 72ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > 403 without org context 21ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped 7ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows 9ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes — the digest an approval binds > returns each change with the content digest its approval signs 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row 10ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 422 on invalid body (missing title) 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505) 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason 7ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 422 without a reason for the move, reading and writing nothing 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > edits a change under assessment, guarded in the statement itself, and records the reason and each field before and after 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 422 without a reason for the edit, reading and writing nothing 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is approved: its content is fixed 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is in_implementation: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is verification: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is closed: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is rejected: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is cancelled: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 404 for a change this organization does not have 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > removes a proposed change, guarded in the statement itself, and records why 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 422 without a reason, reading and writing nothing 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is approved: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is in_implementation: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is verification: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is closed: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is rejected: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is cancelled: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 404 for a change this organization does not have 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 CHANGE_LINK_TARGET_NOT_FOUND for a deviation the organisation has not recorded; nothing is inserted 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 on an invalid link type 2ms
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 for a link to a change past proposal that does not say why; nothing is read further or inserted 6ms
+   → expected 500 to be 422 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > records how the linked record relates and why it was linked 4ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > a link to a proposed change may say why, and needs not 3ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes: 403, nothing read or written 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer patch /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/transition: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/links: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1/links/3: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 500 to be 422 // Object.is equality
+ ❯ server/routes/__tests__/qms-changes.test.ts:323:24
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ ❯ server/routes/__tests__/qms-changes.test.ts:338:23
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ ❯ server/routes/__tests__/qms-changes.test.ts:349:23
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ❯ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx:62:26
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ fill client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx:146:34
+ ❯ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx:318:5
+ Test Files  3 failed (3)
+      Tests  5 failed | 56 passed (61)

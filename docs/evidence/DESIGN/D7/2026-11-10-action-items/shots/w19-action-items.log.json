@@ -1,0 +1,114 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "capa-added",
+      "toast": "Action 2 was added to CAPA-2026-0001."
+    },
+    {
+      "name": "capa-items",
+      "heads": [
+        "#",
+        "Type",
+        "Action",
+        "Owner · due",
+        "State",
+        "Moves"
+      ],
+      "headRows": 1,
+      "bodies": 1,
+      "rows": [
+        [
+          "1",
+          "Containment",
+          "Walk C13: qualify the second gasket supplier",
+          "QA",
+          "In progress",
+          "Mark doneMark blockedCancel action"
+        ],
+        [
+          "2",
+          "Containment",
+          "Walk C13: qualify the second gasket supplier",
+          "QA",
+          "Planned",
+          "StartCancel action"
+        ]
+      ]
+    },
+    {
+      "name": "start-form",
+      "title": null
+    },
+    {
+      "name": "started",
+      "toast": "Action 2 is in progress."
+    },
+    {
+      "name": "capa-items-after",
+      "heads": [
+        "#",
+        "Type",
+        "Action",
+        "Owner · due",
+        "State",
+        "Moves"
+      ],
+      "headRows": 1,
+      "bodies": 1,
+      "rows": [
+        [
+          "1",
+          "Containment",
+          "Walk C13: qualify the second gasket supplier",
+          "QA",
+          "In progress",
+          "Mark doneMark blockedCancel action"
+        ],
+        [
+          "2",
+          "Containment",
+          "Walk C13: qualify the second gasket supplier",
+          "QA",
+          "In progress",
+          "Mark doneMark blockedCancel action"
+        ]
+      ]
+    },
+    {
+      "name": "review-added",
+      "toast": "Action 1 was added to the H2-76213 review."
+    },
+    {
+      "name": "review-items",
+      "heads": [
+        "#",
+        "Action",
+        "Owner · due",
+        "State",
+        "Moves"
+      ],
+      "headRows": 1,
+      "bodies": 1,
+      "rows": [
+        [
+          "1",
+          "Walk C13: appoint a QA lead",
+          "QA",
+          "Open",
+          "Close"
+        ]
+      ],
+      "close": 1
+    },
+    {
+      "name": "old",
+      "count": 0
+    },
+    {
+      "name": "w19-action-items",
+      "ok": true
+    }
+  ]
+}

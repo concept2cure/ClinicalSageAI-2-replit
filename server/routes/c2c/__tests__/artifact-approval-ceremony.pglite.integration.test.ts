@@ -30,7 +30,7 @@
  * assignment's row lock is proved on a real server
  * (tests/db/artifact-review-round-lock.dbtest.ts): PGlite is one connection.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -145,7 +145,7 @@ import { moveArtifactToSection } from '../../../services/artifact-approval-act';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
-  `CREATE TABLE organizations (id serial PRIMARY KEY, name text);`,
+  `CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb);`,
   extractTableDdl(BASELINE, [
     'users', 'organization_users', 'concept2cure_artifacts', 'concept2cure_artifact_versions',
     'concept2cure_signatures', 'concept2cure_submission_snapshots', 'concept2cure_provenance_events',
@@ -1198,42 +1198,52 @@ describe('a Module 3 section bridged from a compile', () => {
 });
 
 /**
- * P-95 Q2 (ruled 2026-11-09 by the coordinating session, COORDINATION.md row
- * 38): two independent reviewers where the contract names
- * regulated_dual_review, read only from fields no request can lower. That
- * means a CTD section set in any module (a placed artifact is a
- * submission_component), or type 'section'. Every other artifact keeps one. A
- * ctd_section change on an artifact with review decisions voids them, as an
- * edit does. The refusal names the count. Review readiness is the quorum's
- * own answer.
+ * P-116 (founder, 2026-11-10: "Doesn't need two"): one independent reviewer is
+ * enough for every artifact, placed or not. From 2026-11-09 a placed artifact
+ * or a dossier section needed two (P-95 Q2, ruled under delegation); these
+ * cases pinned that and now pin the founder's rule. Review itself stays
+ * mandatory (P-95): none at all is still refused, before the password. A
+ * ctd_section change on an artifact with review decisions still voids them
+ * (below). Review readiness is the quorum's own answer.
  */
-describe('P-95 Q2: two independent reviewers for a placed document', () => {
+describe('P-116: one independent reviewer is enough, placed or not', () => {
   beforeAll(addReviewers);
   const placeAt = (section: string | null) => run(`UPDATE concept2cure_artifacts SET ctd_section = $2 WHERE artifact_id = $1`, [ARTIFACT, section]);
   const reviewStatus = () => request(app()).get(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/reviews/status`);
 
-  it('placed in a CTD section, one independent reviewer: refused 409 REVIEW_REQUIRED, naming the count, before the password', async () => {
+  it('placed in a CTD section, one independent reviewer: approved', async () => {
     await seed('review');
     await placeAt('2.5');
     await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it('placed in a CTD section, no reviewer at all: still refused 409 REVIEW_REQUIRED, before the password', async () => {
+    await seed('review');
+    await placeAt('2.5');
     let reauthAsked = false;
     holder.duringReauth = async () => { reauthAsked = true; };
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
-    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers, because it is placed in CTD 2\.5; 1 has approved this version/);
     expect(reauthAsked).toBe(false);
     expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
   });
 
-  it('placed in Module 1 too (any module): one reviewer is refused, two are approved', async () => {
+  it('placed in Module 1 too (any module): one reviewer is approved', async () => {
     await seed('review');
     await placeAt('1.3.1');
     await reviewed();
-    expect((await putStatus(APPROVE)).status).toBe(409);
+    expect((await putStatus(APPROVE)).status).toBe(200);
+  });
 
-    await run(`DELETE FROM concept2cure_review_assignments`);
+  it('two reviewers who both approved a placed document: approved, as before', async () => {
+    await seed('review');
+    await placeAt('1.3.1');
     await reviewedBy([ADA, BEN]);
     const res = await putStatus(APPROVE);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -1246,38 +1256,158 @@ describe('P-95 Q2: two independent reviewers for a placed document', () => {
     expect((await putStatus(APPROVE)).status).toBe(200);
   });
 
-  it.each([['unassigned'], ['ana-ri.risk_memo']])('a section AnA writes to mean "none" (%s) is not a placement: one reviewer approves', async section => {
+  it.each([['unassigned'], ['ana-ri.risk_memo']])('a section AnA writes to mean "none" (%s): one reviewer approves', async section => {
     await seed('review');
     await placeAt(section);
     await reviewed();
     expect((await putStatus(APPROVE)).status).toBe(200);
   });
 
-  it('type section, not placed: one reviewer is refused', async () => {
+  it('type section, not placed: one reviewer is approved', async () => {
     await seed('review');
     await run(`UPDATE concept2cure_artifacts SET type = 'section' WHERE artifact_id = $1`, [ARTIFACT]);
     await reviewed();
     const res = await putStatus(APPROVE);
-    expect(res.status, JSON.stringify(res.body)).toBe(409);
-    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers, because it is a dossier section/);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
   });
 
-  it('review status says not ready, with the same sentence, while the floor is unmet; ready once it is met', async () => {
+  it('review status says ready once one reviewer has approved a placed document', async () => {
     await seed('review');
     await placeAt('3.2.P.5');
     await reviewed();
     const one = await reviewStatus();
     expect(one.status, JSON.stringify(one.body)).toBe(200);
-    expect(one.body.data).toMatchObject({ allApproved: true, readyForApproval: false });
-    expect(one.body.data.notReadyReason).toMatch(/needs 2 independent reviewers.*1 has approved this version/);
-
-    await run(`DELETE FROM concept2cure_review_assignments`);
-    await reviewedBy([ADA, BEN]);
-    const two = await reviewStatus();
-    expect(two.body.data).toMatchObject({ readyForApproval: true });
-    expect(two.body.data.notReadyReason).toBeUndefined();
+    expect(one.body.data).toMatchObject({ allApproved: true, readyForApproval: true });
+    expect(one.body.data.notReadyReason).toBeUndefined();
   });
 
+});
+
+/**
+ * P-116 (founder, 2026-11-10: "What if a client is a single consultant", then
+ * "self-approve, on record"): when the signer is the organisation's only
+ * member there is nobody to be independent of, so they may approve and lock
+ * what they wrote with no reviewer, and the signed act says no independent
+ * review took place. It follows from the membership alone: with a second
+ * member, P-18 and P-95 refuse as before.
+ */
+describe('P-116: a one-person organisation approves its own artifact, on the record', () => {
+  const soleMember = () => run(`DELETE FROM organization_users WHERE organization_id = $1 AND user_id <> $2`, [ORG, USER]);
+  const ledgerPayloads = async () =>
+    (await run(`SELECT command, payload FROM c2c_ana_actions ORDER BY proposed_at`)).rows
+      .map((r) => ({ command: r.command, payload: typeof r.payload === 'string' ? JSON.parse(r.payload) : r.payload }));
+  afterEach(addReviewers);
+
+  it('the only member approves what they wrote, with no reviewer: approved, and the act records no independent review', async () => {
+    await soleMember();
+    await seed('review', { author: USER });
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+    const [act] = await ledgerPayloads();
+    expect(act.command).toBe('approve');
+    expect(act.payload).toMatchObject({ independentReview: 'none' });
+    expect(act.payload.independentReviewNote).toMatch(/only member/);
+  });
+
+  it('the same act with a second member in the organisation: refused 403 SEPARATION_OF_DUTIES, nothing written', async () => {
+    await soleMember();
+    await run(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'viewer')`, [ORG, ADA]);
+    await seed('review', { author: USER });
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await ledgerPayloads()).toEqual([]);
+  });
+
+  it('the only member is not the author (a former colleague wrote it): approved without a reviewer, and still recorded as unreviewed', async () => {
+    await soleMember();
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const [act] = await ledgerPayloads();
+    expect(act.payload).toMatchObject({ independentReview: 'none' });
+  });
+
+  it('an independently reviewed approval carries no such note', async () => {
+    await seed('review');
+    await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const [act] = await ledgerPayloads();
+    expect(act.payload.independentReview).toBeUndefined();
+  });
+});
+
+/**
+ * P-117 (founder, 2026-11-10: "Those rules should be set by the client super
+ * admin in client security user settings"): the reviewer count and the
+ * sole-member self-approval are the organisation's settings, read from
+ * organizations.settings.security on every approval. Unset, they are P-116's
+ * rule: one reviewer, and a sole member may approve their own record.
+ */
+describe("P-117: the review rules are the organisation's own settings", () => {
+  const setSecurity = (security: Record<string, unknown> | null) =>
+    run(`UPDATE organizations SET settings = $2::jsonb WHERE id = $1`, [ORG, security ? JSON.stringify({ security }) : null]);
+  const soleMember = () => run(`DELETE FROM organization_users WHERE organization_id = $1 AND user_id <> $2`, [ORG, USER]);
+  beforeAll(addReviewers);
+  afterEach(async () => { await setSecurity(null); await addReviewers(); });
+
+  it('two reviewers required, one has approved: refused 409 REVIEW_REQUIRED, naming the organisation\'s rule', async () => {
+    await setSecurity({ independentReviewersRequired: 2 });
+    await seed('review');
+    await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers.*your organisation's review rules ask for that many; 1 has approved/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+  });
+
+  it('two reviewers required, two have approved: approved', async () => {
+    await setSecurity({ independentReviewersRequired: 2 });
+    await seed('review');
+    await reviewedBy([ADA, BEN]);
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it('self-approval switched off: the only member cannot approve what they wrote, and nothing is written', async () => {
+    await setSecurity({ soleMemberSelfApproval: false });
+    await soleMember();
+    await seed('review', { author: USER });
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).not.toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect((await run(`SELECT 1 FROM c2c_ana_actions`)).rows).toEqual([]);
+  });
+
+  it('self-approval switched off, and the only member did not write it: still refused, because no one reviewed it', async () => {
+    await setSecurity({ soleMemberSelfApproval: false });
+    await soleMember();
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+  });
+
+  it('a stored value outside the bounds never lowers the floor below one reviewer', async () => {
+    await setSecurity({ independentReviewersRequired: 0 });
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+  });
 });
 
 /** P-95 Q2, the second half of the ruling: a ctd_section change on an artifact with review decisions voids them, as an edit does. */

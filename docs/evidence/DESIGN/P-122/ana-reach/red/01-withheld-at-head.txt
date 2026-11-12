@@ -1,0 +1,143 @@
+# RED 1 — at HEAD 45a3fbe8b (nothing changed but the three new test files): the capabilities are withheld under launch scope.
+# 2026-11-12T00:32:22Z  npx vitest run <the three files> --reporter=verbose
+
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member of the project is answered from the engine and their organisation’s history 9ms
+   → expected '{"error":"LAUNCH_SCOPE","tool":"simul…' to match /Probability of success on the primary…/
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > RULE 2: no model is asked for anything, and the same design gives the same answer 1ms
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a user of another organisation who opens this project is refused, and nothing is simulated 2ms
+   → expected undefined to be 'ANA_PROJECT_NOT_FOUND' // Object.is equality
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member who cannot open a private project is refused there 1ms
+   → expected undefined to be 'ANA_PROJECT_ACCESS_DENIED' // Object.is equality
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > each organisation’s prior rests on its own reports, never another’s 4ms
+   → expected '{"error":"LAUNCH_SCOPE","tool":"simul…' to contain 'Effect prior grounded in 2 historical…'
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a member of the project is recommended the endpoints their organisation’s reports record 3229ms
+   → {"status":"failed","command":"recommend_endpoints","result":{"success":false,"action":"recommend_endpoints","message":"This part of the product is not in this release.","error":"LAUNCH_SCOPE"},"instruction":"If the result's error is HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED, nothing ran: it is a proposal, a
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an endpoint a model proposes carries no rate and no count, and is labelled as a model’s 26ms
+   → expected undefined to match object { occurrence_count: +0, …(3) }
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an evaluation carries no score, even when the model’s commentary contains one 24ms
+   → {"status":"failed","command":"evaluate_endpoint","result":{"success":false,"action":"evaluate_endpoint","message":"This part of the product is not in this release.","error":"LAUNCH_SCOPE"},"instruction":"If the result's error is HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED, nothing ran: it is a proposal, and o
+ ✓ server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation who opens this project is refused, and no command runs 5ms
+ × server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation reads their own organisation’s corpus, never this one’s 17ms
+   → expected [] to deeply equal [ [ …(2) ] ]
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a member of the project is answered: the organisation’s own commitments they may open, counted by urgency 16ms
+   → {"error":"LAUNCH_SCOPE","tool":"review_commitment_portfolio","message":"review_commitment_portfolio belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > with the project open in the conversation, the same member is answered for that project’s sponsor 5ms
+   → {"error":"LAUNCH_SCOPE","tool":"review_commitment_portfolio","message":"review_commitment_portfolio belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a private project’s commitment is counted only for someone who can open that project 7ms
+   → expected undefined to match object { total: 2, overdue: 1 }
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a submission of a project the person cannot open is refused, in the words a missing one is 5ms
+   → expected 'LAUNCH_SCOPE' to match /Nothing was read/
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation is refused that submission, and never counts this organisation’s commitments 5ms
+   → expected 'LAUNCH_SCOPE' to match /Nothing was read/
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation who opens this organisation’s project is refused before anything is read 5ms
+   → expected undefined to be 'ANA_PROJECT_NOT_FOUND' // Object.is equality
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > nobody identified, or someone who is not a current member, is refused 4ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a sharing policy that cannot be read is an error, never an empty portfolio 9ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who may change the project records a commitment on its submission, in the organisation’s register 7ms
+   → {"error":"LAUNCH_SCOPE","tool":"create_regulatory_commitment","message":"create_regulatory_commitment belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a commitment that names no submission and no meeting is the organisation’s own: an editor records it 4ms
+   → {"error":"LAUNCH_SCOPE","tool":"create_regulatory_commitment","message":"create_regulatory_commitment belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a user of another organisation cannot record a commitment against this organisation’s submission 7ms
+   → expected 'LAUNCH_SCOPE' to match /Nothing was recorded/
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > nor from this organisation’s meeting 5ms
+   → expected 'LAUNCH_SCOPE' to match /Nothing was recorded/
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who can open the project but not change it is refused, and nothing is recorded 5ms
+   → expected 'LAUNCH_SCOPE' to match /Nothing was recorded/
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a private project’s submission, or its meeting, is refused in the words a missing one is 7ms
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a submission in no project is refused: there is no project whose edit right could admit it 6ms
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > the project’s owner records a commitment on the private project’s submission 7ms
+   → {"error":"LAUNCH_SCOPE","tool":"create_regulatory_commitment","message":"create_regulatory_commitment belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a viewer is refused before any of it: the write needs an editor role 5ms
+   → expected 'LAUNCH_SCOPE' to match /needs an editor role/
+ ✓ server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a sharing policy that cannot be read records nothing, and says so 5ms
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > the launch screens that own the jobs > Communication and the protocol workspace are launch surfaces; the two locked screens are not 2ms
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > create_regulatory_commitment is classified, and not as a hidden app’s tool 10ms
+   → create_regulatory_commitment is still filed under lifecycle-mgmt: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > review_commitment_portfolio is classified, and not as a hidden app’s tool 1ms
+   → review_commitment_portfolio is still filed under lifecycle-mgmt: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > simulate_study_design is classified, and not as a hidden app’s tool 1ms
+   → simulate_study_design is still filed under csr-workflow: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > the command evaluate_endpoint is classified, and not as a hidden app’s command 1ms
+   → evaluate_endpoint is still filed under csr-workflow: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > the command recommend_endpoints is classified, and not as a hidden app’s command 1ms
+   → recommend_endpoints is still filed under csr-workflow: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > in production, the toolset every chat door composes offers the re-filed tools 2ms
+   → create_regulatory_commitment: expected false to be true // Object.is equality
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > in production, the fulfilment tool is still withheld 1ms
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, create_regulatory_commitment is not refused as outside the release 7ms
+   → expected '{"error":"LAUNCH_SCOPE","tool":"creat…' not to contain 'LAUNCH_SCOPE'
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, review_commitment_portfolio is not refused as outside the release 1ms
+   → expected '{"error":"LAUNCH_SCOPE","tool":"revie…' not to contain 'LAUNCH_SCOPE'
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, simulate_study_design is not refused as outside the release 1ms
+   → expected '{"error":"LAUNCH_SCOPE","tool":"simul…' not to contain 'LAUNCH_SCOPE'
+ ✓ server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the fulfilment tool is refused as outside the release, before anyone is asked to confirm 1ms
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the command evaluate_endpoint passes the launch-scope step of dispatch 1ms
+   → expected 'LAUNCH_SCOPE' not to be 'LAUNCH_SCOPE' // Object.is equality
+ × server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the command recommend_endpoints passes the launch-scope step of dispatch 0ms
+   → expected 'LAUNCH_SCOPE' not to be 'LAUNCH_SCOPE' // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 32 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > create_regulatory_commitment is classified, and not as a hidden app’s tool
+AssertionError: create_regulatory_commitment is still filed under lifecycle-mgmt: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > review_commitment_portfolio is classified, and not as a hidden app’s tool
+AssertionError: review_commitment_portfolio is still filed under lifecycle-mgmt: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > simulate_study_design is classified, and not as a hidden app’s tool
+AssertionError: simulate_study_design is still filed under csr-workflow: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > the command evaluate_endpoint is classified, and not as a hidden app’s command
+AssertionError: evaluate_endpoint is still filed under csr-workflow: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > the command recommend_endpoints is classified, and not as a hidden app’s command
+AssertionError: recommend_endpoints is still filed under csr-workflow: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what AnA is offered under launch scope > in production, the toolset every chat door composes offers the re-filed tools
+AssertionError: create_regulatory_commitment: expected false to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, create_regulatory_commitment is not refused as outside the release
+AssertionError: expected '{"error":"LAUNCH_SCOPE","tool":"creat…' not to contain 'LAUNCH_SCOPE'
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, review_commitment_portfolio is not refused as outside the release
+AssertionError: expected '{"error":"LAUNCH_SCOPE","tool":"revie…' not to contain 'LAUNCH_SCOPE'
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, simulate_study_design is not refused as outside the release
+AssertionError: expected '{"error":"LAUNCH_SCOPE","tool":"simul…' not to contain 'LAUNCH_SCOPE'
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the command evaluate_endpoint passes the launch-scope step of dispatch
+ FAIL  server/services/ana/__tests__/ana-reach-p122-launch-scope.test.ts > what runs when it is reached by name > in production, the command recommend_endpoints passes the launch-scope step of dispatch
+AssertionError: expected 'LAUNCH_SCOPE' not to be 'LAUNCH_SCOPE' // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a member of the project is answered: the organisation’s own commitments they may open, counted by urgency
+AssertionError: {"error":"LAUNCH_SCOPE","tool":"review_commitment_portfolio","message":"review_commitment_portfolio belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > with the project open in the conversation, the same member is answered for that project’s sponsor
+AssertionError: {"error":"LAUNCH_SCOPE","tool":"review_commitment_portfolio","message":"review_commitment_portfolio belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a private project’s commitment is counted only for someone who can open that project
+AssertionError: expected undefined to match object { total: 2, overdue: 1 }
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a submission of a project the person cannot open is refused, in the words a missing one is
+AssertionError: expected 'LAUNCH_SCOPE' to match /Nothing was read/
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation is refused that submission, and never counts this organisation’s commitments
+AssertionError: expected 'LAUNCH_SCOPE' to match /Nothing was read/
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > review_commitment_portfolio, reached under launch scope > a user of another organisation who opens this organisation’s project is refused before anything is read
+AssertionError: expected undefined to be 'ANA_PROJECT_NOT_FOUND' // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who may change the project records a commitment on its submission, in the organisation’s register
+AssertionError: {"error":"LAUNCH_SCOPE","tool":"create_regulatory_commitment","message":"create_regulatory_commitment belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a commitment that names no submission and no meeting is the organisation’s own: an editor records it
+AssertionError: {"error":"LAUNCH_SCOPE","tool":"create_regulatory_commitment","message":"create_regulatory_commitment belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a user of another organisation cannot record a commitment against this organisation’s submission
+AssertionError: expected 'LAUNCH_SCOPE' to match /Nothing was recorded/
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > nor from this organisation’s meeting
+AssertionError: expected 'LAUNCH_SCOPE' to match /Nothing was recorded/
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a member who can open the project but not change it is refused, and nothing is recorded
+AssertionError: expected 'LAUNCH_SCOPE' to match /Nothing was recorded/
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > the project’s owner records a commitment on the private project’s submission
+AssertionError: {"error":"LAUNCH_SCOPE","tool":"create_regulatory_commitment","message":"create_regulatory_commitment belongs to a part of the product that is not in this release. Nothing was run."}: expected undefined to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/commitment-tools-project-scope.pglite.test.ts > create_regulatory_commitment, reached under launch scope > a viewer is refused before any of it: the write needs an editor role
+AssertionError: expected 'LAUNCH_SCOPE' to match /needs an editor role/
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member of the project is answered from the engine and their organisation’s history
+AssertionError: expected '{"error":"LAUNCH_SCOPE","tool":"simul…' to match /Probability of success on the primary…/
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a user of another organisation who opens this project is refused, and nothing is simulated
+AssertionError: expected undefined to be 'ANA_PROJECT_NOT_FOUND' // Object.is equality
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > a member who cannot open a private project is refused there
+AssertionError: expected undefined to be 'ANA_PROJECT_ACCESS_DENIED' // Object.is equality
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > simulate_study_design, reached under launch scope > each organisation’s prior rests on its own reports, never another’s
+AssertionError: expected '{"error":"LAUNCH_SCOPE","tool":"simul…' to contain 'Effect prior grounded in 2 historical…'
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a member of the project is recommended the endpoints their organisation’s reports record
+AssertionError: {"status":"failed","command":"recommend_endpoints","result":{"success":false,"action":"recommend_endpoints","message":"This part of the product is not in this release.","error":"LAUNCH_SCOPE"},"instruction":"If the result's error is HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED, nothing ran: it is a pr
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an endpoint a model proposes carries no rate and no count, and is labelled as a model’s
+AssertionError: expected undefined to match object { occurrence_count: +0, …(3) }
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > RULE 2: an evaluation carries no score, even when the model’s commentary contains one
+AssertionError: {"status":"failed","command":"evaluate_endpoint","result":{"success":false,"action":"evaluate_endpoint","message":"This part of the product is not in this release.","error":"LAUNCH_SCOPE"},"instruction":"If the result's error is HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED, nothing ran: it is a propos
+ FAIL  server/services/ana/__tests__/study-design-tools-reach.pglite.test.ts > recommend_endpoints and evaluate_endpoint, reached under launch scope > a user of another organisation reads their own organisation’s corpus, never this one’s
+AssertionError: expected [] to deeply equal [ [ …(2) ] ]
+ Test Files  3 failed (3)
+      Tests  32 failed | 10 passed (42)

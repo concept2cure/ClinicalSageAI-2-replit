@@ -1,0 +1,47 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/container-closures",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scope": "drug_substance",
+      "systemName": "Double LDPE bag in HDPE drum",
+      "containerDescription": "Double low-density polyethylene bags, each closed with a tie, inside a 25 L high-density polyethylene drum",
+      "closureDescription": "Tamper-evident HDPE lid with a tinned-steel locking ring",
+      "suitabilityJustification": "LDPE in contact with the substance meets Ph. Eur. 3.1.3; no interaction seen in 12 months at 25C/60%RH",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 8,
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "scope": "drug_substance",
+        "systemName": "Double LDPE bag in HDPE drum",
+        "componentType": "primary",
+        "containerDescription": "Double low-density polyethylene bags, each closed with a tie, inside a 25 L high-density polyethylene drum",
+        "closureDescription": "Tamper-evident HDPE lid with a tinned-steel locking ring",
+        "materialsOfConstruction": null,
+        "compendialStandards": null,
+        "suitabilityJustification": "LDPE in contact with the substance meets Ph. Eur. 3.1.3; no interaction seen in 12 months at 25C/60%RH",
+        "extractablesLeachables": null,
+        "integrityTesting": null,
+        "supplier": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-10T13:06:37.851Z",
+        "updatedAt": "2026-11-10T13:06:37.851Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

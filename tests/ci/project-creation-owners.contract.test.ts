@@ -21,7 +21,12 @@ const RETAINED_ROUTES = [
   ['server/routes/project-hierarchy.ts', 'patch', '/:projectId/move'],
   ['server/bootstrap/register-advanced-platform-routes.ts', 'get', '/api/workspace/projects'],
   ['server/routes/ctd-onboarding.ts', 'get', '/projects'],
-  ['server/routes/ctd-onboarding.ts', 'post', '/projects/:id/upload'],
+  /* 2026-11-09 (P-108 3(b), item 5; 217f501532): POST /projects/:id/upload was removed on purpose,
+     its 404 pinned by server/routes/__tests__/ctd-upload-route-retired.test.ts. What A2.9 left
+     here and that removal kept are the reads beside it. */
+  ['server/routes/ctd-onboarding.ts', 'get', '/projects/:id'],
+  ['server/routes/ctd-onboarding.ts', 'post', '/projects/:id/validate'],
+  ['server/routes/ctd-onboarding.ts', 'post', '/projects/:id/detect-section'],
   ['server/routes/program-journey.routes.ts', 'get', '/'],
   ['server/routes/ana-platform-control.ts', 'get', '/capabilities'],
   ['server/routes/ana-platform-control.ts', 'patch', '/settings'],

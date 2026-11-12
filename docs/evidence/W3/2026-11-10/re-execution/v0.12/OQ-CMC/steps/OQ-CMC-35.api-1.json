@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/analytical-methods/14/validate",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 13,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "Invalid input data",
+      "details": [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "reason"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]
+    }
+  }
+}

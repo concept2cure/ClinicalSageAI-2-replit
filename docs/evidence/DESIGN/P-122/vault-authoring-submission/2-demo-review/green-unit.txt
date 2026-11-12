@@ -1,0 +1,151 @@
+ok 1 - records the sponsor and binds it with the application number, each with a reason
+ok 2 - a project that already records both is found, and nothing is written
+ok 3 - an existing sponsor of the same name is bound, not recorded twice
+ok 4 - biotech: a FROZEN document from a previous run is found, and no review is requested
+ok 5 - device: a FROZEN 510(k) Summary from a previous run is found, and no review is requested
+ok 6 - biotech: a APPROVED document from a previous run is found, and no review is requested
+ok 7 - device: a APPROVED 510(k) Summary from a previous run is found, and no review is requested
+ok 8 - a draft is still sent for review, so the first run is unchanged
+ok 9 - biotech (C2C-101): records the drug substance §3.2.S is written about
+ok 10 - biotech (C2C-101): records the drug product §3.2.P is written about
+ok 11 - biotech (C2C-101): a biologic substance states its origin, as §3.2.A.2 asks
+ok 12 - lumen (LMN-201): records the drug substance §3.2.S is written about
+ok 13 - lumen (LMN-201): records the drug product §3.2.P is written about
+ok 14 - lumen (LMN-201): a biologic substance states its origin, as §3.2.A.2 asks
+ok 15 - every study that claims a shelf life sends it, so §3.2.P.8 has its subject
+ok 16 - a study already on file without its claim is given one
+ok 17 - the recorded release results reach the register §3.2.S.4.4 and §3.2.P.5.4 read
+ok 18 - one recorded result disagrees with its own criterion, on purpose
+ok 19 - the seeder records the substance and the product first of all
+ok 20 - the substance carries the modality the boundary reads, as stated
+ok 21 - a second run records neither material twice
+ok 22 - biotech (C2C-101): every specification's method is a method the pack records
+ok 23 - biotech (C2C-101): every recorded method states the ICH Q2 parameters its validation signs for
+ok 24 - biotech (C2C-101): no method is declared validated in the pack's data
+ok 25 - lumen (LMN-201): every specification's method is a method the pack records
+ok 26 - lumen (LMN-201): every recorded method states the ICH Q2 parameters its validation signs for
+ok 27 - lumen (LMN-201): no method is declared validated in the pack's data
+ok 28 - the seeder records each method before the specification that cites it
+ok 29 - the seeder carries the Q2 parameters, and does not sign without a signer
+ok 30 - with a signer, each method is validated through the governed route
+ok 31 - a second run records nothing twice
+ok 32 - C2C-201: each of the eleven registers ensureCmc did not write gets a row
+ok 33 - C2C-201: the impurities cover every class the assessment routes, and dissolution can be compared
+ok 34 - C2C-201: a second run creates nothing
+ok 35 - C2C-201: each stability result carries the condition it was pulled at and its reading
+ok 36 - C2C-201: an earlier run’s results are re-recorded with their condition and reading, and only the seed’s own
+ok 37 - seed identity comes from the verified session and exercises protected project and task reads
+ok 38 - refuses unauthenticated envelope before any protected read or seed write
+ok 39 - refuses missing user before any protected read or seed write
+ok 40 - refuses missing organization before any protected read or seed write
+ok 41 - refuses default organization is not a session before any protected read or seed write
+ok 42 - refuses zero organization before any protected read or seed write
+ok 43 - refuses fractional organization before any protected read or seed write
+ok 44 - refuses truncated organization before any protected read or seed write
+ok 45 - refuses missing actor before any protected read or seed write
+ok 46 - refuses missing email before any protected read or seed write
+ok 47 - refuses missing organization record before any protected read or seed write
+ok 48 - refuses a different session organization than the operator requested
+ok 49 - a token must not silently override the explicitly named demo account
+ok 50 - email comparison ignores surrounding whitespace and case
+ok 51 - refuses unprovisioned projects, rather than treating it as an empty demo tenant
+ok 52 - refuses malformed projects, rather than treating it as an empty demo tenant
+ok 53 - refuses unreconciled project access, rather than treating it as an empty demo tenant
+ok 54 - refuses partial board, rather than accepting a broken Tasking backend
+ok 55 - refuses unread task source, rather than accepting a broken Tasking backend
+ok 56 - refuses malformed board, rather than accepting a broken Tasking backend
+ok 57 - session read failures do not expose response bodies or bearer material
+ok 58 - invalid workspace selection is refused before authentication or HTTP
+ok 59 - the fresh biotech pack supplies its recorded biologic class and explicit workspace
+ok 60 - the biotech pack refuses an unread project list without attempting creation
+ok 61 - existing demo projects are reused without a second create
+ok 62 - the Module 3 build runs after the registers it compiles from
+ok 63 - a pack whose second programme is missing creates only that one
+ok 64 - CLI refuses a mixed valid/invalid pack list before connecting
+ok 65 - an existing demo on a later portfolio page is reused, not duplicated
+ok 66 - a stalled paginated project read cannot create a duplicate
+ok 67 - an explicit workspace does not silently reuse a project in another workspace
+ok 68 - a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+ok 69 - successful seeding still does not assert browser qualification
+ok 70 - an environment-named demo email must match even when a token is supplied
+ok 71 - CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+ok 72 - CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+ok 73 - CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+ok 74 - biotech: C2C-201 is created under C2C-101's client workspace when the run named none
+ok 75 - biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none
+ok 76 - checked-in synthetic source is complete and remains explicitly artificial
+ok 77 - reconciles the synthetic QC index and both TLFs with the source before admitting data
+ok 78 - seeds one CSR project, ten Data Room source records, one editor document and pending tasks
+ok 79 - Data Room records the original synthetic QC index and both reconciled TLF files by exact bytes
+ok 80 - the exact fictional ADSL/ADEFF/ADAE/ADLB sources remain available with pinned bytes
+ok 81 - original fictional analysis archive refuses tampering or a mismatched derived source
+ok 82 - replays an exact source on a later Data Room search page without uploading a duplicate
+ok 83 - an inactive or foreign client record is never adopted by the Faux seed
+ok 84 - duplicate slugged client records fail before any project or source write
+ok 85 - a second same-title project is a refusal, not an arbitrary project selection
+ok 86 - a stalled paginated source search never silently assumes the source was absent
+ok 87 - replaying the pack reuses governed records without rewriting existing data
+ok 88 - corrects only previously miscatalogued synthetic protocol/SAP through audited Vault details
+ok 89 - refuses an inconsistent document type on an otherwise exact-hash existing source
+ok 90 - does not edit a source that has entered an approved or other lifecycle stage
+ok 91 - refuses wrong organization before any project or source read/write
+ok 92 - Project Management detail is unwrapped and must match the same client anchor
+ok 93 - refuses missing project client anchor before any Data Room or authoring write
+ok 94 - refuses substituted project ID before any Data Room or authoring write
+ok 95 - never adopts an existing project with a different document type
+ok 96 - matching catalog hash never substitutes for an unavailable original
+ok 97 - a misclassified protocol cannot be corrected if its original was removed
+ok 98 - an altered current source hash refuses overwrite and stops other uploads
+ok 99 - CLI rejects accidental mixed-tenant seed selection without starting any connection
+ok 100 - CLI requires exact organization ID before connecting to any Faux Biotech tenant
+ok 101 - CLI rejects a fake tenant plus an explicit client-workspace bypass
+ok 102 - purge is an honest refusal to delete governed source records
+ok 103 - rejects missing canonical CSR templates before any tenant write
+ok 104 - rejects duplicated canonical CSR templates before any tenant write
+ok 105 - ambiguous same-title Data Room sources are not silently adopted
+ok 106 - ambiguous same-title editor documents are not silently adopted
+ok 107 - a prior CSR working document with a non-canonical template is never adopted
+ok 108 - refuses a IN_REVIEW CSR as the reusable working draft
+ok 109 - refuses a APPROVED CSR as the reusable working draft
+ok 110 - refuses a FROZEN CSR as the reusable working draft
+ok 111 - refuses a section-only CSR rather than pretending it is an accessible working document
+ok 112 - an actor without existing Authoring edit permission cannot seed a pending CSR review task
+ok 113 - a changed document identity on the existing Authoring detail read is refused
+ok 114 - an existing reviewer task whose origin no longer matches the document is not reused
+ok 115 - no demo task is created when the existing Task Board reports missing stores
+ok 116 - ambiguous task titles cannot silently reuse another task in the same project
+ok 117 - two people's same-titled tasks that are not the seed's do not stop a re-run
+ok 118 - the existing Task Board reread confirms each created task and its exact authoring document
+ok 119 - a task creation acknowledgement without a saved task identity is not counted as complete
+ok 120 - a task acknowledged but not visible in the refreshed board is not reported as verified
+ok 121 - all review tasks remain pending; the seed never uses a review or approval ceremony
+ok 122 - a study document is placed with its study id and file-tag; another document carries neither
+ok 123 - a leaf an earlier run placed untagged is tagged, against the values it was read with
+ok 124 - a leaf that already names a study is left as a person set it
+ok 125 - the approver signs the digest of the change as they read it in the register
+ok 126 - nothing is signed when the register does not list the change to its approver
+ok 127 - nothing is signed when the register gives the change no digest
+ok 128 - nothing is signed when the digest is not a SHA-256
+ok 129 - a document counts as frozen from the CSR source only when one of its study data carries that source's bytes
+ok 130 - the pack files the source that carries every safety domain, under its own title
+ok 131 - required subject intake HTTP403 fails the actual seed CLI and manifest
+ok 132 - required subject intake HTTP429 fails the actual seed CLI and manifest
+ok 133 - required subject intake HTTP500 fails the actual seed CLI and manifest
+ok 134 - successful required subject intake completes without signing the optional RACT
+ok 135 - an already-loaded subject extract completes without resubmitting it
+ok 136 - a real source-grounded AnA draft must have model, candidate, and audit turn
+ok 137 - AnA governed accept must reopen exact document, section and human-accepted content
+ok 138 - approved source is unique and requires complete, exact Vault metadata
+ok 139 - frozen study-data identity and its exact approved source hash must reopen
+ok 140 - real, hash-verified model drafting is distinguishable from templates, failures and demo mode
+ok 141 - independent current review must approve the exact imported CSR, not a Tasking card
+ok 142 - the reopened DOCX must contain actual saved prose from the approved version
+ok 143 - the real API path does not create a model build unless explicitly requested
+ok 144 - explicit build request starts one existing API job, but never reports completed drafting
+ok 145 - the seed adds a synthetic @example.test reviewer through the product and sets its password from the activation link
+ok 146 - on a later run the reviewer is found, and the seed says it cannot sign rather than inventing a password
+ok 147 - with no second signer, the synthetic reviewer is named on the round and signs it REVIEWER: the round is complete
+ok 148 - a reviewer this run cannot sign for leaves the round open, and says so
+# tests 148
+# pass 148
+# fail 0

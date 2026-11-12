@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d/approve",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "Invalid input data",
+      "details": [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "reason"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]
+    }
+  }
+}

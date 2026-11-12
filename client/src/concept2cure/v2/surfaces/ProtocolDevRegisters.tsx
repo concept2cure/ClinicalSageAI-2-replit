@@ -105,7 +105,7 @@ function RiskRow({ r, open, onPick }: { r: Row; open: boolean; onPick: () => voi
         <span className="pd-risk-haz">{str(r.hazard)}</span><PG.StatusBadge status={str(r.status)} />
       </div>
       <div className="pd-risk-meta">
-        <span className="pd-chip">{str(r.cat)}</span><span>{`Inherent L${l}×I${i}`}</span>
+        <span className="pd-chip">{PG.inWords(r.cat)}</span><span>{`Inherent L${l}×I${i}`}</span>
         <span className="pd-risk-arrow">{'→'}</span>
         <span className="pd-risk-resid">{rl && ri ? `Residual L${rl}×I${ri}` : 'Residual not rated'}</span>
       </div>
@@ -236,7 +236,7 @@ function BudgetTable({ items, summary }: { items: Row[]; summary: BudgetSummary 
       <thead><tr><th>Category</th><th>Line item</th><th className="r">Per subject</th></tr></thead>
       <tbody>{items.map((i) => (
         <tr key={str(i.id)}>
-          <td><span className="pd-chip">{str(i.cat)}</span></td>
+          <td><span className="pd-chip">{PG.inWords(i.cat)}</span></td>
           <td>{str(i.label)}</td>
           <td className="r pg-mono">{i.perSubject != null ? usd(Number(i.perSubject)) : ''}</td>
         </tr>

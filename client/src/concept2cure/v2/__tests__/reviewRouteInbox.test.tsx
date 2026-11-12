@@ -107,9 +107,11 @@ describe('Tasks: a route member opens where the route is acted on (§2.11)', () 
     approvalStatus: 'not_started', criticalPath: false, waitingOn: 'review', reviewRole: 'approver', ...over,
   });
 
-  it('says what an approver waits on, and opens the Review board', () => {
+  /* A Vault route member's row opens its version (GA-UI-04,
+     openWorkOpensTheVersion.test.tsx). A QMS route still opens the Review board. */
+  it('says what an approver waits on, and a QMS route opens the Review board', () => {
     const go = vi.fn(); const openTask = vi.fn();
-    render(<OpenWorkGroups workLoading={false} assigned={[work({})]} queue={null} approvalRows={[]} go={go} openTask={openTask} />);
+    render(<OpenWorkGroups workLoading={false} assigned={[work({ moduleType: 'QMS' })]} queue={null} approvalRows={[]} go={go} openTask={openTask} />);
     const row = screen.getByRole('button', { name: /Approve: Clinical overview/ });
     expect(row.textContent).toContain('waiting on the review');
     expect(row.textContent).not.toContain('blocked');

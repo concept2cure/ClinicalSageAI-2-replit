@@ -32,6 +32,16 @@
  * Source-level, not runtime: the whole point is to catch the regression without
  * a live Postgres + full app boot, in the fast unit tier, the moment the wiring
  * changes.
+ *
+ * ── The comment stripper (2026-11-12) ─────────────────────────────────────────
+ * This file stripped comments with its own regex, /\/\*[\s\S]*?\*\//g, which
+ * does not know about strings. A string holding `/*` opened a "comment" that
+ * ran to the next real `*` `/`, and the code between was never read. It now
+ * uses scripts/ci/lib/strip-comments.mjs, which walks quotes, templates and
+ * regex literals. Measured the day it changed: the regex hid 178 lines of code
+ * in server/bootstrap/register-document-routes.ts (140–453, from the
+ * '/api/ectd/v4/*' in a log line to the first block comment after it) and 188
+ * in server/bootstrap/register-inline-routes.ts (838–1131).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -39,14 +49,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// The shared, string-aware comment stripper the CI gates use. See the note at the foot of the header comment.
+// @ts-expect-error — a .mjs module with no type declaration.
+import { stripComments } from '../scripts/ci/lib/strip-comments.mjs';
 
-/** Strip line + block comments so commented-out code can't satisfy the gate. */
-function stripComments(src: string): string {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
-}
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function read(rel: string): string {
   return stripComments(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));

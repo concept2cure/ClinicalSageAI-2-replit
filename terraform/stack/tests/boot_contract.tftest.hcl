@@ -43,6 +43,10 @@ mock_provider "aws" {
   mock_resource "aws_iam_role" {
     defaults = { arn = "arn:aws:iam::123456789012:role/mock" }
   }
+  # The alarm topic (monitoring.tf): alarms and subscriptions validate its ARN.
+  mock_resource "aws_sns_topic" {
+    defaults = { arn = "arn:aws:sns:us-east-1:123456789012:c2c-production-alarms" }
+  }
   mock_resource "aws_kms_key" {
     defaults = { arn = "arn:aws:kms:us-east-1:123456789012:key/mock" }
   }
@@ -77,6 +81,33 @@ mock_provider "aws" {
   # No arn default for secrets: the mock then generates a DISTINCT value per
   # instance. A shared fixed ARN made every "this variable reads that secret"
   # assertion below pass even with DATABASE_URL pointed at jwt_secret.
+}
+
+# The disaster-recovery region's provider, aws.dr (MR-04 Stage 1). The key
+# replicas go through it; tests/dr.tftest.hcl asserts them.
+mock_provider "aws" {
+  alias = "dr"
+  mock_data "aws_region" {
+    defaults = { name = "us-west-2" }
+  }
+  mock_data "aws_caller_identity" {
+    defaults = { account_id = "123456789012" }
+  }
+}
+
+# CloudFront's v2 access log (access_logs.tf) validates the distribution's, the
+# access-log bucket's and its destination's ARNs; a mock's random strings are not ARNs.
+override_resource {
+  target = module.cdn.aws_cloudfront_distribution.this
+  values = { arn = "arn:aws:cloudfront::123456789012:distribution/EMOCKDIST" }
+}
+override_resource {
+  target = aws_s3_bucket.access_logs
+  values = { arn = "arn:aws:s3:::c2c-prod-access-logs-123456789012", id = "c2c-prod-access-logs-123456789012" }
+}
+override_resource {
+  target = aws_cloudwatch_log_delivery_destination.cloudfront
+  values = { arn = "arn:aws:logs:us-east-1:123456789012:delivery-destination:c2c-production-cloudfront" }
 }
 
 # Throwaway values of the right SHAPE, for production's settings. Nothing here
@@ -156,6 +187,8 @@ variables {
   # records for `local`, which boot_contract now requires.
   # A commit id's shape, not bge-m3's real commit (the stack leaves it unset
   # until one is recorded; warns_while_the_embedding_model_is_unpinned below).
+  # Production refuses to apply with nobody to page (monitoring.tf).
+  alarm_emails             = ["oncall@example.com"]
   embedding_model_revision = "0123456789abcdef0123456789abcdef01234567"
 }
 
@@ -237,6 +270,35 @@ run "renders_the_boot_contract" {
       length([for e in module.ecs.api_container.environment : e.name if e.name == "SETUP_TOKEN"]) == 0
     )
     error_message = "SETUP_TOKEN must reach the API from the setup_token secret, never as a plain variable."
+  }
+
+  # In production /readyz answers { ready } alone; which dependency is down goes
+  # to a caller presenting READYZ_TOKEN, or to one inside the task
+  # (server/startup/readyz.ts; MR-03 Stage 7, OPS-22). Generated here, held in
+  # Secrets Manager, given to the API alone, and never a plain value. The
+  # deploy's smoke test presents the same value from the GitHub environment's
+  # READYZ_TOKEN secret (outputs.tf, readyz_detail). Until 2026-11-11 nothing
+  # set it, so a failed smoke test could say only that the deployment was not
+  # ready, never why.
+  assert {
+    condition = (
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "READYZ_TOKEN"]) == lookup(module.secrets.secret_arns, "readyz_token", "no readyz_token secret") &&
+      length([for e in module.ecs.api_container.environment : e.name if e.name == "READYZ_TOKEN"]) == 0
+    )
+    error_message = "READYZ_TOKEN must reach the API from the readyz_token secret, never as a plain variable."
+  }
+
+  # Postgres is the coordination store and the API runs as more than one task
+  # (decision B6; MR-03 Stage 7 step 8, OPS-20). Live co-editing keeps each
+  # document's state in one process's memory (server/services/hocuspocus-server.ts),
+  # so two tasks would hold two copies of one document. It stays off until F-27
+  # decides it; the deploy preflight refuses a revision that turns it on.
+  assert {
+    condition = !contains(concat(
+      [for e in module.ecs.api_container.environment : e.name],
+      [for s in module.ecs.api_container.secrets : s.name],
+    ), "ENABLE_COLLAB_CRDT")
+    error_message = "The API task must not carry ENABLE_COLLAB_CRDT: live co-editing is per-process, and this stack runs more than one task."
   }
 
   # Every upload is scanned before it is stored, and production refuses one the
@@ -811,13 +873,14 @@ run "the_one_off_database_task_alone_holds_it" {
     error_message = "The database task's environment must be the API container's."
   }
   # Everything the API boots with, so the readiness contract can be verified as
-  # the runtime role; the setup token is the API's alone.
+  # the runtime role; the setup token and the readiness token are the API's
+  # alone (only the API serves /api/setup and /readyz).
   assert {
     condition = (
-      length(setsubtract(toset([for s in module.ecs.api_container.secrets : s.name if s.name != "SETUP_TOKEN"]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0 &&
-      !contains([for s in module.ecs.migrate_container.secrets : s.name], "SETUP_TOKEN")
+      length(setsubtract(toset([for s in module.ecs.api_container.secrets : s.name if !contains(["SETUP_TOKEN", "READYZ_TOKEN"], s.name)]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0 &&
+      length(setintersection(toset(["SETUP_TOKEN", "READYZ_TOKEN"]), toset([for s in module.ecs.migrate_container.secrets : s.name]))) == 0
     )
-    error_message = "The database task must carry every API secret but SETUP_TOKEN."
+    error_message = "The database task must carry every API secret but SETUP_TOKEN and READYZ_TOKEN, and neither of those."
   }
   # One container that serves nothing: no scanner, port or health check, and a
   # command that migrates. Started as it is, it never boots the server.

@@ -1,0 +1,25 @@
+{
+  "supplied": {
+    "status": "final",
+    "confidence": 97,
+    "blockers": [
+      {
+        "provider": "supplied",
+        "reason": "supplied-by-request"
+      }
+    ],
+    "dependencySummary": {
+      "summary": {
+        "suppliedByRequest": true
+      }
+    },
+    "summary": {
+      "suppliedByRequest": true
+    }
+  },
+  "stored": {
+    "status": "completed",
+    "confidence": null,
+    "blockers": []
+  }
+}

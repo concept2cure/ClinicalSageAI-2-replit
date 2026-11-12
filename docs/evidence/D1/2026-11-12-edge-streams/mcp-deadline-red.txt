@@ -1,0 +1,210 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts
+{
+  "timestamp": "2026-11-12T06:11:38.804Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T06:11:38.806Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts
+{
+  "timestamp": "2026-11-12T06:11:38.806Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts
+[database] Database connection successful
+
+ × server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > sits under the edge, with progress more often than the edge waits 8ms
+   → expected undefined to be 50000 // Object.is equality
+ × server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > a tool that takes 70 s is answered at 50 s with an error, not a partial result 10003ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+stdout | server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the agency-response draft > passes the call's signal to the model call, so a call cut at 50 s stops its model request
+{
+  "timestamp": "2026-11-12T06:11:58.877Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-12T06:11:58.877Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the agency-response draft > passes the call's signal to the model call, so a call cut at 50 s stops its model request
+{
+  "timestamp": "2026-11-12T06:11:58.877Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the agency-response draft > passes the call's signal to the model call, so a call cut at 50 s stops its model request
+[database] Database connection successful
+
+ × server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > releases the call's database connection only once the abandoned work settles 10006ms
+   → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > a tool that finishes in time is answered with its result, and nothing fires later 3ms
+   → expected undefined to be false // Object.is equality
+ ✓ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > a governed tool is not cut: its record may already be written 1ms
+ × server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > progress notifications > every 15 s while the call runs, for a request that carries a progress token 6ms
+   → expected [] to deeply equal [ { …(2) }, { …(2) } ]
+ ✓ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > progress notifications > none without a token 1ms
+ ✓ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > progress notifications > a notification that cannot be sent does not fail the call 1ms
+ × server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the agency-response draft > passes the call's signal to the model call, so a call cut at 50 s stops its model request 263ms
+   → expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > sits under the edge, with progress more often than the edge waits
+AssertionError: expected undefined to be 50000 // Object.is equality
+
+- Expected:
+50000
+
++ Received:
+undefined
+
+ ❯ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts:73:34
+     71| describe('the 50 s deadline', () => {
+     72|   it('sits under the edge, with progress more often than the edge wait…
+     73|     expect(MCP_TOOL_DEADLINE_MS).toBe(50_000);
+       |                                  ^
+     74|     expect(MCP_TOOL_DEADLINE_MS).toBeLessThan(60_000);
+     75|     expect(MCP_PROGRESS_INTERVAL_MS).toBe(15_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > a tool that takes 70 s is answered at 50 s with an error, not a partial result
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts:78:3
+     76|   });
+     77|
+     78|   it('a tool that takes 70 s is answered at 50 s with an error, not a …
+       |   ^
+     79|     const { spec, seen } = slowTool(70_000);
+     80|     const pending = capture(spec)({}, { authInfo });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > releases the call's database connection only once the abandoned work settles
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts:96:3
+     94|   });
+     95|
+     96|   it("releases the call's database connection only once the abandoned …
+       |   ^
+     97|     const { spec } = slowTool(70_000);
+     98|     const pending = capture(spec)({}, { authInfo });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the 50 s deadline > a tool that finishes in time is answered with its result, and nothing fires later
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts:115:34
+    113|     expect(released.count).toBe(1);
+    114|     await vi.advanceTimersByTimeAsync(60_000);
+    115|     expect(seen.signal?.aborted).toBe(false);
+       |                                  ^
+    116|     expect(audits.length).toBe(1);
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > progress notifications > every 15 s while the call runs, for a request that carries a progress token
+AssertionError: expected [] to deeply equal [ { …(2) }, { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "method": "notifications/progress",
+-     "params": {
+-       "message": "c2c_draft_agency_response is still working (15 s)",
+-       "progress": 1,
+-       "progressToken": "p-1",
+-     },
+-   },
+-   {
+-     "method": "notifications/progress",
+-     "params": {
+-       "message": "c2c_draft_agency_response is still working (30 s)",
+-       "progress": 2,
+-       "progressToken": "p-1",
+-     },
+-   },
+- ]
++ []
+
+ ❯ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts:136:65
+    134|     await vi.advanceTimersByTimeAsync(40_000);
+    135|     await pending;
+    136|     expect(sendNotification.mock.calls.map((c: any[]) => c[0])).toEqua…
+       |                                                                 ^
+    137|       { method: 'notifications/progress', params: { progressToken: 'p-…
+    138|       { method: 'notifications/progress', params: { progressToken: 'p-…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts > the agency-response draft > passes the call's signal to the model call, so a call cut at 50 s stops its model request
+AssertionError: expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+- Expected:
+AbortSignal {
+  Symbol(kEvents): Map {},
+  Symbol(events.maxEventTargetListeners): 0,
+  Symbol(events.maxEventTargetListenersWarned): false,
+  Symbol(kHandlers): Map {},
+  Symbol(kAborted): false,
+  Symbol(kReason): undefined,
+  Symbol(kComposite): false,
+}
+
++ Received:
+undefined
+
+ ❯ server/mcp/__tests__/mcp-tool-deadline-and-progress.test.ts:180:53
+    178|     );
+    179|     expect(chat).toHaveBeenCalledTimes(1);
+    180|     expect((chat.mock.calls[0] as any[])[2].signal).toBe(controller.si…
+       |                                                     ^
+    181|   });
+    182| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  06:11:36
+   Duration  22.18s (transform 800ms, setup 96ms, import 1.53s, tests 20.30s, environment 0ms)
+

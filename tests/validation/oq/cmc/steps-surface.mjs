@@ -7,8 +7,12 @@
  */
 import { step, state, BROWSERLESS } from './context.mjs';
 import { requireSigner } from '../../lib/credentials.mjs';
-import { dataOf, errCode, errDetail, postAsSigner } from './signed-acts.mjs';
+import { serverIsDevelopment } from '../../lib/harness.mjs';
+import { approveSection, completeUnapprovedKey, dataOf, errCode, errDetail, postAsSigner, runReauth } from './signed-acts.mjs';
 import { FILING_STEPS } from './steps-filing.mjs';
+import {
+  everySectionUnchanged, gateNamesStaleSections, module3RequirementFindings, releaseClears, sectionsOwingApproval,
+} from './complete-programme.mjs';
 
 await step(
   {
@@ -77,26 +81,86 @@ await step(
   },
 );
 
+/**
+ * The product's shelf life changes (OQ-CMC-27): approved sections that cite the study go stale and the gate refuses;
+ * after the compile, what lost its approval is approved again and the gate passes. Returns the gate's answer while
+ * the sections were stale, and the sections re-approved.
+ */
+async function changeShelfLifeAndReapprove(ctx, signer, { projectId, records }) {
+  const { api, expect } = ctx;
+  const gate = () => api('POST', `/api/cmc/module3-os/guard/final-export/${projectId}`, {});
+  const edit = await api('PUT', `/api/cmc/stability-studies/${records.stabilityDrugProduct}`, {
+    shelfLife: '18 months when stored at or below 25 C', reason: 'Shelf life shortened after the 18-month time point.',
+  });
+  expect(edit.status === 200, `the shelf-life edit expected 200, got ${edit.status}`, edit.json);
+  const staleGate = await gate();
+  expect(gateNamesStaleSections(staleGate), `the gate with approved sections made stale expected 409 naming them, got ${staleGate.status}`, staleGate.json);
+  const compile = await api('POST', `/api/cmc/module3-os/compile/${projectId}`, {});
+  expect(compile.status === 200, `the compile expected 200, got ${compile.status}`, compile.json);
+  const owed = await sectionsOwingApproval(api, projectId);
+  expect(owed.length >= 1, 'the edit left every section approved after the compile', owed);
+  const unapproved = await gate();
+  expect(unapproved.status === 409, `the gate with ${owed.length} section(s) to re-approve expected 409, got ${unapproved.status}`, unapproved.json);
+  for (const key of owed) {
+    const r = await approveSection(ctx, signer, { projectId, sectionKey: key, reason: `Section ${key} re-approved after the shelf life changed.` });
+    expect(r.status === 200, `the re-approval of ${key} expected 200, got ${r.status}`, r.json);
+  }
+  const clear = await gate();
+  expect(clear.status === 200, `the gate after re-approval expected 200, got ${clear.status}`, clear.json);
+  const d = staleGate.json.data;
+  return { owed, staleGate: { status: staleGate.status, error: staleGate.json.error, staleSections: d.staleSections, driftedApprovedSections: d.driftedApprovedSections } };
+}
+
 await step(
   {
     id: 'OQ-CMC-27',
     urs: ['URS-CMC-017'],
     title: 'A release signature covers the manifest that would be transmitted',
-    action: 'sign the sequence’s release, then read the dispatch gate',
-    expected: 'the signature is bound to this sequence’s leaf manifest; a manifest that differs reads as no release signature for the sequence',
+    action: 'as the signer, sign the second programme’s sequence for dispatch; place Module 3 again unchanged; then change the product’s shelf life, read the gate, compile, re-approve what lost its approval, and place; read the release verdict at each point',
+    expected: 'signed and bound to the current leaf manifest; an unchanged placement leaves it clearing; the edit makes approved sections stale and the gate refuses until they are re-approved; once the changed section is placed the signature no longer clears the sequence, and the verdict says to sign the current content',
     dependsOn: ['OQ-CMC-19'],
+    note: 'v0.13: executed for the first time; until v0.12 the step posted to /api/submissions/sequences/:id/sign-release, which is no route (a release is a governed signature, POST /api/c2c/actions/sign, intent `dispatch`). v0.14: the content is changed the way a programme changes it. In v0.13 the step placed the same Module 3 again, which then rewrote every filing document; since the 2026-11-11 repair an unchanged placement writes nothing, and the step asserts that too. The gate\'s answer with approved sections made stale is attached (URS-CMC-010\'s stale case).',
   },
   async (ctx) => {
-    const { api, deviation } = ctx;
+    const { api, expect, attach } = ctx;
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
-    const sign = await postAsSigner(ctx, signer, `/api/submissions/sequences/${state.sequenceId}/sign-release`, {
-      reason: 'Releasing sequence 0001 for transmission.', meaning: 'approval',
+    const { projectId, submissionId, sequenceId } = state.complete;
+    const release = async () => (await api('GET', `/api/submissions/sequences/${sequenceId}/dispatch-readiness`)).json.releaseSignature;
+    const place = (reason) => postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${projectId}`, { submissionId, sequenceId, reason });
+
+    const unsigned = await release();
+    expect(unsigned.cleared === false, 'the sequence read as released before anyone signed it', unsigned);
+    const sign = await postAsSigner(ctx, signer, '/api/c2c/actions/sign', {
+      target: `ectd-sequence:${sequenceId}`, reason: 'Releasing sequence 0001 for transmission.', payload: { intent: 'dispatch', meaning: 'approval' },
     });
-    if (sign.status !== 200) {
-      deviation(`not executed — the release signature could not be made (${sign.status}); the Submission Center path (OQ-SUBC) owns that act.`, sign.json);
-    }
-    const readiness = await api('GET', `/api/submissions/sequences/${state.sequenceId}/dispatch-readiness`);
-    return `release signed; dispatch readiness ${readiness.status}`;
+    expect(sign.status === 200, `the release signature expected 200, got ${sign.status}`, sign.json);
+    const signed = await release();
+    expect(releaseClears(signed), `the signed sequence expected a clearing release, got ${signed.verdict}`, signed);
+
+    // The same Module 3 placed again: nothing is written, so the signature still covers the sequence.
+    const same = await place('Placing Module 3 again; nothing has changed.');
+    expect(everySectionUnchanged(same), 'an unchanged placement was not reported unchanged for every section', same.json);
+    const afterSame = await release();
+    expect(releaseClears(afterSame), `an unchanged placement stopped the signature clearing the sequence (${afterSame.verdict})`, afterSame);
+    expect(afterSame.signatureId === signed.signatureId, 'the release rests on another signature after an unchanged placement', afterSame);
+
+    // A real change, re-approved, then placed: the signed manifest is no longer the sequence's.
+    const { owed, staleGate } = await changeShelfLifeAndReapprove(ctx, signer, state.complete);
+    const placed = await place('Placing the revised Module 3 after the shelf life changed.');
+    expect(placed.status === 200, `the placement of changed content expected 200, got ${placed.status}`, placed.json);
+    const rows = dataOf(placed).placements;
+    const refiled = rows.filter((x) => x.updatedInPlace).map((x) => x.sectionKey);
+    expect(refiled.length >= 1, 'the placement of changed content filed no section again', placed.json);
+    const after = await release();
+    attach('release-signature.json', {
+      unsigned, signed, afterUnchangedPlacement: afterSame, afterChangedPlacement: after, refiled,
+      unchanged: rows.filter((x) => x.unchanged).length, gateWithStaleSections: staleGate, reapproved: owed,
+    });
+    expect(!releaseClears(after), `the signature still clears the sequence after its content changed (${after.verdict})`, after);
+    expect(/sign/i.test(String(after.detail)), 'the verdict does not say to sign the current content', after);
+    return `signed and bound to the current leaf manifest (signature ${signed.signatureId}); an unchanged placement left it clearing; the shelf-life edit made ` +
+      `${staleGate.staleSections} approved section(s) stale and the gate 409; ${owed.join(', ')} re-approved, gate 200; ${refiled.join(', ')} filed again; ` +
+      `then: ${after.verdict}, not cleared — ${after.detail}`;
   },
 );
 
@@ -105,21 +169,38 @@ await step(
     id: 'OQ-CMC-28',
     urs: ['URS-CMC-018'],
     title: 'An original IND carrying no 3.2.S and no 3.2.P is not dispatch-ready',
-    action: 'read the dispatch readiness of the original IND sequence',
-    expected: 'the verdict speaks to the Module 3 requirement, citing 21 CFR 312.23(a)(7) and (b) and naming both remedies',
+    action: 'read the dispatch verdict of the first programme’s original IND sequence, which carries no Module 3; then of the second programme’s, where Module 3 is placed',
+    expected: 'blocked for 3.2.S and for 3.2.P, citing 21 CFR 312.23(a)(7) and (b) and naming both remedies; no such finding once Module 3 is placed',
     dependsOn: ['OQ-CMC-19'],
+    note: 'v0.13: executed for the first time, on two live sequences. The third case the row names, clearance by a cross-referenced Drug Master File with its Letter of Authorization, is not executed and is owed.',
   },
   async ({ api, expect, attach }) => {
-    const r = await api('GET', `/api/submissions/sequences/${state.sequenceId}/dispatch-readiness`);
-    attach('dispatch-readiness.json', r.json ?? {});
-    expect(r.status === 200, `the readiness read expected 200, got ${r.status}`, r.json);
-    const text = JSON.stringify(r.json ?? {});
-    expect(
-      /312\.23/.test(text) || /3\.2\.S/.test(text),
-      'the verdict says nothing about the Module 3 requirement',
-      text.slice(0, 300),
-    );
-    return 'readiness read 200; the verdict speaks to the Module 3 requirement';
+    const submissions = await api('GET', '/api/submissions');
+    const rows = Array.isArray(dataOf(submissions)) ? dataOf(submissions) : [];
+    const own = rows.find((x) => String(x.programId ?? x.projectId ?? x.project_id) === String(state.projectId));
+    expect(Boolean(own), 'the first programme has no submission', rows.length);
+    const seq = await api('POST', `/api/submissions/${own.id}/sequences`, { region: 'fda', sequenceNumber: '0001', type: 'original' });
+    expect([200, 201].includes(seq.status), `the sequence create expected 200/201, got ${seq.status}`, seq.json);
+    const read = async (sequenceId) => {
+      const r = await api('GET', `/api/submissions/sequences/${sequenceId}/dispatch-readiness`);
+      expect(r.status === 200, `the readiness read expected 200, got ${r.status}`, r.json);
+      return r.json ?? {};
+    };
+    const without = await read(dataOf(seq).id);
+    const required = module3RequirementFindings(without);
+    const withModule3 = await read(state.complete.sequenceId);
+    const stillRequired = module3RequirementFindings(withModule3);
+    attach('dispatch-readiness.json', { withoutModule3: { gate: without.gate, findings: required }, withModule3: { gate: withModule3.gate, findings: stillRequired } });
+    const headings = required.map((f) => f.sectionCode).sort();
+    expect(headings.join(',') === '3.2.P,3.2.S', `expected a blocking finding for 3.2.S and for 3.2.P, got ${headings.join(',') || 'none'}`, required);
+    for (const f of required) {
+      const m = String(f.message ?? '');
+      expect(f.severity === 'error' && /312\.23\(a\)\(7\)/.test(m) && /312\.23\(b\)/.test(m), `the ${f.sectionCode} finding does not cite 21 CFR 312.23(a)(7) and (b)`, f);
+      expect(/place Module 3/i.test(m) && /Letter of Authorization/i.test(m), `the ${f.sectionCode} finding does not name both remedies`, f);
+    }
+    expect(without.gate?.cleared === false, 'the sequence with no Module 3 read dispatch-clear', without.gate);
+    expect(stillRequired.length === 0, 'the sequence that carries Module 3 is still asked for it', stillRequired);
+    return 'with no Module 3: blocked for 3.2.S and 3.2.P, each citing 21 CFR 312.23(a)(7) and (b) and naming both remedies; with Module 3 placed: no such finding';
   },
 );
 
@@ -137,14 +218,15 @@ await step(
     const called = await api('GET', `/api/cmc/drug-substances?projectId=${state.projectId}`);
     expect(called.status === 200, `a claimed path expected 200, got ${called.status}`, called.json);
     /* The probe has to be a path NO entry of the surface registry claims.
-       /api/cmc/variations/classify — what the third smoke run probed — is
-       claimed (shared/constants/ui-surface-registry.ts, the cmc entry), so
-       its 400 was body validation and said nothing about launch scope;
-       the step recorded that 400 as a pass. The CMC entry lists one prefix
-       per register plus the module3-os segments, and `/api/cmc/projects` is
-       not among them, so the process-capability read under it is the
-       unattributed path LAUNCH_SCOPE_API_UNATTRIBUTED decides. */
-    const unclaimed = await api('GET', `/api/cmc/projects/${state.projectId}/process-capability`);
+       /api/cmc/variations/classify (the third smoke run's probe) and
+       /api/cmc/projects/:id/process-capability (the probe until v0.11) are
+       both claimed today, so each was served and said nothing about launch
+       scope. At 97a0fec5cf every route the core CMC router registers is
+       claimed (launchScopeApiVerdict, services/entitlements/launch-scope-api.ts:
+       66 of 66 `launch`), so no served route is left to probe. The surface
+       does not claim the root: /api/cmc/unclaimed-probe names no register, the
+       verdict for it is `unmapped`, and the gate answers before routing. */
+    const unclaimed = await api('GET', '/api/cmc/unclaimed-probe');
     const catalog = await api('GET', '/api/module-subscriptions/catalog');
     const enforced = catalog.json?.launchScope?.enforced === true;
     attach('launch-scope.json', { launchScopeEnforced: enforced, unclaimedStatus: unclaimed.status, unclaimedBody: unclaimed.json ?? null });
@@ -155,17 +237,10 @@ await step(
         { launchScopeEnforced: enforced, unclaimedStatus: unclaimed.status },
       );
     }
-    if (unclaimed.status !== 403) {
-      /* Scope is enforced and the path is still served: that is
-         LAUNCH_SCOPE_API_UNATTRIBUTED=report, an explicit deployment choice to
-         record unclaimed paths rather than refuse them (moduleEntitlementGate
-         `refusedByLaunchScope`). Said as what it is, not read as a pass. */
-      deviation(
-        `partly executed — launch scope is enforced and a claimed path is served (200), but the unclaimed path answered ${unclaimed.status}: ` +
-          'this deployment sets LAUNCH_SCOPE_API_UNATTRIBUTED=report, which records an unclaimed path instead of refusing it. Set it to enforce to observe the refusal.',
-        { launchScopeEnforced: enforced, unclaimedStatus: unclaimed.status },
-      );
-    }
+    /* v0.12: no deviation here. Until v0.11 a served probe was recorded as "this deployment sets
+       LAUNCH_SCOPE_API_UNATTRIBUTED=report", a posture the step never read: on 2026-11-10 the server ran
+       enforce and the probe was served because it was claimed. An unclaimed path that is not refused under
+       enforced launch scope is a failure, with what was answered. */
     expect(
       unclaimed.status === 403 && errCode(unclaimed) === 'LAUNCH_SCOPE',
       `an unclaimed path expected 403 LAUNCH_SCOPE, got ${unclaimed.status} ${errCode(unclaimed) ?? ''}`.trim(),
@@ -195,11 +270,13 @@ await step(
        control. A run outside the W3 posture therefore cannot observe it, and
        says so rather than reporting the development behaviour as a pass — the
        first smoke run of this protocol read `invalid_request` here and called
-       it a failure of the control, which it was not. */
-    if (errCode(inline) !== 'INLINE_CMC_SOURCES_REFUSED') {
+       it a failure of the control, which it was not. Since v0.11 the deviation
+       is recorded only on a server that says it is a development build
+       (serverIsDevelopment); anywhere else a missing refusal is a failure. */
+    if (errCode(inline) !== 'INLINE_CMC_SOURCES_REFUSED' && (await serverIsDevelopment(ctx.baseUrl))) {
       ctx.deviation(
-        `not executed — this server allows inline cmcSources (it answered ${inline.status} ${errCode(inline)}), which is the documented development behaviour. ` +
-          'The refusal is a production control; observe it under the W3 posture.',
+        `not executed — this is a development server (its CSP is report-only), which allows inline cmcSources (it answered ${inline.status} ${errCode(inline)}), the documented development behaviour. ` +
+          'The refusal is a production control; observe it on a production build.',
         inline.json,
       );
     }
@@ -270,7 +347,8 @@ await step(
   },
   async (ctx) => {
     const { api, expect, deviation } = ctx;
-    const key = state.sectionKeys.find((k) => k !== state.approvedKey) ?? state.sectionKeys[0];
+    const key = completeUnapprovedKey(state.sections, state.approvedKey);
+    if (!key) deviation('not executed — the compile left no complete section beside the approved one, so a self-approval would meet the completeness refusal first.', state.sectionKeys);
     const path = `/api/cmc/module3-os/sections/${state.projectId}/${encodeURIComponent(key)}/approve`;
 
     /* The authorship-meaning refusal comes FIRST in the route, before the
@@ -302,7 +380,7 @@ await step(
     /* The run identity recorded every register row in OQ-CMC-03, so its own
        approval is exactly the self-approval the control refuses. */
     const self = await api('POST', path, {
-      reason: 'Approving the section whose records I entered myself.', meaning: 'approval', reauth: { password: authorPassword },
+      reason: 'Approving the section whose records I entered myself.', meaning: 'approval', reauth: await runReauth(),
     });
     expect(self.status === 403, `a self-approval expected 403, got ${self.status}`, self.json);
     expect(errCode(self) === 'SEPARATION_OF_DUTIES', `expected SEPARATION_OF_DUTIES, got ${errCode(self)}`, self.json);

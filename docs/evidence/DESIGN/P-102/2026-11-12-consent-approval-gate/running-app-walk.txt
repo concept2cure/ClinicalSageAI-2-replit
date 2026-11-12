@@ -1,0 +1,13 @@
+member consent-reviewer-b@example.test (reviewer): add 201, password set 200
+  signed in as consent-reviewer-b@example.test: user 5
+member consent-approver-b@example.test (approver): add 201, password set 200
+  signed in as consent-approver-b@example.test: user 6
+approver granted APPROVER on the document: 201
+section 6 set without the FDA wording: 200
+round 1 (section 6 lacks the FDA wording, section 11 empty): review requested 200; review signed 200
+approval 1: 409 CONSENT_INCOMPLETE Not approved — this informed consent form does not yet meet 1 required element of informed consent (21 CFR 50.25(a)): Extent of confidentiality of records, noting that FDA may inspect the records. The ClinicalTrials.gov statement is also missing; it is required for an applicable clinical trial. The editor’s Check says what each one lacks. Nothing was signed.
+section 6 saved with the FDA wording: 200
+round 2 (only the ClinicalTrials.gov statement missing): review requested 200; review signed 200
+approval 2: 409 CONSENT_TRIAL_STATUS_REQUIRED Not approved — this informed consent form has no ClinicalTrials.gov statement, which 21 CFR 50.25(c) requires for an applicable clinical trial. Add it, or, if this study is not an applicable clinical trial, say so and approve again: that statement is recorded with your approval. Nothing was signed.
+CONSENT_NOT_APPLICABLE_CLINICAL_TRIAL_STATED|Approved without the ClinicalTrials.gov statement (21 CFR 50.25(c)): consent-approver-b@example.test stated that the study is not an applicable clinical trial.|2026-11-12 18:57:25.937405+00
+APPROVED

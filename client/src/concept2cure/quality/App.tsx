@@ -1,8 +1,12 @@
 /**
  * QualityApp — Quality domain shell.
  *
- * A tabbed shell (topbar + tab bar + scrollable page) over the quality
- * surfaces: the SOP register (controlled documents, periodic review, training),
+ * One work area on the D5 §WA page pattern (D7-B, 2026-11-06): the header
+ * ("Quality", one sentence), AnA's starters, the registers as tabs below the
+ * header, then the register. Until D7-B it had its own topbar (crumbs and an
+ * "Ask AnA" button) above its tab bar; the shell's breadcrumb names the place
+ * and the first starter sends the same `ASK_STARTER[tab]` prompt. The tabs are
+ * over the quality surfaces: the SOP register (controlled documents, periodic review, training),
  * Change control (the change-control log, lifecycle flowchart, and the links
  * to deviations, CAPAs and validation records), and the quality records
  * (QmsRecords.tsx: CAPA, nonconformances, suppliers, internal audits, management
@@ -21,11 +25,13 @@
 
 import * as React from 'react';
 import { I } from '../v2/icons';
+import { getSurfaceMeta } from '../v2/registryModel';
 import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
 import { QmsRecords, QMS_RECORD_ASK, QMS_RECORD_TABS } from './QmsRecords';
 import type { QmsRecordTab } from './qmsRecordData';
-import type { RecordRegisterContext } from './qmsRegisterKit';
+import { inSentence, type RecordRegisterContext } from './qmsRegisterKit';
+import { setQualityWide, useQualityScope } from './registerContext';
 import { useChangeRegister } from './changeHooks';
 import {
   STATE_LABEL,
@@ -36,6 +42,7 @@ import {
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../v2/surfaceActions';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
 import { WorkProjectTasks } from '../v2/surfaces/ProjectWorkTasks';
+import { QualityFigures } from './QualityFigures';
 
 /** Stable identity for an unread register, so memo deps do not churn. */
 const NO_CHANGES: ChangeControlRow[] = [];
@@ -55,19 +62,11 @@ export interface QualityAppProps {
 
 type QualityTab = 'sop' | 'change' | QmsRecordTab;
 
-const RECORD_ICON: Record<QmsRecordTab, React.ReactNode> = {
-  capa: I.target,
-  deviations: I.flag,
-  nonconforming: I.alertTriangle,
-  suppliers: I.building,
-  audits: I.clipboardList,
-  reviews: I.users,
-};
-
-const TABS: { id: QualityTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'sop', label: 'SOP register', icon: I.template },
-  { id: 'change', label: 'Change control', icon: I.gitBranch },
-  ...QMS_RECORD_TABS.map((t) => ({ ...t, icon: RECORD_ICON[t.id] })),
+/* The registers as tabs: text only, no icons (ONE_DESIGN_PLAN §2, D5 §WA). */
+const TABS: { id: QualityTab; label: string }[] = [
+  { id: 'sop', label: 'SOP register' },
+  { id: 'change', label: 'Change control' },
+  ...QMS_RECORD_TABS,
 ];
 
 const HERE = Object.fromEntries(TABS.map((t) => [t.id, t.label])) as Record<QualityTab, string>;
@@ -78,9 +77,41 @@ const ASK_STARTER: Record<QualityTab, string> = {
     'and where current-release personal acknowledgements are missing.',
   change:
     'Give me a read-out on change control — what is awaiting approval, what is overdue for implementation, ' +
-    'and which linked deviations or CAPAs are still open.',
+    'and which linked deviations or CAPAs are still open, ranked by risk.',
   ...QMS_RECORD_ASK,
 };
+
+/** The pre-inspection prompt, unchanged from the register head's button it replaces. */
+export const PRE_INSPECTION_PROMPT =
+  'Run a QMS pre-inspection check — surface every controlled document overdue for periodic ' +
+  'review, every training gap, and anything not yet effective, ranked by inspection risk.';
+
+
+/**
+ * The change-control procedure's explanation, unchanged from the "Explain the procedure" button in the guidance box
+ * under the change log, which D7-B retired (2026-11-10). AnA explains the procedure; a person's read-and-understood
+ * acknowledgement is theirs, in the SOP register.
+ */
+export const CHANGE_PROCEDURE_PROMPT =
+  'Explain how to raise a change request in this quality system. Explain each step of the ' +
+  'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
+  'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.';
+
+/**
+ * AnA's three starters (D7-B step 3): the tab's read-out, the pre-inspection
+ * check, and the training gaps. On Change control the third explains the
+ * change procedure: its read-out already asks what the retired health check
+ * asked (awaiting approval, overdue, open links, ranked by risk).
+ */
+export function qualityStarters(tab: QualityTab): { label: string; prompt: string }[] {
+  return [
+    { label: `Give me a read-out on ${inSentence(HERE[tab])}`, prompt: ASK_STARTER[tab] },
+    { label: 'Run a pre-inspection check', prompt: PRE_INSPECTION_PROMPT },
+    tab === 'change'
+      ? { label: 'Explain the change procedure', prompt: CHANGE_PROCEDURE_PROMPT }
+      : { label: 'Where is training missing?', prompt: 'Which controlled documents have missing read-and-understood acknowledgements, and for whom?' },
+  ];
+}
 
 /**
  * What AnA is told on a record tab: the register's rows as read, or that it is
@@ -100,11 +131,19 @@ export function recordTabContext(tab: QmsRecordTab, ctx: RecordRegisterContext |
     return { summary: `The user is on the ${here} tab of Quality. The register could not be read — a failure, not an empty register.`, facts: { tab, registerRead: 'failed' }, availableActions: actions };
   }
   const n = ctx.count ?? 0;
-  const counts = ctx.counts.map((c) => `${c.label}: ${c.val}`).join('; ');
+  const counts = ctx.counts.map((c) => `${c.label}: ${c.val}${c.detail ? ` (${c.detail})` : ''}`).join('; ');
+  const noun = n === 1 ? ctx.noun[0] : ctx.noun[1];
+  /* At the server's cap the read is the most recent rows, not the register (C12): "holds 100" would be a claim about
+     records nobody read. */
+  const whose = !ctx.scope ? '' : 'project' in ctx.scope ? ` filed under the project ${ctx.scope.project}`
+    : ' of the whole organisation (this register is not kept per project)';
+  const held = ctx.partial
+    ? `The register read stopped at the server's cap: it shows the ${n} most recent ${noun}${whose}, and there may be more, so its figures are of those ${n}`
+    : `The register holds ${n} ${noun}${whose}`;
   return {
-    summary: `The user is on the ${here} tab of Quality. The register holds ${n} ${n === 1 ? ctx.noun[0] : ctx.noun[1]}` +
+    summary: `The user is on the ${here} tab of Quality. ${held}` +
       (counts ? ` (${counts})` : '') + '.' + (ctx.truncated ? ` Only the first ${ctx.records.length} are listed in the facts.` : ''),
-    facts: { tab, recordCount: n, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
+    facts: { tab, about: ctx.about, scope: ctx.scope, recordCount: n, partial: ctx.partial, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
     availableActions: actions,
   };
 }
@@ -141,6 +180,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
      none — the example change log (FIXTURE_CHANGES) and the sample mode that
      could show it were removed on 2026-10-14. */
   const changeReg = useChangeRegister();
+  const scope = useQualityScope();
   /* The record register on screen reports what it read (QmsRecords.tsx), so
      what AnA is told about a record tab is the register's own rows. */
   const [recordCtx, setRecordCtx] = React.useState<RecordRegisterContext | null>(null);
@@ -290,7 +330,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
     const base =
       `The user is on the ${HERE[tab]} tab of Quality` +
       (state.length ? ` — ${state.join('; ')}` : '') +
-      '.';
+      '.' + (scope.programId ? ` Quality shows the project ${scope.projectName}: its controlled documents and changes only.` : '');
     if (changeReg.loading) {
       return {
         summary: `${base} The change log is still loading — its records are not readable yet.`,
@@ -323,7 +363,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
       ],
     };
-  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, recordCtx]);
+  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, recordCtx, scope.programId, scope.projectName]);
   usePublishSurfaceContext('quality', anaContext);
 
   /* The bus's ready signal: a not-ready open-change (retry: true) held across
@@ -333,42 +373,63 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
     if (!changeReg.loading) notifySurfaceActionReady('quality');
   }, [changeReg.loading]);
 
+  const surface = getSurfaceMeta('quality');
   return (
     <div className="qms-shell" data-screen-label="Quality" data-editing={editingDocument || undefined}>
-      {!editingDocument && <div className="qms-topbar">
-        <div className="qms-crumbs">
-          <span>Quality</span>
-          <span className="sep" aria-hidden="true">/</span>
-          <span className="here">{HERE[tab]}</span>
-        </div>
-        <div className="qms-spacer" />
-        <button className="qms-tb-btn" onClick={() => onAsk(ASK_STARTER[tab])}>
-          {I.sparkles} Ask AnA
-        </button>
-      </div>}
-
-      {!editingDocument && <div className="qms-tabbar" role="tablist" aria-label="Quality surfaces">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={tab === t.id}
-            className="qms-tab"
-            data-on={tab === t.id || undefined}
-            tabIndex={tab === t.id ? 0 : -1}
-            onClick={() => setTab(t.id)}
-            onKeyDown={onTabKey}
-          >
-            <span className="qms-tab-ico">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
-      </div>}
-
       <div className="qms-page">
-        <div className="qms-page-inner">
-          {/* P-111: opened from a Quality work project's door, its tasks above the whole project's records. */}
-          {!editingDocument && <WorkProjectTasks area="quality" />}
+        {/* The one editor takes the page while a document is open: no header, starters or tabs. */}
+        <div className={editingDocument ? 'qms-page-inner' : 'qms-page-inner page-inner'} data-work-area={editingDocument ? undefined : 'quality'}>
+          {!editingDocument && <>
+            <header className="ph">
+              <div>
+                <h1 className="ph-title">{surface.label}</h1>
+                <p className="ph-sub" data-testid="quality-scope">
+                  {scope.programId
+                    ? `${scope.projectName}: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.`
+                    : scope.wide
+                      ? "The whole organisation's quality records."
+                      : 'Controlled documents and their training, change control, CAPA and the other quality records.'}
+                </p>
+              </div>
+              {scope.projectName && (
+                <div className="ph-acts">
+                  {/* One quiet control (P-122). It names the project by its code: the full name ("C11 · Gasket
+                      programme …") made the button wider than a phone. The full name is its title. */}
+                  <button type="button" className="btn ghost small" title={scope.wide ? `Show ${scope.projectName} only` : undefined}
+                    onClick={() => setQualityWide(!scope.wide)}>
+                    {scope.wide ? `Show ${scope.projectName.split(' · ')[0]} only` : 'Show the whole organisation'}
+                  </button>
+                </div>
+              )}
+            </header>
+            {/* P-122: the quality system's figures, one quiet line of the server's numbers, on every tab. */}
+            <QualityFigures organisationWide={scope.programId !== null} />
+            {/* P-111: opened from a Quality work project's door, its tasks under the title, above the registers. */}
+            <WorkProjectTasks area="quality" />
+            <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
+              {qualityStarters(tab).map((s) => (
+                <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>
+                  <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{s.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="tabs" role="tablist" aria-label="Quality registers">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  className="tab"
+                  tabIndex={tab === t.id ? 0 : -1}
+                  onClick={() => setTab(t.id)}
+                  onKeyDown={onTabKey}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </>}
           {tab !== 'sop' && tab !== 'change' ? (
             <QmsRecords tab={tab} onAsk={onAsk} onContext={setRecordCtx} />
           ) : tab === 'sop' ? (
@@ -384,6 +445,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
               changes={changes}
               loading={changeReg.loading}
               error={changeReg.error}
+              failure={changeReg.failure}
               onRetry={changeReg.refresh}
             />
           )}

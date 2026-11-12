@@ -584,3 +584,39 @@ variable "embedding_desired_count" {
   type        = number
   default     = 2
 }
+
+# ── Alarms (monitoring.tf, MR-04 Stage 2) ───────────────────────────────────
+
+# Who is paged. Each address is subscribed to the alarm topic by email; AWS
+# sends each a confirmation, and an address that does not confirm is not paged.
+# The founder names them (MR-04 NEW-1). Production refuses to apply without one.
+variable "alarm_emails" {
+  type    = list(string)
+  default = []
+  validation {
+    condition     = alltrue([for e in var.alarm_emails : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", e))])
+    error_message = "Each entry of alarm_emails must be an email address."
+  }
+  validation {
+    condition     = var.environment != "production" || length(var.alarm_emails) >= 1
+    error_message = "Production needs at least one address in alarm_emails: an alarm with nobody subscribed pages no one."
+  }
+}
+
+variable "alb_p95_latency_alarm_seconds" {
+  description = "Page when the API's p95 TargetResponseTime stays above this for 15 minutes. The edge cuts a request at 60 s."
+  type        = number
+  default     = 10
+}
+
+# How long the load balancer's access logs are kept (access_logs.tf). The
+# records-retention policy for access logs is not yet decided; a year matches
+# the flow logs' floor (MR-04 Stage 3).
+variable "access_log_retention_days" {
+  type    = number
+  default = 365
+  validation {
+    condition     = var.access_log_retention_days >= 365
+    error_message = "Access logs are kept at least 365 days."
+  }
+}

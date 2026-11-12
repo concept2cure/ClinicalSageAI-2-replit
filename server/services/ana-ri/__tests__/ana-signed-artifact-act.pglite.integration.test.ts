@@ -68,7 +68,7 @@ import type { CommandContext } from '../command-executor';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
-  `CREATE TABLE organizations (id serial PRIMARY KEY, name text);`,
+  `CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb);`,
   extractTableDdl(BASELINE, [
     'users', 'organization_users', 'concept2cure_artifacts', 'concept2cure_artifact_versions',
     'concept2cure_signatures', 'concept2cure_submission_snapshots', 'concept2cure_provenance_events',
@@ -181,7 +181,10 @@ beforeAll(async () => {
        (${AUTHOR}, 'author@example.com', 'Ari Author', 'x'),
        (${REVIEWER}, 'reviewer@example.com', 'Rae Reviewer', 'x')`,
   );
-  await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`);
+  // The author and the reviewer are members too: the organisation has someone to be independent
+  // of, so P-116's sole-member path (isSoleMember) is not what these cases exercise.
+  await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin'),
+    (${ORG}, ${AUTHOR}, 'member'), (${ORG}, ${REVIEWER}, 'reviewer')`);
 }, 60_000);
 afterAll(async () => {
   await holder.pg?.close();

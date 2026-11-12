@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/characterization-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "studyType": "structural",
+      "studyTitle": "Structural elucidation of BX-702",
+      "technique": "1H and 13C NMR, HRMS, IR, single-crystal X-ray diffraction",
+      "result": "All data consistent with the proposed structure",
+      "conclusion": "The structure of BX-702 is confirmed",
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 36,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 10,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "scope": "drug_substance",
+        "studyType": "structural",
+        "studyTitle": "Structural elucidation of BX-702",
+        "technique": "1H and 13C NMR, HRMS, IR, single-crystal X-ray diffraction",
+        "attribute": null,
+        "result": "All data consistent with the proposed structure",
+        "resultUnit": null,
+        "acceptanceReference": null,
+        "conclusion": "The structure of BX-702 is confirmed",
+        "studyReference": null,
+        "performedBy": null,
+        "performedDate": null,
+        "supportingData": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-12T00:34:41.748Z",
+        "updatedAt": "2026-11-12T00:34:41.748Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

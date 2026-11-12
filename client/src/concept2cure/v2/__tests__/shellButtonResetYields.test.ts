@@ -83,20 +83,38 @@ describe('the shell’s button reset', () => {
      different face and up to 12% narrower. Measured: the font family and
      the box it sizes were the only things that changed outside Quality. */
   it('keeps the shell’s font family on every button, over a one-class legacy rule', () => {
-    const family = topLevelRules(appCss).filter((r) => /font-family:\s*inherit/.test(r.decls) && r.selectors.some((s) => /(^|\s)button$/.test(s)));
+    const family = topLevelRules(appCss).filter((r) => /font(-family)?:\s*inherit/.test(r.decls) && r.selectors.some((s) => /(^|\s)button$/.test(s)));
     expect(family.length, 'no button rule inherits the shell’s font family').toBeGreaterThan(0);
     expect(family.some((r) => r.selectors.some((s) => outranks(specificity(s), specificity('.btn')))), family.map((r) => r.selectors.join(', ')).join(' | ')).toBe(true);
   });
 
-  it('keeps the whole font (size, weight, line height) at the old strength outside Quality', () => {
+  /* C18 (2026-11-10): Quality styles no button of its own, so the carve-out that let its one-class rules set their
+     own size (`button:not(:where(.qms-shell *))`) is gone with them. */
+  it('keeps the whole font (size, weight, line height) at the old strength on every button, Quality’s included', () => {
     const font = topLevelRules(appCss).filter((r) => /(^|;)\s*font:\s*inherit/.test(r.decls)
-      && r.selectors.some((s) => /button:not\(:where\(\.qms-shell \*\)\)$/.test(s) && outranks(specificity(s), specificity('.btn'))));
-    expect(font.length, 'no full font reset outranks one class outside Quality').toBeGreaterThan(0);
+      && r.selectors.some((s) => /(^|\s)button$/.test(s) && outranks(specificity(s), specificity('.btn'))));
+    expect(font.length, 'no full font reset outranks one class').toBeGreaterThan(0);
+    expect(topLevelRules(appCss).some((r) => r.selectors.some((s) => s.includes('.qms-shell'))), 'a Quality carve-out in app-v2.css').toBe(false);
   });
 
-  it.each(['.qms-tab', '.qms-btn', '.qms-chip', '.qms-tpl-card', '.qms-tb-btn'])('Quality’s %s keeps the box its own rule gives it', (cls) => {
-    const own = topLevelRules(qualityCss).filter((r) => r.selectors.includes(cls) && /padding:/.test(r.decls));
-    expect(own.length, `${cls} has no padding rule in quality/app.css`).toBeGreaterThan(0);
-    expect(outranks(specificity(cls), specificity(reset!.selectors[0])), `${cls} vs ${reset!.selectors[0]}`).toBe(true);
+  /* D7-B (2026-11-06) deleted .qms-tab, .qms-tpl-card and .qms-tb-btn with the topbar, the type cards and the icon
+     tabs (Quality's tabs are D0's .tabs/.tab now). C13 (2026-11-10) deleted .qms-chip with its last use: the action
+     items' moves are D0's .btn ghost small. The button Quality still styles itself is this one (until C18). */
+  /* C18 (2026-11-10): the last one, .qms-btn, and .qms-link went with their callers; Quality's buttons are D0's. Its
+     root sets no type, colour or background of its own, and no button reset: it is the product's page. */
+  it('Quality styles no button of its own, and its root is the product’s', () => {
+    const rules = topLevelRules(qualityCss);
+    expect(rules.filter((r) => r.selectors.some((s) => /\.qms-(btn|link)\b/.test(s))).map((r) => r.selectors.join(', '))).toEqual([]);
+    expect(rules.filter((r) => r.selectors.some((s) => /^\.qms-shell :where\(button\)/.test(s)))).toEqual([]);
+    const root = rules.filter((r) => r.selectors.includes('.qms-shell'));
+    for (const prop of ['font-size', 'font-family', 'line-height', 'color', 'background', '-webkit-font-smoothing']) {
+      expect(root.filter((r) => new RegExp(`(^|;|\\s)${prop}:`).test(r.decls)).length, `.qms-shell sets ${prop}`).toBe(0);
+    }
+    expect(qualityCss.match(/font-size:\s*[\d.]+px/g) ?? [], 'a type size not on the ramp').toEqual([]);
+    // A quiet button Quality keeps (the change log's link count) outranks the shell's font reset, or its size is lost.
+    const count = rules.find((r) => r.selectors.some((s) => /\.qcc-linkcount$/.test(s)) && /font-size:/.test(r.decls));
+    expect(count && outranks(specificity(count.selectors[0]), specificity('.c2c-v2 button')), 'qcc-linkcount vs the reset').toBe(true);
+    const num = rules.find((r) => r.selectors.some((s) => /\.qms-num$/.test(s)) && /font-weight:/.test(r.decls));
+    expect(num && outranks(specificity(num.selectors[0]), specificity('.c2c-v2 button')), 'the record number’s weight vs the reset').toBe(true);
   });
 });

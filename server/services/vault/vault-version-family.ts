@@ -28,6 +28,43 @@ const VALID_LINK = (s: string, p: string) =>
      AND ${s}.organization_id = ${p}.organization_id
      AND ${s}.deleted_at IS NULL AND ${p}.deleted_at IS NULL`;
 
+/** The version that replaced a version, and when it was added. */
+export interface VersionSuccessor { version: string | null; at: string | null }
+
+/**
+ * For each of `ids` that a live later version has replaced: that version and when it was added, by the one link
+ * rule (VALID_LINK). Reads the chain only (ids, version numbers, dates), never a document's own content or fields.
+ */
+export async function readSuccessors(
+  q: { query(sql: string, params?: unknown[]): Promise<{ rows: unknown[] }> },
+  organizationId: number, programId: string, ids: readonly string[],
+): Promise<Map<string, VersionSuccessor>> {
+  const out = new Map<string, VersionSuccessor>();
+  if (!ids.length) return out;
+  // The join is VALID_LINK('succ', 'p') written out, so this SQL text carries no interpolation (ci:sql-interpolation).
+  // tenant-isolation-safe: p is bound to the organization and program; the link holds succ to the same ones.
+  const { rows } = await q.query(
+    `SELECT p.id::text AS id, succ.version, succ.created_at
+       FROM vault.documents p
+       JOIN vault.documents succ
+         ON succ.supersedes_id = p.id
+        AND succ.program_id = p.program_id
+        AND succ.document_code IS NOT DISTINCT FROM p.document_code
+        AND succ.organization_id = p.organization_id
+        AND succ.deleted_at IS NULL AND p.deleted_at IS NULL
+      WHERE p.id::text = ANY($1::text[]) AND p.organization_id = $2 AND p.program_id = $3::uuid`,
+    [ids, organizationId, programId],
+  );
+  for (const r of rows as Array<{ id: string; version: unknown; created_at: unknown }>) {
+    const at = r.created_at ? new Date(r.created_at as string) : null;
+    out.set(String(r.id), {
+      version: typeof r.version === 'string' && r.version ? r.version : null,
+      at: at && Number.isFinite(at.getTime()) ? at.toISOString() : null,
+    });
+  }
+  return out;
+}
+
 /** SQL: row `alias` has a live successor in its family, so it is not the current version. */
 export const supersededSql = (alias: string) =>
   // tenant-isolation-safe: a correlated fragment; VALID_LINK requires succ.organization_id = <alias>.organization_id, and every caller filters <alias> to the caller's organization.

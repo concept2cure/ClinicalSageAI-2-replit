@@ -27,7 +27,8 @@ describe('reportSecurityAlert', () => {
     const { reportSecurityAlert } = await import('../server/services/security-alerts');
     reportSecurityAlert({ kind: 'test_event', message: 'test message' });
 
-    expect(console.warn).toHaveBeenCalledWith('[SECURITY] test message', '');
+    // The marker the stack's security-alert alarm matches (terraform/stack/monitoring.tf).
+    expect(console.warn).toHaveBeenCalledWith('[SECURITY] [alert:test_event] test message', '');
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

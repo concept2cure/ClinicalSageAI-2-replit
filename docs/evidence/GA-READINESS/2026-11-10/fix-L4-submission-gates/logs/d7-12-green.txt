@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > lists the supported forms from the engine 256ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict 723ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > downloads the streamed FDA PDF and reports the honest render kind + coverage 109ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > surfaces the regulatory-author role gate honestly 20ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > saves a governed artifact to the open project’s dossier 188ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not call a data-complete artifact "ready" when boxes are left on the form 123ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says "ready" only when the data is complete AND the form leaves nothing 52ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an absent sponsorMustComplete is "not reported", never "nothing left" 74ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build 123ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save 221ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does NOT save (or guess a project) when no project is open 152ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > names the official template and the boxes still left blank on it 35ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > counts a required box the project has no value for, which `unmapped` never names 47ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says the server did not report, rather than implying a clean form 48ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing 92ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not claim the PDF arrived when the browser blocked the download 201ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > asks the engine for the open program and shows the recorded facts, not input boxes 121ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > states what each form will produce BEFORE anything is rendered, and who reviewed the asset 132ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reviewer recorded as a role reads as that role 87ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reconstruction is never described as the official form 87ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back 271ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen 231ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with no program open it still works standalone and claims no record 97ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists 300ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > sends nothing until a sequence is chosen, and sends the one chosen 350ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > is reachable and operable from the keyboard, and names the form it files 761ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > reports a refusal in the server’s own words and claims nothing was filed 212ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed 159ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the form is named once > reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA" 127ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts > FDA template manifests name a reviewer role, not a person's e-mail > FDA_1572: no e-mail address anywhere in the manifest 2ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts > FDA template manifests name a reviewer role, not a person's e-mail > FDA_3454: no e-mail address anywhere in the manifest 1ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts > FDA template manifests name a reviewer role, not a person's e-mail > FDA_356H: no e-mail address anywhere in the manifest 0ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts > FDA template manifests name a reviewer role, not a person's e-mail > FDA_1572: the reviewer is still recorded, so the asset stays trusted 1ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts > FDA template manifests name a reviewer role, not a person's e-mail > FDA_3454: the reviewer is still recorded, so the asset stays trusted 0ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsTemplateReviewer.test.ts > FDA template manifests name a reviewer role, not a person's e-mail > FDA_356H: the reviewer is still recorded, so the asset stays trusted 0ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  12:11:27
+   Duration  11.94s (transform 3.61s, setup 548ms, import 4.69s, tests 5.42s, environment 810ms)
+

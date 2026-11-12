@@ -1,0 +1,109 @@
+# 09-mutations: each defect the suites exist to catch, put back one at a time
+# One edit per line below, to VaultTrialMasterFile.tsx (M.., N01-N07), Etmf.tsx (N08-N11) or Vault.tsx (N12-N14);
+# both suites were run, and the source was restored and compared byte for byte. M..: the first change's
+# defects, against the section as it now stands. N..: this change's. CAUGHT: at least one case failed.
+
+CAUGHT  M01 the server's "not determined" is shown as incomplete
+    2 failed | 42 passed (44)
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+CAUGHT  M02 a read that checked nothing may read complete
+    1 failed | 43 passed (44)
+      × whether the essential records are all filed > states no verdict over a read that checked nothing, even one the server called ready
+CAUGHT  M04 the document reference is made up from the study and the code
+    1 failed | 43 passed (44)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+CAUGHT  M05 a filing needs no reason
+    1 failed | 43 passed (44)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+CAUGHT  M06 a removal needs no reason
+    1 failed | 43 passed (44)
+      × removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again
+CAUGHT  M07 the write controls are offered to every role
+    1 failed | 43 passed (44)
+      × a role that may not write the Vault > reads the trial master file and is offered no filing or removal
+CAUGHT  M08 the section reads before its view is opened
+    1 failed | 43 passed (44)
+      × which study the trial master file is of > reads nothing until the view that holds it is first on screen
+CAUGHT  M09 a completeness answer is taken without its shape or its study being checked
+    2 failed | 42 passed (44)
+      × whether the essential records are all filed > an answer about another study is not shown as this study’s
+      × whether the essential records are all filed > a completeness answer with no stated verdict is a failed read
+CAUGHT  M10 every refusal is said as a failed read
+    4 failed | 40 passed (44)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not in this release (403 LAUNCH_SCOPE)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not enabled for the organization (403 MODULE_NOT_LICENSED)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > the person’s role (403, no code)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not found (404 STUDY_NOT_FOUND)
+CAUGHT  M12 nothing is read again after a write
+    4 failed | 40 passed (44)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+      × filing a document against a missing record > keeps what was filed on screen when the read after it fails
+      × filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again
+      × removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again
+CAUGHT  M13 a filing without a verified document counts as filed
+    3 failed | 41 passed (44)
+      × whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name
+      × whether the essential records are all filed > names the document a record is filed against as the server names it
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+CAUGHT  M14 a package that does not match its stated SHA-256 is saved
+    1 failed | 43 passed (44)
+      × the inspection package > does not save a file that does not match the SHA-256 the server stated
+CAUGHT  M15 an unconfirmed write is reported as refused
+    1 failed | 43 passed (44)
+      × filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again
+CAUGHT  N01 a filed record's document is named from its reference, not from what the server found
+    4 failed | 40 passed (44)
+      × whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name
+      × whether the essential records are all filed > names the document a record is filed against as the server names it
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+      × a role that may not write the Vault > reads the trial master file and is offered no filing or removal
+CAUGHT  N02 a version a later one replaced is not said to be an earlier version
+    1 failed | 43 passed (44)
+      × whether the essential records are all filed > names the document a record is filed against as the server names it
+CAUGHT  N03 a package the server marked not determined is said to record missing records
+    1 failed | 43 passed (44)
+      × the inspection package > says a package the server marked not determined as not determined, never as missing records
+CAUGHT  N04 the host is not told what a study's read came to (AnA sees nothing of it)
+    4 failed | 40 passed (44)
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+      × what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+      × what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+CAUGHT  N05 the host is not told about the project's studies
+    1 failed | 43 passed (44)
+      × what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+CAUGHT  N06 the section ignores its host's heading (the page is titled twice)
+    1 failed | 43 passed (44)
+      × the page that hosts the trial master file > with a project open: the way back, one title, and the section for that project’s study
+CAUGHT  N07 choosing a study takes the chooser away and puts a new one in its place
+    1 failed | 43 passed (44)
+      × which study the trial master file is of > a study chosen next carries neither the last study’s verdict nor its failed read
+CAUGHT  N08 the page publishes "not determined" to AnA as not ready
+    1 failed | 43 passed (44)
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+CAUGHT  N09 the page publishes a refused read without saying it is not an empty file
+    1 failed | 43 passed (44)
+      × what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+CAUGHT  N10 the page reads and shows a section with no project open
+    1 failed | 43 passed (44)
+      × the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing
+CAUGHT  N11 the page publishes nothing to AnA
+    5 failed | 39 passed (44)
+      × the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+      × what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+      × what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+CAUGHT  N12 the Vault's button is named "Inspection readiness" again
+    1 failed | 43 passed (44)
+      × the Vault’s header button > is named "Trial master file" and opens the page that hosts it
+CAUGHT  N13 the Vault's button opens the project page, not the trial master file
+    1 failed | 43 passed (44)
+      × the Vault’s header button > is named "Trial master file" and opens the page that hosts it
+CAUGHT  N14 the Vault hosts the section before admission (the held hook-in applied)
+    2 failed | 42 passed (44)
+      × the Vault’s header button > is named "Trial master file" and opens the page that hosts it
+      × the Vault’s header button > is not offered where that page is locked, and the Vault itself reads nothing of the trial master file
+
+27 of 27 mutations caught.

@@ -77,7 +77,7 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
       </select></label>
       {selection.index.rows.length > 0 && <label>Protocol <select aria-label="Protocol document" value={selection.selectedId ?? ''} onChange={(event) => changeSelection(() => selection.select(event.target.value))}>
         {selection.index.rows.map((row) => <option key={row.id} value={row.id}>
-          {[row.shortTitle, row.title, row.status, !row.programId && 'Unfiled'].filter(Boolean).join(' · ')}
+          {[row.shortTitle, row.title, PG.inWords(row.status), !row.programId && 'Unfiled'].filter(Boolean).join(' · ')}
         </option>)}
       </select></label>}
       <PG.Btn icon="plus" variant="primary" onClick={() => changeSelection(() => setStarting(true))} disabled={!programId}>Start a protocol</PG.Btn>

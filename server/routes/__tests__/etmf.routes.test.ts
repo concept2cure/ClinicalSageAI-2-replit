@@ -28,10 +28,16 @@ beforeAll(() => {
 });
 
 describe('eTMF routes', () => {
-  it('403 without the regulatory-author role', async () => {
+  /* P-124 item 7 (2026-11-12): a viewer reads the trial master file, as it reads the Vault; it writes nothing. This case
+     read "403 without the regulatory-author role" on a read. */
+  it('a viewer reads; a session with neither role is refused; a viewer\'s write is refused', async () => {
     currentUser = { id: 9, organizationId: 1, roles: ['viewer'] };
-    const res = await request(app).get('/api/etmf/reference-model');
-    expect(res.status).toBe(403);
+    expect((await request(app).get('/api/etmf/reference-model')).status).toBe(200);
+    expect((await request(app).post('/api/etmf/completeness').send({ providedArtifacts: [] })).status).toBe(403);
+    expect((await request(app).post('/api/etmf/trials/S-1/artifacts').send({ artifactCode: 'protocol', reason: 'A reason long enough.' })).status).toBe(403);
+    expect((await request(app).delete('/api/etmf/artifacts/1').send({ reason: 'A reason long enough.' })).status).toBe(403);
+    currentUser = { id: 9, organizationId: 1, roles: ['client_user'] };
+    expect((await request(app).get('/api/etmf/reference-model')).status).toBe(403);
     currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
   });
 

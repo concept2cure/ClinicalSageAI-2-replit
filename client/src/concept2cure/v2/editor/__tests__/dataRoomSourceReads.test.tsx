@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+/* The panel also reads what the project uses (GET …/evidence, S2 step 3); it answers "nothing yet" here, so
+   these cases count and answer the sources reads alone, as they always did. */
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()),
+  apiRequest: (...args: unknown[]) => String(args[1]).endsWith('/evidence')
+    ? Promise.resolve(new Response(JSON.stringify({ evidence: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    : apiRequest(...args) }));
 import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 
 const programId = '11111111-1111-4111-8111-111111111111';
@@ -24,6 +29,15 @@ afterEach(() => cleanup());
    only a failure to answer offers one. */
 const refused = (status: number, code?: string) =>
   Object.assign(new Error('Request refused.'), { name: 'ApiRequestError', status, ...(code ? { code } : {}) });
+
+describe('the Data Room inside the editor\'s Vault panel, as development mounts it', () => {
+  it('loads the project\'s sources when React mounts the panel twice, with the editor\'s read owner', async () => {
+    apiRequest.mockResolvedValue(ok(page()));
+    render(<React.StrictMode><DataRoomSourcesPanel programId={programId} readOwner={{ key: 'library', current: () => true }} /></React.StrictMode>);
+    expect(await screen.findByText('Protocol source')).toBeTruthy();
+    expect(screen.queryByText('Loading project sources…')).toBeNull();
+  });
+});
 
 describe('a Data Room refusal is said as itself, never as a failed read', () => {
   it.each([

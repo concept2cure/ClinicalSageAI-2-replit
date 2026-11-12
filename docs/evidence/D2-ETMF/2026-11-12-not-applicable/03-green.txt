@@ -1,0 +1,28 @@
+# The same pins with the change
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+
+# Every eTMF server suite (services/etmf, the four route suites)
+ Test Files  14 passed (14)
+      Tests  173 passed (173)
+
+# Every trial master file client suite (the six: vaultTrialMasterFile, vaultTmf*, etmfHostsTrialMasterFile)
+ Test Files  6 passed (6)
+      Tests  104 passed (104)
+
+# PostgreSQL (platform_ci_vault_fixture_e4b, after deploy-migrate with the amended file): tests/db/etmf-governed-filing.dbtest.ts and etmf-study-binding.dbtest.ts
+      Tests  30 passed (30)
+
+# Gates
+ci:sql-interpolation: ok
+ci:migration-set-order: ok
+ci:migration-drop-safety: ok
+ci:migration-deploy-path: ok
+ci:orm-reachability: ok
+ci:launch-scope-api: ok
+ci:unreferenced-modules: ok
+ci:vault-document-writers: ok
+ci:undefined-css-classes: ok
+ci:one-product: ok
+ci:ana-surface-context: ok
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

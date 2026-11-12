@@ -16,6 +16,7 @@
  * Reuses the validation harness's API client and PDF fixture (tests/validation/
  * lib) — one client, one rate-limit strategy, one PDF writer.
  */
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -246,10 +247,73 @@ export async function connectSigner({ baseUrl, authorEmail, onRecord } = {}) {
   return { email, password, session, api, userId: session.user?.id ?? null };
 }
 
-/** PDF string escaping: parentheses and backslashes, and anything outside Latin-1 becomes '?'. */
+/**
+ * The synthetic second person who reviews the demo's documents (P-122, 2026-11-10). Since P-95 (33c3e4de9) an
+ * approval is refused (409 REVIEW_REQUIRED) until the document's latest review route names a reviewer and every
+ * reviewer has signed, and the author is never their own reviewer. With no second signer supplied, the seed left
+ * every review "not executed", so no seeded document could be approved in a live demo.
+ *
+ * This member is made through the product, as an administrator adds anyone: POST /api/tenant-users (role
+ * reviewer), then the activation link the server hands back when it sends no email, redeemed with a random password
+ * (POST /api/auth/reset-password). The password is held in memory for this run's review signatures and is never
+ * printed, recorded or written. The address is synthetic (`@example.test`, a reserved domain) and nothing else is
+ * accepted. On a later run the member is found and its password is not known: what still needs its signature is
+ * said, never faked. Null when the seed identity may not add members, or the server sent the link by email.
+ */
+export const SYNTHETIC_REVIEWER = { email: 'demo-reviewer@example.test', name: 'Demo Reviewer (synthetic)', role: 'reviewer' };
+
+export async function ensureSyntheticReviewer({ api, baseUrl, identity, onRecord } = {}) {
+  const { email, name, role } = SYNTHETIC_REVIEWER;
+  if (!/^[a-z0-9.+-]+@example\.test$/.test(email)) throw new Error('The synthetic reviewer must be an @example.test address');
+  const base = (baseUrl || process.env.DEMO_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
+  const org = Number(identity?.organizationId);
+  const listed = await api('GET', `/api/tenant-users/${org}`);
+  const rows = Array.isArray(listed.json) ? listed.json : [];
+  const found = rows.find((r) => String(r.email ?? '').toLowerCase() === email) || null;
+  let password = null;
+  let note = null;
+  if (!found) {
+    const created = await api('POST', '/api/tenant-users', { email, name, role, organizationId: org });
+    if (created.status !== 201) return { state: 'not created', note: `adding the synthetic reviewer answered HTTP ${created.status} ${JSON.stringify(created.json ?? '').slice(0, 160)}` };
+    const setupUrl = created.json?.invitation?.setupUrl;
+    const token = setupUrl ? new URL(setupUrl).searchParams.get('token') : null;
+    if (!token) return { state: 'created, no password', note: 'the server emailed its activation link, so the seed cannot set its password' };
+    const candidate = `${crypto.randomBytes(18).toString('base64url')}-Rv9!`;
+    const redeemed = await fetch(`${base}/api/auth/reset-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base },
+      body: JSON.stringify({ token, newPassword: candidate }),
+    });
+    if (redeemed.ok) password = candidate;
+    else note = `its activation link was refused (HTTP ${redeemed.status})`;
+  } else {
+    note = 'it was added on an earlier run, and its password is never kept';
+  }
+  /* Signed in as a person is: the development sign-in on a local server, else the password just set. */
+  let session;
+  try { session = await devLogin(base, email); } catch (err) {
+    if (!password) return { state: found ? 'found' : 'created', email, password: null, note: `${note ?? 'no password'}; ${err.message.slice(0, 120)}` };
+    // Read when needed: a stand-in harness (demo-recovery.test.mjs) carries only what the rest of the seed uses.
+    const { passwordLogin } = await import('../../../tests/validation/lib/harness.mjs');
+    session = await passwordLogin(base, { email, password });
+  }
+  const reviewerApi = createApiClient({ baseUrl: base, accessToken: session.accessToken, onRecord: onRecord || (() => {}), identity: email });
+  return { state: found ? 'found' : 'created', email, password, session, api: reviewerApi, userId: session.user?.id ?? null, note };
+}
+
+/**
+ * Characters the pack prose uses that Latin-1 lacks. Until 2026-11-12 each printed as "?" in every seeded PDF
+ * (GA-DEMO-14). The fonts are Helvetica with WinAnsiEncoding, which has the dashes, the curly quotes, the bullet,
+ * the ellipsis and the euro sign at its own codes (0x80-0x9f); the rest has no code there and is written out.
+ */
+const WIN_ANSI = { '\u2013': '\x96', '\u2014': '\x97', '\u2018': '\x91', '\u2019': '\x92', '\u201c': '\x93', '\u201d': '\x94', '\u2022': '\x95', '\u2026': '\x85', '\u20ac': '\x80', '\u2122': '\x99' };
+const SPELLED = { '\u2265': '>=', '\u2264': '<=', '\u2212': '-', '\u2192': '->', '\u2190': '<-', '\u2500': '-', '\u2248': '~', '\u2260': '!=', '\u03b1': 'alpha', '\u03b2': 'beta', '\u03b3': 'gamma', '\u03b4': 'delta', '\u03b8': 'theta', '\u03ba': 'kappa', '\u03bb': 'lambda', '\u03c3': 'sigma', '\u00a0': ' ' };
+
+/** PDF string escaping: WinAnsi and spelled-out characters first, then parentheses and backslashes; anything else becomes '?'. */
 function pdfLatin1(s) {
   return String(s ?? '')
-    .replace(/[^\x20-\x7e\xa0-\xff]/g, '?')
+    .replace(/[\u2013\u2014\u2018\u2019\u201c\u201d\u2022\u2026\u20ac\u2122]/g, (c) => WIN_ANSI[c])
+    .replace(/[\u2265\u2264\u2212\u2192\u2190\u2500\u2248\u2260\u03b1-\u03c3\u00a0]/g, (c) => SPELLED[c] ?? '?')
+    .replace(/[^\x20-\x7e\x80-\xff]/g, '?')
     .replace(/\\/g, '\\\\')
     .replace(/\(/g, '\\(')
     .replace(/\)/g, '\\)');
@@ -290,8 +354,9 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
   const LEFT = 72;
   const lines = []; // { text, bold, size }
   const push = (text, bold = false, size = BODY_SIZE) => lines.push({ text, bold, size });
-  push(title, true, 16);
-  if (subtitle) push(subtitle, false, 11);
+  // Wrapped to the 468 pt column: a long subtitle ran off the page (GA-DEMO-14).
+  for (const l of wrap(title, 56)) push(l, true, 16);
+  if (subtitle) for (const l of wrap(subtitle, 84)) push(l, false, 11);
   push('');
   for (const sec of sections) {
     push(sec.heading, true, 13);
@@ -317,7 +382,8 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
   pages.forEach((pageLines, idx) => {
     let y = TOP;
     const ops = [];
-    ops.push(`BT /F2 8 Tf ${LEFT} 752 Td (${pdfLatin1(title)}) Tj ET`);
+    const header = title.length > 110 ? `${title.slice(0, 109).trimEnd()}\u2026` : title;
+    ops.push(`BT /F2 8 Tf ${LEFT} 752 Td (${pdfLatin1(header)}) Tj ET`);
     ops.push(`BT /F1 8 Tf ${LEFT} 40 Td (${pdfLatin1(`${footer ? footer + '  |  ' : ''}Page ${idx + 1} of ${pages.length}`)}) Tj ET`);
     for (const l of pageLines) {
       if (l.text) ops.push(`BT /${l.bold ? 'F2' : 'F1'} ${l.size} Tf ${LEFT} ${y} Td (${pdfLatin1(l.text)}) Tj ET`);

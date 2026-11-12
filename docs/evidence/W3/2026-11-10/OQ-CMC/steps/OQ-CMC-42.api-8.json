@@ -1,0 +1,52 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5200/api/concept2cure/projects/808060af-b01c-4b94-b24f-58138b33098d/agency-communications/ace_1794276550491_be59a791/questions/1/owner",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "ownerUserId": 3,
+      "reason": "OQ-CMC-42: recording the information request as the agency worded it."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 49,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 1,
+        "questionRef": "Q1",
+        "questionText": "Provide the container closure integrity data for the 100-count bottle.",
+        "discipline": "CMC",
+        "ctdSection": "3.2.P.7",
+        "severity": "major",
+        "ownerUserId": 3,
+        "ownerName": "OQ Approver",
+        "responseText": "",
+        "responseRevision": 0,
+        "responseUpdatedBy": null,
+        "responseUpdatedByName": null,
+        "responseUpdatedAt": null,
+        "state": "unanswered",
+        "digest": "54c5827ef57b3408b917f8b82f9ceb85eaa16b12a5cd67784c2f80575c2d25fa",
+        "approval": null,
+        "supersededApproval": null,
+        "signRefusal": {
+          "code": "NOTHING_TO_SIGN",
+          "message": "Q1 has no response yet, so there is nothing to approve."
+        },
+        "withdrawal": null,
+        "history": [],
+        "commitments": []
+      },
+      "governance": {
+        "actionId": "act_cc85ff06ca554ebf827609d5d9c58ce4",
+        "auditId": "84f7bf2a-65d4-4dcf-a2ad-4f0530bb1585",
+        "sha256Chain": "4b51c31367cce5e7e33b54e86c72cfb14dc8eae658e91e2641f998ee48f43aeb"
+      }
+    }
+  }
+}

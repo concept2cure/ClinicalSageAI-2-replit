@@ -58,7 +58,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
   IVD_CALCULATOR_BASE,
@@ -147,11 +146,19 @@ interface Defensibility {
  * where a result was returned. One parameter, declared per calculator in
  * `biostatCalculators.ts`, rather than two copies of this function.
  */
+/** The inputs a NEEDS_PARAMETERS refusal names (its `data.errors[].field`). A field not yet filled is not an error. */
+function neededFields(e: unknown): string[] | undefined {
+  const err = e as { code?: unknown; payload?: { data?: { errors?: Array<{ field?: unknown }> } } };
+  if (err.code !== 'NEEDS_PARAMETERS') return undefined;
+  const fields = (err.payload?.data?.errors ?? []).map((x) => x.field).filter((f): f is string => typeof f === 'string');
+  return fields.length ? fields : undefined;
+}
+
 async function readData<T = any>(
   path: string,
   body: unknown,
   resultKey: 'data' | 'result' = 'data',
-): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+): Promise<{ ok: boolean; status: number; data: T | null; error: string | null; needs?: string[] }> {
   try {
     const res = await apiRequest('POST', path, body);
     const parsed = (await res.json().catch(() => null)) as any;
@@ -183,6 +190,7 @@ async function readData<T = any>(
       status: known ? (e as { status: number }).status : 0,
       data: null,
       error: known && (e as Error).message ? (e as Error).message : null,
+      needs: known ? neededFields(e) : undefined,
     };
   }
 }
@@ -659,12 +667,21 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
   });
   const [asmtRes, setAsmtRes] = useState<Defensibility | null>(null);
   const [asmtBusy, setAsmtBusy] = useState(false);
+  // The fields the engine still needs, by the labels on this form (2026-11-10: they were a red error toast in
+  // developer words, "Missing or invalid: effectSize", for a form nobody had filled yet).
+  const [asmtNeeds, setAsmtNeeds] = useState<string[]>([]);
+  const fieldLabel = (field: string): string => ({
+    effectSize: asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)',
+    controlRate: 'Control rate', treatmentRate: 'Treatment rate',
+    nonInferiorityMargin: 'Non-inferiority margin', equivalenceMargin: 'Equivalence margin',
+    alpha: 'Alpha (two-sided)', powerTarget: 'Power', attritionRate: 'Dropout rate', allocationRatio: 'Allocation ratio',
+  } as Record<string, string>)[field] ?? field;
 
   const runAssess = useCallback(async () => {
-    setAsmtBusy(true);
+    setAsmtBusy(true); setAsmtNeeds([]);
     try {
       const n = (v: string) => (v.trim() === '' ? undefined : Number(v));
-      const { ok, status, data, error } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
+      const { ok, status, data, error, needs } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
         clientTrack: 'biotech_pharma',
         phase: asmt.studyPhase, indication: asmt.indication || undefined,
         studyType: asmt.studyType, objectiveType: asmt.objectiveType, endpointType: asmt.endpointType,
@@ -674,6 +691,7 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
         alpha: n(asmt.alpha), powerTarget: n(asmt.powerTarget), attritionRate: n(asmt.attritionRate),
         allocationRatio: n(asmt.allocationRatio),
       });
+      if (needs) { setAsmtRes(null); setAsmtNeeds(needs); return; }
       if (!ok || !data) {
         setAsmtRes(null);
         fireToast(error ?? `Assessment failed (HTTP ${status}).`, 'error');
@@ -723,6 +741,11 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
         <label className="wb-f">Allocation ratio<input className="c2c-input" inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
       </div>
       <button type="button" className="btn" onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
+      {asmtNeeds.length > 0 && (
+        <p role="status" style={{ marginTop: 8, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>
+          {`To assess this design, enter: ${[...new Set(asmtNeeds.map(fieldLabel))].join(', ')}.`}
+        </p>
+      )}
 
       {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
     </section>
@@ -730,40 +753,50 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
 }
 
 /**
+ * Resolve the design engine AnA named: an exact id, then an exact title, then
+ * one title containing the phrase. Honest misses and ambiguity refusals.
+ */
+export function resolveCalculatorByName(name: string): { ok: true; calc: Calculator } | { ok: false; reason: string } {
+  const raw = name.trim();
+  if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
+  const needle = raw.toLowerCase();
+  const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
+  const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
+  const hits = byId.length ? byId
+    : byTitle.length ? byTitle
+    : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
+  if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
+  if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
+  return { ok: true, calc: hits[0] };
+}
+
+/**
  * The design calculators — a section of the Biostatistics surface.
  *
  * It was the bottom half of `biostat-workbench`. The surface action AnA uses to
- * open an engine by name moved with it, and is registered here under the
- * surviving surface's id.
+ * open an engine by name moved with it to `biostatistics`, whose ONE handler
+ * set registers it (`Biostatistics.tsx`): the surface owns the open engine and
+ * passes it here as `activeId` / `onSelect`. Rendered without them (a test
+ * mounting the section alone), the section keeps its own choice.
  */
-export function DesignCalculatorsSection({ fireToast, onNav, deviceProject }: { fireToast: FireToast; onNav?: (id: string) => void; deviceProject?: boolean }) {
-  const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
+export function DesignCalculatorsSection({ fireToast, onNav, deviceProject, activeId: chosenId, onSelect }: {
+  fireToast: FireToast;
+  onNav?: (id: string) => void;
+  deviceProject?: boolean;
+  activeId?: string;
+  onSelect?: (id: string) => void;
+}) {
+  const [ownId, setOwnId] = useState<string>(CALCULATORS[0].id);
+  const activeId = onSelect ? (chosenId ?? CALCULATORS[0].id) : ownId;
+  const setActiveId = onSelect ?? setOwnId;
   const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
 
-  /* AnA can open any design engine by its name — the same tile click a person
-     makes — so a drive can land on the right calculator before its inputs are
-     discussed. The registry (CALCULATORS) is static, so no not-ready state;
-     opening an engine is view-state only — computing a result stays deliberate.
-     Registered under `biostatistics` since 2026-11-09: the action's id moved
-     with the section (shared/navigation/surface-actions.ts). */
-  useSurfaceActionHandlers('biostatistics', {
-    'biostatistics.select-calculator': (params) => {
-      const raw = String(params.calculator ?? '').trim();
-      if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
-      const needle = raw.toLowerCase();
-      const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
-      const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
-      const hits = byId.length ? byId
-        : byTitle.length ? byTitle
-        : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
-      if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
-      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
-      const c = hits[0];
-      if (activeId === c.id) return { ok: true, detail: `Already on ${c.title}` };
-      setActiveId(c.id);
-      return { ok: true, detail: `Opened ${c.title}` };
-    },
-  });
+  /* No action registration here. The bus holds ONE registration, and this
+     section's (made under `biostatistics` on 2026-11-09) ran its effect before
+     the surface's (React runs a child's effects first): it answered a design
+     held while the list loaded with "This screen does not support", and the
+     surface's registration then replaced it, so `select-calculator` was never
+     reachable on the mounted screen. The surface registers it now. */
 
   return (
     <section className="pj-sec" aria-label="Design calculators">

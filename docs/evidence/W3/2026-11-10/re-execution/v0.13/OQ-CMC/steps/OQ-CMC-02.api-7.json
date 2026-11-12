@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/drug-substances",
+    "anonymous": false,
+    "identity": "oq-viewer@validation.local",
+    "body": {
+      "substanceName": "VIEWER-20261110130629",
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "modality": "small_molecule"
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Insufficient permissions"
+    }
+  }
+}

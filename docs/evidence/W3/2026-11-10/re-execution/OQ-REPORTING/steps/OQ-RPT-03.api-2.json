@@ -1,0 +1,853 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scopeType": "account",
+      "scopeId": "2",
+      "reportTypeId": "research_admin.scorecard"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 59,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "run": {
+          "id": 23,
+          "runUuid": "6bfb5192-7af4-4520-909d-ce33735f14b0",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_admin.scorecard",
+          "status": "completed",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:35:49.586Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:35:49.586Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:35:49.603Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:35:49.603Z",
+          "completedAt": "2026-11-10T03:35:49.603Z",
+          "createdAt": "2026-11-10T03:35:49.603Z",
+          "updatedAt": "2026-11-10T03:35:49.603Z"
+        },
+        "snapshot": {
+          "id": 22,
+          "runId": 23,
+          "organizationId": 2,
+          "scopeType": "account",
+          "scopeId": "2",
+          "snapshotVersion": 1,
+          "isLatest": true,
+          "previousSnapshotId": null,
+          "artifactRecordId": null,
+          "snapshotMetadata": {
+            "reportTypeId": "research_admin.scorecard",
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:35:49.586Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:35:49.586Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "confidence": null
+          },
+          "createdBy": 1,
+          "createdAt": "2026-11-10T03:35:49.603Z"
+        },
+        "blockers": [],
+        "confidence": null
+      }
+    }
+  }
+}

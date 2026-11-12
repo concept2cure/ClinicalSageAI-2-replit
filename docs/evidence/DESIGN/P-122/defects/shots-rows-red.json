@@ -1,0 +1,54 @@
+{
+  "runs": [
+    {
+      "key": "390-light",
+      "views": [
+        {
+          "name": "schedule-c2c101",
+          "file": "rows-red-schedule-c2c101-390-light.png",
+          "sideways": 0,
+          "squeezed": [
+            "m1.20: Introductory Statement and General Investigational Plan"
+          ],
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nMilestone tasks\n1 of 12 tasks done\nPre-IND Meeting Request\nRegulatory · Done\nDue Nov 25, 2026\nPre-IND Briefing Document\nDocument prep · In progress\nDue Dec 10, 2026\nPre-IND Meeting\nMeeting · To do\nDue Dec 25, 2026\nModule 1 Administrative\nDocument prep · To do\nDue Jan 9, 2027\nModule 2 Summaries\nDocument prep · To do\nDue Jan 24, 2027\nModule 3 Quality (CMC)\nDocument prep · To do\nDue Feb 8, 2027\nModule 4 Nonclinical\nDocument prep · To do\nDue Feb 23, 2027\nModule 5 Clinical\nDocument prep · To do\nDue Mar 10, 2027\nIND Compilation & QC\nQuality · To do\nDue Mar 25, 2027\nIND Submission to FDA\nSubmission · To do\nDue Apr 9, 2027\n30-Day Safety Review\nRegulatory · To do\nDue Apr 24, 2027\nStudy May Proceed\nMilestone · To do\nDue May 9, 2027\nProject roll-up\n2 work projects: 2 Active.\nAcross the hierarchy: 1 of 14 tasks done · 1 blocked · 0 overdue."
+        },
+        {
+          "name": "schedule-lmn201",
+          "file": "rows-red-schedule-lmn201-390-light.png",
+          "sideways": 0,
+          "squeezed": [
+            "m1.20: Introductory Statement and General Investigational Plan"
+          ],
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\n6 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRob Reviewer\n1 open of 1 section\nRae Reviewer\n1 open of 1 section\nPre-IND written responses received\nMilestone · Overdue\nOct 31, 2026\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nNov 5, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nNov 30, 2026\nInvestigator's Brochure approved\nMilestone · On track\nDec 1, 2026\nm2.6.2: Pharmacology Written Summary\nSection deadline · Rob Reviewer · Drafting\nDec 5, 2026\nRePreve protocol final\nMilestone · On track\nDec 10, 2026\nm3.2.P.5: Control of Drug Product\nSection deadline · Mo Member · Data gathering\nDec 20, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nDec 25, 2026\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nJan 9, 2027\nMilestone tasks\n3 of 12 tasks done\nPre-IND Meeting Request\nRegulatory · Done\nDue Nov 20, 2026\nPre-IND Briefing Document\nDocument prep · Done\nDue Nov 30, 2026\nPre-IND Meeting\nMeeting · Done\nDue Dec 10, 2026\nModule 1 Administrative\nDocument prep · In progress\nDue Dec 20, 2026\nModule 2 Summaries\nDocument prep · To do\nDue Dec 30, 2026\nModule 3 Quality (CMC)\nDocument prep · Blocked\nDue Jan 9, 2027\nModule 4 Nonclinical\nDocument prep · To do\nDue Jan 19, 2027\nModule 5 Clinical\nDocument prep · To do\nDue Jan 29, 2027\nIND Compilation & QC\nQuality · To do\nDue Feb 8, 2027\nIND Submission to FDA\nSubmission · To do\nDue Feb 18, 2027\n30-Day Safety Review\nRegulatory · To do\nDue Feb 28, 2027\nStudy May Proceed\nMilestone · To do\nDue Mar 10, 2027\nProject roll-up\n2 work projects: 2 Active.\nAcross the hierarchy: 3 of 13 tasks done · 1 blocked · 0 overdue."
+        }
+      ],
+      "failed": []
+    },
+    {
+      "key": "1440-light",
+      "views": [
+        {
+          "name": "schedule-c2c101",
+          "file": "rows-red-schedule-c2c101-1440-light.png",
+          "sideways": 0,
+          "squeezed": [],
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\n8 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n3 open of 3 sections\nRob Reviewer\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRae Reviewer\n1 open of 1 section\nm2.6.6: Toxicology Written Summary\nSection deadline · Rob Reviewer · Drafting\nNov 7, 2026\nm3.2.S.4: Control of Drug Substance\nSection deadline · Mo Member · Data gathering\nDec 10, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nDec 15, 2026\nPre-IND meeting with FDA held\nMilestone · On track\nDec 25, 2026\nm2.4: Nonclinical Overview\nSection deadline · Rob Reviewer · Drafting\nDec 30, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nJan 9, 2027\nNonclinical summaries locked\nMilestone · On track\nJan 19, 2027\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nJan 24, 2027\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nFeb 8, 2027\nModule 3 quality data locked\nMilestone · On track\nFeb 18, 2027\nm1.2: Cover Letter\nSection deadline · Avery Author · Not started\nApr 9, 2027\nMilestone tasks\n1 of 12 tasks done\nPre-IND Meeting Request\nRegulatory · Done\nDue Nov 25, 2026\nPre-IND Briefing Document\nDocument prep · In progress\nDue Dec 10, 2026\nPre-IND Meeting\nMeeting · To do\nDue Dec 25, 2026\nModule 1 Administrative\nDocument prep · To do\nDue Jan 9, 2027\nModule 2 Summaries\nDocument prep · To do\nDue Jan 24, 2027\nModule 3 Quality (CMC)\nDocument prep · To do\nDue Feb 8, 2027\nModule 4 Nonclinical\nDocument prep · To do\nDue Feb 23, 2027\nModule 5 Clinical\nDocument prep · To do\nDue Mar 10, 2027\nIND Compilation & QC\nQuality · To do\nDue Mar 25, 2027\nIND Submission to FDA\nSubmission · To do\nDue Apr 9, 2027\n30-Day Safety Review\nRegulatory · To do\nDue Apr 24, 2027\nStudy May Proceed\nMilestone · To do\nDue May 9, 2027\nProject roll-up\n2 work projects: 2 Active.\nAcross the hierarchy: 1 of 14 tasks done · 1 blocked · 0 overdue."
+        },
+        {
+          "name": "schedule-lmn201",
+          "file": "rows-red-schedule-lmn201-1440-light.png",
+          "sideways": 0,
+          "squeezed": [],
+          "text": "Schedule\nSection owners, deadlines and milestones, the milestone tasks, and the project roll-up\nSection owners and deadlines\n6 of 107 sections have an owner · 0 complete · 1 overdue\nAvery Author\n2 open of 2 sections\nMo Member\n2 open of 2 sections\nRob Reviewer\n1 open of 1 section\nRae Reviewer\n1 open of 1 section\nPre-IND written responses received\nMilestone · Overdue\nOct 31, 2026\nm2.3: Quality Overall Summary\nSection deadline · Mo Member · Drafting\nNov 5, 2026\nm1.14.4.1: Investigator's Brochure\nSection deadline · Rae Reviewer · Internal review\nNov 30, 2026\nInvestigator's Brochure approved\nMilestone · On track\nDec 1, 2026\nm2.6.2: Pharmacology Written Summary\nSection deadline · Rob Reviewer · Drafting\nDec 5, 2026\nRePreve protocol final\nMilestone · On track\nDec 10, 2026\nm3.2.P.5: Control of Drug Product\nSection deadline · Mo Member · Data gathering\nDec 20, 2026\nm1.1.1: Form FDA 1571\nSection deadline · Avery Author · Drafting\nDec 25, 2026\nm1.20: Introductory Statement and General Investigational Plan\nSection deadline · Avery Author · Not started\nJan 9, 2027\nMilestone tasks\n3 of 12 tasks done\nPre-IND Meeting Request\nRegulatory · Done\nDue Nov 20, 2026\nPre-IND Briefing Document\nDocument prep · Done\nDue Nov 30, 2026\nPre-IND Meeting\nMeeting · Done\nDue Dec 10, 2026\nModule 1 Administrative\nDocument prep · In progress\nDue Dec 20, 2026\nModule 2 Summaries\nDocument prep · To do\nDue Dec 30, 2026\nModule 3 Quality (CMC)\nDocument prep · Blocked\nDue Jan 9, 2027\nModule 4 Nonclinical\nDocument prep · To do\nDue Jan 19, 2027\nModule 5 Clinical\nDocument prep · To do\nDue Jan 29, 2027\nIND Compilation & QC\nQuality · To do\nDue Feb 8, 2027\nIND Submission to FDA\nSubmission · To do\nDue Feb 18, 2027\n30-Day Safety Review\nRegulatory · To do\nDue Feb 28, 2027\nStudy May Proceed\nMilestone · To do\nDue Mar 10, 2027\nProject roll-up\n2 work projects: 2 Active.\nAcross the hierarchy: 3 of 13 tasks done · 1 blocked · 0 overdue."
+        }
+      ],
+      "failed": [
+        "409 GET /api/c2c/projects/d56ad63d-8530-4cd5-b81f-dc55102a6dea/intelligence",
+        "409 GET /api/c2c/projects/d56ad63d-8530-4cd5-b81f-dc55102a6dea/intelligence"
+      ]
+    }
+  ],
+  "base": "http://localhost:5266",
+  "label": "rows-red",
+  "at": "2026-11-10T15:08:19.883Z"
+}

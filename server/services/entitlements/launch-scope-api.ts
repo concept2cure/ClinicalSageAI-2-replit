@@ -100,7 +100,10 @@ export const LAUNCH_INFRASTRUCTURE_API: Readonly<Record<string, string>> = {
  * `ci:launch-scope-api` fails if a launch screen ever calls one.
  */
 export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
-  '/api/mdx/qms/readiness': "DEAD: the deleted MDX device shell's quality-readiness panel (consumer removed in 4aa204390)",
+  /* '/api/mdx/qms/readiness' was here as DEAD (the deleted MDX device shell's quality-readiness panel, consumer
+     removed in 4aa204390). P-122 (2026-11-10) reaches it: Quality's figure line (quality/QualityFigures.tsx) reads it
+     under Quality's claim on /api/mdx/qms, behind the same request executor and organisation filter as Quality's
+     other reads. */
   '/api/regulatory/tasks/dashboard': 'DEAD: a legacy cross-module progress dashboard; nothing calls it, and it is not Submission Readiness',
   '/api/regulatory/tasks/sync': "DEAD: a legacy cross-module task importer, its device branch reading the device app's tables",
   '/api/concept2cure/projects/all': "DEAD: the deleted legacy Home dashboard's counter (consumer removed in 2895218b8)",

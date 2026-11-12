@@ -2152,10 +2152,9 @@
    }
   },
   "classify_tmf_artifact": {
-   "class": "conditional",
-   "writes": "INSERT tmf_artifacts + governed-action row (status unvalidated)",
-   "site": "AnaToolExecutor.ts registerToolHandler('classify_tmf_artifact')",
-   "rule": "input.status === final -> refuse; else confirm"
+   "class": "confirm",
+   "writes": "INSERT or UPDATE tmf_artifact_filings + chained audit row (recordTmfArtifactFiling)",
+   "site": "AnaToolExecutor.ts registerToolHandler('classify_tmf_artifact')"
   },
   "classify_tox_findings": {
    "class": "read",
@@ -2694,7 +2693,12 @@
   "create_regulatory_commitment": {
    "class": "confirm",
    "writes": "INSERT regulatory_commitments + provenance + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_regulatory_commitment')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_regulatory_commitment')",
+   "present": {
+    "verb": "record",
+    "object": "a regulatory commitment",
+    "source": "project"
+   }
   },
   "create_research_agreement": {
    "class": "confirm",
@@ -2726,11 +2730,6 @@
     "object": "a software lifecycle record",
     "source": "project"
    }
-  },
-  "create_tmf": {
-   "class": "confirm",
-   "writes": "INSERT tmf_files + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_tmf')"
   },
   "create_udi_record": {
    "class": "confirm",
@@ -3768,7 +3767,12 @@
   "fulfill_regulatory_commitment": {
    "class": "confirm",
    "writes": "UPDATE regulatory_commitments fulfilled (terminal), meeting commitment or other only; a PMR, PMC or REMS writes nothing (a signed act, P-41)",
-   "site": "AnaToolExecutor.ts registerToolHandler('fulfill_regulatory_commitment')"
+   "site": "AnaToolExecutor.ts registerToolHandler('fulfill_regulatory_commitment')",
+   "present": {
+    "verb": "record",
+    "object": "a commitment as fulfilled",
+    "source": "project"
+   }
   },
   "gateway_configuration_status": {
    "class": "read",
@@ -4705,6 +4709,16 @@
     "source": "project"
    }
   },
+  "list_my_support_tickets": {
+   "class": "read",
+   "writes": "none",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "list",
+    "object": "your support requests",
+    "source": "screen"
+   }
+  },
   "list_platform_commands": {
    "class": "read",
    "writes": "none",
@@ -5065,6 +5079,16 @@
    "class": "confirm",
    "writes": "INSERT grant_closeout_records + governed-action row",
    "site": "AnaToolExecutor.ts registerToolHandler('open_grant_closeout')"
+  },
+  "open_support_ticket": {
+   "class": "read",
+   "writes": "none: drafts the request and links it; the person sends it from Help & training (POST /api/support/tickets)",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "draft",
+    "object": "a support request",
+    "source": "screen"
+   }
   },
   "override_import_mapping": {
    "class": "confirm",
@@ -5529,6 +5553,16 @@
     "source": "submissions"
    }
   },
+  "read_help_article": {
+   "class": "read",
+   "writes": "none",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "read",
+    "object": "a help article",
+    "source": "screen"
+   }
+  },
   "read_project_document": {
    "class": "self",
    "writes": "her read-coverage receipt; extraction outcome backfill",
@@ -5899,7 +5933,12 @@
   "review_commitment_portfolio": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('review_commitment_portfolio')"
+   "site": "AnaToolExecutor.ts registerToolHandler('review_commitment_portfolio')",
+   "present": {
+    "verb": "review",
+    "object": "the commitment portfolio",
+    "source": "project"
+   }
   },
   "review_consent_completeness": {
    "class": "read",
@@ -6274,11 +6313,6 @@
     "object": "the protocol against SPIRIT",
     "source": "authoring"
    }
-  },
-  "review_tmf_completeness": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('review_tmf_completeness')"
   },
   "review_training_gate": {
    "class": "read",
@@ -6811,6 +6845,19 @@
     ]
    }
   },
+  "search_help_center": {
+   "class": "read",
+   "writes": "none",
+   "site": "help-support-tools.ts registerHelpSupportHandlers",
+   "present": {
+    "verb": "search",
+    "object": "the Help Center",
+    "source": "screen",
+    "preview": [
+     "query"
+    ]
+   }
+  },
   "search_ivd_knowledge": {
    "class": "read",
    "writes": "none",
@@ -6898,16 +6945,6 @@
     "preview": [
      "query"
     ]
-   }
-  },
-  "seed_tmf": {
-   "class": "confirm",
-   "writes": "INSERT tmf_artifacts + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('seed_tmf')",
-   "present": {
-    "verb": "create",
-    "object": "the Trial Master File structure",
-    "source": "project"
    }
   },
   "select_505_pathway": {
@@ -7139,7 +7176,12 @@
   "simulate_study_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('simulate_study_design')"
+   "site": "AnaToolExecutor.ts registerToolHandler('simulate_study_design')",
+   "present": {
+    "verb": "simulate",
+    "object": "the study design",
+    "source": "engine"
+   }
   },
   "size_diagnostic_study": {
    "class": "read",
@@ -7390,7 +7432,7 @@
    "class": "conditional",
    "writes": "UPDATE invention_disclosures + audit",
    "site": "AnaToolExecutor.ts registerToolHandler('update_invention_disclosure')",
-   "rule": "input.status in (elected, patent_filed, licensed, released, abandoned) or input.election_date -> refuse; else confirm"
+   "rule": "input.status in (elected, patent_filed, licensed, released, abandoned) or input.election_date or input.decision_rationale (any string) -> refuse; else confirm"
   },
   "update_monitoring_action": {
    "class": "confirm",
@@ -7436,12 +7478,6 @@
    "class": "confirm",
    "writes": "UPDATE research_agreements + audit (executed refused by service)",
    "site": "AnaToolExecutor.ts registerToolHandler('update_research_agreement')"
-  },
-  "update_tmf_artifact_status": {
-   "class": "conditional",
-   "writes": "UPDATE tmf_artifacts + governed-action row",
-   "site": "AnaToolExecutor.ts registerToolHandler('update_tmf_artifact_status')",
-   "rule": "input.status === 'final' -> refuse (TMF QC finalization); else confirm"
   },
   "update_vault_document": {
    "class": "confirm",
