@@ -864,6 +864,11 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
     - It is trunk's, and only named, when it was red there with nothing new. Touching a file whose red is already
       on trunk does not refuse a push.
     - The base is your upstream, or `origin/concept2cure-v2` on a detached HEAD (a worktree push).
+    - **Since 2026-11-12 19:30 the gates run on HEAD in a temporary worktree, not on the working tree.** An
+      agent worktree nested under `.claude/worktrees/` made three repo-walking gates (the duplicate CREATE TABLE
+      check, the legacy-dependency quarantine and DOCX runtime canonicality) read a second copy of the repository.
+      They refused a push that changed one Markdown file. Uncommitted edits are not pushed, so they are no longer
+      read. `docs/reports/` is no longer touched.
   - **Shown working:** about 90–110 s with a red on trunk.
     - From a detached worktree with no change: passed, with the four trunk reds named.
     - An envelope read added to `HomeSections.tsx`: refused.
