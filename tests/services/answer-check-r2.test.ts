@@ -295,8 +295,8 @@ describe('cost and shape (F10)', () => {
     expect(() => checkAnswer('NCT04123456.', [tool('x', deep, { query: 'NCT04123456' })])).not.toThrow();
   });
 
-  it('names the round-2 engine', () => {
-    expect(ANSWER_CHECK_VERSION).toBe('answer-check/2');
+  it('names the engine: /3 since 2026-11-12, when it began to read EU law, standards, EU guidance and EMA references', () => {
+    expect(ANSWER_CHECK_VERSION).toBe('answer-check/3');
   });
 });
 

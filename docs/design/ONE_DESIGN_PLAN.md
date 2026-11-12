@@ -2915,6 +2915,51 @@ lanes' files (the IND registers and forms, the Part 11 chain view, the CMC clien
 **For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
 `COORDINATION.md` row): the first six decide the most.
 
+#### F1 — AnA's answer check, and this lane's own refusals (session `session_01TTTQ1hpdMr1yAMVYH4nYdE`, 2026-11-12)
+
+The lane "AnA's reasoning is checked by an engine" (`docs/work-orders/README.md`), back after 24 days. Every open item
+was re-read at HEAD before anything was changed.
+
+**Closed by other lanes meanwhile** (checked, not redone): the device and IVD exits ask whether the filing holds the
+document's text (`8c30fa2c9`, `e05eb3d4a`); a diverged section is re-filed with Re-file saved text (`848fa68e3`); the
+seeded 510(k) template is keyed to the eSTAR outline (`be46895c9`). This lane's nine suites from October pass at HEAD
+(180 tests).
+
+**Delivered**
+
+- **The answer check reads EU law, standards, EU guidance and EMA references** (`46c66f3d6`,
+  `docs/evidence/ANA-REASONING/2026-11-12/grd-cites/`). An answer whose claims were "MDR Article 61", "ISO 14971:2019",
+  "MDCG 2020-6" or "EMA/CHMP/ICH/135/1995" had no claims for the check: eight such answers each returned `claims=0`
+  and the strip said "No specific claims to check". Four kinds are read now, under the file's rule for CFR and ICH.
+  Engine `answer-check/3`; answers stored with a `/2` check stop vouching for memory until checked again, by design.
+  Red first (21 failed), then 37 of 37; 240 pass across the 20 suites around the check; 33 of 33 mutants killed.
+  Found and fixed before it landed: AnA's own `generate_citation` formats an EU citation from the identifier it is
+  given, unverified, and the first version would have counted that echo as found.
+- **Two refusals stop naming a remedy nobody could take** (`583dc7b5f`,
+  `docs/evidence/ANA-REASONING/2026-11-12/refusal-remedies/`). The QMS approval's `FILING_DIVERGED` told the approver
+  to edit and save a controlled document under review, which refuses every write; it now gives Return for revision,
+  Re-file saved text, review, approve. The note after an approval told the approver to save a document the approval
+  had just frozen; it now says what is so and carries the server's reason. Red first (2 and 5 failed); 804 pass across
+  63 suites; 13 of 13 mutants killed.
+
+**Found, not fixed here**
+
+- TP-RL-8: tool results are staged for the model without the input that produced them (one reader; not re-read a
+  second time). `server/services/ana/tool-output-frame.ts`.
+- Author-year references are not read by the answer check; the marker list in `server/services/ana/grounding-core.ts`
+  has no EU, ISO/IEC or MDCG form.
+- A template re-seed writes no audit row (`server/services/intelligence/template-seeds.ts`).
+- Two lists say which statuses seal a document, with two and eight entries (`document-lock.ts`,
+  `authoring-permissions.ts`); no statement writes any of the other six.
+- Not re-read this round: GRD-8 (the label check) and the editor family's follow-ons.
+
+**For the founder**
+
+1. A sealed non-QMS document that left filing sections unapproved has no repair path. Recommended: refuse the approval
+   while a bound section is unfiled and could still be filed, which sends the approver to Re-file saved text before
+   signing. It narrows P-29.2; the record is in the second evidence folder above.
+2. Documents started from the 510(k) template before 2026-11-01 keep its old section codes.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

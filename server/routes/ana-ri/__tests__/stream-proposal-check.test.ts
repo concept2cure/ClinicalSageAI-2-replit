@@ -273,7 +273,7 @@ describe('a governed draft is checked before the person approves it', () => {
 
     expect(h.state.approvals).toHaveLength(1);
     const held = h.state.approvals[0].check;
-    expect(held.engine).toBe('answer-check/2');
+    expect(held.engine).toBe('answer-check/3');
     expect(held.found).toBe(3);
     expect(held.notFound.map((c: { text: string }) => c.text)).toEqual(['31%']);
     expect(held.verdicts.map((v: { text: string }) => v.text)).toEqual(['is ready to file']);
