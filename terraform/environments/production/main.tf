@@ -165,3 +165,20 @@ output "github_build_role_arn" {
 output "cloudfront_distribution_id" {
   value = module.stack.cloudfront_distribution_id
 }
+
+# How the deployment's first administrator is created: where the setup token is
+# and the one call that uses it (the stack's first_run_setup).
+output "first_run_setup" {
+  value = module.stack.first_run_setup
+}
+
+# Where /readyz's detail token is, for the GitHub environment's READYZ_TOKEN
+# secret (deploy-aws.yml's smoke test) and for an operator.
+output "readyz_detail" {
+  value = module.stack.readyz_detail
+}
+
+# The PostgreSQL version RDS runs, for the IQ record.
+output "engine_version_actual" {
+  value = module.stack.engine_version_actual
+}
