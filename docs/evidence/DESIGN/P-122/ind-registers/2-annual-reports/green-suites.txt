@@ -1,0 +1,8 @@
+# every entitlements suite; server/routes/ind-lifecycle/__tests__ (the contract cases assert the refusal without a request scope); the IND screen's client suites
+green-claim-2.txt: Test Files  24 passed (24)
+green-claim-2.txt:      Tests  648 passed (648)
+ind-server-2.txt: Test Files  11 passed (11)
+ind-server-2.txt:      Tests  175 passed (175)
+ind-client-2.txt: Test Files  16 passed (16)
+ind-client-2.txt:      Tests  127 passed (127)
+ci:launch-scope-api: 665 API paths named by launch and shell screens; none refused. {"launch":607,"infrastructure":9,"never-gated":49}

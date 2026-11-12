@@ -8,6 +8,8 @@
  * @module server/services/gcp-operations/gcp-operations-reference
  */
 
+import { tmfArtifactByCode, tmfZoneByNumber } from '../../../shared/constants/domain/tmf-reference-model';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ICH E6(R3) Unifying Principles
 // ─────────────────────────────────────────────────────────────────────────────
@@ -230,61 +232,95 @@ export interface EssentialDocument {
   id: string;
   name: string;
   stage: TrialStage;
-  tmfZone: string;
+  /** The DIA TMF Reference Model zone the document is filed in: a zone number (1–11) of the one catalog. */
+  tmfZone: number;
+  /** That zone's name, read from the catalog, never typed here. */
+  tmfZoneName: string;
+  /** The catalog artifact this document is, when it is one. Its zone is then that artifact's. */
+  catalogArtifact?: string;
+  /** Who keeps it: the sponsor's TMF, the investigator site file, or both. */
   heldBy: Array<'sponsor' | 'investigator'>;
   purpose: string;
   citation: string;
 }
 
-export interface TmfZone {
-  zone: string;
-  description: string;
-  exampleSections: string[];
+/**
+ * A library document, with its zone's name read from the catalog. Refused: a zone the catalog does not hold, a
+ * `catalogArtifact` the catalog does not hold, and a zone other than that artifact's.
+ */
+export function essentialDocument(d: Omit<EssentialDocument, 'tmfZoneName'>): EssentialDocument {
+  const zone = tmfZoneByNumber(d.tmfZone);
+  if (!zone) throw new Error(`Essential document ${d.id}: zone ${d.tmfZone} is not a TMF Reference Model zone.`);
+  if (d.catalogArtifact !== undefined) {
+    const tied = tmfArtifactByCode(d.catalogArtifact);
+    if (!tied) throw new Error(`Essential document ${d.id}: "${d.catalogArtifact}" is not a catalog artifact.`);
+    if (tied.zone.number !== d.tmfZone) {
+      throw new Error(`Essential document ${d.id}: zone ${d.tmfZone}, but catalog artifact ${d.catalogArtifact} is in zone ${tied.zone.number}.`);
+    }
+  }
+  return { ...d, tmfZoneName: zone.name };
 }
 
 /**
- * Essential-document library aligned to ICH E6(R3) Appendix C essential-records concepts and
- * the DIA TMF Reference Model zone structure.
+ * Essential-document library aligned to ICH E6(R3) Appendix C essential-records concepts, each document placed in
+ * a zone of the one TMF Reference Model catalog (shared/constants/domain/tmf-reference-model.ts).
+ *
+ * Until 2026-11-10 each document named one of seven "abridged" zones kept in this file ("Central & Site
+ * Management", "Ethics", "IP & Trial Information", "Statistics / Data", "Site (ISF)", …), and AnA's
+ * plan_essential_documents returned those seven as the TMF's structure, beside an eTMF and a Vault that show the
+ * model's eleven. The seven are gone. The investigator site file was one of them; it is not a zone but a holder,
+ * and `heldBy` already says it.
+ *
+ * How each zone was chosen, so that no placement is new regulatory content invented here:
+ *   1. `catalogArtifact` set: the document is that catalog artifact, and takes its zone (pinned by
+ *      server/services/__tests__/vault-taxonomy-etmf.test.ts).
+ *   2. Otherwise the group this library already gave it, where that group is one zone of the model: Trial
+ *      Management → 1, Central & Site Management → 5, Ethics → 4, IP & Trial Information → 6, Safety → 7.
+ *   3. Three exceptions:
+ *      - Monitoring visit reports are in zone 5, not the library's zone 1: the TMF classifier files a monitoring
+ *        visit report in Site Management (etmf-logic.ts), and the product says one thing.
+ *      - Source documents were "Site (ISF)", which is not a zone. Zone 5: the TMF Reference Model lists Source
+ *        Data as a site-level Site Management record (05.04.11).
+ *      - The clinical study report was "Statistics / Data", which is two zones. Zone 2: the CDISC TMF terminology
+ *        places it in the Central Trial Documents zone.
+ *      The last two were read on 2026-11-10 through search summaries of tmfrefmodel.com and the CDISC TMF
+ *      terminology, not from the model's spreadsheet; QA should confirm them against it.
+ *
+ * Rule 2 keeps what this library said; it does not verify it against the model. A review on 2026-11-11 doubted
+ * four of those placements, from memory of the model and without its spreadsheet: protocol deviations (zone 1
+ * here; a Site Management record, zone 5), the approved consent form and subject information (zone 4 here; the
+ * catalog's own consent form, `sample_icf`, is in zone 2), signed consent forms (zone 4 here; site-level, zone 5),
+ * and the close-out monitoring report half of ED-CLOSEOUT (zone 1 here, right for the audit certificate; zone 5).
+ * None is changed from memory. QA confirms the four with the two above.
  */
-export const ESSENTIAL_DOCUMENTS: EssentialDocument[] = [
+export const ESSENTIAL_DOCUMENTS: EssentialDocument[] = ([
   // ── Before the trial begins ──
-  { id: 'ED-IB', name: 'Investigator’s Brochure (current version)', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the available nonclinical/clinical information relevant to the IP.', citation: 'ICH E6(R3) Appendix C (essential records); 21 CFR 312.55' },
-  { id: 'ED-PROTOCOL', name: 'Signed protocol and amendments', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents agreement to the protocol and any changes.', citation: 'ICH E6(R3) Appendix B (protocol); 21 CFR 312.23(a)(6)' },
-  { id: 'ED-CONSENT', name: 'IRB-approved informed consent form(s) and any subject information', stage: 'before', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the consent materials approved for use.', citation: '21 CFR 50.25; 56.111' },
-  { id: 'ED-IRB-APPROVAL', name: 'IRB/IEC approval and composition/statement', stage: 'before', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents independent ethics review and approval before enrollment.', citation: '21 CFR 56.108; 56.115' },
-  { id: 'ED-1572', name: 'Statement of Investigator (Form FDA-1572) and signed agreement', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor'], purpose: 'Documents the investigator’s commitments and qualifications.', citation: '21 CFR 312.53(c)' },
-  { id: 'ED-CV', name: 'Curriculum vitae / qualification of investigator(s) and sub-investigators', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents qualifications and eligibility to conduct the trial.', citation: 'ICH E6(R3) Principle 5; 21 CFR 312.53(c)' },
-  { id: 'ED-FINANCIAL', name: 'Financial disclosure information (Form FDA-3454/3455)', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor'], purpose: 'Documents financial interests for disclosure to FDA.', citation: '21 CFR Part 54' },
-  { id: 'ED-LAB-CERT', name: 'Normal ranges and laboratory certification/accreditation', stage: 'before', tmfZone: 'Central & Site Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents competence of facilities to perform required tests.', citation: 'ICH E6(R3) Appendix C; CLIA where applicable' },
-  { id: 'ED-IP-RELEASE', name: 'IP labeling, instructions, shipping and handling records', stage: 'before', tmfZone: 'IP & Trial Information', heldBy: ['sponsor'], purpose: 'Documents proper labeling and conditions for IP.', citation: 'ICH E6(R3) Principle 11; Annex 1 §3.15 (investigational product); 21 CFR 312.57' },
-  { id: 'ED-RANDOM', name: 'Randomization/blinding procedures and code (sponsor-held)', stage: 'before', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents the randomization method and emergency unblinding procedure.', citation: 'ICH E6(R3) Annex 1 §2.11 (randomisation procedures and unblinding); ICH E9' },
+  { id: 'ED-IB', name: 'Investigator’s Brochure (current version)', stage: 'before', tmfZone: 2, catalogArtifact: 'investigators_brochure', heldBy: ['sponsor', 'investigator'], purpose: 'Documents the available nonclinical/clinical information relevant to the IP.', citation: 'ICH E6(R3) Appendix C (essential records); 21 CFR 312.55' },
+  { id: 'ED-PROTOCOL', name: 'Signed protocol and amendments', stage: 'before', tmfZone: 2, catalogArtifact: 'protocol', heldBy: ['sponsor', 'investigator'], purpose: 'Documents agreement to the protocol and any changes.', citation: 'ICH E6(R3) Appendix B (protocol); 21 CFR 312.23(a)(6)' },
+  { id: 'ED-CONSENT', name: 'IRB-approved informed consent form(s) and any subject information', stage: 'before', tmfZone: 4, heldBy: ['sponsor', 'investigator'], purpose: 'Documents the consent materials approved for use.', citation: '21 CFR 50.25; 56.111' },
+  { id: 'ED-IRB-APPROVAL', name: 'IRB/IEC approval and composition/statement', stage: 'before', tmfZone: 4, catalogArtifact: 'irb_approval', heldBy: ['sponsor', 'investigator'], purpose: 'Documents independent ethics review and approval before enrollment.', citation: '21 CFR 56.108; 56.115' },
+  { id: 'ED-1572', name: 'Statement of Investigator (Form FDA-1572) and signed agreement', stage: 'before', tmfZone: 5, heldBy: ['sponsor'], purpose: 'Documents the investigator’s commitments and qualifications.', citation: '21 CFR 312.53(c)' },
+  { id: 'ED-CV', name: 'Curriculum vitae / qualification of investigator(s) and sub-investigators', stage: 'before', tmfZone: 5, catalogArtifact: 'investigator_cv', heldBy: ['sponsor', 'investigator'], purpose: 'Documents qualifications and eligibility to conduct the trial.', citation: 'ICH E6(R3) Principle 5; 21 CFR 312.53(c)' },
+  { id: 'ED-FINANCIAL', name: 'Financial disclosure information (Form FDA-3454/3455)', stage: 'before', tmfZone: 5, catalogArtifact: 'financial_disclosure', heldBy: ['sponsor'], purpose: 'Documents financial interests for disclosure to FDA.', citation: '21 CFR Part 54' },
+  { id: 'ED-LAB-CERT', name: 'Normal ranges and laboratory certification/accreditation', stage: 'before', tmfZone: 8, catalogArtifact: 'lab_certification', heldBy: ['sponsor', 'investigator'], purpose: 'Documents competence of facilities to perform required tests.', citation: 'ICH E6(R3) Appendix C; CLIA where applicable' },
+  { id: 'ED-IP-RELEASE', name: 'IP labeling, instructions, shipping and handling records', stage: 'before', tmfZone: 6, heldBy: ['sponsor'], purpose: 'Documents proper labeling and conditions for IP.', citation: 'ICH E6(R3) Principle 11; Annex 1 §3.15 (investigational product); 21 CFR 312.57' },
+  { id: 'ED-RANDOM', name: 'Randomization/blinding procedures and code (sponsor-held)', stage: 'before', tmfZone: 11, catalogArtifact: 'randomization_plan', heldBy: ['sponsor'], purpose: 'Documents the randomization method and emergency unblinding procedure.', citation: 'ICH E6(R3) Annex 1 §2.11 (randomisation procedures and unblinding); ICH E9' },
 
   // ── During the trial ──
-  { id: 'ED-IB-UPDATE', name: 'Updates to Investigator’s Brochure and other current documents', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents revisions made available during conduct.', citation: 'ICH E6(R3) Appendix C' },
-  { id: 'ED-IRB-CONTINUING', name: 'IRB continuing-review approvals and correspondence', stage: 'during', tmfZone: 'Ethics', heldBy: ['sponsor', 'investigator'], purpose: 'Documents ongoing ethics oversight.', citation: '21 CFR 56.108(a); 56.109(f)' },
-  { id: 'ED-CONSENT-SIGNED', name: 'Signed informed-consent forms (source/site)', stage: 'during', tmfZone: 'Ethics / Site (ISF)', heldBy: ['investigator'], purpose: 'Documents that consent was obtained before procedures.', citation: '21 CFR 50.27' },
-  { id: 'ED-SOURCE', name: 'Source documents and case-report forms / eCRFs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents trial data (ALCOA+).', citation: '21 CFR 312.62(b); ICH E6(R3) Principle 9' },
-  { id: 'ED-SAE', name: 'Safety reports, SAE source and reporting documentation', stage: 'during', tmfZone: 'Safety', heldBy: ['sponsor', 'investigator'], purpose: 'Documents AE/SAE ascertainment and reporting.', citation: '21 CFR 312.32; 312.64(b)' },
-  { id: 'ED-MONITORING', name: 'Monitoring visit reports and follow-up letters', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents sponsor monitoring and issue follow-up.', citation: '21 CFR 312.56; FDA RBM Guidance (2013)' },
-  { id: 'ED-DELEGATION', name: 'Delegation-of-authority / signature and training logs', stage: 'during', tmfZone: 'Site (ISF)', heldBy: ['investigator'], purpose: 'Documents who performed and was qualified for each delegated task.', citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60' },
-  { id: 'ED-IP-ACCOUNT', name: 'IP accountability (receipt, dispensing, return, destruction)', stage: 'during', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents IP control throughout the trial.', citation: '21 CFR 312.62(a); 812.140' },
-  { id: 'ED-DEVIATION', name: 'Protocol-deviation log and CAPA records', stage: 'during', tmfZone: 'Trial Management', heldBy: ['sponsor', 'investigator'], purpose: 'Documents deviations, importance and corrective actions.', citation: 'ICH E6(R3) Annex 1 §2.5 (compliance with protocol); 21 CFR 312.60' },
+  { id: 'ED-IB-UPDATE', name: 'Updates to Investigator’s Brochure and other current documents', stage: 'during', tmfZone: 2, catalogArtifact: 'investigators_brochure', heldBy: ['sponsor', 'investigator'], purpose: 'Documents revisions made available during conduct.', citation: 'ICH E6(R3) Appendix C' },
+  { id: 'ED-IRB-CONTINUING', name: 'IRB continuing-review approvals and correspondence', stage: 'during', tmfZone: 4, heldBy: ['sponsor', 'investigator'], purpose: 'Documents ongoing ethics oversight.', citation: '21 CFR 56.108(a); 56.109(f)' },
+  { id: 'ED-CONSENT-SIGNED', name: 'Signed informed-consent forms (source/site)', stage: 'during', tmfZone: 4, heldBy: ['investigator'], purpose: 'Documents that consent was obtained before procedures.', citation: '21 CFR 50.27' },
+  { id: 'ED-SOURCE', name: 'Source documents and case-report forms / eCRFs', stage: 'during', tmfZone: 5, heldBy: ['investigator'], purpose: 'Documents trial data (ALCOA+).', citation: '21 CFR 312.62(b); ICH E6(R3) Principle 9' },
+  { id: 'ED-SAE', name: 'Safety reports, SAE source and reporting documentation', stage: 'during', tmfZone: 7, catalogArtifact: 'sae_reports', heldBy: ['sponsor', 'investigator'], purpose: 'Documents AE/SAE ascertainment and reporting.', citation: '21 CFR 312.32; 312.64(b)' },
+  { id: 'ED-MONITORING', name: 'Monitoring visit reports and follow-up letters', stage: 'during', tmfZone: 5, heldBy: ['sponsor'], purpose: 'Documents sponsor monitoring and issue follow-up.', citation: '21 CFR 312.56; FDA RBM Guidance (2013)' },
+  { id: 'ED-DELEGATION', name: 'Delegation-of-authority / signature and training logs', stage: 'during', tmfZone: 5, catalogArtifact: 'site_signature_sheet', heldBy: ['investigator'], purpose: 'Documents who performed and was qualified for each delegated task.', citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60' },
+  { id: 'ED-IP-ACCOUNT', name: 'IP accountability (receipt, dispensing, return, destruction)', stage: 'during', tmfZone: 6, catalogArtifact: 'ip_accountability', heldBy: ['sponsor', 'investigator'], purpose: 'Documents IP control throughout the trial.', citation: '21 CFR 312.62(a); 812.140' },
+  { id: 'ED-DEVIATION', name: 'Protocol-deviation log and CAPA records', stage: 'during', tmfZone: 1, heldBy: ['sponsor', 'investigator'], purpose: 'Documents deviations, importance and corrective actions.', citation: 'ICH E6(R3) Annex 1 §2.5 (compliance with protocol); 21 CFR 312.60' },
 
   // ── After completion ──
-  { id: 'ED-IP-RECON', name: 'Final IP accountability and destruction records', stage: 'after', tmfZone: 'IP & Trial Information', heldBy: ['sponsor', 'investigator'], purpose: 'Documents final reconciliation of IP.', citation: 'ICH E6(R3) Appendix C' },
-  { id: 'ED-CLOSEOUT', name: 'Audit certificate / monitoring close-out report', stage: 'after', tmfZone: 'Trial Management', heldBy: ['sponsor'], purpose: 'Documents close-out of the site and trial.', citation: 'ICH E6(R3) Appendix C' },
-  { id: 'ED-FINAL-IRB', name: 'Final IRB notification of study completion', stage: 'after', tmfZone: 'Ethics', heldBy: ['investigator'], purpose: 'Documents notification of completion to the IRB.', citation: '21 CFR 56.108(a)' },
-  { id: 'ED-DB-LOCK', name: 'Database lock documentation and final datasets', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents the controlled finalization of trial data.', citation: 'ICH E6(R3) Annex 1 §4 (data governance)' },
-  { id: 'ED-CSR', name: 'Clinical Study Report (CSR)', stage: 'after', tmfZone: 'Statistics / Data', heldBy: ['sponsor'], purpose: 'Documents trial results and conclusions.', citation: 'ICH E3; ICH E6(R3) Appendix C' },
-];
-
-/** DIA TMF Reference Model zone concepts (abridged). */
-export const TMF_ZONES: TmfZone[] = [
-  { zone: 'Trial Management', description: 'Oversight, planning, monitoring and reporting of the trial.', exampleSections: ['Trial oversight', 'Monitoring', 'Deviations & CAPA', 'Meetings'] },
-  { zone: 'Central & Site Management', description: 'Site identification, qualification, and investigator documentation.', exampleSections: ['Site qualification', 'Form FDA-1572', 'CVs/qualifications', 'Financial disclosure'] },
-  { zone: 'Ethics', description: 'IRB/IEC review, approvals, consent materials and correspondence.', exampleSections: ['IRB approvals', 'Consent forms', 'Continuing review'] },
-  { zone: 'IP & Trial Information', description: 'Investigational product handling, labeling, accountability and the IB.', exampleSections: ['Investigator’s Brochure', 'IP accountability', 'Labeling/shipping'] },
-  { zone: 'Safety', description: 'Adverse-event and safety-reporting documentation.', exampleSections: ['SAE reports', 'Safety correspondence', 'DSMB materials'] },
-  { zone: 'Statistics / Data', description: 'Data management, statistics, database lock and the CSR.', exampleSections: ['SAP', 'Database lock', 'Final datasets', 'CSR'] },
-  { zone: 'Site (ISF)', description: 'The Investigator Site File: site-held source and essential records.', exampleSections: ['Signed consents', 'Source documents', 'Delegation log', 'Site IP records'] },
-];
+  { id: 'ED-IP-RECON', name: 'Final IP accountability and destruction records', stage: 'after', tmfZone: 6, catalogArtifact: 'ip_destruction', heldBy: ['sponsor', 'investigator'], purpose: 'Documents final reconciliation of IP.', citation: 'ICH E6(R3) Appendix C' },
+  { id: 'ED-CLOSEOUT', name: 'Audit certificate / monitoring close-out report', stage: 'after', tmfZone: 1, heldBy: ['sponsor'], purpose: 'Documents close-out of the site and trial.', citation: 'ICH E6(R3) Appendix C' },
+  { id: 'ED-FINAL-IRB', name: 'Final IRB notification of study completion', stage: 'after', tmfZone: 4, heldBy: ['investigator'], purpose: 'Documents notification of completion to the IRB.', citation: '21 CFR 56.108(a)' },
+  { id: 'ED-DB-LOCK', name: 'Database lock documentation and final datasets', stage: 'after', tmfZone: 10, catalogArtifact: 'database_lock', heldBy: ['sponsor'], purpose: 'Documents the controlled finalization of trial data.', citation: 'ICH E6(R3) Annex 1 §4 (data governance)' },
+  { id: 'ED-CSR', name: 'Clinical Study Report (CSR)', stage: 'after', tmfZone: 2, heldBy: ['sponsor'], purpose: 'Documents trial results and conclusions.', citation: 'ICH E3; ICH E6(R3) Appendix C' },
+] satisfies Array<Omit<EssentialDocument, 'tmfZoneName'>>).map(essentialDocument);

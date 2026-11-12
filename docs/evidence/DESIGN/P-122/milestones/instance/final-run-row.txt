@@ -1,0 +1,23 @@
+# c2c_rr5_phone_instance, project 2 (C2C-101), after the final 1440-light flow through the form (the screenshots' run).
+# The instance ran with LAUNCH_SCOPE_ENFORCE=on and LAUNCH_SCOPE_API_UNATTRIBUTED=enforce; shots-after.json's gate probe:
+# an unclaimed section read answered 403 LAUNCH_SCOPE and the claimed milestone list 200.
+# id|name|target_date|done|linked_sections|created_by
+9|Pre-IND briefing package sent|2027-01-22|t|{m1.2,m2.5}|1
+# The instance's request log for the milestone routes since its restart on the claim (method, path, status):
+2026-11-10T16:36:29.367Z POST /api/project-sections/milestones 200
+2026-11-10T16:36:33.879Z PATCH /api/project-sections/milestones/7 200
+2026-11-10T16:36:38.600Z PATCH /api/project-sections/milestones/7 200
+2026-11-10T16:37:33.466Z GET /api/project-sections/milestones 401
+2026-11-10T16:37:33.468Z GET /api/project-sections/milestones?project_id=2 401
+2026-11-10T16:38:24.457Z GET /api/project-sections/milestones?project_id=2 200
+2026-11-10T16:38:25.781Z POST /api/project-sections/milestones 200
+2026-11-10T16:38:30.278Z PATCH /api/project-sections/milestones/8 200
+2026-11-10T16:38:37.010Z PATCH /api/project-sections/milestones/8 200
+2026-11-10T16:45:29.644Z GET /api/project-sections/milestones?project_id=2 200
+2026-11-10T16:45:31.211Z POST /api/project-sections/milestones 200
+2026-11-10T16:45:35.715Z PATCH /api/project-sections/milestones/9 200
+2026-11-10T16:45:40.495Z PATCH /api/project-sections/milestones/9 200
+# Runs: 16:36 (run 1, row 7, in run-1-row.txt), 16:38 (run 2, row 8, its date-moved shot missed the module mid-refresh; deleted), 16:45 (the screenshots, row 9 above). The 401s at 16:37:33 are a probe sent without the bearer token; each GET with project_id=2 at 200 is the shots' gate probe.
+# Then deleted, to leave the shared demo data as it was:
+deleted 9
+DELETE 1

@@ -1,0 +1,96 @@
+# npx vitest run server/services/entitlements/__tests__/ server/middleware/__tests__/launch-scope-api-gate.test.ts server/middleware/__tests__/moduleEntitlementGate*.test.ts
+# Condensed: tests passed and failed per file, then every failure as vitest printed it.
+
+server/services/entitlements/__tests__/ind-registers-launch-claim.test.ts: 19 passed, 0 failed
+server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts: 27 passed, 0 failed
+server/services/entitlements/__tests__/module-grants.test.ts: 6 passed, 0 failed
+server/services/entitlements/__tests__/enforcement-mode.test.ts: 19 passed, 0 failed
+server/middleware/__tests__/launch-scope-api-gate.test.ts: 42 passed, 1 failed
+server/services/entitlements/__tests__/require-entitlement.test.ts: 18 passed, 0 failed
+server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts: 201 passed, 0 failed
+server/services/entitlements/__tests__/reporting-launch-claim.test.ts: 19 passed, 0 failed
+server/services/entitlements/__tests__/ind-launch-claim.test.ts: 66 passed, 1 failed
+server/services/entitlements/__tests__/launch-scope.test.ts: 48 passed, 0 failed
+server/middleware/__tests__/moduleEntitlementGate.test.ts: 18 passed, 0 failed
+server/services/entitlements/__tests__/mdx-entitlements.test.ts: 17 passed, 0 failed
+server/services/entitlements/__tests__/master-admin-designation.test.ts: 16 passed, 0 failed
+server/services/entitlements/__tests__/master-admin.test.ts: 24 passed, 0 failed
+server/services/entitlements/__tests__/rbm-launch-claim.test.ts: 30 passed, 0 failed
+server/services/entitlements/__tests__/resolver-reports-an-unread-layer-as-unread.test.ts: 9 passed, 0 failed
+server/services/entitlements/__tests__/navigation-entitlements.test.ts: 24 passed, 0 failed
+server/services/entitlements/__tests__/grant-expiry.test.ts: 15 passed, 0 failed
+server/services/entitlements/__tests__/company-documents-launch-claim.test.ts: 10 passed, 0 failed
+server/services/entitlements/__tests__/enforcement-observations.test.ts: 10 passed, 0 failed
+server/services/entitlements/__tests__/sequence-qc-launch-claim.test.ts: 15 passed, 0 failed
+server/services/entitlements/__tests__/access-requests.test.ts: 27 passed, 0 failed
+server/services/entitlements/__tests__/enforcement-mode-under-rls.test.ts: 2 passed, 0 failed
+server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts: 7 passed, 0 failed
+server/services/entitlements/__tests__/quality-figures-launch-claim.test.ts: 4 passed, 0 failed
+server/services/entitlements/__tests__/csr-pivotal-launch-scope.test.ts: 2 passed, 0 failed
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call
+AssertionError: ind-checklist apiPrefixes no screen of it calls:
+  /api/ind-lifecycle/submission/:id/cross-references
+  /api/ind-lifecycle/submission/:id/cross-reference-register
+  /api/ind-lifecycle/cross-references: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/api/ind-lifecycle/submission/:id/cross-references",
++   "/api/ind-lifecycle/submission/:id/cross-reference-register",
++   "/api/ind-lifecycle/cross-references",
++ ]
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:635:102
+    633|     const calls = callsOf('ind-checklist');
+    634|     const uncalled = prefixes.filter((pre) => !calls.some(([p]) => p =…
+    635|     expect(uncalled, `ind-checklist apiPrefixes no screen of it calls:…
+       |                                                                                                      ^
+    636|   });
+    637|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/entitlements/__tests__/ind-launch-claim.test.ts > P-32: nothing is claimed that no screen calls > the IND lifecycle routes production serves are exactly the called ones, plus the named sub-routes
+AssertionError: served under /api/ind-lifecycle with no screen caller:
+  POST /api/ind-lifecycle/submission/{id}/cross-references
+  GET /api/ind-lifecycle/submission/{id}/cross-references
+  GET /api/ind-lifecycle/submission/{id}/cross-reference-register
+  POST /api/ind-lifecycle/submission/{id}/cross-references/{crossRefId}/file-loa
+  PATCH /api/ind-lifecycle/cross-references/{crossRefId}
+  DELETE /api/ind-lifecycle/cross-references/{crossRefId}: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "POST /api/ind-lifecycle/submission/{id}/cross-references",
++   "GET /api/ind-lifecycle/submission/{id}/cross-references",
++   "GET /api/ind-lifecycle/submission/{id}/cross-reference-register",
++   "POST /api/ind-lifecycle/submission/{id}/cross-references/{crossRefId}/file-loa",
++   "PATCH /api/ind-lifecycle/cross-references/{crossRefId}",
++   "DELETE /api/ind-lifecycle/cross-references/{crossRefId}",
++ ]
+
+ ❯ server/services/entitlements/__tests__/ind-launch-claim.test.ts:183:114
+    181|     const served = ROUTES.filter((r) => verdict(fill(r.path)) === 'lau…
+    182|     const unexplained = served.filter((k) => !calledRoutes.has(k.split…
+    183|     expect(unexplained, `served under /api/ind-lifecycle with no scree…
+       |                                                                                                                  ^
+    184|     for (const k of Object.keys(ADMITTED_UNCALLED)) expect(served, k).…
+    185|     /* And none of the uncalled lifecycle engines. /readiness has no s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 24 passed (26)
+      Tests  2 failed | 695 passed (697)
+   Start at  16:23:17
+   Duration  25.42s (transform 6.15s, setup 478ms, import 15.54s, tests 5.19s, environment 3ms)
+

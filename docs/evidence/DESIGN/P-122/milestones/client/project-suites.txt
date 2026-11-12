@@ -1,0 +1,130 @@
+# npx vitest run client/src/concept2cure/v2/__tests__/project client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts
+# Condensed: per file, then each failure as vitest printed it. Neither failure is this work: `btn sm` rose with the IND registers (SubmissionIndRegisters.tsx, another session); `.pj-act`/`.pj-act-w` are defined in project-home-v2.css by d053ba0d5 (P-122 defects item 5).
+
+client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx: 2 passed, 0 failed
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx: 19 passed, 0 failed
+client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx: 27 passed, 0 failed
+client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx: 38 passed, 0 failed
+client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx: 10 passed, 0 failed
+client/src/concept2cure/v2/__tests__/ProjectTeamSharing.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts: 77 passed, 1 failed
+client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx: 2 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectArtifactReadiness.test.tsx: 15 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectBack.test.tsx: 12 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx: 12 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx: 3 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx: 11 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts: 20 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectDestination.test.ts: 12 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx: 14 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx: 7 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectDossierParity.test.tsx: 7 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx: 17 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx: 6 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx: 42 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx: 33 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx: 14 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeMyWorkLine.test.tsx: 2 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx: 11 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx: 10 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx: 27 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeQualityDocuments.test.tsx: 3 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx: 13 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx: 2 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx: 8 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx: 12 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx: 2 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx: 1 passed, 1 failed
+client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx: 10 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeStartBox.test.tsx: 5 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeStatusChip.test.tsx: 6 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx: 8 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx: 36 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeTeamResponsibilities.test.tsx: 12 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx: 14 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectHomeWorkingMarker.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx: 16 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectMarketsAddPermission.test.tsx: 3 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx: 13 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx: 53 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx: 27 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectObjective.test.tsx: 5 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx: 6 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectPageShown.test.tsx: 8 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx: 5 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectPlanSchedule.test.tsx: 7 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx: 24 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectRecords.test.tsx: 8 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx: 14 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx: 21 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectSettingsArchive.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts: 13 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectSideNotRead.test.tsx: 1 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx: 13 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectSubmitPlainBlockers.test.tsx: 5 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx: 2 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx: 10 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx: 9 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx: 6 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx: 7 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx: 5 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx: 6 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx: 6 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx: 4 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsPortfolioLine.test.tsx: 5 passed, 0 failed
+client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx: 3 passed, 0 failed
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0
+AssertionError: `btn sm` is retired (D0 spec §4.6, §4.7). Use the canonical primitive instead; uses rose from 14 to 27.: expected 27 to be less than or equal to 14
+ ❯ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts:221:9
+    219|         `\`${name}\` is retired (D0 spec §4.6, §4.7). Use the canonica…
+    220|           `uses rose from ${baseline} to ${uses}.`,
+    221|       ).toBeLessThanOrEqual(baseline);
+       |         ^
+    222|       if (uses === 0 && r.css) {
+    223|         const left = preludes.filter((p) => r.css!.test(p.prelude)).ma…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines
+AssertionError: expected [ '.pj-act (also app-v2.css)', …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".pj-act (also app-v2.css)",
++   ".pj-act-w (also app-v2.css)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx:62:21
+     60|       for (const c of mine) if (theirs.has(c)) clashes.push(`.${c} (al…
+     61|     }
+     62|     expect(clashes).toEqual([]);
+       |                     ^
+     63|     expect(mine, 'the Evidence and Submit wrapper').toContain('pj-stag…
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 82 passed (84)
+      Tests  2 failed | 987 passed (989)
+   Start at  16:41:24
+   Duration  202.84s (transform 9.75s, setup 5.91s, import 49.55s, tests 94.15s, environment 39.96s)
+

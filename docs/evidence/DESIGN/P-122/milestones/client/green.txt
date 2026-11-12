@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > records it with its name, due date and linked sections, for this project, and reads the list again 333ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > keeps the list, and the button that opened the drawer, on screen while the list is read again 93ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > sends no linked sections when none are given, and needs a name and a due date 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > refuses a linked section that is not a CTD section number, and sends nothing 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Record a milestone > a refused record keeps the drawer open, says why, and says nothing was recorded 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > moves an open milestone's date 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > marks it done 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > Update a milestone > a done milestone and a section deadline offer no update 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectScheduleMilestones.test.tsx > a person who may not change the project > is offered neither control 17ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  16:40:49
+   Duration  2.13s (transform 363ms, setup 156ms, import 454ms, tests 842ms, environment 521ms)
+

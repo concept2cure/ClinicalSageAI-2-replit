@@ -1,0 +1,236 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-10T16:20:19.193Z","pid":24158,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T16:20:19.195Z","pid":24158,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T16:20:19.195Z","pid":24158,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-milestone-writes.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-milestone-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > records it on a private project, with its linked sections, and the Schedule's timeline lists it 85ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > moves its date, then marks it done 12ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > refuses a date that is not one, before anything is written 11ms
+   → expected 403 to be 400 // Object.is equality
+ × tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > the milestone list shares the path: it is read only on a project the person can open 8ms
+   → expected 403 to be 200 // Object.is equality
+ × tests/db/p122-milestone-writes.dbtest.ts > who may not > a colleague not on the private project is answered as if it did not exist, and nothing is written or changed 12ms
+   → expected { status: 403, code: 'LAUNCH_SCOPE' } to deeply equal { status: 404, …(1) }
+ × tests/db/p122-milestone-writes.dbtest.ts > who may not > a member who may open the project but not edit it is refused, and nothing is written or changed 10ms
+   → expected { status: 403, code: 'LAUNCH_SCOPE' } to deeply equal { status: 403, …(1) }
+ × tests/db/p122-milestone-writes.dbtest.ts > who may not > another organisation's project is 404 both ways, and nothing is written or changed 6ms
+   → expected { status: 403, code: 'LAUNCH_SCOPE' } to deeply equal { status: 404, …(1) }
+ × tests/db/p122-milestone-writes.dbtest.ts > who may not > the project owner deletes a milestone (DELETE shares the claimed path, and is admitted as a write) 9ms
+   → expected 403 to be 200 // Object.is equality
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections?project_id=PROJECT 7ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/initialize 11ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/m2.5?project_id=PROJECT 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5/status 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5/assign 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/m2.5/deadline 6ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/m2.5/comments 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/m2.5/comments?project_id=PROJECT 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/m2.5/history?project_id=PROJECT 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/dependencies 5ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/dependencies?project_id=PROJECT 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > GET /api/project-sections/notifications 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > PATCH /api/project-sections/notifications/1/read 4ms
+ ✓ tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > POST /api/project-sections/notifications/read-all 4ms
+ × tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > a section route reached under the claimed path answers as no section or milestone, and writes nothing 5ms
+   → expected 403 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > records it on a private project, with its linked sections, and the Schedule's timeline lists it
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:132:64
+    130|   it('records it on a private project, with its linked sections, and t…
+    131|     const res = await post('editorA', { project_id: project.priv, name…
+    132|     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(20…
+       |                                                                ^
+    133|     recorded = Number(res.body.milestone.id);
+    134|     expect(await named(name)).toEqual([{ project_id: project.priv, lin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > moves its date, then marks it done
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:143:68
+    141|   it('moves its date, then marks it done', async () => {
+    142|     const moved = await patch('editorA', recorded, { target_date: '202…
+    143|     expect(moved.status, JSON.stringify(moved.body).slice(0, 300)).toB…
+       |                                                                    ^
+    144|     expect(await named(name)).toMatchObject([{ target: '2027-01-22', d…
+    145|     const done = await patch('editorA', recorded, { status: 'completed…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > refuses a date that is not one, before anything is written
+AssertionError: expected 403 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 403
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:153:133
+    151|
+    152|   it('refuses a date that is not one, before anything is written', asy…
+    153|     expect(outcome(await post('editorA', { project_id: project.priv, n…
+       |                                                                                                                                     ^
+    154|     expect(await named(`${TAG} No date`)).toEqual([]);
+    155|     expect(outcome(await patch('editorA', milestone.priv, { target_dat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > a project member records a milestone from the Schedule, in production > the milestone list shares the path: it is read only on a project the person can open
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:161:25
+    159|   it('the milestone list shares the path: it is read only on a project…
+    160|     const list = await request(app).get(`/api/project-sections/milesto…
+    161|     expect(list.status).toBe(200);
+       |                         ^
+    162|     expect(list.body.milestones.map((m: { name: string }) => m.name)).…
+    163|     expect(outcome(await request(app).get(`/api/project-sections/miles…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > who may not > a colleague not on the private project is answered as if it did not exist, and nothing is written or changed
+AssertionError: expected { status: 403, code: 'LAUNCH_SCOPE' } to deeply equal { status: 404, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "PROJECT_NOT_FOUND",
+-   "status": 404,
++   "code": "LAUNCH_SCOPE",
++   "status": 403,
+  }
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:172:8
+    170|     const name = `${TAG} Not on it`;
+    171|     expect(outcome(await post('colleagueA', { project_id: project.priv…
+    172|       .toEqual({ status: 404, code: 'PROJECT_NOT_FOUND' });
+       |        ^
+    173|     expect(outcome(await patch('colleagueA', milestone.priv, { target_…
+    174|       .toEqual({ status: 404, code: 'Milestone not found' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > who may not > a member who may open the project but not edit it is refused, and nothing is written or changed
+AssertionError: expected { status: 403, code: 'LAUNCH_SCOPE' } to deeply equal { status: 403, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "PROJECT_WRITE_PERMISSION_DENIED",
++   "code": "LAUNCH_SCOPE",
+    "status": 403,
+  }
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:183:8
+    181|     const name = `${TAG} Viewer`;
+    182|     expect(outcome(await post('viewerA', { project_id: project.priv, n…
+    183|       .toEqual({ status: 403, code: 'PROJECT_WRITE_PERMISSION_DENIED' …
+       |        ^
+    184|     expect(outcome(await patch('viewerA', milestone.priv, { target_dat…
+    185|       .toEqual({ status: 403, code: 'PROJECT_WRITE_PERMISSION_DENIED' …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > who may not > another organisation's project is 404 both ways, and nothing is written or changed
+AssertionError: expected { status: 403, code: 'LAUNCH_SCOPE' } to deeply equal { status: 404, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "PROJECT_NOT_FOUND",
+-   "status": 404,
++   "code": "LAUNCH_SCOPE",
++   "status": 403,
+  }
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:198:8
+    196|     const name = `${TAG} Not ours`;
+    197|     expect(outcome(await post('editorA', { project_id: project.theirs,…
+    198|       .toEqual({ status: 404, code: 'PROJECT_NOT_FOUND' });
+       |        ^
+    199|     expect(outcome(await patch('editorA', milestone.theirs, { status: …
+    200|     expect(outcome(await post('memberB', { project_id: project.priv, n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > who may not > the project owner deletes a milestone (DELETE shares the claimed path, and is admitted as a write)
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:209:108
+    207|   it('the project owner deletes a milestone (DELETE shares the claimed…
+    208|     const id = await seedMilestone(org.A, project.priv, `${TAG} To del…
+    209|     expect((await request(app).delete(`/api/project-sections/milestone…
+       |                                                                                                            ^
+    210|     expect(await seeded(id)).toEqual([]);
+    211|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/p122-milestone-writes.dbtest.ts > every project-sections route that is not claimed is still refused in production > a section route reached under the claimed path answers as no section or milestone, and writes nothing
+AssertionError: expected 403 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 403
+
+ ❯ tests/db/p122-milestone-writes.dbtest.ts:242:28
+    240|     const comment = await request(app).post('/api/project-sections/mil…
+    241|       .send({ project_id: project.priv, content: 'a comment on a secti…
+    242|     expect(comment.status).toBe(404);
+       |                            ^
+    243|     const status = await request(app).patch('/api/project-sections/mil…
+    244|       .send({ project_id: project.priv, new_status: 'drafting' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 15 passed (24)
+   Start at  16:20:16
+   Duration  3.37s (transform 1.53s, setup 95ms, import 2.69s, tests 291ms, environment 0ms)
+
