@@ -106,8 +106,8 @@ const BASE_SCHEMA_SENTINELS = ['organizations', 'users', 'c2c_documents', 'regul
  * Objects that exist ONLY if install-fresh's governed-content step completed.
  *
  * ── WHY THIS CHECK EXISTS (2026-09-10, WO-15 finding 1) ──────────────────────
- * install-fresh applies the `db/migrations/*_gcc_*.sql` tree — 43 files, ~167
- * tables — at STEP 6, by shelling out to psql. Step 6 is the ONLY non-fatal
+ * install-fresh applies the `db/migrations/*_gcc_*.sql` tree — 39 files and
+ * 175 tables on 2026-11-09 — at STEP 6, by shelling out to psql. Step 6 is the ONLY non-fatal
  * step in that script: if `psql --version` fails it records the shortfall and
  * RETURNS. install-fresh is honest about it and exits 1 with
  * "❌ Install INCOMPLETE — not reporting success."
@@ -313,7 +313,7 @@ async function verifyGovernedContentApplied(client) {
     throw new Error(
       `the governed-content tree (db/migrations/*_gcc_*.sql) did not run on this database — ` +
         `missing: ${absent.join(', ')}.\n` +
-        `  install-fresh applies those 43 files at step 6 by shelling out to psql, and step 6 is its\n` +
+        `  install-fresh applies those files at step 6 by shelling out to psql, and step 6 is its\n` +
         `  ONLY non-fatal step: with psql absent it records the shortfall and returns, exiting 1 with\n` +
         `  "Install INCOMPLETE". Every base-schema sentinel this script preflights on is created\n` +
         `  earlier, so without this check the deploy would report success on that database.\n` +

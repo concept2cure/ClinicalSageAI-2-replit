@@ -113,3 +113,63 @@ describe("EngineeringSurface — the project's design history", () => {
     expect(document.body.textContent ?? '').toMatch(/This project's document sections appear here once its documents have sections\./);
   });
 });
+
+/* P-114 item 2 (2026-11-09, decided under the founder's delegation; MDX journey
+   M16): the design and development file holds design records, not a filing's
+   paperwork. Found in the running app: every eSTAR node in "What's blocking
+   your documents" was tagged "DHF", the cover letter included, and the Open
+   risks card was red at zero with no risk file. The route marks each section
+   (`record`, shared/regulatory/design-controls-trace.ts designFileStanding);
+   this pins what the screen makes of it. Nothing is removed from the screen. */
+describe("EngineeringSurface — a filing's paperwork is not tagged as a design record", () => {
+  const FILING = { ...section('A1', 'blocked', K510), label: 'Cover letter', record: 'filing-content' };
+  const DESIGN = { ...section('E5', 'blocked', K510), label: 'Bench performance testing', record: 'design-file' };
+  const feedRow = (c: HTMLElement, ref: string) =>
+    Array.from(c.querySelectorAll<HTMLElement>('.eng-blocker-row')).find((r) => r.querySelector('.eng-blocker-ref')?.textContent === ref);
+
+  it('tags a blocked cover letter "filing" in the blocker feed, and a blocked test report "dhf"', async () => {
+    respond([FILING, DESIGN]);
+    const { container } = await mountExpanded();
+    const letter = feedRow(container, '§A1');
+    expect(letter, 'the cover letter still blocks its document, and is still listed').toBeDefined();
+    expect(letter?.getAttribute('data-kind')).toBe('filing');
+    expect(letter?.querySelector('.eng-blocker-kind')?.textContent).toBe('filing');
+    expect(feedRow(container, '§E5')?.getAttribute('data-kind')).toBe('dhf');
+  });
+
+  it('marks it as filing content in the section list, and says why in the note', async () => {
+    respond([FILING, DESIGN]);
+    await mountExpanded();
+    const panel = screen.getByTestId('eng-design-history');
+    const cells = Array.from(panel.querySelectorAll<HTMLElement>('.eng-dhf-cell'));
+    const letter = cells.find((c) => /Cover letter/.test(c.textContent ?? ''));
+    const report = cells.find((c) => /Bench performance testing/.test(c.textContent ?? ''));
+    expect(letter?.getAttribute('data-record')).toBe('filing-content');
+    expect(letter?.textContent ?? '').toMatch(/filing content/);
+    expect(report?.getAttribute('data-record')).toBe('design-file');
+    expect(report?.textContent ?? '').not.toMatch(/filing content/);
+    expect(screen.getByTestId('eng-design-history-note').textContent ?? '').toMatch(/cover letter, forms and certifications.*filing content, not design records/);
+  });
+
+  it('a row the route did not mark keeps the standing it had', async () => {
+    respond(DHF);
+    const { container } = await mountExpanded();
+    expect(feedRow(container, '§3')?.getAttribute('data-kind')).toBe('dhf');
+  });
+});
+
+describe('EngineeringSurface — the Open risks card is red only when a risk is open', () => {
+  it('zero open risks with no risk file recorded is neither red nor green: "No risks recorded yet"', async () => {
+    respond(DHF, { openRisks: 0 });
+    const { container } = await mountExpanded();
+    const c = card(container, 'Open risks');
+    expect(c?.textContent ?? '').toMatch(/No risks recorded yet/);
+    expect(c?.getAttribute('data-tone')).toBeNull();
+  });
+
+  it('an open risk is red', async () => {
+    respond(DHF, { openRisks: 2 });
+    const { container } = await mountExpanded();
+    expect(card(container, 'Open risks')?.getAttribute('data-tone')).toBe('err');
+  });
+});

@@ -6,10 +6,9 @@
  *   GET    /api/submission-orchestrator/runs/:runId               — get run state
  *   GET    /api/submission-orchestrator/runs/:runId/audit         — append-only step audit
  *   POST   /api/submission-orchestrator/runs/:runId/regenerate    — regenerate stale steps
- *   POST   /api/submission-orchestrator/m2/nonclinical            — build M2.4 standalone
- *   POST   /api/submission-orchestrator/m2/clinical               — build M2.7 standalone
- *   POST   /api/submission-orchestrator/csr/tabulate              — build CSR §10–§12 tables
- *   POST   /api/submission-orchestrator/validate/hardened         — run hardened eCTD validator
+ *
+ * The standalone request-body builders (/m2/*, /csr/tabulate, /validate/hardened)
+ * are retired; see the note above `export default router`.
  *
  * @module server/routes/submission-orchestrator
  */
@@ -17,7 +16,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
-  JURISDICTION_REGIONS,
   SUBMISSION_REGIONS,
   normalizeSubmissionRegion,
 } from '../services/module3-regional-readiness.js';
@@ -31,16 +29,6 @@ import {
   type OrchestratorRun,
   type StepKey,
 } from '../services/submission-package-orchestrator.js';
-import {
-  buildM24NonclinicalOverview,
-  buildM25ClinicalOverview,
-  buildM27ClinicalSummary,
-} from '../services/m2-summary-builders.js';
-import { buildCSRTables } from '../services/csr-tabulation-builders.js';
-import {
-  validateEctdPackageHardened,
-  flattenFindings,
-} from '../services/ectd/ectd-validator-hardening.js';
 import { loadApprovedCmcSourcesForProject } from '../services/cmc/load-approved-cmc-sources-for-project.js';
 import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
 import { readProgramCsrSourceReadiness, CSR_NARRATIVE_INPUTS_REQUIRED } from '../services/csr/program-source-readiness.js';
@@ -61,51 +49,6 @@ import { CsrSourceInputError } from '../services/csr/vault-source-input.js';
 import { createCsrSourceInputRouter } from './csr-source-inputs.js';
 
 const log = createScopedLogger('submission-orchestrator');
-
-/**
- * Fire-and-forget audit for standalone-builder + validator access. 21 CFR
- * Part 11 §11.10(e) requires every view / build of regulated submission
- * content to be logged with attribution. The standalone routes
- * (/m2/nonclinical, /m2/clinical, /m2/clinical-overview, /csr/tabulate,
- * /validate/hardened) are pure transforms with no DB
- * writes, but the *act of generating regulated content* still has to be
- * attributable to a tenant + user. Non-fatal on failure — the response
- * stream is the user value, the audit row is the regulator value.
- */
-async function auditOrchestratorAccess(
-  req: Request,
-  organizationId: number,
-  action:
-    | 'orchestrator_m24_built'
-    | 'orchestrator_m25_built'
-    | 'orchestrator_m27_built'
-    | 'orchestrator_csr_tabulated'
-    | 'orchestrator_validated_hardened',
-  details: Record<string, unknown> = {}
-): Promise<void> {
-  const user = (req as any).user;
-
-  const orchestratorAudit = await auditService.logAction({
-    tenantId: organizationId,
-    userId: user?.id ?? user?.userId,
-    action,
-    resourceType: 'submission_orchestrator',
-    // Standalone routes are not bound to a numeric orchestrator runId; a
-    // 'standalone' sentinel keeps these rows distinct from per-run rows
-    // when grouping by (resourceType, resourceId).
-    resourceId: 'standalone',
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent'] as string | undefined,
-    details,
-  });
-  if (!orchestratorAudit.persisted) {
-    log.warn('orchestrator audit write failed (non-fatal)', {
-      err: orchestratorAudit.error ?? 'no durable store accepted the row',
-      action,
-      organizationId,
-    });
-  }
-}
 
 // ── Tenant resolution helpers ───────────────────────────────────────────────
 //
@@ -976,182 +919,20 @@ router.post('/runs/:runId/regenerate', requireOrchestratorWrite, async (req: Req
    'server/routes/submission-orchestrator*'`): no earlier generation of this
    handler was removed and rebuilt. */
 
-router.post('/m2/nonclinical', async (req: Request, res: Response) => {
-  const organizationId = requireTenant(req, res);
-  if (organizationId == null) return;
-
-  const Schema = z.object({
-    nonclinicalStudies: z.array(NonclinicalStudySchema),
-    drugSubstanceName: z.string().optional(),
-    indication: z.string().optional(),
-  });
-  const parsed = Schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
-  }
-  try {
-    const summary = buildM24NonclinicalOverview(parsed.data);
-    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m24_built', {
-      studyCount: parsed.data.nonclinicalStudies.length,
-      completeness: summary.completeness,
-    });
-    return res.json(summary);
-  } catch (err) {
-    return serverError(res, log, 'saving nonclinical', err);
-  }
-});
-
-router.post('/m2/clinical', async (req: Request, res: Response) => {
-  const organizationId = requireTenant(req, res);
-  if (organizationId == null) return;
-
-  const Schema = z.object({
-    csrs: z.array(CSRInputSchema),
-    indication: z.string(),
-    investigationalProduct: z.string(),
-  });
-  const parsed = Schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
-  }
-  try {
-    const summary = buildM27ClinicalSummary(parsed.data);
-    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m27_built', {
-      csrCount: parsed.data.csrs.length,
-      completeness: summary.completeness,
-    });
-    return res.json(summary);
-  } catch (err) {
-    return serverError(res, log, 'saving clinical', err);
-  }
-});
-
-/**
- * Build M2.5 Clinical Overview standalone (does not require a full orchestrator run).
- */
-router.post('/m2/clinical-overview', async (req: Request, res: Response) => {
-  const organizationId = requireTenant(req, res);
-  if (organizationId == null) return;
-
-  const Schema = z.object({
-    csrs: z.array(CSRInputSchema),
-    indication: z.string(),
-    investigationalProduct: z.string(),
-    developmentRationale: z.string().optional(),
-    nonclinicalConclusion: z.string().optional(),
-  });
-  const parsed = Schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
-  }
-  try {
-    const summary = buildM25ClinicalOverview(parsed.data);
-    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m25_built', {
-      csrCount: parsed.data.csrs.length,
-      completeness: summary.completeness,
-    });
-    return res.json(summary);
-  } catch (err) {
-    return serverError(res, log, 'saving clinical overview', err);
-  }
-});
-
-/**
- * Build CSR §10–§12 tabulations for a single study.
- */
-router.post('/csr/tabulate', async (req: Request, res: Response) => {
-  const organizationId = requireTenant(req, res);
-  if (organizationId == null) return;
-
-  const Schema = StudyDataSchema;
-  const parsed = Schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
-  }
-  try {
-    const tables = buildCSRTables(parsed.data as Parameters<typeof buildCSRTables>[0]);
-    await auditOrchestratorAccess(req, organizationId, 'orchestrator_csr_tabulated', {
-      studyId: parsed.data.studyId,
-      protocolNumber: parsed.data.protocolNumber,
-    });
-    return res.json(tables);
-  } catch (err) {
-    return serverError(res, log, 'tabulating the CSR', err);
-  }
-});
-
-/**
- * Run the hardened eCTD validator (DTD + sequence + MD5 + study-id + regional).
- *
- * SECURITY: gated by requireTenant for the same §11.10(e) reason as the
- * standalone builders — the validator output (findings, gatewayReady,
- * hardenedScore) drives go/no-go submission decisions and so the access
- * must be attributable to a tenant + user even though no DB write
- * occurs in the validator itself.
- */
-router.post('/validate/hardened', async (req: Request, res: Response) => {
-  const organizationId = requireTenant(req, res);
-  if (organizationId == null) return;
-
-  const LeafSchema = z.object({
-    sectionCode: z.string(),
-    title: z.string(),
-    checksum: z.string(),
-    checksumType: z.literal('md5'),
-    operation: z.enum(['new', 'append', 'replace', 'delete']),
-    lifecycleOperator: z.string().optional(),
-    filePath: z.string(),
-    mimeType: z.string(),
-    fileSize: z.number(),
-    studyId: z.string().optional(),
-  });
-  /* The twelve real jurisdictions, derived — a validation context needs an
-     actual agency to validate against, so GLOBAL is not a member here the way it
-     is in RegionSchema. This was a second hand-written region literal in this
-     same file, 600 lines below the first, and the test that pins the first one
-     found it. */
-  const ValidatorRegionSchema = z.enum(JURISDICTION_REGIONS);
-  const Schema = z.object({
-    leaves: z.array(LeafSchema),
-    submissionId: z.string(),
-    region: ValidatorRegionSchema,
-    applicationNumber: z.string(),
-    sequenceNumber: z.string().regex(/^\d{4}$/),
-    submissionType: z.string(),
-    totalSizeBytes: z.number().optional(),
-    backboneXml: z.string().optional(),
-  });
-  const parsed = Schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
-  }
-  const { leaves, backboneXml, ...body } = parsed.data;
-  /* Tenant scope comes from the JWT, never from the request body. The spread
-     above carries whatever the caller sent, so the authenticated org is applied
-     LAST and overwrites any `organizationId` a client tried to supply —
-     otherwise this endpoint would let a caller name the tenant whose sequence
-     history it reads. The request schema does not accept the field either; this
-     is the belt to that braces, because the two are edited independently. */
-  const context = { ...body, organizationId };
-  try {
-    const result = await validateEctdPackageHardened(leaves, context, backboneXml);
-    await auditOrchestratorAccess(req, organizationId, 'orchestrator_validated_hardened', {
-      submissionId: context.submissionId,
-      region: context.region,
-      sequenceNumber: context.sequenceNumber,
-      leafCount: leaves.length,
-      gatewayReady: result.gatewayReady,
-      hardenedScore: result.hardenedScore,
-    });
-    return res.json({
-      gatewayReady: result.gatewayReady,
-      hardenedScore: result.hardenedScore,
-      summary: result.summary,
-      findings: flattenFindings(result),
-    });
-  } catch (err) {
-    return serverError(res, log, 'saving hardened', err);
-  }
-});
+/* The five request-body builders are retired (R1 S13, 2026-11-09, founder-approved).
+   ────────────────────────────────────────────────────────────────────────────
+   POST /m2/nonclinical, /m2/clinical, /m2/clinical-overview, /csr/tabulate and
+   /validate/hardened built Module 2 summaries, CSR tables or a go/no-go
+   validation from whatever the request body carried: the /m2/qos defect above.
+   No screen called any of them in the repository's history, and production
+   refused them. The replacements, by path:
+     • a run built from the program's records — POST /runs/for-program, sent by
+       eCTD Compile's run controls (client/src/concept2cure/v2/surfaces/
+       OrchestratorRunControls.tsx). Its m2.4, m2.5, m2.7, CSR and gateway
+       steps (services/submission-package-orchestrator.ts) call the same
+       builders over stored inputs;
+     • AnA's Module 2 tools, over the project's records;
+     • the hardened validator at sign and release (routes/submission-sign-release.ts).
+   Pinned by routes/__tests__/orchestrator-request-body-builders-retired.test.ts. */
 
 export default router;

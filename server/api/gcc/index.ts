@@ -12,23 +12,25 @@
  * gcc/vault prototype was removed: its schema and route columns had
  * diverged (uploads failed), it had no tenant scoping and no consumers,
  * and it duplicated the canonical vault.
+ *
+ * 2026-11-09 (R1 S19, founder-approved): GCC drafting (../drafting/routes.ts)
+ * and the eCTD prototype (./ectd/routes.js) were retired. No screen called
+ * either; production refused both. Cited drafting is AnA batch_draft_sections,
+ * entity extraction is AnA extract_submission_document, and the CTD module
+ * list is the record's (MODULE_NAMES, the ICH M4 headings).
  */
 import { Router } from 'express';
-import ectdRoutes from './ectd/routes.js';
 import signingRoutes from './signing/routes.js';
 import siteIntelRoutes from './site-intel/routes.js';
 import labelingRoutes from './labeling/routes.js';
-import draftingRoutes from '../drafting/routes.js';
 import { GCC_MODULES } from './modules.js';
 
 const router = Router();
 
 // Mount all GCC platform routes
-router.use('/ectd', ectdRoutes);
 router.use('/signing', signingRoutes);
 router.use('/site-intel', siteIntelRoutes);
 router.use('/labeling', labelingRoutes);
-router.use('/drafting', draftingRoutes);
 
 /**
  * Platform health.
