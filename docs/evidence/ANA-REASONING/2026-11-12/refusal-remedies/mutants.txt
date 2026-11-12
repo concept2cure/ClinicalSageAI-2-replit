@@ -1,0 +1,22 @@
+Mutant run — two corrected refusal sentences
+Targets: server/services/qms/document-approval-signature.ts (S), client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx (C)
+Suites:  server/services/qms/__tests__/qms-approval-checks-the-filing.pglite.test.ts, client/src/concept2cure/v2/surfaces/__tests__/esignNotApprovedDisclosure.test.ts
+
+
+S1 the refusal goes back to "make any edit and save"           KILLED  Tests  1 failed | 7 passed (8)
+S2 a section named once per diverged node, not once            KILLED  Tests  1 failed | 7 passed (8)
+S3 the refusal names only the filing node                      KILLED  Tests  2 failed | 6 passed (8)
+S4 the steps are given out of order                            KILLED  Tests  1 failed | 7 passed (8)
+S5 the refusal no longer says nothing was signed               KILLED  Tests  1 failed | 7 passed (8)
+S6 the refusal refuses unfiled sections too                    KILLED  Tests  1 failed | 7 passed (8)
+C1 the transport drops the reason again                        KILLED  Tests  1 failed | 13 passed (14)
+C2 the note ignores the reason                                 KILLED  Tests  1 failed | 13 passed (14)
+C3 the note tells the approver to save and approve again       KILLED  Tests  2 failed | 12 passed (14)
+C4 the note does not say what it costs at dispatch             KILLED  Tests  1 failed | 13 passed (14)
+C5 a reason of spaces is shown                                 KILLED  Tests  1 failed | 13 passed (14)
+C6 a reason of spaces is carried                               KILLED  Tests  1 failed | 13 passed (14)
+C7 the note names no sections                                  KILLED  Tests  2 failed | 12 passed (14)
+
+killed 13/13
+
+Run on the code as committed. Both mutated files were restored after each mutant.
