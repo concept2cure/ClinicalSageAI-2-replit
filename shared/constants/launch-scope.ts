@@ -291,15 +291,17 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   'master-licensing': 'platform-owner administration',
   'access-requests': 'how a member asks for a locked app',
   'identity-console': 'SSO / SCIM; a security reviewer expects it (D6)',
+  training: 'Help & training: the Help Center, training courses and support requests, for every member (P-127)',
 };
 
 // CPO decision, 2026-10-08: three shell entries left. AnA Command answers
 // only enterprise organisations and tells a client two of its runs are
 // recorded to the audit trail when they are not. AnA memory lists a store
 // nothing writes instead of the memory AnA loads each turn, so it tells a
-// client AnA remembers nothing; it returns reading that memory. Training has
+// client AnA remembers nothing; it returns reading that memory. Training had
 // no path, lesson or certification behind it; training of record is the QMS
-// read-and-understood record.
+// read-and-understood record. It returned as Help & training (P-127, 2026-11-12):
+// the Help Center, courses and support requests, which are not GxP training.
 
 /** Every surface id in the launch scope: the seven apps plus the shell set. */
 export const LAUNCH_SURFACE_IDS: ReadonlySet<string> = new Set([

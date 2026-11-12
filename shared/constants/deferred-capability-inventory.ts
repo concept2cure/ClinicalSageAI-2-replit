@@ -41,9 +41,8 @@ export const DEFERRED_CAPABILITY_INVENTORY: readonly DeferredCapability[] = [
   /* ana-memory left this list on 2026-10-29: it folded into the conversation, which
      now reads the memory each turn uses ("What AnA remembers"; D2,
      docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). */
-  { surfaceId: 'training', decision: 'converge', canonicalSurfaces: ['quality'],
-    implementedParts: 'Retained training screen and discovery layout.', completionNeeded: 'Provide persisted lessons, paths and assessed certifications before exposure, or converge on QMS read-and-understood training.',
-    description: 'Deferred training screen. Guided lessons, paths and certifications are unfinished. Quality provides the current read-and-understood training record.' },
+  /* training left this list on 2026-11-12: it is Help & training (P-127), in the launch shell, where the Help Center,
+     the courses and support requests are; Quality keeps GxP training of record. */
 ] as const;
 
 export function deferredSurfaceDescription(surfaceId: string): string {
