@@ -1540,10 +1540,16 @@ the search had named the trial master file store unavailable on every call. Evid
 `classify_tmf_artifact` files through the deployed store with the person's confirmation and reason (L-1(a)). No tool is
 added. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step3-ana-writes/`. **Step 4 is done** (F1, `1bcc069d3f`). The
 second store's eight routes (`server/routes/etmf.ts`) and its metrics are deleted. `/api/etmf` mounts the one router,
-and two baselines shrank by hand. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step4-routes-metrics/`. Step 5 (its
-service, schema and migration) remains; then "not applicable" is already carried, and admission waits on the URS and
-OQ. "Not applicable" (P-124 item 5) is on the deployed
-store, so step 3's retirement of `update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+and two baselines shrank by hand. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step4-routes-metrics/`. **Step 5 is
+done, and so is E4** (F1, `2ccfe707cb`). The second store's service and schema model are deleted, `etmf-logic.ts` is
+the classifier only, and the seed skeleton is gone. `migrations/20260610_etmf.sql` creates nothing: it is amended in
+place with a dated header (RULE 1) and keeps its deploy-path baseline entry (R6). install-fresh on a blank database
+completes with neither table. `ci:orm-reachability` and `ci:unbacked-tables` were each seen to refuse the case they
+exist for. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step5-service-schema/`. Before it (F1, `e37936ad31`), the
+retired verdict's one guard was carried onto the deployed store. A study whose every required record is declared not
+applicable had read "ready" with nothing filed, in AnA, on the inspection package's cover and in the report pack. It
+now has no readiness verdict. "Not applicable" (P-124 item 5) is on the deployed store, so step 3's retirement of
+`update_tmf_artifact_status` has the declaration to point to. Admission waits on the URS and OQ. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 
