@@ -118,6 +118,18 @@
   .pde-shell > .pd-wrap > .pd-grid{min-height:max(520px,72vh);}
   .pd-grid > .pd-work > .pd-pane{max-width:920px;}
 
+  /* On a narrow window the section list goes above the tab, not beside it (F1, 2026-11-12). The list kept its
+     268 px column at every width. At 390 a tab's content (the IRB package, statistics, consent, every register)
+     was a strip about 100 px wide, one or two words a line; at 761, beside the rail, it was 177 px. Measured in the
+     running app. Under 1100 px the list is above, capped, and scrolls inside itself, so the tab's content starts
+     within one screen of the tabs. From 1100 px the tab has at least 560 px beside the list. */
+  @media (max-width:1100px){
+    .pd-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);}
+    .pd-grid > .pd-outline{border-right:0;border-bottom:1px solid var(--border);}
+    .pd-grid > .pd-outline > .pd-tree{flex:0 1 auto;max-height:216px;}
+    .pd-grid > .pd-work{padding:16px 16px 48px;}
+  }
+
   /* ── cover page ─────────────────────────────────────────────────── */
 
   /* The sub-row carries the sponsor, the PI, the status and now an edit
