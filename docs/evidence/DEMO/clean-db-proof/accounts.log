@@ -1,0 +1,56 @@
+User upserted: ana.author@concept2cure.pro (id: 1)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : ana.author@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[ana.author@concept2cure.pro] exit=0
+User upserted: rhea.reviewer@concept2cure.pro (id: 2)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : rhea.reviewer@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[rhea.reviewer@concept2cure.pro] exit=0
+User upserted: ava.approver@concept2cure.pro (id: 3)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : ava.approver@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[ava.approver@concept2cure.pro] exit=0
+User upserted: mo.monitor@concept2cure.pro (id: 4)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : mo.monitor@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[mo.monitor@concept2cure.pro] exit=0
+User upserted: quinn.quality@concept2cure.pro (id: 5)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : quinn.quality@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[quinn.quality@concept2cure.pro] exit=0
+User upserted: sam.stats@concept2cure.pro (id: 6)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : sam.stats@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[sam.stats@concept2cure.pro] exit=0
+User upserted: cal.cmc@concept2cure.pro (id: 7)
+Workspace for organization 2: 2
+
+=== LOGIN CREDENTIALS ===
+Email   : cal.cmc@concept2cure.pro
+Password: (the ADMIN_PASSWORD you set)
+=========================
+[cal.cmc@concept2cure.pro] exit=0

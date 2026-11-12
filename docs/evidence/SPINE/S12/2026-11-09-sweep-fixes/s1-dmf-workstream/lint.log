@@ -1,0 +1,11 @@
+=== shared/constants/domain/product-types.ts
+HEAD:    0 errors, 0 warnings
+working: 0 errors, 0 warnings
+--- working-tree eslint output:
+=== shared/constants/domain/__tests__/product-types.test.ts
+HEAD:    0 errors, 0 warnings
+working: 0 errors, 0 warnings
+--- working-tree eslint output:
+
+=== test file is in lint scope (eslint --print-config returns a config, not 'undefined'): yes
+=== npx tsc --noEmit -p tsconfig.json: errors naming product-types: 0

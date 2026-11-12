@@ -1,0 +1,54 @@
+# 2026-11-09T19:12:47Z BEFORE the local archive: the first portfolio projects are still active in workspace 2. Expected: the four sponsor workspaces are created; the two Varnhollow studies (new titles) are created in their workspace; the six same-titled studies are REFUSED, nothing attached; exit 1.
+$ DEMO_MANIFEST_ROOT=<scratchpad>/manifests node scripts/demo/launch-demo/seed.mjs --pack portfolio --base-url http://127.0.0.1:5000 --email jm.smith@concept2cure.pro
+Signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: portfolio ===
+  • Editor: the canonical CSR template … ok — 
+  • Client workspace: Varnhollow Oncology (fictional demo) … ok — created 53496
+  • Client workspace: Petrelline Rare Therapeutics (fictional demo) … ok — created 53497
+  • Client workspace: Quillmont Immunology (fictional demo) … ok — created 53498
+  • Client workspace: Halcyra Vaccines (fictional demo) … ok — created 53499
+  • Project (a) Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC — workspace 53496 … ok — 
+  • Vault: VNH-310-301 protocol · synthetic … ok — 
+  • Vault: VNH-310-301 statistical analysis plan · synthetic … ok — 
+  • Editor: CSR working document for VNH-310-301 … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310 … ok — 0 corrected
+  • Tasks: 3 tasks on VNH-310-301 … ok — 3 created, 0 already there (board project 197876)
+  • Project (b) Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC — workspace 53497 … FAILED
+  refused · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC: refused — project 3a0d3318-03dd-4497-9a34-761440301c81 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  • Project (c) Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC — workspace 53498 … FAILED
+  refused · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC: refused — project 412badea-f1bf-406f-91e9-92314ed443df has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  • Project (d) Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC — workspace 53499 … FAILED
+  refused · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC: refused — project ef21f2b4-41c6-4e32-af92-c862746d4342 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  • Project (e) Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC — workspace 53496 … ok — 
+  • Vault: VNH-310-201 protocol · synthetic … ok — 
+  • Vault: VNH-310-201 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for VNH-310-201 … ok — 
+  • Editor: write 11 ICH E3 narrative headings (saved revisions) … ok — 
+  • Editor: 4 reviewer comments … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310 … ok — 0 corrected
+  • Tasks: 3 tasks on VNH-310-201 … ok — 3 created, 0 already there (board project 197877)
+  • Project (f) Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC — workspace 53497 … FAILED
+  refused · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC: refused — project cca22f86-489f-4b58-ba6b-2a5a8c5c8d79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  • Project (g) Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC — workspace 53498 … FAILED
+  refused · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC: refused — project bddfa0d1-144f-40ee-a922-31a522648eec has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  • Project (h) Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC — workspace 53499 … FAILED
+  refused · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC: refused — project c7019221-64ae-46b6-b979-50fa0a122f79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  summary: created 34, found 0, not executed 3, refused 6
+  workspace 53496 · Varnhollow Oncology (fictional demo): a 7a266309-5fc1-4c18-8438-8619b1b5e805, e 8835514e-ff8c-4b1c-9a23-c0049189780f
+  workspace 53497 · Petrelline Rare Therapeutics (fictional demo): b REFUSED, f REFUSED
+  workspace 53498 · Quillmont Immunology (fictional demo): c REFUSED, g REFUSED
+  workspace 53499 · Halcyra Vaccines (fictional demo): d REFUSED, h REFUSED
+  not executed · [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC · formal review request: not executed — a formal review request needs a second organisation member as reviewer; the server refuses the author as their own reviewer (REVIEWER_IS_AUTHOR)
+  refused · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC · project: refused — project 3a0d3318-03dd-4497-9a34-761440301c81 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  refused · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC · project: refused — project 412badea-f1bf-406f-91e9-92314ed443df has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  refused · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC · project: refused — project ef21f2b4-41c6-4e32-af92-c862746d4342 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  refused · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC · project: refused — project cca22f86-489f-4b58-ba6b-2a5a8c5c8d79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53497. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  refused · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC · project: refused — project bddfa0d1-144f-40ee-a922-31a522648eec has this pack's title but is in client workspace 2, not its sponsor's workspace 53498. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+  refused · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC · project: refused — project c7019221-64ae-46b6-b979-50fa0a122f79 has this pack's title but is in client workspace 2, not its sponsor's workspace 53499. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.
+✗ portfolio: 6 portfolio project(s) refused: found by title outside their sponsor's workspace and not moved (manifest: refused). The other studies were seeded.
+exit 1

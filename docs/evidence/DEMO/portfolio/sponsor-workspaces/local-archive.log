@@ -1,0 +1,73 @@
+# LOCAL DATABASE ONLY. One-off archive of the first fictional-portfolio projects, created in the organisation's own client workspace (2, Concept2Cure Therapeutics) by 4d935f8ea, so the pack recreates them in their sponsors' workspaces. Route: POST /api/c2c/projects/:id/archive {reason} — the close-out route Project settings uses (client/src/concept2cure/v2/surfaces/projectSettingsRequest.ts requestProjectArchive; server/routes/c2c/projects.ts), with the headers the UI sends (Authorization, x-organization-id, x-client-id). The route checks the person may change the project and writes the chained audit row with the reason. Nothing was deleted or moved; an archived project can be reopened with POST /:id/unarchive. Script: a scratch file outside the repository (not committed).
+
+## dry run
+# 2026-11-09T19:13:19.151Z DRY RUN — signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+# 8 active portfolio project(s) outside the sponsor workspaces (sponsor workspace ids: 53499, 53497, 53498, 53496)
+would archive  bddfa0d1-144f-40ee-a922-31a522648eec  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC
+would archive  c7019221-64ae-46b6-b979-50fa0a122f79  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC
+would archive  cca22f86-489f-4b58-ba6b-2a5a8c5c8d79  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC
+would archive  f235cef6-e64b-4830-abad-cd5b0306cd70  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Corvane Oncology (fictional) · CRV-310-201 Phase 2 CSR (in review) — SYNTHETIC
+would archive  ef21f2b4-41c6-4e32-af92-c862746d4342  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC
+would archive  412badea-f1bf-406f-91e9-92314ed443df  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC
+would archive  3a0d3318-03dd-4497-9a34-761440301c81  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC
+would archive  138395e0-06b1-4617-8761-9fcc5091ce7b  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Corvane Oncology (fictional) · CRV-310-301 Phase 3 CSR (planning) — SYNTHETIC
+
+## apply
+# 2026-11-09T19:13:19.344Z APPLY — signed in as jm.smith@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+# 8 active portfolio project(s) outside the sponsor workspaces (sponsor workspace ids: 53499, 53497, 53498, 53496)
+archive 200 CONFIRMED  bddfa0d1-144f-40ee-a922-31a522648eec  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC  → {"ok":true,"projectId":"bddfa0d1-144f-40ee-a922-31a522648eec"}
+archive 200 CONFIRMED  c7019221-64ae-46b6-b979-50fa0a122f79  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC  → {"ok":true,"projectId":"c7019221-64ae-46b6-b979-50fa0a122f79"}
+archive 200 CONFIRMED  cca22f86-489f-4b58-ba6b-2a5a8c5c8d79  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC  → {"ok":true,"projectId":"cca22f86-489f-4b58-ba6b-2a5a8c5c8d79"}
+archive 200 CONFIRMED  f235cef6-e64b-4830-abad-cd5b0306cd70  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Corvane Oncology (fictional) · CRV-310-201 Phase 2 CSR (in review) — SYNTHETIC  → {"ok":true,"projectId":"f235cef6-e64b-4830-abad-cd5b0306cd70"}
+archive 200 CONFIRMED  ef21f2b4-41c6-4e32-af92-c862746d4342  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC  → {"ok":true,"projectId":"ef21f2b4-41c6-4e32-af92-c862746d4342"}
+archive 200 CONFIRMED  412badea-f1bf-406f-91e9-92314ed443df  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC  → {"ok":true,"projectId":"412badea-f1bf-406f-91e9-92314ed443df"}
+archive 200 CONFIRMED  3a0d3318-03dd-4497-9a34-761440301c81  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC  → {"ok":true,"projectId":"3a0d3318-03dd-4497-9a34-761440301c81"}
+archive 200 CONFIRMED  138395e0-06b1-4617-8761-9fcc5091ce7b  workspace 2 (Concept2Cure Therapeutics)  status active  [Demo · Portfolio] Corvane Oncology (fictional) · CRV-310-301 Phase 3 CSR (planning) — SYNTHETIC  → {"ok":true,"projectId":"138395e0-06b1-4617-8761-9fcc5091ce7b"}
+after: 138395e0-06b1-4617-8761-9fcc5091ce7b status archived
+after: 3a0d3318-03dd-4497-9a34-761440301c81 status archived
+after: 412badea-f1bf-406f-91e9-92314ed443df status archived
+after: ef21f2b4-41c6-4e32-af92-c862746d4342 status archived
+after: f235cef6-e64b-4830-abad-cd5b0306cd70 status archived
+after: cca22f86-489f-4b58-ba6b-2a5a8c5c8d79 status archived
+after: c7019221-64ae-46b6-b979-50fa0a122f79 status archived
+after: bddfa0d1-144f-40ee-a922-31a522648eec status archived
+# reason sent (verbatim, in each project's audit row): Demo data correction (local database): the fictional portfolio sponsors move to their own client workspaces; this first copy, created in the organisation's own workspace, is archived and the pack recreates it in its sponsor's workspace.
+exit 0
+
+## the scratch script, verbatim
+// One-off, LOCAL database only: archive the first portfolio projects (created in the organisation's own
+// workspace) through the route Project settings uses: POST /api/c2c/projects/:id/archive { reason },
+// with the headers the UI sends (Authorization, x-organization-id, x-client-id). Dry run unless --apply.
+import { devLogin } from '/home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.mjs';
+const BASE = 'http://127.0.0.1:5000';
+const apply = process.argv.includes('--apply');
+const auth = await devLogin(BASE, 'jm.smith@concept2cure.pro');
+const tok = auth.accessToken;
+const claims = JSON.parse(Buffer.from(tok.split('.')[1], 'base64url').toString('utf8'));
+const call = async (method, p, body, extra = {}) => {
+  const res = await fetch(BASE + p, { method, headers: { Origin: BASE, Accept: 'application/json', Authorization: `Bearer ${tok}`, ...(body ? { 'Content-Type': 'application/json' } : {}), ...extra }, body: body ? JSON.stringify(body) : undefined });
+  const text = await res.text(); let json = null; try { json = JSON.parse(text); } catch {}
+  return { status: res.status, json, text };
+};
+console.log(`# ${new Date().toISOString()} ${apply ? 'APPLY' : 'DRY RUN'} — signed in as ${claims.email ?? 'jm.smith@concept2cure.pro'} (user ${claims.userId}, organisation ${claims.organizationId}) at ${BASE}`);
+const list = await call('GET', '/api/c2c/projects?limit=200');
+if (list.status !== 200 || list.json?.meta?.hasMore) throw new Error(`project list: ${list.status} hasMore=${list.json?.meta?.hasMore}`);
+const sponsorNames = new Set(['Varnhollow Oncology (fictional demo)', 'Petrelline Rare Therapeutics (fictional demo)', 'Quillmont Immunology (fictional demo)', 'Halcyra Vaccines (fictional demo)']);
+const clients = await call('GET', '/api/clients');
+const sponsorIds = new Set((clients.json?.clients ?? []).filter((c) => sponsorNames.has(c.name)).map((c) => Number(c.id)));
+const rows = list.json.data.filter((p) => String(p.title ?? p.name).startsWith('[Demo · Portfolio] ') && !sponsorIds.has(Number(p.client_workspace_id)));
+console.log(`# ${rows.length} active portfolio project(s) outside the sponsor workspaces (sponsor workspace ids: ${[...sponsorIds].join(', ') || 'none yet'})`);
+const reason = 'Demo data correction (local database): the fictional portfolio sponsors move to their own client workspaces; this first copy, created in the organisation\'s own workspace, is archived and the pack recreates it in its sponsor\'s workspace.';
+for (const p of rows) {
+  const line = `${p.id}  workspace ${p.client_workspace_id} (${p.client_name})  status ${p.status}  ${p.title ?? p.name}`;
+  if (!apply) { console.log(`would archive  ${line}`); continue; }
+  const r = await call('POST', `/api/c2c/projects/${encodeURIComponent(p.id)}/archive`, { reason }, { 'x-organization-id': String(claims.organizationId), 'x-client-id': String(p.client_workspace_id) });
+  const named = r.json?.ok === true && String(r.json?.projectId ?? '').toLowerCase() === String(p.id).toLowerCase();
+  console.log(`archive ${r.status} ${named ? 'CONFIRMED' : 'NOT CONFIRMED'}  ${line}  → ${JSON.stringify(r.json ?? r.text).slice(0, 300)}`);
+}
+if (apply) {
+  const after = await call('GET', '/api/c2c/projects?limit=200&includeArchived=true');
+  const mine = new Set(rows.map((p) => p.id));
+  for (const p of (after.json?.data ?? []).filter((x) => mine.has(x.id))) console.log(`after: ${p.id} status ${p.status}`);
+  console.log(`# reason sent (verbatim, in each project's audit row): ${reason}`);
+}

@@ -1,0 +1,18 @@
+# TYPECHECK (targeted, re-run 2026-11-09T21:10:11Z on the final working tree): tsc -p <scratch tsconfig extending tsconfig.json, files = the 7 changed .ts/.tsx files, skipLibCheck>.
+# A 'files'-only config does not load the repo's ambient .d.ts (express Request augmentation, CSS modules, import.meta.env, @types for jsonwebtoken/qrcode), so the errors below are all of that kind and none is in a changed file.
+# Total errors: 20; in changed files: 0
+      1 client/src/concept2cure/components/ana/BriefingBookPanel.tsx TS2307
+      1 client/src/concept2cure/components/ana/CrlPremortemPanel.tsx TS2307
+      1 client/src/concept2cure/components/ana/GovernedActionSignoff.tsx TS2307
+      1 client/src/concept2cure/v2/surfaceActions.ts TS2339
+      4 server/db/requestDbLease.ts TS2339
+      1 server/middleware/establishRequestTenantScope.ts TS2339
+      1 server/middleware/requirePlatformAdmin.ts TS2339
+      1 server/routes/c2c/shared.ts TS7016
+      1 server/services/ana-ri/proposal-seal.ts TS7016
+      2 server/services/ana/AnaToolExecutor.ts TS7016
+      1 server/services/authoring/authoring-permissions.ts TS2339
+      1 server/services/cmc/link-to-module3.ts TS7016
+      2 server/services/mfaService.ts TS7016
+      1 server/services/token-revocation.ts TS7016
+      1 server/utils/jwtVerify.ts TS7016

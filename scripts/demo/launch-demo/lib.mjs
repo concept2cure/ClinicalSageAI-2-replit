@@ -32,7 +32,7 @@ export const MANIFEST_ROOT = process.env.DEMO_MANIFEST_ROOT
   : path.join(REPO_ROOT, 'docs', 'evidence', 'DEMO');
 
 /** Prefix on every demo record's title. A customer never sees it unless they run the seed. */
-export const DEMO_PREFIX = { biotech: '[Demo · Biotech]', mdx: '[Demo · MDX]', lumen: '[Demo · Lumen]', faux: '[Demo · Faux]' };
+export const DEMO_PREFIX = { biotech: '[Demo · Biotech]', mdx: '[Demo · MDX]', lumen: '[Demo · Lumen]', faux: '[Demo · Faux]', portfolio: '[Demo · Portfolio]' };
 
 export { makePdfBuffer, sha256 };
 

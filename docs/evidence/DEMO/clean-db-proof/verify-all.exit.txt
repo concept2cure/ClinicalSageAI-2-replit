@@ -1,0 +1,4 @@
+verify-all pack=all exit=0 start=2026-11-09T20:52:59Z end=2026-11-09T20:54:39Z
+# server: :5100 restarted 2026-11-09T20:52:35Z (session 10153, /api/version commit 8d30ddf60 + uncommitted working-tree edits in server/routes/c2c/projects.ts, server/routes/submissions.ts, shared/constants/domain/product-types.ts), stopped by PID after the run
+# rows written to c2c_cleanproof_1 since 20:52:30Z: audit_logs 2 (c2c.work.persist), concept2cure_artifact_versions 21, cmc_provenance_events 42, cmc_section_lineage 58 (replaced), cdisc_prm_study_arms 5 / endpoints 3 (replaced); cre_evidence_sources, regulatory_programs, projects unchanged (231/15/15); storage/vault files added: 0
+# normalized (uuids, retry waits) verify-all.log is identical to all-run4.log
