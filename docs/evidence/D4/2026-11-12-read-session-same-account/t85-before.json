@@ -1,0 +1,26 @@
+{
+ "settled": {
+  "reads": 3,
+  "title": null,
+  "sections": 105,
+  "loading": []
+ },
+ "during": {
+  "readsSince": 3,
+  "title": null,
+  "sections": 105,
+  "loading": []
+ },
+ "after": {
+  "readsSince": 3,
+  "repeated": [
+   "/api/authoring/docs/796654ab-1cbd-475e-ae39-d20886242e00/citations",
+   "/api/authoring/docs/796654ab-1cbd-475e-ae39-d20886242e00?programId=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "/api/authoring/docs/796654ab-1cbd-475e-ae39-d20886242e00/sections?programId=c2ed888d-2958-4332-b186-e81482f2ce"
+  ],
+  "title": null,
+  "sections": 105,
+  "loading": []
+ },
+ "apiFailures": []
+}
