@@ -1,0 +1,23 @@
+  ✓ the exact named literal array, beside an unrelated inline array
+  ✓ a computed filename must not be mistaken for its literal prefix
+  ✓ a spread must not silently hide creator entries
+  ✓ duplicate declarations cannot choose a convenient first list
+  ✓ THE REAL CASE — an unguarded FK to a db/migrations-only table — expected 1, got 1
+  ✓ guarded — to_regclass IS NULL short-circuits, so it no-ops instead of deferring — expected 0, got 0
+  ✓ a non-public schema qualifier is not the table name — expected 0, got 0
+  ✓ reachable because step 2 pushed it — expected 0, got 0
+  ✓ a table nothing in the repo creates is another gate's question — expected 0, got 0
+  ✓ the file creating it itself is never its own missing dependency — expected 0, got 0
+  ✓ THE REAL CASE (2026-11-12) — an unguarded ALTER of a named-schema table that exists only after step 6 — expected 1, got 1
+  ✓ an unguarded FK to it is the same defect — expected 1, got 1
+  ✓ guarded on that exact table — no-ops at step 3, re-applied at step 6 — expected 0, got 0
+  ✓ guarded on a DIFFERENT table — the unguarded one still hard-fails — expected 1, got 1
+  ✓ created during the overlay by an undeferred root file — a later pass resolves it — expected 0, got 0
+  ✓ the file creating it itself is never its own missing dependency — expected 0, got 0
+  ✓ a named-schema table nothing in the repo creates is another gate's question — expected 0, got 0
+  ✓ a public table is not this rule's — it is unreachableDeps' above — expected 0, got 0
+  ✓ the installer's selector is read, not restated
+  ✓ a missing selector must not fall back to a guess
+  ✓ two selectors cannot choose a convenient first one
+
+[ci:install-fresh-overlay-deps] selftest passed: it fails on the unguarded case and only on that case.
