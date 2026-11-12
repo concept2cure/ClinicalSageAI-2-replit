@@ -72,7 +72,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/project-sections',
   '/api/project-sections/dependencies',
   '/api/project-sections/initialize',
-  '/api/project-sections/milestones',
+  /* /api/project-sections/milestones: served since P-122 (2026-11-10), below. */
   '/api/project-sections/notifications',
   /* /api/project-sections/summary and /timeline: served since P-122 (2026-11-10), below. */
   '/api/realtime-collab/health',
@@ -114,6 +114,10 @@ const STILL_SERVED = [
      exactly, so the section list, its writes and the rest of /api/submission-ops stay refused. */
   '/api/project-sections/summary',
   '/api/project-sections/timeline',
+  /* Upheld on 2026-10-15: no screen wrote them. P-122 (2026-11-10): the Plan step's Schedule records a milestone,
+     moves its date and marks it done, each admitted as a write on the project (tests/db/p122-milestone-writes.dbtest.ts). */
+  '/api/project-sections/milestones',
+  '/api/project-sections/milestones/12',
   '/api/submission-ops/due-soon',
   '/api/authoring-actions/decision-context',
   '/api/authoring-actions/decisions',

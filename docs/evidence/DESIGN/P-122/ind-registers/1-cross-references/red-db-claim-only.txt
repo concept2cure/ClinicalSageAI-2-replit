@@ -1,0 +1,62 @@
+# The same test with the claim alone (ui-surface-registry.ts claims the register; registers.routes.ts as HEAD, no project check).
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > records a cross-reference, and reads the list and the LOA-coverage QC
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > marks the letter on file, and the QC is ready
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > files the letter as the m1.4.1 leaf of a new sequence
+  × the cross-reference and letter of authorization register, for a member of the organisation > an id that is not one of this IND's cross-references is not found
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > removes one
+  × and refused to anyone who cannot open the project > another organisation, whichever route it asks
+  × and refused to anyone who cannot open the project > a colleague who can read the project but does not edit it
+  × and refused to anyone who cannot open the project > a colleague who is not on a private project
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > enumerated from the routers, the safety registers among them (P-32)
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/classify
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/icsr
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/icsr/message
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/pdf
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/authorized-persons
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/authorized-persons/pdf
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/cross-reference-register
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/envelope
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/file
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/readiness
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/timeline
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/action-items
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/validate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/lifecycle-validate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/history-audit
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/sequence/7/validate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/7/dispatch-gate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/7/dispatch-gate/snapshot
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/sequence/7/snapshots
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/portfolio
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/portfolio/drift
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/portfolio/drift/csv
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/overview
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/dashboard
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/cockpit
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/drift
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/safety-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/safety-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/safety-reports/7
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/safety-reports/overdue
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/annual-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/annual-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/annual-reports/7
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/annual-reports/overdue
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/amendments
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/amendments
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/amendments/7
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/icsr-transmissions
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/icsr-transmissions
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/icsr-transmissions/7/transmit
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/icsr-transmissions/7/acknowledge
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > the cross-reference and letter of authorization register, for a member of the organisation > an id that is not one of this IND's cross-references is not found
+AssertionError: expected 500 to be 404 // Object.is equality
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > and refused to anyone who cannot open the project > another organisation, whichever route it asks
+AssertionError: []: expected 200 to be 404 // Object.is equality
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > and refused to anyone who cannot open the project > a colleague who can read the project but does not edit it
+AssertionError: {"id":"5a32bd6c-0ad2-4ed8-9a2d-8e3b4c23d60a","organizationId":23,"submissionId":25,"referencedFileType":"DMF","referencedFileNumber":"12345","subjectName":"Invented drug substance","authorizedSections":["3.2.S"],"loaOnFile":false,"loaLeafSection":null,"createdBy":32,"createdAt":"2026-11-10T16:27:47.: expected 201 to be 403 // Object.is equality
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > and refused to anyone who cannot open the project > a colleague who is not on a private project
+AssertionError: [{"id":"3580e139-8680-47f4-8389-876e8f0cdb32","organizationId":23,"submissionId":26,"referencedFileType":"DMF","referencedFileNumber":"12345","subjectName":"Invented drug substance","authorizedSections":["3.2.S"],"loaOnFile":false,"loaLeafSection":null,"createdBy":30,"createdAt":"2026-11-10T16:27:47: expected 200 to be 403 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 47 passed (51)

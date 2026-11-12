@@ -1,0 +1,68 @@
+# tests/db/p122-ind-registers.dbtest.ts with the annual-report cases, before their claim and check (the cross-reference register already in), real PostgreSQL as app_service, RLS_ENFORCE=on, gate in production mode. Run before the no-period case was added (57 cases then).
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > records a cross-reference, and reads the list and the LOA-coverage QC
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > marks the letter on file, and the QC is ready
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > files the letter as the m1.4.1 leaf of a new sequence
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > an id that is not one of this IND's cross-references is not found
+  ✓ the cross-reference and letter of authorization register, for a member of the organisation > removes one
+  ✓ and refused to anyone who cannot open the project > another organisation, whichever route it asks
+  ✓ and refused to anyone who cannot open the project > a colleague who can read the project but does not edit it
+  ✓ and refused to anyone who cannot open the project > a colleague who is not on a private project
+  × the annual-report tracker, for a member of the organisation > tracks a report, with the due date and the open sections the server computes
+  × the annual-report tracker, for a member of the organisation > the overdue feed names it overdue, and one with no IND effective date as not known
+  × the annual-report tracker, for a member of the organisation > a tracked report filed through the IND forms filing is filed in the register, and leaves the overdue feed
+  ↓ the annual-report tracker is refused to anyone who cannot open the project > another organisation
+  ↓ the annual-report tracker is refused to anyone who cannot open the project > a colleague who can read the project but does not edit it tracks nothing
+  ↓ the annual-report tracker is refused to anyone who cannot open the project > a colleague who is not on a private project
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > enumerated from the routers, the safety registers among them (P-32)
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/classify
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/icsr
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/icsr/message
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/pdf
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/authorized-persons
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/authorized-persons/pdf
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/cross-reference-register
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/envelope
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/safety-report/file
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/readiness
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/timeline
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/action-items
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/validate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/lifecycle-validate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/history-audit
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/sequence/7/validate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/7/dispatch-gate
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/sequence/7/dispatch-gate/snapshot
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/sequence/7/snapshots
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/portfolio
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/portfolio/drift
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/portfolio/drift/csv
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/overview
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/dashboard
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/cockpit
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/drift
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/safety-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/safety-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/safety-reports/7
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/safety-reports/overdue
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/annual-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/annual-reports
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/annual-reports/7
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/annual-reports/overdue
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/amendments
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/amendments
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/amendments/7
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/submission/7/icsr-transmissions
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > GET /api/ind-lifecycle/submission/7/icsr-transmissions
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/icsr-transmissions/7/transmit
+  ✓ every route under /api/ind-lifecycle that nothing claims is still refused in production > POST /api/ind-lifecycle/icsr-transmissions/7/acknowledge
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > the annual-report tracker is refused to anyone who cannot open the project
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 201 // Object.is equality
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > the annual-report tracker, for a member of the organisation > tracks a report, with the due date and the open sections the server computes
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 201 // Object.is equality
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > the annual-report tracker, for a member of the organisation > the overdue feed names it overdue, and one with no IND effective date as not known
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 201 // Object.is equality
+ FAIL  tests/db/p122-ind-registers.dbtest.ts > the annual-report tracker, for a member of the organisation > a tracked report filed through the IND forms filing is filed in the register, and leaves the overdue feed
+AssertionError: {"error":{"code":"VALIDATION","message":"Name the tracked draft (draftId), or supply the report to file: productName, indNumber and the reporting period are required. Nothing was filed."}}: expected 400 to be 201 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 51 passed | 3 skipped (57)

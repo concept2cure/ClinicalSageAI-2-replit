@@ -28,6 +28,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { pool } from '../db.js';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
 import { canAccessReportProject } from '../services/report-os/project-access.js';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access.js';
+import { launchScopeEnforced } from '../services/entitlements/launch-scope.js';
 import {
   getAllINDSections,
   getSectionByCode,
@@ -98,24 +100,54 @@ async function admitNamedProject(req: Request, res: Response, next: NextFunction
   return next();
 }
 
-/** A milestone is changed by its id: admit the project it belongs to, and answer one outside it as a missing one. */
+/* A milestone write changes the project's schedule, so it is admitted as a write (P-122, 2026-11-10): the person's
+   current role writes, the project's sharing gives them edit permission, and the project is not archived. That is the
+   admission the project's tasks take (c2c/tasks.ts, D6). The read policy alone admitted a member the project is shared
+   with to use, not to edit, and production now serves these routes (shared/constants/ui-surface-registry.ts,
+   project-home; tests/db/p122-milestone-writes.dbtest.ts). Resolves true when admitted; otherwise it has answered. */
+async function admitMilestoneWrite(req: Request, res: Response, projectId: number): Promise<boolean> {
+  try {
+    await requireProjectAdmission(req, String(projectId), true);
+    return true;
+  } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return false;
+    }
+    projectAccessFailure(res, error);
+    return false;
+  }
+}
+
+/** Recording a milestone writes to the project its body names, parsed as the handler parses it: the read policy
+ *  admitted it above; admit it as a write. A body naming no project is the handler's 400. */
+async function admitMilestoneCreate(req: Request, res: Response, next: NextFunction) {
+  const named = (req.body as Record<string, unknown> | undefined)?.project_id;
+  const projectId = parseInt(String(named ?? ''), 10);
+  if (extractOrgId(req) == null || !named || !Number.isSafeInteger(projectId)) return next();
+  return (await admitMilestoneWrite(req, res, projectId)) ? next() : undefined;
+}
+
+/** A milestone is changed by its id: admit the project it belongs to, and answer one outside it as a missing one; then
+ *  admit it as a write. */
 async function admitMilestoneProject(req: Request, res: Response, next: NextFunction) {
   const orgId = extractOrgId(req);
   if (orgId == null) return next();
   const milestoneId = parseInt(String(req.params.id), 10);
+  let projectId: number;
   try {
     const { rows } = Number.isSafeInteger(milestoneId) ? await pool.query(
       'SELECT project_id FROM project_milestones WHERE id = $1 AND organization_id = $2',
       [milestoneId, orgId]
     ) : { rows: [] };
-    const projectId = Number(rows[0]?.project_id);
+    projectId = Number(rows[0]?.project_id);
     if (!(Number.isSafeInteger(projectId) && projectId > 0) || !(await canOpenProjects(req, orgId, [projectId]))) {
       return res.status(404).json({ error: 'Milestone not found' });
     }
   } catch (error) {
     return projectAccessFailure(res, error);
   }
-  return next();
+  return (await admitMilestoneWrite(req, res, projectId)) ? next() : undefined;
 }
 
 router.use(admitNamedProject);
@@ -598,7 +630,15 @@ function linkedSectionCodes(value: unknown): string[] | null {
   return value.map((code: string) => code.trim());
 }
 
-router.post('/milestones', async (req: Request, res: Response) => {
+/* A target date that is not a date reached PostgreSQL as an invalid timestamp and answered 500 (P-122, 2026-11-10).
+   It is refused with a 400 before anything is written. */
+function targetDate(value: unknown): Date | null {
+  const date = typeof value === 'string' || typeof value === 'number' ? new Date(value) : null;
+  return date && Number.isFinite(date.getTime()) ? date : null;
+}
+const NOT_A_DATE = 'target_date must be a date';
+
+router.post('/milestones', admitMilestoneCreate, async (req: Request, res: Response) => {
   try {
     const { project_id, name, description, target_date, linked_sections } = req.body;
     const orgId = extractOrgId(req);
@@ -610,12 +650,15 @@ router.post('/milestones', async (req: Request, res: Response) => {
     if (!project_id || !name || !target_date) {
       return res.status(400).json({ error: 'project_id, name, and target_date are required' });
     }
+    const target = targetDate(target_date);
+    if (!target) return res.status(400).json({ error: NOT_A_DATE });
     const linkedSections = linkedSectionCodes(linked_sections);
     if (linkedSections === null) {
       return res.status(400).json({ error: 'linked_sections must be a list of section codes' });
     }
 
     const projectId = parseInt(String(project_id), 10);
+    if (!(Number.isSafeInteger(projectId) && projectId > 0)) return res.status(400).json({ error: 'project_id must be a project id' });
 
     const result = await pool.query(
       `INSERT INTO project_milestones
@@ -627,7 +670,7 @@ router.post('/milestones', async (req: Request, res: Response) => {
         projectId,
         name,
         description || null,
-        new Date(target_date),
+        target,
         linkedSections,
         userId,
       ]
@@ -697,8 +740,10 @@ router.patch('/milestones/:id', admitMilestoneProject, async (req: Request, res:
       params.push(description);
     }
     if (target_date !== undefined) {
+      const target = targetDate(target_date);
+      if (!target) return res.status(400).json({ error: NOT_A_DATE });
       updates.push(`target_date = $${idx++}`);
-      params.push(new Date(target_date));
+      params.push(target);
     }
     if (status === 'completed') {
       updates.push(`completed_at = NOW()`);
@@ -730,7 +775,15 @@ router.patch('/milestones/:id', admitMilestoneProject, async (req: Request, res:
   }
 });
 
+/* A milestone is a project record: it is moved or marked done. This hard delete keeps no history, and no screen,
+   seed or AnA tool calls it. project-home's claim on /api/project-sections/milestones (P-122) admits the path in
+   production, so while launch scope is on the route refuses itself, as /api/cmc-changes does, and touches nothing. */
 router.delete('/milestones/:id', admitMilestoneProject, async (req: Request, res: Response) => {
+  if (launchScopeEnforced()) {
+    return res.status(409).json({
+      error: { code: 'MILESTONE_NOT_DELETED', message: 'A milestone is not deleted: move its date or mark it done. Nothing was changed.' },
+    });
+  }
   try {
     const milestoneId = parseInt(String(req.params.id), 10);
     const orgId = extractOrgId(req);
