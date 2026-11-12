@@ -31,10 +31,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 /* The navigation verdicts' platform-administrator answer, which the SSO tab's door reads (7dfb49b645). */
 const navAccess = vi.hoisted(() => ({ platformAdmin: false }));
-vi.mock('../navEntitlements', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../navEntitlements')>();
-  return { ...actual, useNavEntitlements: () => ({ ...actual.useNavEntitlements(), platformAdmin: navAccess.platformAdmin }) };
-});
+vi.mock('../navEntitlements', async (original) => { const actual = await original<typeof import('../navEntitlements')>();
+  return { ...actual, useNavEntitlements: () => ({ ...actual.useNavEntitlements(), platformAdmin: navAccess.platformAdmin }) }; });
 
 import { AdminAccess } from '../surfaces/AdminAccess';
 import { ClientCredentialVaultCard, AiPlacementPolicyCard } from '../surfaces/AdminSettings';
@@ -161,39 +159,18 @@ describe('Settings carries every governed setting Setup held', () => {
   });
 });
 
-/* Since 7dfb49b645 the Identity console door is a platform administrator's: every read on that page needs one.
-   Mounted here as a customer's administrator; the door's platform-administrator branch is in
-   identityConsoleDoorAudience.test.tsx. */
+/* Since 7dfb49b645 the Identity console door is a platform administrator's (every read on that page needs one); a
+   customer's administrator reads who sets single sign-on up instead. Each, with the SSO read answered and refused. */
 describe('the SSO tab says where single sign-on is governed', () => {
-  it("tells a customer's administrator who sets it up, and offers no door to a page they cannot use", async () => {
+  it.each([[false, false], [false, true], [true, false], [true, true]])('platform administrator: %s; SSO read refused: %s', async (platformAdmin, refused) => {
+    navAccess.platformAdmin = platformAdmin; if (refused) adminBody = { ...admin({ sso: null }), meta: { count: 1, unavailable: ['sso'] } };
     const p = mount(); await openTab('SSO');
-    expect(await screen.findByText(/set up for your organisation by Concept2Cure/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Open Identity console/ })).toBeNull();
-    expect(p.onNav).not.toHaveBeenCalledWith('identity-console');
-    expect(p.onAsk).not.toHaveBeenCalled();
-  });
-
-  it('still says so when the SSO read failed', async () => {
-    adminBody = { ...admin({ sso: null }), meta: { count: 1, unavailable: ['sso'] } };
-    mount(); await openTab('SSO');
-    expect(await screen.findByText("Couldn't load SSO and provisioning")).toBeTruthy();
-    expect(screen.getByText(/set up for your organisation by Concept2Cure/)).toBeTruthy();
-  });
-
-  it('offers a platform administrator the door, which opens the Identity console', async () => {
-    navAccess.platformAdmin = true;
-    const p = mount(); await openTab('SSO');
-    fireEvent.click(await screen.findByRole('button', { name: /Open Identity console/ }));
-    expect(p.onNav).toHaveBeenCalledWith('identity-console');
-    expect(p.onAsk).not.toHaveBeenCalled();
-  });
-
-  it('still offers a platform administrator the door when the SSO read failed', async () => {
-    navAccess.platformAdmin = true;
-    adminBody = { ...admin({ sso: null }), meta: { count: 1, unavailable: ['sso'] } };
-    mount(); await openTab('SSO');
-    expect(await screen.findByText("Couldn't load SSO and provisioning")).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Open Identity console/ })).toBeTruthy();
+    if (refused) expect(await screen.findByText("Couldn't load SSO and provisioning")).toBeTruthy();
+    if (!platformAdmin) {
+      expect(await screen.findByText(/set up for your organisation by Concept2Cure/)).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /Open Identity console/ })).toBeNull();
+    } else fireEvent.click(await screen.findByRole('button', { name: /Open Identity console/ }));
+    expect([p.onNav.mock.calls.some(([id]) => id === 'identity-console'), p.onAsk.mock.calls.length]).toEqual([platformAdmin, 0]);
   });
 });
 
