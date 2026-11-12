@@ -11185,6 +11185,44 @@ registerToolHandler('create_ha_interaction', async (input, ctx) => {
   }
 });
 
+/**
+ * Null when the person may record a commitment that names this submission, or a meeting on one; otherwise the refusal
+ * (P-122, 2026-11-12, when the tool was reached under launch scope). Until then the organisation's editor role was the
+ * only check, so an editor could record a commitment against a submission of a project they cannot open. A submission
+ * belongs to a project, and the write is admitted by that project's edit right (artifactEditRefusal), as a meeting on a
+ * submission is (routes/ha-interactions.ts admitSubmissionWrite). A submission or meeting of another organisation, of
+ * no project, or of a project the person cannot change is answered in the same words, and nothing is recorded. A
+ * commitment that names neither is the organisation's own and needs no project.
+ */
+async function commitmentWriteRefusal(
+  client: PoolClient,
+  who: { organizationId: number; userId: number },
+  named: { submissionId: number | null; sourceInteractionId: number | null },
+): Promise<string | null> {
+  const { projectOfSubmission, submissionOfInteraction } = await import('../ha-interactions/ha-service.js');
+  const refuse = (what: string) => JSON.stringify({
+    error: `That ${what} is not one of a project you may change. Nothing was recorded.`, code: 'PROJECT_WRITE_ACCESS_DENIED',
+  });
+  const mayChange = async (submissionId: number): Promise<boolean> => {
+    const projectId = await projectOfSubmission(client, who.organizationId, submissionId);
+    return projectId !== null && (await artifactEditRefusal(client, { ...who, projectIds: [] }, projectId)) === null;
+  };
+  if (named.submissionId !== null && !(await mayChange(named.submissionId))) return refuse('submission');
+  if (named.sourceInteractionId === null) return null;
+  const meetingSubmission = await submissionOfInteraction(client, who.organizationId, named.sourceInteractionId);
+  if (meetingSubmission === undefined) return refuse('meeting');
+  if (meetingSubmission !== null && !(await mayChange(meetingSubmission))) return refuse('meeting');
+  return null;
+}
+
+/** The submission and the meeting a commitment call names, as the numbers given or null. */
+function commitmentSubjects(input: Record<string, unknown>): { submissionId: number | null; sourceInteractionId: number | null } {
+  return {
+    submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+    sourceInteractionId: typeof input.source_interaction_id === 'number' ? input.source_interaction_id : null,
+  };
+}
+
 registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_regulatory_commitment requires tenant + user context.' });
   const commitmentType = typeof input.commitment_type === 'string' ? input.commitment_type : '';
@@ -11196,16 +11234,21 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createCommitmentTx } = await import('../ha-interactions/ha-service.js');
   const reason = gatedReason(input);
+  const named = commitmentSubjects(input);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
+    const denied = await commitmentWriteRefusal(client, { organizationId: ctx.organizationId, userId: ctx.userId }, named);
+    if (denied) {
+      await client.query('ROLLBACK');
+      return denied;
+    }
     const { id, provenanceLinkIds } = await createCommitmentTx(client, ctx.organizationId, ctx.userId, {
       commitmentType: commitmentType as any, description,
       dueDate: typeof input.due_date === 'string' ? input.due_date : null,
       regulatoryBasis: typeof input.regulatory_basis === 'string' ? input.regulatory_basis : null,
-      sourceInteractionId: typeof input.source_interaction_id === 'number' ? input.source_interaction_id : null,
-      submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
+      ...named,
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -11222,17 +11265,30 @@ registerToolHandler('create_regulatory_commitment', async (input, ctx) => {
   }
 });
 
+/* P-122 (2026-11-12), reached under launch scope: counted for the reader. The organisation's own commitments
+   (ORG_LEVEL) that name no submission, or a submission of a project this person can open (programReadScope, inside a
+   project its sponsor's); until then every commitment of the organisation was counted for any caller, identified or
+   not. A named submission outside that scope is refused in the words a missing one is, never answered as an empty
+   portfolio. */
 registerToolHandler('review_commitment_portfolio', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_commitment_portfolio requires tenant context.' });
-  const { listCommitments } = await import('../ha-interactions/ha-service.js');
+  const scope = await programReadScope('review_commitment_portfolio', ctx);
+  if (typeof scope === 'string') return scope;
+  const { listCommitments, submissionReadableIn, ORG_LEVEL } = await import('../ha-interactions/ha-service.js');
   const { summarizeCommitmentPortfolio } = await import('../ha-interactions/ha-logic.js');
   try {
+    const { getPool } = await import('../../db.js');
+    const reader = getPool() as never;
     const submissionId = typeof input.submission_id === 'number' ? input.submission_id : undefined;
-    const rows = await listCommitments(ctx.organizationId, submissionId);
+    if (submissionId !== undefined && !(await submissionReadableIn(reader, scope.organizationId, submissionId, scope.programIds))) {
+      return JSON.stringify({ error: 'submission_id does not name a submission of a project you can open. Nothing was read.', code: 'SUBMISSION_NOT_READABLE' });
+    }
+    const rows = await listCommitments(scope.organizationId, submissionId, ORG_LEVEL, reader, scope.programIds);
     const today = new Date().toISOString().slice(0, 10);
     const summary = summarizeCommitmentPortfolio(rows.map((r: any) => ({ status: r.status, dueDate: r.due_date, fulfilledDate: r.fulfilled_date })), today);
     return JSON.stringify({
       ok: true, summary,
+      counted: 'The organisation\'s own commitments that name no submission, or a submission of a project you can open.',
       message: summary.overdue > 0
         ? `${summary.overdue} commitment(s) overdue; ${summary.due_30} due within 30 days.`
         : `No overdue commitments; ${summary.due_30} due within 30 days, ${summary.due_90} within 90.`,
