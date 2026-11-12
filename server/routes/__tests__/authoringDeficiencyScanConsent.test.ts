@@ -83,3 +83,47 @@ describe('the check on an informed-consent document', () => {
     expect(s.consent_elements).toBeUndefined();
   });
 });
+
+/*
+ * 2026-11-12 (F1, found walking slice 1): three of the Check's heuristics are
+ * written for CTD sections. On a consent section they told the author that a
+ * one-sentence confidentiality statement "appears insufficient", that it had
+ * "no data tables or figures", and that it "lacks proper structure". A consent
+ * form is meant to be short, plain language, with no tables. On a consent
+ * document those three are skipped, saying why; the placeholder check still
+ * runs, and the 50.25 elements are the check that applies.
+ */
+describe('the CTD heuristics on a consent section', () => {
+  const ids = (s: { deficiencies: Array<{ type: string }> }) => s.deficiencies.map((d) => d.type);
+
+  it('are skipped with a reason, and the placeholder check still runs', async () => {
+    wire(CONSENT_TEMPLATE_IDS[0]);
+    const s = await scan();
+    expect(ids(s)).not.toContain('content_length');
+    expect(ids(s)).not.toContain('missing_data');
+    expect(ids(s)).not.toContain('structure');
+    const skipped = (s.checks_skipped ?? []).filter((c: { id: string }) => ['content_length', 'data_presence', 'structure'].includes(c.id));
+    expect(skipped.map((c: { id: string }) => c.id).sort()).toEqual(['content_length', 'data_presence', 'structure']);
+    expect(skipped[0].reason).toMatch(/informed consent form[\s\S]*21 CFR 50\.25/);
+    expect(s.checks_run).toBeGreaterThan(0);
+  });
+
+  it('still run on a document of another type (control)', async () => {
+    wire('4331e7e3-7777-5c21-8c9b-0e2f56194e7e');
+    const s = await scan();
+    expect(ids(s)).toContain('content_length');
+    expect(ids(s)).toContain('missing_data');
+  });
+});
+
+describe('what a consent section is told it must contain', () => {
+  it('points at the 50.25 elements, not at a CTD guidance entry, and names no empty module', async () => {
+    wire(CONSENT_TEMPLATE_IDS[0]);
+    const s = await scan();
+    expect(s.record_requirements.indexed).toBe(false);
+    expect(s.record_requirements.reason).toMatch(/informed consent form[\s\S]*21 CFR 50\.25 elements/);
+    expect(s.record_requirements.reason).not.toMatch(/CTD section entry/);
+    const kw = (s.checks_skipped ?? []).find((c: { id: string }) => c.id === 'module_keywords');
+    expect(kw.reason).not.toContain('""');
+  });
+});

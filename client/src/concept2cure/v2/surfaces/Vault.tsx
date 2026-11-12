@@ -2675,6 +2675,13 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         uploading={uploading}
         onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
         onOpenSection={(docId, code) => openImportedDocument(docId, projectId, onNav, code ?? undefined)}
+        /* A version is read in the same wide drawer as the record (it framed in the record panel, 319px wide). What a
+           View from this list came to, when nothing was framed, is said in the list. */
+        reader={{
+          view: (id, label, hash, as) => { setReadDocId(`versions:${d.docId}`); void reader.view(id, label, hash, as); },
+          viewing: reader.viewing,
+          note: readDocId === `versions:${d.docId}` && !reader.viewer ? reader.note : null,
+        }}
       />
     ) : null;
   const annotationsOf = (d: VaultDoc) =>
