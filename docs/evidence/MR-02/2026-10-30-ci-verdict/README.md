@@ -1,6 +1,6 @@
 # MR-02 Stage 3 — bring the CI verdict inside the deploy window (OPS-25)
 
-**Row:** D1 (via MR-02 Stage 3). **Date:** 2026-10-30. **Status:** in progress — the change is pushed; CI confirmation pending.
+**Row:** D1 (via MR-02 Stage 3). **Date:** 2026-10-30. **Status:** in progress — the change is pushed; the first two runs with it are measured (2026-11-12); 20 runs pending.
 
 ## What already exists
 
@@ -135,12 +135,44 @@ Coverage is unchanged: nightly, eight shards, one file at a time.
 all, or about 68% of the account's capacity at 90 pushes a day. A Test shard should take about
 25 minutes.
 
+## The first two runs with four shards (2026-11-12)
+
+Two trunk pushes from after the change finished all four shards on 12 November: run
+[42842510749](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42842510749)
+(`4e77f48479`, pushed 10 November 15:15 UTC) and run
+[42841814706](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42841814706)
+(`2b0c842d9d`, pushed 15:11). Job times come from the jobs API, each job's start to finish, rounded up.
+
+| | 42842510749 | 42841814706 | Expected |
+|---|---|---|---|
+| Test shards 1–4, job minutes | 25, 27, 34, 26 | 33, 31, 33, 29 | about 25 each |
+| Vitest's own duration (s) | 1,358, 1,451, 1,895, 1,445 | not read | |
+| A shard at the 90-minute limit | none | none | |
+| Test, runner-minutes (four shards) | 112 | 126 | about 100 (was about 200) |
+| The run, runner-minutes (every job that ran) | 204 | 247 | about 210 (median was 268) |
+| Push to the shards' end | 48 h 16 min | 48 h 26 min | |
+
+- **The shards did what was measured locally.** Each took 25–34 minutes, and each ran to its own verdict.
+  Run 42842510749's four shards ran 6,251 files and 82,121 tests. The slowest shard is the third in both runs. It holds the
+  editor's full-catalog PGlite test, which ran past its timeout here and has since been given ten minutes on trunk.
+- **The runner-minutes fell as expected; the time to a verdict did not.** 42841814706 is 247 rather than about 210
+  only because its Codespace job built the image (29 minutes, against under 1 when cached). Lint ran 23 hours
+  after each push and the rest of each run 47 hours after.
+  At 15:31 UTC on 12 November, 212 `ci.yml` runs were queued and 6 were in progress. The runs finishing that hour
+  included pushes from 10 November 01:37, which carry the eight-shard `ci.yml`. The queue therefore still holds
+  both shapes. The 20-run measurement below waits for runs pushed after `8a7e41392d` (10 November 13:58) to drain.
+- **The verdicts are red, and not because of the sharding.** At these two-day-old commits the first run's shards failed 15
+  tests in 8 files. Its merge job was created when the last shard ended and was queued behind the 20-job limit at
+  15:31. Of those 8 files, only `d0PhoneWidth` and `workbenchRemedies`
+  still failed in the pinned replay of trunk at `ef0472c7b8`
+  (`docs/evidence/F1/2026-11-10-trunk-ci/README.md`), where both are held by their owners.
+
 ## Next
 
 - The fork-worker exits that began at `40aa75d90`: not reproduced locally. The 177-file sample
   took 418 s before the merge and 416 s after, and the merge's own 78 test files took 525 s and
   693 s, the difference being one new file failing 25 tests at 5 s each, which passes at head.
   In CI the shards now bound any such stall to 90 minutes and name the shard.
-- Measure 20 trunk runs that start after this change: runner-minutes per push and push-to-verdict.
+- Measure 20 trunk runs that start after this change: runner-minutes per push and push-to-verdict. Two of the 20 are above.
   The 187 runs already queued carry the old `ci.yml` and will still spend six hours each on these
   jobs.
