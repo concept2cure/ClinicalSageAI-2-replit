@@ -21,6 +21,7 @@ import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic'
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
 import { mapAmendments, mapDeviations, mapReviewComments, mapReviews } from './pdev-view-registers';
 import { milestoneBucket } from '../protocol-milestones/protocol-milestones-logic';
+import { consentGateView } from '../protocol-consent/protocol-consent-logic';
 import { summarizeRiskRegister, type RiskImpact, type RiskLikelihood, type RiskRegisterSummary } from '../protocol-risks/protocol-risks-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
@@ -405,7 +406,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       ? queryExecutor.query(`SELECT id, deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1) ORDER BY id`, [deviationIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     consentFormIds.length
-      ? queryExecutor.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
+      ? queryExecutor.query(`SELECT id, consent_form_id, element_key, title, content, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     readSignatureFacets(orgId, signedTargets, executor),
   ]);
@@ -487,6 +488,11 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
 
     const latestConsentForm = g(byDoc.consentForms, id)[0];
     const consentEls = latestConsentForm ? g(elementsByForm, Number(latestConsentForm.id)) : [];
+    /* The approval gate's own verdict on that form (2026-11-11, F1): the tab
+       showed a percentage of `present` ticks, which the gate does not accept. */
+    const consentGate = latestConsentForm
+      ? consentGateView(consentEls.map((e) => ({ elementKey: str(e.element_key), required: bool(e.required), present: bool(e.present), content: e.content == null ? null : str(e.content) })), str(latestConsentForm.status))
+      : null;
 
     /* The bound study design. `null` — not an empty report — when the protocol
        names no design, so the surface says "no design is bound" rather than
@@ -544,7 +550,8 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       /* Who finalized it, from the signature row; `none` on a finalized
          protocol is a finalization with no signature on record. */
       finalization: signatureOf(finalizationTarget(id)),
-      consent: consentEls.map((e) => ({ id: str(e.id), el: str(e.title), key: str(e.element_key), required: bool(e.required), present: bool(e.present) })),
+      consent: consentEls.map((e) => ({ id: str(e.id), el: str(e.title), key: str(e.element_key), required: bool(e.required), present: bool(e.present), complete: bool(e.present) && !(bool(e.required) && consentGate?.incomplete.includes(str(e.element_key))) && str(e.content).trim().length > 0 })),
+      consentGate,
       consentForm: latestConsentForm
         ? { id: str(latestConsentForm.id), title: str(latestConsentForm.title), version: str(latestConsentForm.version), status: str(latestConsentForm.status), formsLinked: g(byDoc.consentForms, id).length }
         : null,
