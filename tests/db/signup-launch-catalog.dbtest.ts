@@ -466,11 +466,16 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
     //     commercial verdict). Written out, not read from
     //     MDX_PROJECT_FEATURE_SURFACE_IDS: that constant widens the launch scope,
     //     so a pin that read it could not see a widening made through it;
+    //   - etmf (Vault, admitted 2026-11-12 by 2dc105c1b7, P-74/P-75: the Vault's
+    //     module stays vault; etmf is in the professional band, kept below it
+    //     only by an organisation that held filings before admission, which a
+    //     new signup never has);
     //   - ind-checklist (Submission Center, P-32);
     //   - the surfaces-only apps: cmc (P-28), rbm (P-76), biostatistics (P-77).
     // In launchSurfaces order, and nothing else is locked.
-    expect(locked).toEqual(['communication-center', ...'device-510k device-pma device-cer device-diagnostics device-clinical-studies device-software device-engineering device-udi device-postmarket device-presub human-factors labeling'.split(' '), 'ind-checklist', 'cmc', 'rbm', 'biostatistics'].map((id) => `${id}:tier`));
-    for (const id of ['cmc', 'rbm', 'biostatistics']) expect(v.get(id), id).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
+    expect(locked).toEqual(['communication-center', ...'device-510k device-pma device-cer device-diagnostics device-clinical-studies device-software device-engineering device-udi device-postmarket device-presub human-factors labeling'.split(' '), 'etmf', 'ind-checklist', 'cmc', 'rbm', 'biostatistics'].map((id) => `${id}:tier`));
+    for (const id of ['etmf', 'cmc', 'rbm', 'biostatistics']) expect(v.get(id), id).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
+    expect((await grantRows(orgId)).filter((grant) => grant.module_id === 'etmf')).toEqual([]);
     expect((await grantRows(orgId)).filter((grant) => ['cmc', 'rbm', 'biostatistics'].includes(grant.module_id))).toEqual([]);
     for (const s of rail.surfaces) {
       if (isLaunchSurface(s.id)) expect(s.source, s.id).not.toBe(LAUNCH_SCOPE_SOURCE);
