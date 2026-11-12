@@ -239,7 +239,8 @@
   .rbm-linkbtn:hover{border-color:var(--text-400);color:var(--text-100);}
   .rbm-linkbtn[aria-pressed="true"]{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}
   .rbm-kri-acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
-  .rbm-kri-sub{margin-top:9px;border-top:1px solid var(--bg-100);padding-top:9px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+  /* A narrow card scrolls the by-site list inside itself. */
+  .rbm-kri-sub{margin-top:9px;border-top:1px solid var(--bg-100);padding-top:9px;display:flex;flex-direction:column;align-items:flex-start;gap:7px;max-width:100%;overflow-x:auto;}
   .rbm-kri-sub-h{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);}
   .rbm-kri-sub-row{display:grid;grid-template-columns:56px 1fr 46px auto;align-items:center;gap:8px;font-size:10.5px;color:var(--text-300);}
   .rbm-kri-sub-row .bar{height:7px;border-radius:var(--radius-sm);background:var(--bg-100);overflow:hidden;}
@@ -254,9 +255,8 @@
   .rbm-kri-sites tbody th{color:var(--text-100);}
   .rbm-kri-sites td{padding:3px 6px 3px 0;color:var(--text-200);border-top:1px solid var(--bg-100);}
   .rbm-kri-trend{display:inline-flex;align-items:center;}
-  /* A reading and its date stay on one line; a narrow card scrolls the list inside itself. */
+  /* A reading and its date stay on one line. */
   .rbm-kri-sites :is(th,td){white-space:nowrap;}
-  .rbm-kri-sub{max-width:100%;overflow-x:auto;}
   .rbm-act-origin{margin-left:6px;font-size:var(--fs-caption);font-weight:600;color:var(--ai);background:var(--ai-muted);border-radius:var(--radius-sm);padding:0 5px;}
 
   /* KRI trend data-table equivalent */
