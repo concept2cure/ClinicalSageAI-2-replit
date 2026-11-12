@@ -3382,3 +3382,27 @@ What the founder chose is unchanged.
    device capability (question 4).
 5. **D8 adds nothing (RULE 6),** and files another session holds stay with it until its row releases them. F1 still
    takes the device screens' repairs and R1 their unreached capability.
+
+### P-129 — Rate limits are counted across API tasks, in Postgres: one table, `public.rate_limit_counters`
+
+**The question.** Production runs the API as more than one task, and coordinates them through Postgres, not Redis
+(B6, 2026-10-01). Sign-in sessions already follow that rule (`session_activity`). The sign-in and document rate limits
+do not: each task counts in its own memory, so a client gets each task's allowance, twice the limit on production's
+two tasks (MR-03 SEC-08, OPS-20). MR-03 Stage 7 steps 2–3 count them in Postgres, and that needs a new table, which
+RULE 6 leaves to the founder. NEW-2 asked whether B6 holds for rate limits as well as sessions.
+
+**The founder's answer, 2026-11-12.** Session `…01QoxbLbx` reported that the shared rate limits still needed the
+founder's approval for a new table. The founder answered: **"I approve and you still have much to do"**. Recorded by
+that session. Reversible by the founder.
+
+1. **One table, `public.rate_limit_counters`:**
+   - `organization_id INTEGER NOT NULL DEFAULT 0`, `bucket_key`, `window_start` and `hits`, keyed on the three;
+   - an index on `window_start`;
+   - the estate's row (organization 0), written and read under the system tenant scope only, as `session_activity` is;
+   - one migration in `C2C_MIGRATION_FILES` before the final sweep pair, `IF NOT EXISTS`-guarded, with no DROP
+     (RULE 1).
+2. **B6 holds for rate limits (NEW-2).** Postgres is the coordination store; no ElastiCache, no Redis.
+3. **What it counts:** the sign-in and document categories (`RATE_LIMIT_FAIL_CLOSED_CATEGORIES`) and the sign-in
+   limiters (`server/middleware/sign-in-limits.ts`), as MR-03 Stage 7 steps 2–3 say. The other categories stay per-task
+   ceilings, documented as such. No new `*_ACCEPT_*` override (P-43).
+4. **Nothing else is added:** no screen, no mount, no service file.
