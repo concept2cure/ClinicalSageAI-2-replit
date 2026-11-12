@@ -82,7 +82,6 @@
     "server/routes/inspections.ts",
     "server/routes/intelligence.ts",
     "server/routes/invention-disclosure.ts",
-    "server/routes/investigator-brochure.routes.ts",
     "server/routes/irb.ts",
     "server/routes/ivd-assessments.ts",
     "server/routes/ivd-completeness-routes.ts",
