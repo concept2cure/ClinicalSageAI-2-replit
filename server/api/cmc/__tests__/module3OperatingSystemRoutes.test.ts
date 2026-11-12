@@ -242,8 +242,9 @@ describe('module3OperatingSystemRoutes', () => {
     // The refusal names the section, its completeness and every missing input.
     expect(res.body.error).toContain('3.2.P.6');
     expect(res.body.error).toMatch(/0% complete/);
-    expect(res.body.error).toContain('containerClosureDescription');
-    expect(res.body.error).toContain('suitabilityJustification');
+    // Every missing input is named, in words rather than the composer's field names (307d82d2af).
+    expect(res.body.error).toContain('Missing required inputs: container closure description; suitability justification.');
+    expect(res.body.error).not.toMatch(/containerClosureDescription|suitabilityJustification/);
     expect(res.body.data).toEqual({
       completeness: 0,
       missingInputs: ['containerClosureDescription', 'suitabilityJustification'],
