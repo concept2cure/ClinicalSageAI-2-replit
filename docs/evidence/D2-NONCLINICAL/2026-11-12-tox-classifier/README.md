@@ -41,7 +41,22 @@ across `server`, `shared`, `client/src` and `tests`. No second classifier exists
   Severity alone is framed as severity. A rule that cannot be escalated, with an adverse change beside it, is
   indeterminate. A finding no rule describes, with an adverse change stated in it or beside it, is adverse.
 - The reason names the whole words that escalated, and says when a word of negation stands beside them.
-- A correlate that is not text is skipped.
+- A correlate that is not text is skipped (as the version before did; a draft of this change threw on one).
+
+## The review of the committed version (2026-11-12), and what changed after it
+
+An independent reviewer ran 3,925,548 inputs against the version before this change and refused the first commit:
+
+| Finding | Fix |
+|---|---|
+| **A hang.** The narrowed thyroid rule, `thyroid.*(follicular.*(hypertrophy|…)|…)`, backtracked in cubic time: 0.4 to 0.6 s on a 10,000-character finding, 3 to 5 s on 20,000. | Three anchored lookaheads, each read once. A timing case now reaches every rule with a long text. |
+| Wordings a report uses were not read: "increased alanine aminotransferase", "increases in serum ALT", "ALT elevation (3x)", "necrotizing", "hyperplastic". The version before missed them too. | The laboratory forms are bounded patterns over the spelled-out enzyme names, in either order; the stems read "necrotizing" and "hyperplastic". |
+| A correlate split across entries (`["increased", "ALT"]`) was no longer read as one (2,512 inputs, less adverse than before). | The correlates are also read joined. |
+| INHAND's "Hypertrophy, periportal, hepatocellular" fell out of the liver rule. | Up to two qualifiers between the change and the cell type, in either order. |
+| The negation note reached neither an adverse rule's reason nor the overview the 2.6 composer prints, so "no mortality" was listed as defining the NOAEL with no caveat. | The note is on every adverse reason, the finding carries `negationUnread`, and the overview names such findings and says a pathologist confirms. |
+| The thyroid case read only the finding: with "C-cell adenoma" in the organ field it still gave the enzyme-induction reason. Mild qualifiers ("minimal", "diffuse") fell out of it. | It applies only when hyperplasia is the only adverse word anywhere, and allows mild and distribution qualifiers. A focal, atypical or nodular hyperplasia gets the ordinary reason. |
+| Hyaline droplets with a stated necrosis went from adverse (the version before, by accident) to indeterminate. | Adverse, the conservative call, with the rule's rodent-specific human relevance said and left to a pathologist. |
+| The commit claimed a non-text correlate failed the whole batch before. It did not: the version before joined them. | The claim is withdrawn here and in the code; that test is marked as a guard. |
 
 ## What was tried and refused: reading negation
 
@@ -71,8 +86,13 @@ run against the committed classifier: 12 of 16 cases fail. The four that pass ar
 
 A differential over 13,056 inputs (17 findings, 24 adverse words, 16 phrasings, in the finding and as a correlate):
 
-- **0** answers less adverse than `HEAD`;
+- **0** answers less adverse than `HEAD` among inputs that hold an adverse word;
 - **0** answers of adaptive or monitor where an adverse word is stated.
+
+The reviewer's 3.9 million inputs found the same, outside the two cases now fixed (split correlates, and hyaline
+droplets beside another rule's lesion). An input with no adverse word can be answered less adversely than before: an
+INHAND "Hypertrophy, hepatocellular" given an unusual organ field is now adaptive where it was indeterminate; that is
+the rule doing what it says.
 
 Across severities, 36 answers go from adverse to indeterminate, all one case: a finding no rule describes ("liver:
 hypertrophy", "Kupffer cell hypertrophy", "thyroid: follicular atrophy") at moderate or marked severity. `HEAD` called
@@ -84,5 +104,6 @@ adverse word, in 23 phrasings that the refused versions got wrong, in the findin
 
 ## Suites
 
-`server/services/preclinical/__tests__`, `server/services/toxicology` and the three AnA test files that name the tool:
-16 files, 362 tests, all pass. ESLint: no warning in either file. `ci:typecheck:no-regression --incremental`: 0 errors.
+After the review's fixes: `server/services/preclinical/__tests__`, `server/services/toxicology` and the three AnA test
+files that name the tool: 17 files, 395 tests, all pass. ESLint: no warning in either file.
+`ci:typecheck:no-regression --incremental`: 0 errors.

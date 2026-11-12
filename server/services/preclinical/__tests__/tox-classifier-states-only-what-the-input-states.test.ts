@@ -18,8 +18,15 @@
  *    relevance. A rule that cannot be escalated (hyaline droplets) stayed
  *    adaptive with a necrosis stated beside it. A Kupffer cell hypertrophy, a
  *    follicular cell carcinoma and a C-cell hyperplasia were taken for the
- *    adaptive responses whose patterns they happened to match. A correlate that
- *    was not text failed the whole batch.
+ *    adaptive responses whose patterns they happened to match. "Increased
+ *    alanine aminotransferase", "necrotizing" and "hyperplastic" were not read.
+ *
+ * ── What the review of the first committed version found (2026-11-12) ───────
+ * Its narrowed thyroid pattern backtracked in cubic time: 3 to 5 s on a
+ * 20,000-character finding. A correlate split across entries (["increased",
+ * "ALT"]) was no longer read as one. INHAND's "Hypertrophy, periportal,
+ * hepatocellular" fell out of the liver rule. The negation note reached neither
+ * an adverse rule's reason nor the overview the 2.6 composer prints.
  *
  * ── What was tried and refused (never committed) ─────────────────────────────
  * Reading negation, so that "no necrosis" would not escalate. Two versions were
@@ -86,10 +93,36 @@ describe('an adverse change the input states is never missed', () => {
     expect(call('spleen', 'extramedullary haematopoiesis')).toEqual({ adversity: 'indeterminate', escalated: false });
   });
 
-  it('a long list is read in linear time', () => {
-    const started = performance.now();
-    classifyToxFinding({ organ: 'liver', finding: 'hepatocellular hypertrophy', correlates: ['necrosis, '.repeat(600), 'no necrosis or '.repeat(400)] });
-    expect(performance.now() - started).toBeLessThan(200);
+  it('a long text is read in linear time, whichever rule it reaches', () => {
+    const texts: Array<[string, string, string[]]> = [
+      ['liver', 'hepatocellular hypertrophy', ['necrosis, '.repeat(1000), 'no necrosis or '.repeat(700)]],
+      ['thyroid', 'thyroid follicular '.repeat(1100), []],
+      ['thyroid', 'follicular '.repeat(2000), ['hyperplasia '.repeat(900)]],
+      ['liver', 'hypertrophy, '.repeat(1500), ['increased '.repeat(1200)]],
+      ['adrenal', 'adrenal cortical '.repeat(1200), []],
+      ['kidney', 'x'.repeat(20000), ['y'.repeat(20000)]],
+    ];
+    const slow = texts.flatMap(([organ, finding, correlates]) => {
+      const started = performance.now();
+      classifyToxFinding({ organ, finding, correlates });
+      const ms = performance.now() - started;
+      return ms > 150 ? [`${organ} ${finding.slice(0, 30)}…: ${Math.round(ms)} ms`] : [];
+    });
+    expect(slow).toEqual([]);
+  });
+
+  it('the wordings a study report uses for a laboratory change, a necrotizing or a hyperplastic one, are adverse', () => {
+    const correlates = [
+      'increased alanine aminotransferase', 'increased serum ALT', 'increases in ALT and AST', 'ALT elevation (3x)', 'elevated plasma bilirubin',
+      'raised aspartate aminotransferase', 'necrotizing foci', 'hyperplastic foci',
+    ];
+    expect(correlates.filter((c) => call('liver', 'hepatocellular hypertrophy', [c]).adversity !== 'adverse')).toEqual([]);
+    expect(call('liver', 'hepatocellular hypertrophy; hyperplastic foci')).toEqual(ESCALATED);
+  });
+
+  it('a correlate split across entries is read as one statement', () => {
+    expect(call('liver', 'hepatocellular hypertrophy', ['increased', 'ALT'])).toEqual(ESCALATED);
+    expect(call('liver', 'hepatocellular hypertrophy', ['single', 'cell', 'death'])).toEqual(ESCALATED);
   });
 });
 
@@ -98,6 +131,15 @@ describe('negation is not read, and the reason says so', () => {
     expect(call('liver', 'hepatocellular hypertrophy without necrosis')).toEqual(ESCALATED);
     expect(call('liver', 'hepatocellular hypertrophy', ['no necrosis'])).toEqual(ESCALATED);
     expect(classifyToxFinding({ organ: 'kidney', finding: 'no tubular necrosis' }).adversity).toBe('adverse');
+  });
+
+  it('the note reaches an adverse rule\'s reason and the overview the 2.6 composer prints', () => {
+    const r = classifyToxFinding({ organ: 'liver', finding: 'No test article-related necrosis' });
+    expect(r.adversity).toBe('adverse');
+    expect(r.rationale).toMatch(/word of negation/);
+    const s = classifyToxFindings([{ organ: 'kidney', finding: 'no mortality' }, { organ: 'liver', finding: 'tubular necrosis' }]);
+    expect(s.overviewParagraph).toMatch(/For no mortality \(kidney\), the text also holds a word of negation/);
+    expect(s.overviewParagraph).not.toMatch(/For tubular necrosis/);
   });
 
   it('the reason names the negation and leaves it to a pathologist', () => {
@@ -111,13 +153,25 @@ describe('negation is not read, and the reason says so', () => {
 
 describe('a finding is not escalated by its own name', () => {
   it('thyroid follicular hyperplasia is adverse, says why, and leaves the adaptive reading to a pathologist', () => {
-    for (const finding of ['follicular cell hyperplasia', 'Hyperplasia, follicular cell', 'diffuse follicular cell hyperplasia', 'follicular cell hypertrophy/hyperplasia']) {
+    for (const finding of ['follicular cell hyperplasia', 'Hyperplasia, follicular cell', 'diffuse follicular cell hyperplasia', 'follicular cell hypertrophy/hyperplasia',
+      'follicular cell hyperplasia, minimal', 'Hyperplasia, follicular cell, diffuse, bilateral']) {
       const r = classifyToxFinding({ organ: 'thyroid', finding });
       expect({ finding, adversity: r.adversity, escalated: r.escalated, relevance: r.humanRelevance }).toEqual({ finding, adversity: 'adverse', escalated: false, relevance: 'uncertain' });
       expect(r.rationale).not.toMatch(/correlate/i);
       expect(r.rationale).toMatch(/pathologist/);
     }
     expect(classifyToxFindings([{ organ: 'thyroid', finding: 'follicular cell hyperplasia' }]).overviewParagraph).toMatch(/define the NOAEL/);
+  });
+
+  it('it is not that case when anything else adverse is stated, in the organ field too', () => {
+    const r = classifyToxFinding({ organ: 'thyroid C-cell adenoma', finding: 'follicular hyperplasia' });
+    expect({ adversity: r.adversity, escalated: r.escalated }).toEqual(ESCALATED);
+    expect(r.rationale).toMatch(/adenoma/);
+    for (const finding of ['Hyperplasia, follicular cell, focal', 'atypical follicular cell hyperplasia', 'nodular follicular cell hyperplasia']) {
+      const f = classifyToxFinding({ organ: 'thyroid', finding });
+      expect({ finding, adversity: f.adversity }).toEqual({ finding, adversity: 'adverse' });
+      expect(f.rationale).not.toMatch(/often a rodent-specific response/);
+    }
   });
 
   it('a stated correlate or a severity still escalates it, and is named', () => {
@@ -165,10 +219,11 @@ describe('the reason names what it rests on', () => {
     expect(classifyToxFinding({ organ: 'liver', finding: 'hepatocellular hypertrophy with necrosis', reversible: false }).reversibility).toBe('not_reversible');
   });
 
-  it('a rule that cannot be escalated, with an adverse change beside it, is a pathologist\'s call', () => {
+  it('a rule that cannot be escalated, with an adverse change beside it, is adverse, and its human relevance is said and left to a pathologist', () => {
     const r = classifyToxFinding({ organ: 'kidney', finding: 'hyaline droplet nephropathy with tubular degeneration and necrosis' });
-    expect({ adversity: r.adversity, relevance: r.humanRelevance }).toEqual({ adversity: 'indeterminate', relevance: 'rodent_specific' });
-    expect(r.rationale).toMatch(/pathologist judgement/);
+    expect({ adversity: r.adversity, relevance: r.humanRelevance }).toEqual({ adversity: 'adverse', relevance: 'rodent_specific' });
+    expect(r.rationale).toMatch(/pathologist's judgement/);
+    expect(call('thyroid', 'hyaline droplets with hyperplasia').adversity).toBe('adverse');
     expect(call('kidney', 'hyaline droplet accumulation')).toEqual(ADAPTIVE);
     expect(classifyToxFindings([{ organ: 'kidney', finding: 'hyaline droplet nephropathy with tubular necrosis' }]).overviewParagraph).not.toMatch(/not considered to limit the NOAEL/);
   });
@@ -178,9 +233,15 @@ describe('the reason names what it rests on', () => {
       expect({ finding, adversity: classifyToxFinding({ organ, finding }).adversity }).toEqual({ finding, adversity: 'indeterminate' });
     }
     expect(call('liver', 'hypertrophy of hepatocytes')).toEqual(ADAPTIVE);
+    for (const finding of ['Hypertrophy, periportal, hepatocellular', 'Hypertrophy, diffuse, hepatocellular', 'Hypertrophy (hepatocellular)', 'Hypertrophy; hepatocellular',
+      'hepatocellular, centrilobular, hypertrophy']) {
+      expect({ finding, ...call('liver', finding) }).toEqual({ finding, ...ADAPTIVE });
+      expect({ finding, ...call('liver', finding, [], 'marked') }).toEqual({ finding, ...ESCALATED });
+    }
     expect(call('thyroid gland', 'follicular epithelial hypertrophy')).toEqual(ADAPTIVE);
   });
 
+  // A guard: the version before this change read these too. A first draft of it threw on them.
   it('a correlate that is not text is not read, and does not fail the batch', () => {
     expect(call('liver', 'hepatocellular hypertrophy', [null, 42, { name: 'necrosis' }] as unknown as string[])).toEqual(ADAPTIVE);
     expect(call('liver', 'hepatocellular hypertrophy', ['necrosis', null as unknown as string])).toEqual(ESCALATED);

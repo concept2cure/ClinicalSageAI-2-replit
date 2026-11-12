@@ -55,6 +55,8 @@ export interface ClassifiedFinding {
   references: string[];
   /** True when an otherwise-adaptive finding was escalated by correlates/severity. */
   escalated: boolean;
+  /** Set when an adverse word stands beside a word of negation, which this classifier does not read. */
+  negationUnread?: true;
 }
 
 export interface ToxFindingsSummary {
@@ -84,8 +86,20 @@ interface KbEntry {
 // (ADVERSE_WORDS), so this list cannot fall behind them. 2026-11-12: the
 // adjectives ("necrotic", "fibrotic") and the reversed order ("ALT increased")
 // were not read.
-const ADVERSE_CORRELATES =
-  /necro(?:sis|ses|tic)|degener|inflammat|fibro(?:sis|tic)|hyperplasia|neoplas|tumou?r|single[-\s]?cell death|apoptosis|vacuolation with|impair|dysfunction|increased\s+(?:alt|ast|alp|alkaline|bilirubin|ggt|creatinine|bun)|elevated\s+(?:alt|ast|alp|bilirubin)|\b(?:alt|ast|alp|bilirubin|ggt|creatinine|bun)\s+(?:increased|elevated)|mortality|moribund/i;
+const LAB = String.raw`(?:alt|ast|alp|alkaline phosphatase|alanine aminotransferase|aspartate aminotransferase|gamma[-\s]?glutamyl\w*|ggt|bilirubin|creatinine|bun|urea)`;
+const RISE = String.raw`(?:increase[sd]?|elevat\w*|raised|higher)`;
+const ADVERSE_CORRELATES = new RegExp(
+  [
+    String.raw`necro(?:sis|ses|tic|ti[sz]\w*)`, 'degener', 'inflammat', String.raw`fibro(?:sis|tic)`, 'hyperplas', 'neoplas', String.raw`tumou?r`,
+    String.raw`single[-\s]?cell death`, 'apoptosis', 'vacuolation with', 'impair', 'dysfunction',
+    // "increased ALT", "increases in serum ALT", "elevated alanine aminotransferase"; and the reversed order,
+    // "ALT increased", "ALT elevation". Each part is bounded, so a long text cannot make it backtrack.
+    String.raw`${RISE}\s+(?:in\s+)?(?:(?:the\s+)?(?:serum|plasma)\s+)?${LAB}`,
+    String.raw`\b${LAB}\s+(?:${RISE}|elevation|rise)`,
+    'mortality', 'moribund',
+  ].join('|'),
+  'i',
+);
 
 const SEVERE_GRADE = /moderate|marked|severe|grade\s*[4-5]/i;
 
@@ -94,7 +108,9 @@ const KB: KbEntry[] = [
   {
     // Hepatocellular only. Until 2026-11-12 the pattern ended in liver.*hypertrophy,
     // which took a Kupffer cell or stellate cell hypertrophy for enzyme induction.
-    pattern: /(?:hepatocellular|hepatocytes?|hepatocytic|centrilobular)(?:,?\s+\w+)?,?\s+hypertrophy|hypertrophy,?\s+(?:of\s+(?:the\s+)?)?(?:hepatocellular|hepatocytes?|hepatocytic|centrilobular)/,
+    // INHAND writes the cell type after the change, with qualifiers between: "Hypertrophy, periportal,
+    // hepatocellular", "Hypertrophy (hepatocellular)". Up to two words of either kind; each step is bounded.
+    pattern: /(?:hepatocellular|hepatocytes?|hepatocytic|centrilobular)(?:[\s,;:()]+[a-z-]+){0,2}[\s,;:()]+hypertrophy|hypertrophy(?:[\s,;:()]+[a-z-]+){0,2}[\s,;:()]+(?:hepatocellular|hepatocytes?|hepatocytic|centrilobular)/,
     baseAdversity: 'adaptive_non_adverse',
     reversibility: 'reversible',
     humanRelevance: 'low',
@@ -118,7 +134,10 @@ const KB: KbEntry[] = [
     // 2026-11-12 the pattern was thyroid.*(follicular|hypertrophy|hyperplasia):
     // it took a C-cell hyperplasia, a follicular cell carcinoma, a follicular
     // cyst and a parathyroid change for this response.
-    pattern: /\bthyroid\b.*(?:\bfollicular\b.*(?:hypertrophy|hyperplasia)|(?:hypertrophy|hyperplasia).*\bfollicular\b)/,
+    // Anchored lookaheads, each read once: the first version of this narrowing,
+    // thyroid.*(follicular.*(hypertrophy|…)|…), backtracked in cubic time and
+    // took 3 to 5 s on a 20,000-character finding.
+    pattern: /^(?=[\s\S]*\bthyroid\b)(?=[\s\S]*\bfollicular\b)(?=[\s\S]*(?:hypertrophy|hyperplasia))/,
     baseAdversity: 'adaptive_non_adverse',
     reversibility: 'reversible',
     humanRelevance: 'rodent_specific',
@@ -209,7 +228,7 @@ const ADVERSE_WORDS = new RegExp(
  * must not. So the reason says when a negation is there, and a pathologist
  * reads it.
  */
-const NEGATION = /\b(?:no|not|without|absence|absent|free\s+of|negative\s+for|lack\s+of|lacking|neither|nor|none)\b/i;
+const NEGATION = /\b(?:no|not|without|absence|absent|free\s+of|negative\s+for|lack\s+of|lacking|neither|nor|none|non-|un(?:impaired|remarkable|affected))/i;
 
 /**
  * The whole finding, when it is thyroid follicular hyperplasia and nothing
@@ -218,8 +237,11 @@ const NEGATION = /\b(?:no|not|without|absence|absent|free\s+of|negative\s+for|la
  * It is still adverse (a hyperplastic change is not called adaptive here), and
  * the reason now says why, and that the adaptive reading is a pathologist's.
  */
-const THYROID_FOLLICULAR_HYPERPLASIA_ONLY =
-  /^\s*(?:thyroid(?:\s+gland)?\s*:?\s*)?(?:diffuse\s+)?(?:hyperplasia,?\s+)?follicular(?:[\s-]+(?:cells?|epithelial|epithelium))?(?:[\s-]+(?:hypertrophy\s*(?:\/|and|or)\s*)?hyperplasia)?(?:,?\s*diffuse)?\s*$/;
+const MILD = String.raw`(?:diffuse|bilateral|unilateral|minimal|mild|slight|grade\s*[12])`;
+const THYROID_FOLLICULAR_HYPERPLASIA_ONLY = new RegExp(
+  String.raw`^\s*(?:thyroid(?:\s+gland)?\s*:?\s*)?(?:${MILD}\s+)?(?:hyperplasia,?\s+)?follicular(?:[\s-]+(?:cells?|epithelial|epithelium))?`
+    + String.raw`(?:[\s-]+(?:hypertrophy\s*(?:\/|and|or)\s*)?hyperplasia)?(?:,?\s*${MILD}){0,2}\s*$`,
+);
 
 /**
  * Classify a single target-organ finding.
@@ -233,21 +255,20 @@ const THYROID_FOLLICULAR_HYPERPLASIA_ONLY =
  *    an escalated finding kept the adaptive rule's "reversible" and its low
  *    human relevance, neither of which the input had said;
  *  - a rule that cannot be escalated (hyaline droplets) stayed "adaptive,
- *    non-adverse" with a necrosis stated beside it;
- *  - a correlate that was not text failed the whole batch.
+ *    non-adverse" with a necrosis stated beside it.
  * It does not read negation (see NEGATION): a stated absence counts as present.
  */
 export function classifyToxFinding(input: ToxFindingInput): ClassifiedFinding {
   const { text, words, inCorrelates, negated } = adverseWordsOf(input);
   const entry = KB.find(k => k.pattern.test(text));
   if (!entry) return unmatched(input, words, negated);
-  if (entry.baseAdversity === 'adverse') return asKnown(input, entry);
-  // A rule that cannot be escalated, with an adverse change stated beside it:
-  // neither "adaptive" nor "adverse" is this classifier's to say.
+  if (entry.baseAdversity === 'adverse') return asKnown(input, entry, negated);
+  // A rule that cannot be escalated, with an adverse change stated beside it.
   if (!entry.escalable) return words.length ? besideAdverseChange(input, entry, words, negated) : asKnown(input, entry);
 
   const isSevere = SEVERE_GRADE.test(normalizeSeverity(input.severity));
-  if (isThyroidFollicularHyperplasiaOnly(input, entry, inCorrelates.length > 0 || isSevere)) return thyroidFollicularHyperplasia(input, entry);
+  const onlyItsOwnWord = words.every((w) => /^hyperplasia$/i.test(w));
+  if (isThyroidFollicularHyperplasiaOnly(input, entry, inCorrelates.length > 0 || isSevere || !onlyItsOwnWord)) return thyroidFollicularHyperplasia(input, entry);
   if (!words.length && !isSevere) return asKnown(input, entry);
 
   const finding = `${capitalize(input.finding)} in the ${input.organ}`;
@@ -266,6 +287,7 @@ export function classifyToxFinding(input: ToxFindingInput): ClassifiedFinding {
       : `${finding}, at moderate or greater severity, is considered adverse.`,
     references: entry.references,
     escalated: true,
+    ...(negated ? { negationUnread: true as const } : {}),
   };
 }
 
@@ -273,7 +295,8 @@ export function classifyToxFinding(input: ToxFindingInput): ClassifiedFinding {
 function adverseWordsOf(input: ToxFindingInput): { text: string; words: string[]; inCorrelates: string[]; negated: boolean } {
   const text = `${input.organ} ${input.finding}`.toLowerCase();
   const stated = (input.correlates ?? []).filter((c): c is string => typeof c === 'string').map((c) => c.toLowerCase());
-  const inCorrelates = stated.flatMap((c) => c.match(ADVERSE_WORDS) ?? []);
+  // Each correlate alone, and all of them together: ["increased", "ALT"] is one statement split in two.
+  const inCorrelates = [...stated, stated.join(' ')].flatMap((c) => c.match(ADVERSE_WORDS) ?? []);
   const words = [...new Set([...(text.match(ADVERSE_WORDS) ?? []), ...inCorrelates].map((w) => w.replace(/\s+/g, ' ')))];
   return { text, words, inCorrelates, negated: words.length > 0 && [text, ...stated].some((t) => NEGATION.test(t)) };
 }
@@ -292,18 +315,20 @@ function statedReversibility(input: ToxFindingInput, adversity: Adversity): Reve
   return input.reversible === false && adversity === 'adverse' ? 'not_reversible' : null;
 }
 
-/** The rule's own call, unchanged. */
-function asKnown(input: ToxFindingInput, entry: KbEntry): ClassifiedFinding {
+/** The rule's own call, unchanged; with the negation note when an adverse call stands beside a word of negation. */
+function asKnown(input: ToxFindingInput, entry: KbEntry, negated = false): ClassifiedFinding {
+  const noted = negated && entry.baseAdversity === 'adverse';
   return {
     organ: input.organ,
     finding: input.finding,
     adversity: entry.baseAdversity,
     reversibility: statedReversibility(input, entry.baseAdversity) ?? entry.reversibility,
     humanRelevance: entry.humanRelevance,
-    rationale: `Classified ${entry.baseAdversity.replace(/_/g, ' ')} — ${entry.framing}.`,
+    rationale: `Classified ${entry.baseAdversity.replace(/_/g, ' ')} — ${entry.framing}.${noted ? NEGATION_NOTE : ''}`,
     overviewFraming: `${capitalize(input.finding)} in the ${input.organ} is ${entry.framing}.`,
     references: entry.references,
     escalated: false,
+    ...(noted ? { negationUnread: true as const } : {}),
   };
 }
 
@@ -323,6 +348,7 @@ function unmatched(input: ToxFindingInput, adverseWords: string[], negated: bool
       rationale: `No established pattern matched the finding, but adverse changes are stated with it: ${words.join(', ')}.${negated ? NEGATION_NOTE : ''}`,
       overviewFraming: `${capitalize(input.finding)} in the ${input.organ}, with adverse correlates, is considered adverse.`,
       references: ['STP adversity framework (Kerlin 2016)'],
+      ...(negated ? { negationUnread: true as const } : {}),
     };
   }
   return {
@@ -335,18 +361,23 @@ function unmatched(input: ToxFindingInput, adverseWords: string[], negated: bool
   };
 }
 
-/** A rule that cannot be escalated, with adverse changes stated beside its finding: a pathologist's call. */
+/**
+ * A rule that cannot be escalated (α2u-globulin), with adverse changes stated beside its finding: adverse, the
+ * conservative call. Whether those changes belong to the male-rat mechanism, and so have no human counterpart, is the
+ * pathologist's: the rule's human relevance is kept and said.
+ */
 function besideAdverseChange(input: ToxFindingInput, entry: KbEntry, words: string[], negated: boolean): ClassifiedFinding {
   return {
     organ: input.organ,
     finding: input.finding,
-    adversity: 'indeterminate',
-    reversibility: input.reversible == null ? 'unknown' : input.reversible ? 'reversible' : 'not_reversible',
+    adversity: 'adverse',
+    reversibility: statedReversibility(input, 'adverse') ?? 'unknown',
     humanRelevance: entry.humanRelevance,
-    rationale: `Normally ${entry.baseAdversity.replace(/_/g, ' ')} (${entry.framing}), but adverse changes are stated beside it: ${words.join(', ')}. Classification requires pathologist judgement in study context.${negated ? NEGATION_NOTE : ''}`,
-    overviewFraming: `${capitalize(input.finding)} in the ${input.organ} requires case-by-case adversity assessment.`,
+    rationale: `Normally ${entry.baseAdversity.replace(/_/g, ' ')} (${entry.framing}), but adverse changes are stated beside it: ${words.join(', ')}. Considered adverse here; whether they belong to that mechanism is a pathologist's judgement.${negated ? NEGATION_NOTE : ''}`,
+    overviewFraming: `${capitalize(input.finding)} in the ${input.organ}, with adverse changes beside it, is considered adverse; its human relevance is a pathologist's judgement.`,
     references: entry.references,
-    escalated: false,
+    escalated: true,
+    ...(negated ? { negationUnread: true as const } : {}),
   };
 }
 
@@ -382,6 +413,12 @@ export function classifyToxFindings(inputs: ToxFindingInput[]): ToxFindingsSumma
         .map(f => `${f.finding} (${f.organ})`)
         .join('; ')}. These define the NOAEL.`,
     );
+    const negated = adverseFindings.filter(f => f.negationUnread);
+    if (negated.length) {
+      parts.push(
+        `For ${negated.map(f => `${f.finding} (${f.organ})`).join('; ')}, the text also holds a word of negation, which this classification does not read; a pathologist confirms.`,
+      );
+    }
   } else {
     parts.push('No frankly adverse target-organ findings were identified.');
   }
