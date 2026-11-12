@@ -270,6 +270,62 @@ describe('Master Licensing — applying a plan', () => {
     await waitFor(() => expect(document.body.textContent).toMatch(/7 modules granted/i));
   });
 
+  // Running app, 2026-11-12: the outcome rendered for ~200 ms, then the
+  // re-read the provisioning run triggers cleared it. waitFor alone catches
+  // that brief window, so this waits for the re-read to land first.
+  it('keeps the outcome on screen after the workspace is re-read', async () => {
+    // A fresh object per read, as a real response body is: handing back the
+    // same object made the re-read invisible to React and the test vacuous.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(JSON.parse(JSON.stringify(TENANT_DETAIL)));
+      if (method === 'POST' && url.endsWith('/provision')) {
+        return ok({ id: 42, name: 'Northwind Bio', tier: 'standard', granted: 0, enabledTotal: 4, retainedAboveTier: [{ moduleId: 'pv-cockpit', name: 'PV cockpit' }] });
+      }
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    await openTenant();
+    const tenantReads = () => apiRequest.mock.calls.filter((c: unknown[]) => c[0] === 'GET' && String(c[1]).startsWith(`${LICENSING}/tenants/`)).length;
+    const before = tenantReads();
+    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
+    fireEvent.click(apply as HTMLButtonElement);
+    await completeConfirmDialog('applying the standard plan');
+    await waitFor(() => expect(tenantReads()).toBeGreaterThan(before));
+    await new Promise((r) => setTimeout(r, 50));
+    const text = document.body.textContent ?? '';
+    expect(text).toMatch(/no new modules to grant for Northwind Bio/i);
+    expect(text).toMatch(/above this plan/i);
+  });
+
+  // The rail locks a module outside the release whatever the licence says, so
+  // the console says the same and offers no Grant or Turn off that would not
+  // reach the customer (running app, 2026-11-12).
+  it('reads a module outside the release as the rail does, with nothing to press', async () => {
+    const detail = {
+      ...TENANT_DETAIL,
+      launchScope: { enforced: true },
+      modules: [
+        ...TENANT_DETAIL.modules,
+        { moduleId: 'deep-research', name: 'Deep research', category: null, minTier: 'free', subscriptionState: 'none', effective: false, source: 'launch-scope' },
+      ],
+    };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(detail);
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    await openTenant();
+    const row = (await screen.findByText('Deep research')).closest('[role="row"]') as HTMLElement;
+    expect(row.textContent).toMatch(/Not in this release/);
+    expect(row.textContent).toMatch(/No change reaches this workspace/);
+    expect(row.querySelector('button')).toBeNull();
+    // A module inside the release keeps its control.
+    const pv = (await screen.findAllByText('PV cockpit')).map((n) => n.closest('[role="row"]')).find(Boolean) as HTMLElement;
+    expect(pv.querySelector('button')?.textContent).toMatch(/Turn off/);
+  });
+
   it('reports nothing at all when provisioning fails', async () => {
     // A provisioning result that did not happen must never appear.
     routeTenant(async (url) => {
@@ -282,6 +338,37 @@ describe('Master Licensing — applying a plan', () => {
     await completeConfirmDialog('deliberate failure');
     await waitFor(() => expect(document.body.textContent).toMatch(/Provisioning failed/));
     expect(document.body.textContent).not.toMatch(/modules granted|no new modules to grant/i);
+  });
+});
+
+describe('Master Licensing — the category filter', () => {
+  // The catalog holds 'Submissions' and 'submissions'; a case-sensitive list
+  // showed two options and 'Submissions' hid five modules (2026-11-12).
+  it('offers one option per category whatever its case, and it finds every module in it', async () => {
+    const mods = [
+      { ...MODULE, moduleId: 'ind-lifecycle', name: 'IND lifecycle', category: 'Submissions' },
+      { ...MODULE, moduleId: 'ind-filing', name: 'IND Filing Suite', category: 'submissions' },
+      { ...MODULE, moduleId: 'ce-marking', name: 'EU MDR / IVDR', category: 'submissions' },
+      { ...MODULE, moduleId: 'analytics-hub', name: 'Analytics Hub', category: 'analytics' },
+    ];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok({ ...PAYLOAD, modules: mods });
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    render(<MasterLicensing />);
+    const select = (await screen.findByLabelText('Category')) as HTMLSelectElement;
+    await waitFor(() => expect(select.options.length).toBeGreaterThan(1));
+    const labels = Array.from(select.options).map((o) => o.textContent);
+    expect(labels).toEqual(['All categories', 'Analytics', 'Submissions']);
+    fireEvent.change(select, { target: { value: 'submissions' } });
+    await waitFor(() => {
+      const text = document.body.textContent ?? '';
+      expect(text).toContain('IND lifecycle');
+      expect(text).toContain('IND Filing Suite');
+      expect(text).toContain('EU MDR / IVDR');
+      expect(text).not.toContain('Analytics Hub');
+    });
   });
 });
 
@@ -562,5 +649,10 @@ describe('the console tab strip stays on the screen', () => {
     // min-width: 915px wide in a 390px page, everything cut off at the right.
     const column = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-lic'));
     expect(column.some((r) => decl(r.body, 'min-width') === '0'), 'the column is as wide as its widest table').toBe(true);
+    // The visually hidden `.ml-vh` labels are position:absolute; unless the
+    // scroll box is their containing block its overflow does not clip them,
+    // and the page scrolled sideways to 509-823px at 390px (2026-11-12).
+    const box = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-scroll'));
+    expect(box.some((r) => decl(r.body, 'position') === 'relative'), 'hidden labels widen the page').toBe(true);
   });
 });

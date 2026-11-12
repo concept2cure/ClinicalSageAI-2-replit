@@ -101,7 +101,7 @@ interface LicensingPayload {
   organizations: LicensingOrg[];
 }
 
-type ModuleSource = 'subscribed' | 'included' | 'disabled' | 'tier' | 'industry';
+type ModuleSource = 'subscribed' | 'included' | 'disabled' | 'tier' | 'industry' | 'launch-scope';
 
 interface TenantModule {
   moduleId: string;
@@ -158,6 +158,9 @@ function verdictText(m: TenantModule): string {
         : 'Above their plan';
     case 'industry':
       return 'Not offered for their industry';
+    case 'launch-scope':
+      // The rail's own lock (navigation-entitlements applyLaunchScope).
+      return 'Not in this release';
     default:
       return m.effective ? 'Available to this workspace' : 'Not available to this workspace';
   }
@@ -306,8 +309,15 @@ export function MasterLicensing() {
   >(null);
   useEffect(() => {
     setOrgTier(tenant.data?.organization?.tier ?? null);
-    setProvisionResult(null); // a previous tenant's result must never sit over this one
   }, [tenant.data]);
+  // A previous workspace's result must never sit over this one. Cleared when
+  // the selection changes, not on every re-read of the same workspace: the
+  // provisioning run re-reads it at once, and clearing there removed the
+  // outcome ("Still granted above this plan") within about 200 ms (running
+  // app, 2026-11-12), leaving only a toast that does not mention it.
+  useEffect(() => {
+    setProvisionResult(null);
+  }, [selectedOrg]);
 
   const [flags, setFlags] = useState<FeatureFlag[] | null>(null);
   const flagSeed = useRef<FeatureFlag[] | null>(null);
@@ -332,16 +342,30 @@ export function MasterLicensing() {
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
 
+  // One option per category, whatever its case. The catalog holds both
+  // 'Submissions' and 'submissions' (an older seed wrote slugs), and a
+  // case-sensitive list showed them as two: picking 'Submissions' hid five
+  // submission modules (running app, 2026-11-12). The key is the lower-cased
+  // value; the label is a recorded spelling with capitals, else the slug
+  // with its first letter raised.
   const categories = useMemo(() => {
-    const set = new Set<string>();
-    for (const m of moduleRows) if (m.category) set.add(m.category);
-    return Array.from(set).sort();
+    const labels = new Map<string, string>();
+    for (const m of moduleRows) {
+      if (!m.category) continue;
+      const key = m.category.toLowerCase();
+      const seen = labels.get(key);
+      if (!seen || (seen === seen.toLowerCase() && m.category !== m.category.toLowerCase())) labels.set(key, m.category);
+    }
+    return Array.from(labels, ([key, label]) => ({
+      key,
+      label: label === label.toLowerCase() ? label.charAt(0).toUpperCase() + label.slice(1) : label,
+    })).sort((a, b) => a.label.localeCompare(b.label));
   }, [moduleRows]);
 
   const visibleModules = useMemo(() => {
     const q = search.trim().toLowerCase();
     return moduleRows.filter((m) => {
-      if (category !== 'all' && (m.category ?? '') !== category) return false;
+      if (category !== 'all' && (m.category ?? '').toLowerCase() !== category) return false;
       if (!q) return true;
       return (
         m.name.toLowerCase().includes(q) ||
@@ -414,6 +438,8 @@ export function MasterLicensing() {
         return;
       }
       fireToast(`${action.label} moved to ${tierLabel(action.to)}.`);
+      // The last provisioning run was against the previous plan.
+      setProvisionResult(null);
       // The tier changes every verdict on the list, and only the server can
       // recompute them. Re-read rather than guess.
       retry();
@@ -765,11 +791,12 @@ export function MasterLicensing() {
         return { ok: false, reason: 'A governed confirmation is open on this console — let the person finish or cancel it first.' };
       }
       const needle = raw.toLowerCase();
-      const target = needle === 'all' ? 'all' : categories.find((c) => c.toLowerCase() === needle);
+      const found = categories.find((c) => c.key === needle || c.label.toLowerCase() === needle);
+      const target = needle === 'all' ? 'all' : found?.key;
       if (!target) {
         return {
           ok: false,
-          reason: `No module category named "${raw}". On screen: all, ${categories.join(', ')}.`,
+          reason: `No module category named "${raw}". On screen: all, ${categories.map((c) => c.label).join(', ')}.`,
         };
       }
       const switched = tab !== 'packaging';
@@ -777,7 +804,7 @@ export function MasterLicensing() {
       setCategory(target);
       return {
         ok: true,
-        detail: `Filtered the module catalog to ${target}` + (switched ? ' on the packaging tab' : ''),
+        detail: `Filtered the module catalog to ${found?.label ?? target}` + (switched ? ' on the packaging tab' : ''),
       };
     },
     'master-licensing.search-modules': (params) => {
@@ -872,7 +899,7 @@ export function MasterLicensing() {
                   >
                     <option value="all">All categories</option>
                     {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c.key} value={c.key}>{c.label}</option>
                     ))}
                   </select>
                 </div>
@@ -1078,14 +1105,19 @@ export function MasterLicensing() {
                       </button>
                     </div>
 
-                    {/* Changing the tier writes no subscription rows — provisioning
-                        is a separate act. Said here rather than left implicit,
-                        because a plan change that appears to have taken effect and
-                        has not is the failure this control exists to prevent. */}
+                    {/* Changing the tier writes no subscription rows, but every
+                        module without a row of its own follows the tier at once
+                        (license-manager canAccessModule), so the customer's rail
+                        changes immediately. The note said the opposite until
+                        2026-11-12, when the running app showed CMC, Biostatistics,
+                        Risk-based monitoring and Communication open on a move to
+                        Professional with nothing applied. Applying the plan writes
+                        grants, and a grant outlives a later downgrade. */}
                     <p className="ml-note">
-                      Changing the plan does not grant its modules on its own. Apply
-                      the plan to grant what this tier includes. Nothing is ever
-                      revoked by applying a plan.
+                      A new plan takes effect at once for every module this
+                      workspace holds no grant of its own for. Applying the plan
+                      writes its modules as grants: a grant stays if the plan is
+                      later lowered, and applying a plan never revokes one.
                     </p>
 
                     {provisionResult && (
@@ -1155,14 +1187,20 @@ export function MasterLicensing() {
                                 <div className="ml-sub">{verdictText(m)}</div>
                               </div>
                               <div role="cell">
-                                <button
-                                  type="button"
-                                  className="btn ghost"
-                                  onClick={() => askTenantModule(m, !m.effective)}
-                                >
-                                  {m.effective ? 'Turn off' : 'Grant'}
-                                  <span className="ml-vh"> {m.name}</span>
-                                </button>
+                                {m.source === 'launch-scope' ? (
+                                  // Outside the release no grant or turn-off reaches
+                                  // the customer, so none is offered.
+                                  <span className="ml-sub">No change reaches this workspace</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn ghost"
+                                    onClick={() => askTenantModule(m, !m.effective)}
+                                  >
+                                    {m.effective ? 'Turn off' : 'Grant'}
+                                    <span className="ml-vh"> {m.name}</span>
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ))}

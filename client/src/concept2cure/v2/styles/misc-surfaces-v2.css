@@ -729,7 +729,13 @@
 .c2c-v2 .ml-count{ margin-left:auto; font-size:12px; color:var(--text-300); font-variant-numeric:tabular-nums; }
 
 /* ── Tables ──────────────────────────────────────────────────────────────── */
-.c2c-v2 .ml-scroll{ overflow-x:auto; }
+/* `position:relative` makes the scroll box the containing block of the
+   visually hidden `.ml-vh` labels inside its rows' buttons. They are
+   position:absolute, and with no positioned ancestor their containing block
+   was the page, so this box's overflow did not clip them: at 390px the page
+   itself scrolled sideways to 509px on Feature flags, 549px on a workspace's
+   modules and 823px on Trials (2026-11-12). */
+.c2c-v2 .ml-scroll{ overflow-x:auto; position:relative; }
 .c2c-v2 .ml-table{
   --ml-cols: minmax(230px,2fr) minmax(330px,auto) minmax(140px,.7fr);
   min-width:760px; border:1px solid var(--border); border-radius:var(--radius-md);
