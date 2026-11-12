@@ -1,3 +1,9 @@
+-- 2026-11-12 (MR-03 Stage 6 steps 4-6, OPS-17): amended in place (CLAUDE.md RULE 1).
+-- Seeds a second runtime profile, `ectd-in-process`, for a route's own long work
+-- recorded as a job (eCTD compile and sequence assemble answer 202 and the screen
+-- polls; server/services/compute/computeService.ts startRouteJob). INSERT … ON
+-- CONFLICT DO NOTHING: additive, and a deployed row is never rewritten. Nothing
+-- was removed.
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS artifact_compute_runtime_profiles (
@@ -106,5 +112,23 @@ ON CONFLICT (profile_key) DO UPDATE SET
   timeout_seconds = EXCLUDED.timeout_seconds,
   enabled = EXCLUDED.enabled,
   updated_at = NOW();
+
+-- A route's own work, run in the API process that answered its 202 (2026-11-12).
+INSERT INTO artifact_compute_runtime_profiles (
+  profile_key, display_name, language, image_ref, network_policy,
+  cpu_limit_millis, memory_limit_mb, timeout_seconds, enabled
+)
+VALUES (
+  'ectd-in-process', 'In-process route job (eCTD compile and assemble)', 'node', NULL, 'deny_all',
+  60000, 512, 1800, TRUE
+)
+ON CONFLICT (profile_key) DO NOTHING;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM artifact_compute_runtime_profiles WHERE profile_key = 'ectd-in-process') THEN
+    RAISE EXCEPTION 'artifact_compute_runtime_profiles: the ectd-in-process profile was not seeded';
+  END IF;
+END $$;
 
 COMMIT;

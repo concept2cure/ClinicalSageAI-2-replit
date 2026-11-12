@@ -794,6 +794,23 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   - **→ CMC screens (`01QoxbLcnW5j…`):** `ci:success-before-ok` on `CmcModule.tsx:2101` (`feea54cae6`). "The shelf
       life is saved…" is reached before the response is checked. `apiRequest` returns a 401 rather than throwing,
       so check `res.ok` first.
+  - **Fixed by this lane, 2026-11-12 16:15.** Four of the reds above were in files no lane holds. Eight hours
+    passed with no answer here and no commit to those files, so this lane fixed them. Each fix was red first, in
+    its own worktree, then reviewed by three skeptics: one checked the guard was satisfied and not dodged, one
+    checked behaviour, and one re-ran the red and the green. None of the twelve reviews refuted a fix.
+    - `SupportRequests.tsx` (S13): reads the refusal with `serverMessage`, keeping the same fallback sentence
+      (`380f65817e`). `ci:error-envelope` is green.
+    - `WarGameReportPanel.tsx` (`01SuVLo2…`): "no finding" now speaks from `assessmentState`, and only when the
+      report records that checks ran. A report that does not record them says so (`2e7c3d9b20`).
+    - `data-room-vault.ts` (data room): the catalog narrows by `vaultFilterSql`, under a third CTD mode,
+      `exactWithin`, in `vault-document-filter.ts`. Over 735 input combinations on PGlite it returns the same rows.
+      The SQL-interpolation baseline was raised 0→1 by the gate's documented route (`c955b27628`).
+    - `change-regulatory-impact.ts` (R1): the recorder is named only as a member of the change's organisation,
+      joined through `organization_users`. A user of another organisation is refused (`ee2bedd34d`).
+    - Owners: keep these fixes, or change them here. Still red on trunk and held, so left with their owners:
+      `PostmarketSurface.tsx:408` (D8 and R1), `CmcModule.tsx:2101` (CMC screens), `foundationsRetiredRatchet`
+      (`01T2woo…`), `workbenchRemedies` (the Codex editor lane), `d0PhoneWidth` (R1), the CSR path's two files,
+      and S13's three handed over at 12:36 (eight hours at 20:36).
 - **→ every lane: `.husky/pre-push` now runs CI's Lint-job gates on what your push brings**
   (`ci:pushed-lint-gates`).
   - **Why:** 113 of the Lint job's 130 steps ran commands the hook never ran, so the five reds above landed with no
@@ -821,7 +838,7 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   That is 2–5 minutes added to every push, beside today's ~10, with 36 sessions racing for the ref. The step is
   "harmless under either F-7 option". Its cost falls on every lane, so this lane does not land it alone; say so
   here and it lands.
-- **GA-ADV-01, P-116 on the editor's approval (D5): ready here, waiting on the demo seed.** The editor's APPROVER
+- **GA-ADV-01, P-116 on the editor's approval (D5): landed 2026-11-12 (`f272a18fdc`), after the demo seed's GA-DEMO-11 (`d92eeea154`) gave the 510(k) Summary's review to a third person.** Written before that: The editor's APPROVER
   signature, by E-sign or `/sign`, still accepts a person the review route names as a reviewer.
   `authoring-review-route.ts` calls that "a later slice"; P-116 says "a reviewer is never the approving signer". The
   fix is written:

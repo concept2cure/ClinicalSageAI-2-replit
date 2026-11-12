@@ -59,10 +59,18 @@ describe('listVaultForCatalog', () => {
     const query = vi.fn(async () => answer([row()], [{ facet: 'folder', value: 'module-5', label: null, n: 1 }, { facet: 'project', value: P, label: 'Open project', n: 1 }]));
     const page = await listVaultForCatalog(7, { programId: P, programIds: [P, OTHER.toUpperCase()], kind: 'protocol', ctd: '5.3', q: 'dose' }, { query });
     const [sql, args] = query.mock.calls[0] as unknown as [string, unknown[]];
-    expect(args).toEqual([7, [P, OTHER], null, 'protocol', '5.3', null, null, null, 'dose', 200, 0]);
+    expect(args).toEqual([7, [P, OTHER], null, null, null, 'dose', 200, 0, ['protocol'], ['5.3'], ['5.3.%']]);
+    // The kind and section are the Vault's one metadata predicate (vault-document-filter.ts), the section as recorded
+    // or beneath it by whole segment, as the catalog matches its captures.
+    expect(sql).toContain(' AND d.evidence_kind = ANY($9::text[])');
+    expect(sql).toContain(' AND (d.ctd_section = ANY($10::text[]) OR d.ctd_section LIKE ANY($11::text[]))');
+    expect(sql).not.toMatch(/folder_id = /);
     // The catalog's own page: its limit (never more than 200) and offset.
-    await listVaultForCatalog(7, { programId: P, programIds: [P], limit: 50, offset: 100 }, { query });
-    expect((query.mock.calls[1] as unknown as [string, unknown[]])[1].slice(-2)).toEqual([50, 100]);
+    expect(sql).toMatch(/LIMIT \$7 OFFSET \$8\)/);
+    await listVaultForCatalog(7, { programId: P, programIds: [P], limit: 50, offset: 100, folder: 'module-5' }, { query });
+    const [folderSql, folderArgs] = query.mock.calls[1] as unknown as [string, unknown[]];
+    expect(folderArgs.slice(6)).toEqual([50, 100, ['module-5']]);
+    expect(folderSql).toContain(' AND d.folder_id = ANY($9::text[])');
     expect(sql).not.toMatch(/protocol|dose/);
     expect(page.total).toBe(1);
     expect(page.documents[0]).toMatchObject({ documentId: row().id, projectId: P, title: 'Protocol v3', folder: 'module-5', folderLabel: 'Module 5 · Clinical',

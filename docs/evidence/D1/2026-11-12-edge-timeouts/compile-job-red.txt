@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/routes/ectd-compile-async-job.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-async-job.test.ts
+{
+  "timestamp": "2026-11-12T16:37:22.023Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-async-job.test.ts [ tests/routes/ectd-compile-async-job.test.ts ]
+Error: Missing route GET /:projectIdent/jobs/:jobId
+ ❯ Module.handlerOf tests/routes/ectd-compile-spine.harness.ts:19:21
+     17|     (l: any) => l.route?.path === routePath && l.route?.methods?.[meth…
+     18|   );
+     19|   if (!layer) throw new Error(`Missing route ${method.toUpperCase()} $…
+       |                     ^
+     20|   return layer.route.stack[layer.route.stack.length - 1].handle;
+     21| }
+ ❯ tests/routes/ectd-compile-async-job.test.ts:34:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:37:20
+   Duration  2.93s (transform 1.73s, setup 115ms, import 0ms, tests 0ms, environment 0ms)
+

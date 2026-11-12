@@ -14,6 +14,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
+import { ApiRequestError } from '@/lib/queryClient';
 import { Training, helpViewFromLocation } from '../surfaces/Training';
 
 const json = (status: number, body: unknown) => ({ ok: status < 300, status, json: async () => body, headers: new Headers() }) as unknown as Response;
@@ -105,6 +106,25 @@ describe('support requests on Help & training', () => {
     expect(within(alert).getByText('The request was not sent')).toBeTruthy();
     expect(within(alert).getByText(/Nothing was saved/)).toBeTruthy();
     expect((screen.getByLabelText('Subject') as HTMLInputElement).value).toBe('Hello there');
+  });
+
+  it('a refusal apiRequest throws shows the server’s own sentence, and the failed-write sentence in place of infrastructure text', async () => {
+    // apiRequest throws ApiRequestError for every non-401 failure, carrying the parsed envelope as its payload.
+    let refusal: unknown = { error: { code: 'SUPPORT_UNAVAILABLE', message: 'The support request could not be recorded with its audit record. Nothing was saved.' } };
+    const answer = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'POST') throw new ApiRequestError('The server could not complete this request. Try again.', 503, refusal, 'SUPPORT_UNAVAILABLE');
+      return answer(method, url, body);
+    });
+    window.history.replaceState(null, '', '/concept2cure/training?request=new&subject=Hello+there&details=Something+went+wrong+here.');
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Send request' }));
+    expect(within(await screen.findByRole('alert')).getByText('The support request could not be recorded with its audit record. Nothing was saved.')).toBeTruthy();
+
+    refusal = { error: { code: 'INTERNAL', message: 'relation "support_tickets" does not exist' } };
+    fireEvent.click(screen.getByRole('button', { name: 'Send request' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('The request could not be sent. Nothing was saved.'));
+    expect(screen.getByRole('alert').textContent).not.toMatch(/relation|support_tickets/);
   });
 
   it('replies, marks resolved, and rates', async () => {
