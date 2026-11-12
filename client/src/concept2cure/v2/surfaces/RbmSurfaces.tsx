@@ -419,6 +419,21 @@ export function RbmStarters({ nav, onAsk, layout }: { nav: RbmNavItem; onAsk: (t
   );
 }
 
+/** The conversation before its first turn: one question, what she is looking at, and what to ask. */
+function RbmAnaHello({ nav, study, onAsk }: { nav: RbmNavItem; study: string; onAsk: (t: string) => void }) {
+  return (
+    <div className="rbm-ana-hello">
+      <p className="rbm-ana-hello-t">{study ? `What should we look at in ${study}?` : 'What should we look at?'}</p>
+      <div className="rbm-ana-ctx">
+        <span className="rbm-ana-ctx-k">On this surface</span>
+        <span className="rbm-ana-ctx-v">{nav.label}</span>
+        <p className="rbm-ana-ctx-note">AnA reads the figures on this board and runs the same monitoring tools the buttons run. A plan or report she drafts stays a draft until it is approved.</p>
+      </div>
+      <RbmStarters nav={nav} onAsk={onAsk} />
+    </div>
+  );
+}
+
 export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo, drawer }: {
   nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
   onAsk: (t: string) => void; onClose: () => void;
@@ -442,9 +457,12 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
   // Follow the newest turn. An empty conversation stays at its top, where the question is.
   useEffect(() => { if (endRef.current && msgs.length > 0) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
   const drawerRef = useDialog(onClose, Boolean(drawer));
+  // Docked, it is a panel beside the board; as a drawer it is a dialog that takes focus.
+  const frame = drawer
+    ? { role: 'dialog', 'aria-modal': true, tabIndex: -1, ref: drawerRef as React.RefObject<HTMLElement> }
+    : { 'data-docked': '' };
   const panel = (
-    <aside className="rbm-ana de" data-docked={drawer ? undefined : ''} aria-label="AnA — risk-based monitoring"
-      role={drawer ? 'dialog' : undefined} aria-modal={drawer || undefined} tabIndex={drawer ? -1 : undefined} ref={drawer ? (drawerRef as React.RefObject<HTMLElement>) : undefined}>
+    <aside className="rbm-ana de" aria-label="AnA — risk-based monitoring" {...frame}>
       <div className="de-h">
         <div>
           <div className="de-h-t"><span className="rbm-ana-mk" aria-hidden="true">{'✻'}</span>AnA</div>
@@ -479,17 +497,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
         </div>
       )}
       <div className="rbm-ana-scroll" ref={endRef}>
-        {empty && (
-          <div className="rbm-ana-hello">
-            <p className="rbm-ana-hello-t">{study ? `What should we look at in ${study}?` : 'What should we look at?'}</p>
-            <div className="rbm-ana-ctx">
-              <span className="rbm-ana-ctx-k">On this surface</span>
-              <span className="rbm-ana-ctx-v">{nav.label}</span>
-              <p className="rbm-ana-ctx-note">AnA reads the figures on this board and runs the same monitoring tools the buttons run. A plan or report she drafts stays a draft until it is approved.</p>
-            </div>
-            <RbmStarters nav={nav} onAsk={onAsk} />
-          </div>
-        )}
+        {empty && <RbmAnaHello nav={nav} study={study} onAsk={onAsk} />}
         {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} onNav={onNav} onStartDemo={onStartDemo} />)}
       </div>
       {/* With a conversation under way the open tab's suggestions stay one tap away, in one quiet row. */}
