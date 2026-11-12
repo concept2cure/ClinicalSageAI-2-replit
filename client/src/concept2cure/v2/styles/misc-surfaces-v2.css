@@ -395,9 +395,11 @@
   /* The list: one toolbar row (search, saved views, the two scopes), the facets
      under it, where the list is, then the rows. */
   .vd-list{ display:flex; flex-direction:column; gap:10px; min-width:0; }
-  /* Finding a document sits across the structure and the list (Vault.tsx `vd-findbar`), so the six filters share
-     one row where the room allows: each as narrow as 104px, sharing the row evenly. */
+  /* Finding a document sits across the whole Library, over the structure, the list and the record (Vault.tsx
+     `vd-findbar`, the first child of `.vd-grid`), so the six filters share one row where the room allows: each as
+     narrow as 104px, sharing the row evenly. Docked, the record starts under it. */
   .vd-findbar{ grid-column:1 / -1; display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .vd-grid:not(.wa-split) > .vd-findbar{ margin:0 0 16px; }
   .vd-findbar > .vd-facets[aria-label="Filter documents"]{ display:grid; grid-template-columns:repeat(auto-fit, minmax(104px, 1fr)); align-items:end; }
   .vd-findbar > .vd-facets[aria-label="Filter documents"] .vd-facet .c2c-input{ width:100%; max-width:none; }
   .vd-findbar > .vd-facets[aria-label="Filter documents"] > .vd-find-note{ grid-column:1 / -1; }
@@ -559,6 +561,8 @@
   /* Confirm N suggested (VR-11b): above a folder's list, one reason for the set. */
   .vd-confirm{ display:flex; flex-direction:column; gap:6px; margin:0; }
   .vd-confirm-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  /* What awaits confirmation, and its "Confirm…" on the same line (VaultConfirmSuggested.tsx). */
+  .vd-confirm > .vd-confirm-acts > .vd-dr-meta{ flex:1 1 180px; min-width:0; }
   .vd-confirm-form{ display:flex; flex-direction:column; gap:6px; max-width:560px; }
   /* The form is a column, so the reason field's row basis (flex:1 1 200px, for a field beside its button) would
      read as a 200px height: the field takes its rows. */
