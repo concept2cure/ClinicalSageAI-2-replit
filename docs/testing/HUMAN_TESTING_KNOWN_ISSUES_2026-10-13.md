@@ -386,3 +386,83 @@ should read as unavailable, never as zero.
   nothing in the rail or on Home leads to "not in this release".
 
 Known issues on this journey (bold = stops it): ARCH-01, ARCH-14, ARCH-21, CAT1-07, DATA-11, DATA-12, UX-14, OPS-02, OPS-17, P11-05, P11-15, SEC-02, SEC-21, SEC-23, SEC-24, SEC-25, SEC-26, SEC-27, SEC-28.
+
+### 10. Licensing and access: who can open what
+
+Walked end to end in the running app on 2026-11-12 at `922e6519c` plus the
+three repairs listed at the end of this journey, as three people at once
+([evidence](../evidence/F1/2026-11-12-licensing-at-head/)). It runs across
+every app, so it needs three browser profiles (or one normal window and two
+private ones).
+
+**Set-up, on the recipe above.**
+
+- **The platform owner** is the account `seed-admin.mjs` created. The owner is
+  named by configuration, never by code. Add both of these to step 4's
+  command, with that account's e-mail: `MASTER_ADMIN_EMAILS=<owner e-mail>`
+  and `PLATFORM_ADMIN_EMAILS=<owner e-mail>`. Both lists are needed, and they
+  apply only to a password sign-in. The other way is an audited `super_admin`
+  designation in Access Management.
+- **The release's locks.** Also add `LAUNCH_SCOPE_ENFORCE=on`. Unset, it is
+  off under `NODE_ENV=development` and on in production. Without it you are
+  not testing what a customer sees.
+- **A customer's administrator.** In a private window, sign up at
+  `/concept2cure/signup`. The password must not contain your name, e-mail
+  address or organisation; if it does, the form returns to step 1 and says
+  so. On the legal step, each checkbox enables once you scroll that agreement
+  to its end. The new organisation is on the Free plan with the launch
+  catalog.
+- **A member of that customer.** As the customer's administrator: account
+  menu → Admin → **Invite member**, role Member. With no SMTP configured,
+  the page shows the setup link. Open it in the third profile and set a
+  password.
+
+**Steps.**
+
+1. **As the member, read the rail.** Communication, CMC / Module 3,
+   Biostatistics and Risk-based monitoring each show a lock, and hovering says
+   "not included in your subscription". Projects, Tasks, Vault, Submission
+   Center, Quality and Reporting & analytics open.
+2. **Ask for a locked app.** Click CMC / Module 3. The dialog says it is
+   included from Professional, and offers "Why you need it (optional)" and
+   **Ask an administrator**. Write a reason and ask. Open it again: "You
+   asked for this feature on <date>. It is with your administrators."
+3. **As the customer's administrator,** click the same app. You get
+   **Compare subscriptions** and no request button: an administrator decides
+   rather than asks. Account menu → **Access requests** lists the member's
+   request with the reason.
+4. **As the owner, decide.** Account menu → **Platform licensing** →
+   **Access requests**. The request shows its workspace, who asked and why.
+   **Approve** is a governed action: a reason of at least three characters,
+   then type `yes`.
+5. **As the member, reload.** The lock is gone. CMC / Module 3 opens inside a
+   project, so with none yet it opens Projects and says "CMC / Module 3 opens
+   inside a project".
+6. **Decline.** The member asks for Communication; the owner declines it with
+   a reason. The member's dialog now reads "Declined on <date>. Reason given:
+   …", and Communication stays locked. They can ask again.
+7. **A time-limited grant.** As the owner, **Trials**: the customer's
+   workspace, Risk-based monitoring, an end date (or 30, 60 or 90 days), then
+   **Open the grant** with a reason and `yes`. The row says when it ends,
+   that the Free plan does not include the module, and that access ends with
+   the grant. The member's rail opens Risk-based monitoring.
+8. **The record.** As the owner, **Decisions**: the approval, the decline and
+   the trial each appear, newest first, with the operator, workspace, module
+   and reason, under a chain verdict. Where record sealing is not configured
+   it says seals could not be checked. That is honest, not a defect.
+9. **Look, do not touch:** **Enforcement** shows the mode this deployment
+   inherits and what has been measured. Changing it reaches every server
+   within 30 seconds, so leave it alone on a shared stack.
+
+**Working:** nothing opens without a recorded reason, and every owner decision
+appears in Decisions. A locked app explains itself and never opens a blank
+screen. A member never sees an approve control. A customer's administrator never
+sees Platform licensing. After a period of inactivity a session ends and the page
+asks you to sign in again; that is the session control, not a defect.
+
+**Fixed while this was walked, so a recurrence is a regression:** the console's
+tabs were clipped to a 1px strip, so only Packaging could be reached; at phone
+width the console was 915px wide and cut off at the right; and the owner's
+answers to access requests were missing from Decisions.
+
+Known issues on this journey (bold = stops it): GTM-02, GTM-05, UX-05.
