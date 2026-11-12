@@ -1532,8 +1532,10 @@ deployed store as the person who runs it, one project or every project they can 
 own assessment of a study. It counted the retired store's tables organization-wide, and failed on a deployed
 database. The type id is kept; its label is "Trial master file filings and readiness", and its scopes are project
 and account (L-3). It was run in the app on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step1-report-pack/`.
-Steps 2 (AnA's reads) and 3 (AnA's retired write tools) are next, by the plan named above. Step 2's partial patch
-from 2026-11-11 is kept outside the tree and is unverified. "Not applicable" (P-124 item 5) is on the deployed
+**Step 2 is done** (F1, `76185b6434`). AnA's `get_tmf_view`, `review_tmf_completeness` and the trial master file part
+of `search_all_documents` read the deployed store, held to the projects the person can open. On a deployed database
+the search had named the trial master file store unavailable on every call. Evidence
+`docs/evidence/D2-ETMF/2026-11-12-e4-step2-ana-reads/`. Step 3 (AnA's retired write tools) is next. "Not applicable" (P-124 item 5) is on the deployed
 store, so step 3's retirement of `update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
