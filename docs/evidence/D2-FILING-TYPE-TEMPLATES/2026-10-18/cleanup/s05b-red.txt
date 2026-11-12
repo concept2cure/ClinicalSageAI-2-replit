@@ -1,0 +1,11 @@
+s05b red: server/routes/__tests__/gcc-ectd-seeder-migration-retired.test.ts on trunk 51c52751e (the parent of this change), 2026-11-09T19:52Z
+ × server/routes/__tests__/gcc-ectd-seeder-migration-retired.test.ts > S05b: migration 038 (the GCC eCTD seeder) is retired > the migration file is gone 
+ × server/routes/__tests__/gcc-ectd-seeder-migration-retired.test.ts > S05b: migration 038 (the GCC eCTD seeder) is retired > the migrations manifest no longer lists it 
+ ✓ server/routes/__tests__/gcc-ectd-seeder-migration-retired.test.ts > S05b: migration 038 (the GCC eCTD seeder) is retired > it was never on the deploy applier, so no DROP is owed (RULE 1) 
+ ✓ server/routes/__tests__/gcc-ectd-seeder-migration-retired.test.ts > S05b: migration 038 (the GCC eCTD seeder) is retired > no server, client or shared code reads the ectd schema it created 
+ ✓ server/routes/__tests__/gcc-ectd-seeder-migration-retired.test.ts > S05b: migration 038 (the GCC eCTD seeder) is retired > the replacement is reached: project creation scaffolds the filing documents 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected '{\n  "$schema": "https://concept2cure…' not to contain '038_gcc_ectd_seeder_service.sql'
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)

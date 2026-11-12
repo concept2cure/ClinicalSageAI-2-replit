@@ -561,3 +561,266 @@ default export.
 - IND sections → `getAllINDSections` and `getRequiredSections` (kept).
 
 **Gates:** typecheck: 0 errors. The 22 test files that name these modules: 383 pass.
+
+## R1 batch 1 — six retirements the founder approved (2026-11-09)
+
+**Decision:** on 2026-11-09 the founder chose "list first" for this lane's R1 retirements. The lane then brought the
+exact list, verified on HEAD (`1398b4168`): 26 items, 6 ready, 13 for a decision, 5 blocked and 2 changed. The
+founder approved all six ready items: S05b, S10, S12, S13, S19 and S29. The 13 decision items go to the founder one
+at a time. S10 waits for RIM's C3 commit to `server/routes/submissions.ts`, at the coordinating session's direction.
+This section records the five that landed here.
+
+**The rule (R1, COORDINATION.md, P-107 row):** code nothing calls is retired only when three conditions hold:
+- nothing called it in any history;
+- what it did is reachable somewhere else, named by path;
+- no table or column is dropped.
+
+The coordinating session added a fourth: the replacement must be shown to work.
+
+### What already exists (RULE 3)
+
+- **The verified list:** each item was re-checked on HEAD for its files, mounts and callers today. Its history callers
+  were searched in a full-history copy of the repository: 19,286 commits back to the first import on 2025-11-20. The
+  working clone is shallow (five weeks), so that copy was needed. For the six, no screen ever called any of their
+  routes, including through runtime-built paths.
+- **The replacements,** each named in its slice below. Each was opened and used in the running app before its
+  deletion (`r1-batch-1/app-walk.txt` and screenshots), on a local database migrated by `deploy-migrate` (466 files)
+  with the biotech demo pack seeded.
+- **History searched:**
+  - `git log --all --diff-filter=D` on every deleted path, in the full-history copy. None of these files was deleted
+    and rebuilt before.
+  - `git log -S` over `client/` and `shared/` for every retired route path. No client commit ever named one.
+
+### Proof for the batch (all five applied together)
+
+- **The server boots and loses exactly these routes.** The R1 inventory's own trace
+  (`docs/evidence/DESIGN/R1/2026-11-01-inventory/method/trace.cjs`, `compose.py`) was preloaded into the running
+  server, on trunk `51c52751e` and again with all five slices applied. Both booted with no "Failed to mount" line.
+  The live route table went from 3,993 handlers to 3,979 and lost exactly the 14 retired routes. Nothing else changed
+  and nothing was added (`r1-batch-1/route-trace-before-after.txt`).
+- **The R1 inventory, re-run:** `resolve.cjs` and `match.py` over both tables. The 14 retired handlers all read
+  `caller=none`. The count with a client caller is 1,384 before and after, and every other handler keeps its
+  classification (`r1-batch-1/r1-inventory-rerun.txt`).
+- **The patched server, probed:** the replacements answer 200 and each retired route answers 404
+  (`r1-batch-1/patched-server-probe.txt`).
+- **Not used, and why:** `prove-module-unused.mjs` scores only the modules nothing imports (73 candidates). Every
+  file deleted here was mounted, so the live trace and the history search are its proof instead.
+
+### S05b — delete migration 038, the GCC eCTD seeder, replaced by the record and the project scaffold
+
+**Deleted:** `db/migrations/038_gcc_ectd_seeder_service.sql`. It created the `ectd` schema:
+- `ectd.module_structure`;
+- `ectd.project_folders`;
+- three functions;
+- two views.
+
+**What already exists:**
+- **Readers:** nothing in `server/`, `shared/` or `client/src` reads any of these objects. The last two readers were
+  `ECTDScaffoldingService.ts`, deleted in `7a7428755` (2026-10-15), and `server/api/ectd/routes.ts`, deleted in
+  `3c394edb3` (2026-10-25).
+- **Screen:** the one screen that used its endpoints, `components/gcc/ECTDModuleBrowser.tsx`, was deleted in
+  `7a144fd1e` (2026-05-01).
+- **Appliers:** only `install-fresh` step 6 and the CI psql loops applied it, through their `*_gcc_*` glob. It was
+  never in `C2C_MIGRATION_FILES`.
+- **Replacement:** a project's filing documents are scaffolded from the record when the project is created, by
+  `scaffoldProjectDocuments` (`server/services/c2c/scaffold-project-documents.ts`). It is called by
+  `POST /api/c2c/projects` (`server/routes/c2c/projects.ts`) and sent by project intake.
+
+**RULE 1:** no DROP is appended. Deployed databases keep the objects, and a fresh install no longer creates them.
+
+**Changed:**
+- `migrations_manifest.json` drops 038 from the "regulatory" group and from the execution order. It was re-synced with
+  `npm run db:sync-manifest` (291 files), and `db:sync-manifest:check` passes.
+- `scripts/db/deploy-migrate.mjs`: the stale "43 files" now reads the measured count, 39 files and 175 tables.
+
+**Left, as the plan says:**
+- The `ectd.project_folders` row in `20260813_child_table_parent_scoped_rls.sql`, which is `to_regclass`-guarded.
+- `tests/db/child-table-parent-scoped-rls.cases.ts`, which asserts only when the table exists.
+- `_legacy/015`.
+
+**CI's own loop, run:** `r1-batch-1/s05b-gcc-migration-loop.txt`. CI's "Apply GCC migrations" step (`psql -v
+ON_ERROR_STOP=1` over `db/migrations/*_gcc_*.sql`) was run on a scratch database twice. With 038 all 40 apply. Without
+it all 39 apply, and no `ectd` schema is created. 052 and 053 use `ectd_v4`, a different schema.
+
+**Red:** `s05b-red.txt`. `gcc-ectd-seeder-migration-retired.test.ts` fails 2 of 5 on trunk, both on assertions: the
+file exists, and the manifest lists it. The 3 controls pass on trunk:
+- it was never on the deploy applier;
+- nothing reads the schema;
+- the replacement is reached.
+
+**Gates:** all exit 0:
+- `ci:migration-drop-safety` and `ci:migration-set-order`;
+- `check-duplicate-table-ddl`, `check-migration-reachability` and `check-journey-migration-reachability`;
+- `ci:unkeyed-request-tables` and `db:sync-manifest:check`.
+
+### S12 — delete `/api/biopharma/ctd` and its build-state helpers, replaced by AnA `get_ctd_module_home` and the filing outline
+
+**Deleted:**
+- `server/routes/biopharma/ctd.ts`, which served `GET /structure` and `GET /build-state/:projectId`, and its mount in
+  `server/bootstrap/register-inline-routes.ts`.
+- From `server/services/regulatory/ctd-module-structure.ts`, the build-state helpers only that route used:
+  `annotateModuleBuildState`, `SectionStatusRow`, `ModuleBuildState`, `CtdSectionState`, `SectionStatus`,
+  `moduleReadiness`, `coerceStatus` and their two status sets. Its three cases in
+  `tests/services/regulatory/ctd-module-structure.test.ts` went with them.
+
+**What already exists:**
+- **Callers:** no screen ever called either route. Across the full history, the only client request was
+  `BiopharmaProject.tsx` asking for the mount root, which never had a handler. That screen was retired in `e3c80c548`
+  (2026-07-31). Production refused both routes.
+- **The structure:** AnA `get_ctd_module_home` (`server/services/ana/AnaToolExecutor.ts`), over `getCtdModuleHome`,
+  which stays with the structure tests.
+- **A filing's sections and their state:** `GET /api/c2c/documents/:id/outline` (`server/routes/c2c/documents.ts`). It
+  is read by the editor's filing outline (`client/src/concept2cure/v2/useFilingOutline.ts`) and by AnA
+  `list_authoring_outline`. In the running app the editor shows "Filings in this project · FDA · IND — home filing"
+  and its section tree. The outline answers 200 (`r1-batch-1/app-02-editor-filing-outline.png`,
+  `patched-server-probe.txt`).
+
+**Changed:**
+- `get_ctd_module_home`'s description (`bla-biologics-tool-defs.ts`) no longer sends the model to the retired route. It
+  names `list_authoring_outline` instead. `docs/ana-capability-manifest.json` was regenerated with
+  `npm run manifest:ana`: that one line, and nothing else.
+- The route file's entries leave `scripts/ci/tenant-resolvers-baseline.json` and
+  `docs/reports/requestdb-coverage-baseline.json`.
+- A comment in `csr-workflow-routes.ts` that cited its build-state pattern.
+
+**Red:** `s12-red.txt`. `biopharma-ctd-route-retired.test.ts` fails 4 of 5 on trunk, all on assertions: the file, the
+mount, the helper export and the tool sentence. The control, that both replacements are reached, passes on trunk.
+
+**Gates:** all exit 0:
+- `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
+- `audit-requestdb-coverage.mjs --strict-no-regression` and `ci:tenant-resolvers`;
+- the 15 tool-selection, manifest and `get_ctd_module_home` suites: 461 pass.
+
+### S13 — delete the orchestrator's five request-body builders, replaced by the program's run and AnA's Module 2 tools
+
+**Deleted:** from `server/routes/submission-orchestrator.ts`, these five routes:
+- `POST /m2/nonclinical`, `/m2/clinical` and `/m2/clinical-overview`;
+- `POST /csr/tabulate`;
+- `POST /validate/hardened`.
+
+Their imports went with them, as did `auditOrchestratorAccess`, which only they called. A dated note where they stood
+names the replacements.
+
+**Why:** each built Module 2 summaries, CSR tables or a go/no-go validation from whatever the request body carried.
+No record backed it and nobody approved it. That is the defect `/m2/qos` was retired for on 2026-10-05 (RULE 2).
+
+**What already exists:**
+- **Callers:** no screen ever called any of the five. Their paths appear in client and shared history only as a
+  registry comment, `4a4e92b3d`. Production refused them.
+- **A run built from the program's records:** `POST /api/submission-orchestrator/runs/for-program`, sent by eCTD
+  Compile's run controls (`client/src/concept2cure/v2/surfaces/OrchestratorRunControls.tsx`). Its m2.4, m2.5, m2.7, CSR
+  and gateway steps (`server/services/submission-package-orchestrator.ts`) call the same builders over stored inputs.
+  - In the running app the controls load saved runs (200).
+  - Build package run refuses with its named reason (409): the demo project records no agency application number
+    (`r1-batch-1/app-05-build-package-run.png`). That is the designed fail-closed answer. Nothing edits the number after
+    a project is created.
+- **The hardened validator** stays at sign and release (`server/routes/submission-sign-release.ts`).
+- **AnA's Module 2 tools,** over the project's records.
+- **Kept:** the three schemas the run itself uses, `NonclinicalStudySchema`, `CSRInputSchema` and `StudyDataSchema`.
+
+**Changed:**
+- The file header.
+- The `package.validate` comment in `submission-package-orchestrator.ts`.
+- `module3-regional-readiness.test.ts`: its pin required the route file to name `JURISDICTION_REGIONS`. That held only
+  because `/validate/hardened` derived its enum from it. Its intent, no hand-written region list in the file, is still
+  asserted, and it passes 38 of 38.
+
+**Left, as the plan says:**
+- `csr-readiness-launch-claim.test.ts`, whose paths stay unmapped.
+- The `ui-surface-registry.ts` comment, which belongs to the UI lane (H10).
+
+**Red:** `s13-red.txt`. `orchestrator-request-body-builders-retired.test.ts` fails 6 of 8 on trunk, all on assertions:
+the five routes and the audit helper. The two controls pass on trunk: the run route is reached, and the run still
+composes with the builders.
+
+**Gates:**
+- `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
+- the orchestrator suites, including `orchestrator-csr-readiness.pglite.test.ts` and
+  `submission-orchestrator-inputs.pglite.test.ts`.
+
+### S19 — delete GCC drafting and the GCC eCTD prototype, replaced by AnA `batch_draft_sections` and the record
+
+**Deleted:**
+- `server/api/drafting/routes.ts`, mounted at `/api/gcc/drafting`: `generate`, `sessions`, `sessions/:id`, `stats` and
+  `extract-entities`.
+- Its tests, `gcc-drafting-governance.test.ts` and `tests/routes/drafting-store-not-provisioned.test.ts`.
+- `server/api/gcc/ectd/routes.js`, mounted at `/api/gcc/ectd`: `modules` and `status`.
+
+**What already exists:**
+- **Callers:** no screen ever called a route either file serves today. An older module browser called other GCC eCTD
+  endpoints, which were already gone. Production refused all of these.
+- **What the routes did:** the drafting routes read `vault.*` tables that no applier provisions. `/modules` answered
+  the same five strings for every caller.
+- **Cited drafting:** AnA `batch_draft_sections` (`server/services/ana/AnaToolExecutor.ts`), blueprint-grounded
+  (`blueprint-grounded-drafting.test.ts`).
+- **Entity extraction:** AnA `extract_submission_document`.
+- **The module list:** `MODULE_NAMES` and the record's ICH M4 headings.
+- **The rest of the GCC platform** keeps its honest state. `GET /api/gcc/health` answers 200, with signing, site
+  intelligence and labeling `not_implemented`.
+
+**Changed:**
+- `server/api/gcc/index.ts` loses the two imports and mounts, and gains a dated header note.
+- `server/api/gcc/modules.ts` drops the `ectd` and `drafting` declarations.
+- `register-document-routes.ts`: the mount log line no longer claims eCTD or Vault.
+- The baselines that named the deleted file shrink:
+  - `tables-live-schema-baseline.json`: 33 → 29;
+  - `unbacked-tables-baseline.json`: 16 → 14;
+  - `unapproved-model-pins-baseline.json`;
+  - `check-embedding-runtime-canonicality.mjs`.
+- The laptop script `scripts/test-cognitive-fabric.ts` names the replacement instead of the retired route.
+
+**Red:** `s19-red.txt`. `gcc-drafting-and-ectd-prototype-retired.test.ts` fails 4 of 5 on trunk, all on assertions:
+the files, the mounts, the declarations and the baselines. The control, that the AnA tools are registered, passes on
+trunk.
+
+**Gates:** all exit 0:
+- `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
+- `ci:unbacked-tables` and `ci:unapproved-model-pins`;
+- `check-embedding-runtime-canonicality.mjs` and `ci:unreferenced-modules`.
+
+`ci:unreferenced-modules` reports 71, against a baseline of 73. Its note about `auditLogger.js` and
+`services/index.ts` is the same on trunk. `ci:tables-live-schema` needs an install-fresh database and was not run.
+This change only removes entries for the file it deletes.
+
+### S29 — delete the second Module 3 compile path, replaced by Module 3 build's composer
+
+**Deleted:** from `server/services/cmc-module3-compiler.ts`:
+- `compileModule3Sections` and `markStaleSections`;
+- their `SECTION_MAP`;
+- the types `CmcSourceObject` and `CompiledSection`.
+
+**Kept:** `createSourceHash`, `summarizeSectionDiff` and `canFinalizeExport`, all live.
+
+**What already exists:**
+- **Callers:** only tests used the two functions. No client or shared commit ever named them.
+- **The compile path:** CMC / Module 3 → Module 3 build → "Compile Module 3" (`CmcModule3Build.tsx`). It sends
+  `POST /api/cmc/module3-os/compile/:projectId` (`server/api/cmc/module3OperatingSystemRoutes.ts`), whose
+  `composeProjectModule3` (`server/services/cmc/module3-compile.ts`) composes through
+  `composeModule3FromCanonicalSources` (`server/services/module3Composer.ts`).
+- **Staleness:** `impactedSectionsForSourceType` and `server/services/cmc/section-drift.ts`.
+- **In the running app:**
+  - Compile Module 3 answers 200 on the small-molecule C2C-201: 21 sections, 18 ready to compile
+    (`r1-batch-1/app-09-compile-module3-small-molecule.png`).
+  - It refuses the biologic C2C-101 with the P-28 composition boundary's reason.
+- **The old map was wrong.** It said a container-closure change affects only 3.2.S.6 and 3.2.P.7. The composer's rule
+  table also names 3.2.P.2 and 3.2.A.1.
+
+**Tests repointed:**
+- `tests/module3-e2e-journey.test.ts` and `tests/module3-workflow-convergence.test.ts`: the stale cases now ask
+  `impactedSectionsForSourceType`, and the pipeline cases recompose through the composer.
+- `server/services/__tests__/cmc-module3-compiler.test.ts` keeps its finalize, diff and hash cases.
+
+**Red:** `s29-red.txt`. `cmc-module3-second-compile-path-retired.test.ts` fails 1 of 3 on trunk: the two functions are
+still exported. The controls pass on trunk: the live helpers stay, and the composer path is reached.
+
+### Green, for the batch
+
+- **The five retirement tests and the touched suites:** 134 of 134 pass in 9 files.
+- **The neighbourhood:** every test that names a touched file, plus each replacement's own tests, 140 files.
+  - 3,081 of 3,082 passed on the first run.
+  - The one failure was the `module3-regional-readiness` pin described under S13. Once corrected it passes 38 of 38.
+- **The pglite suites near the change:** 73 of 73 pass in 5 files.
+- **Tool selection and the manifest:** 461 of 461 pass in 15 files.
+- **Typecheck** (`typecheck-no-regression --incremental`): 0 errors.
+- **ESLint ratchet:** net −7 warnings, and the new tests have none.
+- **The app:** the replacements were walked on the patched server (`r1-batch-1/app-walk.txt`).
