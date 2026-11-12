@@ -118,6 +118,9 @@ describe('an adverse change the input states is never missed', () => {
     ];
     expect(correlates.filter((c) => call('liver', 'hepatocellular hypertrophy', [c]).adversity !== 'adverse')).toEqual([]);
     expect(call('liver', 'hepatocellular hypertrophy; hyperplastic foci')).toEqual(ESCALATED);
+    const more = ['haemorrhage', 'hemorrhage', 'ulceration', 'erosion', 'dysplasia', 'atypia', 'cholestasis', 'hepatitis', 'inflamed portal tracts', 'mononuclear cell infiltrate'];
+    expect(more.filter((c) => call('liver', 'hepatocellular hypertrophy', [c]).adversity !== 'adverse')).toEqual([]);
+    expect(call('hepatic', 'Hypertrophy, periportal, hepatocellular with hemorrhage').adversity).toBe('adverse');
   });
 
   it('a correlate split across entries is read as one statement', () => {
@@ -140,6 +143,12 @@ describe('negation is not read, and the reason says so', () => {
     const s = classifyToxFindings([{ organ: 'kidney', finding: 'no mortality' }, { organ: 'liver', finding: 'tubular necrosis' }]);
     expect(s.overviewParagraph).toMatch(/For no mortality \(kidney\), the text also holds a word of negation/);
     expect(s.overviewParagraph).not.toMatch(/For tubular necrosis/);
+  });
+
+  it('"noted", "normal", "nodular" and "notable" are not words of negation', () => {
+    const r = classifyToxFinding({ organ: 'liver', finding: 'hepatocellular hypertrophy', correlates: ['necrosis noted in 3/10 animals, notable at the high dose; normal ALT; nodular'] });
+    expect(r.rationale).not.toMatch(/negation/);
+    expect(classifyToxFindings([{ organ: 'kidney', finding: 'tubular necrosis noted' }]).overviewParagraph).not.toMatch(/negation/);
   });
 
   it('the reason names the negation and leaves it to a pathologist', () => {

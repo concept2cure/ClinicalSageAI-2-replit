@@ -58,6 +58,13 @@ An independent reviewer ran 3,925,548 inputs against the version before this cha
 | Hyaline droplets with a stated necrosis went from adverse (the version before, by accident) to indeterminate. | Adverse, the conservative call, with the rule's rodent-specific human relevance said and left to a pathologist. |
 | The commit claimed a non-text correlate failed the whole batch before. It did not: the version before joined them. | The claim is withdrawn here and in the code; that test is marked as a guard. |
 
+The same reviewer then re-ran every probe on the fix and passed it (SHIP): none of 3,925,548 inputs with an adverse
+word answered adaptive or less adversely than before; the worst time on a 10,000-character input was 13 ms (the
+thyroid shape, 588 ms before, now 1 ms). It also found, and this commit fixes: the negation check had lost its word
+boundary, so "noted", "normal" and "nodular" read as negation; `elevat\w*` was quadratic on a repeated stem; and
+haemorrhage, ulceration, erosion, dysplasia, atypia, cholestasis, hepatitis, "inflamed" and an infiltrate had no word
+here, so hepatocellular hypertrophy beside them stayed adaptive in every version. Now 17 files, 396 tests.
+
 ## What was tried and refused: reading negation
 
 The defect list of the map also named "no tubular necrosis" and "hypertrophy without necrosis" being escalated. Two

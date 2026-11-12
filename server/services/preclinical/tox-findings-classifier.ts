@@ -87,11 +87,14 @@ interface KbEntry {
 // adjectives ("necrotic", "fibrotic") and the reversed order ("ALT increased")
 // were not read.
 const LAB = String.raw`(?:alt|ast|alp|alkaline phosphatase|alanine aminotransferase|aspartate aminotransferase|gamma[-\s]?glutamyl\w*|ggt|bilirubin|creatinine|bun|urea)`;
-const RISE = String.raw`(?:increase[sd]?|elevat\w*|raised|higher)`;
+const RISE = String.raw`(?:increase[sd]?|elevat(?:ed|ion|ing|es)?|raised|higher)`;
 const ADVERSE_CORRELATES = new RegExp(
   [
     String.raw`necro(?:sis|ses|tic|ti[sz]\w*)`, 'degener', 'inflammat', String.raw`fibro(?:sis|tic)`, 'hyperplas', 'neoplas', String.raw`tumou?r`,
     String.raw`single[-\s]?cell death`, 'apoptosis', 'vacuolation with', 'impair', 'dysfunction',
+    // 2026-11-12: changes a report calls adverse that had no word here, so hepatocellular hypertrophy beside a
+    // haemorrhage or an ulcer stayed adaptive.
+    String.raw`ha?emorrha`, 'ulcer', 'erosi', 'dysplas', 'atypi', 'cholesta', 'hepatitis', 'inflamed', 'infiltrat',
     // "increased ALT", "increases in serum ALT", "elevated alanine aminotransferase"; and the reversed order,
     // "ALT increased", "ALT elevation". Each part is bounded, so a long text cannot make it backtrack.
     String.raw`${RISE}\s+(?:in\s+)?(?:(?:the\s+)?(?:serum|plasma)\s+)?${LAB}`,
@@ -228,7 +231,7 @@ const ADVERSE_WORDS = new RegExp(
  * must not. So the reason says when a negation is there, and a pathologist
  * reads it.
  */
-const NEGATION = /\b(?:no|not|without|absence|absent|free\s+of|negative\s+for|lack\s+of|lacking|neither|nor|none|non-|un(?:impaired|remarkable|affected))/i;
+const NEGATION = /\b(?:no|not|without|absence|absent|free\s+of|negative\s+for|lack\s+of|lacking|neither|nor|none)\b|\bnon-|\bun(?:impaired|remarkable|affected)\b/i;
 
 /**
  * The whole finding, when it is thyroid follicular hyperplasia and nothing
