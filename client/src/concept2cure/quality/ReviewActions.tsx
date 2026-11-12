@@ -14,6 +14,7 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { EmptyState } from '../v2/dataConnect';
 import { formatDate } from './data';
 import { pill } from './qmsRegisterKit';
+import { writeRefusal } from './qmsWrites';
 import { closeReviewAction, reviewActions, type ManagementReviewRow, type ReviewAction } from './qmsRecordData';
 
 export function ReviewActions({ review, onChanged }: { review: ManagementReviewRow; onChanged: (confirmation?: string) => void }) {
@@ -37,7 +38,7 @@ export function ReviewActions({ review, onChanged }: { review: ManagementReviewR
       setClosing(null);
       onChanged(done);
     } catch (err) {
-      setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
+      setRefusal(writeRefusal(err));
     } finally {
       writing.current = false;
     }

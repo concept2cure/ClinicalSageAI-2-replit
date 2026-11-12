@@ -1,0 +1,8 @@
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > never reads a failed register as empty, and never borrows another tab's rows 1ms
+ ✓ client/src/concept2cure/quality/__tests__/reviewOverdueToday.test.ts > review overdue is judged against today > marks a review due 2026-07-01 overdue on 2026-10-29, in the register and in the Record review row 5ms
+
+ Test Files  32 passed (32)
+      Tests  435 passed (435)
+   Start at  04:10:06
+   Duration  74.63s (transform 5.52s, setup 2.65s, import 12.66s, tests 36.73s, environment 16.91s)
+
