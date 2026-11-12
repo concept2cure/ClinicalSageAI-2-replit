@@ -1077,6 +1077,26 @@ describe('D2 end to end — a fresh org, the real launch provisioning, the rail 
     }
   });
 
+  // Subscription & features reads the catalog's `launchScope` flag; the rail
+  // decides with isLaunchSurface. They disagreed for every launch surface that
+  // is not a granted module: the page said CMC, RBM, Biostatistics and
+  // Communication were "not in this release" while the rail said "included
+  // from Professional" (running app, 2026-11-12). One rule now.
+  it("the catalog's launchScope flag is the rail's: 'launch' exactly for the launch surfaces", async () => {
+    const catalog = await asUser(ORG_LAUNCH_SETUP, 'member', '/api/module-subscriptions/catalog', () =>
+      license.getModuleCatalog(ORG_LAUNCH_SETUP),
+    );
+    expect(catalog.length).toBeGreaterThan(0);
+    for (const m of catalog) {
+      expect(m.launchScope, m.moduleId).toBe(isLaunchSurface(m.moduleId) ? 'launch' : 'later');
+    }
+    const byId = new Map(catalog.map((m) => [m.moduleId, m]));
+    for (const id of ['cmc', 'rbm', 'biostatistics', 'communication-center']) {
+      if (byId.has(id)) expect(byId.get(id)!.launchScope, id).toBe('launch');
+    }
+    expect(['cmc', 'rbm', 'biostatistics'].filter((id) => byId.has(id)).length, 'the surface-only apps are catalogued').toBeGreaterThan(0);
+  });
+
   it('professional CMC opens under launch enforcement without acquiring an explicit module grant', async () => {
     process.env.LAUNCH_SCOPE_ENFORCE = 'on';
     try {
