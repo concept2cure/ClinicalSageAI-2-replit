@@ -592,7 +592,8 @@ export class JudgmentEngine {
 
     // Missing data impact from computation
     if (comp.missingDataImpact) {
-      if (comp.missingDataImpact.powerReduction > 0.10) {
+      // Only a reduction the engine computed (complete case); null for every other method.
+      if (comp.missingDataImpact.powerReduction !== null && comp.missingDataImpact.powerReduction > 0.10) {
         flags.push(`Power reduced by ${(comp.missingDataImpact.powerReduction * 100).toFixed(1)}% due to missing data`);
         score -= 10;
       }

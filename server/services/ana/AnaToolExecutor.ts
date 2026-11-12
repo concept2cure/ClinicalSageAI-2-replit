@@ -6098,7 +6098,8 @@ registerToolHandler('analyze_missing_data_impact', async (input: Record<string, 
       baselinePower: base.power,
       missingDataImpact: impact,
       assumptions: { missingDataMethod: normalized.missingDataMethod, expectedMissingRate: normalized.expectedMissingRate },
-      instruction: 'Report the effective sample size, power reduction, adjusted power, bias risk and recommendation verbatim.',
+      // adjustedPower and powerReduction are null for every method but complete case: the engine does not compute them (RULE 2).
+      instruction: 'Report the effective sample size, bias risk and recommendation verbatim. Report the adjusted power and power reduction only where they are numbers; where they are null, say the engine does not compute the power for this method and give no figure.',
     }));
   } catch (err: any) {
     return JSON.stringify({ error: `Missing-data impact analysis failed: ${err?.message || 'unknown error'}` });
