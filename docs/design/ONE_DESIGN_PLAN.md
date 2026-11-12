@@ -1538,8 +1538,11 @@ the search had named the trial master file store unavailable on every call. Evid
 `docs/evidence/D2-ETMF/2026-11-12-e4-step2-ana-reads/`. **Step 3 is done** (F1, `1c08a054a9`). `create_tmf`,
 `seed_tmf`, `update_tmf_artifact_status` and `review_tmf_completeness` retire, each onto what now answers it.
 `classify_tmf_artifact` files through the deployed store with the person's confirmation and reason (L-1(a)). No tool is
-added. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step3-ana-writes/`. Steps 4 (the second store's routes and metrics)
-and 5 (its service, schema and migration) remain; nothing in `server/services/ana/` imports `etmf-service` now. "Not applicable" (P-124 item 5) is on the deployed
+added. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step3-ana-writes/`. **Step 4 is done** (F1, `1bcc069d3f`). The
+second store's eight routes (`server/routes/etmf.ts`) and its metrics are deleted. `/api/etmf` mounts the one router,
+and two baselines shrank by hand. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step4-routes-metrics/`. Step 5 (its
+service, schema and migration) remains; then "not applicable" is already carried, and admission waits on the URS and
+OQ. "Not applicable" (P-124 item 5) is on the deployed
 store, so step 3's retirement of `update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
