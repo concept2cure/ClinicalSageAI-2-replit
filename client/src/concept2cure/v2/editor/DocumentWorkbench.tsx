@@ -959,7 +959,11 @@ export function readDocumentAccess(raw: unknown, readScope?: unknown): DocumentA
  */
 export function filingCommitNote(filing: unknown): string {
   if (!filing || typeof filing !== 'object') return '';
-  const f = filing as { committed?: unknown; reason?: unknown; partOf?: unknown };
+  const f = filing as { committed?: unknown; reason?: unknown; partOf?: unknown; outsideFiling?: unknown };
+  /* A Quality controlled document is approved and released in Quality and is never part of a filing, so
+     its save has nothing to say about one (it read "saved in the editor but not in the filing" on every
+     save of an SOP, 2026-11-12). The server says which documents these are. */
+  if (f.committed === false && f.outsideFiling === 'controlled-document') return '';
   /* QA 2026-10-08, walk 2: a section under an undivided outline node (2.5.1 of
      the 2.5 Clinical Overview) goes into that node with the document's other
      sections there; the server names the node as `partOf`. */
