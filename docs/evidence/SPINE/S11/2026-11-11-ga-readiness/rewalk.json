@@ -1,0 +1,70 @@
+{
+  "server": "runtime role app_service, RLS_ENFORCE=on, launch gate enforcing, trunk 31047492b7 plus this change",
+  "walks": {
+    "2026-11-05-owners-and-due-dates": {
+      "steps": [
+        "sign in (one dev-login)",
+        "projects",
+        "1. the plan says its schedule",
+        "2. the task row carries owner and due date",
+        "3. the sheet gives the schedule",
+        "4. already assigned on an earlier run",
+        "5. after a reload, the row names its owner",
+        "6. it is in the person's work (GET /api/tasks/my-work)",
+        "6b. on Tasks",
+        "7. a project with no target date says so",
+        "8. 390 wide, no horizontal scroll"
+      ],
+      "apiErrors": [],
+      "error": null,
+      "finishedAt": "2026-11-11T23:50:21.734Z"
+    },
+    "2026-11-05-plan-step": {
+      "steps": [
+        "sign in (one dev-login)",
+        "1440: 1. Due for you, first",
+        "1440: 2. each document names its producing task",
+        "1440: 3. no horizontal scroll",
+        "390: 1. Due for you, first",
+        "390: 2. each document names its producing task",
+        "390: 3. no horizontal scroll"
+      ],
+      "apiErrors": [],
+      "error": null,
+      "finishedAt": "2026-11-11T23:50:32.255Z"
+    },
+    "2026-11-05-portfolio-line": {
+      "steps": [
+        "sign in (one dev-login)",
+        "set up through the API",
+        "1440: 1. WALK-IND-301 line and workstreams",
+        "1440: 2. WALK-IND-303 at risk",
+        "1440: 3. WALK-510K-401 clock, blocked, device note",
+        "1440: 4. Projects, one read, one line per card",
+        "390: 1. WALK-IND-301 line and workstreams",
+        "390: 2. WALK-IND-303 at risk",
+        "390: 3. WALK-510K-401 clock, blocked, device note",
+        "390: 4. Projects, one read, one line per card"
+      ],
+      "apiErrors": [],
+      "error": null,
+      "finishedAt": "2026-11-11T23:50:59.759Z"
+    },
+    "2026-11-10-strategy-and-reschedule": {
+      "steps": [
+        "sign in (one dev-login)",
+        "project",
+        "1. the Plan step opens with the strategy; the objective is under the name",
+        "2. already stated on an earlier run",
+        "3. after a reload",
+        "4. the sheet says the dates differ",
+        "5. already on the schedule's date",
+        "6. tasking has the new date; the move is no longer offered",
+        "7. 390 wide, no horizontal scroll"
+      ],
+      "apiErrors": [],
+      "error": null,
+      "finishedAt": "2026-11-11T23:51:20.289Z"
+    }
+  }
+}

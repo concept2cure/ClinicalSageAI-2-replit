@@ -1,0 +1,71 @@
+# Walk of every launch screen in the running app (2026-11-11)
+
+Launch row **D2** (the launch catalog works in the app) and founder decision **P-122** (the UI shows the work).
+Session `session_01E8btkB8mcLirW4rNvsMNxK`, at the founder's direction of 2026-11-11: "focus entirely on getting what
+we built surfaced correctly on the UI and working for GA".
+
+Trunk `31047492b7`. Nobody had pushed since 2026-11-10 16:00 UTC, so this is the first look at the app with every
+P-122 restoration merged.
+
+## What already exists (RULE 3)
+
+Nothing was built for the walk.
+- **The app and its data** are the founder's Codespace, made here by trunk's own scripts as
+  `../2026-11-06/README.md` ("How to rerun it") says: `.devcontainer/post-create.sh` and `post-start.sh`, PostgreSQL
+  16 with pgvector, `RLS_ENFORCE=on`, the app as the `app_service` role. From an empty database: the Lumen account
+  (416 records created), the demo packs, the project-management pack.
+- **`walk.cjs`** (this folder) opens a list of screens as a demo person through `POST /api/auth/dev-login` and
+  records, for each: a screenshot, every API answer of 400 or more, every console error, the headings, tabs,
+  controls and closed disclosures, and any words that say a read failed. `../2026-11-06/clickcrawl.cjs` clicks
+  every control; this one reads every screen. Neither replaces the other.
+- No AI provider key is set here, so AnA's drafting and Shadow Review answer 503, as they should.
+
+## What was walked
+
+| Run | As | Screens | Failed requests | Console errors |
+|---|---|---|---|---|
+| Lumen account, LMN-201 (biologic IND) | Lumen lead | 26: Home, Projects, the project page's six steps, Tasks, Communication, Vault, Authoring, Review, Protocol, Submission Center and its four screens, Quality, CMC, RBM, Biostatistics, Reporting, Compliance reports, Admin | 0 | 0 |
+| Development organisation, NeuroPanel-Dx 510(k) | Rhea Reviewer | 16: the project page, the twelve device screens, Submission Center, Vault, Quality | 3 on 2 screens (below) | 2 |
+| Development organisation, C2C-201 (small-molecule IND) | Rhea Reviewer | 13: the project page, CMC's eight other tabs, RBM, Biostatistics, Tasks, Communication | 0 | 0 |
+
+All at 1440×900. The Lumen run was repeated with a 2,400 px window to read each screen whole. Not walked: 390 px,
+dark, the other demo people, and any control beyond the tabs and steps named.
+
+## What the screens show
+
+Every screen opened and showed its work. Home, Projects, the project page, Vault, Submission Center, Quality and CMC
+read as ONE_DESIGN_PLAN §2 describes: a title, one line, one primary action, tabs, the record. Quality has nine
+tabs with the server's figures above them; CMC nine; RBM ten; Submission Center eight; the Vault six.
+
+## Found, and what became of each
+
+| # | Found | Outcome |
+|---|---|---|
+| 1 | **Projects showed two of the three portfolio figures** the plan names: no average readiness, because the server sent none. | **Fixed** (`81fdef65dd`): the server measures it over every selected project and the page shows it. Tests on a real SQL engine. Seen in the running app after the restart: see "After the restart". |
+| 2 | **Reporting's landing offered one pack while 20 reports could be run**, on the Catalog tab only. | **Fixed** (`bdb639850e`): the landing says how many and opens the catalog. Walked. `../../../DESIGN/P-122/reporting/`. |
+| 3 | **Reporting's catalog printed stored codes**: "USA_OLAW · iacuc coordinator, ra lead, qa". | **Fixed** (`bdb639850e`): "US · OLAW · For IACUC coordinator, regulatory affairs lead, quality assurance", on cards and in both filters. Walked. |
+| 4 | **Plan step, "Use the schedule's date": a refusal carrying only a code was shown as its words** ("The due date was not changed: FORBIDDEN."). Found by `ci:error-envelope`, red on trunk. | **Fixed** (`d886ad0282`). |
+| 5 | **The twelve device screens are in the earlier design.** `device-engineering-1440.png`: an uppercase eyebrow ("WORKSTREAM · CLASS II · 510K · …"), four filled stat tiles, tag chips. ONE_DESIGN_PLAN §2 retires each. Device engineering also says "No engineering documents yet" directly above "13 hard blockers" on thirteen listed documents. | **Open, and the largest gap from "looks like Claude".** No design package's paths cover `client/src/concept2cure/mdx/**`; it needs its own slice (D-package work under R1/F1 paths, screen by screen, with its ledger). Not started here. |
+| 6 | Device 510(k) screen: `503` on `/api/predicate-intelligence/candidates` and `/se-matrix`. | **Correct here.** The screen says predicate intelligence is not configured and that openFDA could not be reached; this sandbox has no route to openFDA. Check it once with network. |
+| 7 | Diagnostics screen: `404` on `/api/ivdr/gspr-checklist/:program/matrix` for a device with no GSPR matrix yet. | **Open, low.** The screen says "Not yet assessed" and offers to start the matrix. A read of nothing-yet should answer 200 with an empty matrix, not 404, so the console is clean. |
+| 8 | Quality's SOP register at 1440: the "Next review" heading and its dates are cut off by the row's actions. | **Open, measured, needs a choice.** The table needs 1,081 px (columns 110, 180, 52, 68, 90, 108, 108, and 364 for the four inline actions). Its scroll box is 1,040 px: the page column was 1,344 px when `../../../DESIGN/P-122/quality/register-width.txt` measured it and is the standard 1,040 now. The actions column is pinned at the box's right edge (`quality/app.css:64-69`), so it covers the last 41 px of "Next review" until the box is scrolled. Each fix costs something: 9 px cell padding in this register (off the shared 12 px), a shorter label than "Read and acknowledge" (167 px), or a narrower title column (already at its 180 px minimum). Not changed here. |
+| 9 | Vault's Library: six filters sit above the list, so one document shows above the fold at 900 px; binder folder names are truncated in a 220 px tree. | **Open, low** (S6's files). |
+| 10 | Reporting: regional reports' "not offered" reasons use stored values ("a nda or bla filing"); the catalog's count lines use internal words ("unregistered", "uncomputed"). | **Open, low.** In `../../../DESIGN/P-122/reporting/README.md`. |
+
+## After the restart
+
+The app was restarted on the changed server code and Projects was opened again.
+- **On the page** (`projects-average-readiness-1440.png`, the Lumen lead): "4 active projects · 0% average
+  readiness · 0 filings due within 60 days". Each of the four cards reads "Dossier readiness 0%", so 0% is the
+  measured mean, not an absent figure.
+- **From the API, on PostgreSQL as the `app_service` role under RLS:** `GET /api/c2c/projects?limit=3` as Rhea
+  Reviewer answered a page of 3 with `hasMore: true` and
+  `counts: { total: 8, averageReadiness: 0, readinessMeasured: 8, readinessState: "measured" }`. So the average
+  covers the five projects that are not on the page.
+- No request failed and the console was clean.
+
+## A mistake during the work
+
+The first push of these fixes was refused by the pre-push warning ratchet: `TypeCard` had gone one branch over the
+complexity limit and a template literal kept an escaped apostrophe. Both were mine, and I had not linted the changed
+files before committing. Fixed in `19dabf8cf8`; every changed file is back at trunk's warning count.

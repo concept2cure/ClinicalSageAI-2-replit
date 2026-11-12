@@ -604,6 +604,7 @@ async function portfolioLine(req: Request, ref: string, asOf: string) {
     // The global schedule in Reporting draws each project from this line (THE_PROGRAM §5): its filing, the work's
     // start and the agency's clock, the same as the single read gives.
     return { type: scope.type, filing: scope.filing, target: scope.target, start: schedule?.start ?? null,
+      durations: schedule?.durations ?? null,
       reviewClock: reviewClock(scope.type, scope.target),
       summary: scheduleSummary(getPyramidForProject(scope.type), schedule, statuses, asOf),
       ...(pendingStore ? { pendingStore: true } : {}) };

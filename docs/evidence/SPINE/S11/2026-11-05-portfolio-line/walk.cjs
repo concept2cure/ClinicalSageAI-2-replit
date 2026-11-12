@@ -122,6 +122,8 @@ async function walk(page, P, width) {
   const onReq = (r) => { if (r.url().includes('/api/v1/pyramids/by-project?refs=')) batches.push(r.url()); };
   page.on('request', onReq);
   await page.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'networkidle' });
+  // Projects remembers the view; the cards are the grid's.
+  await page.getByRole('button', { name: /^Grid/ }).click();
   await page.locator('.pj-card-plan').first().waitFor({ timeout: 20000 });
   const cards = await page.locator('.pj-card').evaluateAll((cs) => cs.map((c) => `${c.querySelector('.pj-card-t')?.textContent} → ${c.querySelector('.pj-card-plan')?.textContent ?? '(no line)'}`));
   page.off('request', onReq);

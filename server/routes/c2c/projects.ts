@@ -99,7 +99,7 @@ import { readProjectAuthoringRecords } from '../../services/c2c/project-authorin
 import { readProjectTeam } from '../../services/c2c/project-team';
 import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-intake-workspace';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
-import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts } from '../../services/c2c/project-portfolio';
+import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts, readPortfolioReadiness } from '../../services/c2c/project-portfolio';
 import { installProjectSettingsRoutes } from './project-settings';
 import { CharterObjectivesRefusal, objectiveStatedAtCreation, recordObjectiveAtCreation, type RecordedObjectives } from '../../services/c2c/charter-objectives';
 import { installProjectRecordedContextRoutes } from './project-recorded-context';
@@ -636,7 +636,11 @@ router.get('/', async (req: Request, res: Response) => {
       Object.assign(p, readinessFields(figures.get(p.id) ?? unread()));
     }
 
-    const counts = await readPortfolioCounts(pool, {organizationId:orgId, anchors, includeArchived, clientWorkspaceId, workstream, pathway});
+    const selection = {organizationId:orgId, anchors, includeArchived, clientWorkspaceId, workstream, pathway};
+    const counts = {...await readPortfolioCounts(pool, selection)};
+    // The portfolio's average readiness, the server's figure (P-122): over every selected project, not this page.
+    Object.assign(counts, await readPortfolioReadiness(pool, selection,
+      {total: counts.total, whole: offset === 0 && !hasMore, figures}, (ids) => homeFigures(ids, orgId)));
     const clients = await readPortfolioClients(pool, orgId, anchors, includeArchived);
     await requireProgramScopeStillCurrent(pool, identity, scope);
     return res.json({
@@ -1413,12 +1417,27 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
            'sourceId', s.id, 'projectId', s.client_program_id, 'projectName', rp.name,
            'isCurrent', s.is_current IS NOT FALSE, 'checksum', s.checksum,
            'grade', s.grade, 'gradeScore', s.grade_score, 'gradedAt', s.graded_at,
-           'extractionStatus', s.extraction_status) END AS data_room
+           'extractionStatus', s.extraction_status) END AS data_room,
+         CASE WHEN vd.id IS NULL THEN NULL ELSE jsonb_build_object(
+           'documentId', vd.id, 'projectId', vd.program_id, 'projectName', vrp.name, 'checksum', btrim(vd.content_hash),
+           'isCurrent', NOT EXISTS (SELECT 1 FROM vault.documents succ
+              WHERE succ.supersedes_id = vd.id AND succ.program_id = vd.program_id
+                AND succ.document_code IS NOT DISTINCT FROM vd.document_code
+                AND succ.organization_id = vd.organization_id AND succ.deleted_at IS NULL)) END AS vault
        FROM c2c_project_pinned_evidence e
        LEFT JOIN cre_evidence_sources s
-         ON e.evidence_kind = 'data_room' AND e.evidence_ref ~ '^[0-9]{1,10}$'
-        AND s.id = e.evidence_ref::int AND s.organization_id = $2 AND s.deleted_at IS NULL
+         /* The cast sits inside CASE: SQL does not promise the order a join's conditions are tested in, and a
+            reference of another kind (a Vault document's uuid) cast to an integer fails the whole read. */
+         ON s.id = CASE WHEN e.evidence_kind = 'data_room' AND e.evidence_ref ~ '^[0-9]{1,10}$' THEN e.evidence_ref::int END
+        AND s.organization_id = $2 AND s.deleted_at IS NULL
        LEFT JOIN regulatory_programs rp ON rp.id = s.client_program_id
+       /* A Vault document the project uses from the catalog (S2, 2026-11-11): its project and whether a later
+          version replaced it. The successor test is the Vault's one link rule (vault-version-family.ts), written out. */
+       LEFT JOIN vault.documents vd
+         ON vd.id = CASE WHEN e.evidence_kind = 'vault_doc' AND e.evidence_ref ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+                         THEN e.evidence_ref::uuid END
+        AND vd.organization_id = $2 AND vd.deleted_at IS NULL
+       LEFT JOIN regulatory_programs vrp ON vrp.id = vd.program_id
        WHERE e.project_id = $1
        ORDER BY e.pinned_at DESC`,
       [req.params.id, orgId],
@@ -1469,6 +1488,33 @@ async function dataRoomPinTitle(
   }
 }
 
+/** The same for a Vault document used from the catalog: current, eligible and in the person's catalog for this project. */
+async function vaultPinTitle(
+  res: Response,
+  p: { orgId: number; userId: number; programId: string; evidenceRef: string },
+): Promise<string | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.evidenceRef)) { send400(res, 'evidenceRef must be a Vault document id.'); return null; }
+  try {
+    const { catalogProgramIds } = await import('../../services/clinical-regulatory-evidence/data-room-search.js');
+    const { vaultDocumentForUse } = await import('../../services/clinical-regulatory-evidence/data-room-vault.js');
+    const allowed = await catalogProgramIds({ organizationId: p.orgId, userId: p.userId }, p.programId);
+    const found = await vaultDocumentForUse(p.orgId, allowed, p.evidenceRef);
+    if (!found.ok) { res.status(found.status).json({ error: found.code, message: found.message }); return null; }
+    return found.title;
+  } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) sendProjectAccessFailure(res, err);
+    else serverError(res, logger, 'checking the Vault document', err, { programId: p.programId });
+    return null;
+  }
+}
+
+/** The title a checked kind is recorded under: the item's own, never the request's. undefined: the kind is not checked here. */
+function checkedPinTitle(res: Response, kind: string, p: { orgId: number; userId: number; programId: string; evidenceRef: string }): Promise<string | null> | undefined {
+  if (kind === 'data_room') return dataRoomPinTitle(res, p);
+  if (kind === 'vault_doc') return vaultPinTitle(res, p);
+  return undefined;
+}
+
 router.post('/:id/evidence', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId  = resolveOrgId(req);
@@ -1495,8 +1541,9 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
      in the person's catalog for this project (their accessible projects of this sponsor). The
      title is the capture's own, never the request's. One answer for absent and inaccessible. */
   let pinTitle = title;
-  if (evidenceKind === 'data_room') {
-    const checked = await dataRoomPinTitle(res, { orgId, userId, programId: String(req.params.id), evidenceRef: String(evidenceRef) });
+  const checking = checkedPinTitle(res, evidenceKind, { orgId, userId, programId: String(req.params.id), evidenceRef: String(evidenceRef) });
+  if (checking) {
+    const checked = await checking;
     if (checked === null) return;
     pinTitle = checked;
   }
@@ -2039,6 +2086,29 @@ function catalogAnswer(catalog: boolean, grades: Map<number, unknown> | null, pr
   };
 }
 
+type VaultCatalogPage = import('../../services/clinical-regulatory-evidence/data-room-vault.js').VaultCatalogPage;
+/** The Vault's documents for the catalog; a failed read leaves the captures readable and says the Vault's are unavailable (null). */
+async function vaultForCatalog(catalog: boolean, orgId: number, query: import('../../services/clinical-regulatory-evidence/data-room-search.js').DataRoomQuery, programId: string): Promise<VaultCatalogPage | null | undefined> {
+  if (!catalog || (query.offset ?? 0) !== 0) return undefined;
+  try {
+    const { listVaultForCatalog } = await import('../../services/clinical-regulatory-evidence/data-room-vault.js');
+    return await listVaultForCatalog(orgId, query);
+  } catch (err) {
+    logger.warn('[c2c-projects] the Vault documents of the data catalog are unavailable', { programId, err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
+/** What the catalog answers about the Vault's documents: them, that they could not be listed, or nothing (not the catalog's first page). */
+function vaultAnswer(vault: VaultCatalogPage | null | undefined) {
+  if (vault === undefined) return {};
+  return vault === null ? { vaultUnavailable: true } : { vault: { total: vault.total, documents: vault.documents } };
+}
+async function catalogFacetsWithVault<T>(facets: T, vault: VaultCatalogPage | null | undefined): Promise<T> {
+  if (!facets || !vault) return facets;
+  const { mergeCatalogFacets } = await import('../../services/clinical-regulatory-evidence/data-room-vault.js');
+  return mergeCatalogFacets(facets as never, vault.facets) as T;
+}
+
 /** Point a room query at the person's catalog for this project; false when it narrows to a project outside it. */
 async function scopeToCatalog(
   query: { programIds?: string[] | null; project?: string | null },
@@ -2097,7 +2167,10 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: userId }, programId, catalogProgramIds))) {
       return send404(res);
     }
-    const { total, currentTotal, sources, facets } = await searchDataRoom(orgId, query, { userId: userId });
+    const { total, currentTotal, sources, facets: captureFacets } = await searchDataRoom(orgId, query, { userId: userId });
+    // The catalog also lists the Vault's current documents of the same projects, on its first page (S2, 2026-11-11).
+    const vault = await vaultForCatalog(catalog, orgId, query, programId);
+    const facets = await catalogFacetsWithVault(captureFacets, vault);
     const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
@@ -2135,6 +2208,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       window: { shown: sources.length, truncated },
       usageScope: 'accessible-citations',
       ...catalogAnswer(catalog, grades, query.programIds, facets),
+      ...vaultAnswer(vault),
     });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);

@@ -705,6 +705,16 @@ capture of another project may be assembled into, or filed for, this project's d
 the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
 "S2: the walk of the CSR example and AnA's tools, recorded".
 
+**2026-11-11, for GA** ("R1: the data catalog lists the Vault's documents, graded and usable, beside the captures",
+`docs/evidence/SPINE/S2/2026-11-11-ga-surface-walk/`). Walked at head, the catalog was Quality records and almost no
+files: documents and study data are filed in the project's Vault, and the catalog read captures only. It now also
+lists the Vault's current documents of the same projects (step 2 of §1: items get in "from Vault"), organized by Vault
+folder, graded by the same engine from the Vault's facts, with **Use in this project** (kind `vault_doc`, checked
+against the person's catalog), and AnA's catalog tool answers them. A read only: **LX-03** (every Vault version a
+data-room source) still needs the founder's decision. Also fixed: the project's "what this project uses" read failed
+for any pinned item that was not a capture. 2026-11-10: the project's data room lists files first and shows a Quality
+record as a record (`docs/evidence/SPINE/S2/2026-11-10-quality-records/`).
+
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
 **What already exists.** The six-component audit and completion contracts are in §1d. These changes extend those
@@ -1070,6 +1080,22 @@ RBM, QMS and more; Vault … and tasking too")
     answered 503 there.
   - Open: the other system packages a Codespace lacks beside the production image (LibreOffice, Ghostscript,
     veraPDF, `xmllint`, python-docx). Not exercised.
+- **Risk-based monitoring, the two defects the GA map lists under S8** (2026-11-11, the founder: "focus entirely
+  on getting what we built surfaced correctly on the UI and working for GA"). Record:
+  `docs/evidence/SPINE/S8/2026-11-11-site-risk-from-study-data/README.md`.
+  - GA-S8-01, "New KRI" answered 500 from the screen and from AnA: one KRI INSERT, typed (`c7f797d89`).
+  - GA-S8-02, Site risk and Site oversight read "0 sites": a study's sites are scored from its own site-level
+    indicator readings where Site Intelligence holds none (`e9fad2163`). The rule is stated on the screen and on
+    every row. A load that carries site rows rescores the sites.
+  - The Lumen seed scores LMN-201's eight sites, and no longer stops on an indicator a person added
+    (`bcf2b595f`).
+  - "Run central monitoring" compares each site-level indicator across the study's sites, and Critical signals
+    list first (`7e4284cc5`). On LMN-201 it raises two Critical signals for site 104.
+  - Open: clinical operations has not confirmed the scoring weights; a change to a KRI's limits does not rescore;
+    Site Intelligence itself stays unreached and needs a founder decision to reach or retire.
+- **AnA's three agency-commitment tools are in scope in production** (2026-11-11, `7994dc8f1`; reach map section 4
+  rank 7). They write the store Communication writes. A PMR, PMC or REMS is still fulfilled only by a person's
+  signature (P-41). Record: `docs/evidence/DESIGN/R1/2026-11-11-ana-commitment-tools/README.md`.
 
 **Finding shared with the design lead**
 

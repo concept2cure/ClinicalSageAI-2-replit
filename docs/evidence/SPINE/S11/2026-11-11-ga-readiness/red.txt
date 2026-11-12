@@ -1,0 +1,9 @@
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > refuses a project reader, another client scope and another organisation, changing nothing 26ms
+ × projectProgramPlan.test.tsx > the program plan's owners and due dates > says the schedule is built back from the target date, when the work starts, what is behind, and who owns what 29ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > lists one row per workstream: lead, tasks done, completion date and a status word 10ms
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > draws the schedule: phase completions as dots, the submission, the review clock and today, the critical path darker
+ × projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says when no agency review clock is on record for the filing 10ms
+ × projectProgramPlan.test.tsx > the program plan for a person who may not change the project > shows each task status without offering to change it, in the rows and in the sheet 21ms
+ × planStrategyAndReschedule.test.tsx > the strategy at the head of the Plan step > records the strategy as a new version of the objective of record, keeping the objective and its sources, with the r
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 54 passed (61)

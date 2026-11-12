@@ -239,6 +239,9 @@ export interface PyScheduledTask {
 }
 
 export interface PySchedule {
+  /** What the task lengths rest on (the engine's BackSchedule.durations). 'hours-only': the dates are the earliest
+   *  possible, not a forecast. */
+  durations?: 'typical' | 'hours-only' | 'mixed';
   target: string;
   anchorTaskId: string;
   start: string;
