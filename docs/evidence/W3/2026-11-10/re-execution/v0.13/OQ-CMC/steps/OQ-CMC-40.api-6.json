@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies/77/close-out",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "The 24-month long-term data support a 24-month shelf life at the labelled condition.",
+      "meaning": "approval"
+    }
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 23,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "REAUTH_PASSWORD_REQUIRED"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/batch-records/389b4308-3626-4eb6-909a-e2738ed9721f/release",
+    "url": "http://localhost:5200/api/cmc/batch-records/63245ec5-3c3a-4661-81fa-51ffaeae2fb1/release",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
@@ -17,16 +17,16 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 440,
+    "durationMs": 390,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
         "batchRecord": {
-          "id": "389b4308-3626-4eb6-909a-e2738ed9721f",
+          "id": "63245ec5-3c3a-4661-81fa-51ffaeae2fb1",
           "organization_id": 2,
-          "project_id": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
-          "batch_number": "R2-20261110130629",
+          "project_id": "689b2e11-9727-43af-9aae-1369322b42cc",
+          "batch_number": "R2-20261112003432",
           "batch_type": null,
           "material_type": null,
           "scale": null,
@@ -47,8 +47,8 @@
           "linked_stability_study_id": null,
           "specification_compliance": null,
           "oos_events": null,
-          "created_at": "2026-11-10T13:07:32.310Z",
-          "updated_at": "2026-11-10T13:08:00.728Z",
+          "created_at": "2026-11-12T00:35:32.217Z",
+          "updated_at": "2026-11-12T00:36:00.700Z",
           "product_name": "Drug substance",
           "manufacturing_site": null,
           "status": "in-progress",
@@ -60,7 +60,7 @@
           "release_testing": {
             "comments": null,
             "decision": "rejected",
-            "releasedAt": "2026-11-10T13:08:00.731Z",
+            "releasedAt": "2026-11-12T00:36:00.703Z",
             "releasedBy": "OQ Signer",
             "testResults": [],
             "releaseStatus": "rejected",
@@ -68,7 +68,7 @@
           },
           "release_status": "rejected",
           "released_by": "OQ Signer",
-          "released_at": "2026-11-10T13:08:00.728Z",
+          "released_at": "2026-11-12T00:36:00.700Z",
           "tenant_id": "2"
         },
         "releaseEvaluation": {
@@ -78,15 +78,15 @@
           "testResults": [],
           "allTestsPassed": false,
           "releaseStatus": "rejected",
-          "releasedAt": "2026-11-10T13:08:00.731Z"
+          "releasedAt": "2026-11-12T00:36:00.703Z"
         }
       },
       "governance": {
-        "actionId": "act_c38b9897b4544c67b53c21635eb7c0b6",
-        "sha256Chain": "420c9dd675998fadf30c19fb53b0996149a5079d71e4512b65dbcf54072182d0"
+        "actionId": "act_30915e0f08df4ce6bf9a492e13c6d477",
+        "sha256Chain": "d7702e584a66702843e3250a1e8e7c22fa5b75cbca9190bd85a31b442a3195c7"
       },
       "message": "Batch release decision recorded successfully",
-      "timestamp": "2026-11-10T13:08:00.743Z",
+      "timestamp": "2026-11-12T00:36:00.716Z",
       "module3Linked": true
     }
   }

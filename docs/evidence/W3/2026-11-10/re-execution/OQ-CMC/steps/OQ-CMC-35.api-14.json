@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/process-validation/6/approve",
+    "url": "http://localhost:5200/api/cmc/process-validation/7/approve",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,14 +16,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 364,
+    "durationMs": 396,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 6,
+        "id": 7,
         "organizationId": 2,
-        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "projectId": "8655492d-c15c-4585-9ed2-6a645fc7c7f6",
         "processName": "OQ probe PPQ",
         "stage": "qualification",
         "batchNumbers": null,
@@ -35,13 +35,13 @@
         "status": "approved",
         "leadValidator": null,
         "approvedBy": 1,
-        "approvalDate": "2026-11-10T13:25:00.658Z",
-        "createdAt": "2026-11-10T13:23:07.022Z",
-        "updatedAt": "2026-11-10T13:25:00.658Z"
+        "approvalDate": "2026-11-12T00:54:30.690Z",
+        "createdAt": "2026-11-12T00:52:36.320Z",
+        "updatedAt": "2026-11-12T00:54:30.690Z"
       },
       "governance": {
-        "actionId": "act_7886b76ebcb442a68510cee2c982e89a",
-        "sha256Chain": "4dddf35300bba2f33e4cd79578e7ec324bdde07d109557f0a8865711e93dcad0"
+        "actionId": "act_2e3368150f264f4b924f8c55a1a45b6a",
+        "sha256Chain": "6a60c500a1b29f8e0f2e3b9f4a8fec17439df0ba919485747e6af3fea2dd1209"
       },
       "module3Linked": true
     }

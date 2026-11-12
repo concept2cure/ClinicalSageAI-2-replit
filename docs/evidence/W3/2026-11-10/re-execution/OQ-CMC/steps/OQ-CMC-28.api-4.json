@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/submissions/sequences/14/dispatch-readiness",
+    "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,10 +9,10 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 86,
+    "durationMs": 64,
     "rateLimitRetries": 0,
     "body": {
-      "sequenceId": 14,
+      "sequenceId": 18,
       "region": "fda",
       "sequenceStatus": "draft",
       "validatedStage": null,
@@ -46,7 +46,7 @@
       "releaseSignature": {
         "required": true,
         "verdict": "invalid",
-        "signatureId": 109,
+        "signatureId": 167,
         "detail": "the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content",
         "cleared": false
       },

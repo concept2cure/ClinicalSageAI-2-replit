@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/submissions/sequences/14/dispatch-readiness",
+    "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,10 +9,10 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 121,
+    "durationMs": 93,
     "rateLimitRetries": 0,
     "body": {
-      "sequenceId": 14,
+      "sequenceId": 18,
       "region": "fda",
       "sequenceStatus": "draft",
       "validatedStage": null,
@@ -45,33 +45,30 @@
       },
       "releaseSignature": {
         "required": true,
-        "verdict": "invalid",
-        "signatureId": 109,
-        "detail": "the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content",
-        "cleared": false
+        "verdict": "signed",
+        "signatureId": 167,
+        "detail": "signed for dispatch on ectd-sequence:18, bound to the current leaf manifest",
+        "cleared": true
       },
       "gate": {
         "cleared": false,
         "blockers": [
           "7 open error-severity validation finding(s) must be resolved before dispatch.",
-          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
-          "Dispatch is blocked because the release signature on record does not verify against the package (the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content). A signature that does not match its record is evidence of tampering and blocks dispatch whether or not this submission type requires one."
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
         ]
       },
       "freezeGate": {
         "cleared": false,
         "blockers": [
           "7 open error-severity validation finding(s) must be resolved before dispatch.",
-          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
-          "Dispatch is blocked because the release signature on record does not verify against the package (the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content). A signature that does not match its record is evidence of tampering and blocks dispatch whether or not this submission type requires one."
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
         ]
       },
       "dispatchGateOnSigning": {
         "cleared": false,
         "blockers": [
           "7 open error-severity validation finding(s) must be resolved before dispatch.",
-          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
-          "Dispatch is blocked because the release signature on record does not verify against the package (the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content). A signature that does not match its record is evidence of tampering and blocks dispatch whether or not this submission type requires one."
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
         ]
       },
       "gates": [
@@ -147,10 +144,8 @@
             "enforcement": "dispatch-readiness",
             "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
           },
-          "cleared": false,
-          "blockers": [
-            "Dispatch is blocked because the release signature on record does not verify against the package (the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content). A signature that does not match its record is evidence of tampering and blocks dispatch whether or not this submission type requires one."
-          ]
+          "cleared": true,
+          "blockers": []
         }
       ],
       "readiness": {

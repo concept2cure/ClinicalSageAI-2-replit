@@ -1,0 +1,88 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/manufacturing-processes",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "processType": "drug_substance",
+      "processName": "BX-702 drug substance synthesis",
+      "processSteps": [
+        {
+          "step": 1,
+          "name": "Coupling",
+          "description": "Amide coupling of intermediates A and B in THF"
+        },
+        {
+          "step": 2,
+          "name": "Crystallisation",
+          "description": "Crystallisation from ethanol/water and drying"
+        }
+      ],
+      "processControls": [
+        {
+          "test": "Reaction completion by HPLC",
+          "acceptanceCriteria": "Intermediate A not more than 0.5%"
+        },
+        {
+          "test": "Loss on drying",
+          "acceptanceCriteria": "Not more than 0.5%"
+        }
+      ],
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 41,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "9de86cf6-03d3-4230-bf1a-f31913ae1fe4",
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "processName": "BX-702 drug substance synthesis",
+        "processType": "drug_substance",
+        "processDescription": null,
+        "processSteps": [
+          {
+            "name": "Coupling",
+            "step": 1,
+            "description": "Amide coupling of intermediates A and B in THF"
+          },
+          {
+            "name": "Crystallisation",
+            "step": 2,
+            "description": "Crystallisation from ethanol/water and drying"
+          }
+        ],
+        "criticalProcessParameters": null,
+        "processControls": [
+          {
+            "test": "Reaction completion by HPLC",
+            "acceptanceCriteria": "Intermediate A not more than 0.5%"
+          },
+          {
+            "test": "Loss on drying",
+            "acceptanceCriteria": "Not more than 0.5%"
+          }
+        ],
+        "equipmentList": null,
+        "facilityInfo": null,
+        "batchSize": null,
+        "yieldData": null,
+        "scaleUpData": null,
+        "processDevelopment": null,
+        "reprocessing": null,
+        "validationStatus": "not-started",
+        "validatedBy": null,
+        "validationDate": null,
+        "createdAt": "2026-11-10T13:06:41.845Z",
+        "updatedAt": "2026-11-10T13:06:41.845Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

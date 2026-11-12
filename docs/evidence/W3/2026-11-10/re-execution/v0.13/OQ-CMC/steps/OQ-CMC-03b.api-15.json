@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/impurity-profiles",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scope": "drug_product",
+      "materialName": "BX-702 5 mg film-coated tablet",
+      "impurityName": "BX-702 N-oxide",
+      "impurityType": "degradation",
+      "observedLevel": "0.05",
+      "levelUnit": "%",
+      "maximumDailyDose": "10 mg",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 31,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 4,
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "scope": "drug_product",
+        "materialName": "BX-702 5 mg film-coated tablet",
+        "impurityName": "BX-702 N-oxide",
+        "impurityType": "degradation",
+        "origin": null,
+        "casNumber": null,
+        "molecularFormula": null,
+        "structure": null,
+        "relativeRetentionTime": null,
+        "analyticalMethod": null,
+        "observedLevel": "0.05",
+        "levelUnit": "%",
+        "routeOfAdministration": null,
+        "amesResult": null,
+        "structuralAlert": null,
+        "carcinogenicityData": null,
+        "treatmentDuration": null,
+        "cohortOfConcern": null,
+        "specificationLimit": null,
+        "reportingThreshold": null,
+        "identificationThreshold": null,
+        "qualificationThreshold": null,
+        "maximumDailyDose": "10 mg",
+        "qualificationBasis": null,
+        "controlStrategy": null,
+        "batchesObserved": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-10T13:06:39.848Z",
+        "updatedAt": "2026-11-10T13:06:39.848Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

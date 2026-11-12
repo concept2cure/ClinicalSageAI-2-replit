@@ -5,11 +5,11 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "BX-702 IND 20261110130629",
+      "name": "BX-702 IND 20261112003432",
       "productName": "BX-702",
       "programType": "ind",
       "productType": "drug",
-      "applicationNumber": "161329",
+      "applicationNumber": "161332",
       "primaryAgency": "FDA",
       "priority": "high",
       "indication": "Relapsed multiple myeloma"
@@ -18,21 +18,21 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 161,
+    "durationMs": 156,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
-        "title": "BX-702 IND 20261110130629",
+        "id": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "title": "BX-702 IND 20261112003432",
         "ws": "Biotech",
         "pathway": "ind",
-        "code": "BX-702-EZ4Z",
+        "code": "BX-702-FNZK",
         "stage": "Planning",
         "status": "active",
         "lead": "oq-runner@validation.local",
         "due": "—",
         "due_date": null,
-        "activity": "Updated Nov 10",
+        "activity": "Updated Nov 12",
         "client_workspace_id": 2,
         "client_name": "Concept2Cure Therapeutics",
         "description": null,
@@ -43,9 +43,9 @@
         "readinessState": "measured"
       },
       "program": {
-        "id": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
-        "code": "BX-702-EZ4Z",
-        "name": "BX-702 IND 20261110130629",
+        "id": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "code": "BX-702-FNZK",
+        "name": "BX-702 IND 20261112003432",
         "program_type": "ind",
         "status": "active",
         "phase": "planning",
@@ -63,9 +63,9 @@
         "approval_date": null,
         "lead_user_id": 1,
         "team_members": [],
-        "created_at": "2026-11-10T13:06:35.746Z",
-        "updated_at": "2026-11-10T13:06:35.746Z",
-        "application_number": "161329",
+        "created_at": "2026-11-12T00:34:38.767Z",
+        "updated_at": "2026-11-12T00:34:38.767Z",
+        "application_number": "161332",
         "product_type": "drug",
         "device_class": null,
         "regulatory_path": null,
@@ -82,7 +82,7 @@
         "device_flags": null,
         "readiness": 0,
         "readinessState": "measured",
-        "readinessAsOf": "2026-11-10T13:06:35.870Z"
+        "readinessAsOf": "2026-11-12T00:34:38.890Z"
       },
       "meta": {
         "created": true,
@@ -90,7 +90,7 @@
         "actorUserId": 1,
         "clientWorkspaceId": 2,
         "clientWorkspaceName": "Concept2Cure Therapeutics",
-        "documentId": "doc_76f0d70ccfef4bc682fd26c192ca9f71",
+        "documentId": "doc_4c35ac60bb834c23975d91d3c1fcf053",
         "scaffoldedSections": 92,
         "marketSupport": {
           "tier": "build_and_sequence",
@@ -101,9 +101,9 @@
             "US_IND_AMENDMENT"
           ]
         },
-        "submissionId": 86,
+        "submissionId": 101,
         "submissionCreated": true,
-        "projectAnchorId": 81,
+        "projectAnchorId": 96,
         "projectAnchorCreated": true
       }
     }

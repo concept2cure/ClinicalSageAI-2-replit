@@ -1,0 +1,62 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/stability-studies/84",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "shelfLife": "18 months when stored at or below 25 C",
+      "reason": "Shelf life shortened after the 18-month time point."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 58,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 84,
+        "organizationId": 2,
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
+        "studyTitle": null,
+        "productName": "BX-702 5 mg film-coated tablet",
+        "batchNumber": "P2-20261112003432",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "LT",
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "3",
+          "6",
+          "12",
+          "24"
+        ],
+        "stabilityData": null,
+        "notes": null,
+        "shelfLife": "18 months when stored at or below 25 C",
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-15T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-12T00:34:45.450Z",
+        "updatedAt": "2026-11-12T00:51:01.046Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

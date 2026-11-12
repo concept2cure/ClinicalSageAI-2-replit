@@ -10,20 +10,20 @@
       "technique": "Enzyme inhibition assay",
       "result": "IC50 4.2 nM against the target enzyme (n=3)",
       "conclusion": "Potency is consistent across the three development batches",
-      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+      "projectId": "689b2e11-9727-43af-9aae-1369322b42cc"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 30,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 6,
+        "id": 12,
         "organizationId": 2,
-        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "projectId": "689b2e11-9727-43af-9aae-1369322b42cc",
         "scope": "drug_substance",
         "studyType": "biological",
         "studyTitle": "Biological activity of BX-702",
@@ -40,8 +40,8 @@
         "status": "draft",
         "qualifiedBy": null,
         "qualificationDate": null,
-        "createdAt": "2026-11-10T13:06:39.285Z",
-        "updatedAt": "2026-11-10T13:06:39.285Z"
+        "createdAt": "2026-11-12T00:34:42.311Z",
+        "updatedAt": "2026-11-12T00:34:42.311Z"
       },
       "module3Linked": true
     }

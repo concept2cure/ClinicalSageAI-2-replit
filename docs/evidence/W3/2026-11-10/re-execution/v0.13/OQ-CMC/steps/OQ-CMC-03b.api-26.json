@@ -1,0 +1,230 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 26,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "sectionKey": "3.1",
+          "sectionPath": "3.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.A.1",
+          "sectionPath": "3.2.A.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.A.2",
+          "sectionPath": "3.2.A.2",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.A.3",
+          "sectionPath": "3.2.A.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.1",
+          "sectionPath": "3.2.P.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.2",
+          "sectionPath": "3.2.P.2",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.3",
+          "sectionPath": "3.2.P.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.4",
+          "sectionPath": "3.2.P.4",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.5",
+          "sectionPath": "3.2.P.5",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.6",
+          "sectionPath": "3.2.P.6",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.7",
+          "sectionPath": "3.2.P.7",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.P.8",
+          "sectionPath": "3.2.P.8",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.R.1.US",
+          "sectionPath": "3.2.R.1.US",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.1",
+          "sectionPath": "3.2.S.1",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.2",
+          "sectionPath": "3.2.S.2",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.3",
+          "sectionPath": "3.2.S.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.4",
+          "sectionPath": "3.2.S.4",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.5",
+          "sectionPath": "3.2.S.5",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.6",
+          "sectionPath": "3.2.S.6",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.2.S.7",
+          "sectionPath": "3.2.S.7",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        },
+        {
+          "sectionKey": "3.3",
+          "sectionPath": "3.3",
+          "stale": false,
+          "staleReason": null,
+          "approvalState": "draft",
+          "updatedAt": "2026-11-10T13:06:42.715Z",
+          "completeness": 100,
+          "missingInputs": []
+        }
+      ]
+    }
+  }
+}
