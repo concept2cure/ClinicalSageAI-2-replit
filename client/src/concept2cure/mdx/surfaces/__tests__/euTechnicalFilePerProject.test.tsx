@@ -186,7 +186,7 @@ describe('an EU IVDR project, on the IVD screen', () => {
     mount('device-diagnostics');
     fireEvent.click(await assembleButton());
     await waitFor(() => expect(status()).toMatch(/^Downloaded /));
-    expect(status()).toMatch(/not yet a complete technical file/);
+    expect(status()).toMatch(/not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section/);
     expect(status()).toMatch(/3 of its sections are still in draft or review/);
   });
 

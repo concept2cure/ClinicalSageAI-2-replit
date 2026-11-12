@@ -70,7 +70,7 @@ What the status line says, in each case:
 | The server answered | The screen says |
 |---|---|
 | 200, `ready: true`, placed in the registry | "Downloaded <file>" |
-| 200, `ready: false` | "… · not yet a complete technical file: manifest.json in the ZIP lists each required Annex II and III section and whether it is present" |
+| 200, `ready: false` | "… · not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section and whether it is present" |
 | 200, `unfinalized: n` | "… · n of its sections are still in draft or review" |
 | 200, no `ready` or no `unfinalized` | that the server did not say; neither is read as complete or approved |
 | 200, audited without a registry placement | "… · audit-logged; artifact registry placement pending" |
@@ -91,6 +91,7 @@ missing (P-114 item 1's rule, applied here).
 | `server/services/c2c/__tests__/pathway-doc-class.test.ts` (3 cases added: the EU test against the server's table) | the function did not exist | 5 passed (`green/screens-after.txt`) |
 | Every `client/src/concept2cure/mdx` suite | — | 115 files, 1,134 tests passed (`green/neighbours.txt`) |
 | ESLint warning ratchet, against trunk | — | no file changed its warning count |
+| `ci:internals-in-copy` | the first push was refused: the incomplete-file line named the manifest by its file name, which the gate reads as an internal identifier in user copy | the line says "the manifest in the ZIP"; the gate passes, and both walks were repeated on the new wording |
 
 ## Walked in the running app (2026-11-12)
 

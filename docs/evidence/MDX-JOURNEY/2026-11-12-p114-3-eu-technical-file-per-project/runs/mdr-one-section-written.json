@@ -46,7 +46,7 @@
  "saysEstar": [],
  "assembleOffered": 1,
  "assembleTitle": "Assemble a ZIP of this project’s written MDR Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.",
- "status": "Downloaded PROG-871D7801-technical-file-mdr.zip · not yet a complete technical file: manifest.json in the ZIP lists each required Annex II and III section and whether it is present · 1 of its sections is still in draft or review",
+ "status": "Downloaded PROG-871D7801-technical-file-mdr.zip · not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section and whether it is present · 1 of its sections is still in draft or review",
  "anaAsks": [],
  "downloaded": "md-written-PROG-871D7801-technical-file-mdr.zip",
  "zipEntries": [

@@ -48,7 +48,7 @@
  "saysEstar": [],
  "assembleOffered": 1,
  "assembleTitle": "Assemble a ZIP of this project’s written IVDR Annex II and III sections, with its manifest and checksums. It is not sent to a Notified Body.",
- "status": "Downloaded PROG-F8AF5607-technical-file-ivdr.zip · not yet a complete technical file: manifest.json in the ZIP lists each required Annex II and III section and whether it is present · 1 of its sections is still in draft or review",
+ "status": "Downloaded PROG-F8AF5607-technical-file-ivdr.zip · not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section and whether it is present · 1 of its sections is still in draft or review",
  "anaAsks": [],
  "downloaded": "iv-written-PROG-F8AF5607-technical-file-ivdr.zip",
  "zipEntries": [

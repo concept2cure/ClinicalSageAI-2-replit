@@ -235,7 +235,7 @@ export function technicalFileStatusLine(
   const completeness = outcome.ready === true
     ? ''
     : outcome.ready === false
-      ? ' · not yet a complete technical file: manifest.json in the ZIP lists each required Annex II and III section and whether it is present'
+      ? ' · not yet a complete technical file: the manifest in the ZIP lists each required Annex II and III section and whether it is present'
       : ' · the server did not say whether the file is complete';
   const n = outcome.unfinalized;
   const drafts = n === null
