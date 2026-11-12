@@ -178,10 +178,10 @@ export function averageReadinessFigure(counts: PortfolioCounts | null): AverageR
 export function averageReadinessSentence(counts: PortfolioCounts | null): string | null {
   const f = averageReadinessFigure(counts);
   if (!f) return null;
+  if (f.state === 'measured') return `The server measured an average dossier readiness of ${f.pct}% over the ${f.measured} project(s) with a measured figure.`;
   if (f.state === 'none') return 'No project has a measured dossier readiness yet, so there is no average.';
   if (f.state === 'not_measured') return 'The average dossier readiness is not measured for this many projects.';
-  if (f.state === 'unavailable') return 'The average dossier readiness could not be read.';
-  return `The server measured an average dossier readiness of ${f.pct}% over the ${f.measured} project(s) with a measured figure.`;
+  return 'The average dossier readiness could not be read.';
 }
 
 function AverageReadiness({ counts }: { counts: PortfolioCounts }) {
