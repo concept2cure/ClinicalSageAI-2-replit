@@ -1508,13 +1508,26 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
 - **Documents are on the Library's first screen** (F1, `9d80501d23`). The search and the six filters moved, as they
   are, into a bar across the tree and the list. At 1440 by 900 two documents are wholly visible where none was.
 
-Left open on the Vault's screens, none started: at 1280 by 800 the Library's first document still begins below the
-window; lifting a hold from the record (the notice carries no hold id); the dark theme was not re-checked for these
-changes.
+- **The first document is on the first screen at 1280 by 800 too** (F1, `4424c05e21`). The find bar spans the whole
+  Library, the record included, so the search and the six filters take one row each. The binder's note names the
+  outline once, and the confirm prompt's control reads "Confirm…" beside the sentence that names its folder. The
+  first document moves from 904px to 699px and is wholly visible. At 1440 by 900, 3 documents are (was 2). The dark
+  theme was walked over every Library view: no defect but "these 1 filings", now "this filing".
+- **A trial master file record can be declared not applicable to its study** (F1, `790706d7c3`; P-124 item 5,
+  carried before admission). The declaration has a reason, says who and when, is written with its chained audit
+  row, and names no document (a CHECK holds it). It counts as neither filed nor missing, and the verdict, figures,
+  package and index say how many were declared. A filed record is not declared over (409). A document filed against
+  a declared record ends the declaration. Withdrawing it is a removal with a reason. The store's file was amended in
+  place (RULE 1). Walked on a deploy-migrated database. Evidence `docs/evidence/D2-ETMF/2026-11-12-not-applicable/`.
+
+Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
+administration's restoration order); on a phone the first document is below the first screen (the shared page
+header takes four lines).
 
 **E4, where it stands.** Steps 1 and 2 were started on 2026-11-11 by two agents that a usage limit cut off. Their
-unfinished edits were not committed and are not in the tree. E4 remains this lane's and is next after the screens
-above, by the plan named above. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+unfinished edits were not committed and are not in the tree. E4 remains this lane's and is next, by the plan named
+above; "not applicable" (P-124 item 5) is now on the deployed store, so E4's retirement of
+`update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 
