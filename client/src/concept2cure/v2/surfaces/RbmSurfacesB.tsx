@@ -29,9 +29,10 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { RBM_VOCAB, type RbmSignal } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardSignal, RbmBoardSite, RbmBoardAction } from './rbmBoard';
+import { siteIndicatorColumns } from './rbmBoard';
 import {
   RbmChip, RbmFreshness, RbmWhen, DimBars,
-  RbmFormModal, GovernedApprovalDialog, type FormField,
+  RbmFormModal, GovernedApprovalDialog, AskAna, type FormField,
 } from './RbmSurfaces';
 import {
   useRbmMutation, useRbmOwners, ownerId, dueDate,
@@ -85,7 +86,7 @@ function NoPlanNote({ onTab }: { onTab?: (id: string) => void }) {
 }
 
 /* 6 -- Signals */
-export function RbmSignals({ board, onTab, onReload }: SubProps) {
+export function RbmSignals({ board, onTab, onReload, onAsk }: SubProps) {
   const signals = board.signals.map(signalView);
   const [filter, setFilter] = useState('open');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -95,6 +96,8 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
   const owners = useRbmOwners();
   // The plan in force, not the plan on screen — see the header.
   const planId = board.governingPlanId ?? null;
+  // The scan follows the sites' source (server/routes/mdx-rbm-data.ts scanSites).
+  const scansIndicators = board.sites.some(s => s.source === 'study_indicators');
 
   const isOpen = (s: RbmSignal) => !['resolved', 'dismissed'].includes(s.status);
   const shown = signals
@@ -227,15 +230,21 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
                   <button className="rbm-btn" disabled={mut.busy || planId == null}
                     title={planId == null ? 'This study has no monitoring plan for the action to attach to' : undefined}
                     onClick={() => escalate(s)}>Escalate to action {I.chevRight}</button>
+                  <AskAna onAsk={onAsk} prompt={`Explain this central monitoring signal${s.site !== '—' ? ` at site ${s.site}` : ''} and recommend the next step (triage, investigate, dismiss or escalate): ${s.title}. ${s.detail ?? ''}`.trim()} />
                 </div>
               )}
             </div>
           )}
         </div>
       ))}
-        {shown.length === 0 && <div className="rbm-inbox-empty">No {filter === 'all' ? '' : filter + ' '}signals. Central monitoring re-scans the site cohort server-side.</div>}
+        {shown.length === 0 && <div className="rbm-inbox-empty">No {filter === 'all' ? '' : filter + ' '}signals. “Run central monitoring” compares the study’s sites again.</div>}
       </div>
-      <div className="rbm-note">{I.info}Central statistical monitoring compares each site against the study cohort on its four risk dimensions (robust modified z-score, MIN_COHORT 5). It scans the site-risk snapshot — not the underlying clinical data — so it does not cover lab, adverse-event, visit-timing or data-entry patterns.</div>
+      {/* What the scan compares depends on where the sites' figures came from, and the note said the Site
+          Intelligence case for both: on a study scored from its own indicators it described a scan that no longer
+          runs. */}
+      <div className="rbm-note">{I.info}{scansIndicators
+        ? 'Central monitoring compares each site-level indicator across the study’s sites, in the indicator’s own direction, with a robust score. An indicator is compared only where five or more sites have a reading. It reads the indicator readings loaded for the sites, not the subject-level data behind them, so a pattern no indicator measures — in laboratory values, adverse events, visit timing or data entry — is not covered.'
+        : 'Central monitoring compares each site against the study’s other sites on its four risk scores (composite, enrollment, quality, operational), with a robust score; it needs five or more sites. It reads the site risk scores, not the clinical data behind them, so it does not cover laboratory, adverse-event, visit-timing or data-entry patterns.'}</div>
       {logging && <RbmFormModal title="Log a manual signal"
         intro="Manual signals join the inbox alongside statistical, KRI- and QTL-derived signals. Severity drives triage order."
         fields={[{ key: 'title', label: 'Signal', type: 'textarea' }, { key: 'severity', label: 'Severity', type: 'select', options: ['critical', 'high', 'medium', 'low'], labels: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' } }, { key: 'site', label: 'Site (optional)', type: 'text', optional: true }, { key: 'detail', label: 'Detail', type: 'textarea' }]}
@@ -252,7 +261,7 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
 }
 
 /* 7 -- Patients */
-export function RbmPatients({ board, onReload }: SubProps) {
+export function RbmPatients({ board, onReload, onAsk }: SubProps) {
   const P = board.patients;
   const [open, setOpen] = useState<string>(() => P[0]?.sid ?? '');
   const mut = useRbmMutation(onReload);
@@ -312,7 +321,9 @@ export function RbmPatients({ board, onReload }: SubProps) {
         </div>
         {sel && (
           <div className="rbm-card">
-            <div className="rbm-card-h">Why {sel.sid} is atypical<span className="rbm-card-sub">per-metric robust z vs cohort</span></div>
+            <div className="rbm-card-h">Why {sel.sid} is atypical<span className="rbm-card-sub">per-metric robust z vs cohort</span>
+              <AskAna onAsk={onAsk} prompt={`Explain why subject ${sel.sid}${sel.site ? ` at site ${sel.site}` : ''} is ${sel.status === 'normal' ? 'scored as typical' : sel.status === 'flagged' ? 'flagged for medical review' : 'queued for review'} in the patient profiles, which dimensions drive the anomaly score, and what a medical monitor should check.`} />
+            </div>
             <div className="rbm-pt-detail">{sel.metrics.map((m, i) => {
               const a = Math.abs(m.z), pct = Math.min(100, a / 5 * 100);
               return (
@@ -323,7 +334,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
                 </div>
               );
             })}
-              {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}No dimension was comparable for this subject: either the cohort was below MIN_COHORT (5) on every metric it carries, or the subject was last scored before the breakdown was recorded. <b>Scan cohort</b> recomputes it. An absent dimension means <b>not comparable</b> — not typical.</div>}
+              {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}No dimension was comparable for this subject: either fewer than 5 subjects carry each metric it has, or the subject was last scored before the breakdown was recorded. <b>Scan cohort</b> recomputes it. An absent dimension means <b>not comparable</b> — not typical.</div>}
               <div className="rbm-pt-foot"><RbmFreshness at={sel.at ?? '—'} />{sel.status !== 'normal' && <span className="rbm-pt-note">{I.alertTriangle}{sel.status === 'flagged' ? 'Flagged for medical review' : 'Queued for review'} — dimensions 3+ MAD from cohort median drive the score.</span>}</div>
             </div>
           </div>
@@ -358,8 +369,51 @@ function SiteIndicatorCounts({ basis }: { basis: NonNullable<RbmBoardSite['basis
   return <span className="mut">{parts.length ? parts.join(' · ') : 'No indicator read'}{evaluated === 0 && parts.length ? ' — not scored' : ''}</span>;
 }
 
-export function RbmSites({ board, onReload }: SubProps) {
+/**
+ * Every site against every indicator read there: the readings behind the composites above, side by side, so the
+ * one site that stands apart on an indicator, or the one indicator that is red across sites, can be seen at once.
+ *
+ * Nothing here is computed in the browser. Each cell is a reading the engine stored on the site's risk row with the
+ * band it gave it (`sites[].indicators`); the screen showed only their counts ("1 red · 1 amber"). The band is
+ * written in every cell as well as coloured, because colour alone does not carry it. A site with no reading of an
+ * indicator has an empty cell that says so: not read is not green.
+ */
+function SiteIndicatorTable({ sites, columns }: { sites: RbmBoardSite[]; columns: { name: string; unit: string | null }[] }) {
+  const BAND: Record<string, string> = { red: 'Red', amber: 'Amber', green: 'Green', not_evaluated: 'No limit' };
+  return (
+    <div className="pj-card rbm-sx">
+      <div className="pj-card-h"><span className="t">Indicators by site</span><span className="s">each site’s latest reading, banded against the indicator’s own limits</span></div>
+      <div className="pj-card-b rbm-sx-scroll">
+        <table className="rbm-tbl rbm-sx-tbl">
+          <caption className="rbm-sr">Each site’s latest reading of each indicator, with its band</caption>
+          <thead><tr><th scope="col">Site</th>{columns.map(c => <th key={c.name} scope="col">{c.name}{c.unit ? <span className="rbm-sx-unit"> ({c.unit})</span> : null}</th>)}</tr></thead>
+          <tbody>{sites.map(s => (
+            <tr key={s.n}>
+              <th scope="row" className="mono">{s.n}</th>
+              {columns.map(c => {
+                const r = (s.indicators ?? []).find(x => x.name.trim().toLowerCase() === c.name.trim().toLowerCase());
+                if (!r) return <td key={c.name}><span className="mut">Not read</span></td>;
+                const limit = r.status === 'red' ? r.red : r.status === 'amber' ? r.amber : null;
+                return (
+                  <td key={c.name}>
+                    <span className="rbm-sx-cell" data-st={r.status}
+                      title={`Site ${s.n}, ${r.name}: ${r.value}${r.unit ? ` ${r.unit}` : ''} — ${BAND[r.status] ?? r.status}${limit != null ? ` (limit ${limit}${r.unit ? ` ${r.unit}` : ''})` : ''}${r.cutoff ? `, data cut-off ${r.cutoff}` : ''}`}>
+                      <b className="mono">{r.value}</b><em>{BAND[r.status] ?? r.status}</em>
+                    </span>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export function RbmSites({ board, onReload, onAsk }: SubProps) {
   const sites = board.sites;
+  const columns = siteIndicatorColumns(board);
   const mut = useRbmMutation(onReload);
   const at = sites[0]?.at ?? null;
 
@@ -398,19 +452,21 @@ export function RbmSites({ board, onReload }: SubProps) {
                 : <span className="mut">Not scored</span>}</td>
               <td>{s.basis ? <SiteIndicatorCounts basis={s.basis} /> : <DimBars enr={s.enr ?? 0} qual={s.qual ?? 0} ops={s.ops ?? 0} />}</td>
               <td><RbmChip vocab="tier" value={s.tier} /></td>
-              <td className="mit"><div className="rbm-drivers">{s.drivers.map((d, i) => <span key={i} className="rbm-driver">{d}</span>)}</div></td>
+              <td className="mit"><div className="rbm-drivers">{s.drivers.map((d, i) => <span key={i} className="rbm-driver">{d}</span>)}</div>
+                <AskAna onAsk={onAsk} prompt={`Explain why site ${s.n} is on the ${s.tier} monitoring tier for this study, citing the indicator readings behind its composite${s.composite != null ? ` of ${Math.round(s.composite)}` : ''}, and what oversight it needs next.`} /></td>
             </tr>
           ))}
           {sites.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No site risk scored for this study yet. Sites are scored from the study’s site-level indicator readings: load an extract that carries site rows for an indicator that has limits, then recompute.</td></tr>}
           </tbody></table>
       </div>
+      {columns.length > 0 && <SiteIndicatorTable sites={sites} columns={columns} />}
       <div className="rbm-note">{I.info}All {sites.length} scored site{sites.length === 1 ? '' : 's'} shown, ranked by composite risk. {fromIndicators ? 'Each indicator is banded at the site against its own limits: red counts 100, amber 50, green 0, and the composite is the mean over the indicators evaluated at the site. ' : ''}The tier is set from the composite score; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available.</div>
     </div>
   );
 }
 
 /* 9 -- Oversight */
-export function RbmOversight({ board, onTab, onReload }: SubProps) {
+export function RbmOversight({ board, onTab, onReload, onAsk }: SubProps) {
   const C = board.oversight;
   const sites = board.sites;
   const [schedFor, setSchedFor] = useState<RbmBoardSite | null>(null);
@@ -456,7 +512,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
       )}
       {planId == null && <NoPlanNote onTab={onTab} />}
       <div className="rbm-card">
-        <div className="rbm-card-h">Where do I send a monitor<span className="rbm-card-sub">SPOT — site risk joined with open-signal load</span></div>
+        <div className="rbm-card-h">Where do I send a monitor<span className="rbm-card-sub">site risk joined with each site’s open signals</span></div>
         <table className="rbm-tbl"><thead><tr><th>Site</th><th>Composite</th><th>Tier</th><th>Open signals</th><th>High severity</th><th>Oversight action</th></tr></thead>
           <tbody>{sites.map(s => {
             const c = C[s.n ?? ''] || { open: 0, high: 0 };
@@ -471,16 +527,17 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
                 <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled — due {v.due} — {v.owner}</span>
                   : <button className="rbm-linkbtn" disabled={mut.busy || planId == null}
                       title={planId == null ? 'This study has no monitoring plan for the visit to attach to' : undefined}
-                      onClick={() => setSchedFor(s)}>{I.clock}Schedule visit</button>}</td>
+                      onClick={() => setSchedFor(s)}>{I.clock}Schedule visit</button>}
+                  {(c.open > 0 || s.tier === 'enhanced') && <AskAna onAsk={onAsk} prompt={`What oversight does site ${s.n} need? It is on the ${s.tier} tier with ${c.open} open signal${c.open === 1 ? '' : 's'}${c.high ? `, ${c.high} of high severity` : ''}. Recommend the visit type, its focus and the follow-up actions.`} />}</td>
               </tr>
             );
           })}
           {sites.length === 0 && <tr><td colSpan={6} className="rbm-col-empty">No sites to oversee for this study yet.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}SPOT turns risk + signal load into a monitoring assignment: scheduling a visit creates a site_visit action on the monitoring plan. Enhanced-tier sites should carry an on-site visit; reduced-tier sites are remote/central by default. The visit is a tracked action — the monitoring report, findings, follow-up letter and targeted SDV/SDR scope are not modelled yet.</div>
+      <div className="rbm-note">{I.info}Site oversight turns a site’s risk and its open signals into a monitoring assignment: scheduling a visit creates a site-visit action on the monitoring plan. Enhanced-tier sites should carry an on-site visit; reduced-tier sites are remote or central by default. The visit is a tracked action: the monitoring visit report, its findings, the follow-up letter and a targeted source-data verification scope are not recorded here yet.</div>
       {schedFor && <RbmFormModal title={`Schedule oversight visit — site ${schedFor.n}`}
-        intro={`${schedFor.name} — composite ${schedFor.composite ?? '—'} — ${schedFor.tier} tier. The visit is created as a site_visit action on the monitoring plan.`}
+        intro={`${schedFor.name ?? `Site ${schedFor.n}`} — composite ${schedFor.composite ?? '—'} — ${schedFor.tier} tier. The visit is created as a site-visit action on the monitoring plan.`}
         fields={[
           { key: 'type', label: 'Visit type', type: 'select', options: ['on_site', 'remote'], labels: { on_site: 'On-site', remote: 'Remote / central' } },
           { key: 'when', label: 'Target date', type: 'date' },
@@ -496,7 +553,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
 }
 
 /* 10 -- Plan */
-export function RbmPlan({ board, onReload }: SubProps) {
+export function RbmPlan({ board, onReload, onAsk }: SubProps) {
   const plan = board.plan;
   // Actions are execution records logged against the plan in force, which is
   // not the plan on screen while an amendment draft is open. board.actions
@@ -585,7 +642,10 @@ export function RbmPlan({ board, onReload }: SubProps) {
       )}
       <div className="rbm-bar" style={{ marginBottom: 11 }}>
         <span className="rbm-bar-info">{acts.length} actions — {acts.filter(a => a.overdue).length} overdue — {showingOtherPlan ? 'logged against the approved plan in force' : 'escalations, investigations and scheduled visits land here'}</span>
-        <button className="rbm-btn" disabled={mut.busy || governingId == null} title={governingId == null ? (plan ? 'This study has no monitoring plan in force' : 'Generate a monitoring plan first') : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
+        <span className="rbm-bar-acts">
+          <AskAna onAsk={onAsk} prompt="Review this study's monitoring plan actions: which are overdue or at risk, who owns them, and what should be done first. Then say whether any open signal or red indicator has no action yet." />
+          <button className="rbm-btn" disabled={mut.busy || governingId == null} title={governingId == null ? (plan ? 'This study has no monitoring plan in force' : 'Generate a monitoring plan first') : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
+        </span>
       </div>
       <div className="rbm-board">{cols.map(([st, label]) => (
         <div key={st} className="rbm-col">
