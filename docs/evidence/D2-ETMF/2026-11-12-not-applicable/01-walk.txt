@@ -1,0 +1,45 @@
+# The running app (dev server on the deploy-migrated dev database), 2026-11-12 06:25 UTC, demo project C2C-101,
+# signed in through the real form as the development login. Script: a Playwright walk (light theme; repeated in dark).
+
+verdict before: 2 of 26 essential records are filed. 24 are missing.
+figures before: Zones complete 1 of 11 · Essential records filed 2 of 26 · Open records 24, 0 filed with no verified document
+declaring: Protocol and amendments
+said: Protocol and amendments is declared not applicable to this study. It is no longer counted as missing. Your reason is recorded on the record and in the audit trail.
+verdict after: 2 of 25 essential records are filed. 23 are missing. 1 is declared not applicable to this study.
+figures after: Zones complete 1 of 11 · Essential records filed 2 of 25 · Open records 23, 0 filed with no verified document · Not applicable 1
+row: Protocol and amendments Zone 2 · protocol Not applicable to this study: “No investigational product is imported for this single-country study.” Declared by JM Smith on 2026-11-12. File a document Withdraw
+package: /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5604a993-5de5-57da-baa3-135913cf4da5/scratchpad/ui-walk/shots/tmf-na/package.zip
+said after withdraw: The declaration that Protocol and amendments does not apply was withdrawn. It is required again. Your reason is recorded with the withdrawal.
+verdict after withdraw: 2 of 26 essential records are filed. 24 are missing.
+console errors: []
+responses >= 400: []
+
+# The inspection package downloaded while the record was declared (README head and index, verbatim)
+TRIAL MASTER FILE — INSPECTION-READINESS PACKAGE
+==================================================
+
+Study:            sd_65bfd735cf9649258e6d6bd78349e1cb
+Protocol:         833164a5-6fca-4bf8-95c4-a2030fed4acb
+Title:            [Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis
+Scope:            essential artifacts
+Reference model:  DIA TMF Reference Model (ICH E6(R3) Appendix C)
+Inspection ready: NO
+
+Zones complete:   1 / 11
+Required docs:    25
+Missing:          23
+  of which filed without a verified document: 0
+Not applicable:   1 (declared, each with its reason; not required)
+Artifacts filed:  2
+
+zone,artifact_code,artifact_name,filed_at,document_ref,document_evidence,not_applicable_reason
+1,monitoring_plan,Monitoring Plan,2026-11-10T15:00:03.234Z,vault://282502b1-d0dc-4097-adc6-2643e4df1e45,verified,
+1,tmf_plan,Trial Master File Plan,2026-11-10T13:10:25.220Z,vault://9ed8e080-cb49-495c-9ddb-2793e00639bc,verified,
+
+# The audit rows the walks wrote (dev database, newest first)
+TMF_ARTIFACT_REMOVED |  | Walk check: the declaration is withdrawn again.
+TMF_ARTIFACT_DECLARED_NOT_APPLICABLE | declared_after_removal | No investigational product is imported for this single-country study.
+TMF_ARTIFACT_REMOVED |  | Walk check: the declaration is withdrawn again.
+TMF_ARTIFACT_DECLARED_NOT_APPLICABLE | declared_after_removal | No investigational product is imported for this single-country study.
+TMF_ARTIFACT_REMOVED |  | Walk check: the declaration is withdrawn again.
+TMF_ARTIFACT_DECLARED_NOT_APPLICABLE | declared | No investigational product is imported for this single-country study.

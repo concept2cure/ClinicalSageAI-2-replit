@@ -51,11 +51,15 @@ export function TmfFiguresLine({ result, testId }: { result: TmfCompletenessResu
       <span className="vd-dr-stage">{capital(scopeNoun(result.scope))} filed <b>{f.filed}</b> of <b>{f.required}</b></span>
       {dot}
       <span className="vd-dr-stage">Open records <b>{f.open}</b>{f.open > 0 ? `, ${unverifiedWords(f.unverified)}` : ''}</span>
+      {f.notApplicable > 0 ? <>{dot}<span className="vd-dr-stage">Not applicable <b>{f.notApplicable}</b></span></> : null}
     </div>
   );
 }
 
-const zoneStatus = (required: number, open: number) => (required === 0 ? 'No record required' : open === 0 ? 'Complete' : `${open} open`);
+const zoneStatus = (required: number, open: number, declared = 0) => {
+  const status = required === 0 ? 'No record required' : open === 0 ? 'Complete' : `${open} open`;
+  return declared > 0 ? `${status} · ${declared} not applicable` : status;
+};
 const OPEN_STATE: Record<string, string> = {
   no_document: 'Filed with no document',
   unresolved: 'Filed against a Vault document that no longer exists',
@@ -88,7 +92,7 @@ function PackageDocument({ study, verdict, result, readOn }: { study: TmfStudy; 
             {result.zones.map((z) => (
               <tr key={z.number}>
                 <td className="mono">{z.number}</td><td>{z.name}</td>
-                <td className="mono">{z.present.length} of {z.required.length}</td><td>{zoneStatus(z.required.length, z.missing.length)}</td>
+                <td className="mono">{z.present.length} of {z.required.length}</td><td>{zoneStatus(z.required.length, z.missing.length, z.notApplicable?.length ?? 0)}</td>
               </tr>
             ))}
           </tbody>
@@ -114,7 +118,8 @@ function PackageDocument({ study, verdict, result, readOn }: { study: TmfStudy; 
       <h4>4 What this package is</h4>
       <p data-testid="vault-tmf-package-what">
         The index and the readiness picture of this study’s trial master file: a manifest, the completeness assessment, and an index of every filing
-        with its zone, its record code, when it was filed, the document it refers to and what that reference was found to be. It is not the documents.
+        with its zone, its record code, when it was filed, the document it refers to and what that reference was found to be, and of every record
+        declared not applicable to the study, with its reason. It is not the documents.
         They stay in the Vault, or in the system a filing refers to, and the package does not contain them. {basisSentence(result.basis)} {NOT_ASSESSED}{' '}
         The download is built when it is asked for, so it states the trial master file as it is then. It is a recorded download, with the SHA-256 of the file sent.
       </p>

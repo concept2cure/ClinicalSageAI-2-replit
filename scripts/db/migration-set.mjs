@@ -3828,6 +3828,8 @@ export const C2C_MIGRATION_FILES = [
   // removed_at, removed_by, removal_reason and a CHECK that a removal carries its reason. After
   // the table's creator (20260615), 20260926b and 20261008d. Each statement runs only when its
   // object is absent; no DROP; no new table, so the sweeps below have nothing new to policy.
+  // Amended in place 2026-11-12 (P-124 item 5): not_applicable_reason and the CHECK that a
+  // declaration names no document and carries a reason, each only when absent.
   'migrations/20261110_tmf_filings_study_ref.sql',
   // P-122 defects, item 2 (2026-11-10): projects.risk_level loses its DEFAULT 'medium', a risk nobody assessed that
   // the hierarchy roll-up reported as one. Conditional on the column still having a default; changes no row; no table.

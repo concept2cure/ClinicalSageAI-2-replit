@@ -26,16 +26,24 @@ const rule = (selector: string): string => {
   return found ? found[1] : '';
 };
 
-/** The four rules every device screen shows on arrival, as the running app showed them (probe of 2026-11-12). */
-const ON_ARRIVAL = ['.mdx-shell .page-eyebrow', '.mdx-shell .metric-label', '.mdx-shell .tbl thead th', '.mdx-shell .ctable-head'];
+/** The four rules every device screen shows on arrival, as the running app showed them (probe of 2026-11-12), each
+    with the size it takes. The tile's label took the caption size in slice 1; slice 3 made the tiles a line of
+    figures and gave it the canonical register label's size (`.c2c-v2 .reg-kpi-l`), which tilesAreALineOfFigures
+    pins too. */
+const ON_ARRIVAL: ReadonlyArray<[selector: string, size: string]> = [
+  ['.mdx-shell .page-eyebrow', '--fs-caption'],
+  ['.mdx-shell .metric-label', '--fs-small'],
+  ['.mdx-shell .tbl thead th', '--fs-caption'],
+  ['.mdx-shell .ctable-head', '--fs-caption'],
+];
 
 describe('the device kit’s shared look (D8 slice 1)', () => {
-  it.each(ON_ARRIVAL)('%s is a quiet caption: sentence case, no letter-spacing, the caption size', (selector) => {
+  it.each(ON_ARRIVAL)('%s is quiet: sentence case, no letter-spacing, %s', (selector, size) => {
     const body = rule(selector);
     expect(body, `${selector} has a rule`).not.toBe('');
     expect(body).not.toMatch(/text-transform:\s*uppercase/);
     expect(body).not.toMatch(/letter-spacing:\s*0\.\d+em/);
-    expect(body).toMatch(/font-size:\s*var\(--fs-caption\)/);
+    expect(body).toMatch(new RegExp(`font-size:\\s*var\\(${size}\\)`));
   });
 
   /* The sheet had 43 uppercase rules. Four are what a screen shows on arrival and are gone. One, .eng-blocker-kind,

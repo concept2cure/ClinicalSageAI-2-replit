@@ -1,0 +1,11 @@
+✓ control — a stream opened by the helper: passed
+✓ the helper itself names the type: passed
+✓ a route setting the header with setHeader: refused
+✓ a route setting it in writeHead, with a charset: refused
+✓ a service opening one: refused
+✓ the type named only in a comment: passed
+✓ a test file: passed
+✓ a stale exception is reported: reported
+
+✓ sse-heartbeat self-test: every case decided as expected
+exit 0

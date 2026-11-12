@@ -1,0 +1,58 @@
+{
+ "light": {
+  ".mdx-shell .status-pill.empty": {
+   "elements": 38,
+   "lowest": {
+    "ratio": 1.91,
+    "colour": "#b0aea5",
+    "on": "#f0eee6"
+   },
+   "highest": {
+    "ratio": 1.91,
+    "colour": "#b0aea5",
+    "on": "#f0eee6"
+   }
+  },
+  ".mdx-shell .estar-num": {
+   "elements": 38,
+   "lowest": {
+    "ratio": 3.9,
+    "colour": "#71706a",
+    "on": "#f5dfdd"
+   },
+   "highest": {
+    "ratio": 4.51,
+    "colour": "#71706a",
+    "on": "#f5f4ee"
+   }
+  }
+ },
+ "dark": {
+  ".mdx-shell .status-pill.empty": {
+   "elements": 38,
+   "lowest": {
+    "ratio": 2.41,
+    "colour": "#6b6963",
+    "on": "#30302e"
+   },
+   "highest": {
+    "ratio": 2.41,
+    "colour": "#6b6963",
+    "on": "#30302e"
+   }
+  },
+  ".mdx-shell .estar-num": {
+   "elements": 38,
+   "lowest": {
+    "ratio": 4.29,
+    "colour": "#94928a",
+    "on": "#4a2424"
+   },
+   "highest": {
+    "ratio": 4.55,
+    "colour": "#94928a",
+    "on": "#2b2b29"
+   }
+  }
+ }
+}

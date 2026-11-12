@@ -149,8 +149,10 @@ describe('native change closure and concurrent work', () => {
       await blocker.query('SELECT id FROM qms_change_controls WHERE id=$1 AND organization_id=$2 FOR UPDATE', [id, orgA.id]);
       closing = closure(id);
       await waitForBlockedMutation(pid);
+      // Past proposal a link states why it is added (979554ff60), or the route refuses it before it reaches the lock.
       linking = call(A.admin, 'post', `/changes/${id}/links`, {
         linkType: 'validation', linkedRef: `${TAG}-VP-TOO-LATE`, relationship: 'requires',
+        note: 'The late validation plan is required before closure.',
       }).then(response => response);
       await waitForBlockedMutation(pid, 2);
       await blocker.query('COMMIT');

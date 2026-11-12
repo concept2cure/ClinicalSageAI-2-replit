@@ -108,3 +108,20 @@ describe('Help & training', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Browse help' })).toBeTruthy());
   });
 });
+
+describe('opening Help & training by the navigation channel', () => {
+  it('opens the getting-started course for the client type that Home asked for', async () => {
+    const { stashNavParamsForTarget } = await import('../navParams');
+    stashNavParamsForTarget('training', { course: 'getting-started' });
+    render(<Training surface={{ id: 'training', label: 'Help & training' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="medtech" />);
+    expect(await screen.findByRole('heading', { level: 2, name: /device and diagnostics teams/ })).toBeTruthy();
+  });
+
+  it('opens the request AnA drafted', async () => {
+    const { stashNavParamsForTarget } = await import('../navParams');
+    stashNavParamsForTarget('training', { request: 'new', subject: 'Export fails', details: 'The export stops at 80 percent.' });
+    render(<Training surface={{ id: 'training', label: 'Help & training' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
+    expect(await screen.findByText(/AnA drafted this request/)).toBeTruthy();
+    expect((screen.getByLabelText('Subject') as HTMLInputElement).value).toBe('Export fails');
+  });
+});

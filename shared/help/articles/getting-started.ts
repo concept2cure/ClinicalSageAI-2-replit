@@ -111,7 +111,7 @@ When the account is created, select **Open Concept2Cure**. You arrive on Home, w
 
 **1. Ask AnA in any conversation.** Ask how to do something ("How do I invite a colleague?"). AnA answers from the Help Center and names the article, which you can open.
 
-**2. Use Get help.** Select **Get help** in the account menu or the **?** button in the top bar. This opens AnA's support conversation. In it AnA:
+**2. Use Get help.** Select **Get help** in the account menu or the **?** button in the top bar (or **Ask support** on Help & training). The conversation opens marked **From Help & training**; type your question, and AnA answers it as Concept2Cure support. In it AnA:
 
 - answers questions about using Concept2Cure, from the Help Center;
 - can show you a feature by moving through the screens with you;
@@ -158,7 +158,9 @@ When the account is created, select **Open Concept2Cure**. You arrive on Home, w
 2. **Invite your team**: the people who write, review and sign with you. Opens the **Members** tab of Admin.
 3. **Create your first project**: one regulatory filing, for example an IND or a 510(k), from plan to submission.
 
-The list disappears from Home when every step is done. Members who are not administrators do not see it.`,
+Below the steps, **Take the getting-started course** opens the course for your organisation's client type on Help & training. It is not counted as a step: progress through a course is not recorded.
+
+The list disappears from Home when the three steps are done. Members who are not administrators see only **Get started**, with the course, until they have opened it.`,
   },
   {
     slug: 'track-your-support-requests',

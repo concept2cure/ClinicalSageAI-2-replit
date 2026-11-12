@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -80,7 +80,8 @@ describe('a returned review, where the document opens (J3 R2)', () => {
     await open();
     const note = await screen.findByTestId('ed-review-returned');
     expect(note.textContent).toContain(`Returned by Dana Chen: ${REASON}`);
-    fireEvent.click(screen.getByRole('button', { name: 'Review tasks' }));
+    // The note's own way to Review tasks; the editor bar has its own door to the same panel (4197ede3a3).
+    fireEvent.click(within(note).getByRole('button', { name: 'Review tasks' }));
     await waitFor(() => expect(screen.getByRole('complementary', { name: 'Review tasks' })).toBeTruthy());
   });
 

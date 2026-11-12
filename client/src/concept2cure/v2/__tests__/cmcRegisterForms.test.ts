@@ -1206,3 +1206,47 @@ describe('a register that signs two states round-trips either one', () => {
     expect(statusOptionsFor(statuses, ' Completed ', 'COMPLETED')).toEqual(['COMPLETED', 'ACTIVE', 'PAUSED']);
   });
 });
+
+/* Walked 2026-11-12: the Sample type select offered "raw-material", "in-process"… and nothing said which of them is
+   drug substance evidence. The composer files a result by its sample type (cmc-write-through.ts); each option now
+   says where, from the same shared rule. */
+describe('the QC sample type says where a result is filed', () => {
+  const sampleType = () => qcTestForm().fields.find((f) => f.key === 'sampleType');
+  const labelOf = (value: string) =>
+    (sampleType()?.options as Array<{ value: string; label: string }> | undefined)?.find((o) => o.value === value)?.label;
+
+  it('keeps the register’s values, so what is stored is unchanged', () => {
+    const values = (sampleType()?.options as Array<{ value: string }>).map((o) => o.value);
+    expect(values).toEqual(['raw-material', 'in-process', 'finished-product', 'stability', 'reference-standard', 'cleaning-verification']);
+  });
+
+  it('names the section each sample type files into', () => {
+    expect(labelOf('finished-product')).toBe('Finished product (drug product, §3.2.P.5.4)');
+    expect(labelOf('raw-material')).toBe('Raw material (drug substance, §3.2.S.4.4)');
+    expect(labelOf('in-process')).toBe('In-process (drug substance, §3.2.S.4.4)');
+    expect(labelOf('stability')).toBe('Stability (drug substance, §3.2.S.4.4)');
+    expect(labelOf('reference-standard')).toBe('Reference standard (not a batch analysis)');
+    expect(labelOf('cleaning-verification')).toBe('Cleaning verification (not a batch analysis)');
+  });
+});
+
+/* Walked 2026-11-12: the ICH Q2 check asks each method's record for specificity, linearity, accuracy and precision
+   data, and the method form had no place to record them. */
+describe('the method form records each characteristic’s result', () => {
+  const base = { methodCode: 'AM-011', title: 'RP-HPLC assay', purpose: 'Assay', analyte: 'BX-733', matrix: 'Drug product', technique: 'HPLC', status: 'validation' };
+
+  it('offers the four characteristics the check reads, prefilled from the record', () => {
+    const fields = methodForm({ ichQ2Parameters: { characteristics: [], evidence: { accuracy: 'Recovery 99.6%' } } }).fields;
+    expect(fields.filter((f) => f.key.startsWith('q2_')).map((f) => f.key)).toEqual(['q2_specificity', 'q2_linearity', 'q2_accuracy', 'q2_precision']);
+    expect(fields.find((f) => f.key === 'q2_accuracy')?.default).toBe('Recovery 99.6%');
+  });
+
+  it('sends only what was written, inside the Q2 record', () => {
+    const body = methodBody({ ...base, q2_specificity: ' No interference ', q2_precision: 'RSD 0.4%', q2_linearity: '  ' });
+    expect(body.ichQ2Parameters.evidence).toEqual({ specificity: 'No interference', precision: 'RSD 0.4%' });
+  });
+
+  it('control: with nothing written, the record carries no evidence key', () => {
+    expect(methodBody(base).ichQ2Parameters).not.toHaveProperty('evidence');
+  });
+});

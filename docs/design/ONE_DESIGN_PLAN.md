@@ -1508,13 +1508,33 @@ measured or used in the running app on PostgreSQL, red first; evidence under `do
 - **Documents are on the Library's first screen** (F1, `9d80501d23`). The search and the six filters moved, as they
   are, into a bar across the tree and the list. At 1440 by 900 two documents are wholly visible where none was.
 
-Left open on the Vault's screens, none started: at 1280 by 800 the Library's first document still begins below the
-window; lifting a hold from the record (the notice carries no hold id); the dark theme was not re-checked for these
-changes.
+- **The first document is on the first screen at 1280 by 800 too** (F1, `4424c05e21`). The find bar spans the whole
+  Library, the record included, so the search and the six filters take one row each. The binder's note names the
+  outline once, and the confirm prompt's control reads "Confirm…" beside the sentence that names its folder. The
+  first document moves from 904px to 699px and is wholly visible. At 1440 by 900, 3 documents are (was 2). The dark
+  theme was walked over every Library view: no defect but "these 1 filings", now "this filing".
+- **A trial master file record can be declared not applicable to its study** (F1, `790706d7c3`; P-124 item 5,
+  carried before admission). The declaration has a reason, says who and when, is written with its chained audit
+  row, and names no document (a CHECK holds it). It counts as neither filed nor missing, and the verdict, figures,
+  package and index say how many were declared. A filed record is not declared over (409). A document filed against
+  a declared record ends the declaration. Withdrawing it is a removal with a reason. The store's file was amended in
+  place (RULE 1). Walked on a deploy-migrated database. Evidence `docs/evidence/D2-ETMF/2026-11-12-not-applicable/`.
+- **A filed record says its document's review stage** (F1, `d35c89ed05`; P-124 item 5's other half, "a record's
+  status is its document's"). The stage is the one the Library reads for the same document, e.g. "Review:
+  Approved.". Readiness is unchanged.
 
-**E4, where it stands.** Steps 1 and 2 were started on 2026-11-11 by two agents that a usage limit cut off. Their
-unfinished edits were not committed and are not in the tree. E4 remains this lane's and is next after the screens
-above, by the plan named above. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
+Left open on the Vault's screens: lifting a hold from the record (the notice carries no hold id; client
+administration's restoration order); on a phone the first document is below the first screen (the shared page
+header takes four lines).
+
+**E4, where it stands.** **Step 1 is done** (F1, `d7ebbb034a`). The report pack `etmf.completeness_pack` reads the
+deployed store as the person who runs it, one project or every project they can open. Each figure is the store's
+own assessment of a study. It counted the retired store's tables organization-wide, and failed on a deployed
+database. The type id is kept; its label is "Trial master file filings and readiness", and its scopes are project
+and account (L-3). It was run in the app on PostgreSQL. Evidence `docs/evidence/D2-ETMF/2026-11-12-e4-step1-report-pack/`.
+Steps 2 (AnA's reads) and 3 (AnA's retired write tools) are next, by the plan named above. Step 2's partial patch
+from 2026-11-11 is kept outside the tree and is unverified. "Not applicable" (P-124 item 5) is on the deployed
+store, so step 3's retirement of `update_tmf_artifact_status` has the declaration to point to. The first slice's own review (`06d8036f89`, session `…01LjrcEe`) changed
 `classifyArtifact` so a code is returned only for a catalog name itself; E4's L-1 reads that, and its refusal on
 `code: null` stands.
 

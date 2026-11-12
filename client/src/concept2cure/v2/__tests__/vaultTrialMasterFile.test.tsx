@@ -234,7 +234,7 @@ describe('whether the essential records are all filed', () => {
   });
 
   it('states no verdict over a read that checked nothing, even one the server called ready', async () => {
-    const nothing = { ...completenessOf(), ready: true, zones: [], summary: { zoneCount: 0, zonesComplete: 0, totalRequired: 0, totalMissing: 0, totalUnverified: 0 } };
+    const nothing = { ...completenessOf(), ready: true, zones: [], summary: { zoneCount: 0, zonesComplete: 0, totalRequired: 0, totalMissing: 0, totalUnverified: 0, totalNotApplicable: 0 } };
     expect(tmfVerdict(nothing)).toBe('not-assessed');
     // And an answer that calls itself ready while listing a missing record is not complete.
     expect(tmfVerdict({ ...completenessOf(), ready: true })).toBe('incomplete');

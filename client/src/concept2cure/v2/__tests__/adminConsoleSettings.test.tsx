@@ -155,19 +155,23 @@ describe('Settings carries every governed setting Setup held', () => {
   });
 });
 
-describe('the SSO tab opens the Identity console', () => {
-  it('names where SSO and SCIM are governed and opens it', async () => {
+/* Since 7dfb49b645 the Identity console door is a platform administrator's: every read on that page needs one.
+   Mounted here as a customer's administrator; the door's platform-administrator branch is in
+   identityConsoleDoorAudience.test.tsx. */
+describe('the SSO tab says where single sign-on is governed', () => {
+  it("tells a customer's administrator who sets it up, and offers no door to a page they cannot use", async () => {
     const p = mount(); await openTab('SSO');
-    fireEvent.click(await screen.findByRole('button', { name: /Open Identity console/ }));
-    expect(p.onNav).toHaveBeenCalledWith('identity-console');
+    expect(await screen.findByText(/set up for your organisation by Concept2Cure/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Open Identity console/ })).toBeNull();
+    expect(p.onNav).not.toHaveBeenCalledWith('identity-console');
     expect(p.onAsk).not.toHaveBeenCalled();
   });
 
-  it('still offers the door when the SSO read failed', async () => {
+  it('still says so when the SSO read failed', async () => {
     adminBody = { ...admin({ sso: null }), meta: { count: 1, unavailable: ['sso'] } };
     mount(); await openTab('SSO');
     expect(await screen.findByText("Couldn't load SSO and provisioning")).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Open Identity console/ })).toBeTruthy();
+    expect(screen.getByText(/set up for your organisation by Concept2Cure/)).toBeTruthy();
   });
 });
 

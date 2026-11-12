@@ -17,6 +17,9 @@
  * `removalReason` record a removal on the row, and every reader skips a
  * removed row. Filing the artifact again clears the three on the same row.
  *
+ * A live row with `notApplicableReason` is not a filing: it declares that the
+ * record does not apply to the study, with who, when and why (P-124 item 5).
+ *
  * Distinct from shared/schema/etmf.ts `tmfArtifacts` (Store B, on no deploy
  * path; retired by slice E4 of docs/design/ETMF_CONVERGENCE_2026-10-30.md).
  *
@@ -24,7 +27,8 @@
  * organization_id tenant column + drizzle-zod insert).
  *
  * Migrations: migrations/20260615_tmf_artifact_filings.sql (the table),
- * migrations/20261110_tmf_filings_study_ref.sql (the study and the removal).
+ * migrations/20261110_tmf_filings_study_ref.sql (the study, the removal and
+ * the declaration).
  */
 
 import { InferSelectModel } from 'drizzle-orm';
@@ -64,6 +68,12 @@ export const tmfArtifactFilings = pgTable(
     removedBy: integer('removed_by'),
     /** Why it was removed (at least 8 characters; tmf_artifact_filings_removal_recorded_chk). */
     removalReason: text('removal_reason'),
+    /**
+     * Set on a declaration that the record does not apply to the study (P-124 item 5): why, in the person's words
+     * (at least 8 characters; a declaration names no document, tmf_artifact_filings_not_applicable_chk). Who and
+     * when are `createdBy` and `filedAt`. Counted as neither filed nor missing.
+     */
+    notApplicableReason: text('not_applicable_reason'),
   },
   (t) => ({
     orgIdx: index('tmf_artifact_filings_org_idx').on(t.organizationId),
