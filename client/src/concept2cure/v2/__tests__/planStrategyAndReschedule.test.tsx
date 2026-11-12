@@ -75,9 +75,11 @@ describe('the strategy at the head of the Plan step', () => {
     const sec = await screen.findByTestId('pj-plan-strategy');
     fireEvent.click(within(sec).getByRole('button', { name: 'State the strategy' }));
     const drawer = await screen.findByRole('dialog');
+    // The form is named for what the person came to state.
+    expect(within(drawer).getByText("Record the project's regulatory strategy")).toBeTruthy();
     fireEvent.change(within(drawer).getByLabelText(/Regulatory strategy/), { target: { value: 'Priority review; rolling submission.' } });
     fireEvent.change(within(drawer).getByLabelText(/^Reason/), { target: { value: 'Agreed at the pre-IND meeting' } });
-    fireEvent.click(within(drawer).getByRole('button', { name: 'Record objective' }));
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Record strategy' }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]).toMatchObject({ objective: 'File the IND for BX-204.', strategy: 'Priority review; rolling submission.',
       reason: 'Agreed at the pre-IND meeting', sources: [{ kind: 'protocol', title: 'Protocol BX-204-201' }] });
