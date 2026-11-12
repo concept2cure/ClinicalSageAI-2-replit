@@ -1304,7 +1304,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.fileText}
             title="No governed statistical documents yet"
-            hint="Statistical documents persisted for this project appear here, with their real status."
+            /* The heading above already says which it is; with no project open this said "for this project". */
+            hint={program
+              ? 'Statistical documents persisted for this project appear here, with their real status.'
+              : 'Statistical documents persisted for this organization appear here, with their real status.'}
           />
         ) : (
           <div className="sp-list">

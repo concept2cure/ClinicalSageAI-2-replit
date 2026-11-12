@@ -400,6 +400,25 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
     mapped.push('regulatoryBody');
   }
 
+  /* The design states its missing-data strategy in its own words. Five methods have an engine model;
+     any other (non-responder imputation, jump-to-reference, …) used to be DROPPED here, so the judgment
+     and the generated SAP told a design which stated its strategy that it stated none (T2-F9). It is
+     carried as stated, and the gap says what the engine does with it: nothing it has no model for. */
+  const missingDataMethod = missingDataFor(plan.missingDataStrategy);
+  const statedStrategy = (plan.missingDataStrategy ?? '').trim();
+  const missingDataStrategyStated = !missingDataMethod && statedStrategy ? statedStrategy : undefined;
+  if (missingDataStrategyStated) {
+    gaps.push({
+      field: 'missingDataMethod',
+      message:
+        `The design states its missing-data strategy ("${missingDataStrategyStated}"). The engine models MMRM, multiple ` +
+        'imputation, pattern-mixture, LOCF and complete-case analysis only, so the strategy is carried as stated and its ' +
+        'effect on power is not computed.',
+      severity: 'note',
+      designPath: 'statisticalPlan.missingDataStrategy',
+    });
+  }
+
   const interimAnalyses = (plan.interim?.informationFractions ?? []).filter((f) => f > 0 && f < 1).length;
   const keySecondaries = (design.endpoints ?? []).filter((e) => e.role === 'key_secondary').length;
 
@@ -454,7 +473,8 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
     withinSubjectCorrelation,
     multiplicityMethod: multiplicityFor(plan),
     estimandStrategy: primaryEstimand?.strategy,
-    missingDataMethod: missingDataFor(plan.missingDataStrategy),
+    missingDataMethod,
+    missingDataStrategyStated,
   };
   for (const k of ['studyType', 'endpointType', 'clientTrack', 'indication', 'phase', 'numberOfGroups'] as const) {
     if (!mapped.includes(k)) mapped.push(k);

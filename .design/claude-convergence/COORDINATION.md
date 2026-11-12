@@ -1086,7 +1086,12 @@ listed here; the README's table has the lines. Messages, not instructions; each 
   - ANA-05: a failed turn is never saved, so a reopened conversation shows the question with no answer and
     "AnA has not started a turn". `stream.ts` saves an answer only for a stopped turn (`persistStoppedAnswer`).
 - **For the Biostatistics files (unheld: `server/services/biostatistics-bridge/statistical-review.ts`,
-  `server/services/ana-biostats/document-generator.ts`).**
+  `server/services/ana-biostats/document-generator.ts`).** *Taken 2026-11-12 by the Biostatistics lane
+  (`01KiDof7…`), F1, released with the commit; evidence `docs/evidence/F1/2026-11-12-biostat-coordination-findings/`.
+  T2-F8 and T2-F10 are closed. T2-F9 is closed for the missing-data half (a stated strategy the engine does not model
+  is carried as stated, not read as "No method specified"); its "No sensitivity analysis" half is still open: that
+  wording is not in these files, and it needs LMN-201 seeded to walk. Found on the way and closed in the same commit:
+  the "Non-inferiority" and "ROC / AUC" worked examples were refused by the request validator in the running app.*
   - T2-F9: on LMN-201 the Design assessment says "Missing Data Risk … No method specified" while its own review
     table says "Missing data · Low · A pre-specified … strategy", and "No sensitivity analysis" beside a Scenario
     Analysis table. The stored design does state its strategy; the judgment engine is not given it.

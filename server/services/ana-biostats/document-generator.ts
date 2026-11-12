@@ -46,7 +46,7 @@ import {
   vocabPhrase,
 } from '../../../shared/biostat-vocabulary';
 import { canonicalPhase } from './input-normalizer';
-import { EFFECT_HOLDS_NOTE, SENSITIVITY_NOT_ASSESSED_NOTE, SENSITIVITY_POWER_THRESHOLD } from './judgment-engine';
+import { ADEQUATE_MEAN_SCORE, EFFECT_HOLDS_NOTE, SENSITIVITY_NOT_ASSESSED_NOTE, SENSITIVITY_POWER_THRESHOLD } from './judgment-engine';
 import { phaseNumbers } from '../../../shared/clinical-phase';
 
 const ENGINE_VERSION = '1.0.0';
@@ -112,6 +112,56 @@ function sensitivityNotes(judgment: JudgmentResult): string[] {
 }
 
 /** One bullet per recomputed point, then one per point that could not be claimed. */
+/* A missing-data strategy the design states and the engine does not model (T2-F9). The SAP used to
+   answer such a design with "Missing data handling method should be pre-specified". It quotes the
+   design, and says the one true thing the engine can say about a method it has no model of. */
+function statedMissingDataStrategy(stated: string): string {
+  return (
+    `### Primary Approach: as stated on the design\n\n> ${stated}\n\n` +
+    `The statistical engine does not model this method, so the power after missing data is not computed here. ` +
+    `State the estimand it serves and the sensitivity analyses that test its assumption.\n\n`
+  );
+}
+
+/* What a "revise" or "escalate" recommendation rests on, in the engine's own words (T2-F10).
+   The note printed `escalationReasons` under "Key concerns:". Those collect only an INADEQUATE
+   dimension, a VERY fragile design or very low confidence — but the engine recommends "revise" for a
+   marginal verdict or a merely fragile design, so the commonest revise was followed by an empty list.
+   This names everything the recommendation can rest on, each once:
+     1. the escalation reasons;
+     2. every dimension judged short of adequate, by its first flag or its rationale;
+     3. the design's fragility, when that is what raised the risk;
+     4. when the verdict is marginal on the average alone, the average, the mark it missed and the
+        lowest-scoring dimensions.
+   With nothing recorded it says so, and prints no heading over an empty list. */
+function reviseRecommendation(judgment: JudgmentResult): string {
+  const concerns = [...judgment.escalationReasons];
+  const named = (prefix: string) => concerns.some((c) => c.startsWith(`${prefix}:`));
+  for (const d of judgment.dimensions) {
+    if (d.verdict !== 'adequate' && !named(d.name)) concerns.push(`${d.name}: ${d.flags[0] || d.rationale}`);
+  }
+  const fragile = judgment.fragility.category === 'fragile' || judgment.fragility.category === 'very_fragile';
+  if (fragile && !named('Design fragility')) concerns.push(`Design fragility: ${judgment.fragility.narrative}`);
+  if (concerns.length > 0) {
+    return `Revision recommended before proceeding. Key concerns:\n${concerns.map((c) => `- ${c}`).join('\n')}\n`;
+  }
+  const scores = judgment.dimensions.map((d) => d.score);
+  const mean = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : NaN;
+  const lowest = judgment.dimensions.filter((d) => d.score < ADEQUATE_MEAN_SCORE).sort((a, b) => a.score - b.score);
+  if (judgment.overallVerdict === 'marginal' && lowest.length > 0) {
+    return (
+      `Revision recommended before proceeding. No single dimension is judged short of adequate; their scores average ` +
+      `${Math.round(mean)}/100, below the ${ADEQUATE_MEAN_SCORE} the engine takes as adequate. The lowest:\n` +
+      `${lowest.map((d) => `- ${d.name} (${d.score}/100): ${d.flags[0] || d.rationale}`).join('\n')}\n`
+    );
+  }
+  // Nothing to point at: this note prints no dimension table, so it states the two figures the recommendation was derived from.
+  return (
+    `Revision recommended before proceeding. The engine recorded no specific concern: its overall verdict is ` +
+    `${verdictLabel(judgment.overallVerdict).toLowerCase()} and its overall risk is ${judgment.overallRisk}.\n`
+  );
+}
+
 function sensitivitySection(heading: string, judgment: JudgmentResult, comp: ComputationResult): string {
   const notes = sensitivityNotes(judgment);
   const points = judgment.fragility.sensitiveParameters;
@@ -428,10 +478,7 @@ export class DocumentGenerator {
         content += `- Address: ${lim}\n`;
       }
     } else {
-      content += `Revision recommended before proceeding. Key concerns:\n`;
-      for (const reason of judgment.escalationReasons) {
-        content += `- ${reason}\n`;
-      }
+      content += reviseRecommendation(judgment);
     }
 
     content += `\n`;
@@ -519,6 +566,8 @@ export class DocumentGenerator {
         content += `Bias risk: ${comp.missingDataImpact.biasRisk}.\n\n`;
         content += `${comp.missingDataImpact.recommendation}\n\n`;
       }
+    } else if (input.missingDataStrategyStated) {
+      content += statedMissingDataStrategy(input.missingDataStrategyStated);
     } else {
       content += `Missing data handling method should be pre-specified in the SAP. Consider MMRM for longitudinal endpoints or multiple imputation for general missing data patterns.\n\n`;
     }
@@ -788,6 +837,8 @@ export class DocumentGenerator {
     c += `## 9. Missing Data\n\n`;
     if (input.missingDataMethod && comp.missingDataImpact) {
       c += `Primary approach: **${missingDataLabel(input.missingDataMethod)}**. Expected missing rate ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%; effective N ${comp.missingDataImpact.effectiveSampleSize}; ${comp.missingDataImpact.adjustedPower === null ? 'power under this method is not computed (it depends on the missingness mechanism)' : `complete-case power ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%`}; bias risk ${comp.missingDataImpact.biasRisk}. ${comp.missingDataImpact.recommendation}\n\n`;
+    } else if (!input.missingDataMethod && input.missingDataStrategyStated) {
+      c += statedMissingDataStrategy(input.missingDataStrategyStated);
     } else {
       c += `Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.\n\n`;
     }
@@ -899,7 +950,7 @@ export class DocumentGenerator {
     c += `## 9.7.1.2 Primary Endpoint Analysis\n\nThe primary endpoint was planned to be compared between arms using ${comp.method} at a two-sided α = ${input.alpha}, with the point estimate reported with its ${((1 - input.alpha) * 100).toFixed(0)}% confidence interval${comp.confidenceInterval ? ` (planned CI [${comp.confidenceInterval.lower}, ${comp.confidenceInterval.upper}])` : ''}.\n\n`;
     c += `## 9.7.1.3 Sample Size\n\nThe planned sample size of ${n} (${comp.sampleSize.perGroup}/group) provided ${(comp.power * 100).toFixed(1)}% power. ${comp.formula}\n\n`;
     c += `## 9.7.2 Multiplicity\n\n${comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1 ? comp.multiplicityResult.recommendation : `One primary comparison is planned. ${toConfirm('how secondary endpoints were tested and how multiplicity was controlled')}`}\n\n`;
-    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `The plan specifies ${missingDataLabel(input.missingDataMethod)} for missing data. ${toConfirm('the method used and the sensitivity analyses performed')}` : toConfirm('how missing data were handled, and the sensitivity analyses performed')}\n\n`;
+    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `The plan specifies ${missingDataLabel(input.missingDataMethod)} for missing data. ${toConfirm('the method used and the sensitivity analyses performed')}` : input.missingDataStrategyStated ? `The plan states its handling of missing data as: "${input.missingDataStrategyStated}". ${toConfirm('the method used and the sensitivity analyses performed')}` : toConfirm('how missing data were handled, and the sensitivity analyses performed')}\n\n`;
     c += `## 9.7.4 Interim Analyses\n\n${input.interimAnalyses && input.interimAnalyses > 0 ? `The plan specifies ${input.interimAnalyses} interim ${input.interimAnalyses === 1 ? 'analysis' : 'analyses'} under a pre-specified alpha-spending function with DSMB oversight. ${toConfirm('the interim analyses conducted and their outcomes')}` : `No interim efficacy analysis is specified in the plan. ${toConfirm('whether any interim analysis was conducted')}`}\n\n`;
     if (judgment.fragility.category !== 'robust') {
       c += `## 9.7.5 Robustness\n\nResult robustness was assessed (fragility index ${judgment.fragility.fragilityIndex}); conclusions were examined under alternative assumptions.\n\n`;
