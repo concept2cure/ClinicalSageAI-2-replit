@@ -1953,10 +1953,10 @@ export async function runOrchestrator(
     });
 
     // package.validate — Move 3: replace the deferred stub with a real call
-    // to the hardened validator. The orchestrator now drives the same
-    // gateway-readiness check that the standalone /validate/hardened route
-    // exposes, so a `run.status === 'complete'` result actually means the
-    // package would clear the FDA ESG / EMA CESP / PMDA gateway.
+    // to the hardened validator, the gateway-readiness check sign and release
+    // also run (routes/submission-sign-release.ts), so a
+    // `run.status === 'complete'` result actually means the package would
+    // clear the FDA ESG / EMA CESP / PMDA gateway.
     //
     // gatewayReady === false makes the step fail (and therefore the run
     // status follows, via the existing failed-step count logic below). We

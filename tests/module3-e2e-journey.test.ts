@@ -24,14 +24,9 @@ import {
   type CanonicalSource,
   type CmcSourceType,
   MODULE3_SECTION_RULES,
+  impactedSectionsForSourceType,
 } from '../server/services/module3Composer';
-import {
-  createSourceHash,
-  compileModule3Sections,
-  markStaleSections,
-  canFinalizeExport,
-  type CmcSourceObject,
-} from '../server/services/cmc-module3-compiler';
+import { createSourceHash, canFinalizeExport } from '../server/services/cmc-module3-compiler';
 import {
   detectContradictions,
   deriveImpactTasks,
@@ -390,23 +385,11 @@ function makeSeedSources(): CanonicalSource[] {
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
-/** Convert CanonicalSource to CmcSourceObject (adds sourceHash) */
-function toCompilerSources(sources: CanonicalSource[]): CmcSourceObject[] {
-  return sources.map(s => ({
-    id: s.id,
-    sourceType: s.sourceType,
-    sourcePayload: s.sourcePayload,
-    sourceHash: createSourceHash(s.sourcePayload),
-  }));
-}
-
 describe('Module 3 E2E Journey — Realistic IND Seed', () => {
   let sources: CanonicalSource[];
-  let compilerSources: CmcSourceObject[];
 
   beforeAll(() => {
     sources = makeSeedSources();
-    compilerSources = toCompilerSources(sources);
   });
 
   // ── Step 1: Source classification coverage ────────────────────────────────
@@ -612,43 +595,28 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
     });
   });
 
-  // ── Step 3: Compiler integration ──────────────────────────────────────────
-
-  describe('Step 3 — Compiler produces all 17 sections', () => {
-    it('compileModule3Sections returns 17 compiled entries', () => {
-      const compiled = compileModule3Sections(compilerSources);
-      expect(compiled.length).toBe(17);
-    });
-  });
+  // ── Step 3: was the second compile path (R1 S29, 2026-11-09) ─────────────
+  // compileModule3Sections and markStaleSections were retired: only tests used
+  // them, and their source-to-section map disagreed with the composer above.
+  // The composer is the one compile path; staleness is its own rule table.
 
   // ── Step 4: Stale detection on source change ─────────────────────────────
 
   describe('Step 4 — Stale propagation on source change', () => {
     it('changing drug_substance marks affected sections as stale', () => {
-      const compiled = compileModule3Sections(compilerSources);
-      // markStaleSections marks all sections that use the changed source type
-      const staleResult = markStaleSections(compiled, 'drug_substance', 'Drug substance data updated');
-
-      const staleKeys = staleResult.filter(s => s.stale).map(s => s.sectionKey);
-      // drug_substance affects S.1, S.2, S.3, S.5, P.2, 3.1, 3.3
+      const staleKeys = impactedSectionsForSourceType('drug_substance');
       expect(staleKeys).toContain('3.2.S.1');
       expect(staleKeys).toContain('3.1');
-      expect(staleKeys.length).toBeGreaterThan(0);
     });
 
     it('changing specification invalidates 3.2.S.4 and 3.2.P.5', () => {
-      const compiled = compileModule3Sections(compilerSources);
-      const staleResult = markStaleSections(compiled, 'specification', 'Spec updated');
-      const staleKeys = staleResult.filter(s => s.stale).map(s => s.sectionKey);
+      const staleKeys = impactedSectionsForSourceType('specification');
       expect(staleKeys).toContain('3.2.S.4');
       expect(staleKeys).toContain('3.2.P.5');
     });
 
     it('changing an unrelated source type does not mark unrelated sections stale', () => {
-      const compiled = compileModule3Sections(compilerSources);
-      // container_closure only affects S.6 and P.7
-      const staleResult = markStaleSections(compiled, 'container_closure', 'CC updated');
-      const staleKeys = staleResult.filter(s => s.stale).map(s => s.sectionKey);
+      const staleKeys = impactedSectionsForSourceType('container_closure');
       expect(staleKeys).toContain('3.2.S.6');
       expect(staleKeys).toContain('3.2.P.7');
       expect(staleKeys).not.toContain('3.2.S.1');
@@ -804,30 +772,22 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
   // ── Step 7: Full pipeline integration ─────────────────────────────────────
 
   describe('Step 7 — Full pipeline roundtrip', () => {
-    it('compose → compile → mark stale → recompile fresh', () => {
-      // Initial compose + compile
+    it('compose → a source changes → its sections are named stale → recompose', () => {
       const composed = composeModule3FromCanonicalSources(sources);
       expect(composed.length).toBe(17);
 
-      const compiled = compileModule3Sections(compilerSources);
-      expect(compiled.length).toBe(17);
-
-      // Mark stale due to stability data change
-      const afterStale = markStaleSections(compiled, 'stability', 'Stability data updated');
-      const staleKeys = afterStale.filter(s => s.stale).map(s => s.sectionKey);
+      // A stability change names the stability sections stale
+      const staleKeys = impactedSectionsForSourceType('stability');
       expect(staleKeys).toContain('3.2.S.7');
       expect(staleKeys).toContain('3.2.P.8');
 
-      // Recompile with modified sources — fresh sections
-      const modifiedSources = toCompilerSources(sources.map(s =>
+      // Recompose with the changed source: the same sections, from the new data
+      const recomposed = composeModule3FromCanonicalSources(sources.map(s =>
         s.sourceType === 'stability'
           ? { ...s, sourcePayload: { ...s.sourcePayload, shelfLife: '36 months at 2-8°C' } }
           : s
       ));
-      const recompiled = compileModule3Sections(modifiedSources);
-      expect(recompiled.length).toBe(17);
-      // New compile has no stale flag
-      expect(recompiled.every(s => !s.stale)).toBe(true);
+      expect(recomposed.map(s => s.sectionKey)).toEqual(composed.map(s => s.sectionKey));
     });
 
     it('every section rule maps to at least one seed source', () => {
@@ -838,12 +798,5 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
       }
     });
 
-    it('composed sections + compiler sections have matching keys', () => {
-      const composed = composeModule3FromCanonicalSources(sources);
-      const compiled = compileModule3Sections(compilerSources);
-      const composedKeys = new Set(composed.map(s => s.sectionKey));
-      const compiledKeys = new Set(compiled.map(s => s.sectionKey));
-      expect(composedKeys).toEqual(compiledKeys);
-    });
   });
 });
