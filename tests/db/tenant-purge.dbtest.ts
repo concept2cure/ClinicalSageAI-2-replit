@@ -294,3 +294,76 @@ describe("the purge erases the vault's stored bytes, and only once it has commit
     expect(await new LocalStorageProvider().get(versionId, ORG)).not.toBeNull();
   });
 });
+
+/* The purge's own list (PURGE_CHILD_TABLES), on the route's connection: the
+   runtime role in the platform scope, as the case above. Two tables became
+   org-keyed on 2026-11-12 and the list named neither, so an erased tenant
+   kept its support messages (ci:purge-coverage on a database built from
+   empty, docs/evidence/D3/2026-11-12-live-tier-at-head/purge-coverage.md).
+   No `childTables` here: what is under test is that the list names them. */
+describe('the purge reaches the tables that became org-keyed on 2026-11-12', () => {
+  const OTHER = 90602;
+  const BUCKET = `${TAG}-bucket`;
+
+  const messages = async (org: number) =>
+    (await owner.query('SELECT count(*)::int AS n FROM support_ticket_messages WHERE organization_id = $1', [org])).rows[0].n as number;
+  const limiterRows = async (org: number) =>
+    (await owner.query('SELECT count(*)::int AS n FROM rate_limit_counters WHERE organization_id = $1 AND bucket_key = $2', [org, BUCKET])).rows[0].n as number;
+
+  /** One support request with a reply from the tenant and an internal note. */
+  async function supportRequest(org: number): Promise<void> {
+    const ticket = await owner.query(
+      `INSERT INTO support_tickets (organization_id, created_by_id, ticket_number, subject, description)
+       VALUES ($1, 1, $2, 'Export fails', 'The export stops at Module 3.') RETURNING id`,
+      // ticket_number is varchar(20) and unique across the estate.
+      [org, `T${org}-${Date.now().toString(36)}`],
+    );
+    await owner.query(
+      `INSERT INTO support_ticket_messages (organization_id, ticket_id, user_id, is_internal, content)
+       VALUES ($1, $2, 1, false, 'It still fails this morning.'), ($1, $2, 1, true, 'Reproduced on the fixture.')`,
+      [org, ticket.rows[0].id],
+    );
+  }
+
+  async function clear(): Promise<void> {
+    await owner.query('DELETE FROM support_tickets WHERE organization_id = ANY($1::int[])', [[ORG, OTHER]]);
+    await owner.query('DELETE FROM rate_limit_counters WHERE bucket_key = $1', [BUCKET]);
+  }
+
+  beforeEach(async () => {
+    await owner.query(
+      `INSERT INTO organizations (id, name, slug, status) VALUES ($1, $2, $2, 'active') ON CONFLICT (id) DO NOTHING`,
+      [OTHER, `${TAG}-other`],
+    );
+    await clear();
+    await supportRequest(ORG);
+    await supportRequest(OTHER);
+    // The limiter writes organisation 0 only. A row under a tenant's id is what the entry is listed for.
+    await owner.query(
+      `INSERT INTO rate_limit_counters (organization_id, bucket_key, window_start, hits)
+       VALUES (0, $1, date_trunc('minute', now()), 3), ($2, $1, date_trunc('minute', now()), 1)`,
+      [BUCKET, ORG],
+    );
+  });
+
+  afterAll(async () => {
+    if (!owner) return;
+    await clear();
+    await owner.query('DELETE FROM organizations WHERE id = $1', [OTHER]);
+  });
+
+  it("erases the tenant's support messages and its limiter rows, and leaves another tenant's and the estate's", async () => {
+    const { pool: runtime } = await import('../../server/db');
+    const { runWithSystemTenantScope } = await import('../../server/db/tenantStore');
+    const result = await runWithSystemTenantScope('tests/db/tenant-purge.dbtest.ts', () =>
+      purgeTenant(runtime, { organizationId: ORG, purgedByUserId: 1, preconditions: { finalExportDigest: DIGEST } }),
+    );
+    expect(result.status).toBe('purged');
+    expect(result.deletedRows.support_ticket_messages, 'both of the tenant’s messages, the internal note included').toBe(2);
+    expect(result.deletedRows.rate_limit_counters).toBe(1);
+    expect(await messages(ORG), 'an erased tenant keeps no support message').toBe(0);
+    expect(await limiterRows(ORG)).toBe(0);
+    expect(await messages(OTHER), 'another tenant’s messages are not this purge’s').toBe(2);
+    expect(await limiterRows(0), 'the estate’s organisation-0 rows are not this tenant’s').toBe(1);
+  });
+});
