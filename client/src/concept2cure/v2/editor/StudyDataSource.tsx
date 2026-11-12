@@ -89,11 +89,13 @@ async function request(method: 'GET' | 'POST', path: string, body?: unknown): Pr
  * the same bytes is that capture, filed: the chooser lists it first. A failed read only loses that ordering.
  */
 async function usedCaptureChecksums(programId: string): Promise<Set<string>> {
-  const result = await apiCall<{ evidence?: Array<{ evidence_kind?: string; data_room?: { checksum?: unknown; isCurrent?: unknown } | null }> }>(
+  type Used = { checksum?: unknown; isCurrent?: unknown } | null;
+  const result = await apiCall<{ evidence?: Array<{ evidence_kind?: string; data_room?: Used; vault?: Used }> }>(
     'GET', `/api/c2c/projects/${encodeURIComponent(programId)}/evidence`);
   const rows = result.ok && Array.isArray(result.body?.evidence) ? result.body.evidence : [];
-  return new Set(rows.filter(r => r.evidence_kind === 'data_room' && r.data_room?.isCurrent !== false && sha(r.data_room?.checksum))
-    .map(r => String(r.data_room?.checksum)));
+  /* A capture the project uses, or a Vault document it uses from the catalog (2026-11-11): either names its bytes. */
+  const used = rows.map(r => (r.evidence_kind === 'data_room' ? r.data_room : r.evidence_kind === 'vault_doc' ? r.vault : null));
+  return new Set(used.filter(u => u && u.isCurrent !== false && sha(u.checksum)).map(u => String(u?.checksum)));
 }
 
 /** The project's used captures first, each list otherwise in the server's order. */
