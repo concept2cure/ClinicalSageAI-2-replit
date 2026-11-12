@@ -231,7 +231,8 @@ export function UdiSurface({ programId, onAskAna, onOpenEditor, onOpenLabeling }
           <div className="metric-val">{blockedDocs.length}</div>
           <div className="metric-meta">{blockedSummary || '—'}</div>
         </div>
-        <div className="metric-card" data-tone="warn">
+        {/* D8 slice 1a (P-128): the warning colour only when a label is waiting; 0 is not a warning. */}
+        <div className="metric-card" data-tone={pendingSig > 0 ? 'warn' : undefined}>
           <div className="metric-label">Awaiting signature</div>
           <div className="metric-val">{pendingSig}</div>
           <div className="metric-meta">Pending Part 11 e-signature</div>

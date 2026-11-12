@@ -209,6 +209,18 @@
       ]
     },
     {
+      "id": "D8",
+      "title": "Device and diagnostics screens: the plan's design on the existing device screens, the shared look first (P-128)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/mdx/**",
+        "client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx",
+        "client/src/concept2cure/v2/surfaces/HumanFactors.tsx",
+        "client/src/concept2cure/v2/surfaces/Labeling.tsx"
+      ]
+    },
+    {
       "id": "R1",
       "title": "Reach: every server capability with no UI caller reached in its package's screen, or retired by founder decision",
       "status": "open",
