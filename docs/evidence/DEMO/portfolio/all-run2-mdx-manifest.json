@@ -1,0 +1,1774 @@
+{
+  "pack": "mdx",
+  "prefix": "[Demo · MDX]",
+  "outcome": "failed",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-09T18:41:00.936Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "2",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 114,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "program": {
+      "id": "a9e43625-0eda-42d2-8c39-846c484801de",
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "code": "NEUR",
+      "created": false,
+      "intake": null,
+      "programType": "510k",
+      "indication": "Differential diagnosis of viral CNS infection (meningitis / encephalitis) from CSF",
+      "intendedUseStored": true,
+      "detailExposesDeviceTaxonomy": [
+        "device_class",
+        "regulatory_path",
+        "product_code",
+        "predicate_devices",
+        "product_type"
+      ],
+      "sentAtIntake": {
+        "deviceClass": "II",
+        "productCode": "QNX",
+        "regulationNumber": "866.3985",
+        "reviewPanel": "Microbiology",
+        "predicateK": "K223456",
+        "flags": [
+          "softwareAiMl",
+          "cyberDevice",
+          "clinicalData"
+        ]
+      },
+      "whyThisProgramType": "'510k' is the filing type (regulatory_path, k510 scaffold, device class); productType 'ivd' selects the IVD vault view. 'ivd' as a program type has no US path and no 510(k) scaffold."
+    },
+    "vaultBefore": {
+      "standard": "ivd",
+      "spine": "510(k) · 21 CFR 807",
+      "documentCount": 7,
+      "unfiledCount": 0,
+      "folders": [
+        {
+          "id": "cab-unfiled",
+          "label": "Unfiled · needs review",
+          "documents": 0
+        },
+        {
+          "id": "cab-bn:A",
+          "label": "Administrative",
+          "documents": 9
+        },
+        {
+          "id": "cab-bn:B",
+          "label": "Device description",
+          "documents": 3
+        },
+        {
+          "id": "cab-bn:C",
+          "label": "Substantial equivalence",
+          "documents": 2
+        },
+        {
+          "id": "cab-bn:D",
+          "label": "Design, manufacturing and labeling",
+          "documents": 6
+        },
+        {
+          "id": "cab-bn:E",
+          "label": "Performance and safety testing",
+          "documents": 8
+        },
+        {
+          "id": "cab-bn:F",
+          "label": "Quality management",
+          "documents": 1
+        },
+        {
+          "id": "cab-bn:G",
+          "label": "References and additional information",
+          "documents": 2
+        },
+        {
+          "id": "cab-k510",
+          "label": "510(k) submissions",
+          "documents": 2
+        },
+        {
+          "id": "cab-pma",
+          "label": "PMA submissions",
+          "documents": 0
+        },
+        {
+          "id": "cab-cer",
+          "label": "Clinical evaluation",
+          "documents": 1
+        },
+        {
+          "id": "cab-eng",
+          "label": "Engineering (DHF + RMF)",
+          "documents": 2
+        },
+        {
+          "id": "cab-udi",
+          "label": "Labeling and UDI",
+          "documents": 1
+        },
+        {
+          "id": "cab-pv",
+          "label": "Post-market vigilance",
+          "documents": 0
+        },
+        {
+          "id": "cab-qms",
+          "label": "Quality system",
+          "documents": 0
+        },
+        {
+          "id": "cab-corresp",
+          "label": "Agency correspondence",
+          "documents": 0
+        },
+        {
+          "id": "cab-shared",
+          "label": "Shared · Templates",
+          "documents": 0
+        }
+      ]
+    },
+    "vault.deviceDescription": {
+      "id": "1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3",
+      "title": "[Demo · MDX] Device Description and Principles of Operation",
+      "folderId": "k510",
+      "sha256": "72feae5569a1615a07a6747428d0997dbc53f49f2478b22219eaa19e77a0d11f",
+      "bytes": 6346,
+      "pages": 4,
+      "ingestType": "OTHER",
+      "created": false
+    },
+    "vault.software": {
+      "id": "bd693b26-37bc-455e-96cf-4a1447b85b6d",
+      "title": "[Demo · MDX] Software Description and Level of Concern",
+      "folderId": "eng",
+      "sha256": "3dcc4dd184111956533730e5b0ef999e3f143f4df82ef3bb161a76d597254385",
+      "bytes": 4654,
+      "pages": 3,
+      "ingestType": "OTHER",
+      "created": false
+    },
+    "vault.analytical": {
+      "id": "0a127beb-c5c8-4adb-ae65-a9426b6a9a2b",
+      "title": "[Demo · MDX] Analytical Performance Study Report",
+      "folderId": "k510",
+      "sha256": "e648b6abc100efc4220470242a46d021b99f461f227255a6d459f44c0f74d160",
+      "bytes": 6247,
+      "pages": 4,
+      "ingestType": "REPORT",
+      "created": false
+    },
+    "vault.clinical": {
+      "id": "0b358a83-7959-4db3-bfc3-abbff5b70c0a",
+      "title": "[Demo · MDX] Clinical Performance Study Report",
+      "folderId": "cer",
+      "sha256": "fe2e01372e4326637d4d25a0bc2add5b8a9e2603b56af6f65a2331a5914306f0",
+      "bytes": 5659,
+      "pages": 4,
+      "ingestType": "REPORT",
+      "created": false
+    },
+    "vault.risk": {
+      "id": "acb39332-1960-45dc-9ff6-2765485f9e51",
+      "title": "[Demo · MDX] Risk Management File Summary (ISO 14971)",
+      "folderId": "eng",
+      "sha256": "0f6ee5b9993af289b17ac4b4443909cfaa8555339e6ec8e30e74af2d4afa06d1",
+      "bytes": 4407,
+      "pages": 3,
+      "ingestType": "REPORT",
+      "created": false
+    },
+    "vault.labeling": {
+      "id": "057e5fdd-2502-45c1-bb5b-b37047f0d9bf",
+      "title": "[Demo · MDX] Labeling and Instructions for Use (Draft)",
+      "folderId": "udi",
+      "sha256": "7d49c9f0929a4c9480ea4aecda95e2baf82da05950a85e926a9cc81f7d91d3c7",
+      "bytes": 6254,
+      "pages": 4,
+      "ingestType": "OTHER",
+      "created": false
+    },
+    "vaultAfter": {
+      "standard": "ivd",
+      "spine": "510(k) · 21 CFR 807",
+      "documentCount": 7,
+      "unfiledCount": 0,
+      "folders": [
+        {
+          "id": "cab-unfiled",
+          "label": "Unfiled · needs review",
+          "documents": 0
+        },
+        {
+          "id": "cab-bn:A",
+          "label": "Administrative",
+          "documents": 9
+        },
+        {
+          "id": "cab-bn:B",
+          "label": "Device description",
+          "documents": 3
+        },
+        {
+          "id": "cab-bn:C",
+          "label": "Substantial equivalence",
+          "documents": 2
+        },
+        {
+          "id": "cab-bn:D",
+          "label": "Design, manufacturing and labeling",
+          "documents": 6
+        },
+        {
+          "id": "cab-bn:E",
+          "label": "Performance and safety testing",
+          "documents": 8
+        },
+        {
+          "id": "cab-bn:F",
+          "label": "Quality management",
+          "documents": 1
+        },
+        {
+          "id": "cab-bn:G",
+          "label": "References and additional information",
+          "documents": 2
+        },
+        {
+          "id": "cab-k510",
+          "label": "510(k) submissions",
+          "documents": 2
+        },
+        {
+          "id": "cab-pma",
+          "label": "PMA submissions",
+          "documents": 0
+        },
+        {
+          "id": "cab-cer",
+          "label": "Clinical evaluation",
+          "documents": 1
+        },
+        {
+          "id": "cab-eng",
+          "label": "Engineering (DHF + RMF)",
+          "documents": 2
+        },
+        {
+          "id": "cab-udi",
+          "label": "Labeling and UDI",
+          "documents": 1
+        },
+        {
+          "id": "cab-pv",
+          "label": "Post-market vigilance",
+          "documents": 0
+        },
+        {
+          "id": "cab-qms",
+          "label": "Quality system",
+          "documents": 0
+        },
+        {
+          "id": "cab-corresp",
+          "label": "Agency correspondence",
+          "documents": 0
+        },
+        {
+          "id": "cab-shared",
+          "label": "Shared · Templates",
+          "documents": 0
+        }
+      ]
+    },
+    "signer": {
+      "supplied": false,
+      "note": "not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)"
+    },
+    "authoring.summary": {
+      "id": "eb043ce5-8a6e-4527-8b76-94f46add1210",
+      "title": "[Demo · MDX] 510(k) Summary",
+      "created": false,
+      "boundToProgram": "unknown (existing)",
+      "sections": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    },
+    "authoring.summaryComment": {
+      "id": "3c517730-c181-41d7-919a-ea6385931f2f",
+      "sectionId": "0ba5f827-05fc-4f7b-9ad7-d02903305ac4",
+      "created": false,
+      "resolved": true
+    },
+    "authoring.summarySignature": {
+      "executed": false,
+      "note": "not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)",
+      "signaturesPresent": 0
+    },
+    "authoring.se": {
+      "id": "24d4e12d-46c6-46da-a0e8-39bd8c13dd20",
+      "title": "[Demo · MDX] Substantial Equivalence Discussion",
+      "status": "DRAFT",
+      "created": false,
+      "boundToProgram": "unknown (existing)",
+      "sections": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "openCommentId": "96c52673-bf2f-4ec2-a239-bfff0b4e7755"
+    },
+    "authoring.cyber": {
+      "id": "4f541f9d-46a4-4f8c-93e9-7d85481ef7e8",
+      "title": "[Demo · MDX] Cybersecurity and Interoperability Summary",
+      "status": "DRAFT",
+      "created": false,
+      "boundToProgram": "unknown (existing)",
+      "sections": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "reviewRequestedFrom": null
+    },
+    "reviewBoard": {
+      "what": "GET /api/review/board after request-review on two documents",
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "queue": [],
+          "workflows": {},
+          "thread": [],
+          "meta": {
+            "scope": "all",
+            "programId": null,
+            "total": 0,
+            "threadItemId": null,
+            "threadDocumentId": null,
+            "generatedAt": "2026-11-09T18:41:19.946Z"
+          },
+          "vaultReviews": [
+            {
+              "canonicalId": "s12-walk-1794196023056",
+              "vaultId": "ec548d37-cca8-4faf-a397-cc82cebe6c5e",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:47:03.069Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794195989733",
+              "vaultId": "d4fb4931-173e-41c6-b4ca-0d7639f05c7b",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:46:29.743Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794195956085",
+              "vaultId": "755ac0c6-d163-425a-8121-c46676f1894a",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:45:56.100Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794195936969",
+              "vaultId": "db99628b-ede7-48f9-805c-d896f3158354",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:45:36.985Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794195915047",
+              "vaultId": "9a23b5d8-8c6a-47c3-ae67-7ca874254f59",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:45:15.063Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794195810317",
+              "vaultId": "4a14a64d-299d-45ea-a3d4-ab57c6082bf7",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:43:30.335Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794195743140",
+              "vaultId": "35c32129-fbb5-404e-b6ec-bab5e55a574f",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:42:23.162Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794193612466",
+              "vaultId": "3fe0a001-51d0-4ea4-8eaa-cdda513ba832",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T03:06:52.480Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794192376320",
+              "vaultId": "21dde493-bb5b-4dc8-bc07-774851d8d1ab",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T02:46:16.332Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794192323817",
+              "vaultId": "e387a1d8-e7fc-49b1-af4c-3bfee7f8af79",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T02:45:23.835Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794192311375",
+              "vaultId": "af68853b-1118-44b5-b0a7-dad3d90abd00",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T02:45:11.392Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            },
+            {
+              "canonicalId": "s12-walk-1794192292154",
+              "vaultId": "a2617cdb-6f2a-4232-9623-2619156a49c5",
+              "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+              "program": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+              "title": "Drug substance specification",
+              "version": "2.0",
+              "step": "review",
+              "sentBy": null,
+              "sentAt": "2026-11-09T02:44:52.177Z",
+              "eligibleSigners": [
+                "JM Smith"
+              ],
+              "mine": true,
+              "sentByMe": false,
+              "routeState": "legacy",
+              "round": null,
+              "routeUnread": false,
+              "myDueAt": null
+            }
+          ]
+        }
+      }
+    },
+    "submission": {
+      "id": 2,
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "applicationType": "510k",
+      "clientType": "ivd",
+      "primaryRegion": "fda",
+      "status": "planning",
+      "created": false
+    },
+    "sequence": {
+      "id": 2,
+      "sequenceNumber": "0000",
+      "status": "assembling",
+      "region": "fda",
+      "created": false
+    },
+    "estarLeafProbe": {
+      "what": "PUT leaves with sectionCode \"estar.device-description\" (an eSTAR slot id) on the 510(k) sequence",
+      "status": 200,
+      "body": {
+        "id": 7,
+        "sequenceId": 2,
+        "sectionCode": "estar.device-description",
+        "title": "[Demo · MDX] Device Description and Principles of Operation",
+        "granularity": null,
+        "lifecycleOp": "new",
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3",
+        "documentType": "device_description",
+        "studyId": null,
+        "stfFileTag": null,
+        "leafGuid": null,
+        "parentLeafId": null,
+        "checksum": null,
+        "documentContentSha256": "72feae5569a1615a07a6747428d0997dbc53f49f2478b22219eaa19e77a0d11f",
+        "documentPinnedAt": "2026-11-08T22:21:45.248Z",
+        "organizationId": 2,
+        "createdBy": 1,
+        "createdAt": "2026-11-08T22:21:45.246Z",
+        "updatedAt": "2026-11-08T22:21:45.246Z",
+        "deletedAt": null,
+        "auditTrail": null,
+        "unchanged": true
+      }
+    },
+    "leaves": {
+      "count": 7,
+      "placedThisRun": 0,
+      "leaves": [
+        {
+          "sectionCode": "3.2.P.1",
+          "estarSlot": "estar.device-description",
+          "documentType": "device_description",
+          "vaultDocumentId": "1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3"
+        },
+        {
+          "sectionCode": "3.2.R",
+          "estarSlot": "estar.software",
+          "documentType": "software",
+          "vaultDocumentId": "bd693b26-37bc-455e-96cf-4a1447b85b6d"
+        },
+        {
+          "sectionCode": "5.3.1.4",
+          "estarSlot": "estar.ivd-analytical-performance",
+          "documentType": "analytical_performance",
+          "vaultDocumentId": "0a127beb-c5c8-4adb-ae65-a9426b6a9a2b"
+        },
+        {
+          "sectionCode": "5.3.5.2",
+          "estarSlot": "estar.ivd-clinical-performance",
+          "documentType": "clinical_performance",
+          "vaultDocumentId": "0b358a83-7959-4db3-bfc3-abbff5b70c0a"
+        },
+        {
+          "sectionCode": "1.16",
+          "estarSlot": "estar.risk-management",
+          "documentType": "risk_management",
+          "vaultDocumentId": "acb39332-1960-45dc-9ff6-2765485f9e51"
+        },
+        {
+          "sectionCode": "1.14",
+          "estarSlot": "estar.proposed-labeling",
+          "documentType": "labeling",
+          "vaultDocumentId": "057e5fdd-2502-45c1-bb5b-b37047f0d9bf"
+        }
+      ]
+    },
+    "sequenceTransition": {
+      "unchanged": "assembling"
+    },
+    "pathwayReadiness": {
+      "what": "GET pathway-readiness?pathway=estar_510k",
+      "status": 200,
+      "body": {
+        "pathway": "estar_510k",
+        "ready": false,
+        "missingRequired": [
+          "cover-letter",
+          "user-fee-cover-sheet",
+          "indications-for-use",
+          "truthful-accurate-statement",
+          "performance-testing",
+          "biocompatibility",
+          "cybersecurity",
+          "clinical-financial-disclosure",
+          "510k-summary-or-statement",
+          "substantial-equivalence",
+          "device-description",
+          "proposed-labeling",
+          "risk-management",
+          "software",
+          "ivd-analytical-performance"
+        ],
+        "detail": {
+          "type": "510k",
+          "sections": [
+            {
+              "id": "cover-letter",
+              "label": "Cover letter / submission cover sheet",
+              "required": true,
+              "necessity": "always",
+              "authority": "FDA eSTAR administrative section",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "user-fee-cover-sheet",
+              "label": "MDUFA user-fee cover sheet and payment (FDA 3601)",
+              "required": true,
+              "necessity": "always",
+              "authority": "Form FDA 3601; MDUFA. An unpaid submission is not accepted and no substantive review begins.",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "indications-for-use",
+              "label": "Indications for use (FDA 3881)",
+              "required": true,
+              "necessity": "always",
+              "authority": "Form FDA 3881",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "truthful-accurate-statement",
+              "label": "Truthful and Accurate Statement",
+              "required": true,
+              "necessity": "always",
+              "authority": "21 CFR 807.87(k)",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "device-description",
+              "label": "Device description",
+              "required": true,
+              "necessity": "always",
+              "authority": "21 CFR 807.87(f)",
+              "present": false,
+              "sourceRefs": [
+                {
+                  "leafId": 8,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Device Description and Principles of Operation"
+                },
+                {
+                  "leafId": 7,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Device Description and Principles of Operation"
+                }
+              ],
+              "contentUndetermined": true,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "proposed-labeling",
+              "label": "Proposed labeling",
+              "required": true,
+              "necessity": "always",
+              "authority": "21 CFR 807.87(e)",
+              "present": false,
+              "sourceRefs": [
+                {
+                  "leafId": 13,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "057e5fdd-2502-45c1-bb5b-b37047f0d9bf"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Labeling and Instructions for Use (Draft)"
+                }
+              ],
+              "contentUndetermined": true,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "risk-management",
+              "label": "Risk management file",
+              "required": true,
+              "necessity": "always",
+              "authority": "ISO 14971",
+              "present": false,
+              "sourceRefs": [
+                {
+                  "leafId": 12,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "acb39332-1960-45dc-9ff6-2765485f9e51"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Risk Management File Summary (ISO 14971)"
+                }
+              ],
+              "contentUndetermined": true,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "performance-testing",
+              "label": "Performance testing (bench / animal / clinical)",
+              "required": true,
+              "necessity": "always",
+              "authority": "FDA eSTAR performance section",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "biocompatibility",
+              "label": "Biocompatibility",
+              "required": true,
+              "necessity": "always",
+              "authority": "ISO 10993-1 (contact category and duration)",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "sterilization",
+              "label": "Sterilization, shelf life and packaging validation",
+              "required": false,
+              "necessity": "conditional",
+              "flag": "sterile",
+              "authority": "FDA sterility review guidance; ISO 11135 / 11137 / 17665 as applicable",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "not-applicable"
+            },
+            {
+              "id": "software",
+              "label": "Software / firmware documentation",
+              "required": true,
+              "necessity": "conditional",
+              "flag": "softwareAiMl",
+              "authority": "FDA premarket software guidance (June 2023): documentation level, architecture, SRS/SDS, V&V, SBOM",
+              "present": false,
+              "sourceRefs": [
+                {
+                  "leafId": 9,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "bd693b26-37bc-455e-96cf-4a1447b85b6d"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Software Description and Level of Concern"
+                }
+              ],
+              "contentUndetermined": true,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "cybersecurity",
+              "label": "Cybersecurity documentation",
+              "required": true,
+              "necessity": "conditional",
+              "flag": "cyberDevice",
+              "authority": "FD&C Act §524B — required in a premarket submission for a cyber device. For an eSTAR, FDA's technical screening checks that the attachment is there.",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "clinical-financial-disclosure",
+              "label": "Financial certification or disclosure (FDA 3454 / 3455)",
+              "required": true,
+              "necessity": "conditional",
+              "flag": "clinicalData",
+              "authority": "21 CFR Part 54 — required where clinical data are submitted",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "combination-product",
+              "label": "Combination-product constituent information",
+              "required": false,
+              "necessity": "conditional",
+              "flag": "combinationProduct",
+              "authority": "21 CFR Part 4; cross-labelled constituent parts",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "not-applicable"
+            },
+            {
+              "id": "implant-labeling",
+              "label": "Implant-specific labeling and long-term performance",
+              "required": false,
+              "necessity": "conditional",
+              "flag": "implantable",
+              "authority": "Implantable-device labeling and duration-appropriate testing",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "not-applicable"
+            },
+            {
+              "id": "clia-waiver",
+              "label": "CLIA waiver by application / dual submission",
+              "required": false,
+              "necessity": "conditional",
+              "flag": "cliaWaived",
+              "authority": "CLIA — applies to IVDs seeking waived status",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "not-applicable"
+            },
+            {
+              "id": "emc-electrical",
+              "label": "Electrical safety, EMC and wireless coexistence",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the device is electrically powered or uses wireless communication",
+              "authority": "IEC 60601-1, IEC 60601-1-2; AAMI TIR69 for wireless",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "human-factors",
+              "label": "Human factors / usability engineering",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the device has critical tasks whose use error could cause harm",
+              "authority": "IEC 62366-1; FDA guidance \"Content of Human Factors Information in Medical Device Marketing Submissions\" (2026) — the eSTAR asks for HF Submission Category 1, 2 or 3 (HFE/UE report Section 1, Sections 1-4, or Sections 1-8)",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "reprocessing",
+              "label": "Reprocessing instructions and validation",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the device is reusable",
+              "authority": "FDA reprocessing guidance",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "standards-conformance",
+              "label": "Declarations of Conformity (FDA 3654)",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the submission relies on a recognised consensus standard",
+              "authority": "Form FDA 3654 — required for each recognised consensus standard relied on",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "class-iii-certification",
+              "label": "Class III Summary and Certification",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the device is class III",
+              "authority": "21 CFR 807.94",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "510k-summary-or-statement",
+              "label": "510(k) Summary or 510(k) Statement",
+              "required": true,
+              "necessity": "always",
+              "authority": "21 CFR 807.92 (summary) or 807.93 (statement) — one or the other is mandatory",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "substantial-equivalence",
+              "label": "Substantial equivalence comparison (predicate)",
+              "required": true,
+              "necessity": "always",
+              "authority": "21 CFR 807.87(f); FD&C Act §513(i)",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "ivd-analytical-performance",
+              "label": "Analytical performance (precision, detection limit, linearity, interference)",
+              "required": true,
+              "necessity": "always",
+              "authority": "FDA IVD eSTAR — Performance Testing › Analytical Performance › Assay Performance",
+              "present": false,
+              "sourceRefs": [
+                {
+                  "leafId": 10,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "0a127beb-c5c8-4adb-ae65-a9426b6a9a2b"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Analytical Performance Study Report"
+                }
+              ],
+              "contentUndetermined": true,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "ivd-method-comparison",
+              "label": "Method comparison study",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the assay is compared against a comparator or reference method",
+              "authority": "FDA IVD eSTAR — \"Did you perform Method Comparison Study?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-matrix-comparison",
+              "label": "Validation of specimens / matrix comparison",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "more than one specimen type or matrix is claimed",
+              "authority": "FDA IVD eSTAR — \"Did you perform Validation of Specimens/Matrix Comparison Study?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-reference-range",
+              "label": "Reference range / expected values",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the assay reports a quantitative or semi-quantitative result",
+              "authority": "FDA IVD eSTAR — \"Do you have Reference Range/Expected Values information to include in this submission?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-specimen-stability",
+              "label": "Stability of specimens",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "specimens are stored or transported before testing",
+              "authority": "FDA IVD eSTAR — \"Did you perform Stability of Sample(s) Study?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-traceability",
+              "label": "Metrological traceability of calibrators and controls",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the assay reports a value against a calibrator",
+              "authority": "FDA IVD eSTAR — \"Do you have Traceability information to include in this submission?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-cutoff",
+              "label": "Assay cut-off",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the assay reports a qualitative result against a cut-off",
+              "authority": "FDA IVD eSTAR — \"Did you perform Assay Cut-Off Study?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-carryover",
+              "label": "Carry-over",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the assay runs on an automated analyser that processes specimens in sequence",
+              "authority": "FDA IVD eSTAR — \"Did you perform Carry-Over Study?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-hook-effect",
+              "label": "High-dose hook effect",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the assay is a sandwich immunoassay or otherwise subject to hook effect",
+              "authority": "FDA IVD eSTAR — \"Did you perform High Dose Hook Effect Study?\"",
+              "present": false,
+              "sourceRefs": [],
+              "contentUndetermined": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "ivd-clinical-performance",
+              "label": "Clinical performance (clinical sensitivity and specificity)",
+              "required": false,
+              "necessity": "when-applicable",
+              "appliesWhen": "the intended use makes a claim about clinical performance",
+              "authority": "FDA IVD eSTAR — \"Do you have Clinical Sensitivity and/or Clinical Specificity to include in this submission?\"",
+              "present": false,
+              "sourceRefs": [
+                {
+                  "leafId": 11,
+                  "sequenceId": 2,
+                  "submissionId": 2,
+                  "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+                  "projectId": 2,
+                  "document": {
+                    "table": "vault_documents",
+                    "keyKind": "uuid",
+                    "id": "0b358a83-7959-4db3-bfc3-abbff5b70c0a"
+                  },
+                  "section": null,
+                  "editor": null,
+                  "evidence": {
+                    "content": "undetermined",
+                    "pin": "match",
+                    "lifecycle": "unverified",
+                    "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+                  },
+                  "label": "[Demo · MDX] Clinical Performance Study Report"
+                }
+              ],
+              "contentUndetermined": true,
+              "sources": [],
+              "applicability": "when-applicable"
+            }
+          ],
+          "summary": {
+            "missingRequired": [
+              "cover-letter",
+              "user-fee-cover-sheet",
+              "indications-for-use",
+              "truthful-accurate-statement",
+              "performance-testing",
+              "biocompatibility",
+              "cybersecurity",
+              "clinical-financial-disclosure",
+              "510k-summary-or-statement",
+              "substantial-equivalence"
+            ],
+            "undetermined": [
+              "device-description",
+              "proposed-labeling",
+              "risk-management",
+              "software",
+              "ivd-analytical-performance"
+            ],
+            "checkApplicability": [
+              "emc-electrical",
+              "human-factors",
+              "reprocessing",
+              "standards-conformance",
+              "class-iii-certification",
+              "ivd-method-comparison",
+              "ivd-matrix-comparison",
+              "ivd-reference-range",
+              "ivd-specimen-stability",
+              "ivd-traceability",
+              "ivd-cutoff",
+              "ivd-carryover",
+              "ivd-hook-effect",
+              "ivd-clinical-performance"
+            ],
+            "contradictions": [],
+            "ready": false
+          }
+        },
+        "scope": {
+          "organizationId": 2,
+          "programId": "a9e43625-0eda-42d2-8c39-846c484801de",
+          "projectId": 2,
+          "submissionId": 2,
+          "sequenceId": 2,
+          "sequenceRegion": "fda",
+          "programCode": "NEUR",
+          "programTitle": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+          "recordedApplicationType": "510k",
+          "recordedPathway": null,
+          "evaluatedPathway": "estar_510k",
+          "memberStates": [],
+          "regulation": null,
+          "inputOrigin": "explicit-compatible",
+          "evaluation": "retained-placement-content-coverage",
+          "dispatchReadiness": "separate-governed-assessment"
+        },
+        "sourceIssues": [
+          {
+            "leafId": 13,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          },
+          {
+            "leafId": 12,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          },
+          {
+            "leafId": 8,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          },
+          {
+            "leafId": 9,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          },
+          {
+            "leafId": 10,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          },
+          {
+            "leafId": 11,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          },
+          {
+            "leafId": 7,
+            "code": "SOURCE_BINARY_CONTENT_UNVERIFIED",
+            "message": "The retained bytes were verified; substantive source text is not established."
+          }
+        ]
+      }
+    },
+    "readiness": {
+      "sequenceStatus": "assembling",
+      "leafCount": 7,
+      "validationErrors": 0,
+      "unacknowledgedShadowCriticals": 0,
+      "shadowReviewRunCount": 0,
+      "externalValidation": {
+        "configured": false,
+        "ran": false,
+        "errorCount": 0,
+        "errorCountKnown": false,
+        "cleared": true,
+        "blockers": [],
+        "validatorKind": "unavailable",
+        "selectedValidatorName": "noop",
+        "reportedValidatorName": null,
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "assessmentNote": "No configured external-engine assessment is established. External validation is advisory here, so this gate does not block dispatch.",
+        "enforced": false
+      },
+      "gate": {
+        "cleared": false,
+        "blockers": [
+          "7 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "freezeGate": {
+        "cleared": false,
+        "blockers": [
+          "7 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "releaseSignature": {
+        "required": false,
+        "verdict": "unsigned",
+        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:2",
+        "cleared": true
+      },
+      "structural": {
+        "errors": 0,
+        "warnings": 10,
+        "infos": 0,
+        "releaseBlockers": 7,
+        "findings": [
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "estar.device-description",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Device Description and Principles of Operation\" (estar.device-description) points at vault_documents 1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "3.2.P.1",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Device Description and Principles of Operation\" (3.2.P.1) points at vault_documents 1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "3.2.R",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Software Description and Level of Concern\" (3.2.R) points at vault_documents bd693b26-37bc-455e-96cf-4a1447b85b6d, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "5.3.1.4",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Analytical Performance Study Report\" (5.3.1.4) points at vault_documents 0a127beb-c5c8-4adb-ae65-a9426b6a9a2b, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "5.3.5.2",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Clinical Performance Study Report\" (5.3.5.2) points at vault_documents 0b358a83-7959-4db3-bfc3-abbff5b70c0a, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "1.16",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Risk Management File Summary (ISO 14971)\" (1.16) points at vault_documents acb39332-1960-45dc-9ff6-2765485f9e51, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "1.14",
+            "blocksRelease": true,
+            "message": "Leaf \"[Demo · MDX] Labeling and Instructions for Use (Draft)\" (1.14) points at vault_documents 057e5fdd-2502-45c1-bb5b-b37047f0d9bf, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.1",
+            "message": "Required section 1.1 has no leaf in this sequence.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.2",
+            "message": "Required section 1.2 has no leaf in this sequence.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.3",
+            "message": "Required section 1.3 has no leaf in this sequence.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          }
+        ]
+      }
+    },
+    "dispatchQc": {
+      "clearedToDispatch": false,
+      "verdictSource": "assess-dispatch-readiness",
+      "blockers": [
+        "7 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ],
+      "warnings": [
+        "Leaf \"[Demo · MDX] Device Description and Principles of Operation\" (estar.device-description) points at vault_documents 1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Leaf \"[Demo · MDX] Device Description and Principles of Operation\" (3.2.P.1) points at vault_documents 1a86bb66-cfe0-4bf9-a8e3-fd6dc2de2be3, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Leaf \"[Demo · MDX] Software Description and Level of Concern\" (3.2.R) points at vault_documents bd693b26-37bc-455e-96cf-4a1447b85b6d, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Leaf \"[Demo · MDX] Analytical Performance Study Report\" (5.3.1.4) points at vault_documents 0a127beb-c5c8-4adb-ae65-a9426b6a9a2b, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Leaf \"[Demo · MDX] Clinical Performance Study Report\" (5.3.5.2) points at vault_documents 0b358a83-7959-4db3-bfc3-abbff5b70c0a, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Leaf \"[Demo · MDX] Risk Management File Summary (ISO 14971)\" (1.16) points at vault_documents acb39332-1960-45dc-9ff6-2765485f9e51, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Leaf \"[Demo · MDX] Labeling and Instructions for Use (Draft)\" (1.14) points at vault_documents 057e5fdd-2502-45c1-bb5b-b37047f0d9bf, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "Required section 1.1 has no leaf in this sequence.",
+        "Required section 1.2 has no leaf in this sequence.",
+        "Required section 1.3 has no leaf in this sequence.",
+        "No configured external-engine assessment is established. External validation is advisory here, so this gate does not block dispatch."
+      ],
+      "checklist": [
+        {
+          "item": "No open error-severity validation findings on the stored leaves",
+          "pass": true
+        },
+        {
+          "item": "No unacknowledged Shadow Review criticals",
+          "pass": true
+        },
+        {
+          "item": "At least one completed Shadow Review has run for this sequence",
+          "pass": false
+        },
+        {
+          "item": "External agency-grade validation gate clear",
+          "pass": true
+        },
+        {
+          "item": "Release signature gate clear (21 CFR Part 11 §11.70)",
+          "pass": true
+        },
+        {
+          "item": "Required Module 1 sections present for the region",
+          "pass": false
+        },
+        {
+          "item": "Lifecycle operations coherent (new/replace/append/delete; original sequence carries only new)",
+          "pass": true
+        }
+      ],
+      "narrative": null,
+      "narrativeUnavailable": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "message": "No AI provider is configured; the deterministic verdict stands without a narrative."
+      }
+    },
+    "readinessReview": {
+      "what": "POST /api/orchestration/execute submission_readiness_review for the 510(k) program",
+      "status": 400,
+      "body": {
+        "error": "projectId must be a positive integer"
+      }
+    },
+    "qms.sop101": {
+      "id": 5,
+      "docNumber": "MDX-SOP-101",
+      "title": "[Demo · MDX] SOP-101 Design Controls (21 CFR 820.30)",
+      "status": "draft",
+      "version": "1.0",
+      "created": false
+    },
+    "qms.sop102": {
+      "id": 6,
+      "docNumber": "MDX-SOP-102",
+      "title": "[Demo · MDX] SOP-102 Corrective and Preventive Action",
+      "status": "draft",
+      "version": "1.0",
+      "created": false
+    },
+    "qms.sop103": {
+      "id": 7,
+      "docNumber": "MDX-SOP-103",
+      "title": "[Demo · MDX] SOP-103 Complaint Handling and MDR Reporting",
+      "status": "draft",
+      "version": "1.0",
+      "created": false
+    },
+    "qms.sop104": {
+      "id": 8,
+      "docNumber": "MDX-SOP-104",
+      "title": "[Demo · MDX] SOP-104 Software Change Control",
+      "status": "draft",
+      "version": "1.0",
+      "created": false
+    },
+    "qms.sop101.approval": {
+      "executed": false,
+      "note": "not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)"
+    }
+  },
+  "notes": [
+    "Provenance: seeded demonstration content authored for the Concept2Cure launch demo (fictional manufacturer, fictional device). Not model-drafted — no AI provider is configured.",
+    "Seed identity: jm.smith@concept2cure.pro (user 1, organisation 2).",
+    "Authoring e-sign: not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)",
+    "FINDING: Authoring/Review: reviews requested through POST /api/authoring/documents/:id/request-review do not appear on GET /api/review/board (the read model behind /concept2cure/review) — the two stores are separate (VSR-001 F-6).",
+    "FINDING: Submission Center: GET /sequences/:id/pathway-readiness?pathway=estar_510k reports every eSTAR section missing although six leaves carry eSTAR documentType tokens — the route maps leaves without the `substantive` flag the mapper requires (server/routes/submissions.ts pathway-readiness → estar-mapper EstarInputLeaf.substantive: undefined ⇒ not substantive, fail-closed), so a vault-backed leaf can never mark a section present here.",
+    "QMS approval of MDX-SOP-101: not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)",
+    "FAILED: list QMS documents: HTTP 401 {\"error\":\"This session has ended. Sign in again.\",\"code\":\"SESSION_ENDED\"}"
+  ],
+  "finishedAt": "2026-11-09T18:41:56.614Z"
+}

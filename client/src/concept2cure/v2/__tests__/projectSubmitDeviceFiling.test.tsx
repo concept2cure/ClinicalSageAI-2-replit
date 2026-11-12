@@ -73,6 +73,9 @@ const PATHWAYS = [
   { programType: 'PMA', productType: 'device', door: DEVICE_DOORS.pathway.pma.assembly, surface: 'device-pma' },
   { programType: 'MDR', productType: 'device', door: DEVICE_DOORS.pathway.mdr.assembly, surface: 'device-cer' },
   { programType: 'IVDR', productType: 'ivd', door: DEVICE_DOORS.pathway.ivdr.assembly, surface: 'device-diagnostics' },
+  /* P-114 item 4 (2026-11-09, MDX journey M7): a De Novo is assembled on the eSTAR the 510(k) screen already
+     produces for a De Novo project. Written as words, so a door that loses them fails. */
+  { programType: 'de_novo', productType: 'device', door: 'Assemble the De Novo eSTAR', surface: 'device-510k' },
 ] as const;
 const ASSEMBLY_DOORS = Object.values(DEVICE_DOORS.pathway).map((p) => p.assembly);
 const STRATEGY_DOORS = Object.values(DEVICE_DOORS.pathway).map((p) => p.strategy);
@@ -144,14 +147,10 @@ describe('Submit — a device project assembles its filing from here', () => {
     expect(pathwayButtons(panel)).toEqual([]);
   });
 
-  it('a pathway with no feature (De Novo) is given no door and no guessed one', async () => {
-    serve({ ...PROGRAM, program_type: 'de_novo' });
-    const panel = await openSubmit();
-    await deviceNoteDrawn(panel);
-    expect(pathwayButtons(panel)).toEqual([]);
-    expect(panel.textContent).not.toContain('where this filing is assembled');
-  });
-
+  /* "A pathway with no feature (De Novo) is given no door" stood here until
+     P-114 item 4 (2026-11-09) gave De Novo its door (the PATHWAYS table above).
+     Every route Plan records now has a feature; a project that records none is
+     the next case. */
   it('a device project that records no pathway is given no door', async () => {
     serve({ ...PROGRAM, program_type: null, regulatory_path: null });
     const panel = await openSubmit();

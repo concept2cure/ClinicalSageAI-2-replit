@@ -1,0 +1,2 @@
+# command: (set -a; . owner.env; set +a; C2C_CODESPACE=1 C2C_ENVIRONMENT=development RLS_ENFORCE=on C2C_AGENT_MODE=active NODE_ENV=development DATABASE_URL=$DATABASE_OWNER_URL npm run --silent db:provision)
+start=2026-11-09T20:25:05Z end=2026-11-09T20:25:22Z exit=0

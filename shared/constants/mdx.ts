@@ -49,6 +49,22 @@ export const REGULATORY_PATH_TO_PATHWAY: Readonly<Record<string, RegulatoryPathw
   ind: 'ind', nda: 'nda', bla: 'bla', anda: 'anda', cta: 'cta', maa: 'maa',
 };
 
+/**
+ * The governed document class (c2c_documents.doc_type) a pathway's own filing
+ * is recorded under, where its spelling is not the pathway's. The table of
+ * record is server/services/c2c/document-class.ts PROGRAM_TO_DOC_TYPE; a test
+ * holds this to it (server/services/c2c/__tests__/pathway-doc-class.test.ts).
+ * Found 2026-11-12 (P-114 item 4): a device screen sent
+ * the pathway `de_novo` as the class, and the editor answered "No DE_NOVO
+ * filing is recorded for this project" for a project whose filing exists.
+ */
+const PATHWAY_DOC_CLASS: Readonly<Partial<Record<RegulatoryPathway, string>>> = { de_novo: 'denovo' };
+
+/** The document class to ask the project's filings by, for a pathway. */
+export function docClassForPathway(pathway: string): string {
+  return PATHWAY_DOC_CLASS[pathway as RegulatoryPathway] ?? pathway;
+}
+
 /** Exact evaluation/regional filing identity wins over a separately recorded
  * US route. Generic IVD/device programs may still carry their actual route. */
 export const PATHWAY_IDENTITY_PROGRAM_TYPES = [
