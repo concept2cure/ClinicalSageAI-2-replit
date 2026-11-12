@@ -18,6 +18,7 @@
  */
 import { pool } from '../../db';
 import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { vaultFilterSql } from '../vault/vault-document-filter.js';
 import { supersededSql } from '../vault/vault-version-family.js';
 import { gradeCapture, type DataRoomGradeFacts, type StoredGrade } from './data-room-grade.js';
 import type { CatalogFacet, CatalogFacets, DataRoomQuery } from './data-room-search.js';
@@ -81,6 +82,8 @@ export function vaultGradeFacts(r: Record<string, any>): DataRoomGradeFacts {
 }
 
 const orNull = <T>(v: T | null | undefined): T | null => v ?? null;
+/** One narrowing value as a filter dimension: absent narrows nothing, as orNull's NULL did. */
+const oneOf = (v: string | null | undefined): string[] | undefined => (v == null ? undefined : [v]);
 const numberOrNull = (v: unknown): number | null => (v == null ? null : Number(v));
 
 /** What the document is called: its title, else its file, else its code. */
@@ -149,6 +152,12 @@ function facetsOf(rows: Array<{ facet: string; value: string; label: string | nu
 export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Queryable = pool): Promise<VaultCatalogPage> {
   const programIds = Array.isArray(p.programIds) ? p.programIds.map((id) => id.toLowerCase()) : [];
   if (programIds.length === 0 || p.study || p.status) return EMPTY;
+  const params: unknown[] = [orgId, programIds, ...[p.project, p.from, p.to, p.q].map(orNull),
+    Math.min(p.limit ?? VAULT_CATALOG_LIMIT, VAULT_CATALOG_LIMIT), p.offset ?? 0];
+  // The evidence kind, folder and CTD section are the Vault's one metadata predicate (vault-document-filter.ts): fixed
+  // fragments over alias d, every value bound after $8. The section as recorded or beneath it, as captures are matched.
+  const narrowing = vaultFilterSql({ evidenceKinds: oneOf(p.kind), folderIds: oneOf(p.folder), ctdSections: oneOf(p.ctd) },
+    params, 'd', { ctdMatch: 'exactWithin' });
   // tenant-isolation-safe: d is bound to the organization and to the caller's verified projects; every join carries the organization.
   const { rows } = await q.query(
     `WITH m AS (
@@ -164,14 +173,11 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
         WHERE d.organization_id = $1 AND d.deleted_at IS NULL
           AND ${vaultDataEligibleSql('d')} AND NOT ${supersededSql('d')}
           AND d.program_id::text = ANY($2::text[])
-          AND ($3::text IS NULL OR d.program_id::text = $3)
-          AND ($4::text IS NULL OR d.evidence_kind = $4)
-          AND ($5::text IS NULL OR d.ctd_section = $5 OR d.ctd_section LIKE $5 || '.%')
-          AND ($6::text IS NULL OR d.folder_id = $6)
-          AND ($7::date IS NULL OR d.created_at >= $7::date)
-          AND ($8::date IS NULL OR d.created_at < ($8::date + 1))
-          AND ($9::text IS NULL OR vault.document_search_vector(COALESCE(d.document_title, d.title, d.file_name), NULL::text, left(d.extracted_text, 900000))
-                 @@ websearch_to_tsquery('english', $9))
+          AND ($3::text IS NULL OR d.program_id::text = $3)${narrowing}
+          AND ($4::date IS NULL OR d.created_at >= $4::date)
+          AND ($5::date IS NULL OR d.created_at < ($5::date + 1))
+          AND ($6::text IS NULL OR vault.document_search_vector(COALESCE(d.document_title, d.title, d.file_name), NULL::text, left(d.extracted_text, 900000))
+                 @@ websearch_to_tsquery('english', $6))
           AND NOT EXISTS (
             SELECT 1 FROM cre_evidence_sources s
              WHERE s.organization_id = d.organization_id AND s.client_program_id = d.program_id
@@ -188,7 +194,7 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
                     ORDER BY a.occurred_at DESC LIMIT 1
                  ) fx ON TRUE
                 ORDER BY m.created_at DESC, m.id
-                LIMIT $10 OFFSET $11) x) AS documents,
+                LIMIT $7 OFFSET $8) x) AS documents,
             (SELECT COALESCE(jsonb_agg(jsonb_build_object('facet', f.facet, 'value', f.value, 'label', f.label, 'n', f.n)
                                        ORDER BY f.facet, f.n DESC, f.value), '[]'::jsonb)
                FROM (SELECT v.facet, v.value, max(v.label) AS label, count(*)::int AS n
@@ -201,8 +207,7 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
                       ) AS v(facet, value, label)
                       WHERE v.value IS NOT NULL AND v.value <> ''
                       GROUP BY v.facet, v.value) f) AS facets`,
-    [orgId, programIds, ...[p.project, p.kind, p.ctd, p.folder, p.from, p.to, p.q].map(orNull),
-      Math.min(p.limit ?? VAULT_CATALOG_LIMIT, VAULT_CATALOG_LIMIT), p.offset ?? 0],
+    params,
   );
   return vaultPage(rows[0] ?? {}, programIds, await folderNamer(orgId, programIds));
 }
