@@ -178,21 +178,17 @@ export function AskAnaButton({ label, onAsk }: { label: string; onAsk: () => voi
 }
 
 /**
- * A Quality register as D0's table: its column headers, then a visually hidden "Actions" header over the row's
- * actions and More (C6). The SOP register, the change log (C8) and the quality records (C11) render through it.
- * The table scrolls inside its own box, and from tablet width up the actions column stays pinned at the box's right
- * edge (P-122): measured at 1440 on the demo, the CAPA, nonconformance, supplier and audit registers ran 200 to 525 px
- * past their section, and their actions were clipped out of reach.
+ * A Quality register as D0's table: its column headers over each record's facts (C6). The SOP register, the change
+ * log (C8) and the quality records (C11) render through it. A record's actions are the line under its facts
+ * (RegisterBody), so the table has no actions column. Where the facts alone are wider than the section (a phone, or
+ * the suppliers register on a small laptop), the table scrolls inside its own box, never the page (P-122).
  */
 export function RegisterTable({ columns, children }: { columns: readonly string[]; children: React.ReactNode }) {
   return (
     <div className="qms-reg-scroll">
       <table className="reg-tbl qms-reg">
         <thead>
-          <tr>
-            {columns.map((c) => <th key={c} scope="col">{c}</th>)}
-            <th scope="col"><span className="sr-only">Actions</span></th>
-          </tr>
+          <tr>{columns.map((c) => <th key={c} scope="col">{c}</th>)}</tr>
         </thead>
         {children}
       </table>
@@ -201,9 +197,14 @@ export function RegisterTable({ columns, children }: { columns: readonly string[
 }
 
 /**
- * One record of a register table, as one <tbody>: its row of facts with the actions that fit its state, Ask AnA and
- * "More", the row of its other actions that More reveals, and any rows of its own after that (the change log's linked
- * records). One body keeps a record's rows together, for a screen reader and for the eye.
+ * One record of a register table, as one <tbody>: its row of facts; on the line under them the actions that fit its
+ * state, Ask AnA and "More"; the row of its other actions that More reveals; and any rows of its own after that (the
+ * change log's linked records). One body keeps a record's rows together, for a screen reader and for the eye.
+ *
+ * The actions are a line of their own, not a column (walked 2026-11-11, w37): the content column is 1040px and a
+ * register with its actions in the row needs more, so the actions, pinned at the right edge, covered the last
+ * columns: the Effective and Next review dates of every document at 1280, the Status at 1024. On a phone the line
+ * stays in view while the facts scroll sideways.
  */
 export function RegisterBody({ name, className, status, columns, cells, primary, ask, rest, after }: {
   /** The record's number: it names the More button and the group of actions it reveals. */
@@ -225,24 +226,26 @@ export function RegisterBody({ name, className, status, columns, cells, primary,
   const moreId = React.useId();
   return (
     <tbody className={className} data-status={status} data-more={more || undefined}>
-      <tr>
-        {cells}
-        <td>
-          <div className="qms-rowacts">
-            {primary}
-            {ask}
-            {rest.length > 0 && (
-              <button type="button" className="btn ghost small" aria-expanded={more} aria-controls={moreId}
-                aria-label={`More actions for ${name}`} onClick={() => setMore((m) => !m)}>
-                More
-              </button>
-            )}
-          </div>
-        </td>
-      </tr>
+      <tr>{cells}</tr>
+      {(primary || ask || rest.length > 0) && (
+        <tr className="qms-row-acts-tr">
+          <td colSpan={columns}>
+            <div className="qms-rowacts">
+              {primary}
+              {ask}
+              {rest.length > 0 && (
+                <button type="button" className="btn ghost small" aria-expanded={more} aria-controls={moreId}
+                  aria-label={`More actions for ${name}`} onClick={() => setMore((m) => !m)}>
+                  More
+                </button>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
       {more && rest.length > 0 && (
         <tr className="qms-row-more-tr">
-          <td colSpan={columns + 1}>
+          <td colSpan={columns}>
             <div className="qms-row-more" id={moreId} role="group" aria-label={`Actions for ${name}`}>{rest}</div>
           </td>
         </tr>

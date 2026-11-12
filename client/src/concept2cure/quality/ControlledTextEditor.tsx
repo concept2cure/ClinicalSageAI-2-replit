@@ -8,6 +8,7 @@ import {
 } from '@shared/qms/training';
 import { canGovernedWrite } from '@shared/constants/permissions';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
 import type { AuthUser } from '@/services/portal/authService';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../v2/editor/RichSectionEditor';
@@ -113,6 +114,7 @@ async function writeControlledText(scope: PersonalTrainingScope, input: QmsContr
     throw new ControlledTextSaveError(serverMessage(body) ?? REFUSED, response.status === 409);
   }
   if (!isConfirmedSave(body, scope, input)) throw new ControlledTextSaveError(UNCONFIRMED, true);
+  qualityWritten();
 }
 
 function useControlledTextSave(props: ControlledTextEditorProps, sections: ControlledSection[] | null, handles: EditorHandles,

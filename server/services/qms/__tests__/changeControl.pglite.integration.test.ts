@@ -269,13 +269,15 @@ describe('controlled lifecycle against real SQL', () => {
     await svc.addLink(ORG, c.id, { linkType: 'validation', linkedRef: 'VP-12', createdBy: 10 });
     expect((await svc.listLinks(ORG, c.id))).toHaveLength(4);
 
-    expect(await svc.removeLink(ORG, c.id, link.id, { removedBy: 11, reason: 'Linked to the wrong CAPA in error' })).toBe(true);
+    // The removal returns which record it was, for the audit row (2026-11-12).
+    expect(await svc.removeLink(ORG, c.id, link.id, { removedBy: 11, reason: 'Linked to the wrong CAPA in error' }))
+      .toEqual({ link_type: link.link_type, linked_ref: link.linked_ref });
     expect((await svc.listLinks(ORG, c.id)).map((l) => l.linked_ref)).toEqual(['DEV-2026-900', 'SUP-7', 'VP-12']);
     expect((await svc.listLinksForChanges(ORG, [c.id])).get(c.id)).toHaveLength(3);
     const kept = (await pglite.query<Record<string, unknown>>(`SELECT removed_at, removed_by, removal_reason FROM qms_change_links WHERE id = $1`, [link.id])).rows[0];
     expect(kept).toMatchObject({ removed_by: 11, removal_reason: 'Linked to the wrong CAPA in error' });
     expect(kept.removed_at).toBeTruthy();
-    expect(await svc.removeLink(ORG, c.id, link.id, { removedBy: 11, reason: 'Linked to the wrong CAPA in error' })).toBe(false);
+    expect(await svc.removeLink(ORG, c.id, link.id, { removedBy: 11, reason: 'Linked to the wrong CAPA in error' })).toBeNull();
   });
 
   it('removes only the owned active change through an executor that supplies rows alone', async () => {
@@ -477,7 +479,7 @@ describe('change closure refuses stale requirements and later mutation', () => {
     await close(change.id);
     await expect(svc.addLink(ORG, change.id, { linkType: 'validation', linkedRef: 'VP-LATE', relationship: 'requires' }))
       .rejects.toBeInstanceOf(svc.ChangeLinkRefusedError);
-    expect(await svc.removeLink(ORG, change.id, link.id, { removedBy: 11, reason: 'Changed after closure' })).toBe(false);
+    expect(await svc.removeLink(ORG, change.id, link.id, { removedBy: 11, reason: 'Changed after closure' })).toBeNull();
     expect(await svc.listLinks(ORG, change.id)).toHaveLength(1);
     expect(await svc.updateChange(ORG, change.id, { implementationPlan: 'Changed after closure' })).toBeNull();
   });
