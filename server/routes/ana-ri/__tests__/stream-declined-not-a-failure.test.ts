@@ -47,7 +47,7 @@ vi.mock('../../../services/ana/tool-telemetry.js', async () => (await harnessMod
 vi.mock('../../../services/ana-ri-metrics.js', async () => (await harnessModule()).mocks.metrics());
 vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule()).mocks.anthropicFiles());
 import { mountStreamRoute } from '../stream.js';
-import { harness as h, resetHarness, streamApp, turn as streamTurn, type SseEvent, type ToolUse } from './support/stream-route-harness.js';
+import { harness as h, resetHarness, streamApp, turn as streamTurn, APPROVED_DRAFTING_MODEL, type SseEvent, type ToolUse } from './support/stream-route-harness.js';
 
 const app = streamApp(mountStreamRoute);
 const turn = (): Promise<SseEvent[]> => streamTurn(app, { message: 'save the plan to the vault' });
@@ -67,6 +67,8 @@ afterAll(() => {
 
 beforeEach(() => {
   resetHarness();
+  // Their subject is the approval of a governed write, so the turn is served by a model that may draft.
+  h.state.servedBy = { ...APPROVED_DRAFTING_MODEL };
   // Each wait "takes" the time it was allowed (the harness's clock).
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);

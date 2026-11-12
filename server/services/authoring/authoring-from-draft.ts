@@ -139,6 +139,8 @@ export interface DocumentProvenance {
   governedWrite?: 'allowed' | 'refused' | 'unverified';
   /** Why the verdict is 'unverified', in the words the decision path uses. */
   governedWriteWhy?: string;
+  /** Read-only, never stored: the verdict shown was resolved from the turn's record after the draft was saved. */
+  resolvedAfterSave?: true;
   note?: string;
   /** True when the caller gave no module and 'M2' was assumed. Set by the
    *  service, never by the caller; a filing must not treat the assumption as
@@ -196,7 +198,31 @@ export async function readDocumentProvenance(
   );
   const raw = r.rows[0]?.provenance;
   const provenance = raw && typeof raw === 'object' ? (raw as DocumentProvenance) : null;
-  return { provenance, provenanceStore: 'present' };
+  return { provenance: provenance && (await verdictOnceRecorded(executor, tenantId, provenance)), provenanceStore: 'present' };
+}
+
+/**
+ * What a reader is shown for a draft the in-process tool saved before its turn was recorded.
+ *
+ * `draft_authoring_document` runs mid-turn and names its RUN; the turn's record is filed when the turn ends
+ * (routes/ana-ri/stream.ts fileTurnRecord). So `governedWriteOf` finds no record at the create, and the stored
+ * verdict is 'unverified' with the run left as the reference, on every draft the tool saves in a live turn, not only
+ * a failed one. Walked in the running app on 2026-11-12: the editor read "model not recorded" on a draft
+ * claude-opus-5-5 had just written. Once the run names one filed record, the reader gets that record's verdict:
+ * its models, RULE 2's verdict and the record id. The stored row and the creation receipts stay as created, and
+ * `resolvedAfterSave` says the verdict is later than they are. A run naming no record, or more than one, still
+ * reads 'unverified'. Not resolved here: the release gate reads the creation receipt's reference
+ * (governed-machine-claims.ts qualifiedMachineGenesis), which for these drafts is still the run.
+ */
+async function verdictOnceRecorded(executor: Queryable, tenantId: number, stored: DocumentProvenance): Promise<DocumentProvenance> {
+  const run = stored.source === 'ana' && stored.governedWrite === 'unverified' && !stored.generatedDerivative
+    && typeof stored.turnId === 'string' && !UUID_RE.test(stored.turnId) ? stored.turnId : null;
+  if (!run) return stored;
+  const now = await governedWriteOf(executor, tenantId, run);
+  if (now.governedWrite === 'unverified') return stored;
+  const shown: DocumentProvenance = { ...stored, ...now, resolvedAfterSave: true };
+  delete shown.governedWriteWhy;
+  return shown;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

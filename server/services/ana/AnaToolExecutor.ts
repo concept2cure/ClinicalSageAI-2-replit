@@ -29,7 +29,8 @@ import { ProgramReadAccessError } from '../c2c/current-program-access';
 import type { PoolClient } from 'pg';
 import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
 import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
-import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { governedWriteModelRefusal } from './governed-write-tools.js';
+export { governedWriteRefusal } from './governed-write-tools.js';
 import { critiqueSavedDocument } from './saved-document-critique';
 import { reviewSavedSectionWriting } from './saved-section-writing-review';
 import { frameToolOutput } from './tool-output-frame.js';
@@ -38,7 +39,6 @@ import { registeredToolTier } from './governed-tool-gate.js';
 import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
-import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { looksLikeProgramUuid } from '../../lib/project-id.js';
@@ -557,12 +557,8 @@ function preHandlerRefusal(
   }
   const privateRefusal = ownerPrivateToolRefusal(name, input, ctx);
   if (privateRefusal) return privateRefusal;
-  if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
-    return {
-      code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
-      result: JSON.stringify(governedWriteRefusal(name, ctx?.servingModel)),
-    };
-  }
+  const modelRefusal = governedWriteModelRefusal(name, ctx?.servingModel);
+  if (modelRefusal) return { code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', result: JSON.stringify(modelRefusal) };
   const auth = toolAuthorizationOf(name, input);
   if (auth.class === 'refuse' && auth.refusedBy !== 'handler') {
     return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
@@ -690,23 +686,6 @@ export function servedModelOf(
   response: { provider?: string | null; model?: string | null; requestId?: string | null } | null | undefined,
 ): { provider: string | null; model: string | null; requestId: string | null } {
   return { provider: response?.provider ?? null, model: response?.model ?? null, requestId: response?.requestId ?? null };
-}
-
-/** What a governed-write tool returns instead of writing, when the model is not approved. */
-export function governedWriteRefusal(
-  tool: string,
-  served: { provider?: string | null; model?: string | null } | null | undefined,
-) {
-  const who = served?.model ? `${served.provider ?? 'unknown'}/${served.model}` : 'an unidentified model';
-  return {
-    error: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
-    tool,
-    servedBy: served?.model ?? null,
-    message:
-      `${tool} was not run: it stores text the model wrote in a governed record, and this turn was answered by ` +
-      `${who}, which is not approved for regulatory drafting. Nothing was saved. Ask again with Thorough effort ` +
-      'to have an approved model draft it.',
-  };
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
