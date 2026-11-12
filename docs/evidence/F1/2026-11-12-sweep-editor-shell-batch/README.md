@@ -71,11 +71,22 @@ client files.
 | **CMC / Module 3** on C2C-101 | The register is `display: block; overflow-x: auto`; the page does not scroll sideways | The same, now from `app-v2.css` (`after-cmc-register.png`) |
 | **Search** | "lmn" lists the four Lumen projects; "BX-401" lists BX-401 | The same |
 
+**The placement itself** (`place-work.cjs`, `place.json`, `after-placed.png`). The dialog accepting the code is half
+of it, so the document was placed: one sentence saved in "1.20:work:1", then Place into filing → LMN-201's IND,
+sequence 0000, a reason, **Place leaf in the sequence**. The server answered 200 on `PUT
+/api/submissions/sequences/3/leaves` with `sectionCode: "1.20"`, and the dialog read "Placed as leaf 1.20 in sequence
+0000 · original — server-confirmed (leaf #14, from Authored document #1). The filing copy is a draft." The CSR lane
+(`017CFk…`) counted 65 of the 200 IND templates that mint such headings, the 1.2 cover letter and Forms 1571, 1572
+and 3674 among them.
+
 **What the running app does not show.** This database has seven projects, so no search is cut at eight and the new
 ordering has nothing to reorder. The sweep's case (nine newer projects whose codes contain "C2C-101", then C2C-101)
 is the unit test, on the palette as rendered.
 
 **Seen, not changed here:**
+- **The filed copy's headings carry the working key**: the snapshot reads "## 1.20:work:1 — Drug name …"
+  (`surfaces/placeIntoFilingCopy.ts` `assembleSnapshot`). It is part of sweep finding 11 (internal section codes
+  shown) and is taken with it.
 - **The Data room panel reads the same sources page through `useLiveData` and has no such retry.** In the "after" run
   it is the reader whose forced refusal stood. `useLiveData` is D0's shared read (`dataConnect.tsx`); a retry there
   reaches every screen, so it is taken as its own change.
