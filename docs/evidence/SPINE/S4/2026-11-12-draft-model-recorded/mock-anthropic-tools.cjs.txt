@@ -1,0 +1,81 @@
+// A local stand-in for the Anthropic Messages API that answers the way Claude does when it uses a tool:
+// first a tool_use for the tool named in scenario.json, then, once the app sends the tool_result back, a text reply
+// that quotes the start of that result. Records every request. It is not Claude.
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const LOG = path.join(__dirname, 'mock-anthropic-requests.jsonl');
+const SCENARIO = path.join(__dirname, 'scenario.json');
+
+// The app returns a tool's output as user text ("[Tool Result for <name> (<id>)]: <tool_output>…"), after the
+// assistant turn that ran it; a tool_result block is accepted too.
+function lastToolResult(messages) {
+  const list = messages || [];
+  let lastAssistant = -1;
+  list.forEach((m, i) => { if (m.role === 'assistant') lastAssistant = i; });
+  for (const m of list.slice(lastAssistant + 1)) {
+    if (m.role !== 'user') continue;
+    const blocks = typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : (m.content || []);
+    for (const b of blocks) {
+      if (b && b.type === 'tool_result') return b;
+      if (b && b.type === 'text' && /\[Tool Result for /.test(b.text || '')) return { content: b.text };
+    }
+  }
+  return null;
+}
+function textOf(block) {
+  if (!block) return '';
+  if (typeof block.content === 'string') return block.content;
+  if (Array.isArray(block.content)) return block.content.map(c => c.text || '').join(' ');
+  return '';
+}
+
+http.createServer((req, res) => {
+  let body = '';
+  req.on('data', c => { body += c; });
+  req.on('end', () => {
+    let parsed = null;
+    try { parsed = JSON.parse(body || 'null'); } catch { parsed = { unparsed: body.slice(0, 200) }; }
+    const headers = { ...req.headers };
+    for (const h of ['x-api-key', 'authorization']) if (headers[h]) headers[h] = `[present, ${String(headers[h]).length} chars]`;
+    fs.appendFileSync(LOG, JSON.stringify({ at: new Date().toISOString(), url: req.url, headers, body: parsed }) + '\n');
+    if (req.url.startsWith('/v1/messages/count_tokens')) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"input_tokens":100}'); }
+    if (!req.url.startsWith('/v1/messages')) { res.writeHead(404); return res.end('{}'); }
+    let scenario = {};
+    try { scenario = JSON.parse(fs.readFileSync(SCENARIO, 'utf8')); } catch {}
+    const model = parsed?.model || 'unknown';
+    const offered = new Set((parsed?.tools || []).map(t => t.name));
+    const result = lastToolResult(parsed?.messages);
+    let content;
+    let stop = 'end_turn';
+    if (result) {
+      content = [{ type: 'text', text: `MOCK AFTER TOOL ${scenario.tool}: ${textOf(result).replace(/\s+/g, ' ').slice(0, 300)}` }];
+    } else if (scenario.tool && offered.has(scenario.tool)) {
+      content = [{ type: 'tool_use', id: 'toolu_mock_' + Date.now(), name: scenario.tool, input: scenario.input || {} }];
+      stop = 'tool_use';
+    } else {
+      content = [{ type: 'text', text: `MOCK NO TOOL: ${scenario.tool || 'none'} was ${scenario.tool ? 'not offered' : 'not asked'} on this call.` }];
+    }
+    const id = 'msg_mock_' + Date.now();
+    if (!parsed?.stream) {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ id, type: 'message', role: 'assistant', model, content, stop_reason: stop, stop_sequence: null, usage: { input_tokens: 100, output_tokens: 20 } }));
+    }
+    res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
+    const ev = (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`);
+    ev('message_start', { message: { id, type: 'message', role: 'assistant', model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 100, output_tokens: 1 } } });
+    content.forEach((block, index) => {
+      if (block.type === 'text') {
+        ev('content_block_start', { index, content_block: { type: 'text', text: '' } });
+        for (const piece of block.text.match(/.{1,40}/g) || ['']) ev('content_block_delta', { index, delta: { type: 'text_delta', text: piece } });
+      } else {
+        ev('content_block_start', { index, content_block: { type: 'tool_use', id: block.id, name: block.name, input: {} } });
+        ev('content_block_delta', { index, delta: { type: 'input_json_delta', partial_json: JSON.stringify(block.input) } });
+      }
+      ev('content_block_stop', { index });
+    });
+    ev('message_delta', { delta: { stop_reason: stop, stop_sequence: null }, usage: { output_tokens: 20 } });
+    ev('message_stop', {});
+    res.end();
+  });
+}).listen(5099, '127.0.0.1', () => console.log('mock anthropic (tools) on 5099'));

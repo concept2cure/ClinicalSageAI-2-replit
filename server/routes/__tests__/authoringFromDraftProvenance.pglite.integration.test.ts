@@ -89,7 +89,8 @@ beforeAll(async () => {
   h.pool = jdb.pool;
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
+  // The request's database client, as production binds it: the document read goes through it.
+  app = makeApp(router, { dbClient: jdb.pool as never });
 }, T);
 
 afterAll(async () => { await jdb?.close(); });
@@ -193,6 +194,45 @@ describe('from-draft records the model from the turn, never from the caller', ()
        provenance named only a run could not be re-checked by them later. */
     expect(provenance.turnId).toBe(recordId);
     expect(provenance.turnId).not.toBe(runId);
+  });
+
+  it('in a live turn the tool saves the draft BEFORE the turn is recorded: a reader gets the model once it is', async () => {
+    /* Walked in the running app on 2026-11-12. draft_authoring_document runs mid-turn and stream.ts files the turn's
+       record when the turn ends, so the run names no record when the document is created. Every case above files
+       the record first, which no live turn does; the editor read "model not recorded" on every draft the tool
+       saved. The stored provenance and the creation receipts stay as created. What a reader is shown is resolved
+       from the one record the run later names. */
+    const runId = 'run_live_order_91c';
+    const { docId, provenance } = await created({ source: 'ana', turnId: runId });
+    expect(provenance).toMatchObject({ governedWrite: 'unverified', governedWriteWhy: 'not a record id', turnId: runId });
+    const read = async () => {
+      const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      return res.body.document.provenance as Record<string, unknown>;
+    };
+    expect(await read()).toMatchObject({ governedWrite: 'unverified', turnId: runId });
+
+    const recordId = await filedTurn([OPUS], runId);
+    const shown = await read();
+    expect(shown).toMatchObject({ governedWrite: 'allowed', model: 'claude-opus-5-5', turnId: recordId, resolvedAfterSave: true });
+    expect(shown.servedBy).toEqual([{ provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' }]);
+    expect(shown.governedWriteWhy).toBeUndefined();
+    // Nothing rewrote the stored row: it says what was known when the draft was saved.
+    const stored = await (jdb.pool as { query: (t: string, p: unknown[]) => Promise<{ rows: any[] }> })
+      .query('SELECT provenance FROM authoring_documents WHERE id = $1', [docId]);
+    expect(stored.rows[0].provenance).toMatchObject({ governedWrite: 'unverified', turnId: runId });
+  });
+
+  it('a reader is shown no model for a run that names two records, or for a draft with another reason to be unverified', async () => {
+    const twice = 'run_live_two_records_5d2';
+    const first = await created({ source: 'ana', turnId: twice });
+    await filedTurn([OPUS], twice);
+    await filedTurn([OPUS], twice);
+    const res = await author(request(app).get(`/api/authoring/docs/${first.docId}`));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const shown = res.body.document.provenance as Record<string, unknown>;
+    expect(shown).toMatchObject({ governedWrite: 'unverified', turnId: twice });
+    expect(shown.model).toBeUndefined();
   });
 
 });

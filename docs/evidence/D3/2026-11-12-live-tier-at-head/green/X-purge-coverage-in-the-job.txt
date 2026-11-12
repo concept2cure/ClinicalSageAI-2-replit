@@ -1,0 +1,24 @@
+     public.csr_study_data (program_id) → public.regulatory_programs, NO ACTION [csr_study_data_program_id_fkey]
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+     public.tenant_offboarding_certificates (custody_signature_id) → public.electronic_signatures, NO ACTION [tenant_offboarding_certificates_custody_signature_fk]
+✅ purge-coverage: no foreign key stops the purge part-way (3 from tables it does not erase, each named).
+✅ purge-coverage: 450 org-keyed tables outside the purge reach (baseline 468, new 0, 18 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     compliance_review_records
+     csr_extraction_log
+     document_audit_log
+     document_folders
+     indemnification_attestations
+     knowledge_graph_edges
+     knowledge_graph_nodes
+     lumen_knowledge_graph_edges
+     qmp_audit_trail
+     reg_responses
+     report_atom_provenance
+     report_seal_events
+     simple_documents
+     tenant_export_receipts
+     tmf_artifacts
+     tmf_files
