@@ -8,6 +8,7 @@
  * controls, closed disclosures, words that say a read failed, horizontal overflow), with every API answer >= 400
  * and every console error. Sign-in is POST /api/auth/dev-login, the identity a Codespace signs in as.
  */
+/* global getComputedStyle, innerHeight -- `facts` runs in the page, not in Node. */
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -88,7 +89,7 @@ const facts = () => {
     rec.failed = [...new Set(failed)].slice(0, 30); rec.consoleErrors = [...new Set(consoleErrors)].slice(0, 10);
     results.push(rec);
     fs.writeFileSync(path.join(OUT, 'facts.json'), JSON.stringify(results, null, 1));
-    console.log(`${stop.name}: ${rec.error ? 'ERROR ' + rec.error : `${rec.failed.length} failed, ${rec.consoleErrors.length} console, h=${rec.facts.pageHeight}`}`);
+    console.info(`${stop.name}: ${rec.error ? 'ERROR ' + rec.error : `${rec.failed.length} failed, ${rec.consoleErrors.length} console, h=${rec.facts.pageHeight}`}`);
   }
   await page.evaluate(() => fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}));
   await browser.close();
