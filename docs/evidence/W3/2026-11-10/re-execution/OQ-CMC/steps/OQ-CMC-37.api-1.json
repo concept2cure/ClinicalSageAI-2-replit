@@ -5,8 +5,8 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "78731580-7719-4562-985d-a412edebff5a",
-      "methodCode": "OQE-20261110033923",
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "methodCode": "OQE-20261110130629",
       "title": "OQ edit probe",
       "purpose": "Assay",
       "analyte": "API",
@@ -23,10 +23,10 @@
     "body": {
       "success": true,
       "data": {
-        "id": 15,
+        "id": 20,
         "organizationId": 2,
-        "projectId": "78731580-7719-4562-985d-a412edebff5a",
-        "methodCode": "OQE-20261110033923",
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "methodCode": "OQE-20261110130629",
         "title": "OQ edit probe",
         "purpose": "Assay",
         "analyte": "API",
@@ -40,8 +40,8 @@
         "validationDate": null,
         "developedBy": null,
         "validatedBy": null,
-        "createdAt": "2026-11-10T03:45:38.564Z",
-        "updatedAt": "2026-11-10T03:45:38.564Z"
+        "createdAt": "2026-11-10T13:26:09.300Z",
+        "updatedAt": "2026-11-10T13:26:09.300Z"
       },
       "module3Linked": true
     }

@@ -1,0 +1,14 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "capa-figures",
+      "text": "The 100 most recently updated CAPAs — Open CAPAs: 100 (0 closed) · Past target close: 0 · High or critical risk, open: 0 · Closed, not effective: 0"
+    },
+    {
+      "name": "w33-capa-figures",
+      "ok": true
+    }
+  ]
+}

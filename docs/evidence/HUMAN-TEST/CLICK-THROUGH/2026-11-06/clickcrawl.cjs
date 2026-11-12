@@ -24,7 +24,10 @@ const fs = require('fs');
 const [BASE, EMAIL, OUT, SEEDS] = process.argv.slice(2);
 fs.mkdirSync(OUT, { recursive: true });
 const LOG = `${OUT}/clicks.jsonl`;
-const SKIP = /^(sign out|log out|delete account|reset|revoke all|end all sessions)$/i;
+// Also skipped: a control that makes a new record and a new, differently named control each time. "Start sequence
+// 0001" leaves "Start sequence 0002" behind it, so a resumed run never ran out of them (it reached 0014 on 2026-11-10).
+// The first one, 0000, is still clicked.
+const SKIP = /^(sign out|log out|delete account|reset|revoke all|end all sessions|start sequence (?!0000$)\d{4}|type of sequence (?!0000$)\d{4})$/i;
 const FAIL_TEXT = /couldn['’]t load|could not be loaded|could not load|something went wrong|unexpected error|failed to (load|fetch)|\[object object\]|\bNaN\b|\bundefined\b|internal server error|cannot read propert|is not a function|try again later/gi;
 const LOADING_TEXT = /\b(loading|reading|fetching)(…|\.\.\.)/gi;
 // Tabs, and controls that behave as tabs: a project's lifecycle steps (.pj-lc-stage, the current one aria-current="step").
@@ -188,7 +191,6 @@ async function discover(page, ev, add) {
   }
 }
 
-// One control on a freshly opened stop: click it and record what happened.
 // What the click did, from the page before (b) and after (a) it.
 function effectOf(clickErr, b, a, downloaded) {
   if (clickErr) return 'click-failed';
@@ -214,6 +216,15 @@ async function afterClick(page, bt) {
   return { a, stuck, newFail };
 }
 
+// A control inside a collapsed <details> has a box in current Chromium but is not visible, so its click timed out
+// (2026-11-10: a seal's "Open", a version's "View", a readiness finding's fix). The section is opened first, as a
+// person opens it, and the record says so.
+const openCollapsed = (loc) => loc.evaluate((el) => {
+  let n = 0;
+  for (let d = el.closest('details:not([open])'); d; d = d.closest('details:not([open])')) { d.open = true; n++; }
+  return n;
+}).catch(() => 0);
+
 // One control on a freshly opened stop: click it and record what happened.
 async function clickOne(page, ev, add, stop, c) {
   if (DONE.clicks.has(clickKey(stop, c)) || BUDGET.left <= 0) return;
@@ -225,10 +236,11 @@ async function clickOne(page, ev, add, stop, c) {
   if (!loc) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, outcome: 'not-found-after-reopen' }) + '\n'); return; }
   ev.errors.length = 0; ev.api.length = 0; const dl0 = ev.downloads;
   let clickErr = null;
+  const opened = await openCollapsed(loc);
   try { await loc.click({ timeout: 4000 }); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
   const { a, stuck, newFail } = await afterClick(page, bt);
   const effect = effectOf(clickErr, b, a, ev.downloads > dl0);
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr }) + '\n');
+  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr, ...(opened ? { opened } : {}) }) + '\n');
   if (effect === 'navigated') add(a.url);
   if (c.href?.startsWith('/concept2cure')) add(c.href);
   await page.keyboard.press('Escape').catch(() => {});

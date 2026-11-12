@@ -87,8 +87,9 @@ describe('the sidebar’s rules (app-v2.css, §D1.A step 6)', () => {
 
 /* ── The top bar's rules (app-v2.css, §D1.B steps 7 and 8) ───────────────── */
 
-/** The bar's own rules: its box, the crumbs, its icon buttons and the Your work badge. */
-const BAR = /\.(topbar|crumbs|crumb-proj|tb-btn|tb-rail|tb-new|tb-collab|tb-newtask|tt-badge|tt-trigger)(?![\w-])/;
+/** The bar's own rules: its box, the crumbs, Search, its icon buttons and the Your work badge.
+ *  Search came back under P-122 and is held to the same rules (Help is a plain .tb-btn). */
+const BAR = /\.(topbar|crumbs|crumb-proj|tb-search|tb-btn|tb-rail|tb-new|tb-collab|tb-newtask|tt-badge|tt-trigger)(?![\w-])/;
 /** `.tb-btn.on` is the MDX filters' engaged state (K510Surface, cer/SignalsTab), which the spec keeps. */
 const bar = ALL.filter((r) => BAR.test(r.selector) && !/\.tb-btn\.on/.test(r.selector));
 const body = (sel: string, media: 'none' | 'phone' = 'none') =>

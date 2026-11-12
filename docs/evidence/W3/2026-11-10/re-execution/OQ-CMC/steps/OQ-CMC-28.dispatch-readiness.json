@@ -1,0 +1,61 @@
+{
+  "withoutModule3": {
+    "gate": {
+      "cleared": false,
+      "blockers": [
+        "10 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:15)."
+      ]
+    },
+    "findings": [
+      {
+        "severity": "error",
+        "code": "IND_MODULE3_REQUIRED",
+        "sectionCode": "3.2.S",
+        "message": "There is no 3.2.S Drug Substance leaf in the original IND (sequence 0001, its first sequence), and no cross-reference on record covers 3.2.S with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.S, naming 3.2.S among its sections, with its Letter of Authorization on file (Module 1.4.1).",
+        "rule": {
+          "id": "IND_MODULE3_REQUIRED",
+          "title": "The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization",
+          "category": "content",
+          "regions": [
+            "fda"
+          ],
+          "severity": "high",
+          "source": "21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+          "enforcement": "dispatch-readiness",
+          "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+        }
+      },
+      {
+        "severity": "error",
+        "code": "IND_MODULE3_REQUIRED",
+        "sectionCode": "3.2.P",
+        "message": "There is no 3.2.P Drug Product leaf in the original IND (sequence 0001, its first sequence), and no cross-reference on record covers 3.2.P with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.P, naming 3.2.P among its sections, with its Letter of Authorization on file (Module 1.4.1).",
+        "rule": {
+          "id": "IND_MODULE3_REQUIRED",
+          "title": "The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization",
+          "category": "content",
+          "regions": [
+            "fda"
+          ],
+          "severity": "high",
+          "source": "21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+          "enforcement": "dispatch-readiness",
+          "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+        }
+      }
+    ]
+  },
+  "withModule3": {
+    "gate": {
+      "cleared": false,
+      "blockers": [
+        "7 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because the release signature on record does not verify against the package (the sequence changed after it was signed for dispatch (leaf manifest digest differs); re-sign the current content). A signature that does not match its record is evidence of tampering and blocks dispatch whether or not this submission type requires one."
+      ]
+    },
+    "findings": []
+  }
+}

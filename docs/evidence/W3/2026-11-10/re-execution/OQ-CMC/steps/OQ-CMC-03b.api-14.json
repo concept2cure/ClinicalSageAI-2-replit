@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/impurity-profiles",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "scope": "drug_substance",
+      "materialName": "BX-702",
+      "impurityName": "Des-methyl BX-702",
+      "impurityType": "process-related",
+      "observedLevel": "0.05",
+      "levelUnit": "%",
+      "maximumDailyDose": "10 mg",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 3,
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "scope": "drug_substance",
+        "materialName": "BX-702",
+        "impurityName": "Des-methyl BX-702",
+        "impurityType": "process-related",
+        "origin": null,
+        "casNumber": null,
+        "molecularFormula": null,
+        "structure": null,
+        "relativeRetentionTime": null,
+        "analyticalMethod": null,
+        "observedLevel": "0.05",
+        "levelUnit": "%",
+        "routeOfAdministration": null,
+        "amesResult": null,
+        "structuralAlert": null,
+        "carcinogenicityData": null,
+        "treatmentDuration": null,
+        "cohortOfConcern": null,
+        "specificationLimit": null,
+        "reportingThreshold": null,
+        "identificationThreshold": null,
+        "qualificationThreshold": null,
+        "maximumDailyDose": "10 mg",
+        "qualificationBasis": null,
+        "controlStrategy": null,
+        "batchesObserved": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-10T13:06:39.567Z",
+        "updatedAt": "2026-11-10T13:06:39.567Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

@@ -181,6 +181,8 @@ describe('the History action reaches the registers the server serves', () => {
        offered a way to read, which was true. */
     const src =
       readFileSync(join(__dirname, '..', 'surfaces', 'cmcRegisters.tsx'), 'utf8') +
+      // The change-control register, split out to keep cmcRegisters.tsx under the 100 kB ceiling (P-122).
+      readFileSync(join(__dirname, '..', 'surfaces', 'cmcChangeRegister.tsx'), 'utf8') +
       readFileSync(join(__dirname, '..', 'surfaces', 'CmcModule.tsx'), 'utf8');
     /* Two forms are in use: `path="/api/cmc/x"` and
        `path={`/api/cmc/x${projectId ? …}`}` — nine of the sixteen cards carry

@@ -2998,3 +2998,232 @@ Sources read 2026-11-10: 21 CFR 11.50, 312.3 and 312.23 (eCFR); FDA, "Letters of
 to Pharmaceutical CGMP Regulations" (2006); 21 CFR 211.22; ICH E6(R3). The regulation and guidance texts were read
 through search summaries and secondary quotations, not line by line: counsel or QA should confirm item 1 and item 3
 against the primary texts before the first real filing by a one-person client.
+
+### P-121 — Decided under the founder's delegation: Vault questions the Vault parity lane met on 2026-11-10
+
+The founder, 2026-11-10: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane). Each is reversible by the founder.
+
+1. **In a pharma or biotech Vault, a "Risk management plan" is the dossier's.** The name means two documents: in a
+   device file, part of the ISO 14971 risk management file; in a medicinal product's dossier, the Risk Management Plan
+   (the EU RMP at Module 1.8.2, Japan's at 1.11; FDA's Module 1 has no single heading for it, as the Module 1 record
+   states). The Vault's view decides. In a drug project the device rule no longer claims the name and the CTD
+   detector proposes it for Module 1 at its region's heading, as it already did for "RMP". A name that also says it
+   is the device's (ISO 14971, RMF, DHF, "device", FMEA) stays the device rule's. A device or IVD Vault is unchanged.
+   Built: `8e5f7cd0b`, `docs/evidence/SPINE/S6/2026-11-10-rmp-classifier/`.
+2. **The server refuses a read that would span clients; "no client" is its own choice.** P-107 item 3 says search
+   never spans sponsors. The Vault page asks first, in the browser (`47a306700`). The server now holds the same
+   line for every caller: a governed-artifacts listing or a library search with no project is one client's, or it is
+   refused with the clients named. Projects that record no client are listed apart from every named client, never
+   with one. Built: `6dac0b836`, `cc1af9221`, `docs/evidence/SPINE/S6/2026-11-10-p107-sponsor-first/`.
+3. **A 510(k)'s or De Novo's section the eSTAR mapper has no slot for keeps the rule pack's flag.** P-107 item 3 has
+   device coverage follow the mapper. Read to the letter that drops "Required" from 510(k) A2 and B3 and De Novo B2,
+   C2 and C4, which the mapper says nothing about and the FDA form shows. Asking too much is the safer error for a
+   filing, so those keep the pack's mark, and each answer says which of the two decided it. The mapper gaining slots
+   for them is the device lane's. Built: `9cff33fe4`,
+   `docs/evidence/SPINE/S6/2026-11-10-p107-device-coverage-estar/`.
+4. **Open, and not decided here: a second layer for PDF renditions of uploaded Word files.** The converter no longer
+   requests what a Word file links to (`4cc352ccf`), which is now the only protection between an upload and a request
+   from the server. Refusing every file that names outside content would also refuse ordinary web links. Whether to
+   add a second layer, and which, is a security decision for the coordinator and the rendition's owner
+   (`docs/evidence/SPINE/S6/2026-11-10-p107-renditions/README.md`).
+
+### P-122 — The UI shows the work: zero capability loss is enforced, and what was hidden comes back
+
+The founder, 2026-11-10, after a demonstration: **"The user interface represents what, 10% of the code base that we
+built? … There wasn't one screen that was satisfactory. … You fucked my project management screen up. … My CMC
+module is missing 1,000 features and functions that we had. … Rendering a shell or 10% of what we built. Nothing
+works."** And: **"Yes to all but I want you to make the most educated 'right calls' on behalf of our potential
+customers and what they will want to pay for."** Decided under that delegation by session `…01DiJJAk`. Each call is
+reversible by the founder.
+
+**What happened.** P-78 asked for two things: the product looks and works like Claude, and the whole codebase lives in
+that UI (`ONE_DESIGN_PLAN.md` §1). The sessions delivered the first by removing, hiding and folding, and did not
+deliver the second. §2's "zero capability loss" was asserted in ledgers and not enforced. The inventory is
+`docs/evidence/DESIGN/P-122/` (filed with the first restoration). For the shell, Home, Projects and the project page:
+- little was deleted, but much was hidden: below a chat box, in closed disclosures, or only in a non-default view;
+- project-management engines that exist on the server have no screen, and most are refused in production.
+
+**1. The Claude look stays; it frames the work and never replaces it.** Where §2's minimalism and a customer seeing
+their own work conflict, the work wins. A paying regulatory team opens the product to see its projects, its due work
+and what is at risk.
+
+**2. Zero capability loss is enforced, not asserted.**
+- No session removes, hides, moves below the fold, or puts behind a closed disclosure a metric, workflow, verdict,
+  action or record a screen showed, without a founder decision.
+- A "fold" of one screen into another is admitted only when a test opens the target and shows it delivers the same
+  outcome. The commit names that test.
+- `ci:one-design-plan` refuses a commit that deletes a surface file, or removes a `UI_SURFACES` id or `SURFACE_VIEWS`
+  entry, unless it carries `Founder-Decision:`.
+
+**3. Restored now, in this order** (each red first, with before-and-after screenshots at 1440 px and 390 px):
+1. **Home.** The person's projects and due tasks are visible at 1440×900 without scrolling, beneath a compact
+   greeting and the composer.
+2. **Projects.** The portfolio figures (active projects, average readiness, filings due within 60 days) and each
+   card's readiness, stage, lead and status are shown by default, in grid and list. "Which projects are at risk this
+   week?" is one click and is answered by the server's risk engines (Sentinel, submission-ops), never by the browser.
+3. **The project page.**
+   - The open step says what to do next.
+   - Records and Activity are open sections.
+   - The Review step lists the approvals and the readiness the server computes.
+4. **The top bar.** Search and Help are visible.
+5. **Project management that was built and never shown** is reached on Projects and the project page:
+   - section owners, deadlines and milestones (`/api/project-sections`);
+   - due soon, workload, blockers and approval bottlenecks (`/api/submission-ops`);
+   - cross-project deadline risk (Sentinel);
+   - the project task list tied to submission milestones;
+   - the project hierarchy and its roll-up;
+   - restoring an archived project.
+
+   Their routes are admitted to production for those screens, behind the same tenant and access checks as the rest
+   of Projects (`Plan: R1`).
+6. **CMC / Module 3** next, from its own inventory, then Vault, Submission Center, Quality and Reporting, from theirs.
+
+**4. Not decided here.** Mission Control, the CRO portfolio and the project journey stay outside the launch catalog
+until the founder admits them. Their engines may serve the screens above (Rule 3: reach, not rebuild).
+
+### P-123 — Decided under the founder's delegation: the Vault lane's open calls, made for the customer who pays
+
+The founder, 2026-11-10, to the Vault session (`…01QoxbLZMS`), on its list of open items: **"Yes to all but I want
+you to make the most educated 'right calls' on behalf of our potential customers and what they will want to pay
+for."** Decided by that session. Each is reversible by the founder. The test applied to each: a regulatory affairs
+lead pays for a Vault that tells them correctly what their filing owes and that an inspector cannot fault. They do
+not pay for a feature that is nearly right.
+
+1. **A device section's requirement is the eSTAR registry's, per device.** (P-107's "D4 and D6 disagreement".) This
+   was landed on trunk by another session (`…01KnUGoX3g`, `server/services/pathway-engines/estar/estar-outline-requirements.ts`)
+   while this session was building the same thing. This session withdrew its copy unpushed (zero duplication) and
+   kept only the decision that slice left open, item 2.
+2. **Risk management in a 510(k) follows FDA's template, not habit.** The registry required it of every 510(k). FDA's
+   eSTAR shows "Benefits, Risks, and Mitigation Measures" for a Special 510(k), a De Novo and a PMA and hides it for a
+   Traditional or Abbreviated 510(k) (the finding recorded in `migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`).
+   The product does not record which kind of 510(k) a project is, so the section reads "When applicable" (required
+   when the submission is a Special 510(k)) and is reported for a person to confirm. It is no longer scored as missing on a Traditional 510(k),
+   where demanding it told a customer their complete filing was incomplete. A De Novo still owes it. **Owed, as a
+   later slice by the device lane:** record the kind of 510(k) at intake, so this becomes a yes or a no.
+3. **The organisation-wide folder route (`/api/folders`) is retired.** It had no screen, no caller, no audit row, no
+   reason for change, and a hard delete. In a Part 11 product that is a finding waiting for an auditor, and nobody
+   could reach it to get value from it. Folders are a project's, through its Vault
+   (`server/routes/c2c/project-vault.ts`, `server/services/vault/vault-folders.ts`). `public.document_folders` stays.
+   If a customer asks for folders shared across projects, that is built on the governed writer, as its own decision.
+4. **Renditions stay Word to PDF.** Word is what regulated documents are written in and PDF is what is filed. A
+   spreadsheet or a slide deck flattened to PDF is not what anyone files, and a poor rendition next to a "verified"
+   label costs trust. Other formats download as their source, verified. Revisit on a customer's request.
+5. **Search filters stay one value each.** Several values already arrive through a saved view. A multi-select on
+   every filter is weight on a screen that should stay calm (RULE 4), and no customer has asked.
+6. **Recommended to the filing lane, not decided here:** accept what the agencies accept for a leaf (PDF 1.4 to 1.7,
+   and PDF/A-1 or PDF/A-2 where the agency lists them) and do not require PDF/A of every leaf. Requiring more than
+   the agency does refuses files a customer may lawfully file. This sentence is from the session's knowledge of FDA's
+   PDF specifications, not from a fresh reading: the filing lane confirms it against the current specification.
+7. **Not this session's to decide, and still owed by people:** legal sign-off on each agency DTD before it is
+   fetched (`assets/ectd-dtd/README.md`); licences; production secrets and hosting; the model key and the
+   qualification approval that lets AnA be walked over folders in a conversation.
+
+Evidence: `docs/evidence/SPINE/S6/2026-11-10/README.md`.
+
+### P-124 — Decided under the founder's delegation: the trial master file in the Vault
+
+The founder, 2026-11-10: **"I don't see the TMF on the vault UI anywhere. The vault UI seems to be lacking in a lot of
+ways."** And, the same day: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane), inside P-74 and P-75 (the eTMF lives inside the Vault and files against the project's study) and under
+P-122 (nothing a screen showed is removed without a decision). Each is reversible by the founder. The test applied:
+a sponsor or CRO pays for a trial master file an inspector can open and trust, where every "filed" has a document
+behind it and every change says who made it and why.
+
+1. **It is called the trial master file, and it is the study's.** The Vault's button read "Inspection readiness" and
+   opened a screen where a trial id was typed by hand and bound to nothing. The button reads "Trial master file" and
+   opens the trial master file of the open project's study. A filing belongs to a study of the project, and its
+   document is a live document of that project's Vault. Rows filed before this name no study and are never served
+   as one's. Built: `64e4bcca0a` (the server), `docs/evidence/D2-ETMF/2026-11-10/`.
+2. **Filing and removing are governed.** Each needs the person's reason and a role that may write the Vault, and
+   writes the chained audit row in the same transaction. A removal stays on the record with who, when and why. The
+   inspection package is a recorded download: nothing is sent when its record cannot be written.
+3. **Everything the retired screen showed is kept (P-122), with two changes decided here.**
+   - Kept: the choice between essential records and all records of the reference model; the figures (zones
+     complete, records filed, open gaps); each record's code and zone; upload a document and file it in one step;
+     the inspection package shown as a document; asking AnA what an inspector would raise.
+   - **Changed: upload-and-file asks for a reason.** It filed with none. A filing with no reason is not one an
+     inspector accepts.
+   - **Not kept: the report built in the browser when the package could not be downloaded.** It was an export with
+     no record of who took it. The package is a recorded download, and when it cannot be recorded the page says so
+     and offers to try again.
+   - The two tiles that read "Not yet available" (timeliness, QC) become one plain line: neither is assessed,
+     because no filing lag and no QC state is recorded for a record. A tile that states an absence is not a figure.
+   - "Open in Project management" is the page's way back to the project.
+4. **Where it lives until admission.** P-75 puts the trial master file in the Vault's own views, and P-74 admits it
+   only with one store, a URS and an OQ. Until then a launch screen may not call its API, so the section is hosted
+   by the `etmf` page that the Vault's button opens, and in a release that page stays locked as the old screen was.
+   The founder's sentence is fully answered only at admission, when the section sits in the Vault's Required
+   documents view (the change is kept ready in `docs/evidence/D2-ETMF/2026-11-10-vault-section/held/`).
+5. **What retires with the second, undeployed store (slice E4), and what is carried.** That store's tables are on no
+   deploy path, so no deployed database holds a row of it; its screens and tools were refused in a release.
+   - **Carried onto the deployed store before admission: "not applicable", with a reason.** A study to which an
+     essential record does not apply could otherwise never read complete. The declaration says who, when and why,
+     is audited, counts as neither filed nor missing, and the verdict says how many were declared.
+   - **A record's status is its document's.** The second store let a person type a status (received, in review,
+     final) with no document behind it. A record's state is the lifecycle stage of the Vault document it is filed
+     against, shown on the record. No status is typed separately.
+   - **Not carried: an artifact outside the reference model's catalog.** A document the catalog does not name is
+     kept in the Vault and is not a record of the trial master file.
+   - **AnA's tools:** `get_tmf_view` and `classify_tmf_artifact` keep their names and read and file through the
+     deployed store, the filing with the person's confirmation and reason. `create_tmf`, `seed_tmf`,
+     `update_tmf_artifact_status` and `review_tmf_completeness` retire, each onto what now answers it: a study's
+     trial master file exists with the study; its expected records are the reference model's; a record changes by
+     filing, removing or declaring it not applicable; completeness is part of the view. No tool is added.
+   - The report pack `etmf.completeness_pack` and the trial master file part of AnA's document search read the
+     deployed store.
+6. **Order to admission:** E4 (one store); "not applicable"; the URS and OQ; then the Vault app gains the `etmf`
+   surface as a professional-tier module and the section moves into the Vault.
+
+Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`. The steps of E4
+are in the plan's §3a.
+
+### P-125 — Decided under the founder's delegation: client administration shows the work (P-122 applied to Administration, Licensing, Onboarding and the account)
+
+The founder, 2026-11-11: **"Continue and focus entirely on getting what we built surfaces correctly on the UI and
+working for GA. Stay aligned with our roadmap and rules."** Decided by session `…01T2wooCZu` (client administration)
+under the founder's standing delegation ("make the best decisions based on our highly regulated clients and their
+needs and the longevity of our product") and inside P-122. Each call is reversible by the founder. The test applied:
+a regulated customer's administrator pays for a console that shows their organisation as it is (people, access,
+security, licence, data) and that an auditor can read without finding a figure nobody recorded.
+
+**What was found.** The four P-122 inventories left this area out. The fifth is
+`docs/evidence/DESIGN/P-122/inventory/administration.md`: 66 capabilities, of which 23 are hidden, 21 were built on
+the server and never reached, 15 are shown but were never recorded (invented), 6 were removed and 1 is reached but
+refused. Little was deleted. The losses are reach and truth: the Setup fold put twelve settings cards in one column
+under a tab that does not open by default (the company card sat 9,193 px down), and the Administration screen shows
+single sign-on status, seats and groups the server never recorded.
+
+1. **The fifth inventory is the work list, in its own order.** `administration-restoration-order.json` beside it lists 30
+   restorations, highest value and smallest size first. Each reaches or shows what exists. None builds a screen, a
+   route file, a service or a table (RULE 6).
+2. **Invented is made true, never removed.** Where a screen shows something the server never recorded (seats, the
+   single sign-on status, how a member signs in, groups), the screen reads the server. Where the server records
+   nothing, the screen says "Not recorded" in that place. Groups becomes job roles (P-119).
+3. **Plan cards keep every line.** Each line says what it is: a term of the plan, or a figure that was measured.
+   Nothing is shown as usage that no meter recorded. A line is not taken off a plan card without a founder decision.
+4. **Settings is reached by name.** It opens with an index of its cards, and a door elsewhere in the product lands
+   on the card it names. No setting is reachable only by scrolling a column.
+5. **The organisation's data return is reached in production.** `GET /api/tenant-export/full` and the custody
+   record are admitted for Audit & compliance reports, for administrators and owners, with a stated reason and an
+   audit row, as the route already requires. The subscription agreement promises the customer its data at any time;
+   until now no screen could ask for it.
+6. **A control nothing enforces says so.** The sign-in policy keys an organisation can store but the sign-in path
+   does not enforce (require an authenticator app, password rules, a sign-in address list) stay on screen and read
+   "not enforced in this release". They are never shown as on. Enforcing them is finish-what-exists work, after the
+   reach items.
+7. **Single sign-on and provisioning are read by the client, and changed by Concept2Cure, for now.** A client
+   administrator sees what is configured for their organisation, by whom and when, in the Identity console that
+   exists. Changing it stays with platform staff until the security review of the write path is filed. Whether a
+   client administrator configures their own identity provider is the founder's call (open question 3 of
+   2026-11-10).
+8. **Legal holds are placed where the record is.** "Place legal hold" belongs on the record in the Vault, for
+   everyone the server already allows. The Vault lane holds that file; this is handed to it, not done beside it.
+
+**Not decided here** (the founder's): which number is the contract seat limit; whether credits and tokens are
+metered and enforced at GA; the free plan's limits; the module-enforcement default; closing an organisation and
+deleting a person's data on request.
+
+Evidence: `docs/evidence/DESIGN/P-122/inventory/administration.md` and `administration-restoration-order.json`; the walk and audit
+behind them, `docs/evidence/F1/2026-11-10-client-admin/`. Each restoration files its before and after beside the
+inventory, as the other areas do.

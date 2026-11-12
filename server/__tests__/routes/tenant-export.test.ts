@@ -113,6 +113,8 @@ describe('GET /api/tenant-export/attestation', () => {
     const res = await request(app).get('/api/tenant-export/attestation');
     expect(res.status).toBe(503);
     expect(res.body.detail).toContain('AUDIT_ATTESTATION_KEY');
+    // The screen branches on the code: a missing key is not an outage, and "Try again" cannot fix it (2026-11-10).
+    expect(res.body.code).toBe('ATTESTATION_KEY_NOT_CONFIGURED');
   });
 
   /* D5: the report is a document handed to an auditor, so its delivery is

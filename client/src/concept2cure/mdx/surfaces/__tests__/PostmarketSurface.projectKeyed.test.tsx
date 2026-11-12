@@ -19,6 +19,13 @@
  * Vigilance trending reads the same unkeyed payload (`trends: []`, :111). It
  * is gated with the others, so the day the route computes trends, another
  * project's device does not draw a sparkline here.
+ *
+ * P-122 (2026-11-10): the read now takes the project (`?program_id=`) and the
+ * server says whose rows it returned (`meta.scope`). The panels are drawn only
+ * when it says 'program' (PostmarketSurface.programScope.test.tsx). These cases
+ * hold the other half: an answer that does not say so — this fixture, like the
+ * organisation-wide read before P-122, carries no scope — is never drawn as
+ * this project's.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, waitFor, fireEvent } from '@testing-library/react';
@@ -90,7 +97,7 @@ function mount(onAskAna: (text: string) => void = () => {}) {
 /** Both reads resolved, and the awareness accordion (CAPA board, PMS plan) open. */
 async function loadedAndExpanded(container: HTMLElement) {
   await waitFor(() => expect(container.textContent ?? '').toMatch(/CMP-OWN-1/));
-  await waitFor(() => expect(seen).toContain('/api/mdx/postmarket'));
+  await waitFor(() => expect(seen).toContain('/api/mdx/postmarket?program_id=project-own'));
   // Give the organisation-wide read a turn to land before asserting its rows are absent.
   await new Promise((r) => setTimeout(r, 0));
   const toggle = container.querySelector('.eng-awareness-head') as HTMLElement | null;

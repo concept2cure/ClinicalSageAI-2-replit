@@ -1,391 +1,63 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/78731580-7719-4562-985d-a412edebff5a",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/7f94ec32-9a96-4b06-a9f2-409507e041dc",
     "anonymous": false,
-    "identity": "oq-signer@validation.local",
-    "body": {
-      "submissionId": 69,
-      "sequenceId": 10,
-      "reason": "Placing the approved Module 3 into sequence 0001 for filing.",
-      "idempotencyKey": "oq-cmc-place-20261110033923",
-      "reauth": {
-        "password": "[REDACTED]",
-        "totp": "[REDACTED]"
-      }
-    }
+    "identity": null,
+    "body": {}
   },
   "response": {
-    "status": 409,
+    "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 36,
+    "durationMs": 37,
     "rateLimitRetries": 0,
     "body": {
-      "success": false,
-      "error": "3 section(s) have no recorded source lineage, so the audit trail required for export is incomplete",
-      "data": {
-        "totalSections": 21,
-        "approvedSections": 1,
-        "staleSections": 0,
-        "openCriticalContradictions": 0,
-        "sectionsWithoutProvenance": 3,
-        "incompleteApprovedSections": [],
-        "unplaceableApprovedSections": [],
-        "driftedApprovedSections": [],
-        "supersededEvidenceSections": [],
-        "unrecordedCriticalFindings": [],
-        "canonicalGovernedState": {
-          "context": {
-            "organizationId": "2",
-            "projectId": "78731580-7719-4562-985d-a412edebff5a",
-            "documentType": "cmc_module3",
-            "ctdSection": "3",
-            "intendedAction": "export",
-            "actorId": "2",
-            "requestId": "7a08aa26-5699-4791-86ed-f4c35f03641d",
-            "timestamp": "2026-11-10T03:41:00.348Z"
-          },
-          "decision": {
-            "decisionId": "",
-            "outcome": "block",
-            "intent": "export",
-            "rationale": "2 critical blocker(s) prevent export",
-            "blockerCount": 3,
-            "warningCount": 4,
-            "consequenceCount": 4,
-            "timestamp": "2026-11-10T03:41:00.348Z",
-            "decisionReference": {
-              "decisionId": "f656ea35-4f97-46d8-b217-0cd84306781d",
-              "projectId": "78731580-7719-4562-985d-a412edebff5a",
-              "intent": "export",
-              "outcome": "block",
-              "actorId": "2",
-              "timestamp": "2026-11-10T03:41:00.348Z"
-            }
-          },
-          "readinessState": {
-            "level": "review_ready",
-            "score": 30,
-            "blockers": [],
-            "warnings": [
-              {
-                "id": "wrn_2c43cb47-0160-4f1c-9784-092e16ad182a",
-                "category": "evidence_incomplete",
-                "severity": "warning",
-                "message": "Evidence is missing or incomplete",
-                "source": "readiness-gates"
-              },
-              {
-                "id": "wrn_cfa5ef85-6445-47ee-98a7-43e9441d31df",
-                "category": "low_completeness",
-                "severity": "warning",
-                "message": "Completeness score is 0.047619047619047616% — below recommended threshold",
-                "source": "readiness-gates"
-              },
-              {
-                "id": "wrn_3435737a-2e82-4bc6-804f-3d728f7c69ef",
-                "category": "incomplete_reviews",
-                "severity": "warning",
-                "message": "0/1 required reviews completed",
-                "source": "readiness-gates"
-              },
-              {
-                "id": "wrn_4b18bbf4-3f91-41fc-b102-11d74633adec",
-                "category": "non_critical_contradictions",
-                "severity": "warning",
-                "message": "1 non-critical contradiction(s) remain unresolved",
-                "source": "readiness-gates"
-              }
-            ],
-            "evaluatedAt": "2026-11-10T03:41:00.348Z",
-            "evaluatedBy": "readiness-gates@1.0.0",
-            "confidence": "high"
-          },
-          "blockers": [
-            {
-              "id": "gate_2ff97b62-df1a-4efb-bd9a-1f0ee3ba7664",
-              "category": "missing_approval",
-              "severity": "critical",
-              "message": "Document must be approved before export",
-              "source": "export-publish-gates@1.0.0"
-            },
-            {
-              "id": "gate_1eae26e0-9514-468a-8a47-22b85024a8a0",
-              "category": "export_gate_failed",
-              "severity": "major",
-              "message": "Provenance chain is incomplete — audit trail required for export",
-              "source": "export-publish-gates@1.0.0"
-            },
-            {
-              "id": "gate_4e4a8c7f-262e-449c-9599-e8869e0c829c",
-              "category": "unresolved_contradiction",
-              "severity": "critical",
-              "message": "1 unresolved contradiction(s) block export",
-              "source": "export-publish-gates@1.0.0"
-            }
+      "success": true,
+      "contradictions": [
+        {
+          "contradictionType": "batch_rejected",
+          "severity": "critical",
+          "details": "At least one batch is rejected while Module 3 composition may include releasable assertions.",
+          "impactedSections": [
+            "3.2.P.3",
+            "3.2.P.5"
           ],
-          "warnings": [
-            {
-              "id": "wrn_2c43cb47-0160-4f1c-9784-092e16ad182a",
-              "category": "evidence_incomplete",
-              "severity": "warning",
-              "message": "Evidence is missing or incomplete",
-              "source": "readiness-gates"
-            },
-            {
-              "id": "wrn_cfa5ef85-6445-47ee-98a7-43e9441d31df",
-              "category": "low_completeness",
-              "severity": "warning",
-              "message": "Completeness score is 0.047619047619047616% — below recommended threshold",
-              "source": "readiness-gates"
-            },
-            {
-              "id": "wrn_3435737a-2e82-4bc6-804f-3d728f7c69ef",
-              "category": "incomplete_reviews",
-              "severity": "warning",
-              "message": "0/1 required reviews completed",
-              "source": "readiness-gates"
-            },
-            {
-              "id": "wrn_4b18bbf4-3f91-41fc-b102-11d74633adec",
-              "category": "non_critical_contradictions",
-              "severity": "warning",
-              "message": "1 non-critical contradiction(s) remain unresolved",
-              "source": "readiness-gates"
-            }
+          "requiredReviewers": [
+            "QA/Release",
+            "MSAT/Process Engineer"
+          ]
+        }
+      ],
+      "sweep": {
+        "inserted": 0,
+        "kept": 0,
+        "keptResolved": 1,
+        "cleared": 1
+      },
+      "examined": {
+        "specifications": 2,
+        "methods": 1,
+        "stability": 2,
+        "batches": 2,
+        "comparability": 0
+      },
+      "impactTasks": [
+        {
+          "title": "Resolve batch_rejected",
+          "impactedSections": [
+            "3.2.P.3",
+            "3.2.P.5"
           ],
-          "placementDecision": {
-            "outcome": "allowed",
-            "canonicalDestination": "3",
-            "allowedDestinations": [
-              "3"
-            ],
-            "missingMetadata": [
-              "regulatorBody",
-              "submissionType"
-            ],
-            "fallbackAcceptable": true
-          },
-          "exportDecision": {
-            "outcome": "blocked",
-            "gateChecks": [
-              {
-                "checkId": "export_content_present",
-                "checkName": "Content Present",
-                "passed": true,
-                "detail": "Document has content",
-                "required": true
-              },
-              {
-                "checkId": "export_placement_present",
-                "checkName": "CTD Placement",
-                "passed": true,
-                "detail": "Placed at 3",
-                "required": true
-              },
-              {
-                "checkId": "export_approval_status",
-                "checkName": "Approval Status",
-                "passed": false,
-                "detail": "Not yet approved",
-                "required": true
-              },
-              {
-                "checkId": "export_provenance_complete",
-                "checkName": "Provenance Chain",
-                "passed": false,
-                "detail": "Provenance chain has gaps",
-                "required": true
-              },
-              {
-                "checkId": "export_no_contradictions",
-                "checkName": "No Unresolved Contradictions",
-                "passed": false,
-                "detail": "1 unresolved contradiction(s)",
-                "required": true
-              },
-              {
-                "checkId": "export_not_stale",
-                "checkName": "Not Stale",
-                "passed": true,
-                "detail": "Document is current",
-                "required": true
-              },
-              {
-                "checkId": "export_human_review",
-                "checkName": "Human Review (AI Content)",
-                "passed": true,
-                "detail": "Recorded as not AI-generated — human review of AI content does not apply",
-                "required": true
-              },
-              {
-                "checkId": "export_regulatory_context",
-                "checkName": "Regulatory Context",
-                "passed": false,
-                "detail": "No regulatory body specified",
-                "required": false
-              }
-            ],
-            "blockingReasons": [
-              {
-                "id": "gate_2ff97b62-df1a-4efb-bd9a-1f0ee3ba7664",
-                "category": "missing_approval",
-                "severity": "critical",
-                "message": "Document must be approved before export",
-                "source": "export-publish-gates@1.0.0"
-              },
-              {
-                "id": "gate_1eae26e0-9514-468a-8a47-22b85024a8a0",
-                "category": "export_gate_failed",
-                "severity": "major",
-                "message": "Provenance chain is incomplete — audit trail required for export",
-                "source": "export-publish-gates@1.0.0"
-              },
-              {
-                "id": "gate_4e4a8c7f-262e-449c-9599-e8869e0c829c",
-                "category": "unresolved_contradiction",
-                "severity": "critical",
-                "message": "1 unresolved contradiction(s) block export",
-                "source": "export-publish-gates@1.0.0"
-              }
-            ],
-            "remediationSteps": [
-              "Complete the approval workflow for this document",
-              "Ensure all document modifications have been tracked with provenance events",
-              "Resolve all contradictions before exporting"
-            ]
-          },
-          "publishDecision": {
-            "outcome": "insufficient_context",
-            "gateChecks": [],
-            "blockingReasons": [],
-            "remediationSteps": [],
-            "dispatchReady": false
-          },
-          "nextRecommendedAction": "Submit for review",
-          "downstreamConsequences": [
-            {
-              "consequenceType": "update_readiness_score",
-              "description": "Readiness evaluated: review_ready (score: 30/100, confidence: high)",
-              "targetObjectType": "project",
-              "targetObjectId": "78731580-7719-4562-985d-a412edebff5a",
-              "severity": "info",
-              "actionRequired": false,
-              "autoExecutable": true,
-              "executed": false
-            },
-            {
-              "consequenceType": "flag_workspace_consequence_row",
-              "description": "Export blocked: 3 gate check(s) failed",
-              "targetObjectType": "artifact",
-              "severity": "major",
-              "actionRequired": true,
-              "autoExecutable": true,
-              "executed": false
-            },
-            {
-              "consequenceType": "mark_submission_item_not_dispatch_ready",
-              "description": "Submission item is not dispatch-ready",
-              "targetObjectType": "submission_item",
-              "severity": "major",
-              "actionRequired": true,
-              "autoExecutable": true,
-              "executed": false
-            },
-            {
-              "consequenceType": "create_audit_reference",
-              "description": "Governed decision recorded for export on new document",
-              "targetObjectType": "artifact",
-              "severity": "info",
-              "actionRequired": false,
-              "autoExecutable": true,
-              "executed": false
-            }
+          "requiredReviewers": [
+            "QA/Release",
+            "MSAT/Process Engineer"
           ],
-          "decisionReference": {
-            "decisionId": "f656ea35-4f97-46d8-b217-0cd84306781d",
-            "projectId": "78731580-7719-4562-985d-a412edebff5a",
-            "intent": "export",
-            "outcome": "block",
-            "actorId": "2",
-            "timestamp": "2026-11-10T03:41:00.348Z"
-          },
-          "uiPresentationHints": {
-            "readinessBadge": {
-              "label": "Review Ready",
-              "tone": "amber"
-            },
-            "exportBadge": {
-              "label": "blocked",
-              "tone": "red"
-            },
-            "publishBadge": {
-              "label": "insufficient_context",
-              "tone": "stone"
-            },
-            "topBlockerMessages": [],
-            "topWarningMessages": [
-              "Evidence is missing or incomplete",
-              "Completeness score is 0.047619047619047616% — below recommended threshold",
-              "0/1 required reviews completed"
-            ],
-            "nextRecommendedAction": "Submit for review",
-            "placementLabel": "allowed (3)",
-            "decisionOutcomeLabel": "block"
-          },
-          "rimContextHints": {
-            "readinessLevel": "review_ready",
-            "blockerCategories": [],
-            "warningCategories": [
-              "evidence_incomplete",
-              "low_completeness",
-              "incomplete_reviews",
-              "non_critical_contradictions"
-            ],
-            "exportGateOutcome": "blocked",
-            "publishGateOutcome": "insufficient_context",
-            "consequenceTypes": [
-              "update_readiness_score",
-              "flag_workspace_consequence_row",
-              "mark_submission_item_not_dispatch_ready",
-              "create_audit_reference"
-            ],
-            "placementOutcome": "allowed",
-            "documentClass": "cmc_module3"
-          },
-          "decisionLifecycle": {
-            "hasUnresolved": false,
-            "unresolvedCount": 0,
-            "escalatedCount": 0,
-            "states": {
-              "under_review": 0,
-              "escalated": 0,
-              "deferred": 0,
-              "rejected": 0
-            }
-          },
-          "artifactBinding": {},
-          "stateFreshness": {
-            "evaluatedAt": "2026-11-10T03:41:00.348Z",
-            "generatedAt": "2026-11-10T03:41:00.352Z"
-          },
-          "derivedFlags": {
-            "isBlocked": true,
-            "isReviewRequired": false,
-            "isExportReady": false,
-            "isPublishReady": false,
-            "hasUnresolvedGovernedDecisions": false,
-            "hasCriticalContradictions": true,
-            "hasPlacementGap": false,
-            "hasEvidenceGap": false,
-            "requiresHumanApproval": true,
-            "isDegraded": false
-          },
-          "decisionPersisted": true
-        },
-        "governedStateEvaluated": true,
-        "fabricBlocks": true,
-        "governedDecisionsBlock": false
+          "priority": "P0"
+        }
+      ],
+      "tasks": {
+        "created": 0,
+        "existing": 1
       }
     }
   }

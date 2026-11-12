@@ -1,50 +1,73 @@
 {
   "request": {
-    "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/78731580-7719-4562-985d-a412edebff5a",
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/batch-records",
     "anonymous": false,
     "identity": null,
-    "body": null
+    "body": {
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+      "batchNumber": "R2-20261110130629",
+      "productName": "Drug substance",
+      "status": "in-progress",
+      "yieldData": {
+        "percent": 61
+      },
+      "deviations": {
+        "open": 1
+      }
+    }
   },
   "response": {
-    "status": 200,
+    "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 19,
+    "durationMs": 31,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
-      "data": [
-        {
-          "id": "a675f3f8-b4a8-4f64-9927-50f330907100",
-          "severity": "high",
-          "contradictionType": "method_validation_gap",
-          "details": "1 analytical method(s) lack validated status: RP-HPLC Assay. Specifications reference these methods.",
-          "impactedSections": [
-            "3.2.S.4",
-            "3.2.P.5"
-          ],
-          "requiredReviewers": [
-            "Analytical Lead",
-            "Method Validation Scientist"
-          ],
-          "status": "open",
-          "updatedAt": "2026-11-10T03:40:31.153Z"
-        }
-      ],
-      "meta": {
-        "lastSweep": {
-          "at": "2026-11-10T03:40:31.436Z",
-          "by": "1",
-          "examined": {
-            "batches": 1,
-            "methods": 1,
-            "stability": 1,
-            "comparability": 0,
-            "specifications": 1
-          },
-          "found": 1
-        }
-      }
+      "data": {
+        "id": "389b4308-3626-4eb6-909a-e2738ed9721f",
+        "organization_id": 2,
+        "project_id": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "batch_number": "R2-20261110130629",
+        "batch_type": null,
+        "material_type": null,
+        "scale": null,
+        "site": null,
+        "manufacturing_date": null,
+        "expiry_date": null,
+        "batch_size": null,
+        "batch_size_unit": null,
+        "yield": null,
+        "yield_unit": null,
+        "purpose": null,
+        "process_version": null,
+        "deviations": {
+          "open": 1
+        },
+        "disposition": null,
+        "linked_analyses": null,
+        "linked_stability_study_id": null,
+        "specification_compliance": null,
+        "oos_events": null,
+        "created_at": "2026-11-10T13:07:32.310Z",
+        "updated_at": "2026-11-10T13:07:32.310Z",
+        "product_name": "Drug substance",
+        "manufacturing_site": null,
+        "status": "in-progress",
+        "process_parameters": null,
+        "in_process_controls": null,
+        "yield_data": {
+          "percent": 61
+        },
+        "release_testing": null,
+        "release_status": null,
+        "released_by": null,
+        "released_at": null,
+        "tenant_id": "2"
+      },
+      "message": "Batch record created successfully",
+      "timestamp": "2026-11-10T13:07:32.317Z",
+      "module3Linked": true
     }
   }
 }

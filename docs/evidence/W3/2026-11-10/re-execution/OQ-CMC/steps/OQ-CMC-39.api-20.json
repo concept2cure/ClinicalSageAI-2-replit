@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/quality/qbd/78731580-7719-4562-985d-a412edebff5a",
+    "url": "http://localhost:5200/api/cmc/quality/qbd/6270d978-aff3-43f0-ad87-1e6726350bf8",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,12 +9,12 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 29,
+    "durationMs": 45,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "projectId": "78731580-7719-4562-985d-a412edebff5a",
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
         "organizationId": 2,
         "cqas": [
           {
@@ -42,7 +42,7 @@
         "gaps": [
           "No manufacturing processes recorded — CPP list is empty."
         ],
-        "analyzedAt": "2026-11-10T03:45:49.843Z"
+        "analyzedAt": "2026-11-10T13:26:21.112Z"
       }
     }
   }

@@ -17816,18 +17816,6 @@ registerToolHandler('compare_recorded_dissolution', async (input, ctx) => {
   if (!orgId) return 'An active organization context is required to read the dissolution register.';
   const refId = Number(input.reference_profile_id);
   const testId = Number(input.test_profile_id);
-  if (!Number.isInteger(refId) || refId <= 0 || !Number.isInteger(testId) || testId <= 0) {
-    return JSON.stringify({
-      status: 'needs_parameters',
-      message: 'Two numeric dissolution profile ids are required. Use list_cmc_registers to find them.',
-    });
-  }
-  if (refId === testId) {
-    return JSON.stringify({
-      status: 'needs_parameters',
-      message: 'A profile cannot be compared against itself; f2 would be 100 by construction.',
-    });
-  }
   try {
     const [{ db }, { cmcDissolutionProfiles }, { and, eq, inArray }, engine] = await Promise.all([
       import('../../db.js'),
@@ -17835,51 +17823,29 @@ registerToolHandler('compare_recorded_dissolution', async (input, ctx) => {
       import('drizzle-orm'),
       import('../cmc/dissolution-comparison.js'),
     ]);
-    const rows = await db
-      .select()
-      .from(cmcDissolutionProfiles)
-      .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), inArray(cmcDissolutionProfiles.id, [refId, testId])));
-    const byId = new Map(rows.map((r: Record<string, any>) => [r.id, r]));
-    const reference = byId.get(refId);
-    const test = byId.get(testId);
-    if (!reference || !test) {
-      /* Never answered from a partial set: comparing one recorded profile
-         against nothing is a different question than the one asked. */
+    /* One implementation with the Dissolution register's Compare action
+       (POST /api/cmc/dissolution-profiles/compare, P-122): the read is scoped
+       here, the comparison and its refusals are the service's. */
+    const ids = [refId, testId].filter((n) => Number.isInteger(n) && n > 0);
+    const rows = ids.length === 2
+      ? await db.select().from(cmcDissolutionProfiles)
+        .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), inArray(cmcDissolutionProfiles.id, ids)))
+      : [];
+    const outcome = engine.compareRecordedDissolutionProfiles(refId, testId, rows as unknown as Parameters<typeof engine.compareRecordedDissolutionProfiles>[2]);
+    if (outcome.status === 'needs_parameters') {
       return JSON.stringify({
-        status: 'not_found',
-        message: `Not this organization's dissolution profiles: ${[!reference ? refId : null, !test ? testId : null].filter(Boolean).join(', ')}. No comparison is made.`,
+        status: 'needs_parameters',
+        message: refId === testId && refId > 0 ? outcome.message : 'Two numeric dissolution profile ids are required. Use list_cmc_registers to find them.',
       });
     }
-    const outcome = engine.compareDissolutionProfiles(
-      {
-        role: 'reference',
-        productName: reference.productName,
-        batchNumber: reference.batchNumber,
-        method: { apparatus: reference.apparatus, medium: reference.medium, rotationSpeed: reference.rotationSpeed },
-        points: engine.pointsFromRecordedProfile(reference.results),
-      },
-      {
-        role: 'test',
-        productName: test.productName,
-        batchNumber: test.batchNumber,
-        method: { apparatus: test.apparatus, medium: test.medium, rotationSpeed: test.rotationSpeed },
-        points: engine.pointsFromRecordedProfile(test.results),
-      },
-      { referenceUnits: reference.unitsTested, testUnits: test.unitsTested },
-    );
-    const identity = {
-      reference: { id: refId, batch: reference.batchNumber, apparatus: reference.apparatus, medium: reference.medium },
-      test: { id: testId, batch: test.batchNumber, apparatus: test.apparatus, medium: test.medium },
-      methodsMatch:
-        reference.apparatus === test.apparatus &&
-        reference.medium === test.medium &&
-        reference.rotationSpeed === test.rotationSpeed,
-    };
-    if (outcome.outcome === 'refused') {
+    if (outcome.status === 'not_found') return JSON.stringify({ status: 'not_found', message: outcome.message });
+    const identity = { reference: outcome.reference, test: outcome.test, methodsMatch: outcome.methodsMatch };
+    const result = outcome.result;
+    if (result.outcome === 'refused') {
       return JSON.stringify({
         status: 'not_comparable',
         ...identity,
-        refusal: { code: outcome.code, message: outcome.message, offending: outcome.offending, alternative: outcome.alternative ?? null },
+        refusal: { code: result.code, message: result.message, offending: result.offending, alternative: result.alternative ?? null },
         instruction:
           'Relay this refusal verbatim. Do NOT re-run the comparison through assess_dissolution_similarity with the same numbers typed in: that is the same computation with the eligibility check removed.',
       });
@@ -17887,12 +17853,12 @@ registerToolHandler('compare_recorded_dissolution', async (input, ctx) => {
     return JSON.stringify({
       status: 'computed',
       ...identity,
-      f2: outcome.f2Reported,
-      similar: outcome.f2Similar,
-      f1: outcome.f1Reported,
-      inputsUsed: outcome.inputsUsed,
-      checksEvaluated: outcome.checksEvaluated,
-      scope: outcome.scope,
+      f2: result.f2Reported,
+      similar: result.f2Similar,
+      f1: result.f1Reported,
+      inputsUsed: result.inputsUsed,
+      checksEvaluated: result.checksEvaluated,
+      scope: result.scope,
       instruction:
         identity.methodsMatch
           ? 'Report the f2 with the timepoints it used and the scope statement. It is not a bioequivalence conclusion.'

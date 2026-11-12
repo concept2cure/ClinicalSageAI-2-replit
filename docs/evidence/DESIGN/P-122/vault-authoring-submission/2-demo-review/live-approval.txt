@@ -1,0 +1,4 @@
+IB Summary (no review round): Approver role granted to the colleague → HTTP 201
+IB Summary (no review round): status before draft; APPROVER e-sign → HTTP 409 {"code":"REVIEW_REQUIRED","message":"This document has not been reviewed. Send it for review; once every reviewer has signed this version, it can be approved. Nothing was signed."}; status after draft
+Protocol Synopsis (round completed by the seed): Approver role granted to the colleague → HTTP 201
+Protocol Synopsis (round completed by the seed): status before draft; APPROVER e-sign → HTTP 200 {"success":true}; status after APPROVED

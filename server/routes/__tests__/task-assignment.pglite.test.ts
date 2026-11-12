@@ -180,3 +180,66 @@ describe('existing automatic assignment uses the same admission and ledger', () 
     expect(r.status).toBe(200); expect(r.body.count).toBe(0); expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n FROM audit_logs')).rows[0].n).toBe(0);
   });
 });
+
+// A task's due date, changed (S9; S11's "Use the schedule's date"): the same admission as a reassignment, a
+// compare-and-set on the date the caller saw, and a task.reschedule ledger row with the stated reason.
+describe("a task's due date is changed with a reason, on the ledger", () => {
+  const NEW = '2027-06-03T17:00:00.000Z';
+  const reschedule = (over: Record<string, unknown> = {}) => ({ action: 'reschedule', dueDate: NEW, expectedDueDate: null, reason: '  The target date moved  ', ...over });
+  const due = async () => (await pg.query<{ due_date: Date | null }>("SELECT due_date FROM unified_tasks WHERE task_id='T1'")).rows[0].due_date;
+
+  it('changes only the due date, clears the reminder markers, and commits its ledger row with the reason', async () => {
+    await pg.exec(`UPDATE unified_tasks SET metadata='{"dueSoonNotifiedAt":"x","overdueNotifiedAt":"y","kept":1}' WHERE task_id='T1'`);
+    const before = (await pg.query<Record<string, unknown>>('SELECT * FROM unified_tasks WHERE task_id=$1', ['T1'])).rows[0];
+    const r = await request(app(5, 'viewer')).patch(taskPath).send(reschedule());
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data).toEqual({ taskId: 'T1', dueDate: NEW, previousDueDate: null });
+    const after = (await pg.query<Record<string, unknown>>('SELECT * FROM unified_tasks WHERE task_id=$1', ['T1'])).rows[0];
+    for (const key of Object.keys(before).filter(k => !['due_date', 'last_modified_by', 'updated_at', 'metadata'].includes(k))) expect(after[key], key).toEqual(before[key]);
+    expect(new Date(after.due_date as string).toISOString()).toBe(NEW);
+    expect(after.metadata).toEqual({ kept: 1 });
+    expect((await pg.query('SELECT command,decision_reason,payload FROM c2c_ana_actions')).rows).toEqual([expect.objectContaining({
+      command: 'task.reschedule', decision_reason: 'The target date moved', payload: expect.objectContaining({ previousDueDate: null, dueDate: NEW }) })]);
+    expect(trace.indexOf('COMMIT')).toBeGreaterThan(trace.findIndex(s => s.includes('INSERT INTO c2c_ana_actions')));
+  });
+
+  it('refuses a stale date, the same date, a missing reason and a malformed date, changing nothing', async () => {
+    expect((await request(app()).patch(taskPath).send(reschedule({ expectedDueDate: '2027-01-01T17:00:00.000Z' }))).status).toBe(409);
+    await pg.query("UPDATE unified_tasks SET due_date=$1 WHERE task_id='T1'", [NEW]);
+    const same = await request(app()).patch(taskPath).send(reschedule({ expectedDueDate: NEW }));
+    expect(same.status).toBe(409); expect(same.body.code).toBe('DUE_DATE_UNCHANGED');
+    expect((await request(app()).patch(taskPath).send(reschedule({ reason: ' ' }))).status).toBe(400);
+    expect((await request(app()).patch(taskPath).send(reschedule({ dueDate: 'next week' }))).status).toBe(400);
+    expect((await request(app()).patch(taskPath).send({ ...reschedule(), status: 'completed' })).status).toBe(400);
+    expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n FROM c2c_ana_actions')).rows[0].n).toBe(0);
+  });
+
+  it('refuses a project reader, another client scope and another organisation, changing nothing', async () => {
+    expect((await request(app(6)).patch(taskPath).send(reschedule())).status).toBe(403);
+    expect((await request(app(5, 'admin', 72)).patch(taskPath).send(reschedule())).status).toBe(403);
+    expect((await request(app(9)).patch(taskPath).send(reschedule())).status).toBeGreaterThanOrEqual(403);
+    expect(await due()).toBeNull();
+  });
+
+  it.each(['completed', 'cancelled'])('protects %s tasks', async status => {
+    await pg.query('UPDATE unified_tasks SET status=$1', [status]);
+    const r = await request(app()).patch(taskPath).send(reschedule());
+    expect(r.status).toBe(409); expect(r.body.code).toBe('TASK_NOT_RESCHEDULABLE');
+    expect(await due()).toBeNull();
+  });
+
+  it('rolls the date back when its ledger row cannot be written', async () => {
+    await pg.exec("ALTER TABLE c2c_ana_actions ADD CONSTRAINT fail_reschedule CHECK(command <> 'task.reschedule') NOT VALID");
+    try {
+      const r = await request(app()).patch(taskPath).send(reschedule());
+      expect(r.status).toBe(500); expect(r.body.error).toBe('AUDIT_WRITE_FAILED');
+      expect(await due()).toBeNull();
+    } finally { await pg.exec('ALTER TABLE c2c_ana_actions DROP CONSTRAINT fail_reschedule'); }
+  });
+
+  it('says the outcome is unknown when the COMMIT loses its acknowledgement', async () => {
+    loseCommit = true;
+    const r = await request(app()).patch(taskPath).send(reschedule());
+    expect(r.status).toBe(500); expect(r.body.error).toBe('OUTCOME_UNKNOWN'); expect(discard).toHaveBeenCalledOnce();
+  });
+});

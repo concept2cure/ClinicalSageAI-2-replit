@@ -1,0 +1,74 @@
+# 04-mutations: each defect the new tests exist to catch, put back one at a time
+# For each line below one edit was made to VaultTrialMasterFile.tsx (M01-M15) or to Vault.tsx (M16-M18),
+# client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx was run, and the source was restored and
+# compared byte for byte. CAUGHT: at least one case failed; the failing cases are listed.
+
+CAUGHT  M01 the server's "not determined" is shown as incomplete
+    1 failed | 36 passed (37)
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+CAUGHT  M02 a read that checked nothing may read complete
+    1 failed | 36 passed (37)
+      × whether the essential records are all filed > states no verdict over a read that checked nothing, even one the server called ready
+CAUGHT  M03 an answer the server did not call ready may read complete
+    2 failed | 35 passed (37)
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+      × whether the essential records are all filed > states no verdict over a read that checked nothing, even one the server called ready
+CAUGHT  M04 the document reference is made up from the study and the code
+    1 failed | 36 passed (37)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+CAUGHT  M05 a filing needs no reason
+    1 failed | 36 passed (37)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+CAUGHT  M06 a removal needs no reason
+    1 failed | 36 passed (37)
+      × removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again
+CAUGHT  M07 the write controls are offered to every role
+    1 failed | 36 passed (37)
+      × a role that may not write the Vault > reads the trial master file and is offered no filing or removal
+CAUGHT  M08 the section reads as soon as the Vault opens
+    2 failed | 35 passed (37)
+      × which study the trial master file is of > reads nothing until the Required documents view is first on screen
+      × in the Vault: a section of Required documents, and the header button that shows it > is a section of the Required documents view, not a view of its own, and reads nothing until that view opens
+CAUGHT  M09 a completeness answer is taken without its shape or its study being checked
+    2 failed | 35 passed (37)
+      × whether the essential records are all filed > an answer about another study is not shown as this study’s
+      × whether the essential records are all filed > a completeness answer with no stated verdict is a failed read
+CAUGHT  M10 every refusal is said as a failed read
+    4 failed | 33 passed (37)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not in this release (403 LAUNCH_SCOPE)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not enabled for the organization (403 MODULE_NOT_LICENSED)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > the person’s role (403, no code)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not found (404 STUDY_NOT_FOUND)
+CAUGHT  M11 a study list that is not a list reads as no study
+    1 failed | 36 passed (37)
+      × which study the trial master file is of > a study list that is not a list is a failed read, never "no study"
+CAUGHT  M12 nothing is read again after a write
+    4 failed | 33 passed (37)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+      × filing a document against a missing record > keeps what was filed on screen when the read after it fails
+      × filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again
+      × removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again
+CAUGHT  M13 a filing without a verified document counts as filed
+    3 failed | 34 passed (37)
+      × whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name
+      × whether the essential records are all filed > says a document that no longer exists, and names a document it cannot find by its reference
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+CAUGHT  M14 a package that does not match its stated SHA-256 is saved
+    1 failed | 36 passed (37)
+      × the inspection package > does not save a file that does not match the SHA-256 the server stated
+CAUGHT  M15 an unconfirmed write is reported as refused ("Nothing was filed")
+    1 failed | 36 passed (37)
+      × filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again
+CAUGHT  M16 the header button opens the separate eTMF screen again
+    1 failed | 36 passed (37)
+      × in the Vault: a section of Required documents, and the header button that shows it > "Inspection readiness" shows Required documents and brings the section into view; it opens no other screen
+CAUGHT  M17 the header button shows the view but does not bring the section into view
+    1 failed | 36 passed (37)
+      × in the Vault: a section of Required documents, and the header button that shows it > "Inspection readiness" shows Required documents and brings the section into view; it opens no other screen
+CAUGHT  M18 the section is put in the Seals & fixity view instead
+    3 failed | 34 passed (37)
+      × in the Vault: a section of Required documents, and the header button that shows it > is a section of the Required documents view, not a view of its own, and reads nothing until that view opens
+      × in the Vault: a section of Required documents, and the header button that shows it > "Inspection readiness" shows Required documents and brings the section into view; it opens no other screen
+      × in the Vault: a section of Required documents, and the header button that shows it > where the eTMF screen is locked the button is not offered, and the section is still in Required documents
+
+18 of 18 mutations caught.

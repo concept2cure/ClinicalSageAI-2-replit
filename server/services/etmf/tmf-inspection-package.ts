@@ -21,13 +21,16 @@
  */
 
 import JSZip from 'jszip';
-import { getTrialTmfCompleteness, listTmfArtifacts } from './tmf-artifact-persistence';
+import { readTrialTmf, type TmfStudy } from './tmf-artifact-persistence';
 import { getTmfReferenceModel } from './tmf-completeness';
 import type { TmfCompletenessResult } from './tmf-completeness';
 
 export interface InspectionPackageParams {
+  /** The study's own id string (cdisc_prm_studies.study_id), as GET /api/study-design lists it. */
   trialId: string;
   organizationId: number;
+  /** The caller: the package is built only for a study whose project they can open. */
+  userId: number;
   scope?: 'essential' | 'all';
   /** ISO timestamp stamped into the manifest; caller supplies for determinism. */
   generatedAt?: string;
@@ -42,6 +45,13 @@ export interface InspectionPackageResult {
   ready: boolean | null;
   summary: TmfCompletenessResult['summary'];
   artifactCount: number;
+  /** The study the package is about. */
+  study: TmfStudy;
+}
+
+/** A file name made of the study's id: letters, digits, dot, dash and underscore only, so it is safe in a header. */
+function packageFileName(studyId: string): string {
+  return `tmf-inspection-${studyId.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100)}.zip`;
 }
 
 /** code → human label + zone, from the reference model (single source of truth). */
@@ -72,20 +82,19 @@ function csvCell(v: unknown): string {
 }
 
 /**
- * Assemble the inspection-readiness ZIP for a trial's TMF. Org-scoped through
- * the persistence layer (both reads are org-filtered).
+ * Assemble the inspection-readiness ZIP for a study's TMF. Scoped through the
+ * persistence layer: one read, admitted by the caller's current access to the
+ * study's project (STUDY_NOT_FOUND otherwise), org-filtered.
  */
 export async function buildTmfInspectionPackage(
   params: InspectionPackageParams,
 ): Promise<InspectionPackageResult> {
-  const { trialId, organizationId } = params;
+  const { organizationId } = params;
   const scope = params.scope ?? 'essential';
   const generatedAt = params.generatedAt ?? '';
 
-  const [completeness, filings] = await Promise.all([
-    getTrialTmfCompleteness(trialId, { organizationId }, scope),
-    listTmfArtifacts(trialId, { organizationId }),
-  ]);
+  const { study, filings, completeness } = await readTrialTmf(params.trialId, { organizationId, userId: params.userId }, scope);
+  const trialId = study.studyId;
 
   const labels = referenceLabelMap();
   // Stable ordering: by zone then code.
@@ -99,6 +108,7 @@ export async function buildTmfInspectionPackage(
     kind: 'tmf-inspection-package',
     version: 1,
     trialId,
+    study: { id: study.id, studyId: study.studyId, protocolId: study.protocolId, title: study.title, programId: study.programId },
     organizationId,
     scope,
     generatedAt,
@@ -137,7 +147,9 @@ export async function buildTmfInspectionPackage(
     'TRIAL MASTER FILE — INSPECTION-READINESS PACKAGE',
     '='.repeat(50),
     ``,
-    `Trial:            ${trialId}`,
+    `Study:            ${trialId}`,
+    `Protocol:         ${study.protocolId}`,
+    `Title:            ${study.title}`,
     `Scope:            ${scope} artifacts`,
     `Reference model:  DIA TMF Reference Model (ICH E6(R3) Appendix C)`,
     `Inspection ready: ${readyLabel}`,
@@ -174,12 +186,13 @@ export async function buildTmfInspectionPackage(
 
   return {
     zip: buffer,
-    fileName: `tmf-inspection-${trialId}.zip`,
+    fileName: packageFileName(trialId),
     sha256,
     sizeBytes: buffer.length,
     ready: completeness.ready,
     summary: completeness.summary,
     artifactCount: orderedFilings.length,
+    study,
   };
 }
 

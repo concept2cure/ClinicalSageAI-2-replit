@@ -20,10 +20,10 @@ const TEMPLATES = [
 const DOC = { id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', docType: 'sop', category: null,
   version: '1.0', status: 'in_review', effectiveDate: null, nextReviewDate: null, updatedAt: null, authorId: 1 };
 const H = vi.hoisted(() => ({ asked: [] as string[], request: vi.fn(), user: { id: '2', name: 'Quinn Approver' } as { id: string; name: string },
-  shell: null as null | { id: string; code?: string; title?: string },
+  shell: null as null | { id: string; code?: string; title?: string }, docsUnread: false,
   reviewRows: [] as Array<Record<string, unknown>> }));
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: [DOC], loading: false, error: null, refresh: vi.fn() }),
+  useSopRegister: () => (H.docsUnread ? { docs: null, loading: true, error: null, refresh: vi.fn() } : { docs: [DOC], loading: false, error: null, refresh: vi.fn() }),
   useSopTemplates: () => ({ templates: TEMPLATES, loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
@@ -53,23 +53,44 @@ beforeEach(() => {
 afterEach(cleanup);
 const mount = () => render(<QualityApp onAskAna={(q) => H.asked.push(q)} />);
 
-/* C14 (QP3): opened with a project open, Quality says whose records it lists and offers the whole organisation. */
+/* P-122 (2026-11-10): opened with a project open, Quality reads the whole organisation and says so; narrowing to the
+   project is one quiet control. C14 (QP3) had made the project's records the default, so the registers looked empty. */
 describe('Quality says whose records it lists', () => {
-  afterEach(() => { H.shell = null; H.reviewRows = []; window.history.replaceState(null, '', '/concept2cure/quality'); });
-  it('names the open project, and widens to the whole organisation and back', () => {
+  afterEach(() => { H.shell = null; H.reviewRows = []; H.docsUnread = false; window.history.replaceState(null, '', '/concept2cure/quality'); });
+  it("reads the whole organisation with a project open, narrows to the project and back", () => {
     H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
     mount();
+    expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
+    expect(new URLSearchParams(window.location.search).get('quality')).toBeNull();
+    // The control names the project by its code; its title carries the full name.
+    const narrow = screen.getByRole('button', { name: 'Show C11 only' });
+    expect(narrow.getAttribute('title')).toBe('Show C11 · Gasket programme only');
+    fireEvent.click(narrow);
+    expect(new URLSearchParams(window.location.search).get('quality')).toBe('project');
     expect(screen.getByTestId('quality-scope').textContent).toMatch(/^C11 · Gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances\. Training, deviations, suppliers, audits and management reviews are the organisation's\.$/);
     fireEvent.click(screen.getByRole('button', { name: 'Show the whole organisation' }));
-    expect(new URLSearchParams(window.location.search).get('quality')).toBe('organisation');
-    expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
-    fireEvent.click(screen.getByRole('button', { name: 'Show C11 · Gasket programme only' }));
     expect(new URLSearchParams(window.location.search).get('quality')).toBeNull();
+    expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
   });
 
   // The SOP tab in a project's scope is its documents and their review: the organisation's schedule is filtered to them.
-  it("lists for periodic review only the project's documents, and says training is the organisation's", () => {
+  // Quality review, 2026-11-10: with the project's documents unread, the schedule is unread too, never the organisation's.
+  // Narrowed to the project (P-122: the organisation is the default).
+  it("lists no periodic review for a project whose documents are not read yet", () => {
     H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
+    window.history.replaceState(null, '', '/concept2cure/quality?quality=project');
+    H.docsUnread = true;
+    H.reviewRows = [{ id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', nextReviewDate: '2026-11-20', overdue: false,
+      status: 'effective', version: '1.0', underRevision: false, lastReview: null, signedReviewDate: null }];
+    mount();
+    const review = screen.getByRole('heading', { name: 'Periodic review' }).closest('section') as HTMLElement;
+    expect(review.textContent).not.toContain('QS-SOP-001');
+    expect(within(review).queryByTestId('qms-review-figure')).toBeNull();
+  });
+
+  it("narrowed to the project, lists for periodic review only the project's documents, and says training is the organisation's", () => {
+    H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
+    window.history.replaceState(null, '', '/concept2cure/quality?quality=project');
     H.reviewRows = [
       { id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', nextReviewDate: '2026-11-20', overdue: false, status: 'effective' },
       { id: 99, docNumber: 'QS-SOP-099', title: 'Another project\'s procedure', nextReviewDate: '2026-11-21', overdue: true, status: 'effective' },
@@ -90,6 +111,16 @@ describe('Quality says whose records it lists', () => {
 });
 
 describe('Quality is one work area with one header (D7-B)', () => {
+  // P-122: the quality system's figures are one quiet line directly under the header, on every tab.
+  it("says the quality system's figures in one line under its header", () => {
+    const { container } = mount();
+    const line = screen.getByTestId('quality-figures');
+    expect(line.previousElementSibling?.tagName).toBe('HEADER');
+    fireEvent.click(screen.getByRole('tab', { name: 'CAPA' }));
+    expect(screen.getByTestId('quality-figures')).toBeTruthy();
+    expect(container.querySelector('.metric-card')).toBeNull();
+  });
+
   it('has one title, the rail label, and no second topbar or eyebrow', () => {
     const { container } = mount();
     const titles = screen.getAllByRole('heading', { level: 1 });
@@ -106,7 +137,8 @@ describe('Quality is one work area with one header (D7-B)', () => {
     const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
     expect(header.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const tabs = within(tablist).getAllByRole('tab');
-    expect(tabs.map((t) => t.textContent)).toEqual(['SOP register', 'Change control', 'CAPA', 'Deviations', 'Nonconformances', 'Suppliers', 'Internal audits', 'Management reviews']);
+    // P-122: Complaints and MDR, beside CAPA.
+    expect(tabs.map((t) => t.textContent)).toEqual(['SOP register', 'Change control', 'CAPA', 'Complaints and MDR', 'Deviations', 'Nonconformances', 'Suppliers', 'Internal audits', 'Management reviews']);
     expect(tablist.querySelector('svg')).toBeNull();
     fireEvent.keyDown(tabs[0], { key: 'ArrowRight' });
     expect(within(tablist).getByRole('tab', { name: 'Change control' }).getAttribute('aria-selected')).toBe('true');
@@ -184,21 +216,21 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
-  // D7-B item 6: a row is one line, its next step and "More"; the rest open in the row, same names, no menu.
-  it('a register row shows its next step and More, and More reveals every other action in the row', () => {
+  // P-122: a row shows the actions that fit its state inline, and Ask AnA as an icon; More reveals the rest in the row.
+  it('a register row shows its state\'s actions inline, and More reveals every other action in the row', () => {
     mount();
     const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
     const shown = () => within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
-    expect(shown()).toEqual(['QS-SOP-001', 'Approve', 'More actions for QS-SOP-001']);
+    expect(shown()).toEqual(['QS-SOP-001', 'Approve', 'Review route', 'Ask AnA about this document', 'More actions for QS-SOP-001']);
     const more = within(row).getByRole('button', { name: 'More actions for QS-SOP-001' });
     expect(more.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(more);
     expect(more.getAttribute('aria-expanded')).toBe('true');
     const group = within(row).getByRole('group', { name: 'Actions for QS-SOP-001' });
     expect(within(group).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
-      'Open', 'Training', 'Review route', 'Revise', 'View version history of QS-SOP-001', 'Ask AnA about this document',
+      'Open', 'Training', 'Revise', 'View version history of QS-SOP-001',
     ]);
-    fireEvent.click(within(group).getByRole('button', { name: 'Ask AnA about this document' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Ask AnA about this document' }));
     expect(H.asked).toEqual(['Summarize QS-SOP-001 Handling of customer complaints and tell me what it needs next.']);
   });
 

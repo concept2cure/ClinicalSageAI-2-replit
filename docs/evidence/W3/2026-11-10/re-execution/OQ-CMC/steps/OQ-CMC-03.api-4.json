@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "methodCode": "AM-20261110033923",
+      "methodCode": "AM-20261110130629",
       "title": "RP-HPLC Assay",
       "purpose": "assay",
       "analyte": "BX-701",
@@ -18,21 +18,21 @@
         "linearity": "r >= 0.999 over 50-150% of nominal",
         "range": "50-150% of nominal"
       },
-      "projectId": "78731580-7719-4562-985d-a412edebff5a"
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 26,
+    "durationMs": 42,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 13,
+        "id": 17,
         "organizationId": 2,
-        "projectId": "78731580-7719-4562-985d-a412edebff5a",
-        "methodCode": "AM-20261110033923",
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "methodCode": "AM-20261110130629",
         "title": "RP-HPLC Assay",
         "purpose": "assay",
         "analyte": "BX-701",
@@ -52,8 +52,8 @@
         "validationDate": null,
         "developedBy": null,
         "validatedBy": null,
-        "createdAt": "2026-11-10T03:39:25.077Z",
-        "updatedAt": "2026-11-10T03:39:25.077Z"
+        "createdAt": "2026-11-10T13:06:30.802Z",
+        "updatedAt": "2026-11-10T13:06:30.802Z"
       },
       "module3Linked": true
     }

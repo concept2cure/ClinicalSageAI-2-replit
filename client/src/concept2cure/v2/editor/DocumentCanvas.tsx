@@ -11,11 +11,11 @@
  * never the event's inline content — so what the person sees is the record,
  * and reopening the thread later shows the same document from the same store.
  *
- * Collapsed, it is a chip (D4-5b, D4.md §D4.I), as Claude shows an artifact
- * under a message: an icon, the title, one line of kind, module, status,
- * progress and project, where it came from, and Open. The work happens in the
- * open document, where File to vault, Send for review and Place into filing
- * are each reached once.
+ * Collapsed, it is the card: title, type, project (name and phase),
+ * provenance, the first section rendered through the one read-only renderer
+ * (`AuthoredHtml`, the same audited sanitiser the editor uses), the section
+ * count, and the four actions — Open full editor, File to vault, Assign
+ * review, Place into filing.
  *
  * Expanded, it "converts into a full editor": it mounts `DocumentWorkbench`
  * PINNED to this document — the same component the Authoring surface renders,
@@ -56,12 +56,20 @@ import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { setEditorTarget } from '../editorTarget';
-import { DocumentWorkbench, escapeBelongsToInner, type AuthDoc, type EditorBridge } from './DocumentWorkbench';
+import { AuthoredHtml } from './AuthoredHtml';
+import {
+  DocumentWorkbench, escapeBelongsToInner, readDocumentAccess, actRefusal, UNKNOWN_DOCUMENT_ACCESS,
+  type AuthDoc, type DocumentAccess, type EditorBridge,
+} from './DocumentWorkbench';
+import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
+import { FileToVaultDialog } from './FileToVaultDialog';
+import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramRead, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
-import { OpenedDocumentPending, statusWords, ToDocumentsButton } from './CanvasDocumentList';
+import { OpenedDocumentPending, ToDocumentsButton } from './CanvasDocumentList';
 import { useCanvasEscape, useCanvasRegionFocus, useCloseFocusHandoff, useOriginSectionFocus } from './canvasFocus';
 import type { AskOrigin } from './askAnaToDraft';
+import { originForSavedSection } from './authoringConversationOrigin';
 import { sourceMetadataUnavailable } from './savedTemplateContext';
 import { captureAuthoringSession, changedSectionCodes, useAuthoringReadSession } from './authoringCurrentRead';
 
@@ -80,7 +88,6 @@ export interface DocumentCanvasProps {
   onNav: (id: string) => void;
   /** Put a prompt in the thread's composer (the workbench's asks). */
   onAsk: (text: string, savedOrigin?: AskOrigin) => void;
-  /** Kept for the thread's call; the card's own acts that toasted moved into the open document (D4-5b). */
   fireToast: FireToast;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
   /**
@@ -159,6 +166,7 @@ export function DocumentCanvas({
   onExpandedChange,
   onNav,
   onAsk,
+  fireToast,
   liveDrive,
   paneEl = null,
   refreshKey = 0,
@@ -182,14 +190,29 @@ export function DocumentCanvas({
   const [storedDoc, setDoc] = useState<DocRow | null>(null);
   const doc = recordCurrent ? storedDoc : null;
   const partialRead = doc?.readScope === 'sections';
+  /* GE-P-3 (2026-09-28): what this caller may do to the document, from the
+     same read (`access`). Unknown until read, and unknown stays enabled. */
+  const [storedAccess, setAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
+  const access = recordCurrent ? readDocumentAccess(storedAccess, partialRead ? 'sections' : undefined) : UNKNOWN_DOCUMENT_ACCESS;
+  const vaultRefusalId = useId();
+  const assignRefusalId = useId();
   const [storedSections, setSections] = useState<SectionRow[]>([]);
   const sections = recordCurrent ? storedSections : [];
   const [savedRefreshKey, setSavedRefreshKey] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  /* The section the outline chose; null shows the first. */
+  const [focusId, setFocusId] = useState<string | null>(null);
   /* Codes whose text changed on the last quiet re-read, and whether that
      re-read failed (the record already on screen stays). */
   const [updatedCodes, setUpdatedCodes] = useState<string[]>([]);
   const [refreshFailed, setRefreshFailed] = useState(false);
   const sectionsRef = useRef<SectionRow[]>([]);
+  const [fileToVaultOpen, setFileToVaultOpen] = useState<string | null>(null);
+  const [assignReviewOpen, setAssignReviewOpen] = useState<string | null>(null);
+  useEffect(() => {
+    setFileToVaultOpen(null);
+    setAssignReviewOpen(null);
+  }, [readKey]);
   /* The workbench mounts on the FIRST expand and stays mounted afterwards,
      hidden while collapsed, so its state survives; before that first expand
      a long thread pays nothing for canvases nobody opened. */
@@ -234,6 +257,7 @@ export function DocumentCanvas({
       setError(null);
       setDoc(null);
       setSections([]);
+      setAccess(UNKNOWN_DOCUMENT_ACCESS);
     }
     const read = await readDocumentRecord(docId, recovery, programId, { headers: owner.headers, current: currentRead });
     if (!read || !currentRead()) return false;
@@ -247,7 +271,7 @@ export function DocumentCanvas({
       setState('error');
       setError(read.message);
       if (read.refused) {
-        setDoc(null); setSections([]);
+        setDoc(null); setSections([]); setAccess(UNKNOWN_DOCUMENT_ACCESS);
       } else if (read.doc) setDoc(read.doc);
       return false;
     }
@@ -255,6 +279,7 @@ export function DocumentCanvas({
     setUpdatedCodes(quiet ? changedSectionCodes(sectionsRef.current, read.sections) : []);
     setRefreshFailed(false);
     setDoc(read.doc);
+    setAccess(readDocumentAccess(read.access));
     sectionsRef.current = read.sections;
     setSections(read.sections);
     setState('ready');
@@ -303,6 +328,9 @@ export function DocumentCanvas({
     draftOwner.session.sameRevision() ? draftTitle : null) ?? 'Document';
   const sectionCount = partialRead ? sections.length : sections.length || Number(doc?.section_count ?? 0) || 0;
   const draftedCount = sections.filter(x => isDrafted(x.content)).length;
+  const first = sections[0] ?? null;
+  const focused = (focusId && sections.find(x => x.id === focusId)) || first;
+  const shown = showAll ? sections : focused ? [focused] : [];
   const typeLabel = documentTypeLabel(doc?.product_code);
 
   const openInAuthoring = () => {
@@ -329,9 +357,18 @@ export function DocumentCanvas({
 
   const [bridge, setBridge] = useState<EditorBridge | null>(null);
 
-  /* The section a saved arrival names (Authoring's conversation hand-off). A section not yet drafted is asked for in
-     the open document: its empty section's "Draft with AnA" and the ✻ menu (D4-5b; the card's own ask is gone). */
-  const [focusSection] = useOriginSectionFocus(focusSectionId);
+  /* A section not yet drafted is one ask away (2026-10-01). The ask opens
+     the editor at that section, so the turn names it and AnA's answer offers
+     to go into it, and lands in the composer for the person to send. The
+     wording asks for the text in the conversation: the document exists, and
+     a second one drafted from this ask would be a duplicate. */
+  const [focusSection, setFocusSection] = useOriginSectionFocus(focusSectionId);
+  const askToDraft = (sec: SectionRow) => {
+    if (!doc) return;
+    setFocusSection(prev => ({ id: sec.id, nonce: (prev?.nonce ?? 0) + 1 }));
+    onExpandedChange(true);
+    onAsk('Draft the text for the saved section attached to this question here in the conversation, so I can insert it into the existing document.', originForSavedSection(doc, sec, programId));
+  };
   /* The workbench reports its open section whether or not this canvas is
      expanded (it stays mounted, hidden), and so does this, saying which. An
      insert lands only where the person can see it, so the thread reopens a
@@ -355,63 +392,52 @@ export function DocumentCanvas({
       {/* ── The card ── (none when the document was opened from the list) */}
       {!cardless && (
       <div className="dcv-card" hidden={expanded && !beside} data-open-beside={(expanded && beside) || undefined}>
-        <div className="dcv-row">
-          <span className="dcv-ic" aria-hidden="true">{I.fileText}</span>
-          <div className="dcv-head">
-            <h3 className="dcv-title" id={titleId} title={title}>{title}</h3>
-            <div className="dcv-meta">
-              <span>{typeLabel ?? 'Document'}</span>
-              {doc?.module && (metadataAvailable && moduleWasAssumed(doc.provenance) ? (
-                <span title={`No module was chosen when this document was created, so ${doc.module} was assumed. Check it before filing.`}>
-                  {`${doc.module} (assumed)`}
-                </span>
-              ) : <span>{doc.module}</span>)}
-              {doc?.status && <span>{statusWords(doc.status)}</span>}
-              {state === 'ready' && (
-                <span data-testid="dc-progress">
-                  {sectionCount === 0 ? partialRead ? 'No accessible sections in this view' : 'No sections'
-                    : `${draftedCount} of ${sectionCount} ${partialRead ? 'accessible ' : ''}section${sectionCount === 1 ? '' : 's'} drafted`}
-                </span>
-              )}
-              {programId ? (
-                <span className="dcv-project">{programLineFor(program, programState)}</span>
-              ) : (
-                <span className="dcv-project dcv-project-none" data-testid="dc-no-program">Not filed under a project</span>
-              )}
-            </div>
-            {provenance && (
-              <div className="dcv-prov" data-source={provenance.source} data-testid="dc-provenance">{provenance.line}</div>
+        <div className="dcv-head">
+          <div className="dcv-kind">
+            {I.fileText} Document{typeLabel ? ` · ${typeLabel}` : ''}
+            {doc?.module && (metadataAvailable && moduleWasAssumed(doc.provenance) ? (
+              <span title={`No module was chosen when this document was created, so ${doc.module} was assumed. Check it before filing.`}>
+                {` · ${doc.module} (assumed)`}
+              </span>
+            ) : ` · ${doc.module}`)}
+            {doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
+          </div>
+          <h3 className="dcv-title" id={titleId}>{title}</h3>
+          <div className="dcv-meta">
+            {programId ? (
+              <span className="dcv-project">{I.folder} {programLineFor(program, programState)}</span>
+            ) : (
+              <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a project</span>
+            )}
+            {state === 'ready' && (
+              <span data-testid="dc-progress">
+                {sectionCount === 0 ? partialRead ? 'No accessible sections in this view' : 'No sections'
+                  : `${draftedCount} of ${sectionCount} ${partialRead ? 'accessible ' : ''}section${sectionCount === 1 ? '' : 's'} drafted`}
+              </span>
             )}
           </div>
-          <button
-            ref={expandBtnRef}
-            type="button"
-            className="btn ghost small"
-            onClick={() => onExpandedChange(beside ? !expanded : true)}
-            disabled={state !== 'ready'}
-            aria-expanded={expanded}
-            aria-controls={expandedId}
-            data-testid="dc-open-editor"
-          >
-            {expanded && beside ? 'Close' : 'Open'}
-          </button>
+          {provenance && (
+            <div className="dcv-prov" data-source={provenance.source} data-testid="dc-provenance">{provenance.line}</div>
+          )}
+          {partialRead && <div className="scaf-note" role="status" data-testid="dc-read-scope">
+            Showing only sections available with your current access. The full document and source metadata are not available in this view.
+          </div>}
+          {updatedCodes.length > 0 && (
+            <div className="dcv-updated" role="status" data-testid="dc-updated">
+              Updated after AnA’s last turn: {updatedCodes.join(', ')}
+            </div>
+          )}
+          {refreshFailed && (
+            <div className="dcv-updated" role="status" data-tone="err" data-testid="dc-refresh-failed">
+              Couldn’t refresh after AnA’s last turn — this is the version read earlier.{' '}
+              <button type="button" className="nda-open" onClick={() => void load(true)}>Retry</button>
+            </div>
+          )}
         </div>
-        {partialRead && <div className="scaf-note" role="status" data-testid="dc-read-scope">
-          Showing only sections available with your current access. The full document and source metadata are not available in this view.
-        </div>}
-        {updatedCodes.length > 0 && (
-          <div className="dcv-updated" role="status" data-testid="dc-updated">
-            Updated after AnA’s last turn: {updatedCodes.join(', ')}
-          </div>
-        )}
-        {refreshFailed && (
-          <div className="dcv-updated" role="status" data-tone="err" data-testid="dc-refresh-failed">
-            Couldn’t refresh after AnA’s last turn — this is the version read earlier.{' '}
-            <button type="button" className="nda-open" onClick={() => void load(true)}>Retry</button>
-          </div>
-        )}
-        {state === 'loading' && <div role="status" className="dcv-note">Reading the document…</div>}
-        {state === 'error' && (
+
+        {state === 'loading' ? (
+          <div role="status" className="scaf-note" style={{ padding: '12px 0' }}>Reading the document…</div>
+        ) : state === 'error' ? (
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
@@ -420,7 +446,128 @@ export function DocumentCanvas({
             retry={() => void load()}
             testId="dc-error"
           />
+        ) : sections.length === 0 ? (
+          <p className="dcv-empty">{partialRead ? 'No accessible sections were returned in this view.' : 'This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.'}</p>
+        ) : (
+          /* Collapsed to the card's head while the document is open beside the
+             conversation: the outline and the section are in the editor next to
+             it, and the editor's own "Draft with AnA" takes the ask. */
+          <div className="dcv-body" hidden={expanded && beside}>
+            {sections.length > 1 && (
+              <ol className="dcv-outline" aria-label="Sections">
+                {sections.map(sec => {
+                  const drafted = isDrafted(sec.content);
+                  const updated = updatedCodes.includes(sec.code);
+                  const current = !showAll && focused?.id === sec.id;
+                  return (
+                    <li key={sec.id} data-drafted={drafted ? 'true' : 'false'} data-updated={updated || undefined}>
+                      <button
+                        type="button"
+                        className="dcv-outline-item"
+                        aria-current={current || undefined}
+                        onClick={() => { setFocusId(sec.id); setShowAll(false); }}
+                      >
+                        <span className="dcv-outline-code">{sec.code}</span>
+                        <span className="dcv-outline-t">{sec.title}</span>
+                      </button>
+                      <span className="dcv-outline-state">
+                        {updated ? 'Updated' : drafted ? 'Drafted' : 'Not drafted'}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            {shown.map(sec => (
+              <article key={sec.id} className="dcv-sec" aria-label={`${sec.code} ${sec.title}`}>
+                <div className="dcv-sec-h">
+                  <span className="dcv-sec-num">{sec.code}</span>
+                  <span className="dcv-sec-t">{sec.title}</span>
+                </div>
+                {(sec.content ?? '').trim() ? (
+                  <AuthoredHtml className="dcv-sec-body ed-full-sec-body" html={sec.content ?? ''} />
+                ) : (
+                  <p className="dcv-sec-empty">
+                    Not drafted yet.
+                    <button type="button" className="nda-open" onClick={() => askToDraft(sec)}>
+                      {`Ask AnA to draft ${sec.code}`}
+                    </button>
+                  </p>
+                )}
+              </article>
+            ))}
+            {sections.length > 1 && (
+              <button type="button" className="nda-open dcv-showall" onClick={() => setShowAll(v => !v)} aria-expanded={showAll}>
+                {showAll ? `Show the first section only` : `Show all ${sections.length} sections`}
+              </button>
+            )}
+          </div>
         )}
+
+        <div className="dcv-actions">
+          {/* No inline heights on these four. `height: 30` beat every
+              stylesheet rule, including the 44px minimum a phone needs, and a
+              declaration a stylesheet cannot reach is a declaration no
+              breakpoint can correct. The size is `.dcv-actions .btn` in
+              authoring-v2.css, which raises it at phone width. */}
+          <button
+            ref={expandBtnRef}
+            type="button"
+            className="btn primary"
+            onClick={() => onExpandedChange(beside ? !expanded : true)}
+            disabled={state !== 'ready'}
+            aria-expanded={expanded}
+            aria-controls={expandedId}
+            data-testid="dc-open-editor"
+          >
+            {expanded && beside ? <>{I.close} Close the editor</> : <>{I.maximize} Open full editor</>}
+          </button>
+          {expanded && beside && (
+            <span className="dcv-open-note" role="status">Open in the editor beside this conversation</span>
+          )}
+          {/* GE-P-3: a refused act is disabled with the server's reason beside it. */}
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setFileToVaultOpen(readKey)}
+            disabled={state !== 'ready' || !!actRefusal(access.fileToVault)}
+            aria-describedby={actRefusal(access.fileToVault) ? vaultRefusalId : undefined}
+            data-testid="dc-file-to-vault"
+          >
+            {I.vault} File to vault
+          </button>
+          {actRefusal(access.fileToVault) && (
+            <span id={vaultRefusalId} style={{ fontSize: 12, color: 'var(--text-400)' }}>
+              {actRefusal(access.fileToVault)}
+            </span>
+          )}
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setAssignReviewOpen(readKey)}
+            disabled={state !== 'ready' || !!actRefusal(access.assignReview)}
+            aria-describedby={actRefusal(access.assignReview) ? assignRefusalId : undefined}
+            data-testid="dc-assign-review"
+          >
+            {I.send} Send for review
+          </button>
+          {actRefusal(access.assignReview) && (
+            <span id={assignRefusalId} style={{ fontSize: 12, color: 'var(--text-400)' }}>
+              {actRefusal(access.assignReview)}
+            </span>
+          )}
+          {recordCurrent && (
+            <AuthoringPlaceIntoFiling
+              docId={docId}
+              docTitle={doc?.title ?? 'Authoring document'}
+              activeSectionCode={first?.code ?? null}
+              sectionCodes={state === 'ready' ? sections.map((x) => x.code) : undefined} docStatus={doc?.status ?? null}
+              refusal={state !== 'ready' ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(access.placeIntoFiling)} dirty={false}
+              onNav={onNav}
+              fireToast={fireToast}
+            />
+          )}
+        </div>
       </div>
       )}
 
@@ -477,6 +624,33 @@ export function DocumentCanvas({
         return beside && paneEl ? createPortal(region, paneEl) : region;
       })()}
 
+      {readSession.sameRevision() && (
+        <FileToVaultDialog
+          key={readKey}
+          open={fileToVaultOpen === readKey}
+          docId={docId}
+          docTitle={doc?.title ?? 'Authoring document'}
+          docStatus={doc?.status ?? null}
+          refusal={state === 'error' ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(access.fileToVault)}
+          programId={programId}
+          programName={doc ? program?.name ?? null : null}
+          onClose={() => setFileToVaultOpen(null)}
+          onNav={onNav}
+          fireToast={(message, tone) => { if (currentReadKey.current === readKey && readSession.sameRevision()) fireToast(message, tone); }}
+        />
+      )}
+      {assignReviewOpen === readKey && readSession.sameRevision() && (
+        <SendForReviewDialog
+          docId={docId}
+          docTitle={doc?.title ?? 'Authoring document'}
+          programId={programId}
+          refusal={state === 'error' ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(access.assignReview)}
+          sectionCode={first?.code ?? null} authorId={doc?.created_by != null ? String(doc.created_by) : null}
+          onClose={() => setAssignReviewOpen(null)}
+          onOpenBoard={() => { setAssignReviewOpen(null); onNav('review'); }}
+          fireToast={(message, tone) => { if (currentReadKey.current === readKey && readSession.sameRevision()) fireToast(message, tone); }}
+        />
+      )}
     </section>
   );
 }

@@ -1,0 +1,46 @@
+One run of the walk with three changes made in a scratch copy and not committed, so that each of the four new
+checks not exercised by 03-red-on-three-refused-paths.txt is seen to fail on the case it exists to catch. 2026-11-10.
+
+  1. AnA's draft of section 2.5.2 states no figure. Nothing then holds the draft back, a review signature is
+     given on it (200, one signature), and ana-draft/draft-not-signed-as-drafted fails. With no earlier finding
+     to decide, seal/check-current-and-findings-decided fails too.
+  2. vault-approval/carried-approval-names-authoring-signatures is pointed at the wrong signers.
+  3. walk-back/document-to-source-by-citation is pointed at a checksum the source does not have.
+
+== per case ==
+ ✓ hop 1 · project — a project of org A, created the way the Projects surface creates it 232ms
+ ✓ hop 2 · capture — bytes X into the project’s Data Room through the upload route 691ms
+ × hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx; as drafted it cannot be signed for review 384ms
+   → ana-draft/draft-not-signed-as-drafted FAILS and is not baselined — the independent check holds AnA’s uncited figure as a hard finding, and a review signature on the draft is refused 409 INDEPENDENT_CHECK_REQUIRED: nothing is signed
+ ✓ hop 4 · edit-save — a person rewrites both sections in their own words, cites the Data Room source, and saves through the section save path 271ms
+ × hop 5 · seal — the independent check is run, the reviewer decides its findings and signs, and the document is frozen and approved under Part 11 signatures 620ms
+   → seal/check-current-and-findings-decided FAILS and is not baselined — the independent check’s receipt is for the saved text, it reports no hard finding, and the reviewer’s decision on the earlier one is on the document’s trail
+ ✓ hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 1848ms
+ × hop 6b · vault approval — the Vault copy stands approved by the Authoring approval (FD5 (c): reviewed and approved in Authoring, so the approval carries) 11ms
+   → vault-approval/carried-approval-names-authoring-signatures FAILS and is not baselined — one chained vault.version.approval_carried row names the Authoring review and approval signatures, their signers and the bytes they are bound to
+ ✓ hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 376ms
+ ✓ hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 1900ms
+ × walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 23ms
+   → walk-back/document-to-source-by-citation FAILS and is not baselined — the sealed document’s registered citation reaches cre_evidence_sources.checksum = sha256(X), at the checksum it was cited under
+ ✓ walk forward · from the project and from the source to the transmittal 172ms
+ ✓ adopt · a conversation file becomes a project’s source only through one audited adopt 209ms
+ ✓ retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 216ms
+ ✓ the database the walk ran on held every table and column the code asked for 1ms
+ ✓ the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+
+== the four failures ==
+Error: ana-draft/draft-not-signed-as-drafted FAILS and is not baselined — the independent check holds AnA’s uncited figure as a hard finding, and a review signature on the draft is refused 409 INDEPENDENT_CHECK_REQUIRED: nothing is signed
+    observed {"standing":"current","hard":[],"status":200,"code":null,"signatures":1}
+    AssertionError: expected [] to deeply equal [ { category: 'grounding', …(1) } ]
+Error: seal/check-current-and-findings-decided FAILS and is not baselined — the independent check’s receipt is for the saved text, it reports no hard finding, and the reviewer’s decision on the earlier one is on the document’s trail
+    observed {"standing":"current","hardStillReported":0,"decided":0,"decisionRows":0}
+    AssertionError: expected 0 to be greater than or equal to 1
+Error: vault-approval/carried-approval-names-authoring-signatures FAILS and is not baselined — one chained vault.version.approval_carried row names the Authoring review and approval signatures, their signers and the bytes they are bound to
+    observed 1
+    AssertionError: expected { …(9) } to match object { …(5) }
+Error: walk-back/document-to-source-by-citation FAILS and is not baselined — the sealed document’s registered citation reaches cre_evidence_sources.checksum = sha256(X), at the checksum it was cited under
+    observed 1
+    AssertionError: expected [ { …(2) } ] to deeply equal [ { …(2) } ]
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)

@@ -4,7 +4,7 @@
  * signer read — the contradiction lifecycle, and the final-export gate.
  */
 import { createHash } from 'node:crypto';
-import { step, state } from './context.mjs';
+import { step, state, stamp } from './context.mjs';
 import { COMPILE_STEPS } from './steps-compile.mjs';
 import { requireIdentity, requireSigner } from '../../lib/credentials.mjs';
 import {
@@ -12,6 +12,7 @@ import {
   isSectionSignatureRow, postAsSigner, signatureRowsFor, SECTION_BINDING_BASIS,
 } from './signed-acts.mjs';
 import { canonicalJson } from '../../lib/qms-digest.mjs';
+import { openFindings } from './complete-programme.mjs';
 
 const REASON = 'Reviewed against the executed batch record and the certificate of analysis.';
 
@@ -208,26 +209,65 @@ await step(
     id: 'OQ-CMC-17',
     urs: ['URS-CMC-009'],
     title: 'Resolving a critical finding needs signing authority and a reason',
-    action: 'resolve a critical finding as a member, then as the signer',
-    expected: '403 ESIGNATURE_NO_AUTHORITY with the row still open and no audit row; then resolved with a reason and a chained row',
-    dependsOn: ['OQ-CMC-16'],
+    action: 'on the second programme: reject a batch under signature and sweep; resolve the critical finding as a member, as the signer with no reason, then as the signer with one',
+    expected: 'the sweep records a critical finding; 403 ESIGNATURE_NO_AUTHORITY and 422 REASON_REQUIRED with the row still open and no audit row; then resolved, with a chained row',
+    dependsOn: ['OQ-CMC-03b'],
+    note: 'v0.13: executed for the first time. Until v0.12 the step waited for a critical finding the first programme\'s records never raise, and called POST /contradictions/:project/:id/resolve with `reason`, which is no route: the resolve is PATCH /contradictions/:id/resolve with `resolutionNote`. The finding is now made the way a programme makes one: a batch rejected under signature (meaning `responsibility`), then a sweep. The gate\'s answer while the finding is open is attached (URS-CMC-010\'s critical-open case).',
   },
   async (ctx) => {
-    const { api, expect, deviation } = ctx;
-    const open = await api('GET', `/api/cmc/module3-os/contradictions/${state.projectId}`);
-    const body = dataOf(open);
-    const all = Array.isArray(body) ? body : (body.findings ?? []);
-    const critical = all.filter((f) => f.severity === 'critical');
-    if (critical.length === 0) {
-      deviation('not executed — the reference records raise no critical contradiction, so the credentialed resolve has nothing to act on.', body);
-    }
-    const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
-    const id = critical[0].id;
-    const r = await postAsSigner(ctx, signer, `/api/cmc/module3-os/contradictions/${state.projectId}/${id}/resolve`, {
-      reason: 'The specification limit was corrected to the approved range.',
+    const { api, apiAs, expect, attach, deviation, baseUrl } = ctx;
+    const projectId = state.complete.projectId;
+    const signer = state.signer ?? (await requireSigner(ctx, baseUrl));
+    state.signer = signer;
+    const member = await requireIdentity({ deviation, expect }, baseUrl, 'OQ_MEMBER', 'a member without signing authority is needed to observe the refusal.');
+
+    const batch = await api('POST', '/api/cmc/batch-records', {
+      projectId, batchNumber: `R2-${stamp}`, productName: 'Drug substance', status: 'in-progress', yieldData: { percent: 61 }, deviations: { open: 1 },
     });
-    expect([200, 403].includes(r.status), `the resolve expected 200/403, got ${r.status}`, r.json);
-    return `critical finding ${id}: resolve ${r.status} ${errCode(r) ?? ''}`.trim();
+    expect([200, 201].includes(batch.status), `the batch create expected 200/201, got ${batch.status}`, batch.json);
+    const rejected = await postAsSigner(ctx, signer, `/api/cmc/batch-records/${dataOf(batch).id}/release`, {
+      decision: 'rejected', reason: 'Yield 61% against an 85% minimum; the batch is rejected.', meaning: 'responsibility',
+    });
+    expect(rejected.status === 200, `the rejection expected 200, got ${rejected.status}`, rejected.json);
+    const sweep = await api('POST', `/api/cmc/module3-os/contradictions/${projectId}`, {});
+    expect(sweep.status === 200, `the sweep expected 200, got ${sweep.status}`, sweep.json);
+    const critical = (await openFindings(api, projectId)).filter((f) => f.severity === 'critical');
+    expect(critical.length === 1, `the sweep left ${critical.length} open critical finding(s), expected 1`, sweep.json);
+    const finding = critical[0];
+    const path = `/api/cmc/module3-os/contradictions/${finding.id}/resolve`;
+    const ledgerRows = async () => {
+      const ledger = await api('GET', '/api/audit-trail/ledger?limit=1000');
+      expect(ledger.status === 200, `the ledger read expected 200, got ${ledger.status}`, ledger.json);
+      const rows = Array.isArray(ledger.json?.data) ? ledger.json.data : [];
+      return { rows: rows.filter((r) => JSON.stringify(r).includes(finding.id)), chain: ledger.json?.meta?.chain ?? null };
+    };
+    const stillOpen = async () => (await openFindings(api, projectId)).some((f) => f.id === finding.id);
+
+    // What the final-export gate says while the finding is open.
+    const gate = await api('POST', `/api/cmc/module3-os/guard/final-export/${projectId}`, {});
+    attach('gate-with-critical-open.json', gate.json ?? {});
+    expect(gate.status === 409 && Number(gate.json?.data?.openCriticalContradictions) >= 1,
+      `the gate with a critical finding open expected 409 counting it, got ${gate.status}`, gate.json);
+
+    const asMember = await apiAs(member.session)('PATCH', path, { resolutionNote: 'The batch was reprocessed and passed.' });
+    expect(asMember.status === 403 && errCode(asMember) === 'ESIGNATURE_NO_AUTHORITY', `the member’s resolve expected 403 ESIGNATURE_NO_AUTHORITY, got ${asMember.status} ${errCode(asMember)}`, asMember.json);
+    const noReason = await apiAs(signer.session)('PATCH', path, {});
+    expect(noReason.status === 422 && errCode(noReason) === 'REASON_REQUIRED', `the signer’s resolve with no reason expected 422 REASON_REQUIRED, got ${noReason.status} ${errCode(noReason)}`, noReason.json);
+    expect(await stillOpen(), 'a refused resolve closed the finding', finding);
+    const before = await ledgerRows();
+    expect(before.rows.length === 0, `the refused resolves wrote ${before.rows.length} audit row(s) naming the finding`, before.rows);
+
+    const resolved = await apiAs(signer.session)('PATCH', path, {
+      resolutionNote: 'The rejected batch was destroyed under deviation DV-0042 and is used in no filed data.',
+    });
+    expect(resolved.status === 200, `the signer’s resolve expected 200, got ${resolved.status}`, resolved.json);
+    expect(!(await stillOpen()), 'the finding is still open after the signer resolved it', finding);
+    const after = await ledgerRows();
+    attach('resolution.json', { finding, member: asMember.json, noReason: noReason.json, resolved: resolved.json, ledgerRows: after.rows, chain: after.chain });
+    expect(after.rows.length >= 1, 'the resolution wrote no chained audit row naming the finding', after);
+    expect(after.chain?.ok === true, 'the tenant chain is not reported ok by the ledger', after.chain);
+    return `${finding.contradictionType} (critical) recorded; gate 409 while open; member 403 ESIGNATURE_NO_AUTHORITY; signer with no reason 422 REASON_REQUIRED; ` +
+      `row still open and no audit row; signer with a reason 200, ${after.rows.length} chained row(s), chain ok`;
   },
 );
 

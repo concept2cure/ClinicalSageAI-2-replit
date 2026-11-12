@@ -275,8 +275,7 @@ describe('every caller of the Place into filing dialog says what the document is
       const src = fs.readFileSync(f, 'utf8');
       return [...src.matchAll(/<AuthoringPlaceIntoFiling\b([\s\S]*?)\/>/g)].map((m) => ({ file: path.relative(root, f), props: m[1] }));
     });
-    // D4-5b: the canvas card's copy of the dialog is gone; the open document's bar is the one place it is rendered.
-    expect(uses.map(u => u.file)).toContain('editor/DocumentWorkbench.tsx');
+    expect(uses.length).toBeGreaterThanOrEqual(2);
     for (const u of uses) {
       expect(u.props, `${u.file}: docStatus`).toMatch(/\bdocStatus=/);
       expect(u.props, `${u.file}: sectionCodes`).toMatch(/\bsectionCodes=/);

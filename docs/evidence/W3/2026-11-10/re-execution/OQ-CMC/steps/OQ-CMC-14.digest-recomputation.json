@@ -1,14 +1,14 @@
 {
-  "signatureId": 50,
+  "signatureId": 83,
   "bindingBasis": "cmc-module3-section-version-sha256",
-  "stored": "01bec5cd54f72b0bbe77aa973920c12dc88609b7b9e6a38955fe54f544b175a2",
-  "recomputed": "01bec5cd54f72b0bbe77aa973920c12dc88609b7b9e6a38955fe54f544b175a2",
+  "stored": "9ca698cfbe10f6d921fa47e731107a04f6c7dde487fafa2b7dda1c69eb4dcd23",
+  "recomputed": "9ca698cfbe10f6d921fa47e731107a04f6c7dde487fafa2b7dda1c69eb4dcd23",
   "inputs": {
     "organizationId": 2,
-    "projectId": "78731580-7719-4562-985d-a412edebff5a",
+    "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
     "sectionKey": "3.1",
     "versionNumber": 1,
-    "approvedVersionId": "8742e751-3bb6-4345-9815-1028d0772d33",
+    "approvedVersionId": "678b7f19-d1af-459a-9b7e-988b4765c896",
     "snapshot": {
       "tables": [
         {

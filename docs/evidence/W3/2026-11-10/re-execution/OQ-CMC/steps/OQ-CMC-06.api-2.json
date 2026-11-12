@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 14,
+    "durationMs": 32,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -20,7 +20,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -30,7 +30,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 50,
           "missingInputs": [
             "containerDescription"
@@ -42,7 +42,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -52,7 +52,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "Whether these components are of human or animal origin is NOT established by this section: the flag rests on their names, and no origin is recorded for them."
@@ -64,7 +64,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 75,
           "missingInputs": [
             "formulationCompositionComplete"
@@ -76,7 +76,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "formulationDevelopment",
@@ -90,7 +90,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 33,
           "missingInputs": [
             "formulation",
@@ -103,7 +103,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "excipientSpecifications",
@@ -117,7 +117,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 25,
           "missingInputs": [
             "releaseCriteria",
@@ -131,7 +131,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "drugProductReferenceStandard",
@@ -145,7 +145,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "drugProductContainerDescription",
@@ -160,7 +160,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "drugProductShelfLifeClaim"
@@ -172,7 +172,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -182,7 +182,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -192,7 +192,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 50,
           "missingInputs": [
             "processControls",
@@ -205,7 +205,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "structuralElucidation",
@@ -220,7 +220,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 50,
           "missingInputs": [
             "drugSubstanceBatchAnalyses",
@@ -233,7 +233,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "drugSubstanceReferenceStandard",
@@ -247,7 +247,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 0,
           "missingInputs": [
             "drugSubstanceContainerDescription",
@@ -262,7 +262,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 100,
           "missingInputs": []
         },
@@ -272,7 +272,7 @@
           "stale": false,
           "staleReason": null,
           "approvalState": "draft",
-          "updatedAt": "2026-11-10T03:39:29.718Z",
+          "updatedAt": "2026-11-10T13:06:44.033Z",
           "completeness": 100,
           "missingInputs": []
         }

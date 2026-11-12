@@ -1,0 +1,386 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > opens a drawer and POSTs the mapped body to the register endpoint 299ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > shows the SERVER’s row, not the values that were typed 105ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > a rejected write adds nothing and names the rejected field 92ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > closes Edit on a validated method and retires it with a reason instead 69ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > an edit PUTs against the row and keeps the validation record it was seeded with 65ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > records the signed-in user as the analyst on a new result 62ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst 66ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > renders the per-section build state the endpoint returns 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > refuses to build a section that no source data feeds, and says why 36ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > compiles the whole module against the operating-system endpoint 63ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > a compile that is refused reports the server’s reason and changes nothing 64ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > resolves a contradiction through the governed endpoint with its note 58ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the export gate’s refusal as the verdict it is, with the reason 66ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the pass verdict when the gate allows the export 65ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > asks for a project rather than guessing one 5ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > reports a failed board read as a failure, never as "nothing here yet" 9ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > says the artifact registry is unlinked instead of rendering its absence as "no artifacts" 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > places approved sections into a chosen sequence through the placement endpoint 120ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > does not place without a stated reason, and offers only this program’s submissions 93ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows a placement refusal as the gate verdict it is, verbatim 92ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > shows each section's completeness, names the missing inputs, and withholds approval from an incomplete one 277ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > a 409 shows the server's own reason — 409 no longer means only "contradictions" 209ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > shows the composed narrative and tables BEFORE the signature form appears 120ms
+stderr | client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature
+An update to CmOverview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CmOverview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CmOverview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature 166ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > offers NO signature when the section could not be read 89ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > warns when the section is stale or its tables are unknown 66ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no all-clear over an earlier CMC file that was not read > shows the all-clear when both reads are measured and nothing is open 24ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no all-clear over an earlier CMC file that was not read > withholds it, and says why, when the earlier file could not be read 23ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no all-clear over an earlier CMC file that was not read > withholds it while the earlier file holds questions not closed there 23ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > sectionsUnreadable renders the failed-read copy and not "No Module 3 sections yet" 20ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > renders a null submission count as unknown even without a portfolioUnreadable flag 14ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > portfolioUnreadable renders the failed-read copy and not "No submissions yet" 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Not export ready with the gate's reasons when every section is approved but one is incomplete 22ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Export ready only when the gate does 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > renders a failed readiness read as a failed read, not as ready and not as not-ready 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — counts its submissions in words > says one submission in the singular, with its preparedness index 10ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — counts its submissions in words > says no preparedness index is computed, rather than "RPI — average" 10ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — counts its submissions in words > counts two or more in the plural 12ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a stored state is shown as a word, never as its token > renders no lower-case enum in a state chip 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 226ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 47ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a role refusal (403) is said as itself 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a record not in this organization (404) is said as itself 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an expired session (401) is said as itself 33ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an ownership check that could not run (503) is said as itself 14ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 14ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 104ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 89ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a role refusal (403) is said as itself 90ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a record not in this organization (404) is said as itself 84ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > an expired session (401) is said as itself 93ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > an ownership check that could not run (503) is said as itself 44ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 74ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 62ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a role refusal (403) is said as itself 62ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a record not in this organization (404) is said as itself 70ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > an expired session (401) is said as itself 71ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > an ownership check that could not run (503) is said as itself 38ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 37ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 71ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a role refusal (403) is said as itself 68ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a record not in this organization (404) is said as itself 75ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > an expired session (401) is said as itself 55ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > an ownership check that could not run (503) is said as itself 32ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 33ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 49ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 68ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a role refusal (403) is said as itself 59ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a record not in this organization (404) is said as itself 60ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > an expired session (401) is said as itself 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > an ownership check that could not run (503) is said as itself 32ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 34ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 56ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a role refusal (403) is said as itself 54ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a record not in this organization (404) is said as itself 50ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > an expired session (401) is said as itself 53ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > an ownership check that could not run (503) is said as itself 37ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 33ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the register-link panel, a CMC surface of its own > a plan without the feature is said as itself 33ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the register-link panel, a CMC surface of its own > a failure to answer keeps the words that matter — saves recorded, linkage unknown 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a plan without the feature is said as itself, not as a failed verdict 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a failure to answer still says the verdict could not be read 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > what a 200 board reports about its own sub-reads is not a refusal > an unreadable section store is still a failed read, in the board’s own words 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 18 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 0 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 13 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-primary`: no more than 50 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-tabs`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-tab`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pd-tab`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ra-tab`: no more than 1 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rl-tab`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `adm-tab`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `company-tabs`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rpk-tab`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-tab`: no more than 2 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `qms-tabbar`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `qms-seg`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pdev-seg`: no more than 3 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `seg-btn`: no more than 7 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-card`: no more than 7 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `py-card`: no more than 5 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `dj-card`: no more than 4 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cv-card`: no more than 2 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `lic-card`: no more than 2 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ph-card`: no more than 1 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-kpi`: no more than 30 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `metric-card`: no more than 40 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cv-kpi`: no more than 6 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ra-kpi`: no more than 4 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `etmf-kpi`: no more than 3 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ivd-stat`: no more than 4 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `py-stat`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-tile`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `status-pill`: no more than 49 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-tag`: no more than 17 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-pill`: no more than 10 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-chip`: no more than 10 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pg-badge`: no more than 8 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rc-chip`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tt-panel`: no more than 3 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pdev-sheet`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `py-sheet`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `de-sheet`: no more than 4 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ana-sheet`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `adm-drawer`: no more than 4 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `risk-drawer`: no more than 1 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ec-composer`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rc-composer`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-ana-composer`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-meta`: no more than 84 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 0 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx > the Section approvals table says what a section still needs in words > names §3.2.P.1's and §3.2.P.2's missing inputs as a reader says them 258ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcMissingInputWords.test.tsx > the Module 3 build board says what a section still needs in words > names a missing field and a missing source record as a reader says them 21ms
+stdout | server/services/__tests__/cmcWriteThroughMappers.test.ts
+{
+  "timestamp": "2026-11-10T14:48:27.758Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T14:48:27.759Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/cmcWriteThroughMappers.test.ts
+{
+  "timestamp": "2026-11-10T14:48:27.760Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cmcWriteThroughMappers.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugSubstancePayload — the §3.2.S register row (Drizzle camelCase, nested manufacturing_process json) > 3.2.S.1's required fields come from the row: name and MANUFACTURER 2ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugSubstancePayload — the §3.2.S register row (Drizzle camelCase, nested manufacturing_process json) > 3.2.S.2's manufacturingRoute and processDescription come from the nested route 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugSubstancePayload — the §3.2.S register row (Drizzle camelCase, nested manufacturing_process json) > identity and structured evidence survive; characterization is NOT invented from a structure string 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugProductPayload — the §3.2.P register row (nested packaging/process json) > 3.2.P.1's required fields survive — composition as TEXT, because every consumer reads it with val() 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugProductPayload — the §3.2.P register row (nested packaging/process json) > the TSE/BSE scan can SEE the ingredients: a gelatin composition surfaces as scannable text 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugProductPayload — the §3.2.P register row (nested packaging/process json) > an EMPTY composition {} maps to null — it must never satisfy a required field 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugProductPayload — the §3.2.P register row (nested packaging/process json) > the container closure, process description and site come out of their nests 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDrugProductPayload — the §3.2.P register row (nested packaging/process json) > 3.2.P.3's formulation is the BATCH formula as TEXT — never the per-unit composition, never an object 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapAnalyticalMethodPayload — the register row (title/technique/status identity) > 3.2.P.5's methodName and 3.2.S.4's validationStatus come from the row's real identity 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapAnalyticalMethodPayload — the register row (title/technique/status identity) > the ICH Q2 record travels whole 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapSpecificationPayload — the raw snake_case quality_specifications row > 3.2.S.4's acceptanceCriteria AND 3.2.P.5's releaseCriteria are both fed by the recorded limits 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapSpecificationPayload — the raw snake_case quality_specifications row > has no fabricated validation status — that field is the method register’s to produce 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapSpecificationPayload — the raw snake_case quality_specifications row > the register’s real {release, shelf} shape splits into DISTINCT claims — shelf never folds under the release label 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapSpecificationPayload — the raw snake_case quality_specifications row > blank limits fabricate NOTHING: {release:"", shelf:""} maps releaseCriteria to null 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapSpecificationPayload — the raw snake_case quality_specifications row > a NON-drug-product spec never produces releaseCriteria — a substance's limits must not bleed into 3.2.P.5 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapBatchRecordPayload — the raw snake_case cmc_batch_records row (with parity + release columns) > 3.2.P.3's batchNumber survives, and the governed release decision travels 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapBatchRecordPayload — the raw snake_case cmc_batch_records row (with parity + release columns) > formulation is never invented — this table has no such column 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapChangeControlPayload — the register row (nested risk_assessment, filing category) > the change identity, assessed risk and ICH Q12 filing category all survive 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapProcessValidationPayload — the register row (CPPs/CQAs/control strategy json) > 3.2.S.2's processControls is the recorded control strategy's own sentence — text, for the narrative's val() read 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapProcessValidationPayload — the register row (CPPs/CQAs/control strategy json) > the validation record travels whole — CPPs, CQAs, batches, protocol 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapProcessValidationPayload — the register row (CPPs/CQAs/control strategy json) > emits the KEYS the composer's PV slots actually read — protocol, validationStatus, consecutiveBatches 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapProcessValidationPayload — the register row (CPPs/CQAs/control strategy json) > a control strategy is NOT rendered as a process description 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > register row → payload → composed section: the whole chain, no "[object Object]", no false claims > a gelatin composition reaches 3.2.P.1 readably and 3.2.A.3 can never call it animal-free 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > register row → payload → composed section: the whole chain, no "[object Object]", no false claims > an EMPTY composition {} leaves 3.2.P.1 honestly incomplete 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > register row → payload → composed section: the whole chain, no "[object Object]", no false claims > two methods in different lifecycle states are reported BY NAME in 3.2.S.4 — one status is never stamped on every row 2ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > register row → payload → composed section: the whole chain, no "[object Object]", no false claims > a drug-substance spec's limits never render as the drug product's 3.2.P.5 release criteria 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > register row → payload → composed section: the whole chain, no "[object Object]", no false claims > the PV register renders a real Process Validation Summary in 3.2.S.2 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > register row → payload → composed section: the whole chain, no "[object Object]", no false claims > the recorded route renders ONCE in 3.2.S.2 — never duplicated as its own process description 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > a finished-product result appears in the drug product batch-analyses table with its real values 3ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > an out-of-specification result is reported as recorded — never smoothed into a pass 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > a finished-product result never files itself as DRUG SUBSTANCE batch analyses, and vice versa 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > a cleaning-verification swab is not a batch analysis — not counted AND not rendered, on EITHER side 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > a reference-standard qualification is not batch data either — it belongs to §3.2.S.5 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > completeness and the rendered table agree: a finished-product result greens ONLY the drug product section 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > a raw-material result greens ONLY the drug substance section — the mirror case 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > a result with no MEASUREMENT never counts — empty object, empty array, blanks, observation-only 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.5.4 / §3.2.S.4.4 — the recorded QC results are RENDERED, not just counted > no QC results means no table and no sentence — never an empty table implying testing happened 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > the ICH Q12 change history renders with its filing category — never inferred, only as recorded 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > an unclassified change says so rather than guessing a filing category 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > the QP release decision — which batch, who released it, when — is stated 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > the release facts travel TOGETHER — one batch's releaser is never attached to another batch 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.3 — the change history and the governed release decision reach the document > free text with newlines and pipes cannot shatter the governed markdown table 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.P.8 — the comparability rationale, not just its one-word status > the assessment, what changed, its outcome and reviewer all render 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapContainerClosurePayload — the cmc_container_closures row > carries the container, closure, materials, E&L and integrity data through 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapContainerClosurePayload — the cmc_container_closures row > emits ONLY the drug-product side keys for a drug-product system 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapContainerClosurePayload — the cmc_container_closures row > emits both sides for a system recorded as evidence for both 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapContainerClosurePayload — the cmc_container_closures row > reports no E&L study for a form that was opened and left blank 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapContainerClosurePayload — the cmc_container_closures row > names the studies on file for §3.2.P.2, from the drug-product side only 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapContainerClosurePayload — the cmc_container_closures row > does not complete a section from a system recorded without a suitability justification 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapReferenceStandardPayload — the cmc_reference_standards row > builds the description from the record own fields and keeps the CoA 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapReferenceStandardPayload — the cmc_reference_standards row > emits ONLY the drug-substance side keys for a drug-substance standard 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapReferenceStandardPayload — the cmc_reference_standards row > produces no description at all for a record with neither a name nor a code 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the two new registers reach their sections, and only their own > completes §3.2.P.7 and §3.2.S.5 from the recorded registers 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the two new registers reach their sections, and only their own > leaves §3.2.S.6 and §3.2.P.6 honestly incomplete — the other side has no record 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the two new registers reach their sections, and only their own > renders the drug-product container closure system with its materials, E&L and compendial citations 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the two new registers reach their sections, and only their own > renders the drug-substance reference standard with its characterisation 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the two new registers reach their sections, and only their own > feeds the drug-product container closure studies to §3.2.P.2 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the composed sections refuse to assert what the register does not say > does not report a standard as qualified because it exists 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > the composed sections refuse to assert what the register does not say > does not assert an E&L safety conclusion the study has not reached 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: a section is never assembled out of records that are each incomplete > a register of systems none of which is justified does not complete §3.2.P.7 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: a section is never assembled out of records that are each incomplete > one fully recorded system does complete it 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: a section is never assembled out of records that are each incomplete > the same rule holds for a reference standard: identity and CoA on ONE record 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: a section is never assembled out of records that are each incomplete > a complete secondary carton does not stand in for an undescribed primary container 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the composed text never credits what the data does not carry > an E&L conclusion with no per-analyte results is reported as unsupported 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the composed text never credits what the data does not carry > a component with no recorded supplier does not inherit the system supplier 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the composed text never credits what the data does not carry > §3.3 names as primary only a standard the register records as primary 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the composed text never credits what the data does not carry > §3.3 asserts no primacy at all when the register records none 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the composed text never credits what the data does not carry > the recorded qualification dates reach both sections 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > carries the ICH M7 inputs as recorded and never defaults them 2ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > renders a ppm level as ppm, never as a percentage 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > says so when a level carries no unit at all, rather than assuming a percentage 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > renders EVERY impurity in the register, not the first one 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > states no threshold at all when no maximum daily dose is recorded 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > does not count an impurity below the reporting threshold as a reported impurity 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > forces the statement when an impurity is above the qualification threshold with no basis 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > names an impurity above the identification threshold with no structure as unidentified 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > refuses to apply a Q3A threshold to a class the guideline does not cover 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > assesses an elemental impurity under Q3D once its route is recorded 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > refuses an elemental impurity whose route was never recorded 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > never states a total impurity figure from whatever rows are on file 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > does not let a drug-substance impurity serve the drug-product section 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapImpurityProfilePayload — one row per impurity, assessed against ICH > reports the recorded maximum daily doses disagreeing rather than picking one 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > a development profile serves §3.2.P.2 and never §3.2.P.5 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > a release-specification profile serves §3.2.P.5 and never §3.2.P.2 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > renders the profile per timepoint with its variability and unit count 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > says a profile with no unit count supports no conformance and no comparison 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > does not carry a typed pass/fail into the dossier 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > never asserts f2 similarity from a rendered table 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapDissolutionProfilePayload — a profile files under ONE section > a release profile with no acceptance criterion does not complete §3.2.P.5 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > says nothing was compared when every impurity was refused 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > does not report a section complete over impurities it cannot assess 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > reads two spellings of the same dose as the same dose 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > prints the limit the comparison actually used, not only the guideline wording 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > leaves a retired impurity out of the current profile 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > a section whose only sources are retired says so, rather than "no data" 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the impurity section claims only what it compared > states a recorded threshold that contradicts the guideline instead of replacing it silently 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the dissolution section > renders the reference profile a comparison is against 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the dissolution section > says how many profiles carry timepoints when only some do 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the dissolution section > reports variability as unrecorded when the register stored an explicit null 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the dissolution section > leaves a retired profile out of the section, and says why it is empty 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapMaterialSpecPayload — one register, two source types > renders EVERY excipient, not the first one 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapMaterialSpecPayload — one register, two source types > a raw material files under §3.2.S.2.3, not the drug product excipient section 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapMaterialSpecPayload — one register, two source types > says when an excipient records neither a specification nor a monograph 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapMaterialSpecPayload — one register, two source types > names a novel excipient recorded without a justification 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapMaterialSpecPayload — one register, two source types > carries the recorded origin without inferring one 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapFormulationRecordPayload — one current version, rendered > renders the CURRENT formulation, not whichever arrived first 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapFormulationRecordPayload — one current version, rendered > refuses to elect a current formulation when none is marked current 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapFormulationRecordPayload — one current version, rendered > says which composition governs is not established when two claim to be current 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapFormulationRecordPayload — one current version, rendered > names an overage recorded without a justification 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > orders the steps by their recorded number, not by array position 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > keeps the recorded order when no step carries a number 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > collects in-process controls from the steps as well as the process level 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > scopes to the recorded side: a drug substance process cannot complete §3.2.P.3 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > does not report a process complete when it records no in-process control 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > §3.2.S.2 is not complete on a name and steps split across two records 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > renders the steps, the CPPs and the equipment into §3.2.S.2 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > names a critical parameter recorded without a proven range instead of dropping it 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > a drug-product process does not appear in §3.2.S.2 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > leaves a retired process out of the section 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > emits §3.2.P.2's manufacturingProcessDev from the recorded process development, drug-product side only 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > never emits a placeholder for manufacturingProcessDev when no development was recorded 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > §3.2.P.3 renders the register rather than the drug product form when both exist 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapManufacturingProcessPayload — the process, not one sentence about it > still renders the drug product form list when no process is recorded 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > a structural study answers structuralElucidation and nothing else 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > three studies of one type do not complete the section 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > three studies of three types answer all three 2ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > a study with no result and no conclusion establishes nothing 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > reports a number whose unit was never recorded as such 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > a drug-product study does not answer the drug substance section 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > leaves a retired study out of the section 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapCharacterizationStudyPayload — one study answers ONE of the three questions > renders the supporting data attributed to its own study 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > §3.2.P.3 does not deny the in-process controls it prints 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > every recorded in-process control reaches a table, not just the first process 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > a signed process validation reaches the composed section 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > a drug-product characterisation study reaches §3.2.P.2 rather than nothing 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > §3.2.P.1 is not complete over a formulation the section says does not govern 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > §3.2.P.4 is not complete over an excipient with no recorded way of being tested 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: what the register data is allowed to CLAIM > §3.2.P.4 does not claim every excipient is controlled when one is not 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapFormulationRecordPayload — §3.2.P.2.2 has a producer > emits formulationDevelopment from the recorded rationale, and null when none is recorded 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > review: the stability mapper carries the condition array beside the joined string > emits storageConditions as an array so a multi-condition study can be told apart 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.A.3 joins a formulation component to the excipient register row of the same name > a bovine gelatin shell whose CEP is on the register is reported CERTIFIED, once, and the section is complete 4ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.A.3 joins a formulation component to the excipient register row of the same name > the join fills a blank origin and role from the register row, and never overwrites what the formulation recorded 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.A.3 joins a formulation component to the excipient register row of the same name > a register row with NO certificate does not certify the formulation component, and the section stays incomplete 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > §3.2.A.3 joins a formulation component to the excipient register row of the same name > a register excipient the formulation does not name is still listed on its own 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapStabilityPayload — the scope the register captures reaches the composer > emits the scope and the side-scoped keys 0ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapStabilityPayload — the scope the register captures reaches the composer > a DRUG SUBSTANCE study does not complete §3.2.P.8, and vice versa 1ms
+ ✓ server/services/__tests__/cmcWriteThroughMappers.test.ts > mapStabilityPayload — the scope the register captures reaches the composer > the drug product study does not set the drug substance section’s condition 1ms
+ ✓ server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > has words for every input the composer can report as missing 6ms
+ ✓ server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > says none of them as a key 2ms
+ ✓ server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > says the demo's missing inputs as a reader says them 1ms
+ ✓ server/services/__tests__/module3-input-words.test.ts > the Module 3 input vocabulary > says a key nobody has worded yet as words, never as the key 0ms
+
+ Test Files  7 passed (7)
+      Tests  318 passed (318)
+   Start at  14:48:10
+   Duration  17.78s (transform 3.06s, setup 413ms, import 8.09s, tests 6.31s, environment 1.89s)
+

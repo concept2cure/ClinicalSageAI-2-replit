@@ -55,7 +55,7 @@ import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
   admitParentTask, admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
 import { requireAssignedVaultFamily, VaultFamilyRefusal } from '../services/clinical-regulatory-evidence/vault-citation-changes';
-import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
+import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, rescheduleSchema, rescheduleTask, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
 const storage = { db };
@@ -430,7 +430,7 @@ function transitionChanges(t: {
 }
 
 router.patch('/tasks/:taskId', (req, res, next) => {
-  if (req.body?.action === 'assign') return next();
+  if (req.body?.action === 'assign' || req.body?.action === 'reschedule') return next();
   return requireEditorAccess(req, res, next);
 }, async (req: Request, res: Response) => {
   if (req.body?.action === 'assign') {
@@ -439,6 +439,17 @@ router.patch('/tasks/:taskId', (req, res, next) => {
       const data = await assignTask(req, { ...input, taskId: String(req.params.taskId), method: 'named' });
       return res.json({ success: true, data });
     } catch (error) { return assignmentFailure(res, error); }
+  }
+  // A new due date, with its reason and its ledger row (task-assignment.ts rescheduleTask).
+  if (req.body?.action === 'reschedule') {
+    try {
+      const input = rescheduleSchema.parse(req.body);
+      const data = await rescheduleTask(req, { taskId: String(req.params.taskId), dueDate: input.dueDate, expectedDueDate: input.expectedDueDate, reason: input.reason });
+      return res.json({ success: true, data });
+    } catch (error) {
+      if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The new due date');
+      return assignmentFailure(res, error);
+    }
   }
   if (req.body && ['assigneeId','expectedAssigneeId','expectedVersion','action'].some(key => key in req.body)) {
     return res.status(400).json({ success: false, code: 'VALIDATION_ERROR', error: 'Assignment and status changes must be separate requests.' });

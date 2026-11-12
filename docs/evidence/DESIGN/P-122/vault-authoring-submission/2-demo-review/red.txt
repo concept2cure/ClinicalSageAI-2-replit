@@ -1,0 +1,4 @@
+# SyntaxError: The requested module './lib.mjs' does not provide an export named 'SYNTHETIC_REVIEWER'
+# tests 1
+# pass 0
+# fail 1

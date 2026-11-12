@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useId } from 'react';
+import React, { useState, useMemo, useId, useCallback } from 'react';
 import { authService } from '@/services/portal/authService';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 
@@ -1381,6 +1381,26 @@ export function Vault(props: SurfaceViewProps) {
   return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} session={session} />;
 }
 
+/**
+ * Each heading's name by its number, from the tree the server sent: the filing's own outline, which the Library
+ * shows as the binder. The Required documents view names a section with it. A number the outline does not carry
+ * has no entry, and the view then says the number alone.
+ */
+function sectionNamesOf(tree: readonly (VaultDoc | VaultFolder)[]): Map<string, string> {
+  const names = new Map<string, string>();
+  const walk = (nodes: readonly (VaultDoc | VaultFolder)[]) => {
+    for (const n of nodes) {
+      if (isVaultDoc(n)) continue;
+      const code = (n.code ?? '').trim().toLowerCase();
+      const label = (n.label ?? '').trim();
+      if (code && label && !names.has(code)) names.set(code, label);
+      if (n.children) walk(n.children);
+    }
+  };
+  walk(tree);
+  return names;
+}
+
 function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session: ReturnType<typeof useAuthoringReadSession> }) {
   const available = useSurfaceAvailable();
   const projectId = currentProjectId();
@@ -1724,6 +1744,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     if (cabinet) walk(cabinet.children);
     return out;
   }, [cabinet]);
+
+  /* What the Required documents view calls each section: the outline's own names. */
+  const sectionNames = useMemo(() => sectionNamesOf(tree), [tree]);
+  const sectionName = useCallback((code: string) => sectionNames.get(code.trim().toLowerCase()) ?? null, [sectionNames]);
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -2090,10 +2114,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
      saying "0 documents" over an outage would make AnA confidently wrong about
      a customer's repository. Loading says loading for the same reason. */
   // Memoized on the read's own fields (the wrapper is new each render), so the context below changes only when they do.
-  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta } = orgRead;
+  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta, code: orgCode } = orgRead;
   const organizationArtifacts = useMemo(
-    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta }, orgActive),
-    [orgRows, orgLoading, orgError, orgMeta, orgActive],
+    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta, code: orgCode }, orgActive),
+    [orgRows, orgLoading, orgError, orgMeta, orgCode, orgActive],
   );
   const orgFocused = orgFocusId ? orgRead.rows.find((r) => r.id === orgFocusId) ?? null : null;
   const savedViewFact = useMemo(() => (appliedView
@@ -2102,7 +2126,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const anaContext = useMemo(() => {
     /* No project open: no tree, and the organization view is what is on screen
        (fold F3 slice C). Its failure is published as a failure, never as zero. */
-    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError }, organizationArtifacts, orgFocused);
+    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError, code: orgCode }, organizationArtifacts, orgFocused);
     if (vaultState.loading) {
       return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
     }
@@ -2208,7 +2232,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
+  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, orgCode, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -3107,6 +3131,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
       busy={filing}
       defaultOpen
       onShowOutline={() => setView('library')}
+      sectionName={sectionName}
     />
   );
 
@@ -3177,9 +3202,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               type="button"
               className="btn ghost"
               onClick={() => onNav && onNav('etmf')}
-              title="TMF inspection-readiness — completeness, timeliness & QC"
+              title="Open the trial master file of this project’s study: its essential records, filed and missing"
             >
-              {I.shieldCheck} Inspection readiness
+              {I.shieldCheck} Trial master file
             </button>
           )}
           {canWrite ? (

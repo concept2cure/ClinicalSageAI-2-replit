@@ -1,0 +1,33 @@
+Probe: Stability tab, C2C-201, 390 px wide, light. 'overflow' is the page's sideways scroll (scrollWidth - clientWidth);
+'first' lists elements past the work area's right edge with no scrolling ancestor. Before the fix:
+{
+ "overflow": 241,
+ "right": 390,
+ "first": [
+  "undefined :: thead.null ParameterEstimateSpec limitTrendPointsR² right=630 w=597",
+  "undefined :: tr.null ParameterEstimateSpec limitTrendPointsR² right=630 w=597",
+  "undefined :: th.null Points right=446 w=60",
+  "undefined :: th.null R² right=515 w=70",
+  "undefined :: th.null Detail right=630 w=115",
+  "undefined :: tbody.null Assay18 mo95decreasing30.9995ICH Q1E sin right=630 w=597",
+  "undefined :: tr.null Assay18 mo95decreasing30.9995ICH Q1E sin right=630 w=597",
+  "undefined :: td.null 3 right=446 w=60",
+  "undefined :: td.null 0.9995 right=515 w=70",
+  "undefined :: td.cm-meta ICH Q1E single-batch/attribute estimate  right=630 w=115",
+  "undefined :: tr.null Dissolutionnot estimable----2/2--ICH Q1E right=630 w=597",
+  "undefined :: td.null 2/2 right=446 w=60",
+  "undefined :: td.null -- right=515 w=70",
+  "undefined :: td.cm-meta ICH Q1E regression needs at least 3 nume right=630 w=115",
+  "undefined :: thead.null ParameterEstimateSpec limitTrendPointsR² right=606 w=572",
+  "undefined :: tr.null ParameterEstimateSpec limitTrendPointsR² right=606 w=572",
+  "undefined :: th.null Points right=421 w=60",
+  "undefined :: th.null R² right=491 w=70",
+  "undefined :: th.null Detail right=606 w=115",
+  "undefined :: tbody.null Total impurities4 mo0.5increasing30.9988 right=606 w=572",
+  "undefined :: tr.null Total impurities4 mo0.5increasing30.9988 right=606 w=572",
+  "undefined :: td.null 3 right=421 w=60",
+  "undefined :: td.null 0.9988 right=491 w=70",
+  "undefined :: td.cm-meta ICH Q1E single-batch/attribute estimate  right=606 w=115",
+  "undefined :: thead.null ParameterEstimateSpec limitTrendPointsR² right=611 w=577"
+ ]
+}

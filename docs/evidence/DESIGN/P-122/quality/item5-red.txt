@@ -1,0 +1,25 @@
+# Item 5 red: QualityComplaints.test.tsx against HEAD (no Complaints and MDR tab; quality.open-tab knows no 'complaints')
+# ac48fe411 2026-11-10T12:42:30Z
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > is a tab of Quality beside CAPA, and AnA can open it 16ms
+   → expected -1 to be 1 // Object.is equality
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > lists the organisation's complaints and MDR reports, with the server's reportability and reporting clock 242ms
+   → Unable to find an accessible element with the role "heading" and name "Complaints"
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > narrowed to the project, reads its complaints and reports only 12ms
+   → Unable to find an element with the text: No complaints filed under Infusion pump.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher 
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > says a failed read is a failure, never an empty register 12ms
+   → Unable to find an element with the text: The complaints register could not be read. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records a complaint in the open project, every event fact stated, through the audited route 25ms
+   → Unable to find an accessible element with the role "button" and name "Record complaint"
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > refuses to record a complaint with no project open, and sends nothing 23ms
+   → Unable to find an accessible element with the role "button" and name "Record complaint"
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > moves a complaint only along the server lifecycle, with its reason 10ms
+   → Unable to find an accessible element with the role "button" and name "CMP-2026-0007"
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > records the MDR decision a complaint needs, in the complaint's project, linked to it 11ms
+   → Unable to find an accessible element with the role "button" and name "CMP-2026-0007"
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > opens a complaint's vigilance timeline under its row 14ms
+   → Unable to find an accessible element with the role "button" and name "CMP-2026-0007"
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > tells AnA both registers as read, and that a failed read is a failure 5009ms
+   → expected last "vi.fn()" call to have been called with [ ObjectContaining{…} ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  10 failed (10)

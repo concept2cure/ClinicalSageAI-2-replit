@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/qc-testing",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sampleId": "QC-DS-20261110130629",
+      "sampleType": "raw-material",
+      "testMethod": "RP-HPLC Assay",
+      "testResults": {
+        "assay": {
+          "value": 99.5,
+          "unit": "%"
+        }
+      },
+      "testDate": "2026-02-01T00:00:00.000Z",
+      "batchNumber": "B2-20261110130629",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 3,
+        "organizationId": 2,
+        "sampleId": "QC-DS-20261110130629",
+        "batchNumber": "B2-20261110130629",
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "sampleType": "raw-material",
+        "testMethod": "RP-HPLC Assay",
+        "testResults": {
+          "assay": {
+            "value": 99.5,
+            "unit": "%"
+          }
+        },
+        "specifications": null,
+        "passFailStatus": null,
+        "certificateOfAnalysis": null,
+        "analyst": null,
+        "reviewedBy": null,
+        "testDate": "2026-02-01T00:00:00.000Z",
+        "releaseDate": null,
+        "createdAt": "2026-11-10T13:06:40.132Z",
+        "updatedAt": "2026-11-10T13:06:40.132Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

@@ -7,6 +7,32 @@
 --
 -- Dependencies: projects table, users table, organizations table
 -- Compliance: FDA 21 CFR Part 11 (audit trail, e-signatures)
+--
+-- ── Amended in place 2026-11-10 (P-122 defects, item 1) ────────────────────
+-- Evidence: docs/evidence/DESIGN/P-122/defects/1-milestones/.
+-- On a push-provisioned database project_milestones already exists in the
+-- baseline shape (shared/schema.ts projectMilestones), so section 5's CREATE
+-- TABLE IF NOT EXISTS no-ops, and that shape keyed project_id to cer_projects
+-- (project_milestones_project_id_cer_projects_id_fk). Every reader and writer
+-- keys it by projects.id (server/routes/project-sections.ts), as section 5
+-- declares, so no milestone could be recorded on any project: the INSERT
+-- failed 23503, and the project page's Schedule could list none. Section 5
+-- now repairs the key after its CREATE, conditionally (CLAUDE.md RULE 1:
+-- amend the creating migration in place, never append a DROP):
+--   - a key on project_id into cer_projects is removed. Nothing on any applier
+--     re-creates it: shared/schema.ts names projects in the same change, and
+--     migrations/0000_sweet_joseph.sql, which still names cer_projects, is
+--     inert on every applier (its first CREATE TABLE fails 42P07 against push;
+--     scripts/ci/duplicate-table-ddl-baseline.json) — and were it ever to run,
+--     this block repairs the key again on the same deploy;
+--   - a key into projects is added only when project_id has none, under the
+--     name push gives it (project_milestones_project_id_projects_id_fk), so a
+--     database built by push and one repaired here converge, and a table this
+--     file created (with its own key into projects) is left as it is;
+--   - it is added NOT VALID and validated only once every row names a project,
+--     so a row recorded against a cer_projects id can never fail a deploy
+--     (ADD CONSTRAINT validates every existing row). Such a row is left for a
+--     person to resolve; new rows are checked either way.
 -- ============================================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -161,6 +187,50 @@ ALTER TABLE project_milestones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS project_milestones_org_policy ON project_milestones;
 CREATE POLICY project_milestones_org_policy ON project_milestones
   USING (organization_id = current_setting('app.organization_id', true)::INTEGER);
+
+-- 2026-11-10 (P-122 defects, item 1): project_id names projects, not cer_projects. See the header.
+DO $$
+DECLARE
+  stale record;
+BEGIN
+  FOR stale IN
+    SELECT c.conname
+      FROM pg_constraint c
+      JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY (c.conkey)
+     WHERE c.conrelid = 'public.project_milestones'::regclass
+       AND c.contype = 'f'
+       AND a.attname = 'project_id'
+       AND c.confrelid = to_regclass('public.cer_projects')
+  LOOP
+    EXECUTE format('ALTER TABLE public.project_milestones DROP CONSTRAINT %I', stale.conname);
+  END LOOP;
+
+  IF NOT EXISTS (
+    SELECT 1
+      FROM pg_constraint c
+      JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY (c.conkey)
+     WHERE c.conrelid = 'public.project_milestones'::regclass
+       AND c.contype = 'f'
+       AND a.attname = 'project_id'
+       AND c.confrelid = 'public.projects'::regclass
+  ) THEN
+    ALTER TABLE public.project_milestones
+      ADD CONSTRAINT project_milestones_project_id_projects_id_fk
+      FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE NOT VALID;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'public.project_milestones'::regclass
+       AND conname = 'project_milestones_project_id_projects_id_fk'
+       AND NOT convalidated
+  ) AND NOT EXISTS (
+    SELECT 1 FROM public.project_milestones pm
+     WHERE NOT EXISTS (SELECT 1 FROM public.projects p WHERE p.id = pm.project_id)
+  ) THEN
+    ALTER TABLE public.project_milestones VALIDATE CONSTRAINT project_milestones_project_id_projects_id_fk;
+  END IF;
+END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 6. NOTIFICATION EVENTS

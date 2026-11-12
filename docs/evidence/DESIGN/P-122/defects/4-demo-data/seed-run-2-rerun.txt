@@ -1,0 +1,21 @@
+Signed in as rr5-author@example.test (user 1, organisation 5) at http://localhost:5266
+
+⚠ On the standard plan these demo areas are locked for organisation 5, and show "not included in your subscription":
+    Risk-based monitoring (from professional)
+    Biostatistics (from professional)
+  Their records are still seeded. To open them, the platform owner sets the plan in Master licensing → Tenants, or re-runs this with --plan enterprise.
+
+
+=== seed: project-management ===
+  • Schedule: CTD sections tracked on C2C-101, with owners, deadlines and status … ok — 0 sections newly tracked, 0 changes on 8 worked sections
+  • Schedule: milestones on C2C-101 … ok — 0 created of 3
+  • Schedule: the IND's milestone tasks on C2C-101 … ok — 0 generated, 0 moved
+  • Roll-up: work project "C2C-101 drug substance and drug product (CMC)" … ok — found, 0 tasks created
+  • Roll-up: work project "C2C-101 Phase 1 statistical analysis plan" … ok — found, 0 tasks created
+  • Schedule: CTD sections tracked on LMN-201, with owners, deadlines and status … ok — 0 sections newly tracked, 0 changes on 6 worked sections
+  • Schedule: milestones on LMN-201 … ok — 0 created of 3
+  • Schedule: the IND's milestone tasks on LMN-201 … ok — 0 generated, 0 moved
+  • Roll-up: work project "LMN-201 drug product manufacturing (CMC)" … ok — found, 0 tasks created
+  • Roll-up: work project "LMN-201 RePreve risk-based monitoring" … ok — found, 0 tasks created
+  • At risk: review work due on LMN-201 … ok — 0 created of 2
+manifest → /home/user/ClinicalSageAI-2-replit/docs/evidence/DEMO/project-management/manifest.json

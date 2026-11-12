@@ -1,0 +1,8 @@
+ × client/src/concept2cure/v2/__tests__/agencyLetterItemized.test.tsx > the deficiency parser, reached from the letter in the project inbox > says what the keyword rules read in each proposed question 5031ms
+   → Unable to find an element with the text: Keyword rules, no AI: CMC and quality · major · 3.2.S. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/agencyLetterItemized.test.tsx > the deficiency parser, reached from the letter in the project inbox > "Record" fills the form with the agency's words and the rules' suggestion, and writes nothing 215ms
+   → expected '' to be '3.2.S' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/agencyLetterItemized.test.tsx > the deficiency parser, reached from the letter in the project inbox > itemizes the deficiencies of a letter that numbers nothing, each recordable with a number the person gives 5006ms
+   → Unable to find an element with the text: /The keyword rules itemized 1 deficiency in the letter's text, without AI/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

@@ -1,0 +1,15 @@
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > what changed against the previous sequence, leaf by leaf 97ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > the package manifest, every leaf by module with its checksum 21ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > the PDF of each 125ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > another organisation 44ms
+ × tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > a colleague who is not on a private project 19ms
+   → /api/ind-lifecycle/sequence/34/diff?priorId=33: expected 200 to be 403 // Object.is equality
+ × tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > a diff across two submissions 21ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > validation 6ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > the dispatch gate 11ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > a persisted readiness snapshot 5ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > the snapshot list 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)

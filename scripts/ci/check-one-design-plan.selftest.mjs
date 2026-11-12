@@ -63,6 +63,11 @@ expect('refuses a new service', refused(commit('X\n\nPlan: F1\nCompletes: server
 expect('refuses a new AnA tool', refused(commit('X\n\nPlan: F1\nCompletes: server/services/ana', [ANA_TOOL_INVENTORY], [{ kind: 'ana-tool', name: 'brand_new_tool' }], after6), /adds a ana-tool "brand_new_tool"/));
 expect('reads every AnA tool name, in scope and held', [...anaToolNames(JSON.stringify({ tools: { inScope: ['a'], hiddenApp: [{ surfaces: ['s'], names: ['b'] }] } }))].sort().join() === 'a,b');
 
+console.log('Part 1c — P-122: nothing a screen showed is removed without a founder decision');
+expect('refuses a commit that deletes a screen with no founder decision', refused(commit('X\n\nPlan: F1', ['client/src/concept2cure/v2/surfaces/Old.tsx'], [], { removals: [{ kind: 'screen file', name: 'client/src/concept2cure/v2/surfaces/Old.tsx' }] }), /removes a screen file .*Founder-Decision/));
+expect('refuses a commit that drops a UI_SURFACES id with no founder decision', refused(commit('X\n\nPlan: F1', ['shared/constants/ui-surface-registry.ts'], [], { removals: [{ kind: 'surface', name: 'old-screen' }] }), /removes a surface "old-screen"/));
+expect('accepts a removal that names the founder decision', accepted(commit('X\n\nPlan: F1\nFounder-Decision: P-122', ['client/src/concept2cure/v2/surfaces/Old.tsx'], [], { removals: [{ kind: 'screen file', name: 'client/src/concept2cure/v2/surfaces/Old.tsx' }] })));
+
 console.log('Part 2 — real git history');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'one-design-plan-'));
 const g = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -112,6 +117,15 @@ try {
   attempt('git: a new file inside an existing service folder is accepted', { 'server/services/vault/split.ts': 'export {};\n' }, 'Split\n\nPlan: F1\nCompletes: server/services/vault', null);
   attempt('git: a new route file is refused', { 'server/routes/new-thing.ts': 'export {};\n' }, 'Route\n\nPlan: F1\nCompletes: README.md', /adds a route "server\/routes\/new-thing\.ts"/);
   attempt('git: a new service folder is refused', { 'server/services/new-engine/a.ts': 'export {};\n' }, 'Engine\n\nPlan: F1\nCompletes: README.md', /adds a service "server\/services\/new-engine"/);
+  write('client/src/concept2cure/v2/surfaces/Kept.tsx', 'export {};\n'); g('add', '.'); g('commit', '-q', '-m', 'A screen\n\nPlan: F1\nCompletes: README.md');
+  const removal = (label, message, pattern) => {
+    g('rm', '-q', 'client/src/concept2cure/v2/surfaces/Kept.tsx'); g('commit', '-q', '-m', message);
+    const res = run({ cwd: dir, range: `${base}..HEAD` });
+    expect(label, pattern ? res.findings.some((f) => pattern.test(f.reason)) : res.findings.length === 0);
+    g('reset', '-q', '--hard', 'HEAD~1');
+  };
+  removal('git: deleting a screen file without a founder decision is refused (P-122)', 'Fold it\n\nPlan: F1\nCompletes: README.md', /removes a screen file "client\/src\/concept2cure\/v2\/surfaces\/Kept\.tsx"/);
+  removal('git: deleting a screen file with a founder decision is accepted', 'Fold it\n\nPlan: F1\nCompletes: README.md\nFounder-Decision: P-122', null);
   attempt('git: a new AnA tool in the inventory is refused', { [ANA_TOOL_INVENTORY]: JSON.stringify({ tools: { inScope: ['old_tool', 'brand_new_tool'], hiddenApp: [] } }) }, 'Tool\n\nPlan: F1\nCompletes: README.md', /adds a ana-tool "brand_new_tool"/);
 } finally {
   fs.rmSync(dir, { recursive: true, force: true });

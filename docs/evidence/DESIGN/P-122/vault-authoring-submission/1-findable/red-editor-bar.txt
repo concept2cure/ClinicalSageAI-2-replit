@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/editor/__tests__/workbenchBarInspectorDoors.test.tsx > P-122: the inspector's doors are on the editor bar > Versions, Review tasks, Signatures and Audit trail are on the bar, each opening its panel 517ms
+   → "Signatures" on the bar: expected [] to have a length of 1 but got +0
+ × client/src/concept2cure/v2/editor/__tests__/workbenchBarInspectorDoors.test.tsx > P-122: the inspector's doors are on the editor bar > Send for review and File to vault are on the bar, and open their dialogs 166ms
+   → "Send for review…" on the bar: expected [] to have a length of 1 but got +0
+ × client/src/concept2cure/v2/editor/__tests__/workbenchBarInspectorDoors.test.tsx > P-122: the inspector's doors are on the editor bar > More still holds each of them for a phone-width bar, by name and test id 214ms
+   → Versions: expected null to be truthy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

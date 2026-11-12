@@ -362,7 +362,11 @@ function QuestionCard({
 }
 
 interface AgencyResponsesProps {
-  projectId: string; letter: CommRow; fire: (m: string, tone?: 'ok' | 'error') => void;
+  /* The letter's id and type are read (the type names the letter in labels and
+     prompts); everything else about it is the server's (`data.letter`). Typed
+     as what is used, so CMC / Module 3 can open the same controls on a letter
+     it lists (P-122) without inventing the rest of an inbox row. */
+  projectId: string; letter: Pick<CommRow, 'id' | 'communicationType'>; fire: (m: string, tone?: 'ok' | 'error') => void;
   /** A question another screen linked to (CMC's "Open on its letter"). */
   focusQuestionId?: number | null; onNav?: (id: string) => void;
   /** A commitment was recorded here (from the letter or a question): the host's register re-reads. */
@@ -398,7 +402,9 @@ function ScopedAgencyResponses({
   const authUser = useAuthUser();
   const [busy, setBusy] = React.useState(false);
   /** The Record-a-question form, open; filled with a question the letter's text numbers (G3), or empty. */
-  const [adding, setAdding] = React.useState<null | { questionRef: string; questionText: string }>(null);
+  /* `suggested`: the deficiency parser's reading of a proposed passage (P-122), put in the form for the person to check. */
+  const [adding, setAdding] = React.useState<null | { questionRef: string; questionText: string;
+    suggested?: { severity: string; ctdSection: string | null; discipline: string | null } }>(null);
   const [committing, setCommitting] = React.useState<AgencyQuestionView | null>(null);
   /** A commitment the letter itself imposes, being recorded from its proposal. */
   const [fromLetter, setFromLetter] = React.useState<LetterCommitmentProposal | null>(null);
@@ -684,7 +690,7 @@ function ScopedAgencyResponses({
       {!closed && viewer.canWrite && (
         <LetterQuestionProposals base={base} version={version} readOwner={readOwner} disabled={busy}
           responseRequired={data?.letter.responseRequired !== false}
-          onRecord={(p) => setAdding({ questionRef: p.ref, questionText: p.text })} />
+          onRecord={(p) => setAdding({ questionRef: p.ref, questionText: p.text, suggested: p.classification?.suggested })} />
       )}
 
       {!closed && viewer.canWrite && (
@@ -772,9 +778,9 @@ function ScopedAgencyResponses({
             submitLabel: 'Record question',
             fields: [
               { key: 'questionRef', label: 'Question number', type: 'text', placeholder: 'As the agency numbered it, e.g. Q3', required: true, half: true, default: adding.questionRef },
-              { key: 'discipline', label: 'Discipline', type: 'select', options: ['Clinical', 'Nonclinical', 'CMC', 'Biostatistics', 'Labeling', 'Safety', 'Regulatory'], half: true },
-              { key: 'severity', label: 'Severity', type: 'seg', options: ['major', 'minor', 'critical'] },
-              { key: 'ctdSection', label: 'CTD section (optional)', type: 'text', placeholder: 'e.g. 3.2.P.5.1', half: true },
+              { key: 'discipline', label: 'Discipline', type: 'select', options: ['Clinical', 'Nonclinical', 'CMC', 'Biostatistics', 'Labeling', 'Safety', 'Regulatory'], half: true, default: adding.suggested?.discipline ?? undefined },
+              { key: 'severity', label: 'Severity', type: 'seg', options: ['major', 'minor', 'critical'], default: adding.suggested?.severity },
+              { key: 'ctdSection', label: 'CTD section (optional)', type: 'text', placeholder: 'e.g. 3.2.P.5.1', half: true, default: adding.suggested?.ctdSection ?? undefined },
               { key: 'questionText', label: 'Question text', type: 'textarea', placeholder: 'Paste the question verbatim', required: true, default: adding.questionText },
               { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recording the IR received 2026-10-12', required: true },
             ],

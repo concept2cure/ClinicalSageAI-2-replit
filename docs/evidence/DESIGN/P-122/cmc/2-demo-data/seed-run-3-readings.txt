@@ -1,0 +1,20 @@
+  • Projects: program C2C-201 (IND) … ok — found <uuid> (C2C-201)
+  • CMC / Module 3: drug substance and drug product on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: analytical methods on C2C-201 … ok — 0 created of 4; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on C2C-201 … ok — 0 created of 6
+  • CMC / Module 3: stability programme on C2C-201 … ok — 0 created of 3
+  • CMC / Module 3: batch records on C2C-201 … ok — 0 created of 3
+  • CMC / Module 3: recorded release results on C2C-201 … ok — 0 created of 5 — second-person review is left to the register, so these compose as not reviewed
+  • CMC / Module 3: referenceStandards on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: impurities on C2C-201 … ok — 0 created of 6
+  • CMC / Module 3: dissolution on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: characterisation on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: processes on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: processValidation on C2C-201 … ok — 0 created of 1
+  • CMC / Module 3: formulations on C2C-201 … ok — 0 created of 1
+  • CMC / Module 3: materials on C2C-201 … ok — 0 created of 5
+  • CMC / Module 3: containerClosures on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: changes on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: comparability on C2C-201 … ok — 0 created of 1
+  • CMC / Module 3: compile the dossier on C2C-201 … ok — 21 section(s) composed, 21 with recorded data
+exit 0

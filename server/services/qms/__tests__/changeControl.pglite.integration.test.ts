@@ -292,6 +292,15 @@ describe('controlled lifecycle against real SQL', () => {
     const retained = await pglite.query<{ deleted_at: string | null }>('SELECT deleted_at FROM qms_change_controls WHERE id = $1', [change.id]);
     expect(retained.rows[0].deleted_at).not.toBeNull();
   });
+
+  // F1 (Part 11 review L-2): a change past assessment is kept; it is cancelled through its lifecycle.
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])('keeps a change that is %s', async (status) => {
+    const change = await svc.createChange(ORG, { changeNumber: `CC-KEEP-${++sequence}`, title: 'Kept', proposedBy: 10 });
+    await pglite.query('UPDATE qms_change_controls SET status=$2 WHERE id=$1', [change.id, status]);
+    expect(await svc.deleteChange(ORG, change.id)).toBe(false);
+    expect(await svc.getChange(ORG, change.id)).toMatchObject({ status, deleted_at: null });
+    expect(await svc.changeEditRefusal(ORG, change.id, undefined, 'delete')).toMatchObject({ details: { code: 'QMS_CHANGE_KEPT', status } });
+  });
 });
 
 let sequence = 0;
@@ -315,6 +324,17 @@ describe('content is editable until approval', () => {
     await pglite.query('UPDATE qms_change_controls SET status=$2 WHERE id=$1', [change.id, status]);
     const row = await svc.updateChange(ORG, change.id, { impactAssessment: 'Assessed.', implementationPlan: 'Planned.' });
     expect(row).toMatchObject({ status, impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
+  });
+
+  // F1 (Part 11 review L-2): the edit returns each field it changed, before and after, read in the same statement.
+  it('returns each field the edit changed, before and after, and none it left as it was', async () => {
+    const change = await svc.createChange(ORG, { changeNumber: `CC-EDIT-${++sequence}`, title: 'Before', impactAssessment: 'As it was.', proposedBy: 10 });
+    const row = await svc.updateChange(ORG, change.id, { title: 'After', impactAssessment: 'As it was.', targetImplementationDate: '2026-12-01' });
+    expect(row?.edits).toEqual([
+      { field: 'title', before: 'Before', after: 'After' },
+      { field: 'target_implementation_date', before: null, after: '2026-12-01' },
+    ]);
+    expect(row).not.toHaveProperty('previous');
   });
 
   it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])(

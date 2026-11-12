@@ -55,7 +55,7 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 
 | # | Where | What is on screen | Say or do |
 |---|---|---|---|
-| 1 | Home, then **LMN-201** | "Good morning"; four Lumen projects. The project: its objective from the public trial listing, AnA's box, the six steps (Plan, Evidence, Author, Review, Submit, Respond), and on the right About (IND number 194021, fictional), Filing ("Dispatch blocked · 3 blockers"), Team (three people with their open work), Work areas | One project, one goal. Everything else hangs off it |
+| 1 | Home, then **LMN-201** | "Good morning"; four Lumen projects, LMN-201 first, and no setup list. The project: its objective from the public trial listing, AnA's box, the six steps (Plan, Evidence, Author, Review, Submit, Respond), and on the right About (IND number 194021, fictional), Filing ("Dispatch blocked · 3 blockers"), Team (three people with their open work), Work areas | One project, one goal. Everything else hangs off it |
 | 2 | **Plan**, then **Tasks** | What an initial IND needs, with target Mar 10, 2027; tasks by due date. Tasks: "5 tasks stand between you and Database lock readiness checklist, and 2 tasks are overdue" | Work comes from the plan, quality records and agency letters, in one board |
 | 3 | **Evidence**, then **Vault** | Data room: 45 sources. Vault: 16 uploads, "Required sections: 5 of 36 have a confirmed document", 3 governed artifacts, 1 seal "by Lumen Approver · 16 documents · SHA-256 …" with **Verify** | Give Evidence a few seconds to load. Open Required documents, then Seals & fixity and press Verify: "Intact: every sealed document is recorded with its sealed hash, and each stored file was read again and matches" |
 | 4 | Author, **Write the protocol in the protocol workspace** | Protocol LMN-201-CDI-02 (synthetic): 10 sections, 5 objectives, 10 eligibility criteria, 8 assessments by 7 visits, 6 risks, amendment 2, 2 deviations with a CAPA. Statistics: "375 planned subjects · 80% power · 0.05 alpha". Compliance: 28 rules assessed, 5 unmet, 17 not assessed | Show Schedule of assessments, Statistics, then Compliance: three counts, never one score |
@@ -85,8 +85,6 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 - **Risk-based monitoring's Site risk and Site oversight read "0 sites".** The site register those two tabs read has
   no writer reachable in the product. It is a known product defect, handed over on 2026-11-06; the other eight tabs
   are populated.
-- **Home shows "Record your company details · To do".** It is the customer's own setup step, left for the presenter
-  to show or skip.
 - **Of LMN-201's three governed artifacts, one is approved, one is in review and one is a draft.** A placed
   artifact needs two independent reviewers (decision P-95), and the Lumen account has one besides its author and
   approver, so the placed one stays in review.
@@ -102,13 +100,23 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 | | With `ANTHROPIC_API_KEY` | Without |
 |---|---|---|
 | AnA's box, suggestion buttons, "Draft with AnA" | Not exercised on this stack | "No AI provider is configured for this deployment, so AnA cannot answer" (read on the 2026-11-09 tour) |
-| Scene 8, Build CSR draft | Not exercised on this stack. The CSR-path session is walking it in the Lumen account | Not pressed on this stack; the earlier walks stopped at "no model key" |
+| Scene 8, Build CSR draft | Walked by the CSR-path session (`01QoxbLZ…`) in the Lumen account with a stand-in provider, not a real key: "complete · 100%", 69 headings drafted, then review by the approver, import and assembly (`docs/evidence/DEMO/2026-11-10-showcase-walk/`). Not yet run with a real key | Not pressed on this stack; the earlier walks stopped at "no model key" |
 | Shadow review (Submission Center) | Not exercised on this stack | A failed run is listed, with "no AI provider is configured" |
 | Everything else in the 14 scenes | Same | Works: it is recorded data and deterministic engines |
 
+**From the CSR-path session (`01QoxbLZ…`), not seen by this one:** on the kit's first study data the LMN-201 build
+ended "failed · 98%", because §12.5 is written over a vital-signs table that data did not have. The seed now freezes
+a second version of the synthetic study data with exposure, laboratory shifts, vital signs and concomitant
+medications (`b0fce0ab9`), and with it that session's build read "complete · 100%", with review, import and assembly
+working as the lead and the approver. Its walk is `docs/evidence/DEMO/2026-11-10-showcase-walk/` and its presenter's
+script is `docs/demo/lumen-showcase.md` (both on trunk, `ee1eb0c0fd`). That script is the script for scene 8, step
+by step; where it and this note differ on the CSR, it is the one to follow.
+
 **Not verified here, and worth five minutes before the room:** scene 8 with the real key, in the Codespace. If a
-build stops part-way, "Resume build N" continues it. Whether the synthetic LMN-201 study data carries every table
-the builder binds figures to is an open question the CSR-path session is answering by running the build.
+build stops part-way, "Resume build N" continues it. The synthetic LMN-201 study data now carries a table for every
+results heading from §10.1 to §12.5 (`server/services/csr/__tests__/lmn201-showcase-source.test.ts`; answered by the
+CSR-path session, which ran the build). It holds no subject-level dates, so "Build narratives" composes none and
+says why.
 
 ## How this was checked
 
@@ -132,6 +140,7 @@ the builder binds figures to is an open question the CSR-path session is answeri
 | The protocol workspace was empty for LMN-201 | `lumen-protocol.mjs`, through the biotech pack's `ensureProtocol` (`7d9112e60`) |
 | Submission Center's Builder said "No leaves in sequence 0000 yet" | The approved Vault documents are placed as 5 leaves (`7d9112e60`) |
 | The Team card listed the lead alone: "16 open items assigned to someone not on this list" | Each Lumen project is shared with the reviewer and the approver (`80f5b7c41`) |
+| Home opened on "Set up your organisation · Record your company details · To do" | The Lumen account's company details are recorded, fictional, through Administration's own route, and only in the Lumen account (`aaa8595e9`) |
 | Reporting's Schedules and Bundles were empty | A bundle of the four runs and two in-platform schedules (`80f5b7c41`) |
 | Every report and bundle PDF export answered 503, "Reporting PDF fonts are unavailable on this deployment" | The Codespace installs the Noto fonts the PDF writer embeds, on every start (`4a473cffe`). After it, both exports answer with a PDF |
 | A document's "Download, PDF" answered 503, "The formatted PDF could not be completed", and Compile said "xmllint not available" (found by running the app with the production image's tools hidden, as a Codespace is) | The Codespace also installs LibreOffice and `xmllint` (`01a5f04db`) |
@@ -157,13 +166,15 @@ the builder binds figures to is an open question the CSR-path session is answeri
 | | With `ANTHROPIC_API_KEY` | Without |
 |---|---|---|
 | AnA's box, suggestion buttons, "Draft with AnA" | Not exercised on this stack | "No AI provider is configured for this deployment, so AnA cannot answer" (read on the 2026-11-09 tour) |
-| Scene 8, Build CSR draft | Not exercised on this stack. The CSR-path session is walking it in the Lumen account | Not pressed on this stack; the earlier walks stopped at "no model key" |
+| Scene 8, Build CSR draft | Walked by the CSR-path session (`01QoxbLZ…`) in the Lumen account with a stand-in provider, not a real key: "complete · 100%", 69 headings drafted, then review by the approver, import and assembly (`docs/evidence/DEMO/2026-11-10-showcase-walk/`). Not yet run with a real key | Not pressed on this stack; the earlier walks stopped at "no model key" |
 | Shadow review (Submission Center) | Not exercised on this stack | A failed run is listed, with "no AI provider is configured" |
 | Everything else in the 14 scenes | Same | Works: it is recorded data and deterministic engines |
 
 **Not verified here, and worth five minutes before the room:** scene 8 with the real key, in the Codespace. If a
-build stops part-way, "Resume build N" continues it. Whether the synthetic LMN-201 study data carries every table
-the builder binds figures to is an open question the CSR-path session is answering by running the build.
+build stops part-way, "Resume build N" continues it. The synthetic LMN-201 study data now carries a table for every
+results heading from §10.1 to §12.5 (`server/services/csr/__tests__/lmn201-showcase-source.test.ts`; answered by the
+CSR-path session, which ran the build). It holds no subject-level dates, so "Build narratives" composes none and
+says why.
 
 ## How this was checked
 

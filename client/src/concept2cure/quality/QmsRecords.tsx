@@ -1,7 +1,7 @@
 /**
  * QmsRecords — the Quality registers beside controlled documents and change
- * control: CAPA, nonconformances, suppliers, internal audits and management
- * reviews.
+ * control: CAPA, complaints and MDR reports (P-122), deviations, nonconformances,
+ * suppliers, internal audits and management reviews.
  *
  * One register component, five configurations: CAPA (qmsCapaRegister.tsx) and
  * the four records (qmsRecordRegisters.tsx), built from qmsRegisterKit.tsx.
@@ -19,13 +19,13 @@
 
 import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { RegisterBody, RegisterTable } from './SopRegisterRow';
+import { AskAnaButton, INLINE_ACTIONS, RegisterBody, RegisterTable } from './SopRegisterRow';
 import { listOf } from './qmsList';
 import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { useCapasBySource } from './capaSources';
-import { scopedPath, useQualityScope, useRegisterContext } from './registerContext';
+import { scopedPath, useAnswerOf, useQualityScope, useRegisterContext } from './registerContext';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
@@ -37,12 +37,19 @@ type ReportContext = (ctx: Omit<RecordRegisterContext, 'tab'>) => void;
 import { CAPAS } from './qmsCapaRegister';
 import { DEVIATIONS } from './qmsDeviationRegister';
 import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from './qmsRecordRegisters';
+import { COMPLAINTS, MDR_EVENTS } from './qmsComplaintRegisters';
 
-function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext }: {
+function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext, secondary }: {
   config: RegisterConfig<R>; onAsk: (q: string) => void; onContext?: ReportContext;
+  /** A second register on the tab: its create is a ghost button, so the view keeps one primary action (§2). */
+  secondary?: boolean;
 }) {
   const scope = useQualityScope();
-  const read = useFetchJson<unknown>(config.projectKept ? scopedPath(config.listPath, scope.programId) : config.listPath);
+  const readPath = config.projectKept ? scopedPath(config.listPath, scope.programId) : config.listPath;
+  const fetched = useFetchJson<unknown>(readPath);
+  // The answer for this scope only, never the previous one's while it loads (Quality review, 2026-11-10).
+  const answer = useAnswerOf(readPath, fetched.data);
+  const read = { ...fetched, data: answer, loading: fetched.loading || (fetched.data != null && answer == null) };
   /* Whose rows these are, said beside the figures and to AnA while a project is open (C14). */
   const scopeOf = React.useMemo<RecordRegisterContext['scope']>(() => (config.projectKept
     ? (scope.programId && scope.projectName ? { project: scope.projectName } : null)
@@ -131,7 +138,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         <div className="pj-sec-h">
           <h2 id={headId}>{config.title}</h2>
           <div className="pj-sec-acts">
-            <button type="button" className="btn primary small" onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
+            <button type="button" className={secondary ? 'btn ghost small' : 'btn primary small'} onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
           </div>
         </div>
         {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
@@ -139,7 +146,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
               {scopeOf && 'organisationWide' in scopeOf && <span data-testid="qms-record-org-wide">Organisation-wide · </span>}
               {/* At the server's cap the register is the most recent rows, and its figures are theirs (C12). */}
               {config.readCap && rows.length >= config.readCap.rows && (
-                <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]}: </span>
+                <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]} — </span>
               )}
               {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span>{k.detail ? ` (${k.detail})` : ''}</React.Fragment>)}
         </p>}
@@ -157,9 +164,10 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         {loaded && rows.length === 0 && (scopeOf && 'project' in scopeOf
           ? <EmptyState title={`No ${config.noun[1]} filed under ${scopeOf.project}.`} hint={`The organisation's other ${config.noun[1]} are under Show the whole organisation.`} />
           : <EmptyState title={`No ${config.noun[1]} recorded yet.`} />)}
-        {/* D0's table (C11), as the SOP register and the change log: a row shows its first action as its next step,
-            and More holds the rest and Ask AnA. Until 2026-11-10 each row carried every action as an arrow chip and a
-            sparkle, on a grid wider than the pane, so at 1440 the action column was scrolled out of the box. */}
+        {/* D0's table (C11), as the SOP register and the change log: a row shows the acts that fit its state (each
+            configuration's `show`), the first two inline with Ask AnA as an icon, and More holds the rest (P-122; from
+            C11 until P-122 only the first act showed). Until 2026-11-10 each row carried every action as an arrow chip
+            and a sparkle, on a grid wider than the pane, so at 1440 the action column was scrolled out of the box. */}
         {loaded && rows.length > 0 && (
           <RegisterTable columns={columns.map((c) => c.label)}>
             {rows.map((r) => {
@@ -169,15 +177,10 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
                   {a.label}
                 </button>
               ));
-              const ask = (
-                <button key="ask" type="button" className="btn ghost small" aria-label="Ask AnA about this record" title="Ask AnA about this record"
-                  onClick={() => onAsk(config.askRow(r))}>
-                  Ask AnA
-                </button>
-              );
+              const ask = <AskAnaButton key="ask" label="Ask AnA about this record" onAsk={() => onAsk(config.askRow(r))} />;
               return (
                 <RegisterBody key={r.id} name={config.name(r)} className="qms-rec" columns={columns.length}
-                  primary={acts[0] ?? null} rest={[...acts.slice(1), ask]}
+                  primary={acts.length ? <>{acts.slice(0, INLINE_ACTIONS)}</> : null} ask={ask} rest={acts.slice(INLINE_ACTIONS)}
                   cells={columns.map((c, n) => (
                     <td key={c.label} className={c.text ? 'qms-title' : undefined}>
                       {n === 0 && config.detail ? (
@@ -243,6 +246,8 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
 export const QMS_RECORD_TABS: { id: QmsRecordTab; label: string }[] = [
   { id: 'capa', label: 'CAPA' },
+  /* P-122: complaints and MDR reports, over /api/capa-mdr, beside CAPA (qmsComplaintRegisters.tsx). */
+  { id: 'complaints', label: 'Complaints and MDR' },
   { id: 'deviations', label: 'Deviations' },
   { id: 'nonconforming', label: 'Nonconformances' },
   { id: 'suppliers', label: 'Suppliers' },
@@ -252,6 +257,7 @@ export const QMS_RECORD_TABS: { id: QmsRecordTab; label: string }[] = [
 
 export const QMS_RECORD_ASK: Record<QmsRecordTab, string> = {
   capa: CAPAS.ask,
+  complaints: COMPLAINTS.ask,
   deviations: DEVIATIONS.ask,
   nonconforming: NONCONFORMANCES.ask,
   suppliers: SUPPLIERS.ask,
@@ -259,12 +265,49 @@ export const QMS_RECORD_ASK: Record<QmsRecordTab, string> = {
   reviews: REVIEWS.ask,
 };
 
+/**
+ * The Complaints and MDR tab (P-122): two registers, complaints and the MDR and vigilance reports decided from them,
+ * one under the other. AnA is told both as one register context: loading until both have answered, failed when
+ * either read failed (never one register passed off as the tab), and otherwise both registers' rows and figures.
+ */
+function ComplaintsAndMdr({ onAsk, onContext }: { onAsk: (q: string) => void; onContext?: ReportContext }) {
+  type Part = Omit<RecordRegisterContext, 'tab'>;
+  const [parts, setParts] = React.useState<{ complaints?: Part; mdr?: Part }>({});
+  const fromComplaints = React.useCallback((c: Part) => setParts((p) => ({ ...p, complaints: c })), []);
+  const fromMdr = React.useCallback((c: Part) => setParts((p) => ({ ...p, mdr: c })), []);
+  React.useEffect(() => {
+    if (!onContext) return;
+    const a = parts.complaints;
+    const b = parts.mdr;
+    const base = { title: 'Complaints and MDR', noun: ['record', 'records'] as [string, string],
+      about: [a?.about, b?.about].filter(Boolean).join(' '), scope: a?.scope ?? b?.scope ?? null };
+    const state = a?.state === 'failed' || b?.state === 'failed' ? 'failed' : !a || !b || a.state === 'loading' || b.state === 'loading' ? 'loading' : 'ready';
+    if (state !== 'ready' || !a || !b) {
+      onContext({ ...base, state, count: null, counts: [], records: [], truncated: false, partial: false });
+      return;
+    }
+    onContext({
+      ...base, state, count: (a.count ?? 0) + (b.count ?? 0), partial: a.partial || b.partial, truncated: a.truncated || b.truncated,
+      counts: [...a.counts.map((c) => ({ ...c, label: `Complaints, ${c.label.toLowerCase()}` })),
+        ...b.counts.map((c) => ({ ...c, label: `MDR reports, ${c.label.toLowerCase()}` }))],
+      records: [...a.records, ...b.records],
+    });
+  }, [parts, onContext]);
+  return (
+    <>
+      <RecordRegister config={COMPLAINTS} onAsk={onAsk} onContext={fromComplaints} />
+      <RecordRegister config={MDR_EVENTS} onAsk={onAsk} onContext={fromMdr} secondary />
+    </>
+  );
+}
+
 export function QmsRecords({ tab, onAsk, onContext }: {
   tab: QmsRecordTab; onAsk: (q: string) => void; onContext?: (ctx: RecordRegisterContext) => void;
 }) {
   const report = React.useCallback<ReportContext>((ctx) => onContext?.({ ...ctx, tab }), [onContext, tab]);
   switch (tab) {
     case 'capa': return <RecordRegister key={tab} config={CAPAS} onAsk={onAsk} onContext={report} />;
+    case 'complaints': return <ComplaintsAndMdr key={tab} onAsk={onAsk} onContext={report} />;
     case 'deviations': return <RecordRegister key={tab} config={DEVIATIONS} onAsk={onAsk} onContext={report} />;
     case 'nonconforming': return <RecordRegister key={tab} config={NONCONFORMANCES} onAsk={onAsk} onContext={report} />;
     case 'suppliers': return <RecordRegister key={tab} config={SUPPLIERS} onAsk={onAsk} onContext={report} />;

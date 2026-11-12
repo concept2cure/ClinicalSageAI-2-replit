@@ -264,8 +264,8 @@ describe('the rail lists the places, then the work areas', () => {
     const menu = screen.getByRole('menu');
     expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
     expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
-    // The catalog is an administrator's licensing view, not a member's place.
-    expect(within(menu).queryByRole('menuitem', { name: 'Subscription & features' })).toBeNull();
+    // The catalog is every member's since P-122 (2026-11-10): a member sees the features they may open.
+    expect(within(menu).getByRole('menuitem', { name: 'Subscription & features' })).toBeTruthy();
   });
 
   it('every entry opens a screen in this release', async () => {

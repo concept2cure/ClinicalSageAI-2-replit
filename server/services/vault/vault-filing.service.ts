@@ -95,8 +95,10 @@ export interface FilingClassification {
 // ─── Rule table ───────────────────────────────────────────────────────────────
 //
 // First match wins, most-specific first. `folders` maps each vault view to the
-// preset folder the match files into; a view absent from the map means the rule
-// does not place the file for that view (later rules / the fallback decide).
+// preset folder the match files into. In a view absent from the map the rule
+// still says what the file is, with no folder (an SOP in a dossier Vault), and
+// nothing later re-files it; the one exception is a name the dossier owns
+// (`dossierOwns`), which the rule does not claim in a pharma or biotech view.
 // Declared as data so the unit tests can enumerate every (rule × view) pair and
 // prove each target folder actually exists in that view's preset.
 
@@ -110,6 +112,9 @@ interface FilingRule {
    *  region's heading. Absent on a Module 1 rule: a US document, which no other region is given a heading for. */
   module1Role?: DocumentRole;
   confidence?: 'high' | 'medium';
+  /** A name this rule's pattern matches but which, in a pharma or biotech Vault, is the dossier's own document:
+   *  the rule does not claim it there, and the CTD filename detector decides it. */
+  dossierOwns?: (name: string) => boolean;
 }
 
 /**
@@ -125,6 +130,19 @@ const FORM_1572_TMF_FOLDER = ((): string | undefined => {
 const EVERY_VIEW: Record<VaultViewId, string> = {
   pharma: 'corresp', biotech: 'corresp', device: 'corresp', ivd: 'corresp', service: 'corresp',
 };
+
+/**
+ * A "risk management plan" is two documents. In a device file it is part of the ISO 14971 risk management file. In a
+ * medicinal product's dossier it is the Risk Management Plan (the EU RMP, Module 1.8.2). Decided as the
+ * subject-matter expert, 2026-11-10: in a pharma or biotech Vault the name is the dossier's, and the CTD filename
+ * detector proposes it for Module 1 at its region's heading, as it does for "RMP". A name that also says it is the
+ * device's (ISO 14971, the RMF or DHF, "device", an FMEA) stays the device rule's.
+ */
+const DOSSIER_RISK_MANAGEMENT_PLAN = /\brisk management (plan|system)\b/i;
+const DEVICE_RISK_FILE_WORDS = /\b(iso.?14971|rmf|dhf|device|fmea)\b/i;
+function isDossierRiskManagementPlan(name: string): boolean {
+  return DOSSIER_RISK_MANAGEMENT_PLAN.test(name) && !DEVICE_RISK_FILE_WORDS.test(name);
+}
 
 export const FILING_RULES: FilingRule[] = [
   // ── Agency correspondence — every view has a corresp folder ────────────────
@@ -194,6 +212,7 @@ export const FILING_RULES: FilingRule[] = [
   },
   {
     label: 'engineering / DHF / risk file',
+    dossierOwns: isDossierRiskManagementPlan,
     pattern: /\b(dhf|rmf|design (history|control|input|output|review)|risk (management|analysis)( file| report)?|residual risk|iso.?14971|fmea|verification|validation report|biocompat(ibility)?|iso.?10993|steriliz(ation|ed)|shelf.?life|software (description|documentation)|sbom|cybersecurity|emc\b|iec.?60601|bench test)\b/i,
     kind: 'report',
     folders: { device: 'eng', ivd: 'eng' },
@@ -422,8 +441,11 @@ function classifyByName(input: FilingInput): NameProposal {
 
   if (haystack.length > 0) {
     // 1) The shared rule table, most-specific first.
+    const dossierView = view === 'pharma' || view === 'biotech';
     for (const rule of FILING_RULES) {
       if (!matches(rule.pattern)) continue;
+      // A name the dossier owns is not this rule's in a dossier view: the CTD detector below decides it.
+      if (dossierView && rule.dossierOwns?.(normalized)) continue;
       const folderId = rule.folders[view] ?? null;
       if (folderId) {
         return {
@@ -438,14 +460,18 @@ function classifyByName(input: FilingInput): NameProposal {
         };
       }
       // The rule names what the file IS but this view has no folder for it
-      // (e.g. an SOP in a pharma dossier vault). Honest partial answer.
+      // (e.g. an SOP in a pharma dossier vault). Honest partial answer. Only a
+      // quality-system record is told where it lives instead; the sentence was
+      // said of every kind (a device report, a PSUR) until 2026-11-10.
       return {
         evidenceKind: rule.kind,
         folderId: null,
         ctdSection: null,
         confidence: 'none',
         needsReview: true,
-        rationale: `Matched ${rule.label}, but the ${view} vault has no folder for that kind — review where it belongs (quality-system records live in the Quality module, not the dossier).`,
+        rationale: `Matched ${rule.label}, but the ${view} vault has no folder for that kind. ${rule.kind === 'qms'
+          ? 'Quality-system records live in the Quality module, not the dossier: review where it belongs.'
+          : 'Review where it belongs.'}`,
       };
     }
 

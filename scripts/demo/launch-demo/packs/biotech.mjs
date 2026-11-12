@@ -27,12 +27,12 @@
  * biotech-protocol.mjs, biotech-submission.mjs and biotech-qms.mjs. This file
  * owns the program, the Vault, the audit-trail check, and seed/purge.
  */
-import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
+import { connectSigner, ensureSyntheticReviewer, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { ensureAuthoring } from './biotech-authoring.mjs';
-import { INDICATION, MOLECULE, PRODUCT_NAME, PROGRAM_NAME, PROVENANCE, SOPS, CHANGE, T, VAULT_DOCS, findDemoByTitle, inDays } from './biotech-content.mjs';
+import { C2C101_IDENTITY, INDICATION, MOLECULE, PRODUCT_NAME, PROGRAM_NAME, PROVENANCE, SOPS, CHANGE, T, VAULT_DOCS, findDemoByTitle, inDays } from './biotech-content.mjs';
 import { ensureProtocol } from './biotech-protocol.mjs';
 import { ensureQms } from './biotech-qms.mjs';
-import { NOT_EXECUTED_NO_SIGNER, asArray, makeTally } from './biotech-shared.mjs';
+import { NOT_EXECUTED_NO_SIGNER, asArray, ensureApplicantIdentity, makeTally } from './biotech-shared.mjs';
 import { ensureSubmission } from './biotech-submission.mjs';
 import { BIOTECH_ADAPTIVE_PLAN, BIOTECH_CMC, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks, ensureAdaptivePlan, ensureDesignTasks } from './work-areas.mjs';
@@ -232,6 +232,7 @@ async function ensureVaultDoc(ctx, program, spec) {
     folderId: spec.folderId,
     sectionCode: spec.sectionCode,
     leafTitle: spec.leafTitle,
+    studyId: spec.studyId, stfFileTag: spec.stfFileTag,
     pages,
     bytes: pdf.length,
     sha256: bytesSha,
@@ -308,9 +309,15 @@ export async function seed(ctx) {
   });
   run.record('provenance', PROVENANCE);
   if (!signer) run.note(NOT_EXECUTED_NO_SIGNER);
+  /* With no second signer, a synthetic reviewer completes the documents' review rounds, so an approval is not
+     refused for want of one (P-95; P-122). It signs reviews only: the freeze and approval stay a person's. */
+  const reviewer = signer ? null : await ensureSyntheticReviewer({ api, baseUrl, identity });
+  run.record('identities.reviewer', reviewer
+    ? { email: reviewer.email ?? null, state: reviewer.state, userId: reviewer.userId ?? null, canSign: Boolean(reviewer.password), note: reviewer.note ?? null }
+    : (signer ? 'the second signer reviews' : 'not added'));
 
   const before = await readLedger(api);
-  const c = { api, run, tally, me, signer, clientWorkspaceId: ctx.clientWorkspaceId };
+  const c = { api, run, tally, me, signer, reviewer: reviewer?.api ? reviewer : null, clientWorkspaceId: ctx.clientWorkspaceId };
 
   const program = await ensureProgram(c);
   const vaultDocs = await ensureVault(c, program);
@@ -323,6 +330,8 @@ export async function seed(ctx) {
      (2026-11-09). */
   await ensureAdaptivePlan(c, BIOTECH_ADAPTIVE_PLAN);
   await ensureDesignTasks(c, BIOTECH_STUDY_DESIGN.title);
+  // Who files it, so the sequence's package identity is complete ("Download an inspection copy" was refused without).
+  await ensureApplicantIdentity(c, { id: program.id, label: PRODUCT_NAME }, C2C101_IDENTITY);
   await ensureSubmission(c, program, vaultDocs);
   await ensureQms(c, program);
   await ensureCmc(c, program, BIOTECH_CMC, 'C2C-101');

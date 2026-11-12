@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "ca16371b-7121-42e7-9e97-932067b83ad9",
+      "projectId": "7902e393-1415-4027-aa17-a6d6c0eed598",
       "productName": "PRV-running 5 mg tablet",
       "dosageForm": "Film-coated tablet",
       "strength": "5 mg",
@@ -16,14 +16,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 29,
+    "durationMs": 46,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 12,
+        "id": 17,
         "organizationId": 2,
-        "projectId": "ca16371b-7121-42e7-9e97-932067b83ad9",
+        "projectId": "7902e393-1415-4027-aa17-a6d6c0eed598",
         "productName": "PRV-running 5 mg tablet",
         "dosageForm": "Film-coated tablet",
         "strength": "5 mg",
@@ -36,8 +36,8 @@
         "packagingMaterials": null,
         "stability": null,
         "status": "development",
-        "createdAt": "2026-11-10T03:47:31.561Z",
-        "updatedAt": "2026-11-10T03:47:31.561Z"
+        "createdAt": "2026-11-10T13:28:01.607Z",
+        "updatedAt": "2026-11-10T13:28:01.607Z"
       },
       "module3Linked": true
     }

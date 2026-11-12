@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/analytical-methods/14/validate",
+    "url": "http://localhost:5200/api/cmc/analytical-methods/19/validate",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,15 +16,15 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 319,
+    "durationMs": 355,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 14,
+        "id": 19,
         "organizationId": 2,
-        "projectId": "78731580-7719-4562-985d-a412edebff5a",
-        "methodCode": "OQ-168309",
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+        "methodCode": "OQ-985336",
         "title": "OQ probe assay",
         "purpose": "Assay",
         "analyte": "API",
@@ -42,15 +42,15 @@
         "systemSuitability": null,
         "acceptance_criteria": null,
         "robustness_data": null,
-        "validationDate": "2026-11-10T03:43:30.618Z",
+        "validationDate": "2026-11-10T13:24:00.647Z",
         "developedBy": null,
         "validatedBy": 1,
-        "createdAt": "2026-11-10T03:42:48.837Z",
-        "updatedAt": "2026-11-10T03:43:30.618Z"
+        "createdAt": "2026-11-10T13:23:05.887Z",
+        "updatedAt": "2026-11-10T13:24:00.647Z"
       },
       "governance": {
-        "actionId": "act_cfece11ea67349ceb840c72c1d166ba2",
-        "sha256Chain": "5b99ddada5a6b049a4334e065a3fa867a63380614f38cd0ee63618878a6ad698"
+        "actionId": "act_9d083b8e602f483a9cb35862b2dd1a9d",
+        "sha256Chain": "8ad7b19ae541a39c0fcd345ebc337f9a613097df5297d5f1fa8a9226a0a22e21"
       },
       "module3Linked": true
     }

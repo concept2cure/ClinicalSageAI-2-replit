@@ -11,6 +11,9 @@ vi.mock('@/utils/authToken', async original => ({
   getAuthToken: () => 't', getAuthHeaders: () => ({ Authorization: 'Bearer t', 'x-organization-id': '1' }),
 }));
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { __resetSurfaceActionBus, applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
@@ -28,8 +31,9 @@ const figure = (label: RegExp) => Array.from(document.querySelectorAll('.pj-summ
   .find(el => label.test(el.textContent ?? ''))?.querySelector('strong')?.textContent;
 function Probe({ seen }: { seen: { ctx: SurfaceContext | null } }) { seen.ctx = useActiveSurfaceContext('projects'); return null; }
 /* D2-1 (2026-11-01): the workstream, pathway and status filters are toolbar
-   selects (their counts in the option text), and the portfolio figures are the
-   list view's footing (.design/claude-convergence/D2.md §1.4 items 2, 4, 7). */
+   selects (their counts in the option text). The portfolio figures were the
+   list view's footing; P-122 (2026-11-10) puts them above the projects in both
+   views, from the server's counts only (p122ProjectsFiguresByDefault.test.tsx). */
 const select = (name: string) => screen.getByRole('combobox', { name }) as HTMLSelectElement;
 const choose = (name: string, value: string) => fireEvent.change(select(name), { target: { value } });
 const optionText = (name: string) => Array.from(select(name).options).map(option => option.textContent);
@@ -50,14 +54,16 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     const seen = { ctx: null as SurfaceContext | null };
     render(<><Projects {...props()} /><Probe seen={seen} /></>);
     await screen.findByText('Project IDE');
+    expect(figure(/active projects/i)).toBe('60');
+    expect(figure(/filings due within 60 days/i)).toBe('17');
+    // No average readiness: the server sends none, and the page mean was the browser's (P-122).
+    expect(figure(/average readiness/i)).toBeUndefined();
     showList();
     expect(figure(/active projects/i)).toBe('60');
-    expect(figure(/filing within 60 days/i)).toBe('17');
-    expect(figure(/average readiness/i)).toBe('40%');
     expect(optionText('Client type')).toContain('Medical device & IVD (58)');
     expect(optionText('Pathway')).toContain('PMA (20)');
     expect(optionText('Pathway')).toContain('Other (20)');
-    expect(screen.getByText(/Showing the first 2 projects/).textContent).toMatch(/readiness.*search.*these only/i);
+    expect(screen.getByText(/Showing the first 2 projects/).textContent).toMatch(/status filter and search cover these only.*figures above cover all/i);
     await waitFor(() => expect(seen.ctx?.facts?.totalPrograms).toBe(60));
     expect(seen.ctx?.summary).not.toMatch(/every figure.*first 2/);
     expect(seen.ctx?.facts?.readinessPageCount).toBe(2);
@@ -99,7 +105,8 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     choose('Pathway', 'pma');
     expect(await screen.findByText("Couldn't load the project portfolio")).toBeTruthy();
     showList();
-    expect(figure(/active projects/i)).toBe('—');
+    // No figure over a failed read: the page says it failed (P-122 shows none, where D2-1 showed a dash).
+    expect(figure(/active projects/i)).toBeUndefined();
     expect(screen.queryByText('No projects yet')).toBeNull();
     expect(screen.getByRole('option', { name: /^All pathways/ })).toBeTruthy();
   });

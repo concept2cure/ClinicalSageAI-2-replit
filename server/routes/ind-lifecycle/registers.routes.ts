@@ -12,8 +12,12 @@
  * unchanged.
  */
 
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireRole } from '../../middleware/auth';
+import { getSubmissionForRequest, SubmissionReadError } from '../../services/submission-service/submission-request-read';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../../services/c2c/current-program-access';
+import { MissingRequestDbContextError, requestPgClient } from '../../db/requestDb';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from '../c2c/project-access';
 import {
   createCrossReference,
   listCrossReferences,
@@ -55,13 +59,60 @@ import {
   type IcsrTransmissionErrorCode,
 } from '../../services/ind-lifecycle/ind-icsr-transmission-persistence';
 import type { IcsrGateway } from '../../services/ind-lifecycle/e2b-icsr-message';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates, type Ctx } from './shared';
 
 const router = Router();
 
 function submissionIdOf(raw: string | string[] | undefined): number | null {
   const n = Number(Array.isArray(raw) ? raw[0] : raw);
   return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/**
+ * The project admission for a register route (P-122, 2026-11-10). The persistence services read and write by
+ * organisation and submission id, so every route here answered for any IND of the organisation: a colleague who is
+ * not on a private project read and changed its registers. Each route the IND screen calls now admits the
+ * submission's project for this person first, as every Submission Center submission read does
+ * (getSubmissionForRequest); a change also needs write permission on that project (requireProjectAdmission, as a
+ * meeting on a submission does, ha-interactions.ts). A submission with no project is refused, never read
+ * organisation-wide. tests/db/p122-ind-registers.dbtest.ts.
+ */
+async function admitSubmission(req: Request, ctx: Ctx, submissionId: number, forWrite: boolean): Promise<void> {
+  const q = requestPgClient(req);
+  const submission = await getSubmissionForRequest(q, ctx, submissionId);
+  if (!submission.programId) {
+    throw new SubmissionReadError(409, 'UNANCHORED_SUBMISSION', 'Anchor this submission to a project before working its registers.');
+  }
+  if (!forWrite) return;
+  const access = await requireCurrentProgramAccess(q, { ...ctx, programId: submission.programId });
+  await requireProjectAdmission(req, String(access.projectId), true, { executor: q, programId: submission.programId });
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Which submission a stored register row belongs to, one fixed statement per register. */
+const ROW_SUBMISSION_SQL = {
+  crossReference: 'SELECT submission_id FROM ind_cross_references WHERE id = $1 AND organization_id = $2',
+} as const;
+
+/** The submission a stored register row belongs to, in this organisation; null when there is none. */
+async function rowSubmission(req: Request, ctx: Ctx, register: keyof typeof ROW_SUBMISSION_SQL, id: string): Promise<number | null> {
+  if (!UUID.test(id)) return null;
+  const { rows } = await requestPgClient(req).query(ROW_SUBMISSION_SQL[register], [id, ctx.organizationId]);
+  return rows.length === 1 ? Number(rows[0].submission_id) : null;
+}
+
+/** A project or read refusal, answered with its own status; anything else goes to `fail`. */
+function refuse(res: Response, err: unknown): void {
+  if (err instanceof MissingRequestDbContextError) {
+    // No request scope to admit the project in: refused, never answered organisation-wide.
+    return void res.status(503).json({ error: { code: err.code, message: 'The project could not be verified for this request.' } });
+  }
+  if (err instanceof SubmissionReadError || err instanceof ProgramReadAccessError || err instanceof ProjectAdmissionRefusal) {
+    const message = err.status === 503 ? 'The submission records could not be verified. Refresh and try again.' : err.message;
+    return void res.status(err.status).json({ error: { code: err.code, message } });
+  }
+  fail(res, err);
 }
 
 // ── Persisted cross-references (eCTD Module 1.4) ──────────────────────────────
@@ -79,6 +130,7 @@ router.post('/submission/:id/cross-references', limiter, requireRole(AUTHOR), as
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'referencedFileType (DMF|IND|NDA|BLA), referencedFileNumber and subjectName are required.' } });
   }
   try {
+    await admitSubmission(req, ctx, submissionId, true);
     const row = await createCrossReference(
       {
         submissionId,
@@ -93,7 +145,7 @@ router.post('/submission/:id/cross-references', limiter, requireRole(AUTHOR), as
     );
     res.status(201).json(row);
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -104,9 +156,10 @@ router.get('/submission/:id/cross-references', limiter, requireRole(AUTHOR), asy
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     res.json(await listCrossReferences(submissionId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -117,9 +170,10 @@ router.get('/submission/:id/cross-reference-register', limiter, requireRole(AUTH
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     res.json(await getCrossReferenceRegister(submissionId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -141,6 +195,7 @@ router.post('/submission/:id/cross-references/:crossRefId/file-loa', limiter, re
     return res.status(400).json({ error: { code: 'VALIDATION', message: '4-digit sequenceNumber, holderName, authorizedPartyName and signatoryName are required.' } });
   }
   try {
+    await admitSubmission(req, ctx, submissionId, true);
     const refs = await listCrossReferences(submissionId, ctx);
     const ref = refs.find((r) => r.id === crossRefId);
     if (!ref) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Cross-reference not found.' } });
@@ -184,7 +239,7 @@ router.post('/submission/:id/cross-references/:crossRefId/file-loa', limiter, re
     if (err instanceof CrossReferenceError) {
       return res.status(404).json({ error: { code: err.code, message: err.message } });
     }
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -195,6 +250,9 @@ router.patch('/cross-references/:crossRefId', limiter, requireRole(AUTHOR), asyn
   const id = Array.isArray(req.params.crossRefId) ? req.params.crossRefId[0] : req.params.crossRefId;
   const b = body(req);
   try {
+    const submissionId = await rowSubmission(req, ctx, 'crossReference', String(id));
+    if (submissionId === null) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Cross-reference not found.' } });
+    await admitSubmission(req, ctx, submissionId, true);
     const row = await updateCrossReference(
       String(id),
       {
@@ -210,7 +268,7 @@ router.patch('/cross-references/:crossRefId', limiter, requireRole(AUTHOR), asyn
     if (err instanceof CrossReferenceError) {
       return res.status(404).json({ error: { code: err.code, message: err.message } });
     }
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -220,13 +278,16 @@ router.delete('/cross-references/:crossRefId', limiter, requireRole(AUTHOR), asy
   if (!ctx) return noAuth(res);
   const id = Array.isArray(req.params.crossRefId) ? req.params.crossRefId[0] : req.params.crossRefId;
   try {
+    const submissionId = await rowSubmission(req, ctx, 'crossReference', String(id));
+    if (submissionId === null) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Cross-reference not found.' } });
+    await admitSubmission(req, ctx, submissionId, true);
     await deleteCrossReference(String(id), ctx);
     res.status(204).end();
   } catch (err) {
     if (err instanceof CrossReferenceError) {
       return res.status(404).json({ error: { code: err.code, message: err.message } });
     }
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -326,13 +387,14 @@ router.post('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), asyn
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'report.indNumber and report.productName are required.' } });
   }
   try {
+    await admitSubmission(req, ctx, submissionId, true);
     const row = await createAnnualReportDraft({ submissionId, report, indEffectiveDate: b.indEffectiveDate }, ctx);
     res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
     if (err instanceof AnnualReportError) {
       return res.status(err.code === 'VALIDATION' ? 400 : 404).json({ error: { code: err.code, message: err.message } });
     }
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -343,9 +405,10 @@ router.get('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), async
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     res.json(await listAnnualReports(submissionId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -371,10 +434,11 @@ router.get('/submission/:id/annual-reports/overdue', limiter, requireRole(AUTHOR
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     const asOf = typeof req.query.asOf === 'string' ? new Date(req.query.asOf) : undefined;
     res.json(await listOverdueAnnualReports(submissionId, ctx, asOf));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -395,13 +459,14 @@ router.post('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (r
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'indNumber and changedDocuments[] are required.' } });
   }
   try {
+    await admitSubmission(req, ctx, submissionId, true);
     const row = await createAmendmentDraft(
       { submissionId, amendment: { indNumber: String(b.indNumber), projectId: String(b.projectId ?? ''), changedDocuments: b.changedDocuments } },
       ctx,
     );
     res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -412,9 +477,10 @@ router.get('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (re
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     res.json(await listAmendments(submissionId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 

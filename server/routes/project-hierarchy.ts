@@ -105,6 +105,13 @@ router.get('/:projectId/tree', async (req: Request, res: Response) => {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
     const { organizationId } = tenantContext;
+    /* The project is admitted by the sharing policy before its subtree is read (P-122, 2026-11-10): this read answered
+       for any project of the organization, a private one included, and the project page's Plan step now reaches it. */
+    try {
+      await requireProjectAdmission(req, String(projectId), false);
+    } catch (error) {
+      return fail(res, workProjectFailure(error));
+    }
 
     const tree = await rollupService.getTree(projectId, organizationId);
     if (!tree) return res.status(404).json({ error: 'Project not found' });
@@ -352,6 +359,13 @@ router.get('/:projectId/rollup', async (req: Request, res: Response) => {
     const tenantContext = getTenantContext(req);
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
     const { organizationId } = tenantContext;
+    /* The project is admitted by the sharing policy before its subtree is read (P-122, 2026-11-10): this read answered
+       for any project of the organization, a private one included, and the project page's Plan step now reaches it. */
+    try {
+      await requireProjectAdmission(req, String(projectId), false);
+    } catch (error) {
+      return fail(res, workProjectFailure(error));
+    }
 
     const tree = await rollupService.getTree(projectId, organizationId);
     if (!tree) return res.status(404).json({ error: 'Project not found' });

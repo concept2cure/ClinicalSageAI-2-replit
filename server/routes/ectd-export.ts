@@ -31,6 +31,7 @@ import { validateEctdPackage } from '../services/submission-gateways/ectd-struct
 import { ArchiveLimitError } from '../services/archive/safeZip';
 import { EctdCompletenessError } from '../services/ectd/completeness';
 import { PackageIdentityMissingError } from '../services/ectd/package-identity';
+import { ValidationError } from '../services/submission-gateways/types';
 import {
   validatePackage as validateEctdLeafPackage,
   type ECTDLeaf,
@@ -147,6 +148,13 @@ function classifyError(error: unknown): {
   // A rehearsal asked of an original sequence: nothing precedes 0000.
   if (/rehearsal binds a follow-up sequence/i.test(raw)) {
     return { status: 400, code: 'REHEARSAL_NOT_APPLICABLE', message: raw };
+  }
+  // The packager refused the package for a filing reason it states in full (FDA validation 1789: study files no
+  // Study Tagging File would reference). A person can act on it, so it is a refusal in the packager's words, not a
+  // server failure: it was answered 500 "eCTD operation failed" (2026-11-10). After the named classes above, which
+  // the packager also throws as ValidationError, and before the not-found phrases, which its sentence may contain.
+  if (error instanceof ValidationError) {
+    return { status: 422, code: 'PACKAGE_VALIDATION_REFUSED', message: raw };
   }
   if (/not found|no such|does not exist/i.test(raw)) {
     return {
@@ -776,6 +784,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       error: 'eCTD package generation failed',
       code: classified.code,
       message: classified.message,
+      ...(classified.code === 'PACKAGE_VALIDATION_REFUSED' ? { findings: (error as ValidationError).findings } : {}),
       correlationId,
     });
   }

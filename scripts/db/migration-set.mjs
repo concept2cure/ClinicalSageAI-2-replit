@@ -3822,6 +3822,17 @@ export const C2C_MIGRATION_FILES = [
   // cre_evidence_sources (a deterministic engine's grade and its basis) and 'data_room' admitted by
   // c2c_pinned_ev_kind_check, replaced only when its live definition differs. Additive; no table.
   'migrations/20261106_data_room_grade.sql',
+  // A TMF filing names its study, and a removal stays on record (D2, eTMF convergence E2 and E3,
+  // P-74 and P-75, 2026-11-10): study_ref on tmf_artifact_filings with a NOT VALID same-org key
+  // to cdisc_prm_studies (id, tenant_id), ON DELETE SET NULL (study_ref), the 20261008d shape;
+  // removed_at, removed_by, removal_reason and a CHECK that a removal carries its reason. After
+  // the table's creator (20260615), 20260926b and 20261008d. Each statement runs only when its
+  // object is absent; no DROP; no new table, so the sweeps below have nothing new to policy.
+  'migrations/20261110_tmf_filings_study_ref.sql',
+  // P-122 defects, item 2 (2026-11-10): projects.risk_level loses its DEFAULT 'medium', a risk nobody assessed that
+  // the hierarchy roll-up reported as one. Conditional on the column still having a default; changes no row; no table.
+  // Its only creator is push, and shared/schema.ts drops the default in the same change (RULE 1).
+  'migrations/20261110_projects_risk_level_not_defaulted.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

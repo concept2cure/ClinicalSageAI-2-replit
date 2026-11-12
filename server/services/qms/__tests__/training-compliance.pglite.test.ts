@@ -18,7 +18,7 @@ import {
   extractTableDdl,
   type JourneyDb,
 } from '../../../../tests/golden-journeys/harness';
-import { readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance } from '../training-compliance';
+import { readQmsTrainingCompliance, readQmsTrainingExpiring, readQmsTrainingView, summarizeQmsTrainingCompliance } from '../training-compliance';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../document-approval-signature';
 import { QMS_APPROVAL_FIXTURE_DDL, assignToEveryone, seedQmsApprovalFixture } from './_release-approval-fixture';
 import { QMS_TRAINING_DECLARATION } from '../../../../shared/qms/training';
@@ -378,3 +378,33 @@ describe('outstanding training in the per-person view (G10, MR-12 Stage 4 slice 
     expect(await expiring(60)).toEqual([]);
   });
 });
+
+/* Quality review, 2026-11-10: the view's all-clear spoke for documents it never assessed. A document assigned to people
+   whose released text cannot be read gives no row of any kind, and only the first 200 trainable documents are read;
+   the view now says both, so the client gives no all-clear over them. */
+describe('what the per-person view assessed', () => {
+  const view = (withinDays: number) => readQmsTrainingView(
+    { query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, 1, withinDays, NOW);
+
+  it('counts an assigned document whose released text cannot be read as not assessed', async () => {
+    const doc = await document();
+    await jdb.pglite.query('DELETE FROM electronic_signatures WHERE signed_target = $1', [`qms-document:${doc}`]);
+    expect(await view(60)).toEqual({ rows: [], unassessed: 1, documentsCapped: false });
+  });
+
+  it('counts, for a reader who sees only their own rows, only the documents assigned to them', async () => {
+    const doc = await document();
+    await jdb.pglite.query('DELETE FROM electronic_signatures WHERE signed_target = $1', [`qms-document:${doc}`]);
+    const asReader = (userId: number) => readQmsTrainingView(
+      { query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, 1, 60, NOW, userId);
+    expect((await asReader(10)).unassessed).toBe(1);
+    expect((await asReader(4242)).unassessed).toBe(0);
+  });
+
+  it('counts nothing as not assessed when every assigned document was read', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 300 });
+    expect(await view(60)).toMatchObject({ unassessed: 0, documentsCapped: false });
+  });
+});
+

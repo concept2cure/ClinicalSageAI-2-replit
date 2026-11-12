@@ -166,8 +166,8 @@ describe('CmOverview — completeness on the section-approval table', () => {
     wire(board({
       sections: [
         section('3.2.S.1', 'draft', 100),
-        section('3.2.P.6', 'draft', 0, ['containerClosureDescription', 'suitabilityJustification']),
-        section('3.2.P.8', 'approved', 60, ['shelfLifeJustification']),
+        section('3.2.P.6', 'draft', 0, ['drugProductContainerDescription', 'drugProductSuitabilityJustification']),
+        section('3.2.P.8', 'approved', 60, ['drugProductShelfLifeClaim']),
         section('3.2.P.1', 'draft', null),
       ],
     }));
@@ -179,12 +179,12 @@ describe('CmOverview — completeness on the section-approval table', () => {
     // The incomplete draft: its score, its missing inputs, and no live approval.
     const p6 = row('3.2.P.6');
     expect(within(p6).getByText('0%')).toBeTruthy();
-    expect(within(p6).getByText(/containerClosureDescription/)).toBeTruthy();
-    expect(within(p6).getByText(/suitabilityJustification/)).toBeTruthy();
+    expect(within(p6).getByText(/the drug product’s container;/)).toBeTruthy();
+    expect(within(p6).getByText(/why the drug product’s container closure is suitable/)).toBeTruthy();
     const withheld = within(p6).getByRole('button', { name: /Approve section/ }) as HTMLButtonElement;
     expect(withheld.disabled).toBe(true);
     expect(withheld.title).toMatch(/0% complete/);
-    expect(withheld.title).toMatch(/containerClosureDescription/);
+    expect(withheld.title).toMatch(/Missing required inputs: the drug product’s container; why the drug product’s container closure is suitable\./);
     // …and the way to where it gets fixed.
     fireEvent.click(within(p6).getByRole('button', { name: /build board/i }));
     expect(setTab).toHaveBeenCalledWith('build');
@@ -198,7 +198,7 @@ describe('CmOverview — completeness on the section-approval table', () => {
     // exactly that — approved AND incomplete — the state the export gate refuses.
     const p8 = row('3.2.P.8');
     expect(within(p8).getByText('60%')).toBeTruthy();
-    expect(within(p8).getByText(/shelfLifeJustification/)).toBeTruthy();
+    expect(within(p8).getByText(/the drug product’s shelf-life claim/)).toBeTruthy();
     /* The chip says the WORD, not the stored token (D5 §A.4.8/16,
        §WA.4.2 rule 10): `approval_status` holds "approved" and a screen that
        files to an agency does not show a reader an enum. */

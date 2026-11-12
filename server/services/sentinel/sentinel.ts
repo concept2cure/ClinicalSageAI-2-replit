@@ -714,12 +714,23 @@ export class AISentinel {
       severity?: string;
       limit?: number;
       offset?: number;
+      /** The projects the reader can open (P-122, 2026-11-10). A finding is listed only when its project and every
+       *  project it names in `affected_items` are among them: a cross-project finding names two projects in its title,
+       *  and one of them may be private. Absent: no project filter (the scheduler's own reads). */
+      readableProjectIds?: readonly number[];
     } = {}
   ): Promise<{ findings: any[]; total: number }> {
     let query = `SELECT * FROM sentinel_findings WHERE organization_id = $1`;
     const params: any[] = [organizationId];
     let idx = 2;
 
+    if (options.readableProjectIds) {
+      const readable = idx++;
+      query += ` AND project_id = ANY($${readable}::int[])` +
+        ` AND NOT EXISTS (SELECT 1 FROM json_array_elements(COALESCE(affected_items, '[]'::json)) item` +
+        ` WHERE item->>'type' = 'project' AND NOT ((item->>'id') = ANY($${readable}::int[]::text[])))`;
+      params.push([...options.readableProjectIds]);
+    }
     if (options.projectId) {
       query += ` AND project_id = $${idx++}`;
       params.push(options.projectId);
@@ -747,6 +758,21 @@ export class AISentinel {
     const result = await this.pool.query(query, params);
 
     return { findings: result.rows, total: countResult.rows[0]?.total || 0 };
+  }
+
+  /** The projects a finding names: its own and each project in `affected_items`. Null when no such finding. */
+  async findingProjectIds(findingId: string, organizationId: number): Promise<number[] | null> {
+    const { rows } = await this.pool.query(
+      `SELECT project_id, COALESCE(affected_items, '[]'::json) AS affected_items
+       FROM sentinel_findings WHERE finding_id = $1 AND organization_id = $2`,
+      [findingId, organizationId]
+    );
+    if (!rows[0]) return null;
+    const items: unknown[] = Array.isArray(rows[0].affected_items) ? rows[0].affected_items : [];
+    const named = items
+      .filter((item): item is { type: string; id: unknown } => !!item && typeof item === 'object' && (item as { type?: unknown }).type === 'project')
+      .map((item) => Number(item.id));
+    return [...new Set([rows[0].project_id === null ? NaN : Number(rows[0].project_id), ...named])];
   }
 
   async updateFindingStatus(

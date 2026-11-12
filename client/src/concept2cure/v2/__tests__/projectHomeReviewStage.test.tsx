@@ -271,14 +271,13 @@ describe('ProjectHome — the Review tab: its empty state and its doors', () => 
     expect(screen.queryByRole('button', { name: 'Review documents on the review board' })).toBeNull();
   });
 
-  /* D3-4: the tab lists no tasks; "Tasks and approvals" and its "See all tasks in Tasks" are on Plan
-     (projectHomeMyWorkLine.test.tsx, projectHomeReviewWork.test.tsx). */
-  it('the tab has no tasks list and no tasks door', async () => {
+  /* D3-4 took "Tasks and approvals" off the tab; P-122 (2026-11-10) puts it back, the same panel as Plan's, with its
+     door to Tasks (projectHomeReviewWork.test.tsx, projectPageShown.test.tsx). */
+  it('the tab lists the tasks and approvals again, with the door to all tasks', async () => {
     serve(() => ok(board(QUEUE)));
     render(<ProjectHome {...props()} />);
     openReviewStage();
     await screen.findByRole('region', { name: 'Reviews' });
-    expect(screen.queryByRole('region', { name: 'Tasks and approvals' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'See all tasks in Tasks' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Tasks and approvals' })).toBeTruthy();
   });
 });

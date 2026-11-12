@@ -1,0 +1,6 @@
+# Green: the same test after the converter starts LibreOffice with BlockUntrustedRefererLinks in each run's profile
+ ✓ server/services/__tests__/pdf-converter.linked-content.real.test.ts > the converter and a Word file that links to an address > starts LibreOffice with linked content from an untrusted file blocked 2ms
+ ✓ server/services/__tests__/pdf-converter.linked-content.real.test.ts > the converter and a Word file that links to an address > requests nothing while converting a file with a linked image, and still writes the PDF 1393ms
+ ✓ server/services/__tests__/pdf-converter.linked-content.real.test.ts > the converter and a Word file that links to an address > requests nothing when the linked image is declared as a hyperlink 1224ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)

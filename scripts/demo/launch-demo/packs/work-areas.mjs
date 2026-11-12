@@ -14,6 +14,7 @@
  */
 import { must } from '../lib.mjs';
 import { NOT_EXECUTED_NO_SIGNER } from './biotech-shared.mjs';
+import { ensureCmcRegisters } from './cmc-registers.mjs';
 
 const DAY = 86_400_000;
 const isoIn = (days) => new Date(Date.now() + days * DAY).toISOString();
@@ -307,6 +308,29 @@ async function ensureSpecs({ api, tally }, program, specs) {
   return created;
 }
 
+/**
+ * A study's results as the register's result form records them
+ * (CmcModule.tsx `recordResult`): each carries the storage condition the study
+ * was placed at (the named condition, as `stabConditionText` reads it, not the
+ * code) and the within-specification reading the pack states. A pack that
+ * states no reading leaves it unrecorded rather than assuming one.
+ */
+function resultsAsRecorded(study) {
+  const storage = Array.isArray(study.storage) ? study.storage : [];
+  const named = storage.find((c) => !STORAGE_CODES.has(c)) ?? storage[0];
+  return (study.results ?? []).map((r) => ({ ...r, ...(r.condition || !named ? {} : { condition: named }) }));
+}
+const STORAGE_CODES = new Set(['LT', 'ACC', 'INT', 'REF', 'STR']);
+
+/** True when the recorded series is exactly the pack's, and lacks a condition or a reading the pack now states. */
+function seededWithoutReading(recorded, seeded) {
+  if (!Array.isArray(recorded) || !Array.isArray(seeded) || recorded.length !== seeded.length) return false;
+  const key = (r) => `${r.timePoint}|${r.parameter}|${r.result}`;
+  const theirs = new Set(recorded.map(key));
+  if (!seeded.every((r) => theirs.has(key(r)))) return false;
+  return recorded.some((r) => !r.condition || (r.withinSpecification === undefined && seeded.some((x) => key(x) === key(r) && x.withinSpecification !== undefined)));
+}
+
 async function ensureStability({ api, tally }, program, studies) {
   const list = rowsOf(must(await api('GET', `/api/cmc/stability-studies?projectId=${encodeURIComponent(program.id)}`), 200, 'list stability studies'));
   let created = 0;
@@ -354,11 +378,26 @@ async function ensureStability({ api, tally }, program, studies) {
       created += 1;
     }
     const recorded = row?.stabilityData?.results ?? row?.stability_data?.results ?? [];
-    if (s.results?.length && !(Array.isArray(recorded) && recorded.length)) {
+    const results = resultsAsRecorded(s);
+    if (results.length && !(Array.isArray(recorded) && recorded.length)) {
       must(await api('PUT', `/api/cmc/stability-studies/${row.id}`, {
-        stabilityData: { results: s.results },
+        stabilityData: { results },
         reason: 'Demo seed: record the pull-point results measured to date.',
       }), 200, `record results for "${s.title}"`);
+      tally.created('cmc-stability-results');
+    } else if (results.length && seededWithoutReading(recorded, s.results)) {
+      /* P-122: an earlier run recorded this study's results without the two
+         things the register's own result form records with each one — the
+         storage condition it was pulled at and whether it was read as within
+         its criterion. Without the condition, ICH Q1E refused every study
+         placed at a code and a condition ("results are not recorded against a
+         condition"); without the reading, the register counted every result as
+         outside its limits. Only the seed's own rows are rewritten: the
+         recorded series must be exactly the pack's, value for value. */
+      must(await api('PUT', `/api/cmc/stability-studies/${row.id}`, {
+        stabilityData: { results },
+        reason: 'Demo seed: record the storage condition and the within-specification reading each pull point was taken with.',
+      }), 200, `re-record results for "${s.title}"`);
       tally.created('cmc-stability-results');
     }
     /* The shelf-life claim, on a study that is already on file without one.
@@ -459,7 +498,7 @@ async function ensureBatches({ api, tally }, program, batches) {
   return created;
 }
 
-/** cmc: { methods: [...], specs: [...], stability: [...], batches: [...] } */
+/** cmc: { methods: [...], specs: [...], stability: [...], batches: [...], registers?: {...} (cmc-registers.mjs) } */
 export async function ensureCmc(ctx, program, cmc, label) {
   const { run } = ctx;
   /* The materials first: §3.2.S and §3.2.P are written about them, and the
@@ -486,6 +525,9 @@ export async function ensureCmc(ctx, program, cmc, label) {
       `${await ensureQcResults(ctx, program, cmc.qcResults)} created of ${cmc.qcResults.length}` +
       ' — second-person review is left to the register, so these compose as not reviewed');
   }
+  /* The eleven registers above the seven this function writes itself, when the
+     pack carries them (P-122): before the compile, so §3.2 composes from them. */
+  await ensureCmcRegisters(ctx, program, cmc.registers, label);
 }
 
 /* ───────────────────────── Biostatistics ───────────────────────── */
@@ -736,7 +778,35 @@ export async function ensureAgencyLetter({ api, run, tally }, program, letter, l
     out.proposals = { questions: questions.length, commitments: refs, commitmentsRecorded: recorded };
     return `${questions.length} questions, ${refs.length} commitments proposed${refs.length ? ` (${recorded} recorded)` : ''}`;
   });
+  if (letter.record?.length) await recordLetterQuestions({ api, run, tally }, commsPath, out.eventId, letter, label);
   return out;
+}
+
+/**
+ * Record the letter's questions, as a person does from its proposals: each
+ * with the agency's number and words, the CTD section it concerns, and a
+ * reason (POST …/questions, a governed write). P-122: no demo letter carried a
+ * recorded question, so CMC's "Agency questions on Module 3" was always empty
+ * and the questions could not be answered from the Module 3 they are about.
+ * A question already recorded under its number is left alone.
+ */
+async function recordLetterQuestions({ api, run, tally }, commsPath, eventId, letter, label) {
+  await run.step(`Communication: record the questions of "${letter.fileName}" on ${label}`, async () => {
+    const base = `${commsPath}/${encodeURIComponent(eventId)}`;
+    const read = must(await api('GET', `${base}/questions`), 200, 'read the letter\'s recorded questions');
+    const have = new Set((read.data?.questions ?? []).map((q) => q.questionRef));
+    let created = 0;
+    for (const q of letter.record) {
+      if (have.has(q.questionRef)) { tally.found('agency-question'); continue; }
+      must(await api('POST', `${base}/questions`, {
+        ...q,
+        reason: 'Demo seed: record the question as the agency numbered and worded it, with the CTD section it concerns.',
+      }), [200, 201], `record question ${q.questionRef}`);
+      tally.created('agency-question');
+      created += 1;
+    }
+    return `${created} recorded of ${letter.record.length}`;
+  });
 }
 
 export { dateIn };

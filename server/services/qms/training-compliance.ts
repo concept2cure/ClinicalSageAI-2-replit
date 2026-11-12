@@ -8,6 +8,8 @@ import { planTrainingTasks } from './training-task';
 import { QMS_TRAINABLE_DOCUMENT_TYPES, type QmsTrainingAcknowledgement } from '../../../shared/qms/training';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** The trainable documents one read covers (`LIMIT` below); a view at the cap says so. */
+const TRAINABLE_DOCUMENT_CAP = 200;
 
 /**
  * The verified current receipts per release in force: the exact released
@@ -22,8 +24,8 @@ async function readCurrentReceipts(client: TrainingSqlClient, organizationId: nu
   // the signed predecessor is what members are trained on (in-force-release.ts).
   const candidates = await client.query(
     `SELECT * FROM qms_documents WHERE organization_id = $1 AND deleted_at IS NULL
-      AND status IN ('effective', 'draft', 'in_review') AND doc_type = ANY($2::text[]) ORDER BY doc_number LIMIT 200`,
-    [organizationId, QMS_TRAINABLE_DOCUMENT_TYPES],
+      AND status IN ('effective', 'draft', 'in_review') AND doc_type = ANY($2::text[]) ORDER BY doc_number LIMIT $3`,
+    [organizationId, QMS_TRAINABLE_DOCUMENT_TYPES, TRAINABLE_DOCUMENT_CAP],
   );
   const today = now.toISOString().slice(0, 10);
   const inForce = await readInForceReleases(client, organizationId, candidates.rows as unknown as QmsDocumentRow[]);
@@ -56,7 +58,7 @@ async function readCurrentReceipts(client: TrainingSqlClient, organizationId: nu
   // task resolver's question (training-task.ts), asked of these.
   const trainable = new Map((candidates.rows as unknown as QmsDocumentRow[]).map(row =>
     [Number(row.id), { docNumber: String(row.doc_number), title: String(row.title) }]));
-  return { releases, trainable };
+  return { releases, trainable, documentsCapped: candidates.rows.length >= TRAINABLE_DOCUMENT_CAP };
 }
 
 /**
@@ -258,13 +260,34 @@ const dayOf = (r: UnnamedRow) => (r.kind === 'lapsing' ? r.expiresAt : r.dueDate
 export async function readQmsTrainingExpiring(
   client: TrainingSqlClient, organizationId: number, withinDays: number, now = new Date(),
 ): Promise<QmsTrainingExpiry[]> {
-  const { releases, trainable } = await readCurrentReceipts(client, organizationId, now);
+  return (await readQmsTrainingView(client, organizationId, withinDays, now)).rows;
+}
+
+/** The per-person view and what it could not assess: assigned documents whose released text cannot be read (they give
+ *  no row of any kind), and whether the trainable documents read stopped at their cap (Quality review, 2026-11-10).
+ *  With `forUser`, a reader who sees only their own rows, the unassessed count is of the documents assigned to them. */
+export interface QmsTrainingView { rows: QmsTrainingExpiry[]; unassessed: number; documentsCapped: boolean }
+
+export async function readQmsTrainingView(
+  client: TrainingSqlClient, organizationId: number, withinDays: number, now = new Date(), forUser: number | null = null,
+): Promise<QmsTrainingView> {
+  const { releases, trainable, documentsCapped } = await readCurrentReceipts(client, organizationId, now);
+  const unassessed = releases.filter(r => !r.context.eligible
+    && (forUser === null ? r.coverage.assignees.length > 0 : r.coverage.assignees.some(a => a.userId === forUser))).length;
+  const rows = await personRows(client, organizationId, { withinDays, now }, { releases, trainable });
+  return { rows, unassessed, documentsCapped };
+}
+
+async function personRows(
+  client: TrainingSqlClient, organizationId: number, { withinDays, now }: { withinDays: number; now: Date },
+  { releases, trainable }: { releases: Release[]; trainable: Map<number, { docNumber: string; title: string }> },
+): Promise<QmsTrainingExpiry[]> {
   const lapsedReceipts = await readLapsedReceipts(client, organizationId, releases.map(r => Number(r.document.id)), now);
   const horizon = now.getTime() + withinDays * DAY_MS;
   const lapses = releases.flatMap(release => releaseExpiry(release, lapsedReceipts, now, horizon));
-  const lapsedKeys = new Set(lapses.filter(r => r.lapsed).map(r => `${r.userId}:${r.documentId}`));
+  const lapsedKeys = new Set(lapses.filter(r => r.lapsed).map(r => `${r.userId}:${r.documentId}:${r.documentVersion}`));
   const outstanding = (await outstandingTraining(client, organizationId, trainable, now, new Date(horizon).toISOString().slice(0, 10)))
-    .filter(r => !lapsedKeys.has(`${r.userId}:${r.documentId}`));
+    .filter(r => !lapsedKeys.has(`${r.userId}:${r.documentId}:${r.documentVersion}`));
   const out: UnnamedRow[] = [...outstanding, ...lapses];
   if (out.length === 0) return [];
   // Names only for the people listed, and only as this organization's members

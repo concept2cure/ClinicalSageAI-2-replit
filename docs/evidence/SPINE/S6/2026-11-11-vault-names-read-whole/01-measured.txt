@@ -1,0 +1,17 @@
+# Measured in the running app (local server on PostgreSQL, the demo's IND project C2C-101, Library tab), Chromium through Playwright.
+# 'cut' counts elements whose text is wider than their box (scrollWidth > clientWidth).
+
+## Before: the stylesheet at 2b0c842d9d
+1440px: folder names cut 102 of 118; titles cut 6 of 10; field lines cut 5 of 10; page 1120px, tree 220px, list 412px, record 360px; horizontal scroll false; console errors []
+1920px: folder names cut 102 of 118; titles cut 6 of 10; field lines cut 5 of 10; page 1120px, tree 220px, list 412px, record 360px; horizontal scroll false; console errors []
+1280px: folder names cut 102 of 118; titles cut 9 of 10; field lines cut 10 of 10; page 1016px, tree 220px, list 308px, record 360px; horizontal scroll false; console errors []
+390px: folder names cut 0 of 0; titles cut 7 of 10; field lines cut 0 of 10; page 390px, tree nullpx, list 358px, record nullpx; horizontal scroll false; console errors []
+
+## After
+1440px: folder names cut 0 of 118; titles cut 0 of 10; field lines cut 0 of 10; page 1176px, tree 242px, list 446px, record 360px; horizontal scroll false; console errors []
+1920px: folder names cut 0 of 118; titles cut 0 of 10; field lines cut 0 of 10; page 1520px, tree 340px, list 692px, record 360px; horizontal scroll false; console errors []
+1280px: folder names cut 0 of 118; titles cut 0 of 10; field lines cut 0 of 10; page 1016px, tree 220px, list 308px, record 360px; horizontal scroll false; console errors []
+390px: folder names cut 0 of 0; titles cut 0 of 10; field lines cut 0 of 10; page 390px, tree nullpx, list 358px, record nullpx; horizontal scroll false; console errors []
+
+## Every Vault tab after the change, and the Vault with no project open
+1440, 1920 and 390px: Data catalog, Uploads, Required documents, Governed artifacts, Seals & fixity, Library and the no-project page: no horizontal scroll, no console error. At 390px the Structure drawer shows each folder name in full.

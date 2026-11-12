@@ -7,7 +7,7 @@
     "body": {
       "substanceName": "BX-902",
       "inn": "belantezumab",
-      "projectId": "1fae3511-9127-4bbf-ba87-a3d1bff918d2",
+      "projectId": "84914360-8fb5-48f7-b167-54a2a092efb2",
       "manufacturingProcess": {
         "route": "CHO cell culture, fed-batch; protein A capture"
       },
@@ -17,14 +17,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 33,
+    "durationMs": 32,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 39,
+        "id": 52,
         "organizationId": 2,
-        "projectId": "1fae3511-9127-4bbf-ba87-a3d1bff918d2",
+        "projectId": "84914360-8fb5-48f7-b167-54a2a092efb2",
         "substanceName": "BX-902",
         "structuralFormula": null,
         "molecularFormula": null,
@@ -46,8 +46,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": null,
-        "createdAt": "2026-11-10T03:39:31.731Z",
-        "updatedAt": "2026-11-10T03:39:31.731Z"
+        "createdAt": "2026-11-10T13:06:46.607Z",
+        "updatedAt": "2026-11-10T13:06:46.607Z"
       },
       "module3Linked": true
     }

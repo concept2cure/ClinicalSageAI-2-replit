@@ -342,6 +342,8 @@ router.get('/attestation', async (req: Request, res: Response) => {
     if (err instanceof AttestationKeyMissingError) {
       return res.status(503).json({
         error: 'Attestation not configured',
+        // The screen branches on this: a key that is not configured is not an outage, and a retry cannot fix it.
+        code: 'ATTESTATION_KEY_NOT_CONFIGURED',
         detail: 'AUDIT_ATTESTATION_KEY env var is required',
       });
     }
