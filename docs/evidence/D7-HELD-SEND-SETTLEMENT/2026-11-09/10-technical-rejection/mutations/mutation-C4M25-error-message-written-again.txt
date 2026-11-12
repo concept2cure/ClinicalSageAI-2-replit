@@ -1,0 +1,7 @@
+MUTATION C4M25-error-message-written-again in server/services/ectd/filed-sequence-rejection.ts (on the final code and tests, 2026-11-09T18:39:32.695643Z): replaced [        SET status = $3::text,
+            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('technicalRejection', $4::jsonb),] with [        SET status = $3::text, error_message = 'Technical rejection recorded.',
+            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('technicalRejection', $4::jsonb),]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > T1 the precheck states it; the act sets the sequence rejected, records the transmittal, and writes the chained row 400ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 98fb0ebf025190618b5939f955a8752c71689fa6648ee6123f047e879c92adcc (expected 98fb0ebf025190618b5939f955a8752c71689fa6648ee6123f047e879c92adcc)

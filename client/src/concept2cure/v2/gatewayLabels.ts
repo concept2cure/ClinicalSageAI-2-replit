@@ -59,13 +59,21 @@ export function heldSendWhen(iso: string | null | undefined): string | null {
   return `${day} at ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`;
 }
 /** P-92: a held send settled by signature, as the transmittal keeps it (fda-esg-receipts.ts markHeldSendSettled). */
-export interface HeldSendSettlementRecord { outcome?: string; kind?: string; settledAt?: string }
+export interface HeldSendSettlementRecord { outcome?: string; kind?: string; settledAt?: string; reopenedBy?: { at?: string | null } | null }
 /** A verified FDA receipt kept with the transmittal; `contradicts` when it disagrees with a settlement (P-108 1(c)). */
 export interface KeptReceipt { verified?: boolean; contradicts?: string; receivedAt?: string }
 const SETTLED_ON: Record<string, string> = {
   ack2: "FDA's Ack2", ack3: "FDA's Ack3", 'fda-non-receipt-confirmation': "FDA's written confirmation",
   'platform-proof': "the platform's own record that it never left",
 };
+/** FDA's verified answer kept against a settlement, in words (P-108 1(c)). */
+function keptAnswerWords(s: HeldSendSettlementRecord, kept: KeptReceipt): string {
+  const keptOn = heldSendDay(kept.receivedAt) ?? 'on an unrecorded day';
+  return s.outcome === 'not-received' ? `FDA's signed receipt, kept ${keptOn}, shows it was received` : `FDA's signed answer, kept ${keptOn}, refuses it`;
+}
+/** P-92 C3: the settlement re-opened on that answer by a second signed act, after ' · ', or nothing. */
+const reopenedWords = (s: HeldSendSettlementRecord): string =>
+  s.reopenedBy ? ` · re-opened on FDA's answer, by signature, ${heldSendDay(s.reopenedBy.at ?? null) ?? 'an unrecorded day'}` : '';
 /** How a held send was settled, in words, and FDA's later verified answer against it; null for a row never settled.
  *  `style` is the transmissions list's ("on …, by signature, DAY") or Gateway transmittals' ("by signature · … · DAY"). */
 export function heldSendSettlementWords(
@@ -79,9 +87,23 @@ export function heldSendSettlementWords(
   const day = heldSendDay(s.settledAt) ?? 'an unrecorded day';
   const settled = style === 'row' ? `${way} on ${ground}, by signature, ${day}` : `${way} by signature · ${ground} · ${day}`;
   const kept = (m?.as2ReceiptHistory ?? []).find((e) => e?.verified === true && e.contradicts === s.outcome);
-  if (!kept) return settled;
-  const keptOn = heldSendDay(kept.receivedAt) ?? 'on an unrecorded day';
-  return s.outcome === 'not-received'
-    ? `${settled} · FDA's signed receipt, kept ${keptOn}, shows it was received`
-    : `${settled} · FDA's signed answer, kept ${keptOn}, refuses it`;
+  return kept ? `${settled} · ${keptAnswerWords(s, kept)}${reopenedWords(s)}` : settled;
+}
+
+/** FDA's technical rejection recorded on a transmittal (P-92 C4, and the package spine's before it). */
+export interface TechnicalRejectionRecord { sequence?: string | null; recordedAt?: string | null; evidence?: { kind?: string | null } | null }
+/** The rejection in words: a sequence's, recorded on FDA's Ack3 (P-92 C4), or a package's (sweep F19). Never the stored keys. */
+export function technicalRejectionWords(m: { technicalRejection?: TechnicalRejectionRecord | null } | null | undefined, style: 'row' | 'log'): string | null {
+  const r = m?.technicalRejection;
+  if (!r) return null;
+  const day = heldSendDay(r.recordedAt ?? null) ?? 'an unrecorded day';
+  if (r.evidence?.kind === 'ack3') return style === 'row' ? `rejected by FDA on its Ack3, by signature, ${day}` : `rejected by FDA on its Ack3, by signature · ${day}`;
+  return `technical rejection recorded${r.sequence ? ` · sequence ${r.sequence} off file` : ''}`;
+}
+
+/** P-92 C3: a settlement of this sequence that FDA's verified answer contradicts and that is not yet re-opened. */
+export function awaitsReopen(m: { heldSendSettlement?: HeldSendSettlementRecord | null; as2ReceiptHistory?: KeptReceipt[] | null; dispatchBinding?: { sequenceId?: number } | null } | null | undefined, sequenceId: number): boolean {
+  const s = m?.heldSendSettlement;
+  if (!s || s.reopenedBy || m?.dispatchBinding?.sequenceId !== sequenceId) return false;
+  return (m?.as2ReceiptHistory ?? []).some((e) => e?.verified === true && e.contradicts === s.outcome);
 }

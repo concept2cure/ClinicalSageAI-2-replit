@@ -427,6 +427,49 @@ SELECT id, metadata->'heldSendSettlement' AS settlement FROM submission_transmit
                 WHERE e->>'contradicts' = 'not-received');
 ```
 
+### 3b. A sent sequence with no record of what it carried (P-99)
+
+A sequence sent before the platform kept what each send carried is read from its compiles, or from nothing, and the next
+sequence of its submission cannot be built against it until its send is put on record ("…nothing on record says what it
+carried … Put it on record from its Dispatch tab in Submission Center."). The person does it from the sequence's
+Dispatch tab, under "Transmit is not available": **Put sequence NNNN's send on record…**.
+
+1. **Read back (bytes kept, P-99 C2).** When the transmittal names a kept copy of the package (`metadata.sentPackage`),
+   the record is read back from those bytes: every document, its section recovered from its backbone ID and its folder,
+   what points outside the package bound against the filed state, the stored shape the guard builds. The person reads
+   the list, gives a reason and records it; no signature (the content is the bytes', and they bind what they read).
+   The record goes on the send's own row (`leafManifest`, `leafManifestDerivation`, and `restoredBinding` when the
+   gateway wrote no binding), and `ECTD_SENT_RECORD_REDERIVED` on the sequence's chain carries the reason.
+2. **A signed statement (no bytes kept, P-99 C3).** Not yet available; the door says so.
+3. **A kept copy that cannot be read back** (missing, or not the package the row records as sent) is an integrity
+   incident (P-108 4(c)), never covered by a statement. Escalate; nothing is recorded.
+
+Earlier sequences first: the door refuses a sequence while one before it is still not on record, naming it.
+
+**Read-only queries, on each deployed database, before P-99 C2 deploys** (results go to the release record; any row in
+(c) is a founder decision, not an edit):
+
+```sql
+-- (a) Sent sequences the lifecycle read refuses today (no transmit record, no compile), and whether each has a kept copy.
+SELECT s.organization_id, s.submission_id, s.id AS sequence_id, s.sequence_number,
+       EXISTS (SELECT 1 FROM submission_transmittals t WHERE t.organization_id = s.organization_id
+                AND t.metadata->'dispatchBinding'->>'sequenceId' = s.id::text AND t.metadata ? 'sentPackage') AS bytes_kept
+  FROM ectd_sequences s
+ WHERE s.deleted_at IS NULL AND s.dispatch_status IN ('sent', 'acknowledged')
+   AND NOT EXISTS (SELECT 1 FROM submission_transmittals t WHERE t.organization_id = s.organization_id
+                    AND t.metadata->'dispatchBinding'->>'sequenceId' = s.id::text AND jsonb_typeof(t.metadata->'leafManifest') = 'array')
+   AND NOT EXISTS (SELECT 1 FROM ectd_compilations c WHERE c.organization_id = s.organization_id AND c.submission_id = s.submission_id
+                    AND c.sequence_number = s.sequence_number AND c.leaf_manifest IS NOT NULL AND c.compilation_type IS DISTINCT FROM 'rehearsal');
+-- (b) Sent sequences with no transmittal row naming them at all.
+SELECT s.organization_id, s.id AS sequence_id, s.sequence_number FROM ectd_sequences s
+ WHERE s.deleted_at IS NULL AND s.dispatch_status IN ('sent', 'acknowledged')
+   AND NOT EXISTS (SELECT 1 FROM submission_transmittals t WHERE t.organization_id = s.organization_id
+                    AND (t.metadata->'dispatchBinding'->>'sequenceId' = s.id::text OR t.metadata->'restoredBinding'->>'sequenceId' = s.id::text));
+-- (c) Rows carrying a key only P-99's acts may write: expected none before C2 deploys.
+SELECT id, organization_id FROM submission_transmittals
+ WHERE metadata ? 'sentRecordStatement' OR metadata ? 'restoredBinding' OR metadata ? 'leafManifestDerivation';
+```
+
 ## What the platform does not claim
 
 - **Module 1 conformance is proven for FDA only.** The FDA backbone groups leaves under

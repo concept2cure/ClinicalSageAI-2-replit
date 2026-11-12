@@ -1,0 +1,6 @@
+# P-99 C4a red, 2026-11-09T20:47:55Z, the card's read-back sentence before it exists: ectdFiledState.test.tsx
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence whose record was read back from the package it sent, and when 234ms
+   → expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)

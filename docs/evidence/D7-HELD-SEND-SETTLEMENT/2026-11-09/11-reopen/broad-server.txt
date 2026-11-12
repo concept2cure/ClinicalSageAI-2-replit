@@ -1,0 +1,4 @@
+# P-92 C3: every submission-service suite, the submissions routes, the package-spine rejection, the receipt path and AnA's no-door pins, on the final server code (2026-11-09T19:38:41Z)
+# npx vitest run server/services/submission-service server/routes/__tests__/submissions server/services/ectd/__tests__/filed-sequence-rejection.test.ts server/services/submission-gateways/__tests__/fda-esg-receipts server/services/ana/__tests__/ana-cannot-
+ Test Files  73 passed | 2 skipped (75)
+      Tests  817 passed | 4 skipped (821)

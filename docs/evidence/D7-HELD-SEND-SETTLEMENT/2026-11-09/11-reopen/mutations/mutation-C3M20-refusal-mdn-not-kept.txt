@@ -1,0 +1,5 @@
+MUTATION C3M20-refusal-mdn-not-kept in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T19:27:48.759756Z): replaced [  const mdn = p.answer.bodyBase64 ? Buffer.from(p.answer.bodyBase64, 'base64').toString('utf8') : null;] with [  const mdn = p.answer.status === 'received' && p.answer.bodyBase64 ? Buffer.from(p.answer.bodyBase64, 'base64').toString('utf8') : null;]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > "received" FDA refused: the sequence and the transmittal are rejected, and both records stay 395ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711 (expected 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711)

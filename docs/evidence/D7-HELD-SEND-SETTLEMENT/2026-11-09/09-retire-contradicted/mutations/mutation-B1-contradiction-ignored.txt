@@ -1,0 +1,6 @@
+MUTATION B1-contradiction-ignored in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T17:47:35.485572Z): replaced [             OR EXISTS (SELECT 1 FROM jsonb_array_elements(] with [             OR false AND EXISTS (SELECT 1 FROM jsonb_array_elements(]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > the act refuses it in those words, and the precheck says the same before anyone signs 37ms
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence > names the reason when a later sequence is the one FDA's receipt keeps 60ms
+      Tests  2 failed | 28 skipped (30)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 55e32cb06b0818159c445f129d94ddbe4da95a7c45e681bd0365f0a4ea6fbdbe (expected 55e32cb06b0818159c445f129d94ddbe4da95a7c45e681bd0365f0a4ea6fbdbe)

@@ -1,0 +1,5 @@
+MUTATION C4M21-payload-without-ack3 in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T18:30:21.668614Z): replaced [          ...settlementFields(f), ...rejectionFields(f),] with [          ...settlementFields(f),]
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, asks again, then records; no record key and no signature id on screen 540ms
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 0b6d92c3b2a033dff96dd1b387ddd77abcfcd671ffc2aafe4b491fe6d9077b59 (expected 0b6d92c3b2a033dff96dd1b387ddd77abcfcd671ffc2aafe4b491fe6d9077b59)

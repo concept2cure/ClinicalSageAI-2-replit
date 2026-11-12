@@ -1,0 +1,13 @@
+# P-92 C3 red, 2026-11-09T19:24:57Z, found by the walk: arm (b) did not keep FDA's negative MDN in mdn_raw, as the receipt path does; the case now asserts it, before the fix
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > "received" FDA refused: the sequence and the transmittal are rejected, and both records stay 448ms
+   → expected { status: 'rejected', …(2) } to match object { status: 'rejected', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { status: 'rejected', …(2) } to match object { status: 'rejected', …(2) }
+- Expected
++ Received
+-   "mdn_raw": "Disposition: automatic-action/MDN-sent-automatically; processed (walk stand-in)",
++   "mdn_raw": null,
+    219|     const t = (await q(`SELECT status, metadata, mdn_raw FROM submissi…
+    220|     expect(t).toMatchObject({ status: 'rejected', mdn_raw: MDN_BODY, m…
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)

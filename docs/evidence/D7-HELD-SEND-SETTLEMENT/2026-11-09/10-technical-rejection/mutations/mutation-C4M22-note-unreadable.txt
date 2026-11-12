@@ -1,0 +1,5 @@
+MUTATION C4M22-note-unreadable in client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx (on the final code and tests, 2026-11-09T18:30:25.202359Z): replaced [  return <div data-testid="technical-rejection-note" style={{ fontSize: 11, color: 'var(--text-300)' }}>{words}</div>;] with [  return <div data-testid="technical-rejection-note" style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>{words}</div>;]
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a sequence's technical rejection is said under its status, readably, with no control added 99ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7e6d986795e336e3c91d9ac0de9edf61ecee7278c0d2d6dd947d9902ddfc8f40 (expected 7e6d986795e336e3c91d9ac0de9edf61ecee7278c0d2d6dd947d9902ddfc8f40)

@@ -1,0 +1,7 @@
+MUTATION C4M18-creator-offered-a-document in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T18:29:59.054637Z): replaced [          {o.signerRefusal
+] with [          {false
+]
+ × client/src/concept2cure/v2/__tests__/dispatchTechnicalRejection.test.tsx > D1 — "Record FDA's technical rejection…" where a send recorded as received is told > the sequence's creator is told why, and offered no document 5137ms
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 3c221ce132a62982df2f7ee0033b533f3592a487eb898937c0d43cc2bcea0632 (expected 3c221ce132a62982df2f7ee0033b533f3592a487eb898937c0d43cc2bcea0632)
