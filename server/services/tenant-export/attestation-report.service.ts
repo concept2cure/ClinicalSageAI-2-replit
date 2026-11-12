@@ -32,6 +32,17 @@
  * the hashed envelope, from a dated cutover — which is a schema decision, not
  * a report change.
  *
+ * ── THE OTHER READERS OF THIS CHAIN NOW RE-COMPUTE; THIS ONE DOES NOT ───────
+ * The audit trail's banner, the signed export, the compliance report, the
+ * monitor and the per-organisation verdict job all read this chain through one
+ * walk (services/audit/audit-event-chain.ts), which re-computes each entry's
+ * hash under the CURRENT recipe as well as comparing links. That does not
+ * change the recipe and does not make a historical row un-reproducible, so the
+ * reasoning above does not rule it out here. But this report's method is in
+ * its signed body and was set by the decision above, so moving it onto the
+ * walk is that decision reopened, not a repair: it is left as it was, and the
+ * question is recorded in docs/evidence/D5-AUDIT-EVENT-CHAIN/2026-11-12/.
+ *
  * The report is signed (HMAC-SHA256 over the report body) so an external
  * auditor can verify it was issued by the platform and not modified after
  * the fact.
@@ -70,6 +81,7 @@
 
 import crypto from 'crypto';
 import type { Pool, PoolClient } from 'pg';
+import { describeUnlinkedAuditEvents } from '../audit/audit-event-chain.js';
 
 /**
  * What every report this service issues checked, and what it did not.
@@ -224,17 +236,30 @@ export async function generateAttestation(
   }
 
   const broken: Array<{ id: string; sequenceNumber: number }> = [];
+  /*
+   * Entries that name NO predecessor although the entry before them carries a
+   * hash. The chain trigger never writes that: it stores the hash of the row it
+   * follows. The loop used to skip the comparison whenever `previous_hash` was
+   * null, so such an entry passed — and with it the one edit that hides a
+   * removal from a link check: delete an entry, blank its successor's pointer.
+   * `covers[0]` below says every entry's stored previous_hash IS the prior
+   * entry's stored record_hash; for these entries it is not, so the verdict
+   * cannot be INTACT. It is not BROKEN either: no mismatch was found, there was
+   * nothing to compare. Same reading as the one walk of this chain
+   * (services/audit/audit-event-chain.ts, `unlinkedRows`).
+   */
+  let unlinkedEntries = 0;
   let prevHash: string | null = null;
   for (const row of rows) {
     const expectedPrev = prevHash;
-    if (
-      expectedPrev !== null &&
-      row.previous_hash !== null &&
-      row.previous_hash !== expectedPrev
-    ) {
-      broken.push({ id: row.id, sequenceNumber: row.sequence_number });
+    if (expectedPrev !== null && row.record_hash != null) {
+      if (row.previous_hash == null || row.previous_hash === '') {
+        unlinkedEntries++;
+      } else if (row.previous_hash !== expectedPrev) {
+        broken.push({ id: row.id, sequenceNumber: row.sequence_number });
+      }
     }
-    prevHash = row.record_hash;
+    prevHash = row.record_hash ?? null;
   }
 
   /*
@@ -299,7 +324,19 @@ export async function generateAttestation(
     });
   }
 
-  return signed({ ...base, attestation: broken.length === 0 ? 'INTACT' : 'BROKEN' });
+  // A found mismatch outranks a link that could not be compared.
+  if (broken.length > 0) return signed({ ...base, attestation: 'BROKEN' });
+
+  if (unlinkedEntries > 0) {
+    return signed({
+      ...base,
+      attestation: 'UNVERIFIABLE',
+      // The words the audit trail and the compliance report use for the same finding.
+      unverifiableReason: describeUnlinkedAuditEvents(unlinkedEntries, rows.length),
+    });
+  }
+
+  return signed({ ...base, attestation: 'INTACT' });
 }
 
 export function verifyAttestationSignature(report: AttestationReport): boolean {

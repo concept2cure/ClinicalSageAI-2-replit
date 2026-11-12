@@ -1,19 +1,23 @@
 /**
  * Audit Chain Integrity Monitor
  *
- * Background service that periodically verifies the hash-chain *linkage* in the
- * audit_events table. If any broken links are detected, it:
+ * Background service that periodically verifies the hash chain in the
+ * audit_events table. If any break is detected, it:
  *   1. Logs a CRITICAL error to console
  *   2. Inserts an audit event recording the integrity failure
  *   3. Exposes status via a health-check getter
  *
- * Scope — linkage only. This monitor checks that each row's `previous_hash`
- * matches the prior row's `record_hash` within the same org (chain continuity).
- * It does NOT re-derive `record_hash` from row content: audit_events is written
- * by many services with no single canonical record_hash serialization (the
- * signed compliance export, signedAuditExport.snapshotChainIntegrity, is
- * linkage-only for the same reason). The stronger content-re-deriving verifier
- * lives in chain.ts (`verifyAuditChain`) for the separate audit_logs chain.
+ * Scope — the one walk of this chain (audit-event-chain.ts): each row's
+ * `previous_hash` is compared with the prior row's `record_hash` within the
+ * same org, AND each row's `record_hash` is re-computed from the fields the
+ * chain covers. This monitor used to compare pointers only, on the stated
+ * ground that audit_events had "no single canonical record_hash
+ * serialization". It has one: the BEFORE INSERT trigger
+ * (db/migrations/20260222_audit_events_hash_chain.sql) writes every
+ * record_hash, whatever service inserts the row, and no writer supplies its
+ * own. The audit trail's banner already re-computed over the same rows, so the
+ * monitor could call a chain healthy that the banner called broken.
+ * (chain.ts `verifyAuditChain` is the separate audit_logs chain.)
  *
  * Three outcomes, not two. A row carrying no `record_hash` is not a link and
  * cannot be checked, and neither can the link through it; the scan counts those
@@ -30,6 +34,14 @@ import { Pool } from 'pg';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
 import { readLatestWindowResult, runScheduledOncePerWindow, windowKeyOf } from '../../db/scheduledOnce';
 import { createScopedLogger } from '../../utils/logger';
+import {
+  AUDIT_EVENT_CHAIN_COLUMNS,
+  AUDIT_EVENT_CHAIN_ORDER,
+  auditEventChainGapReason,
+  walkAuditEventChain,
+  type AuditEventChainRow,
+  type AuditEventChainWalk,
+} from './audit-event-chain';
 import {
   recordBackgroundJobRun,
   registerBackgroundJob,
@@ -71,10 +83,14 @@ export interface ChainMonitorStatus {
   hashedEntries?: number;
   /** Rows carrying no record_hash, so no link through them was checkable. */
   unhashedEntries?: number;
+  /** Rows whose record_hash re-computed from the fields the chain covers. */
+  verifiedEntries?: number;
+  /** Rows naming no predecessor although one was hashed: a link not checkable. */
+  unlinkedEntries?: number;
   /** Optional for the same reason as totalEntries: absent, not zero, on error. */
   brokenLinks?: number;
   /** Absent on error. An empty array here would read as "no breaks found". */
-  details?: Array<{ id: number; sequenceNumber: number; orgId: number }>;
+  details?: BrokenChainLink[];
   /** The last scan that actually completed, kept so an error does not erase it. */
   lastSuccessfulScan?: {
     at: string;
@@ -122,89 +138,63 @@ function erroredStatus(prev: ChainMonitorStatus, reason: string): ChainMonitorSt
   };
 }
 
-/** One audit_events row as the linkage check consumes it. */
-export interface AuditEventChainRow {
-  id: number;
-  organization_id: number;
-  sequence_number: number;
-  /**
-   * Nullable in the table and in practice: the BEFORE INSERT hash trigger
-   * (db/migrations/20260222_audit_events_hash_chain.sql) only reached the
-   * applier on 2026-09-10 and carried no backfill, and UPDATE is blocked by the
-   * immutability trigger — so every row written before that deploy carries NULL
-   * here, permanently. Typing it `string` hid that from every caller.
-   */
-  record_hash: string | null;
-  previous_hash: string | null;
-}
+/** One audit_events row as the walk consumes it (audit-event-chain.ts). */
+export type { AuditEventChainRow };
 
 export interface BrokenChainLink {
-  id: number;
-  sequenceNumber: number;
+  id: number | string;
+  sequenceNumber: number | null;
   orgId: number;
+  /** `pointer`: does not follow its predecessor. `content`: does not match its recorded hash. */
+  kind: 'pointer' | 'content';
 }
 
-/** What a linkage walk found, including what it could NOT look at. */
+/** What a walk found, including what it could NOT look at. */
 export interface ChainLinkageSummary {
   broken: BrokenChainLink[];
-  /** Rows carrying a record_hash — the only rows a link can be checked on. */
+  /** Rows carrying a record_hash — the only rows anything can be checked on. */
   hashedEntries: number;
   /** Rows carrying no record_hash; every link through them is uncheckable. */
   unhashedEntries: number;
+  /** Rows whose record_hash re-computed from the fields the chain covers. */
+  verifiedEntries: number;
+  /** Rows naming no predecessor although one was hashed. */
+  unlinkedEntries: number;
+  /** The walk itself, for the one sentence that describes it. */
+  walk: AuditEventChainWalk;
 }
 
 /**
- * Pure linkage walk over audit_events rows — the canonical one for this module.
+ * The walk over audit_events rows, in this module's shape.
  *
- * `rows` MUST be ordered by (organization_id, sequence_number ASC). Walks each
- * org's chain independently and returns the links whose `previous_hash` does
- * not match the prior row's `record_hash`. A null `previous_hash` (genesis row,
- * or a writer that left it null) is treated as "no claim about the predecessor"
- * and never counts as a break.
+ * This was a second, pointer-only implementation of the walk — one of five
+ * (see audit-event-chain.ts). It is now a view over the one walk, kept under
+ * its name for the monitor and the per-organisation verdict job
+ * (jobs/auditChainOrganizationVerdicts.ts).
  *
- * It also counts what it could not check. A row with no `record_hash` was never
- * hashed: it cannot be a link, so it is skipped AND its successor's comparison
- * is skipped with it (the predecessor hash is cleared, not carried forward).
- * Counting those skips is the whole point — without the count, a table in which
- * no row was ever hashed produces an empty `broken` list, which the caller then
- * read as "verified" over rows nothing had looked at (WO-16C finding 72). This
- * mirrors signedAuditExport.snapshotChainIntegrity, which grew the same counters
- * in a668d73e2.
- *
- * This is linkage continuity only; it does not re-derive `record_hash` from
- * content (see the module header for why).
+ * `rows` MUST be selected with AUDIT_EVENT_CHAIN_COLUMNS and ordered by
+ * (organization_id, sequence_number ASC). A row with no `record_hash` was never
+ * hashed: it is counted, and its successor's pointer is not compared (WO-16C
+ * finding 72). A row naming no predecessor although one was hashed is counted
+ * too, and no longer passes as a verified link.
  */
 export function summarizeChainLinkage(
   rows: readonly AuditEventChainRow[],
 ): ChainLinkageSummary {
-  const broken: BrokenChainLink[] = [];
-  const prevHashByOrg: Record<number, string | null> = {};
-  let hashedEntries = 0;
-  let unhashedEntries = 0;
-
-  for (const row of rows) {
-    const oid = row.organization_id;
-    const expectedPrev = prevHashByOrg[oid] ?? null;
-
-    if (
-      expectedPrev !== null &&
-      row.previous_hash !== null &&
-      row.previous_hash !== expectedPrev
-    ) {
-      broken.push({ id: row.id, sequenceNumber: row.sequence_number, orgId: oid });
-    }
-
-    if (!row.record_hash) {
-      unhashedEntries++;
-      prevHashByOrg[oid] = null;
-      continue;
-    }
-
-    hashedEntries++;
-    prevHashByOrg[oid] = row.record_hash;
-  }
-
-  return { broken, hashedEntries, unhashedEntries };
+  const walk = walkAuditEventChain(rows);
+  return {
+    broken: walk.breaks.map((b) => ({
+      id: b.id,
+      sequenceNumber: b.sequenceNumber,
+      orgId: b.organizationId,
+      kind: b.kind,
+    })),
+    hashedEntries: walk.hashedRows,
+    unhashedEntries: walk.unhashedRows,
+    verifiedEntries: walk.verifiedRows,
+    unlinkedEntries: walk.unlinkedRows,
+    walk,
+  };
 }
 
 /**
@@ -317,9 +307,9 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     // silently never runs in production (the query fails closed every cycle).
     const outcome = await runWithSystemTenantScope('audit:chain-integrity-monitor', async () => {
       const { rows } = await _pool!.query(
-        `SELECT id, organization_id, sequence_number, record_hash, previous_hash
+        `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS}
          FROM audit_events
-         ORDER BY organization_id, sequence_number ASC`
+         ORDER BY ${AUDIT_EVENT_CHAIN_ORDER}`
       );
 
       if (rows.length === 0) {
@@ -340,20 +330,17 @@ async function runCheck(): Promise<ChainMonitorStatus> {
         return _status;
       }
 
-      const { broken: brokenDetails, hashedEntries, unhashedEntries } =
+      const { broken: brokenDetails, hashedEntries, unhashedEntries, verifiedEntries, unlinkedEntries, walk } =
         summarizeChainLinkage(rows as AuditEventChainRow[]);
 
       // Precedence, in the order the fixed sibling surfaces use it:
       //   a positive finding of tampering outranks "cannot tell", and
       //   "cannot tell" outranks "healthy". Only a chain in which EVERY row
-      //   carried a record_hash may be called verified.
+      //   carried a record_hash, was placed and re-computed may be called verified.
       const isBroken = brokenDetails.length > 0;
-      let reason: string | undefined;
-      if (!isBroken && hashedEntries === 0) {
-        reason = 'no row carries a record_hash: the chain has never been hashed, so no link could be checked';
-      } else if (!isBroken && unhashedEntries > 0) {
-        reason = `${unhashedEntries} of ${rows.length} rows carry no record_hash; the links through them could not be checked`;
-      }
+      // One wording for why a chain with no break is still not healthy, shared
+      // with the signed export and the per-organisation verdict job.
+      const reason = isBroken ? undefined : auditEventChainGapReason(walk) ?? undefined;
       const isHealthy = !isBroken && reason === undefined;
 
       _status = {
@@ -362,6 +349,8 @@ async function runCheck(): Promise<ChainMonitorStatus> {
         totalEntries: rows.length,
         hashedEntries,
         unhashedEntries,
+        verifiedEntries,
+        unlinkedEntries,
         brokenLinks: brokenDetails.length,
         details: brokenDetails.slice(0, 50),
         intervalMs: _status.intervalMs,
