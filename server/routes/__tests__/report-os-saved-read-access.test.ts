@@ -23,8 +23,8 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 }));
 
 import reportOsRouter from '../report-os';
-import { resetReportOsHarness, driverRow } from './_report-os-route-harness';
-import { reportRuns, reportTypeRegistry } from '@shared/schema/report-os';
+import { resetReportOsHarness, driverRow, boundInsertColumn } from './_report-os-route-harness';
+import { reportProgramGroupSnapshots, reportRuns, reportTypeRegistry } from '@shared/schema/report-os';
 import type { RequestSqlClient } from '../../db/requestDb';
 
 const app = express();
@@ -163,18 +163,22 @@ describe('program group privacy', () => {
   it('derives snapshot membership from the owned group despite a forged public-only binding in the request', async () => {
     access.projects.mockResolvedValue([11,12]);
     h.queued.select.push([{id:1}], [{projectId:11},{projectId:12}]);
-    let persisted: unknown;
-    const insert = vi.spyOn(h.db, 'insert').mockImplementation(() => ({ values: (row: unknown) => {
-      persisted = row;
-      return { returning: async () => [row] };
-    } }));
-    try {
-      const result = await request(app).post('/api/report-os/program-groups/1/snapshots')
-        .send({projectIds:[11],accessProjectIds:[11],metadata:{accessProjectIds:[11]}});
-      expect(result.status).toBe(201);
-      expect(persisted).toMatchObject({organizationId:7,programGroupId:1,projectIds:[11,12]});
-      expect(result.body.data.projectIds).toEqual([11,12]);
-    } finally { insert.mockRestore(); }
+    /* The snapshot is written on its tenant transaction's connection, with its audit row (2026-11-12), so it is
+       read off that connection: the stored members are the group's, whatever the request claimed. */
+    h.respond.fn = (sql, arrayMode) => {
+      if (!/insert into "report_program_group_snapshots"/.test(sql)) return [];
+      const stored = { id: 9, programGroupId: 1, organizationId: 7, snapshotLabel: null, snapshotReason: null, asOf: new Date(), projectSetHash: 'h', projectIds: [11,12], createdBy: 5, createdAt: new Date() };
+      return [arrayMode ? driverRow(reportProgramGroupSnapshots, stored) : stored];
+    };
+    const result = await request(app).post('/api/report-os/program-groups/1/snapshots')
+      .send({projectIds:[11],accessProjectIds:[11],metadata:{accessProjectIds:[11]}});
+    expect(result.status).toBe(201);
+    const at = h.statements.findIndex(sql => /insert into "report_program_group_snapshots"/.test(sql));
+    expect(at, 'the snapshot insert').toBeGreaterThan(-1);
+    expect(boundInsertColumn(h.statements[at], h.params[at], 'organization_id')).toBe(7);
+    expect(boundInsertColumn(h.statements[at], h.params[at], 'program_group_id')).toBe(1);
+    expect(JSON.parse(String(boundInsertColumn(h.statements[at], h.params[at], 'project_ids')))).toEqual([11,12]);
+    expect(result.body.data.projectIds).toEqual([11,12]);
   });
 });
 
