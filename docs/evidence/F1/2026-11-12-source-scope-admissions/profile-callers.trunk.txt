@@ -1,0 +1,16 @@
+  44 readQualityProjectEvidence < <anonymous> < admitReadableIdentity < admitEvaluated < getCurrentReadableSourceScope
+  36 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < historicalAuthoredParent
+  18 programInOrganization < requireCurrentProgramAccess < getCurrentAccessibleProgramScope < authorizeSnapshot < authorizeQualityEvidenceSnapshot
+  18 programInOrganization < requireCurrentProgramAccess < getCurrentAccessibleProgramScope < requireProgramScopeStillCurrent < authorizeSnapshot
+  14 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < readDocuments
+  14 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < readWorkingDocument
+  14 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < collectQuality
+   5 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < readInForceReleases
+   5 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < readRelease
+   5 programInOrganization < authorizeAuthoringProgram < authorizeQmsContentRead < canReadDocument < readRetainedVersions
+   1 programInOrganization < requireCurrentProgramAccess < getCurrentAccessibleProgramScope < getCurrentReadableSourceScope < <anonymous>
+   1 programInOrganization < requireCurrentProgramAccess < currentProgramAccess < admitRecordedSourceParent < admitReadableIdentity
+   1 programInOrganization < requireCurrentProgramAccess < getCurrentAccessibleProgramScope < collectQuality < readQualityProjectEvidence
+   1 programInOrganization < requireCurrentProgramAccess < getCurrentAccessibleProgramScope < requireProgramScopeStillCurrent < collectQuality
+   1 programInOrganization < requireCurrentProgramAccess < getCurrentAccessibleProgramScope < requireProgramScopeStillCurrent < getCurrentReadableSourceScope
+sources {"native":183,"superseded":22,"total":183}

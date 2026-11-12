@@ -45,8 +45,9 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
       {!props.unread && props.rows.length === 0 && <EmptyState title="No training-controlled documents yet." />}
       {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} canOpen={props.canOpen} onOpen={props.onOpen} />)}
     </div>
-    {/* The method, once, closed (C1): it was a permanent paragraph above every row. */}
-    <details className="pj-more">
+    {/* The method, once, under the rows (C1): it was a permanent paragraph above every row. Open by default again
+        (P-122 rule 2, 2026-11-12); a person can close it. */}
+    <details className="pj-more" open>
       <summary>How coverage is counted</summary>
       <p>Coverage counts the people assigned to each document, by job role or by name, who have acknowledged the version in force. It does not assess competency. Open a document to read it and acknowledge for yourself.</p>
     </details>

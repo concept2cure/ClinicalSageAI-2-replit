@@ -57,7 +57,25 @@
 .c2c-v2 .hc-lesson-t { font-weight: 500; }
 .c2c-v2 .hc-lesson-b .hc-showme { margin: 6px 0 0; align-self: flex-start; }
 
+/* Support requests (surfaces/help/SupportRequests.tsx): a thread read top to bottom, a plain form. */
+.c2c-v2 .hc-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.c2c-v2 .hc-sec-head .hc-h { margin: 0; }
+.c2c-v2 .hc-form { display: flex; flex-direction: column; gap: 14px; margin: 16px 0 0; }
+.c2c-v2 .hc-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .hc-field .c2c-input { width: 100%; font-size: var(--fs-body); color: var(--text-100); }
+.c2c-v2 .hc-field textarea.c2c-input { resize: vertical; line-height: 1.5; padding: 8px 10px; }
+.c2c-v2 .hc-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.c2c-v2 .hc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.c2c-v2 .hc-thread { list-style: none; margin: 16px 0; padding: 0; border-top: 1px solid var(--border); }
+.c2c-v2 .hc-msg { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.c2c-v2 .hc-msg p { margin: 4px 0 0; font-size: var(--fs-body); line-height: 1.6; color: var(--text-200); white-space: pre-wrap; overflow-wrap: anywhere; }
+.c2c-v2 .hc-msg-h { font-size: var(--fs-caption); color: var(--text-400); }
+.c2c-v2 .hc-msg.support .hc-msg-h { color: var(--accent-200); }
+.c2c-v2 .hc-rate { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 20px 0 0; font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .hc-rate [role="group"] { display: flex; gap: 4px; }
+
 @media (max-width: 640px) {
   .c2c-v2 .hc-article-t { font-size: 22px; }
   .c2c-v2 .hc-asks > .btn { flex: 1 1 auto; justify-content: center; }
+  .c2c-v2 .hc-field-row { grid-template-columns: 1fr; }
 }
