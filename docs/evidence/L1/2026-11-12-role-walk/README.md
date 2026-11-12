@@ -45,6 +45,22 @@ One ordering note, left as it is: `POST /api/tenant-users` validates the body be
 target organization may be named in the body; an incomplete body from a non-administrator answers 400 with the
 missing field's name, and a complete one answers 403. Nothing is written either way.
 
+## A role change and a removal, against an open session
+
+Three people signed in at once (administrator, manager, a member), each keeping their session:
+
+| Step | Answer |
+|---|---|
+| The manager promotes themself, demotes a member, removes a member (`PATCH` / `DELETE /api/tenant-users/2/:id`) | 403 each, "Admin of the target organization required" |
+| The member makes a Vault folder | 200 |
+| The administrator demotes that member to viewer | 200 |
+| The member, **same session, next request**, makes a folder | 403 "Your current project permissions do not permit this change. Nothing was changed." Reads still answer 200 |
+| The administrator removes the member | 200 |
+| The removed member, same session, reads projects | 401 "Invalid tenant membership" |
+
+So a demotion and a removal take effect on the very next request of a session that was already open, without a new
+sign-in (the role and the membership are read from the database on each request).
+
 ## A second organization's administrator (tenant isolation, in the running app)
 
 A second organization and its administrator were added to the local database for this check, and that person
