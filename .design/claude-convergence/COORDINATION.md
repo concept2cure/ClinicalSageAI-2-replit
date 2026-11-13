@@ -198,6 +198,8 @@ this session.
 
 ### Holds on other files (one session per file, plan §4.6)
 
+**Copilot Codespaces handoff, Codex 2026-11-13 (F1; ends on publication or 2026-11-13 23:00 UTC):** holds only `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md`, the Copilot handoff link in `docs/operations/CODESPACES_NEON_OPENAI_RECOVERY.md`, and this continuation's existing design/evidence recovery packet. Link current roadmap, coordination, startup and presenter owners from the guide the devcontainer already opens. Both `.github` instruction files remain unchanged: the normal plan gate requires a founder decision for them, and the exact proposed correction is retained in the recovery design packet. No product, startup, model or credential changes. Root owns Git and normal publication.
+
 **Codespaces demo recovery, Codex 2026-11-13 (F1/L1 D1/D2; ends at the slice publication or 2026-11-13 21:30 UTC, whichever is first):** holds only `.devcontainer/post-start.sh`'s CSR browser-bootstrap/preparation block (not the provider-value comparison/restart lines); a new test-only `scripts/ops/codespaces-csr-browser.test.mjs`; the `codespaces:doctor:test` script in `package.json`; and `scripts/demo/launch-demo/packs/lumen.mjs`'s report/bundle/schedule helpers plus their focused test. The provider-restart owner's `codespaces-startup.test.mjs` is untouched. Inventory `.design/claude-convergence/F1-CODESPACES-DEMO-RECOVERY-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-demo-recovery/`. No model/provider/credential behavior, UI or governed release gate change. Root owns dependency installation, Git and final image/branch checks.
 
 Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race
@@ -1720,6 +1722,8 @@ continued runtime health. No implementation hold remains.
 2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
 
 2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
+
+**Codex provider/AnA completion repair, 2026-11-13 (F1 W1 D1/D2), completed; holds released by this source commit:** repaired only `scripts/ops/codespaces-doctor.mjs`, `scripts/ops/codespaces-doctor.test.mjs`, `scripts/ops/verify-ana-answers.mjs`, `scripts/ops/verify-ana-answers.test.mjs`, the existing recovery guide's AnA-check paragraph and its own evidence/design packet. Two scoped workers split doctor and AnA verifier; the doctor split private `codespaces-provider-receipt.mjs` and focused `codespaces-doctor-receipt-cases.mjs` inside scripts/ops to preserve lint limits and the existing test command. Root owns integration/Git. Correct false-success completion receipts only; no provider call, new key, route, model or approval change.
 
 ## Codespaces and Copilot handoff — 2026-11-13
 

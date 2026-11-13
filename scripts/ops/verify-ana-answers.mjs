@@ -23,7 +23,7 @@
  * does.
  *
  * ── The five outcomes ───────────────────────────────────────────────────────
- *   LIVE      completed an answer with a real-provider receipt. This checks
+ *   LIVE      finalized an answer with a real-provider receipt and post_done. This checks
  *             one turn, not scientific review or the full regulated workflow.
  *   FIXTURES  answered, but from AI_GATEWAY_DETERMINISTIC. Honest and useful
  *             for CI; NOT evidence the provider path works. Fails under
@@ -32,7 +32,7 @@
  *             script exists for: it looks like success from every angle except
  *             the user's.
  *   UNVERIFIED text arrived, but the current completion/provider receipt is
- *             missing, stopped, contradictory or from an unexpected provider.
+ *             missing, stopped, contradictory, unfinished or from an unexpected provider.
  *   UNREACHABLE  auth failed, the endpoint 5xx'd, or nothing was listening.
  *
  * ── Usage ────────────────────────────────────────────────────────────────────
@@ -96,6 +96,48 @@ async function getToken() {
   return token;
 }
 
+/** Current AnA frames use one JSON data line; comment/empty lines carry no event. */
+function parseAnaLine(line) {
+  if (!line.startsWith('data: ')) return null;
+  const payload = line.slice(6).trim();
+  if (!payload) return null;
+  let event;
+  try { event = JSON.parse(payload); } catch { throw new Error('The stream carried malformed event data'); }
+  if (!event || typeof event !== 'object' || Array.isArray(event) ||
+      typeof event.type !== 'string' || !event.type.trim()) {
+    throw new Error('The stream carried an invalid event');
+  }
+  return event;
+}
+
+/** Follow the browser's finalization boundary, independent of TCP close timing. */
+async function readAnaEvents(res) {
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error('The stream returned no response body');
+  const decoder = new TextDecoder();
+  const events = [];
+  let buffer = '';
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return events;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const event = parseAnaLine(line);
+        if (!event) continue;
+        events.push(event);
+        if (event.type === 'post_done' || event.type === 'error') return events;
+      }
+    }
+  } finally {
+    // A finalized turn must not wait for (or inspect) a lingering transport.
+    void reader.cancel().catch(() => undefined);
+    reader.releaseLock();
+  }
+}
+
 /** Drive one real turn and return the parsed SSE events. */
 async function askAna(token) {
   const ctl = new AbortController();
@@ -115,13 +157,7 @@ async function askAna(token) {
       try { detail = JSON.stringify(await res.json()); } catch { /* body may not be JSON */ }
       throw new Error(`POST /api/ana-ri/stream returned ${res.status}. ${detail}`);
     }
-    const raw = await res.text();
-    const events = [];
-    for (const line of raw.split('\n')) {
-      if (!line.startsWith('data: ')) continue;
-      try { events.push(JSON.parse(line.slice(6))); } catch { /* keepalive / partial */ }
-    }
-    return events;
+    return await readAnaEvents(res);
   } finally {
     clearTimeout(timer);
   }
@@ -141,8 +177,14 @@ function receiptProblem(done) {
   return null;
 }
 
+function isFixtureReceipt(done) {
+  return done.model === 'demo-mode' || done.deterministic === true ||
+    done.provider === 'demo' || done.provider === 'deterministic';
+}
+
 function classify(events) {
-  const text = events.filter(e => e.type === 'text').map(e => e.content || '').join('');
+  const textEvents = events.filter(e => e.type === 'text');
+  const text = textEvents.filter(e => typeof e.content === 'string').map(e => e.content).join('');
   const receipts = events.filter(e => e.type === 'done');
   const done = receipts[0] || null;
   const errorEvent = events.find(e => e.type === 'error') || null;
@@ -150,6 +192,9 @@ function classify(events) {
 
   if (errorEvent) {
     return { outcome: 'UNREACHABLE', text, done, why: errorEvent.message || errorEvent.error || 'stream reported an error' };
+  }
+  if (textEvents.some(e => typeof e.content !== 'string')) {
+    return unverified('answer text must be a string in every text frame');
   }
   if (!text.trim()) {
     // The bug this script exists for. Report the server-side signals that
@@ -167,12 +212,13 @@ function classify(events) {
   if (receipts.length !== 1) return unverified('exactly one terminal completion receipt is required');
   // Receipt metadata identifies fixtures. A real answer may discuss demo mode;
   // its words cannot turn an actual provider receipt into a fixture.
-  const isFixture = done.model === 'demo-mode' || done.deterministic === true ||
-    done.provider === 'demo' || done.provider === 'deterministic';
-  if (isFixture) return { outcome: 'FIXTURES', text, done,
+  if (isFixtureReceipt(done)) return { outcome: 'FIXTURES', text, done,
     why: 'answered from AI_GATEWAY_DETERMINISTIC fixtures, not a provider model' };
   const problem = receiptProblem(done);
   if (problem) return unverified(problem);
+  if (events.findIndex(e => e.type === 'post_done') <= events.indexOf(done)) {
+    return unverified('post_done must finalize the completed provider receipt');
+  }
   return {
     outcome: 'LIVE',
     text,

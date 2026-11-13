@@ -1,0 +1,11 @@
+{
+  "phase": "baseline source with new receipt regressions",
+  "exit": 1,
+  "tests": 74,
+  "pass": 31,
+  "fail": 43,
+  "sha256": {
+    "/tmp/c2c-doctor-receipt-red.mjs": "c743d3bf6db74a46cebcfea7e48950351e9a6056f92b3d3a5419ae637e61c81d",
+    "/tmp/c2c-doctor-receipt-red.test.mjs": "d4817fc10f7402451bf480bb696d1c92271f17eba17c6910e3ead3af650bbc47"
+  }
+}

@@ -56,7 +56,10 @@
       }
     },
     "codespaces": {
-      "openFiles": ["docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"]
+      "openFiles": [
+        "docs/getting-started/CODESPACE_AGENT_PLAYBOOK.md",
+        "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"
+      ]
     }
   },
 
