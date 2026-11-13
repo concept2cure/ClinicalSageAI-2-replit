@@ -8,13 +8,14 @@
  * - Provenance events (concept2cure_provenance_events)
  * - Review threads (concept2cure_review_threads)
  * - Dossier/submission context (c2c_artifact_section_map)
- * - Review tasks (concept2cure_review_tasks)
+ * - Escalation tasks (unified_tasks, the one task board; see createEscalationTask)
  * - Document editing/drafting (editor handoff)
  */
 
 import crypto from 'crypto';
 
 import { createScopedLogger } from '../../utils/logger.js';
+import type { UnifiedTaskInput } from '../unifiedTaskService';
 
 const logger = createScopedLogger('workflow-integrator');
 
@@ -61,6 +62,48 @@ import type {
 /** The content hash the integrator and the statistical document save both record. */
 export const calculateContentHash = (content: string): string => crypto.createHash('sha256').update(content).digest('hex');
 
+/**
+ * The escalation's row on the one task board: the bridge's `action:escalate` shape
+ * (biostatistics-bridge/task-blueprint.ts), a Biostatistics review task keyed to its source.
+ */
+function escalationTaskInput(
+  document: GovernedStatisticalDocument,
+  judgment: JudgmentResult,
+  task: {
+    title: string;
+    priority: 'critical' | 'high';
+    source: { type: string; id: string };
+    stored: boolean;
+  },
+): UnifiedTaskInput {
+  const reasons = judgment.escalationReasons.join('; ') || judgment.roleExplanations?.regulatory || 'none recorded';
+  return {
+    moduleType: 'Biostatistics',
+    title: task.title,
+    description: `Statistical review found ${judgment.overallRisk} risk. Escalation reasons: ${reasons}`
+      + (task.stored ? '' : ' The document itself was not stored; the finding stands without it.'),
+    category: 'review',
+    taskType: 'review',
+    priority: task.priority,
+    organizationId: document.organizationId,
+    // A document on no project (the orchestrator passes 0) is filed on none.
+    projectId: document.projectId > 0 ? document.projectId : undefined,
+    sourceEntityType: task.source.type,
+    sourceEntityId: task.source.id,
+    tags: ['biostatistics', 'Action: escalate'],
+    metadata: {
+      blueprintKey: 'action:escalate',
+      trigger: 'Action: escalate',
+      riskLevel: judgment.overallRisk,
+      verdict: judgment.overallVerdict,
+      escalationReasons: judgment.escalationReasons,
+      documentType: document.type,
+      raisedBy: 'ana-biostats-workflow',
+    },
+    createdById: document.createdBy ?? undefined,
+  };
+}
+
 export class WorkflowIntegrator {
 
   /**
@@ -104,10 +147,11 @@ export class WorkflowIntegrator {
     const editorResult = this.prepareEditorHandoff(document, artifactResult.artifactId);
     results.push(editorResult);
 
-    // 5. Escalation task if needed
-    if (judgment.actionRecommendation === 'escalate' && artifactResult.artifactId) {
-      const escalationResult = await this.createEscalationTask(document, judgment, artifactResult.artifactId);
-      results.push(escalationResult);
+    /* 5. Escalation task if needed. It is about the FINDING, so it does not wait on the document
+       having been stored. Until 2026-11-12 it ran only when the artifact had an id: a critical
+       finding whose document failed to save raised nothing and said nothing. */
+    if (judgment.actionRecommendation === 'escalate') {
+      results.push(await this.createEscalationTask(document, judgment, artifactResult.artifactId ?? null));
     }
 
     return results;
@@ -221,7 +265,9 @@ export class WorkflowIntegrator {
       return {
         action: 'create_artifact',
         success: false,
-        message: `Artifact creation failed: ${error.message}`,
+        /* The store's own message stays in the log. It was returned to the caller, and for a failed
+           insert that is the whole statement with its parameters: the document's text among them. */
+        message: `The document was not stored: the artifact store could not be written. "${document.title}" exists only in this answer.`,
       };
     }
   }
@@ -303,7 +349,7 @@ export class WorkflowIntegrator {
       return {
         action: 'create_review_thread',
         success: false,
-        message: `Review thread creation failed: ${error.message}`,
+        message: 'No review thread was opened: the review store could not be written.',
       };
     }
   }
@@ -374,43 +420,74 @@ export class WorkflowIntegrator {
         action: 'attach_to_dossier',
         success: false,
         dossierSectionId,
-        message: `Dossier attachment failed: ${error.message}`,
+        message: `The document was not attached to dossier section ${dossierSectionId}: the mapping could not be written.`,
       };
     }
   }
 
   /**
-   * Prepare the document for handoff to the UnifiedDocumentEditor.
+   * Say where the stored document can be found.
+   *
+   * Until 2026-11-12 this answered "Document ready for editing" with
+   * `/concept2cure/editor?artifactId=…`, always a success. No such route exists (the editor it
+   * named was removed), nothing reads the URL, and it said so even when the document had not been
+   * stored (`artifactId=new`). A stored statistical document is listed on the Biostatistics work
+   * area, under the project's statistical documents; that is the address given. Writing it into
+   * the one editor is the person's act there ("Save as a working document"), not this step's.
    */
   private prepareEditorHandoff(
     document: GovernedStatisticalDocument,
     artifactId?: number
   ): WorkflowActionResult {
+    if (!artifactId) {
+      return {
+        action: 'open_in_editor',
+        success: false,
+        message: `"${document.title}" was not stored, so there is nothing to open.`,
+      };
+    }
     return {
       action: 'open_in_editor',
       success: true,
       artifactId,
-      editorUrl: `/concept2cure/editor?artifactId=${artifactId ?? 'new'}&type=${document.type}`,
-      message: `Document ready for editing: ${document.title}`,
+      editorUrl: '/concept2cure/biostatistics',
+      message: `"${document.title}" is stored and listed under the project's statistical documents in Biostatistics. Save it as a working document there to edit it.`,
     };
   }
 
   /**
-   * Create an escalation task when statistical review identifies critical issues.
+   * Raise the escalation of a critical statistical finding on the one task board, with its
+   * task.create row.
+   *
+   * Until 2026-11-12 this inserted into `concept2cure_review_tasks`, the review workflow's own
+   * store, naming none of its four required columns (task_id, org_id, project_id,
+   * created_by_name) and three it does not have (organizationId, priority, metadata). The insert
+   * could not succeed: every escalation was answered "Escalation task creation failed" and reached
+   * nobody. The same escalation already had a canonical shape — the bridge's `action:escalate`
+   * task (biostatistics-bridge/task-blueprint.ts), a Biostatistics task on `unified_tasks` — so
+   * this raises that, through the same creator and the same ledger call, on one transaction: the
+   * task and its row, or neither. The review workflow's store is its own (server/routes/c2c/
+   * reviews.ts) and is not written here.
+   *
+   * One escalation per document: a second run for the same artifact — or, when the document was
+   * not stored, for the same text — answers with the task that is already on the board.
    */
   private async createEscalationTask(
     document: GovernedStatisticalDocument,
     judgment: JudgmentResult,
-    artifactDbId: number
+    artifactDbId: number | null
   ): Promise<WorkflowActionResult> {
+    const notRaised = (why: string): WorkflowActionResult => ({
+      action: 'create_follow_up_task',
+      success: false,
+      message: `No escalation task was raised: ${why} ${judgment.overallRisk} risk on "${document.title}" is unrecorded.`,
+    });
     try {
       const db = await getDb();
-      const schema = await getSchema();
-      if (!db || !schema) {
+      if (!db) {
         /* This escalation is raised when statistical review finds CRITICAL
            risk. Reporting it prepared when no row exists is how a critical
-           finding gets recorded as handled and lives nowhere; "prepared" was
-           also untrue — nothing was. Same repair as the two branches above. */
+           finding gets recorded as handled and lives nowhere. */
         return {
           action: 'create_follow_up_task',
           success: false,
@@ -418,40 +495,73 @@ export class WorkflowIntegrator {
             + `${judgment.overallRisk} risk on "${document.title}" is unrecorded.`,
         };
       }
+      const [{ default: unifiedTaskService }, { auditTaskActionInTx }, { unifiedTasks }, { and, eq, isNull }] = await Promise.all([
+        import('../unifiedTaskService'),
+        import('../tasking/task-audit'),
+        import('../../../shared/schema'),
+        import('drizzle-orm'),
+      ]);
 
-      const [task] = await db
-        .insert(schema.concept2cureReviewTasks)
-        .values({
-          organizationId: document.organizationId,
-          artifactId: artifactDbId,
-          title: `Statistical Escalation: ${document.title}`,
-          description: `Statistical analysis identified ${judgment.overallRisk} risk. Escalation reasons: ${judgment.escalationReasons.join('; ')}`,
-          taskType: 'review_task',
-          status: 'open',
-          priority: judgment.overallRisk === 'critical' ? 'critical' : 'high',
-          metadata: {
-            escalationType: 'biostatistics',
-            riskLevel: judgment.overallRisk,
-            escalationReasons: judgment.escalationReasons,
-            verdict: judgment.overallVerdict,
-            assignTo: 'biostatistics_lead',
+      const title = `Escalate "${document.title}" to the lead biostatistician`;
+      /* Keyed to the stored document when there is one. When the document was not stored, to its
+         content: the same finding on the same text is the same escalation, raised once. */
+      const stored = typeof artifactDbId === 'number' && artifactDbId > 0;
+      const source = stored
+        ? { type: 'statistical_artifact', id: String(artifactDbId) }
+        : { type: 'statistical_document', id: calculateContentHash(document.content) };
+      const [existing] = await db
+        .select({ taskId: unifiedTasks.taskId, title: unifiedTasks.title })
+        .from(unifiedTasks)
+        .where(and(
+          eq(unifiedTasks.organizationId, document.organizationId),
+          eq(unifiedTasks.sourceEntityType, source.type),
+          eq(unifiedTasks.sourceEntityId, source.id),
+          isNull(unifiedTasks.deletedAt),
+        ))
+        .limit(1);
+      if (existing) {
+        return {
+          action: 'create_follow_up_task',
+          success: true,
+          message: `Escalation already on the task board: ${existing.title} (${existing.taskId})`,
+        };
+      }
+
+      const priority = judgment.overallRisk === 'critical' ? 'critical' as const : 'high' as const;
+      let taskId = '';
+      await db.transaction(async (tx: any) => {
+        const task = await unifiedTaskService.createUnifiedTask(
+          escalationTaskInput(document, judgment, { title, priority, source, stored }), tx);
+        await auditTaskActionInTx(tx, {
+          orgId: document.organizationId,
+          userId: document.createdBy ?? null,
+          command: 'task.create',
+          taskId: task.taskId,
+          payload: {
+            moduleType: 'Biostatistics',
+            title,
+            priority,
+            status: 'pending',
+            sourceEntityType: source.type,
+            sourceEntityId: source.id,
+            blueprintKey: 'action:escalate',
           },
-          createdById: document.createdBy,
-        } as any)
-        .returning();
+          summary: `Raised by the statistical review of "${document.title}" (${judgment.overallRisk} risk)`,
+        });
+        taskId = task.taskId;
+      });
 
       return {
         action: 'create_follow_up_task',
-        success: !!task,
-        message: `Escalation task created: Statistical Escalation — ${document.title} (ID: ${task?.id})`,
+        success: true,
+        message: `Escalation raised on the task board: ${title} (${taskId})`,
       };
     } catch (error: any) {
+      // The store's own words stay in the log; the answer says what did not happen.
       logger.error('Escalation task creation failed', { err: error instanceof Error ? error.message : String(error) });
-      return {
-        action: 'create_follow_up_task',
-        success: false,
-        message: `Escalation task creation failed: ${error.message}`,
-      };
+      return notRaised(error?.name === 'TaskAuditNotRecordedError'
+        ? 'its record could not be written, so the task was not written either.'
+        : 'the task board could not be written.');
     }
   }
 
