@@ -1,0 +1,10 @@
+M7 the over-allocation pairs are not put in the order of their ids
+  file: server/services/sentinel/sentinel.ts
+  result: CAUGHT Tests  1 failed | 2 passed (3)
+    × server/services/sentinel/__tests__/sentinel-over-allocation-pairs.pglite.test.ts > Sentinel over-allocation: a project’s name stays with its id > keeps only a pair that
+
+M8 the query aggregates names alone again (no pairs)
+  file: server/services/sentinel/sentinel.ts
+  result: CAUGHT Tests  1 failed | 2 passed (3)
+    × server/services/sentinel/__tests__/sentinel-over-allocation-pairs.pglite.test.ts > Sentinel over-allocation: a project’s name stays with its id > reads each project onc
+

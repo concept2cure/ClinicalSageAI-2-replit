@@ -95,6 +95,14 @@ export type { EnforcementMode } from '../services/entitlements/enforcement-mode.
 // launch-scope API verdict also reads; re-exported so importers are unchanged.
 export { NEVER_GATED, buildPrefixMap, modulesForPath };
 
+/** Ids collapsed to `:id`, so the bounded report holds one row per route an
+ *  operator must decide on, not one per record somebody opened. Both
+ *  recorders use it; the module gate kept raw ids until 2026-11-12, so every
+ *  project or charter opened under 'enforce' added a row. */
+export function collapseIds(pathname: string): string {
+  return pathname.replace(/\/(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=\/|$)/gi, '/:id');
+}
+
 const LAUNCH_SCOPE_REFUSAL = {
   error: { code: 'LAUNCH_SCOPE', message: 'This part of the product is not in this release.' },
 } as const;
@@ -126,7 +134,7 @@ function refusedByLaunchScope(
   recordObservation({
     // Ids collapsed to `:id`, so the bounded report holds one row per route an
     // operator must decide on, not one per record somebody opened.
-    path: pathname.replace(/\/(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=\/|$)/gi, '/:id'),
+    path: collapseIds(pathname),
     organizationId: orgId == null ? 0 : Number(orgId),
     modules: ['launch-scope:unattributed'],
     reasons: ['No surface, platform or infrastructure entry claims this path, so it is outside the launch scope as registered.'],
@@ -183,6 +191,13 @@ export function moduleEntitlementGate(
     const { mode } = await currentEnforcementMode();
     if (mode === 'off') return next();
 
+    // A path at or under a NEVER_GATED entry is never gated, even when a
+    // broader prefix claims it: buildPrefixMap drops only the protected
+    // prefixes themselves, so '/api/tenant-users' (admin-console) still matched
+    // '/api/tenant-users/invitations/mine', the membership inbox, and refused
+    // it on every page load in 'enforce' (running app, 2026-11-12).
+    if (NEVER_GATED.some((n) => pathname === n || pathname.startsWith(`${n}/`))) return next();
+
     const modules = modulesForPath(pathname, prefixMap);
     if (!modules || modules.size === 0) return next();
 
@@ -202,7 +217,14 @@ export function moduleEntitlementGate(
       // the first module costs one query, which is the common case.
       for (const moduleId of modules) {
         const verdict = await canAccessModule(Number(orgId), moduleId);
-        if (verdict.allowed) {
+        // A claimant the catalog does not sell (project-home,
+        // conversation-thread, admin-console: shell surfaces with no
+        // available_modules row) is one every organisation has, so by the
+        // ANY rule above the path is served. Read as a refusal, 'enforce'
+        // refused the licensed project page, conversations and the admin
+        // console to every customer (running app, 2026-11-12). The release
+        // boundary is not this gate's: refusedByLaunchScope ran above.
+        if (verdict.allowed || verdict.notCatalogued) {
           entitled = true;
           break;
         }
@@ -227,7 +249,7 @@ export function moduleEntitlementGate(
     // still needs to see what is being refused — that is when a wrong packaging
     // decision surfaces as a support ticket, and the console is where they look.
     recordObservation({
-      path: pathname,
+      path: collapseIds(pathname),
       organizationId: Number(orgId),
       modules: [...modules],
       reasons,

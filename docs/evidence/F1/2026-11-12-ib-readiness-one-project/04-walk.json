@@ -1,0 +1,77 @@
+{
+ "steps": [
+  {
+   "step": "1. No project open: Search, \"Investigator\", the page",
+   "url": "/concept2cure/investigator-brochure",
+   "text": "Project · IND authoring | Investigator's Brochure | Which sections of a project’s brochure have the project data they need (ICH E6(R3) Appendix A). | Open a project to see its Investigator’s Brochure readiness | Readiness is worked out for one project, from its own recorded studies, safety records and Module 3 sections. | Open Projects",
+   "ibRequests": []
+  },
+  {
+   "step": "2. \"Open Projects\" goes to Projects",
+   "url": "/concept2cure/projects"
+  },
+  {
+   "step": "3. C2C-201 open: Search, \"Investigator\", the page",
+   "url": "/concept2cure/investigator-brochure?program=da734679-6598-492c-9335-813c248f17eb",
+   "head": "Project · IND authoring | Investigator's Brochure | Which sections of the brochure for C2C-201 have the project data they need (ICH E6(R3) Appendix A). | Ask AnA | 18% | of the sections that need project data | 2 of 11 sections that need project data have it | 0 | Title Page | No project data needed | Sponsor name, product ident",
+   "chips": [
+    "0: No project data needed",
+    "0a: No project data needed",
+    "0b: No project data needed",
+    "1: Missing inputs",
+    "2: Ready",
+    "3: Ready",
+    "4: Missing inputs",
+    "4.1: Missing inputs",
+    "4.2: Missing inputs",
+    "4.3: Missing inputs",
+    "5: Missing inputs",
+    "5.1: Missing inputs",
+    "5.2: Missing inputs",
+    "5.3: Missing inputs",
+    "6: Missing inputs",
+    "7: No project data needed"
+   ],
+   "footnote": "A section is Ready when this project holds every kind of data it needs, Partial when it holds some, and Missing inputs when it holds none. What is counted: the project’s recorded nonclinical and clinical studies, its adverse events and risk management plan, and its Module 3 sections. Documents filed in the project’s Vault are not counted. AnA drafts the open sections from the linked summaries and never invents results. One study register in this workspace does not record which project a study belongs to, so it is not counted here.",
+   "ibRequests": [
+    "200 GET /api/investigator-brochure?programId=da734679-6598-492c-9335-813c248f17eb"
+   ]
+  },
+  {
+   "step": "4. C2C-101 open: Search, \"Investigator\", the page",
+   "url": "/concept2cure/investigator-brochure?program=66277053-752f-4806-8112-85be3e9d1aea",
+   "head": "Project · IND authoring | Investigator's Brochure | Which sections of the brochure for C2C-101 have the project data they need (ICH E6(R3) Appendix A). | Ask AnA | 0% | of the sections that need project data | 0 of 11 sections that need project data have it | 0 | Title Page | No project data needed | Sponsor name, product identi",
+   "chips": [
+    "0: No project data needed",
+    "0a: No project data needed",
+    "0b: No project data needed",
+    "1: Missing inputs",
+    "2: Missing inputs",
+    "3: Missing inputs",
+    "4: Missing inputs",
+    "4.1: Missing inputs",
+    "4.2: Missing inputs",
+    "4.3: Missing inputs",
+    "5: Missing inputs",
+    "5.1: Missing inputs",
+    "5.2: Missing inputs",
+    "5.3: Missing inputs",
+    "6: Missing inputs",
+    "7: No project data needed"
+   ],
+   "footnote": "A section is Ready when this project holds every kind of data it needs, Partial when it holds some, and Missing inputs when it holds none. What is counted: the project’s recorded nonclinical and clinical studies, its adverse events and risk management plan, and its Module 3 sections. Documents filed in the project’s Vault are not counted. AnA drafts the open sections from the linked summaries and never invents results. One study register in this workspace does not record which project a study belongs to, so it is not counted here.",
+   "ibRequests": [
+    "200 GET /api/investigator-brochure?programId=66277053-752f-4806-8112-85be3e9d1aea"
+   ]
+  },
+  {
+   "step": "5. 390 wide",
+   "sideways": false
+  }
+ ],
+ "api": [
+  "200 GET /api/investigator-brochure?programId=da734679-6598-492c-9335-813c248f17eb",
+  "200 GET /api/investigator-brochure?programId=66277053-752f-4806-8112-85be3e9d1aea"
+ ],
+ "console": []
+}

@@ -124,6 +124,42 @@ const PATHWAY_BY_ID: Record<string, string> = {
   eu_cta: 'cta', au_ctn: 'cta', ca_cta: 'cta', jp_ctn: 'cta', cn_cta: 'cta',
   us_nda: 'ctd', us_bla: 'bla', eu_maa: 'maa', jp_mkt_approval: 'jnda',
   us_nda_supp: 'ctd', us_bla_supp: 'bla',
+  /* 2026-11-12 (S12 sweep item 3): stated, where it was the New project wizard's
+     `|| 'ctd'` default. An accelerated approval application is the NDA/BLA dossier
+     (21 CFR 314 subpart H, 601 subpart E), and a rolling review is the same dossier
+     submitted in completed units; the registry gives both CTD M1–M5. */
+  us_accel_approval: 'ctd', us_rolling: 'ctd',
+  /* 2026-11-13, the same pass over the filings outside the US. With the packs a
+     deployment has, 'nda' is offered at the FDA only, so each of these was refused
+     for want of "a governed NDA outline", whatever it was. Each now states what it
+     is, from its own registry entry:
+       - a conditional MA is a full MAA (Reg. (EC) 507/2006), and a line extension
+         is assessed as one (Annex I, Reg. (EC) 1234/2008);
+       - a Canadian master file is Module 3 content with a letter of access, as
+         the US DMF and the EU ASMF are;
+       - a regional trial application is its own agency's ('cta'), as ca_cta,
+         au_ctn, jp_ctn and cn_cta already are; a Korean IND is one;
+       - the CTD marketing dossier under its regional name stays 'ctd';
+       - a generic application carries its bioequivalence reports in 5.3.1, as the
+         ANDA does.
+     A filing that is no application and has no document class yet (a variation,
+     a renewal, a scientific-advice or designation request, an RMP, a regional
+     Module 1) is deliberately not here: it states no pathway and is not offered,
+     in its own name. tests/regulatory/fda-filings-not-created-as-an-nda.test.ts. */
+  eu_cma: 'maa', eu_line_extension: 'maa',
+  ca_mf: 'dmf',
+  uk_cta: 'cta', au_cta: 'cta', kr_ind: 'cta',
+  ca_nds: 'ctd', uk_ma: 'ctd', uk_irp: 'ctd', au_cat1: 'ctd', au_cat2: 'ctd', kr_ma_new: 'ctd',
+  ca_ands: 'anda', kr_ma_generic: 'anda',
+  au_biosimilar: 'biosimilar',
+  /* Stated at today's value, each awaiting its own answer, so the wizard's
+     default can go with no exception (agreed with the project-page session,
+     2026-11-12). None of the four is an NDA:
+       - us_supac is a change category whose level decides the supplement it files
+         as; whether it stays a creatable filing is with the founder;
+       - us_priority_review, us_ea and us_icsr_15day each get their own document
+         class in the change that seeds its pack. Remove each line with that change. */
+  us_supac: 'ctd', us_priority_review: 'ctd', us_ea: 'ctd', us_icsr_15day: 'ctd',
   us_dmf: 'dmf', us_anda: 'anda', us_505b2: '505b2', us_351k: 'biosimilar',
   ich_csr: 'csr', ich_clin_overview: 'ctd',
   us_513g: 'device', us_qsub: 'device', us_breakthrough_device: 'device', us_rfd: 'device',
