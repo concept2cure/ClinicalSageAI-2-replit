@@ -95,6 +95,22 @@ describe('⌘K finds a project', () => {
     expect(row).toBeTruthy();
   });
 
+  /* S12's biotech sweep, 2026-11-09 (finding 84): "C2C-101" listed eight newer projects whose codes
+     contained it and dropped C2C-101 itself, with nothing saying more matched. An exact code comes first,
+     and a cut says how many it left out. */
+  it('lists the project whose code is exactly the search first, and says how many more match', async () => {
+    const newer = Array.from({ length: 9 }, (_, i) => ({ id: `00000000-0000-4000-8000-00000000000${i}`, title: `Sweep API ${i}`, code: `C2C-101-${1000 + i}`, ws: 'Biotech', status: 'active' }));
+    const exact = { id: '42d5dcc0-65c1-4581-9e28-dd3c30469312', title: '[Demo · Biotech] anti-IL-23p19 mAb', code: 'C2C-101', ws: 'Biotech', status: 'active' };
+    serve(() => ok({ data: [...newer, exact], meta: {} }));
+    render(<Harness onNav={vi.fn()} />);
+    search('c2c-101');
+    await screen.findByRole('button', { name: /anti-IL-23p19 mAb/ });
+    const rows = Array.from(document.querySelectorAll('button')).map((b) => b.textContent ?? '').filter((t) => /Sweep API|anti-IL-23p19/.test(t));
+    expect(rows[0], 'the exact code is not first').toMatch(/anti-IL-23p19 mAb/);
+    expect(rows).toHaveLength(8);
+    expect(document.body.textContent).toContain('2 more projects match. Keep typing to narrow.');
+  });
+
   it('says a failed project read, and never reads it as no match', async () => {
     serve(() => ({ ok: false, status: 500, json: async () => ({ error: 'down' }) }) as Response);
     render(<Harness onNav={vi.fn()} />);

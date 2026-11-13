@@ -126,6 +126,33 @@ describe('the authoring read session across a pending session adoption', () => {
     expect(before.sameRevision()).toBe(false);
     expect(view.result.current.sameRevision()).toBe(true);
   });
+
+  /* Found 2026-11-09 (task 85): the account panel re-reads the account (authService.refreshUser, GET
+     /session), which hands back a new object for the same account. The read session compared the
+     account by object identity, so that re-read retired every governed read in the editor and
+     they began again. What decides access (the person, the organisation, the roles and the
+     permissions) is compared by value; a change to any of them still mints a new session. */
+  it('an account re-read that returns the same access keeps the session; a changed role replaces it', async () => {
+    authService.setToken('synthetic-before', AUTHOR, 'synthetic-refresh-before');
+    const view = renderHook(() => useAuthoringReadSession(authService.getUser()));
+    const before = view.result.current;
+    const reread = (account: AuthUser) => vi.stubGlobal('fetch', vi.fn(async () =>
+      json(200, { authenticated: true, user: account, session: { idleMinutes: 30, lifetimeHours: 12 } })));
+
+    reread({ ...AUTHOR, displayName: 'Author (renamed)', roles: [...AUTHOR.roles] });
+    await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
+    expect(authService.getUser()).not.toBe(AUTHOR);
+    view.rerender();
+    expect(before.sameRevision(), 'the same account re-read retired the governed reads').toBe(true);
+    expect(view.result.current).toBe(before);
+
+    reread({ ...AUTHOR, roles: ['member', 'approver'] });
+    await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
+    view.rerender();
+    expect(before.sameRevision()).toBe(false);
+    expect(view.result.current.key).toBe(before.key + 1);
+    expect(view.result.current.sameRevision()).toBe(true);
+  });
 });
 
 const PID = '30000000-0000-4000-8000-000000000001';
