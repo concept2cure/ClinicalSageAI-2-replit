@@ -22,6 +22,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { connectorCredentials } from '../../../../shared/schema';
 import { logger } from '../../../utils/logger';
+import { decryptCredential, encryptCredential } from '../../security/credential-cipher.js';
 
 const holder = vi.hoisted(() => ({ pg: null as unknown as import('@electric-sql/pglite').PGlite }));
 const pool = vi.hoisted(() => ({
@@ -100,7 +101,7 @@ describe('connector credentials: stored is not validated', () => {
 
   it('an unvalidated credential is still the one a search tries', async () => {
     await connectDrive();
-    const [res] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] });
+    const [res] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
     expect(res.error, 'a stored, unvalidated credential was treated as not configured').toBeUndefined();
     expect(driveSearches.length).toBeGreaterThan(0);
     const drive = (await getConnectorCatalog(ORG)).find(c => c.id === 'google_drive');
@@ -110,7 +111,7 @@ describe('connector credentials: stored is not validated', () => {
   it('a credential marked invalid is withheld from a search', async () => {
     await connectDrive();
     await holder.pg.exec(`UPDATE connector_credentials SET is_valid = false`);
-    const [res] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] });
+    const [res] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
     expect(res.error).toBeDefined();
     expect(driveSearches).toEqual([]);
   });
@@ -301,6 +302,125 @@ describe('credential use retains current membership through its durable audit', 
   });
 });
 
+describe('real connector transport retains the initiating actor', () => {
+  it.each(['membership', 'user'] as const)('%s revoked by the use audit prevents OAuth and search', async standing => {
+    await connectDrive();
+    const before = (await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows;
+    const mutation = standing === 'membership' ? 'DELETE FROM organization_users WHERE organization_id=NEW.tenant_id AND user_id=11;'
+      : "UPDATE users SET status='inactive' WHERE id=11;";
+    await holder.pg.exec(`CREATE FUNCTION revoke_during_use() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.action='credential.use' THEN ${mutation} END IF; RETURN NEW; END; $$;
+      CREATE TRIGGER revoke_during_use AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION revoke_during_use();`);
+    const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
+    expect(globalThis.fetch).not.toHaveBeenCalled(); expect(result).toMatchObject({ results: [], error: expect.stringContaining('Connector search failed') });
+    const uses = (await holder.pg.query<{ user_id: number; actor_id: number; record_id: string; new_values: Record<string, unknown> }>("SELECT user_id,actor_id,record_id,new_values FROM audit_logs WHERE action='credential.use'")).rows;
+    expect(uses).toEqual([expect.objectContaining({ user_id: 11, actor_id: 11, record_id: 'google_drive', new_values: expect.objectContaining({ credentialId: 'google_drive', purpose: 'connector_search', accountOwner: 'client' }) })]);
+    expect(Object.keys(uses[0].new_values as object).sort()).toEqual(['accountOwner', 'credentialId', 'grantId', 'purpose', 'revision']);
+    expect((await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows).toEqual(before);
+  });
+  it('rechecks the same actor after OAuth before releasing the repository query', async () => {
+    await connectDrive();
+    vi.mocked(globalThis.fetch).mockImplementationOnce(async () => {
+      await holder.pg.exec('DELETE FROM organization_users WHERE organization_id=1 AND user_id=11'); return json({ access_token: 'fixture-token', expires_in: 3600 });
+    });
+    const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
+    expect(result.error).toBeDefined(); expect(globalThis.fetch).toHaveBeenCalledTimes(1); expect(driveSearches).toEqual([]);
+    expect((await holder.pg.query("SELECT user_id FROM audit_logs WHERE action='credential.use'")).rows).toEqual([{ user_id: 11 }]);
+  });
+  it.each(['membership', 'user', 'organization'] as const)('a legacy credential still refuses revoked %s standing', async standing => {
+    await connectDrive();
+    const captured = await captureCredentialForUse(ORG, 'google_drive', 'connector_search', pool);
+    await holder.pg.query('UPDATE connector_credentials SET credentials=$1', [encryptCredential(JSON.stringify(captured?.credentials))]);
+    const before = (await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows;
+    if (standing === 'membership') await holder.pg.exec('DELETE FROM organization_users WHERE organization_id=1 AND user_id=11');
+    if (standing === 'user') await holder.pg.exec("UPDATE users SET status='inactive' WHERE id=11");
+    if (standing === 'organization') await holder.pg.exec("UPDATE organizations SET status='inactive' WHERE id=1");
+    const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
+    expect(globalThis.fetch).not.toHaveBeenCalled(); expect(result.error).toBeDefined();
+    expect((await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows).toEqual(before);
+    expect((await holder.pg.query("SELECT id FROM audit_logs WHERE action='credential.use'")).rows).toEqual([]);
+  });
+  it('explicit background search has a null actor and stops when its organization is inactive', async () => {
+    await connectDrive();
+    const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, null);
+    expect(result.error).toBeUndefined(); expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect((await holder.pg.query("SELECT user_id,actor_id FROM audit_logs WHERE action='credential.use'")).rows).toEqual([{ user_id: null, actor_id: null }]);
+    vi.mocked(globalThis.fetch).mockClear(); await holder.pg.exec("UPDATE organizations SET status='inactive' WHERE id=1");
+    expect((await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, null))[0].error).toBeDefined();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+  it.each([undefined, 0, -1, 1.5, Number.NaN, '11'])('missing or invalid actor %s never becomes background work', async actor => {
+    await connectDrive();
+    await expect(searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, actor as number)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    expect(globalThis.fetch).not.toHaveBeenCalled(); expect((await holder.pg.query("SELECT id FROM audit_logs WHERE action='credential.use'")).rows).toEqual([]);
+  });
+});
+
+describe('credential recovery withholds reasons containing unknown prior values', () => {
+  it.each([
+    ['corrupt', 'rotate'], ['corrupt', 'revoke'], ['organization', 'rotate'], ['organization', 'revoke'], ['provider', 'rotate'], ['provider', 'revoke'],
+    ['nested_legacy', 'rotate'], ['nested_legacy', 'revoke'], ['nested_envelope', 'rotate'], ['nested_envelope', 'revoke'],
+    ['invalid_json', 'rotate'], ['invalid_json', 'revoke'], ['scalar', 'rotate'], ['scalar', 'revoke'], ['array', 'rotate'], ['array', 'revoke'],
+  ] as const)('withholds an unknown prior reason after %s ciphertext on %s', async (state, action) => {
+    const oldKey = 'unreadable-prior-fixture-canary', nextKey = 'replacement-fixture-key';
+    const organizationId = state === 'organization' ? 2 : ORG;
+    const connectorId = state === 'provider' ? 'llm_anthropic' : 'llm_openai';
+    if (organizationId === 2) await holder.pg.query("INSERT INTO organization_users VALUES (2,11,'admin')");
+    await holder.pg.query('DELETE FROM connector_credentials');
+    await changeCard({ ...cardChange(), credentials: { apiKey: oldKey }, reason: 'Initial fixture credential capture' });
+    if (state === 'corrupt') {
+      await holder.pg.query('UPDATE connector_credentials SET credentials=$1', ['not-an-encrypted-fixture']);
+    } else if (state === 'organization' || state === 'provider') {
+      await holder.pg.query(`INSERT INTO connector_credentials (organization_id,connector_id,credentials,is_valid)
+        SELECT $1,$2,credentials,is_valid FROM connector_credentials WHERE organization_id=1 AND connector_id='llm_openai'`, [organizationId, connectorId]);
+    } else {
+      const stored = (await holder.pg.query<{ credentials: string }>('SELECT credentials FROM connector_credentials')).rows[0];
+      const envelope: Record<string, unknown> = JSON.parse(decryptCredential(stored.credentials));
+      const nested = { customHeaders: { nested: { apiKey: oldKey } } };
+      const plaintext: Record<string, string> = { nested_legacy: JSON.stringify(nested), nested_envelope: JSON.stringify({ ...envelope, credentials: nested }),
+        invalid_json: 'not-json-fixture', scalar: JSON.stringify(oldKey), array: JSON.stringify([oldKey]) };
+      await holder.pg.query('UPDATE connector_credentials SET credentials=$1', [encryptCredential(plaintext[state])]);
+    }
+    const saved = await changeCard({ connectorId, action, credentials: action === 'rotate' ? { apiKey: nextKey } : undefined,
+      scopes: ['model_inference'], reason: `Recover ${oldKey} using ${nextKey}` }, organizationId);
+    const rows = (await holder.pg.query<{ reason: string; new_values: unknown }>('SELECT reason,new_values FROM audit_logs WHERE tenant_id=$1 AND record_id=$2 AND action=$3', [organizationId, connectorId, `credential.${action}`])).rows;
+    const visible = JSON.stringify([saved, rows, await listCredentialCards(organizationId, true, pool)]);
+    expect(visible).not.toContain(oldKey);
+    expect(visible).not.toContain(nextKey);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].reason).toBe('Credential changed; reason withheld because prior credentials could not be read.');
+    if (action === 'rotate') expect((await captureCredentialForUse(organizationId, connectorId, 'model_inference', pool))?.credentials.apiKey).toBe(nextKey);
+    else {
+      expect(saved).toMatchObject({ status: 'revoked', grantedScopes: [], secretFieldsHeld: [] });
+      await expect(captureCredentialForUse(organizationId, connectorId, 'model_inference', pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    }
+  });
+  it('retains the safe reason when prior credentials are absent or readable', async () => {
+    const reasons = ['Initial client account setup', 'Routine client account rotation', 'Retire the client account grant', 'Restore the client account grant'];
+    for (const [index, action] of (['capture', 'rotate', 'revoke', 'capture'] as const).entries()) await changeCard({ ...cardChange(action), reason: reasons[index] });
+    expect((await holder.pg.query<{ reason: string }>('SELECT reason FROM audit_logs ORDER BY chain_seq')).rows.map(row => row.reason)).toEqual(reasons);
+  });
+  it.each(['legacy', 'envelope'])('keeps flat fields and string customHeaders readable in a %s prior record', async format => {
+    await changeCard();
+    const stored = (await holder.pg.query<{ credentials: string }>('SELECT credentials FROM connector_credentials')).rows[0];
+    const envelope: Record<string, unknown> = JSON.parse(decryptCredential(stored.credentials));
+    const credentials = { apiKey: CANARY, customHeaders: { tenantId: 'legacy-tenant-fixture' } };
+    await holder.pg.query('UPDATE connector_credentials SET credentials=$1', [encryptCredential(JSON.stringify(format === 'legacy' ? credentials : { ...envelope, credentials }))]);
+    await changeCard({ ...cardChange('rotate'), reason: `Routine rotation ${CANARY} legacy-tenant-fixture` });
+    const rows = (await holder.pg.query("SELECT reason FROM audit_logs WHERE action='credential.rotate'")).rows;
+    expect(rows).toEqual([{ reason: 'Routine rotation [redacted] [redacted]' }]);
+  });
+  it('an unreadable prior credential is unchanged if its replacement audit is refused', async () => {
+    await changeCard();
+    await holder.pg.query('UPDATE connector_credentials SET credentials=$1', ['unreadable-fixture-ciphertext']);
+    const before = (await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows;
+    await holder.pg.exec('ALTER TABLE audit_logs ADD CONSTRAINT refuse_audit CHECK (false) NOT VALID');
+    await expect(changeCard({ ...cardChange('rotate'), credentials: { apiKey: 'replacement-after-unreadable-fixture' } })).rejects.toThrow();
+    expect((await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows).toEqual(before);
+    expect((await holder.pg.query('SELECT action FROM audit_logs')).rows).toEqual([{ action: 'credential.capture' }]);
+  });
+});
+
 
 const existingCredentialCases: Array<{ id: string; fields: Record<string, string>; normalized: Record<string, unknown> }> = [
   { id: 'google_drive', fields: { clientId: 'drive-fixture@example.com', clientSecret: privateKey() }, normalized: {} },
@@ -348,7 +468,7 @@ describe('secure cards preserve all eight previously connected account capabilit
       const saved = await changeCard({ connectorId: 'google_drive', action: 'capture', credentials: { clientId: 'pem-fixture@example.com', clientSecret: pem }, scopes: ['connector_search'], reason: `Fixture PEM capture ${pem}` });
       const captured = await captureCredentialForUse(ORG, 'google_drive', 'connector_search', pool);
       expect(Buffer.from(captured!.credentials.clientSecret!)).toEqual(Buffer.from(pem));
-      const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] });
+      const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
       expect(result.error).toBeUndefined();
       expect(driveSearches.some(url => url.startsWith('https://www.googleapis.com/drive/v3/files'))).toBe(true);
       const surfaces = JSON.stringify([saved, await listCredentialCards(ORG, true, pool), (await holder.pg.query('SELECT reason,new_values FROM audit_logs')).rows, info.mock.calls, warn.mock.calls, error.mock.calls]);

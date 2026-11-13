@@ -106,6 +106,8 @@ export class CredentialCardRefusal extends Error {
 const unavailableCredential = () => new CredentialCardRefusal('TENANT_CREDENTIAL_UNAVAILABLE', 'The organization’s credential grant is unavailable, expired, revoked or does not allow this purpose. Nothing was sent.');
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 const positiveId = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+/** Shape only; current membership is checked independently before credential use. */
+export const isCredentialActorId = positiveId;
 const credentialDigest = (row: Record<string, unknown>) => createHash('sha256').update(JSON.stringify([row.credentials, row.is_valid])).digest('hex');
 function cardSpec(id: string): CredentialCardSpec {
   const spec = CREDENTIAL_CARD_SPECS.find(item => item.id === id);
@@ -247,13 +249,19 @@ function credentialAuditVariants(value: string): string[] {
   const normalized = value.replace(/\\n/g, '\n').replace(/\r\n?/g, '\n');
   return [value, value.trim(), normalized, normalized.trim(), normalized.replace(/\n/g, '\\n'), normalized.trim().replace(/\n/g, '\\n')].filter(Boolean);
 }
+function readablePriorCredentialFields(credentials: ConnectorCredentials): boolean {
+  return Object.entries(credentials).every(([name, value]) => typeof value === 'string'
+    || (name === 'customHeaders' && record(value) && Object.values(value).every(field => typeof field === 'string')));
+}
 function priorCardState(row: Record<string, any> | undefined, spec: CredentialCardSpec, organizationId: number) {
-  if (!row) return { grant: undefined, values: [] as string[] };
+  if (!row) return { grant: undefined, values: [] as string[], unreadable: false };
   try {
     const value = decodeCredentials(row.credentials, organizationId, spec.id);
+    const credentials = isEnvelope(value) ? value.credentials : value;
+    const readable = readablePriorCredentialFields(credentials);
     return { grant: isEnvelope(value) ? value.grant : undefined,
-      values: credentialFieldValues(isEnvelope(value) ? value.credentials : value) };
-  } catch { return { grant: undefined, values: [] as string[] }; }
+      values: readable ? credentialFieldValues(credentials) : [], unreadable: !readable };
+  } catch { return { grant: undefined, values: [] as string[], unreadable: true }; }
 }
 /** The caller owns BEGIN/COMMIT: the credential and its chained audit commit together. */
 export async function writeCredentialCard(db: CredentialDb, organizationId: number, userId: number, change: CredentialCardChange): Promise<CredentialCardView> {
@@ -278,6 +286,8 @@ export async function writeCredentialCard(db: CredentialDb, organizationId: numb
   let reason = change.reason.trim();
   const heldValues = [...new Set([...prior.values, ...credentialFieldValues(credentials)].flatMap(credentialAuditVariants))].sort((a, b) => b.length - a.length);
   for (const value of heldValues) reason = reason.split(value).join('[redacted]');
+  // Unknown prior values cannot be safely removed from arbitrary free text.
+  if (prior.unreadable) reason = 'Credential changed; reason withheld because prior credentials could not be read.';
   const { writeChainedAuditRow } = await import('../auditService.js');
   await writeChainedAuditRow(db, { tenantId: organizationId, userId, action: `credential.${change.action}`,
     resourceType: 'connector_credential_grant', resourceId: spec.id, reason,
@@ -309,13 +319,11 @@ export async function assertCredentialUseCurrent(captured: CapturedCredentialUse
   const authority = credentialUses.get(captured);
   if (!authority) throw unavailableCredential();
   const current = async () => {
-    if (authority.grant) {
-      if (userId !== undefined) {
-        if (!await currentCredentialCardRole(db, authority.organizationId, userId)) throw unavailableCredential();
-      } else {
-        const standing = await db.query("SELECT id FROM organizations WHERE id = $1 AND status = 'active'", [authority.organizationId]);
-        if (standing.rows.length !== 1 || Number(standing.rows[0].id) !== authority.organizationId) throw unavailableCredential();
-      }
+    if (userId !== undefined) {
+      if (!await currentCredentialCardRole(db, authority.organizationId, userId)) throw unavailableCredential();
+    } else {
+      const standing = await db.query("SELECT id FROM organizations WHERE id = $1 AND status = 'active'", [authority.organizationId]);
+      if (standing.rows.length !== 1 || Number(standing.rows[0].id) !== authority.organizationId) throw unavailableCredential();
     }
     let row: Record<string, any> | undefined;
     try { row = (await db.query('SELECT credentials, is_valid FROM connector_credentials WHERE organization_id = $1 AND connector_id = $2', [authority.organizationId, authority.connectorId])).rows[0]; }
@@ -500,7 +508,8 @@ export async function storeCredentials(
  */
 async function getAuthenticatedConnector(
   organizationId: number,
-  connectorId: string
+  connectorId: string,
+  userId: number | undefined
 ): Promise<{ connector: DataConnector; credentialUse?: CapturedCredentialUse } | null> {
   initializeConnectors();
   const make = connectors.get(connectorId);
@@ -513,7 +522,7 @@ async function getAuthenticatedConnector(
   if (connector.requiresCredentials) {
     const captured = await captureCredentialForUse(organizationId, connectorId, 'connector_search');
     if (!captured) return null;
-    await assertCredentialUseCurrent(captured);
+    await assertCredentialUseCurrent(captured, userId);
     credentialUse = captured;
     await connector.authenticate(captured.credentials);
   }
@@ -530,17 +539,20 @@ async function getAuthenticatedConnector(
 export async function searchConnectors(
   organizationId: number,
   connectorIds: string[],
-  query: ConnectorQuery
+  query: ConnectorQuery,
+  actorUserId: number | null
 ): Promise<{ connectorId: string; results: ConnectorResult[]; error?: string }[]> {
+  if (actorUserId !== null && !positiveId(actorUserId)) throw unavailableCredential();
+  const userId = actorUserId === null ? undefined : actorUserId;
   initializeConnectors();
 
   const searchPromises = connectorIds.map(async connectorId => {
     try {
-      const authenticated = await getAuthenticatedConnector(organizationId, connectorId);
+      const authenticated = await getAuthenticatedConnector(organizationId, connectorId, userId);
       if (!authenticated) {
         return { connectorId, results: [], error: 'Connector not available or not configured' };
       }
-      if (authenticated.credentialUse) await assertCredentialUseCurrent(authenticated.credentialUse, undefined, false);
+      if (authenticated.credentialUse) await assertCredentialUseCurrent(authenticated.credentialUse, userId, false);
       const results = await authenticated.connector.search(query);
       return { connectorId, results };
     } catch (err) {

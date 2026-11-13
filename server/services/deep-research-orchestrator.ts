@@ -75,6 +75,8 @@ const jobCallbacks = new Map<number, (progress: number, status: string, data?: a
  * Launch a new deep research job.
  */
 export async function launchResearchJob(request: DeepResearchRequest): Promise<DeepResearchJob> {
+  request = { ...request };
+  if (!Number.isSafeInteger(request.userId) || request.userId <= 0) throw new Error('Current authenticated user required for research.');
   // Check quota
   const quota = await checkQuota(request.organizationId, 'deep_research');
   if (!quota.allowed) {
@@ -146,7 +148,8 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   const connectorResults = await searchConnectors(
     request.organizationId,
     request.connectorIds,
-    connectorQuery
+    connectorQuery,
+    request.userId
   );
 
   // Log per-connector results

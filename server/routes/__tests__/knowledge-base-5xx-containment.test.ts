@@ -39,7 +39,8 @@ vi.mock('../../middleware/auth.js', () => ({
   },
 }));
 vi.mock('../../services/integrations/connector-search.js', () => ({ searchConnectedRepositories }));
-vi.mock('../../services/connectors/connector-registry.js', () => ({
+vi.mock('../../services/connectors/connector-registry.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../services/connectors/connector-registry.js')>(),
   captureCredentialForUse: connector.capture, assertCredentialUseCurrent: connector.current,
 }));
 vi.mock('../../services/connectors/veeva-vault.js', () => ({ VeevaVaultConnector: class { authenticate = connector.authenticate; upload = connector.upload; } }));
@@ -159,6 +160,23 @@ describe('knowledge-base 502s: the status and sentence stay, the upstream text g
     const res = await request(app()).get('/api/knowledge-base/search-connectors');
     expect(res.status).toBe(422);
     expect(res.body).toEqual({ error: 'Query parameter "q" is required' });
+  });
+});
+
+describe('connector search retains authenticated request identity', () => {
+  it('uses the authenticated userId alias, never a query, header or body actor', async () => {
+    connector.user = { userId: 42, organizationId: 7, role: 'editor' };
+    searchConnectedRepositories.mockResolvedValue({ source: 'Connected Repositories', searched: [], skipped: [], resultCount: 0, documents: [] });
+    const res = await request(app()).get('/api/knowledge-base/search-connectors?q=protocol&userId=999')
+      .set('X-User-Id', '999').send({ userId: 999, actorUserId: null });
+    expect(res.status).toBe(200);
+    expect(searchConnectedRepositories).toHaveBeenCalledWith(7, { query: 'protocol', connectors: undefined, limit: undefined, actorUserId: 42 });
+  });
+  it.each([undefined, 0, -1, 1.5, Number.NaN])('refuses invalid authenticated actor %s before search', async id => {
+    connector.user = { id, organizationId: 7, role: 'editor' };
+    const res = await request(app()).get('/api/knowledge-base/search-connectors?q=protocol&userId=999').set('X-User-Id', '999');
+    expect(res.status).toBe(403);
+    expect(searchConnectedRepositories).not.toHaveBeenCalled(); expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
