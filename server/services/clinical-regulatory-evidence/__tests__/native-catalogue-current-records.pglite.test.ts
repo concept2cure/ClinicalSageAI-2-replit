@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
-import type { NativeRecordSnapshot } from '../record-source';
+import { syncQualityProjectSources, type NativeRecordSnapshot } from '../record-source';
 import { seedSourceReadParents } from './source-read-fixture';
 import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 
@@ -21,7 +21,7 @@ vi.mock('../../qms/project-evidence', () => ({ readQualityProjectEvidence: h.col
 // chain's independent SQL suites own seal verification, not this race fixture.
 vi.mock('../data-room-capture-audit', () => ({ captureActor: () => null, recordCapture: async () => undefined, recordSupersession: async () => undefined }));
 
-import { searchDataRoom } from '../data-room-search';
+import { catalogProgramIds, searchDataRoom } from '../data-room-search';
 import { getCurrentReadableSourceScope } from '../source-read-access';
 import { listClientDocuments } from '../evidence-spine.service';
 
@@ -251,6 +251,24 @@ describe('the Data catalog admits only its effective canonical projects', () => 
 });
 
 describe('catalogue scope preserves privacy and its final admission fence', () => {
+  it.each(['deleted program', 'unresolved anchor'])('refuses a stale open project with a %s before supplying its sibling', async kind => {
+    await captureSibling();
+    const identity = { organizationId: ORG, userId: USER };
+    const programIds = await catalogProgramIds(identity, PROGRAM);
+    expect(programIds).toEqual([PROGRAM, SIBLING]);
+    if (kind === 'deleted program') await pg.query('UPDATE regulatory_programs SET deleted_at=now() WHERE id=$1', [PROGRAM]);
+    else await pg.query('UPDATE projects SET regulatory_program_id=NULL WHERE id=$1', [ORG]);
+    try {
+      const refusal = kind === 'deleted program'
+        ? { status: 404, code: 'PROJECT_NOT_FOUND' } : { status: 409, code: 'PROJECT_ANCHOR_UNRESOLVED' };
+      await expect(syncQualityProjectSources({ ...identity, programId: PROGRAM })).rejects.toMatchObject(refusal);
+      await expect(catalog({ programIds })).rejects.toMatchObject(refusal);
+    } finally {
+      if (kind === 'deleted program') await pg.query('UPDATE regulatory_programs SET deleted_at=NULL WHERE id=$1', [PROGRAM]);
+      else await pg.query('UPDATE projects SET regulatory_program_id=$2 WHERE id=$1', [ORG, PROGRAM]);
+    }
+  });
+
   it('omits a denied native object without a title or text', async () => {
     await captureSibling(); await pg.query('UPDATE quality_fixture_state SET visible=FALSE WHERE id=9');
     const result = await catalog();

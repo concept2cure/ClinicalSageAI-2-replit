@@ -1,0 +1,56 @@
+{
+  "scope": "F1 native Quality catalogue currentness: strict open-project guard",
+  "date": "2026-11-13",
+  "branch": "concept2cure-v2",
+  "status": "source frozen; no Git operations or commits by delegated agent",
+  "supersedes": "Prior catalogue-receipt.json source hashes and final-green totals; original catalogue-red-final.log remains initial defect red evidence.",
+  "files": [
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "sha256": "0e74f6abd139249abc43dae9f4d450c7d09287800ed0e7399e68cc2d66c0a3f0",
+      "lines": 342
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+      "sha256": "e82efde6a79a359789db49096931aaf6447d8657dd7878d0d7e8286f75f2372d",
+      "lines": 359
+    }
+  ],
+  "red": {
+    "log": "catalogue-open-project-red.txt",
+    "failed": 2,
+    "skipped": 25,
+    "files": 1,
+    "proof": "Both existing direct sync(open A) refusal controls passed; only catalogue returned sibling B after route-canonical A was deleted or unbound."
+  },
+  "green": {
+    "logs": [
+      {
+        "file": "catalogue-open-project-green.txt",
+        "files": 1,
+        "passed": 27
+      },
+      {
+        "file": "catalogue-open-project-regression.txt",
+        "files": 8,
+        "passed": 66
+      }
+    ],
+    "files": 9,
+    "passed": 93
+  },
+  "lint": {
+    "log": "catalogue-open-project-lint.txt",
+    "exit_code": 0,
+    "diagnostics": 0
+  },
+  "review": "Independent read-only reviewer confirmed both strict open-project calls are after their global catalogue snapshot and before native processing, inside retained end-of-evaluation global checks.",
+  "constraints": {
+    "source_read_access_edits": false,
+    "held_qms_edits": false,
+    "ui_edits": false,
+    "dependency_or_schema_changes": false,
+    "provider_calls": false
+  },
+  "limits": "PGlite source/project/disposition/catalogue SQL; native QMS producer and capture-audit seams mocked. No live application or model qualification claimed. Existing route processing suite logs missing optional grading fixture table but all assertions pass."
+}

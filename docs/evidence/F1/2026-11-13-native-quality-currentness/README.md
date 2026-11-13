@@ -39,6 +39,16 @@ The existing catalogue search now intersects its canonical project set with curr
 
 The SQL tests use PGlite for actual project/source/disposition/catalogue statements, with the separately tested native Quality producer and capture-audit seams mocked. They do not establish a database-wide atomic snapshot, hosted Codespaces acceptance or live model behavior. No application/browser rerun or model qualification is claimed for this slice. The canonical source hashes and actual logs are retained here; normal publication gates remain mandatory.
 
+## Final open-project guard
+
+Final review found that effective-project filtering must preserve the old first-page sync's strict admission of the open project. A canonical set could have been resolved before open A was deleted or its tracking anchor removed; silently excluding A and returning sibling B would change the existing refusal. Two actual SQL cases first confirm the old sync refuses (404 deleted A, 409 unbound A), then fail against the initial scoped repair. This guard red has two failures and 25 skipped cases (`catalogue-open-project-red.txt`). It is an added negative control, not a new access policy.
+
+The existing strict `requireCurrentProgramAccess` helper now runs inside both catalogue access brackets before effective-project processing. The existing global final checks catch later changes. A's native records are still refreshed/read only when its effective facet includes them. Independent review confirms the 404/409/403 semantics and existing empty/private/final-fence behavior.
+
+The final catalogue suite passes 27 cases, and eight adjacent/direct-consumer suites pass 66 cases: 93 across nine files. Root's final combined source/SQL run passes 40 cases. These observations supersede the initial 25/91/38 counts above and overlap; they are not added together. `catalogue-open-project-receipt.json` supersedes the initial catalogue source receipt, and `source-hashes.json` binds the final four source/test files.
+
 ## Compiler and publication
 
 The full Node 22 compiler gate at source `99e83cb86` completes with zero errors, compiler exit 0 and baseline 0 (`TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental`). Output is retained in `typecheck-initial.txt`. Concurrent canonical updates are merged normally before publication; the normal push hook separately checks the merged tree. No baseline, ceiling, gate or protected instruction changes are part of this repair.
+
+The same full compiler gate also passes with zero errors after the final open-project guard and concurrent canonical integration (`typecheck-final.txt`, bound to the final source hashes). The initial publication attempt passed all 89 lint-job gates and the compiler but lost a remote-ref race; no rejected push is described as a publication receipt. The completed repair uses the normal merge/push path again.

@@ -23,7 +23,7 @@ import { EXTRACTION_STATUSES, type EvidenceSource, type ExtractionStatus } from 
 import { syncQualityProjectSources } from './record-source';
 import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
 import { persistedTextAvailableSql } from './data-room-processing-state.js';
-import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
+import { getCurrentAccessibleProgramScope, requireCurrentProgramAccess, requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 export interface DataRoomQuery {
   programId: string;
@@ -179,6 +179,7 @@ async function prepareSourceScope(orgId: number, p: DataRoomQuery, actor?: { use
   if (!actor) return null;
   const identity = { organizationId: orgId, userId: actor.userId };
   const programs = Array.isArray(p.programIds) ? await getCurrentAccessibleProgramScope(pool, identity) : null;
+  if (programs) await requireCurrentProgramAccess(pool, { ...identity, programId: p.programId });
   const programIds = programs
     ? [...new Set(p.programIds!.map(id => id.toLowerCase()))].filter(id => programs.programIds.includes(id) && (!p.project || id === p.project.toLowerCase()))
     : [p.programId];
@@ -197,6 +198,7 @@ async function confirmSourceScope(orgId: number, p: DataRoomQuery, actor: { user
   if (!actor || !readable) return;
   const identity = { organizationId: orgId, userId: actor.userId };
   const programs = Array.isArray(p.programIds) ? await getCurrentAccessibleProgramScope(pool, identity) : null;
+  if (programs) await requireCurrentProgramAccess(pool, { ...identity, programId: p.programId });
   for (const { programId, scope } of readable.admissions) {
     await requireSourceReadScopeStillCurrent(pool, { ...identity, programId }, scope);
   }
