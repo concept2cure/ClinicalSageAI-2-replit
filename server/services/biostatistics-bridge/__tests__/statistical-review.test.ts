@@ -53,6 +53,24 @@ function review(d: StudyDesign) {
   return buildStatisticalReview({ validation, judgment, computation, input: adapter.input, gaps: adapter.gaps });
 }
 
+describe('a fragile design names its sensitive parameters as a reader says them (T2-F8)', () => {
+  it('writes "sensitive to effect size, attrition rate", not the names as stored', () => {
+    const d = design();
+    const validation = validateDesign(d);
+    const adapter = studyDesignToStatisticalInput(d);
+    const computation = computationEngine.compute(adapter.input!);
+    const judged = judgmentEngine.judge(adapter.input!, computation);
+    const judgment = { ...judged, fragility: { fragilityIndex: 82, category: 'very_fragile' as const, narrative: 'n', sensitiveParameters: [
+      { parameter: 'effect_size', currentValue: 0.4, breakpointValue: 0.35, percentMargin: 12 },
+      { parameter: 'attrition_rate', currentValue: 0.2, breakpointValue: 0.3, percentMargin: 50 },
+    ] } };
+    const r = buildStatisticalReview({ validation, judgment, computation, input: adapter.input, gaps: adapter.gaps });
+    const text = r.rows.map((row) => row.finding).join(' ');
+    expect(text).toContain('Fragility index 82/100 (very fragile) — sensitive to effect size, attrition rate.');
+    expect(text).not.toMatch(/effect_size|attrition_rate/);
+  });
+});
+
 describe('buildStatisticalReview', () => {
   it('produces one row per element, in the review order, each traceable to codes', () => {
     const r = review(design());

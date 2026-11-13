@@ -21,6 +21,7 @@ import type { DesignValidationReport } from '../study-design/design-validation';
 import type { DesignFinding, FindingSeverity } from '../study-design/design-gates';
 import type { ComputationResult, JudgmentResult, StatisticalInput } from '../ana-biostats/types';
 import type { DesignGap } from './design-adapter';
+import { PARAMETER_LABELS, vocabPhrase } from '../../../shared/biostat-vocabulary';
 
 export type ReviewRisk = 'low' | 'medium' | 'high' | 'critical';
 
@@ -146,7 +147,9 @@ export function buildStatisticalReview(args: ReviewInputs): StatisticalReview {
         }
         if (j.fragility.category === 'very_fragile' || j.fragility.category === 'fragile') {
           risk = worst(risk, 'high');
-          const params = j.fragility.sensitiveParameters.map((p) => p.parameter).join(', ');
+          /* As a reader says them (T2-F8: it printed "sensitive to effect_size, attrition_rate", the
+             names as stored). The vocabulary is the one the governed documents use. */
+          const params = j.fragility.sensitiveParameters.map((p) => vocabPhrase(PARAMETER_LABELS, p.parameter)).join(', ');
           findingText.push(`Fragility index ${j.fragility.fragilityIndex}/100 (${j.fragility.category.replace('_', ' ')})${params ? ' — sensitive to ' + params : ''}.`);
           actions.push('Run sensitivity scenarios across the sensitive parameters and state the result in the rationale.');
         }

@@ -867,7 +867,13 @@ describe('Enhanced: Missing Data Impact', () => {
     expect(impact.adjustedPower).toBeLessThan(base.power);
   });
 
-  it('MMRM preserves more power than complete case', () => {
+  /* This case was "MMRM preserves more power than complete case", and compared two "adjusted powers".
+     MMRM's was the design's power times (1 − 0.3 × the missing rate): a constant, not a computation.
+     Since 2026-11-12 (03291d0335, RULE 2) the engine states a power after missing data only where it
+     computes one — complete case, recomputed at the evaluable N — and null for every other method
+     (server/services/ana-biostats/__tests__/missing-data-power-not-invented.test.ts). That change left
+     this case red on trunk, asserting the invented figure. It now holds the contract. */
+  it('states a power after missing data for complete case, and none for MMRM', () => {
     const base = engine.compute(pharmaInput);
     const cc = engine.computeMissingDataImpact(
       { ...pharmaInput, expectedMissingRate: 0.20, missingDataMethod: 'complete_case' },
@@ -878,7 +884,9 @@ describe('Enhanced: Missing Data Impact', () => {
       base
     );
 
-    expect(mmrm.adjustedPower).toBeGreaterThanOrEqual(cc.adjustedPower);
+    expect(cc.adjustedPower).not.toBeNull();
+    expect(cc.adjustedPower!).toBeLessThan(base.power);
+    expect(mmrm.adjustedPower).toBeNull();
   });
 
   it('higher missing rate increases bias risk', () => {

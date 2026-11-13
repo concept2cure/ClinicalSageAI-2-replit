@@ -47,6 +47,7 @@ export function toBiostatsInput(
     multiplicityMethod: str(input.multiplicityMethod),
     estimandStrategy: str(input.estimandStrategy),
     missingDataMethod: str(input.missingDataMethod),
+    missingDataStrategyStated: str(input.missingDataStrategyStated),
     expectedMissingRate: num(input.expectedMissingRate),
     regulatoryBody: str(input.regulatoryBody),
     indication: str(input.indication),

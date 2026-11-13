@@ -232,6 +232,31 @@ describe('the note says what the example is, and what to do from here', () => {
   });
 });
 
+describe('the empty documents list names the scope its own heading names', () => {
+  const emptyHint = () => {
+    const section = Array.from(document.querySelectorAll('h2')).find((h) => /^Statistical documents for this/.test(h.textContent ?? ''))?.closest('section, div');
+    return { heading: Array.from(document.querySelectorAll('h2')).find((h) => /^Statistical documents for this/.test(h.textContent ?? ''))?.textContent ?? '', text: (section?.parentElement?.textContent ?? '').replace(/\s+/g, ' ') };
+  };
+
+  it('with no project it says "for this organization", as the heading does (it said "for this project")', async () => {
+    serverWithProfile({ primaryIndustry: 'biotech_pharma', mdxSpecialization: null });
+    render(<Surface onAsk={() => {}} onNav={() => {}} />);
+    await waitFor(() => expect(emptyHint().heading).toBe('Statistical documents for this organization'));
+    await waitFor(() => expect(document.body.textContent).toContain('No governed statistical documents yet'));
+    expect(document.body.textContent).toContain('Statistical documents persisted for this organization appear here');
+    expect(document.body.textContent).not.toContain('Statistical documents persisted for this project appear here');
+  });
+
+  it('with a project open it says "for this project"', async () => {
+    setProject({ id: '3c7e1f4a-9b2d-4e6f-8a15-2d9c7b4e1f60', productType: 'drug' });
+    serverWithProfile(null);
+    render(<Surface onAsk={() => {}} onNav={() => {}} />);
+    await waitFor(() => expect(emptyHint().heading).toBe('Statistical documents for this project'));
+    await waitFor(() => expect(document.body.textContent).toContain('No governed statistical documents yet'));
+    expect(document.body.textContent).toContain('Statistical documents persisted for this project appear here');
+  });
+});
+
 describe('a project’s own product type still decides, and costs no extra read', () => {
   it('a drug project is not moved onto the device example by a device organisation', async () => {
     setProject({ id: '3c7e1f4a-9b2d-4e6f-8a15-2d9c7b4e1f60', productType: 'drug' });
