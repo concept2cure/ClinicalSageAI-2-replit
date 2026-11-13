@@ -141,13 +141,13 @@ describe('background activity belongs to the current verified account', () => {
     expect(result.current.state).toBe('ready'); expect(result.current.summary?.items[0].status).toBe('external_status');
   });
 
-  it.each([
+  it.each<[string, unknown]>([
     ['absent summary fields', {}], ['missing items', { activeCount: 0, stalledCount: 0, recentlyCompletedCount: 0 }],
     ['negative count', { ...activitySummary(), activeCount: -1 }], ['fractional count', { ...activitySummary(), stalledCount: 0.5 }],
     ['unsafe count', { ...activitySummary(), recentlyCompletedCount: Number.MAX_SAFE_INTEGER + 1 }],
     ['invalid item', { ...activitySummary(), items: [null] }],
     ...[{ id: 12 }, { id: '' }, { question: undefined }, { status: undefined }, { toolCalls: -1 }, { toolCalls: 0.5 },
-      { startedAt: 'not a date' }, { completedAt: undefined }].map(patch => ['invalid item fields', { ...activitySummary(), items: [{ ...activityItem, ...patch }] }]),
+      { startedAt: 'not a date' }, { completedAt: undefined }].map<[string, unknown]>(patch => ['invalid item fields', { ...activitySummary(), items: [{ ...activityItem, ...patch }] }]),
   ])('rejects a successful envelope with %s as an error rather than an empty queue', async (_name, body) => {
     setupActivity(body); const { result } = renderHook(() => useAgentActivity(true)); await act(async () => {});
     expect(result.current.state).toBe('error'); expect(result.current.summary).toBeNull(); expect(result.current.readAt).toBeNull();

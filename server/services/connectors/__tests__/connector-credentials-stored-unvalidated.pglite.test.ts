@@ -313,7 +313,7 @@ describe('real connector transport retains the initiating actor', () => {
       CREATE TRIGGER revoke_during_use AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION revoke_during_use();`);
     const [result] = await searchConnectors(ORG, ['google_drive'], { keywords: ['protocol'] }, 11);
     expect(globalThis.fetch).not.toHaveBeenCalled(); expect(result).toMatchObject({ results: [], error: expect.stringContaining('Connector search failed') });
-    const uses = (await holder.pg.query("SELECT user_id,actor_id,record_id,new_values FROM audit_logs WHERE action='credential.use'")).rows;
+    const uses = (await holder.pg.query<{ user_id: number; actor_id: number; record_id: string; new_values: Record<string, unknown> }>("SELECT user_id,actor_id,record_id,new_values FROM audit_logs WHERE action='credential.use'")).rows;
     expect(uses).toEqual([expect.objectContaining({ user_id: 11, actor_id: 11, record_id: 'google_drive', new_values: expect.objectContaining({ credentialId: 'google_drive', purpose: 'connector_search', accountOwner: 'client' }) })]);
     expect(Object.keys(uses[0].new_values as object).sort()).toEqual(['accountOwner', 'credentialId', 'grantId', 'purpose', 'revision']);
     expect((await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows).toEqual(before);
@@ -383,7 +383,7 @@ describe('credential recovery withholds reasons containing unknown prior values'
     }
     const saved = await changeCard({ connectorId, action, credentials: action === 'rotate' ? { apiKey: nextKey } : undefined,
       scopes: ['model_inference'], reason: `Recover ${oldKey} using ${nextKey}` }, organizationId);
-    const rows = (await holder.pg.query('SELECT reason,new_values FROM audit_logs WHERE tenant_id=$1 AND record_id=$2 AND action=$3', [organizationId, connectorId, `credential.${action}`])).rows;
+    const rows = (await holder.pg.query<{ reason: string; new_values: unknown }>('SELECT reason,new_values FROM audit_logs WHERE tenant_id=$1 AND record_id=$2 AND action=$3', [organizationId, connectorId, `credential.${action}`])).rows;
     const visible = JSON.stringify([saved, rows, await listCredentialCards(organizationId, true, pool)]);
     expect(visible).not.toContain(oldKey);
     expect(visible).not.toContain(nextKey);
@@ -398,7 +398,7 @@ describe('credential recovery withholds reasons containing unknown prior values'
   it('retains the safe reason when prior credentials are absent or readable', async () => {
     const reasons = ['Initial client account setup', 'Routine client account rotation', 'Retire the client account grant', 'Restore the client account grant'];
     for (const [index, action] of (['capture', 'rotate', 'revoke', 'capture'] as const).entries()) await changeCard({ ...cardChange(action), reason: reasons[index] });
-    expect((await holder.pg.query('SELECT reason FROM audit_logs ORDER BY chain_seq')).rows.map(row => row.reason)).toEqual(reasons);
+    expect((await holder.pg.query<{ reason: string }>('SELECT reason FROM audit_logs ORDER BY chain_seq')).rows.map(row => row.reason)).toEqual(reasons);
   });
   it.each(['legacy', 'envelope'])('keeps flat fields and string customHeaders readable in a %s prior record', async format => {
     await changeCard();
