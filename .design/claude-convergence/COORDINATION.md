@@ -1756,6 +1756,20 @@ What already exists, the defect/repair boundaries and red-first checks are recor
 `docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`, dated 2026-11-13. No source file, mount, table, tool, model,
 screen or production dependency is added. Current model PQ, independent review, source and filing gates remain.
 
+**Source publication receipt, 2026-11-13:** this continuation is published at
+`464dafb20c4eaf3c8f9b1bda7b8d22b68269cbba` on canonical `concept2cure-v2`, confirmed by Git and the connected
+GitHub branch resource. Both actual golden journeys pass across focused runs; all normal push gates pass,
+including 89 lint-job gates with zero red and full TypeScript with zero errors. Combined startup checks pass
+81/81 on the host and in the configured official image. All implementation agents are frozen and all browser
+workers closed. **The source-file holds in this continuation's table are released.** Root retains only this
+entry and the existing sales-showcase README for the final ordinary-startup receipt; the rehearsal agent retains
+runtime/scratch scope only. Model qualification and broader Anna epic acceptance are not claimed by this receipt.
+The full ordinary startup at that published revision completes at 2026-11-13 20:56 UTC with native/explicit exit 0,
+all three exact current seed stamps and no failed/blocked phase. The existing showcase README records the actual
+non-owner/default-policy, image-shell, physical DOCX and live report-scope evidence. Root's remaining evidence-file
+holds release with this documentation publication; the final cached restart checks only the published version and
+continued runtime health. No implementation hold remains.
+
 **Codex OpenAI/AnA verification continuation, 2026-11-13 (F1 W1 D1/D2):** completed; files released with this source commit: `scripts/ops/verify-ana-answers.mjs`, its new focused `scripts/ops/verify-ana-answers.test.mjs`, and its own evidence/design packet. Complete existing provider/completion proof and explicit admitted model/project requests; no route, model, credential or approval change. Preserve the other continuation's `d06fb86ec` supplied-key repair and Codespaces/bookworm/presenter scope. Evidence: `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
 
 ### Canonical CDISC preparation handoff — 4b2ed1cba

@@ -103,7 +103,7 @@ previews frozen into the document. Demo/Lumen cache and CSR-ready markers are pr
 For the golden browser journeys only, that second startup supplied the existing CI launcher's
 `EXPORT_REVIEW_GATE=enforce` in the process environment. This preserves the pre-review 403 assertion. Ordinary
 development Codespaces permit a labelled uncontrolled DRAFT preview; production enforces the review gate. The
-final regular startup must restore the ordinary default, and no product export policy is amended for a test.
+subsequent regular startup restores the ordinary default, and no product export policy is amended for a test.
 
 This rehearsal uses the configured official-image filesystem locally; it is not a claim that this session created
 a hosted GitHub Codespace. No provider key, paid model call, real client credential, agency submission, model PQ
@@ -131,6 +131,34 @@ that person's real Home task. Its actual review POST answers 200 and records the
 task. Current toolbar/receipt selectors and the required due field replace stale test assumptions; no review gate
 is weakened. The first journey passed twice unchanged; the final second-only run passes in 24.2 seconds. All
 browser workers are closed. The prepared AnA send was deliberately aborted before provider transport.
+
+**Published source and actual default runtime:** normal canonical push completed at
+`464dafb20c4eaf3c8f9b1bda7b8d22b68269cbba`, confirmed independently by Git `ls-remote` and the connected GitHub
+branch resource. All push gates pass, including **89 lint-job gates / zero red**, no changed-file warning growth,
+and the full TypeScript gate with **0 errors / baseline 0**. No hook or baseline was bypassed.
+
+The ordinary post-start now serves that exact commit in the configured official-image rehearsal, with the
+process-only strict export flag removed. Database/schema/storage are healthy; AnA remains explicitly
+`no_provider`. Forwarded-origin sign-in is 200, foreign-origin refusal is 403, and all three actual app processes
+use non-owner `app_service` without owner credentials. The merged **81/81** startup checks also pass inside the
+image on Node 22.16. The app uses the verified private Python runtime, with actual isolated imports of the existing
+`python-docx==1.2.0` and `lxml==6.1.1` pins. The real isolated document worker produces a valid **37,991-byte DOCX**;
+reopening preserves its paragraph and table, with zero provider calls. SHA-256:
+`b15c06d0c8254802ede76aa32d9c5f3b537bff65228a076cb049a373a09a6d50`.
+
+After the normal changed-hash Lumen refresh, actual authenticated reads prove five LMN-201 project-scoped
+reports and the exact five-run bundle. All five report statuses remain **partial**. Four prior report records,
+the original four-run bundle snapshot and both platform schedules are preserved. There was no disabled schedule
+in this live baseline, so disabled-retention coverage remains fixture-only. The three completed synthetic CSRs
+still have 119 nonempty sections each and three linked reviewer tasks. These reads make no report writes and do
+not turn partial assessments into compliance approval.
+
+At **2026-11-13 20:56 UTC**, that full ordinary startup completes with both native and explicit **exit 0**.
+Lumen, general demo and portfolio stamps all match current `scripts/demo` tree
+`e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e`, including their normal account/roster bindings. Every seeded/serving
+marker is present, with no failed, blocked or incomplete phase; the completed seven-step CSR preparation is
+reused. Seed output retains its explicit unexecuted-work annotations. Startup completion establishes the keyless
+synthetic demonstration fixtures, not completion of those unexecuted steps or the broader Anna epic.
 
 ## Before the room
 
