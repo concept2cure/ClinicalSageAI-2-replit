@@ -96,3 +96,9 @@ Commands, bounded summaries and final source/log digests are recorded in
 compiler/build/push verification remains the integrating lead's responsibility.
 No provider calls, live-model answer, PQ qualification or hosted-Codespace
 acceptance were performed or claimed by this worker.
+
+## Root integration verification
+
+The ordinary canonical merge adopted the published AnA activity, credential attribution, checkout and Codespace work through `c36ec97e9`. On the combined source, **73/73 relevant catalog/project-policy cases** and **2/2 native PostgreSQL deletion cases** pass. The canonical whole-program compiler reports **0 errors**, and the complete production build exits **0**. Independent changed-file lint reports no errors or warnings. The compressed compiler/build logs and `verification.json` bind these results to the checked source. The separate native-fixture evidence records actual RLS/runtime-role and provisioning observations.
+
+No live provider or final-HEAD hosted Codespace was invoked for this deterministic receipt repair. The source-selection pin issue is recorded separately with exact-ID validation as its proposed repair, not claimed implemented. Three existing tenant export/purge checks remain blocked by the private-profile custody decision documented in the native-fixture evidence; no export/RLS control was weakened.

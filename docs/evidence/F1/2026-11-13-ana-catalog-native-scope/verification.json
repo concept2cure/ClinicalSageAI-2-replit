@@ -53,5 +53,26 @@
     "No full compiler, build or Git mutation by this worker.",
     "Selected native-context scope loss beyond the 16000-unit excerpt is handed to held existing owners, not fixed here.",
     "Native source admission, scope filters, source hashes and filing authority unchanged."
-  ]
+  ],
+  "rootIntegration": {
+    "adoptedCanonicalRevision": "c36ec97e9",
+    "sourceHeadChecked": "d15989f41",
+    "relatedUnitAndPolicyTestsPassed": 73,
+    "nativeDeletionTestsPassed": 2,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "typecheckExitCode": 0,
+    "typecheckErrors": 0,
+    "productionBuildExitCode": 0,
+    "rootChangedFileLintErrors": 0,
+    "rootChangedFileLintWarnings": 0,
+    "localNativePostgresMajor": 16,
+    "localNativeEncoding": "UTF8",
+    "runtimeRole": "app_service",
+    "runtimeSuperuser": false,
+    "runtimeBypassRls": false,
+    "hostedCodespaceOfFinalHeadClaimed": false,
+    "liveProviderCalls": 0,
+    "knownRemainingOffboardingCiFailures": 3
+  }
 }
