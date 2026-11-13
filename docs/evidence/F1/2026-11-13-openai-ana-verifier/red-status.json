@@ -1,0 +1,11 @@
+{
+  "base": "d06fb86ec904beb947e8641994f13f9eb3a0d27e",
+  "passed": 8,
+  "failed": 21,
+  "fixtureOnly": true,
+  "providerCalls": 0,
+  "sha256": {
+    "scripts/ops/verify-ana-answers.mjs": "acca98efc6c26f5eccd279ce7baaafbc35bd78bef1f0d83329b2ac9e8ce172ba",
+    "scripts/ops/verify-ana-answers.test.mjs": "fdc43c610fbf60e646c50a0817f9dcd2a1519eeceb42ca5c75a68d0419f63e7d"
+  }
+}

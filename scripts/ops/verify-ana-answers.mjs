@@ -3,7 +3,7 @@
  * Does AnA actually answer?
  *
  * Drives the real chat path against a running instance — dev-login, then
- * POST /api/ana-ri/stream — and reports which of four things happened. It is
+ * POST /api/ana-ri/stream — and reports which of five things happened. It is
  * the check that did not exist while AnA was broken, and the reason finding
  * out took a whole session rather than a minute.
  *
@@ -22,24 +22,33 @@
  * was to ask her something and look at what came back — which is what this
  * does.
  *
- * ── The four outcomes ────────────────────────────────────────────────────────
- *   LIVE      answered, from a real provider model. The only state that proves
- *             the product works end to end.
+ * ── The five outcomes ───────────────────────────────────────────────────────
+ *   LIVE      completed an answer with a real-provider receipt. This checks
+ *             one turn, not scientific review or the full regulated workflow.
  *   FIXTURES  answered, but from AI_GATEWAY_DETERMINISTIC. Honest and useful
  *             for CI; NOT evidence the provider path works. Fails under
  *             --require-live, which is what a deploy gate should pass.
  *   SILENT    the stream completed and carried no content. The failure this
  *             script exists for: it looks like success from every angle except
  *             the user's.
+ *   UNVERIFIED text arrived, but the current completion/provider receipt is
+ *             missing, stopped, contradictory or from an unexpected provider.
  *   UNREACHABLE  auth failed, the endpoint 5xx'd, or nothing was listening.
  *
  * ── Usage ────────────────────────────────────────────────────────────────────
  *   node scripts/ops/verify-ana-answers.mjs
  *   node scripts/ops/verify-ana-answers.mjs --base-url https://staging.example --require-live
  *   node scripts/ops/verify-ana-answers.mjs --token "$JWT"        # skip dev-login
+ *   npm run verify:ana -- --model gpt-4o-mini --expect-provider openai --require-live
+ *   npm run verify:ana -- --project-id <project-uuid> --expect-provider openai
+ *
+ * --model requests the existing governed model_override; placement/approval
+ * may substitute a model. --expect-provider checks the actual served receipt.
+ * No flag changes provider approval, PQ or server-side project admission.
  *
  * Exit 0 only when the outcome is acceptable: LIVE always, FIXTURES unless
- * --require-live. SILENT and UNREACHABLE always exit 1.
+ * --require-live or --expect-provider. Other outcomes always exit 1. Older
+ * servers without the current complete receipt cannot establish LIVE proof.
  */
 
 const args = process.argv.slice(2);
@@ -50,9 +59,14 @@ const flag = (name, fallback = null) => {
 const has = (name) => args.includes(`--${name}`);
 
 const BASE = (flag('base-url', process.env.ANA_VERIFY_BASE_URL || 'http://localhost:5000')).replace(/\/$/, '');
-const EMAIL = flag('email', process.env.ANA_VERIFY_EMAIL || 'raj.patel@concept2cure.pro');
+const EMAIL = flag('email', process.env.ANA_VERIFY_EMAIL || process.env.VITE_DEV_LOGIN_EMAIL ||
+  process.env.DEMO_AUTHOR_EMAIL || 'raj.patel@concept2cure.pro');
 const QUESTION = flag('question', 'In one sentence, what is the difference between an IND and an NDA?');
 const REQUIRE_LIVE = has('require-live');
+const MODEL = flag('model')?.trim();
+const PROJECT_ID = flag('project-id')?.trim();
+const EXPECTED_PROVIDER = flag('expect-provider')?.trim();
+const LIVE_PROOF_REQUIRED = REQUIRE_LIVE || Boolean(EXPECTED_PROVIDER);
 const TIMEOUT_MS = Number(flag('timeout-ms', '120000'));
 
 const say = (...a) => console.log(...a);
@@ -67,6 +81,7 @@ async function getToken() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: EMAIL }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(
@@ -89,7 +104,10 @@ async function askAna(token) {
     const res = await fetch(`${BASE}/api/ana-ri/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ message: QUESTION }),
+      body: JSON.stringify({ message: QUESTION,
+        ...(MODEL ? { model_override: MODEL } : {}),
+        ...(PROJECT_ID ? { project_id: PROJECT_ID } : {}),
+      }),
       signal: ctl.signal,
     });
     if (!res.ok) {
@@ -109,10 +127,26 @@ async function askAna(token) {
   }
 }
 
+function receiptProblem(done) {
+  if (typeof done.provider !== 'string' || !done.provider.trim() ||
+      typeof done.model !== 'string' || !done.model.trim()) {
+    return 'the terminal receipt does not identify a provider and model';
+  }
+  if (done.stoppedReason !== 'no_more_tools') {
+    return `the turn did not complete (stoppedReason=${String(done.stoppedReason ?? 'missing')}; expected no_more_tools)`;
+  }
+  if (EXPECTED_PROVIDER && done.provider !== EXPECTED_PROVIDER) {
+    return 'the served provider did not match --expect-provider';
+  }
+  return null;
+}
+
 function classify(events) {
   const text = events.filter(e => e.type === 'text').map(e => e.content || '').join('');
-  const done = events.find(e => e.type === 'done') || null;
+  const receipts = events.filter(e => e.type === 'done');
+  const done = receipts[0] || null;
   const errorEvent = events.find(e => e.type === 'error') || null;
+  const unverified = why => ({ outcome: 'UNVERIFIED', text, done, why });
 
   if (errorEvent) {
     return { outcome: 'UNREACHABLE', text, done, why: errorEvent.message || errorEvent.error || 'stream reported an error' };
@@ -130,20 +164,29 @@ function classify(events) {
         (done ? ` — while done reported model=${done.model} outputTokens=${done.usage?.outputTokens}` : ''),
     };
   }
-  // `deterministic` is set by the gateway's fixture path; model 'demo-mode' is
-  // its signature. Either is enough to refuse to call this a live answer.
-  const isFixture = done?.model === 'demo-mode' || done?.deterministic === true || /demo mode/i.test(text);
+  if (receipts.length !== 1) return unverified('exactly one terminal completion receipt is required');
+  // Receipt metadata identifies fixtures. A real answer may discuss demo mode;
+  // its words cannot turn an actual provider receipt into a fixture.
+  const isFixture = done.model === 'demo-mode' || done.deterministic === true ||
+    done.provider === 'demo' || done.provider === 'deterministic';
+  if (isFixture) return { outcome: 'FIXTURES', text, done,
+    why: 'answered from AI_GATEWAY_DETERMINISTIC fixtures, not a provider model' };
+  const problem = receiptProblem(done);
+  if (problem) return unverified(problem);
   return {
-    outcome: isFixture ? 'FIXTURES' : 'LIVE',
+    outcome: 'LIVE',
     text,
     done,
-    why: isFixture
-      ? 'answered from AI_GATEWAY_DETERMINISTIC fixtures, not a provider model'
-      : `answered from ${done?.provider ?? 'a provider'} / ${done?.model ?? 'unknown model'}`,
+    why: `answered from ${done.provider} / ${done.model}`,
   };
 }
 
 const main = async () => {
+  const missing = ['model', 'project-id', 'expect-provider'].find(name => has(name) && !flag(name)?.trim());
+  if (missing) {
+    fail(`--${missing} requires a value; no verification request was sent.`);
+    process.exitCode = 1; return;
+  }
   say(`[verify-ana] asking ${BASE} — "${QUESTION}"`);
   let events;
   try {
@@ -172,9 +215,9 @@ const main = async () => {
   if (outcome === 'LIVE') { say('\n✅ AnA answers from a live model.'); process.exit(0); }
 
   if (outcome === 'FIXTURES') {
-    if (REQUIRE_LIVE) {
-      fail('\n❌ --require-live was set and this instance is serving fixtures.');
-      fail('   Unset AI_GATEWAY_DETERMINISTIC and configure ANTHROPIC_API_KEY.');
+    if (LIVE_PROOF_REQUIRED) {
+      fail('\n❌ Live provider proof was requested and this instance is serving fixtures.');
+      fail('   Unset AI_GATEWAY_DETERMINISTIC and configure the intended provider credential.');
       process.exit(1);
     }
     say('\n⚠️  AnA answers, but from fixtures. The transport works; the provider path is UNPROVEN.');
@@ -182,7 +225,7 @@ const main = async () => {
     process.exit(0);
   }
 
-  fail('\n❌ AnA did not answer.');
+  fail('\n❌ AnA could not be verified.');
   if (outcome === 'SILENT') {
     fail('   Every server-side signal here can still read as success — that is the point of this check.');
     fail('   Look at the gateway → onStream path before trusting /readyz on this instance.');

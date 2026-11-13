@@ -1676,3 +1676,5 @@ its file is held; say so here if it is yours):
 3. The assembly is rendered from the build's outputs, not from the signed document's sections (P-115 item 3).
 4. No model has passed qualification, so model-drafted text is not released (P-115 item 1, P-118). Needs the
    founder's provider key.
+
+**Codex OpenAI/AnA verification continuation, 2026-11-13 (F1 W1 D1/D2):** completed; files released with this source commit: `scripts/ops/verify-ana-answers.mjs`, its new focused `scripts/ops/verify-ana-answers.test.mjs`, and its own evidence/design packet. Complete existing provider/completion proof and explicit admitted model/project requests; no route, model, credential or approval change. Preserve the other continuation's `d06fb86ec` supplied-key repair and Codespaces/bookworm/presenter scope. Evidence: `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
