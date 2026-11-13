@@ -1,0 +1,118 @@
+{
+  "mode": "prepare",
+  "outcome": "passed",
+  "startedAt": "2026-11-13T19:41:51.267Z",
+  "finishedAt": "2026-11-13T19:49:58.794Z",
+  "steps": [
+    {
+      "name": "project: found or created through New project",
+      "outcome": "skipped",
+      "ms": 13586,
+      "programId": "ae6120f0-07ea-4756-ac7f-b14c43a1d3bd",
+      "screenshot": "screenshots/codespace-00-project.png"
+    },
+    {
+      "name": "IND: the open IND's number and its sponsor, recorded (fictional; P-115)",
+      "outcome": "skipped",
+      "ms": 122,
+      "applicationNumber": "999901",
+      "sponsor": "Concept2Cure Therapeutics (fictional demo sponsor)"
+    },
+    {
+      "name": "Vault: upload the study files and the manifest (POST /api/vault/ingest)",
+      "outcome": "skipped",
+      "ms": 0,
+      "uploaded": 0,
+      "files": [
+        "adsl.xpt",
+        "adae.xpt",
+        "adlbc.xpt",
+        "adlbh.xpt",
+        "advs.xpt",
+        "define.xml",
+        "cdiscpilot01-adam-bundle.json"
+      ]
+    },
+    {
+      "name": "Vault: send, review-sign and approve each of the seven files (three people)",
+      "outcome": "pass",
+      "ms": 346153,
+      "done": {
+        "adsl.xpt": [
+          "sent",
+          "reviewed",
+          "approved"
+        ],
+        "adae.xpt": [
+          "sent",
+          "reviewed",
+          "approved"
+        ],
+        "adlbc.xpt": [
+          "sent",
+          "reviewed",
+          "approved"
+        ],
+        "adlbh.xpt": [
+          "sent",
+          "reviewed",
+          "approved"
+        ],
+        "advs.xpt": [
+          "sent",
+          "reviewed",
+          "approved"
+        ],
+        "cdiscpilot01-adam-bundle.json": [
+          "sent",
+          "reviewed",
+          "approved"
+        ]
+      },
+      "screenshot": "screenshots/codespace-04-vault-manifest-approved.png"
+    },
+    {
+      "name": "Editor: New document \u2192 M5 lists the CSR once (F1)",
+      "outcome": "pass",
+      "ms": 16180,
+      "csrEntries": 1,
+      "screenshot": "screenshots/codespace-05-new-document-m5-csr-entry.png"
+    },
+    {
+      "name": "Editor: the CSR created from New document shows \"Build from the study\u2019s data\"",
+      "outcome": "pass",
+      "ms": 71808,
+      "documentId": "95b5fa7b-04b2-4f04-b7fe-7799dda6ab6e",
+      "csrCatalogEntries": 1,
+      "buildFromStudyData": true,
+      "screenshot": "screenshots/codespace-06-csr-in-the-editor.png"
+    },
+    {
+      "name": "Study data: manifest chosen, tables previewed, frozen in the document",
+      "outcome": "pass",
+      "ms": 29942,
+      "efficacyFileOfferedAsClinicalSource": false,
+      "previewMs": 5887,
+      "freezeMs": 4280,
+      "tables": [
+        "\u00a710.1 \u2014 Patient Disposition",
+        "\u00a711.1 \u2014 Analysis Populations",
+        "\u00a711.2 \u2014 Demographics and Baseline Characteristics",
+        "\u00a711.4 \u2014 Primary Efficacy Endpoint Results",
+        "\u00a712.1 \u2014 Extent of Exposure",
+        "\u00a712.2 \u2014 Overall Adverse Event Summary",
+        "\u00a712.2 \u2014 Adverse Events by System Organ Class",
+        "\u00a712.2 \u2014 Adverse Events by Preferred Term (\u22655% in any arm)",
+        "\u00a712.3 \u2014 Fatal Adverse Events, Serious Adverse Events, and Discontinuations Due to AEs",
+        "\u00a712.4 \u2014 Clinical Laboratory Shifts (Baseline \u2192 On-Treatment)",
+        "\u00a712.5 \u2014 Vital Signs and ECG: Change from Baseline to Last On-Treatment Value"
+      ],
+      "previewShot": "screenshots/codespace-07-clinical-tables-preview.png",
+      "studyDataId": "4be1a654-25ed-41b7-a3f1-79ec0f249099",
+      "screenshot": "screenshots/codespace-08-study-data-frozen.png"
+    }
+  ],
+  "apiErrors": [
+    "author 503 GET /api/c2c/projects/ae6120f0-07ea-4756-ac7f-b14c43a1d3bd/sources?limit=200&offset=0"
+  ]
+}

@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: a present Playwright package recovers missing browser through the actual shell preparation
+ok 1 - a present Playwright package recovers missing browser through the actual shell preparation
+  ---
+  duration_ms: 152.86929
+  type: 'test'
+  ...
+# Subtest: a failed browser repair skips preparation and recovers on the next start
+ok 2 - a failed browser repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 205.322696
+  type: 'test'
+  ...
+# Subtest: a present Playwright package recovers missing deps through the actual shell preparation
+ok 3 - a present Playwright package recovers missing deps through the actual shell preparation
+  ---
+  duration_ms: 139.241069
+  type: 'test'
+  ...
+# Subtest: a failed deps repair skips preparation and recovers on the next start
+ok 4 - a failed deps repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 207.141342
+  type: 'test'
+  ...
+# Subtest: healthy browser preparation and an already prepared restart install nothing
+ok 5 - healthy browser preparation and an already prepared restart install nothing
+  ---
+  duration_ms: 71.64926
+  type: 'test'
+  ...
+# Subtest: an installed wrong Playwright version is replaced by the existing exact pin
+ok 6 - an installed wrong Playwright version is replaced by the existing exact pin
+  ---
+  duration_ms: 94.837634
+  type: 'test'
+  ...
+# Subtest: a successful installer is followed by a real launch check before claiming preparation ready
+ok 7 - a successful installer is followed by a real launch check before claiming preparation ready
+  ---
+  duration_ms: 301.770623
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1254.174291

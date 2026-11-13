@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 const root = resolve(import.meta.dirname, '../..');
@@ -137,6 +138,87 @@ test('a healthy backend at the current commit is retained unless it lacks a newl
   const missingKey = healthyAppDecision({ current: true, missingKeys: 'ANTHROPIC_API_KEY' });
   assert.equal(missingKey.status, 0, missingKey.stderr);
   assert.match(missingKey.stdout, /STOP_CALLED\nSTART_CALLED/);
+});
+
+// Use a real process environment and the existing helper/keep decision. Only
+// the process lookup is supplied: no server, credential or provider is involved.
+async function providerKeyDecision({ running = {}, current = {} }) {
+  const post = readFileSync(postStart, 'utf8');
+  const helperStart = post.indexOf('c2c_keys_app_lacks() {');
+  const helperEnd = post.indexOf('\n}\n', helperStart);
+  const decisionStart = post.indexOf('\nif c2c_app_up; then\n');
+  const decisionEnd = post.indexOf('\nc2c_log "The app is serving.', decisionStart);
+  assert.ok(helperStart >= 0 && helperEnd > helperStart && decisionEnd > decisionStart);
+  const baseEnv = { ...process.env };
+  delete baseEnv.ANTHROPIC_API_KEY;
+  delete baseEnv.OPENAI_API_KEY;
+  const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+    env: { ...baseEnv, ...running }, stdio: 'ignore',
+  });
+  await once(child, 'spawn');
+  try {
+    const result = spawnSync('bash', ['-c', `
+      set -uo pipefail
+      C2C_PORT=5000
+      pgrep() { printf '%s\\n' "$C2C_TEST_PID"; }
+      c2c_app_up() { return 0; }
+      c2c_app_current() { return 0; }
+      c2c_ana_state() { printf ready; }
+      c2c_log() { printf '%s\\n' "$*"; }
+      c2c_stop_app() { printf 'STOP_CALLED\\n'; }
+      c2c_start_app() { printf 'START_CALLED\\n'; }
+      ${post.slice(helperStart, helperEnd + 3)}
+      printf 'KEY_NAMES=%s\\n' "$(c2c_keys_app_lacks)"
+      ${post.slice(decisionStart, decisionEnd)}
+    `], { cwd: root, env: { ...baseEnv, ...current, C2C_TEST_PID: String(child.pid) }, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    for (const key of [...Object.values(running), ...Object.values(current)].filter(Boolean)) {
+      assert.equal((result.stdout + result.stderr).includes(key), false, 'only key names may be reported');
+    }
+    return result.stdout;
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, 'exit');
+      child.kill();
+      await exited;
+    }
+  }
+}
+
+for (const name of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY']) {
+  test(`a corrected ${name} restarts the actual healthy-app decision without revealing either value`, async () => {
+    const result = await providerKeyDecision({ running: { [name]: `FAKE_OLD_${name}` },
+      current: { [name]: `FAKE_CORRECTED_${name}` } });
+    assert.match(result, new RegExp(`KEY_NAMES=${name}\\n`));
+    assert.match(result, /STOP_CALLED\nSTART_CALLED/);
+  });
+}
+
+test('matching provider values retain the running app', async () => {
+  const keys = { ANTHROPIC_API_KEY: 'FAKE_MATCHING_ANTHROPIC', OPENAI_API_KEY: 'FAKE_MATCHING_OPENAI' };
+  const result = await providerKeyDecision({ running: keys, current: keys });
+  assert.match(result, /KEY_NAMES=\n/);
+  assert.doesNotMatch(result, /STOP_CALLED|START_CALLED/);
+});
+
+test('a newly supplied key still restarts an app whose process lacks it', async () => {
+  const result = await providerKeyDecision({ current: { ANTHROPIC_API_KEY: 'FAKE_NEW_ANTHROPIC' } });
+  assert.match(result, /KEY_NAMES=ANTHROPIC_API_KEY\n/);
+  assert.match(result, /STOP_CALLED\nSTART_CALLED/);
+});
+
+test('absent terminal provider keys retain existing running keys without disclosure', async () => {
+  const result = await providerKeyDecision({ running: { ANTHROPIC_API_KEY: 'FAKE_RETAINED_ANTHROPIC',
+    OPENAI_API_KEY: 'FAKE_RETAINED_OPENAI' } });
+  assert.match(result, /KEY_NAMES=\n/);
+  assert.doesNotMatch(result, /STOP_CALLED|START_CALLED/);
+});
+
+test('empty terminal provider keys preserve the existing absent-key behavior', async () => {
+  const result = await providerKeyDecision({ running: { ANTHROPIC_API_KEY: 'FAKE_RETAINED_ANTHROPIC' },
+    current: { ANTHROPIC_API_KEY: '' } });
+  assert.match(result, /KEY_NAMES=\n/);
+  assert.doesNotMatch(result, /STOP_CALLED|START_CALLED/);
 });
 
 function servedCommitCheck({ head = 'a'.repeat(40), body = JSON.stringify({ commit: 'a'.repeat(40) }), gitStatus = 0, curlStatus = 0 }) {

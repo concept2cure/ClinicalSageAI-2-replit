@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+cd /workspaces/repo
+. .devcontainer/post-create.sh
+c2c_csr_browser_ready() {
+  timeout 30 node -e '(async () => {
+    const browser = await require("playwright").chromium.launch({ timeout: 20000 });
+    await browser.close();
+  })().catch(() => process.exit(1));' >/dev/null 2>&1
+}
+c2c_ensure_csr_browser() {
+  local install_log="$C2C_CODESPACE_STATE/playwright-install.log"
+  if ! node -e 'process.exit(require("playwright/package.json").version === "1.56.1" ? 0 : 1)' >/dev/null 2>&1; then
+    c2c_log "Installing playwright@1.56.1 for the CSR study preparation; log: $install_log"
+    timeout 900 npm install --no-save --no-audit --no-fund playwright@1.56.1 >"$install_log" 2>&1 ||
+      { c2c_log "playwright could not be installed; CSR preparation will retry on the next start. See $install_log."; return 1; }
+  fi
+  c2c_csr_browser_ready && return 0
+  c2c_log "Repairing Chromium and its system dependencies for CSR preparation; log: $install_log"
+  { timeout 900 npx --no-install playwright install chromium &&
+    c2c_sudo timeout 900 "$(command -v npx)" --no-install playwright install-deps chromium; } >>"$install_log" 2>&1 ||
+    { c2c_log "Chromium could not be repaired; CSR preparation will retry on the next start. See $install_log."; return 1; }
+  if ! c2c_csr_browser_ready; then
+    c2c_log "Chromium still cannot launch; CSR preparation remains incomplete and will retry on the next start. See $install_log."
+    return 1
+  fi
+  return 0
+}
+printf 'Fresh pinned browser preparation
+'
+c2c_ensure_csr_browser
+node -e 'console.log("Installed Playwright: " + require("playwright/package.json").version)'
+printf 'Healthy retry
+'
+before=$(stat -c '%s:%Y' "$C2C_CODESPACE_STATE/playwright-install.log")
+c2c_ensure_csr_browser
+after=$(stat -c '%s:%Y' "$C2C_CODESPACE_STATE/playwright-install.log")
+test "$before" = "$after"
+printf 'Healthy retry left installer log unchanged
+'
+browser_dir=$(node -e 'const p=require("node:path"); console.log(p.dirname(p.dirname(require("playwright").chromium.executablePath())))')
+# This browser cache belongs only to the disposable rehearsal container.
+case "$browser_dir" in /root/.cache/ms-playwright/chromium-*) ;; *) exit 80;; esac
+mv "$browser_dir" /root/c2c-rehearsal-original-chromium
+# Playwright launches its headless shell by default; move that matching cache too.
+for shell_dir in /root/.cache/ms-playwright/chromium_headless_shell-*; do
+  [[ -d "$shell_dir" ]] && mv "$shell_dir" /root/c2c-rehearsal-original-headless-shell
+done
+printf 'Matching browser cache absent: repairing through actual helper
+'
+c2c_ensure_csr_browser
+c2c_csr_browser_ready
+printf 'Repaired Chromium launched successfully
+'

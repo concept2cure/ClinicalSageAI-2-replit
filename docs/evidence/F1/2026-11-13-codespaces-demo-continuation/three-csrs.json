@@ -1,0 +1,159 @@
+{
+  "reports": [
+    {
+      "program": "LMN-201",
+      "documentId": "8e6d0b14-ad9f-49b3-ba04-92221555091e",
+      "title": "[Demo \u00b7 Lumen] LMN-201 RePreve Part B Clinical Study Report \u2014 SYNTHETIC",
+      "status": "draft",
+      "sectionCount": 119,
+      "nonemptySections": 119,
+      "studyDataStatusKeys": [
+        "studyData"
+      ],
+      "studyData": {
+        "studyData": [
+          {
+            "studyDataId": "bd0f39c5-f5a0-42d4-ad34-ea76c86e2837",
+            "createdAt": "2026-11-13T19:16:01.000Z",
+            "createdBy": 8,
+            "sources": [
+              {
+                "sha256": "44c81cc6603088a51c9ffa7d89657595194bd2e542c9880a4aad8e38f301c59d",
+                "adapter": "concept2cure.csr-source.v1",
+                "studyId": "DEMO-LMN201-PARTB-001",
+                "version": "1.0",
+                "studyInfo": {
+                  "phase": "2",
+                  "title": "SYNTHETIC LMN-201-like recurrent CDI CSR demo \u2014 NOT ACTUAL DATA",
+                  "sponsor": "Lumen Bioscience \u2014 FICTIONAL DEMO, NOT A CLIENT",
+                  "comparator": "Synthetic control",
+                  "indication": "Prevention of recurrent Clostridioides difficile infection",
+                  "sampleSize": 23,
+                  "studyDesign": "Synthetic randomized two-arm demonstration, not actual protocol",
+                  "protocolNumber": "DEMO-LMN201-PARTB-001",
+                  "primaryEndpoint": "Synthetic global cure indicator",
+                  "investigationalProduct": "LMN-201 (illustrative)"
+                },
+                "documentId": "e39a4e3e-55d7-455f-9593-7011dfe42bb0",
+                "dataCutDate": "2026-10-01",
+                "documentTitle": "[Demo \u00b7 Lumen] LMN-201-like Part B CSR source, with safety domains \u2014 SYNTHETIC, NOT CLINICAL EVIDENCE",
+                "protocolNumber": "DEMO-LMN201-PARTB-001",
+                "sourceApproval": "canonical-lifecycle",
+                "clinicalVerification": "not-established"
+              }
+            ],
+            "via": "this-document"
+          }
+        ]
+      }
+    },
+    {
+      "program": "LMN-301",
+      "documentId": "a8c2fa58-f9f1-49a9-ae9f-e329efa38625",
+      "title": "[Demo \u00b7 Lumen] LMN-301 Phase 2a Viral Challenge Clinical Study Report \u2014 SYNTHETIC",
+      "status": "draft",
+      "sectionCount": 119,
+      "nonemptySections": 119,
+      "studyDataStatusKeys": [
+        "studyData"
+      ],
+      "studyData": {
+        "studyData": [
+          {
+            "studyDataId": "d5533980-77d6-4659-be89-fb85da8a58f0",
+            "createdAt": "2026-11-13T19:17:33.000Z",
+            "createdBy": 8,
+            "sources": [
+              {
+                "sha256": "7b86b1d3f85536b0885581ad9fe1e35bfc853bf83d738c60b72f57633f4b707c",
+                "adapter": "concept2cure.csr-source.v1",
+                "studyId": "DEMO-LMN301-P2A-CHAL-001",
+                "version": "1.0",
+                "studyInfo": {
+                  "phase": "2a",
+                  "title": "SYNTHETIC LMN-301 Phase 2a human viral challenge study \u2014 NOT ACTUAL DATA",
+                  "sponsor": "Lumen Bioscience \u2014 FICTIONAL DEMO, NOT A CLIENT",
+                  "comparator": "Placebo",
+                  "indication": "Prevention of viral upper respiratory infection (human challenge model)",
+                  "sampleSize": 40,
+                  "studyDesign": "Synthetic randomised, double-blind, placebo-controlled human challenge demonstration",
+                  "protocolNumber": "DEMO-LMN301-P2A-CHAL-001",
+                  "targetAgencies": [
+                    "FDA"
+                  ],
+                  "primaryEndpoint": "Laboratory-confirmed symptomatic infection after challenge",
+                  "treatmentDuration": "Twice-daily intranasal dosing from Day -1 to Day 6",
+                  "secondaryEndpoints": [
+                    "Viral shedding on two or more consecutive days"
+                  ],
+                  "investigationalProduct": "LMN-301 (illustrative intranasal biologic)"
+                },
+                "documentId": "69fef204-aa59-46a0-838c-a54223c3e65a",
+                "dataCutDate": "2026-07-31",
+                "documentTitle": "[Demo \u00b7 Lumen] LMN-301 Phase 2a challenge CSR source \u2014 SYNTHETIC, NOT CLINICAL EVIDENCE",
+                "protocolNumber": "DEMO-LMN301-P2A-CHAL-001",
+                "sourceApproval": "canonical-lifecycle",
+                "clinicalVerification": "not-established"
+              }
+            ],
+            "via": "this-document"
+          }
+        ]
+      }
+    },
+    {
+      "program": "LMN-801",
+      "documentId": "b07d2974-5f74-4313-9af2-f7b20a7a6e94",
+      "title": "[Demo \u00b7 Lumen] LMN-801 Phase 1 First-in-Human Multiple Ascending Dose Clinical Study Report \u2014 SYNTHETIC",
+      "status": "draft",
+      "sectionCount": 119,
+      "nonemptySections": 119,
+      "studyDataStatusKeys": [
+        "studyData"
+      ],
+      "studyData": {
+        "studyData": [
+          {
+            "studyDataId": "4a01deb9-b92b-4567-8476-33203a02b8e8",
+            "createdAt": "2026-11-13T19:16:49.000Z",
+            "createdBy": 8,
+            "sources": [
+              {
+                "sha256": "568856378f52c815204e0da17257f59000557616df73e8a711b03274fc963e51",
+                "adapter": "concept2cure.csr-source.v1",
+                "studyId": "DEMO-LMN801-P1-MAD-001",
+                "version": "1.0",
+                "studyInfo": {
+                  "phase": "1",
+                  "title": "SYNTHETIC LMN-801 Phase 1 multiple ascending dose study \u2014 NOT ACTUAL DATA",
+                  "sponsor": "Lumen Bioscience \u2014 FICTIONAL DEMO, NOT A CLIENT",
+                  "comparator": "Placebo",
+                  "indication": "Weight management in adults with overweight or obesity (healthy volunteers)",
+                  "sampleSize": 24,
+                  "studyDesign": "Synthetic randomised, double-blind, placebo-controlled, multiple ascending dose demonstration",
+                  "protocolNumber": "DEMO-LMN801-P1-MAD-001",
+                  "targetAgencies": [
+                    "FDA"
+                  ],
+                  "primaryEndpoint": "Participants with at least one treatment-emergent adverse event",
+                  "treatmentDuration": "28 days of once-daily dosing",
+                  "secondaryEndpoints": [
+                    "Percent change in body weight from baseline to Day 28 (exploratory)"
+                  ],
+                  "investigationalProduct": "LMN-801 (illustrative oral hormone protein)"
+                },
+                "documentId": "0056b5ad-5b26-43c5-8421-a3e631197836",
+                "dataCutDate": "2026-08-29",
+                "documentTitle": "[Demo \u00b7 Lumen] LMN-801 Phase 1 MAD CSR source \u2014 SYNTHETIC, NOT CLINICAL EVIDENCE",
+                "protocolNumber": "DEMO-LMN801-P1-MAD-001",
+                "sourceApproval": "canonical-lifecycle",
+                "clinicalVerification": "not-established"
+              }
+            ],
+            "via": "this-document"
+          }
+        ]
+      }
+    }
+  ]
+}

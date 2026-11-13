@@ -1,0 +1,304 @@
+TAP version 13
+# Subtest: every study's source passes the server's own CSR source schema
+ok 1 - every study's source passes the server's own CSR source schema
+  ---
+  duration_ms: 31.381411
+  type: 'test'
+  ...
+# Subtest: a generated source is the same bytes on every run, and these bytes (a change files a new Vault copy)
+ok 2 - a generated source is the same bytes on every run, and these bytes (a change files a new Vault copy)
+  ---
+  duration_ms: 6.7713
+  type: 'test'
+  ...
+# Subtest: the statistics give the published answers
+ok 3 - the statistics give the published answers
+  ---
+  duration_ms: 0.352161
+  type: 'test'
+  ...
+# Subtest: LMN-301's report states the result its source records, and the test the source states
+ok 4 - LMN-301's report states the result its source records, and the test the source states
+  ---
+  duration_ms: 9.227179
+  type: 'test'
+  ...
+# Subtest: the adverse-event and disposition counts are the source's
+ok 5 - the adverse-event and disposition counts are the source's
+  ---
+  duration_ms: 5.322998
+  type: 'test'
+  ...
+# Subtest: every section of the ICH E3 template is written, with no empty, undefined or NaN section
+ok 6 - every section of the ICH E3 template is written, with no empty, undefined or NaN section
+  ---
+  duration_ms: 5.973227
+  type: 'test'
+  ...
+# Subtest: only an empty section is written on a re-run
+ok 7 - only an empty section is written on a re-run
+  ---
+  duration_ms: 0.195605
+  type: 'test'
+  ...
+# Subtest: every study is labelled synthetic in its titles and names no real person
+ok 8 - every study is labelled synthetic in its titles and names no real person
+  ---
+  duration_ms: 0.95597
+  type: 'test'
+  ...
+# Subtest: the approver signs the digest of the change as they read it in the register
+ok 9 - the approver signs the digest of the change as they read it in the register
+  ---
+  duration_ms: 1.297084
+  type: 'test'
+  ...
+# Subtest: nothing is signed when the register does not list the change to its approver
+ok 10 - nothing is signed when the register does not list the change to its approver
+  ---
+  duration_ms: 0.364729
+  type: 'test'
+  ...
+# Subtest: nothing is signed when the register gives the change no digest
+ok 11 - nothing is signed when the register gives the change no digest
+  ---
+  duration_ms: 0.098569
+  type: 'test'
+  ...
+# Subtest: nothing is signed when the digest is not a SHA-256
+ok 12 - nothing is signed when the digest is not a SHA-256
+  ---
+  duration_ms: 0.118339
+  type: 'test'
+  ...
+# Subtest: a document counts as frozen from the CSR source only when one of its study data carries that source's bytes
+ok 13 - a document counts as frozen from the CSR source only when one of its study data carries that source's bytes
+  ---
+  duration_ms: 0.171599
+  type: 'test'
+  ...
+# Subtest: the pack files the source that carries every safety domain, under its own title
+ok 14 - the pack files the source that carries every safety domain, under its own title
+  ---
+  duration_ms: 1.295631
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP403 fails the actual seed CLI and manifest
+ok 15 - required subject intake HTTP403 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 63.661608
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP429 fails the actual seed CLI and manifest
+ok 16 - required subject intake HTTP429 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 73.965258
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP500 fails the actual seed CLI and manifest
+ok 17 - required subject intake HTTP500 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 49.64336
+  type: 'test'
+  ...
+# Subtest: successful required subject intake completes without signing the optional RACT
+ok 18 - successful required subject intake completes without signing the optional RACT
+  ---
+  duration_ms: 45.192515
+  type: 'test'
+  ...
+# Subtest: an already-loaded subject extract completes without resubmitting it
+ok 19 - an already-loaded subject extract completes without resubmitting it
+  ---
+  duration_ms: 53.624508
+  type: 'test'
+  ...
+# Subtest: a snapshot the loads already scored is found, and not recomputed
+ok 20 - a snapshot the loads already scored is found, and not recomputed
+  ---
+  duration_ms: 75.246778
+  type: 'test'
+  ...
+# Subtest: a database seeded before site risk came from the study's data is rescored through the screen's own route
+ok 21 - a database seeded before site risk came from the study's data is rescored through the screen's own route
+  ---
+  duration_ms: 63.862645
+  type: 'test'
+  ...
+# Subtest: a recompute that scores fewer sites than the extracts carry fails the seed, with the count
+ok 22 - a recompute that scores fewer sites than the extracts carry fails the seed, with the count
+  ---
+  duration_ms: 41.353253
+  type: 'test'
+  ...
+# Subtest: an indicator a person added, with no reading yet, does not fail the seed
+ok 23 - an indicator a person added, with no reading yet, does not fail the seed
+  ---
+  duration_ms: 103.317427
+  type: 'test'
+  ...
+# Subtest: one of the seed's own indicators with no reading still fails it, and says how many
+ok 24 - one of the seed's own indicators with no reading still fails it, and says how many
+  ---
+  duration_ms: 62.429691
+  type: 'test'
+  ...
+# Subtest: reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+ok 25 - reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+  ---
+  duration_ms: 5.78865
+  type: 'test'
+  ...
+# Subtest: creates missing reports with both canonical program and numeric scope, then passes those runs directly
+ok 26 - creates missing reports with both canonical program and numeric scope, then passes those runs directly
+  ---
+  duration_ms: 1.95856
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor null before writes
+ok 27 - refuses invalid canonical numeric anchor null before writes
+  ---
+  duration_ms: 0.47803
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 0 before writes
+ok 28 - refuses invalid canonical numeric anchor 0 before writes
+  ---
+  duration_ms: 0.217547
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 411 before writes
+ok 29 - refuses invalid canonical numeric anchor 411 before writes
+  ---
+  duration_ms: 0.206461
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor -1 before writes
+ok 30 - refuses invalid canonical numeric anchor -1 before writes
+  ---
+  duration_ms: 0.171809
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 1.5 before writes
+ok 31 - refuses invalid canonical numeric anchor 1.5 before writes
+  ---
+  duration_ms: 0.153982
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+ok 32 - an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+  ---
+  duration_ms: 0.342065
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+ok 33 - an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+  ---
+  duration_ms: 0.394294
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+ok 34 - an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+  ---
+  duration_ms: 0.472572
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+ok 35 - refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+  ---
+  duration_ms: 0.314234
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+ok 36 - refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+  ---
+  duration_ms: 0.245289
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+ok 37 - refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+  ---
+  duration_ms: 0.187382
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"id":0}
+ok 38 - refuses a created report outside the expected settled receipt: {"id":0}
+  ---
+  duration_ms: 0.186131
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"status":"failed"}
+ok 39 - refuses a created report outside the expected settled receipt: {"status":"failed"}
+  ---
+  duration_ms: 1.339818
+  type: 'test'
+  ...
+# Subtest: retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+ok 40 - retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+  ---
+  duration_ms: 1.997259
+  type: 'test'
+  ...
+# Subtest: an older four-report bundle does not suppress the current five-report pack
+ok 41 - an older four-report bundle does not suppress the current five-report pack
+  ---
+  duration_ms: 0.740486
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+ok 42 - refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+  ---
+  duration_ms: 0.41121
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+ok 43 - refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+  ---
+  duration_ms: 0.390999
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+ok 44 - refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+  ---
+  duration_ms: 3.450528
+  type: 'test'
+  ...
+# Subtest: refuses a returned bundle with unexpected members before scheduling
+ok 45 - refuses a returned bundle with unexpected members before scheduling
+  ---
+  duration_ms: 0.688878
+  type: 'test'
+  ...
+# Subtest: leaves foreign schedules intact and creates only platform schedules for the selected project
+ok 46 - leaves foreign schedules intact and creates only platform schedules for the selected project
+  ---
+  duration_ms: 1.170433
+  type: 'test'
+  ...
+# Subtest: an entitlement refusal stays explicitly not executed without inventing a schedule
+ok 47 - an entitlement refusal stays explicitly not executed without inventing a schedule
+  ---
+  duration_ms: 0.600805
+  type: 'test'
+  ...
+# Subtest: retains an explicitly disabled LMN-201 schedule instead of recreating active work
+ok 48 - retains an explicitly disabled LMN-201 schedule instead of recreating active work
+  ---
+  duration_ms: 0.547074
+  type: 'test'
+  ...
+# Subtest: reuses exact selected membership while preserving additional legitimate source-project provenance
+ok 49 - reuses exact selected membership while preserving additional legitimate source-project provenance
+  ---
+  duration_ms: 0.471991
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 701.758782

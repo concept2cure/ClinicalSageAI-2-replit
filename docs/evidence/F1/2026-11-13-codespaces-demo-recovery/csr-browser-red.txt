@@ -1,0 +1,177 @@
+TAP version 13
+# Subtest: a present Playwright package recovers missing browser through the actual shell preparation
+not ok 1 - a present Playwright package recovers missing browser through the actual shell preparation
+  ---
+  duration_ms: 58.21316
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:101:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data).
+    The CSR study preparation did not finish; see /tmp/c2c-csr-browser-8tKUyo/state/csr-study.log. It re-runs on the next start.
+    
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    assertPrepared (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:95:10)
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:104:7)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: a failed browser repair skips preparation and recovers on the next start
+not ok 2 - a failed browser repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 59.120347
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:112:3'
+  failureType: 'testCodeFailure'
+  error: 'no preparation with an unusable browser'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    walk
+    launch
+    
+  operator: 'doesNotMatch'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:119:14)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: a present Playwright package recovers missing deps through the actual shell preparation
+not ok 3 - a present Playwright package recovers missing deps through the actual shell preparation
+  ---
+  duration_ms: 49.512651
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:101:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data).
+    The CSR study preparation did not finish; see /tmp/c2c-csr-browser-q9mEAb/state/csr-study.log. It re-runs on the next start.
+    
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    assertPrepared (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:95:10)
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:104:7)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a failed deps repair skips preparation and recovers on the next start
+not ok 4 - a failed deps repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 53.046671
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:112:3'
+  failureType: 'testCodeFailure'
+  error: 'no preparation with an unusable browser'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    walk
+    launch
+    
+  operator: 'doesNotMatch'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:119:14)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: healthy browser preparation and an already prepared restart install nothing
+ok 5 - healthy browser preparation and an already prepared restart install nothing
+  ---
+  duration_ms: 49.633737
+  type: 'test'
+  ...
+# Subtest: an installed wrong Playwright version is replaced by the existing exact pin
+not ok 6 - an installed wrong Playwright version is replaced by the existing exact pin
+  ---
+  duration_ms: 47.538693
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:138:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /^npm install --no-save --no-audit --no-fund playwright@1\.56\.1$/m. Input:
+    
+    ''
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: ''
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:142:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a successful installer is followed by a real launch check before claiming preparation ready
+not ok 7 - a successful installer is followed by a real launch check before claiming preparation ready
+  ---
+  duration_ms: 43.262137
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:146:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /walk/. Input:
+    
+    'walk\nlaunch\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    walk
+    launch
+    
+  operator: 'doesNotMatch'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/ops/codespaces-csr-browser.test.mjs:153:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 1
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 422.740113

@@ -1,0 +1,37 @@
+# The test as committed, against trunk's workflow-integrator.ts (6ae4f50429). Expected: red.
+ ✓ the insert it used to make > cannot succeed on the review-task table’s own DDL: four required columns are never named
+ × a critical statistical finding’s escalation > reaches the task board as a Biostatistics task naming its creator, its project and the document it is about
+ × a critical statistical finding’s escalation > carries its task.create row, by the person who ran the review
+ ✓ a critical statistical finding’s escalation > writes nothing to the review workflow’s own store
+ × a critical statistical finding’s escalation > high risk is a high-priority task; a document on no project is filed on none
+ × a critical statistical finding’s escalation > with no escalation reason recorded, it says what the engine said to the regulatory reader
+ × a critical statistical finding’s escalation > raised twice for the same document, it is one task
+ × a critical statistical finding’s escalation > a different document raises its own
+ × the answer never carries the store’s words > trunk answered "Escalation task creation failed: Failed query: insert into …" with the statement and its values
+ × all or nothing > when the ledger cannot be written, no task is raised and the answer is not a success
+ ✓ all or nothing > a document that names no creator raises nothing: a task nobody raised is not recorded
+ × all or nothing > the store’s own error text does not reach the answer
+ × the escalation does not wait on the document having been stored > a critical finding whose document failed to save is still raised, and says the document was not stored
+ × the escalation does not wait on the document having been stored > the same text escalated twice is one task; a different text is another
+ × a failed step says what did not happen, in its own words > the artifact step: no statement, no parameters, no document text
+ × a failed step says what did not happen, in its own words > the review thread and the dossier attachment
+ × a failed step says what did not happen, in its own words > no result of a whole failed run carries the store’s words
+ × the hand-off names a place that exists > a document that was not stored is not "ready for editing"
+ × the hand-off names a place that exists > a stored document is found on Biostatistics, not at a route that was removed
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to have a length of 1 but got +0
+AssertionError: expected undefined to match object { priority: 'high', …(2) }
+AssertionError: expected [] to have a length of 1 but got +0
+AssertionError: expected [] to deeply equal [ '41', '42' ]
+AssertionError: expected 'Escalation task creation failed: Fail…' not to match /Failed query|insert into|params:|nul…/i
+AssertionError: expected 'Escalation task creation failed: Fail…' to match /^No escalation task was raised/
+AssertionError: expected 'Escalation task creation failed: Fail…' not to match /relation|unified_tasks|does not exis…/i
+AssertionError: a critical finding raised nothing because its document failed to save: expected undefined to be defined
+AssertionError: expected [] to have a length of 1 but got +0
+AssertionError: expected 'Artifact creation failed: Failed quer…' to be 'The document was not stored: the arti…' // Object.is equality
+AssertionError: expected { Object (action, success, ...) } to match object { success: false, …(1) }
+AssertionError: create_artifact: expected 'Artifact creation failed: Failed quer…' not to match /Failed query|insert into|select |par…/i
+AssertionError: expected { action: 'open_in_editor', …(4) } to deeply equal { action: 'open_in_editor', …(2) }
+AssertionError: expected '/concept2cure/editor?artifactId=41&ty…' to be '/concept2cure/biostatistics' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  16 failed | 3 passed (19)

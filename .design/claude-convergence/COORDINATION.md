@@ -192,7 +192,13 @@ Note on `dataConnect.tsx`, 2026-11-08, from the reporting session (`session_011H
 this session.
 
 
+
+
+**Codex demo continuation,2026-11-13 (F1 W1 D1/D2):** holds `.devcontainer/post-start.sh` provider-value comparison/restart lines and `scripts/ops/codespaces-startup.test.mjs` only; root also rehearses current post-create/start in the existing bookworm image and records operator evidence. Prior Codespace hold is released. Inventory `.design/claude-convergence/F1-CODESPACES-DEMO-CONTINUATION-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-demo-continuation/`. No UI, provider call, model gate or credential configuration change.
+
 ### Holds on other files (one session per file, plan §4.6)
+
+**Codespaces demo recovery, Codex 2026-11-13 (F1/L1 D1/D2; ends at the slice publication or 2026-11-13 21:30 UTC, whichever is first):** holds only `.devcontainer/post-start.sh`'s CSR browser-bootstrap/preparation block (not the provider-value comparison/restart lines); a new test-only `scripts/ops/codespaces-csr-browser.test.mjs`; the `codespaces:doctor:test` script in `package.json`; and `scripts/demo/launch-demo/packs/lumen.mjs`'s report/bundle/schedule helpers plus their focused test. The provider-restart owner's `codespaces-startup.test.mjs` is untouched. Inventory `.design/claude-convergence/F1-CODESPACES-DEMO-RECOVERY-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-demo-recovery/`. No model/provider/credential behavior, UI or governed release gate change. Root owns dependency installation, Git and final image/branch checks.
 
 Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race
 rejections with all gates green, a 15-minute push window is requested here under
@@ -1729,3 +1735,9 @@ its file is held; say so here if it is yours):
 3. The assembly is rendered from the build's outputs, not from the signed document's sections (P-115 item 3).
 4. No model has passed qualification, so model-drafted text is not released (P-115 item 1, P-118). Needs the
    founder's provider key.
+
+**Codex OpenAI/AnA verification continuation, 2026-11-13 (F1 W1 D1/D2):** completed; files released with this source commit: `scripts/ops/verify-ana-answers.mjs`, its new focused `scripts/ops/verify-ana-answers.test.mjs`, and its own evidence/design packet. Complete existing provider/completion proof and explicit admitted model/project requests; no route, model, credential or approval change. Preserve the other continuation's `d06fb86ec` supplied-key repair and Codespaces/bookworm/presenter scope. Evidence: `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
+
+2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
+
+2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
