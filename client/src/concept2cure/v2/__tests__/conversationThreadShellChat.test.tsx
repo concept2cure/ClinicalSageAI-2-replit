@@ -169,6 +169,9 @@ describe('arriving with nothing to ask shows the conversation in progress', () =
     await mount(shellChat({ messages: [], isStreaming: false, runStatus: null, threadId: null }));
     expect(document.querySelector('.ct-head-t')?.textContent).toBe('New conversation');
     expect(screen.getByText('Talk to AnA')).toBeTruthy();
+    // Finding 86: a question refused before it was saved is not kept, so the empty state does not promise every turn.
+    expect(document.body.textContent).not.toContain('every turn is saved');
+    expect(document.body.textContent).toContain('Each question AnA accepts is kept in your governed conversation store');
   });
 });
 

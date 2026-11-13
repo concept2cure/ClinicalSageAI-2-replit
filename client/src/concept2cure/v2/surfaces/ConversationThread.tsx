@@ -2069,7 +2069,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
                   <h2>Talk to AnA</h2>
-                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
+                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer. Each question AnA accepts is kept in your governed conversation store, with her answer when she gives one.</p>
                   <div className="ct-empty-chips">
                     {STARTER_ASKS.map((q, i) => (
                       <button key={i} className="ct-empty-chip" onClick={() => { void sendTurn(q); }}>{q}</button>

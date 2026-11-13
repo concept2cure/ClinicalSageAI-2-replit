@@ -13,7 +13,11 @@ const CANONICAL = 'The request is about 51,000 tokens (≈50,000 of input plus 1
   + 'Reduce the input by about 1,000 tokens (≈5,000 characters), lower maxTokens, or split the work into smaller sections. '
   + GUIDANCE;
 const FALLBACK = 'This conversation is too large for one AI request. Reduce the input or start a new conversation with a smaller selection. ' + GUIDANCE;
-const GENERIC = "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.";
+/* Finding 86: the generic line says whether the message was saved. A frame with no known code cannot tell; an HTTP
+   refusal came before the stream, so before the save; a tool round's budget refusal came after it. */
+const GENERIC = "AnA couldn't complete this request, and could not confirm whether your message was saved. Try again, or ask an administrator for help if it keeps happening.";
+const GENERIC_NOT_SAVED = "AnA couldn't complete this request, and this message was not saved. Try again, or ask an administrator for help if it keeps happening.";
+const GENERIC_SAVED = "AnA couldn't complete this request. Your message is saved in this conversation without an answer. Try again, or ask an administrator for help if it keeps happening.";
 const RECORD = { status: 'recorded', id: 'context-record-1', sha256: 'a'.repeat(64) } as const;
 const fetchMock = vi.fn();
 const frame = (event: unknown) => new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`);
@@ -145,12 +149,12 @@ describe('pre-header context refusal over HTTP', () => {
 
 describe('existing generic, budget, access and rate recovery stays unchanged', () => {
   it.each([
-    { error: CANONICAL },
-    { error: CANONICAL, code: 'UNRELATED_FAILURE' },
-    { error: CANONICAL, code: 'ANA_TOOL_RESULT_BUDGET_EXCEEDED', status: 422 },
-  ])('does not display arbitrary or newly unapproved copy from %j', async envelope => {
+    [{ error: CANONICAL }, GENERIC],
+    [{ error: CANONICAL, code: 'UNRELATED_FAILURE' }, GENERIC],
+    [{ error: CANONICAL, code: 'ANA_TOOL_RESULT_BUDGET_EXCEEDED', status: 422 }, GENERIC_SAVED],
+  ])('does not display arbitrary or newly unapproved copy from %j', async (envelope, expected) => {
     const { turn } = await send(stream([{ type: 'error', ...envelope }]));
-    expect(turn.text).toBe(GENERIC);
+    expect(turn.text).toBe(expected);
     expect(turn.text).not.toContain('51,000');
     expect(turn.turnRecord).toEqual({ status: 'unconfirmed' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -161,7 +165,7 @@ describe('existing generic, budget, access and rate recovery stays unchanged', (
     { status: 403, envelope: { error: 'private infrastructure detail' }, expected: 'current access' },
     { status: 429, envelope: { error: 'private infrastructure detail' }, expected: 'Too many AnA requests' },
     { status: 429, envelope: { code: 'WEEKLY_LIMIT_EXCEEDED', error: 'private infrastructure detail' }, expected: 'weekly limit' },
-    { status: 422, envelope: { code: 'ANA_TOOL_RESULT_BUDGET_EXCEEDED', error: CANONICAL }, expected: GENERIC },
+    { status: 422, envelope: { code: 'ANA_TOOL_RESULT_BUDGET_EXCEEDED', error: CANONICAL }, expected: GENERIC_NOT_SAVED },
   ])('preserves HTTP recovery at status $status for $envelope', async ({ status, envelope, expected }) => {
     const { turn } = await send(http(envelope, status));
     expect(turn.text).toContain(expected);

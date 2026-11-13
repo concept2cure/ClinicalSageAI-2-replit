@@ -638,8 +638,41 @@ const GATEWAY_REFUSAL_CODES: ReadonlySet<string> = new Set([
   'SOURCE_CONTEXT_UNAVAILABLE',
 ]);
 
+/*
+ * Whether the person's message was saved, from where the refusal came (finding 86, 2026-11-13). The server refuses
+ * over HTTP only before the stream opens, so before the conversation or the question is saved
+ * (routes/ana-ri/stream.ts: openSseStream, then getOrCreateThread and saveMessage). These frames come after the stream
+ * opened and still before the save. A model's refusal, or a tool round's, comes after it.
+ */
+const REFUSED_BEFORE_SAVE: ReadonlySet<string> = new Set([
+  'RUN_IN_PROGRESS', 'RUN_LIMIT', 'THREAD_FORBIDDEN', 'THREAD_PROJECT_MISMATCH',
+  'THREAD_UNAVAILABLE', 'HISTORY_UNAVAILABLE', 'CONVERSATION_UNAVAILABLE',
+]);
+const REFUSED_AFTER_SAVE: ReadonlySet<string> = new Set([
+  ...GATEWAY_REFUSAL_CODES, 'TOKEN_LIMIT_EXCEEDED', 'ANA_TOOL_RESULT_BUDGET_EXCEEDED', 'OWNER_PRIVATE_TOOL_HELD',
+]);
+type RefusalFailure = { code?: string; status?: number; message?: string; serverSent?: boolean } | undefined;
+function messageKept(failure: RefusalFailure): 'not_saved' | 'saved' | 'unknown' {
+  if (failure?.serverSent !== true) return typeof failure?.status === 'number' ? 'not_saved' : 'unknown';
+  if (failure.code && REFUSED_BEFORE_SAVE.has(failure.code)) return 'not_saved';
+  return failure.code && REFUSED_AFTER_SAVE.has(failure.code) ? 'saved' : 'unknown';
+}
+const sentenceOf = (failure: RefusalFailure): string | null =>
+  typeof failure?.message === 'string' && failure.message.trim() && failure.message !== 'Stream error' ? failure.message.trim() : null;
+/* The conversation refusals' own words (stream.ts), for a frame that arrives without them. */
+const CONVERSATION_REFUSAL_TEXT: Readonly<Record<string, string>> = {
+  THREAD_UNAVAILABLE: 'This conversation could not be opened. Please retry.',
+  HISTORY_UNAVAILABLE: 'Earlier conversation could not be loaded. Please retry.',
+};
+const NOT_SAVED = 'This message was not saved.';
+const GENERIC_REFUSAL: Readonly<Record<ReturnType<typeof messageKept>, string>> = {
+  not_saved: "AnA couldn't complete this request, and this message was not saved. Try again, or ask an administrator for help if it keeps happening.",
+  saved: "AnA couldn't complete this request. Your message is saved in this conversation without an answer. Try again, or ask an administrator for help if it keeps happening.",
+  unknown: "AnA couldn't complete this request, and could not confirm whether your message was saved. Try again, or ask an administrator for help if it keeps happening.",
+};
+
 export function streamRefusalText(err: unknown): string {
-  const failure = err as { code?: string; status?: number; message?: string; serverSent?: boolean } | undefined;
+  const failure = err as RefusalFailure;
   if (failure?.code === 'RUN_IN_PROGRESS' || failure?.code === 'RUN_LIMIT') return RUN_REFUSAL_TEXT[failure.code];
   if (failure?.code === 'THREAD_FORBIDDEN') {
     return 'That conversation belongs to another user. Select your own conversation or start a new one. Your request was not sent to the AI provider.';
@@ -652,27 +685,33 @@ export function streamRefusalText(err: unknown): string {
   }
   /* Before the status lines: a qualified-model or placement refusal answers 403,
      and "sign in again" would send the person after the wrong cause. */
-  if (failure?.code && GATEWAY_REFUSAL_CODES.has(failure.code) && typeof failure.message === 'string' &&
-      failure.message.trim() && failure.message !== 'Stream error') {
-    return `${failure.message.trim()} Prior turns are preserved.`;
+  const sentence = sentenceOf(failure);
+  if (failure?.code && GATEWAY_REFUSAL_CODES.has(failure.code) && sentence) {
+    return messageKept(failure) === 'saved' ? `${sentence} Your message is saved in this conversation without an answer.` : `${sentence} ${NOT_SAVED}`;
+  }
+  if (failure?.serverSent === true && failure.code === 'CONVERSATION_UNAVAILABLE') {
+    return sentence ?? 'Your question could not be saved. Please retry.';
+  }
+  if (failure?.serverSent === true && failure.code && CONVERSATION_REFUSAL_TEXT[failure.code]) {
+    return `${sentence ?? CONVERSATION_REFUSAL_TEXT[failure.code]} ${NOT_SAVED}`;
   }
   if (failure?.status === 401) {
-    return 'Your sign-in could not be verified. Sign in again to ask AnA. Prior turns are preserved.';
+    return `Your sign-in could not be verified. Sign in again to ask AnA. ${NOT_SAVED}`;
   }
   if (failure?.status === 403) {
-    return 'AnA cannot accept this request with your current access. Sign in again or ask an administrator to review your access. Prior turns are preserved.';
+    return `AnA cannot accept this request with your current access. Sign in again or ask an administrator to review your access. ${NOT_SAVED}`;
   }
   if (failure?.code === 'TOKEN_LIMIT_EXCEEDED') return contextWindowRecoveryText(err);
   if (failure?.code === 'GATEWAY_UNAVAILABLE') {
-    return 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.';
+    return `No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. ${NOT_SAVED}`;
   }
   if (failure?.code === 'WEEKLY_LIMIT_EXCEEDED') {
-    return 'This organization has reached its weekly limit for AnA requests, so this one was not sent. An administrator can review the limit. Prior turns are preserved.';
+    return 'This organization has reached its weekly limit for AnA requests, so this one was not sent or saved. An administrator can review the limit.';
   }
   if (failure?.status === 429) {
-    return 'Too many AnA requests in the last minute, so this one was not taken. Wait a moment and ask again. Prior turns are preserved.';
+    return 'Too many AnA requests in the last minute, so this one was not taken or saved. Wait a moment and ask again.';
   }
-  return "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.";
+  return GENERIC_REFUSAL[messageKept(failure)];
 }
 
 interface SteerAttempt {
