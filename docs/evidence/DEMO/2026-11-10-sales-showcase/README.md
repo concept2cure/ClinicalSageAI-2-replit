@@ -25,6 +25,55 @@ person.
 | The CSR path with a provider | `docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/` | Walked against a strict stand-in for the provider; says what still stands between the CSR and a filed sequence |
 | Watching a CSR being written | `docs/evidence/D2-CSR/2026-11-10-live-drafting-view/` | The live drafting view and "Resume build" |
 
+### 2026-11-13 continuation: startup and browser proof
+
+This continuation picks up Claude's canonical `d06fb86ec` and moves W1 / D2 under **F1**, finishing the existing
+Codespace and demo verification. It adds no screen, route, service, table, model or production dependency.
+
+**What already exists:** `.devcontainer/post-create.sh` installs and provisions the local database with separate
+owner/runtime credentials; `.devcontainer/post-start.sh` starts the current revision and seeds the existing demo.
+The first dependency-log redirect previously preceded creation of its private state directory. The existing
+`scripts/ops/codespaces-startup.test.mjs` now exercises that actual shell recovery branch. Claude's provider-key
+fingerprint/restart checks remain in place. The auto-opened editor handoff now describes the current Lumen chooser,
+three synthetic reports, human review and current model qualification boundary.
+
+`.github/workflows/tier5-browser-smoke.yml` already provisions the real schema and runs four browser suites.
+`scripts/run-e2e-smoke.mjs` already seeds its login identity and passes the environment to the browser, while
+`tests/e2e/dev-auth-helper.ts` correctly refuses an unnamed identity. The job now supplies the same explicit
+fictional seed/browser account; no authentication gate or anonymous negative control is weakened.
+The existing authenticated smoke also expected a former person's name; its greeting must instead identify the
+current authenticated account, while the anonymous case refuses any personalized Home greeting. The existing
+keyboard walk needs accurate visibility/paint observation: Vault's hidden upload inputs are not tab stops, and
+RBM's existing composer frame changes its visible border on `:focus-within`. Its checker is extended with bounded
+frame observation and positive/negative controls; the product's skip target and focus styling are preserved.
+`tests/e2e/golden-customer-journey.e2e.ts` still called the retired project creator and expected a stored title in
+AnA's prompt. It now uses the existing canonical creator's UUID and integer-anchor receipt, and verifies the fixed
+neutral prompt plus exact saved-section context. Its bounded capture aborts before provider transport and proves
+client request preparation only. The retired creator is not restored. Full deletion-history searches of these
+existing startup, workflow and journey paths found no deleted replacement to revive.
+
+Initial checks: all three private-state regressions fail against the preceding shell branch; the full Codespaces
+suite passes **64/64** on Node 22. The smoke identity contract fails four cases before the workflow correction and
+passes **6/6** afterward, including the actual helper's refusal before fetch. These are component checks. Fresh
+devcontainer startup, actual browser checks, compiler, normal push and remote receipt are recorded below only
+after completion; earlier green CI skipped its conditional Codespace rehearsal.
+
+The actual configured devcontainer filesystem/configuration now completes `post-create.sh`: fresh locked
+dependencies, all 64 checks on the image's Node 22.16, PostgreSQL 16 + pgvector, canonical provisioning, separate
+non-owner runtime credentials, fictional accounts, Chromium, Noto fonts, LibreOffice and `xmllint`. This runner's
+VFS layer-copying exhausted its 32 GiB disk on a normal image pull. The rehearsal therefore exports the same
+official amd64 image filesystem and imports a single layer with the original runtime configuration; it changes
+no repository or Codespace configuration. Original image manifest:
+`sha256:a32008c8fa6eaa28f8974577d28dc83e23e2d0fb939cb7b17ce65ed8a9b13f72`.
+
+Actual default startup serves the app with database/schema/storage healthy. Forwarded-origin dev sign-in answers
+200; a foreign origin answers 403. The app holds only its `app_service` runtime DSN, with no owner credential;
+native PostgreSQL verifies NOSUPER/NOBYPASS. Model readiness truthfully remains unavailable without keys.
+Actual authenticated reads find three completed synthetic reports, each with **119 sections and 119 nonempty saved
+contents**, frozen study/source hashes and three pending reviewer tasks. This establishes saved demo content, not
+scientific approval or model qualification. The complete host compiler passes **0 errors / baseline 0**, and the
+changed-source warning count does not grow. These are overlapping checks, not additive totals.
+
 ## Before the room
 
 1. **Codespaces secrets** (GitHub, Settings, Codespaces, Secrets, for this repository). Never typed into a chat.

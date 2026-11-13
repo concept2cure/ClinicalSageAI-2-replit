@@ -1676,3 +1676,23 @@ its file is held; say so here if it is yours):
 3. The assembly is rendered from the build's outputs, not from the signed document's sections (P-115 item 3).
 4. No model has passed qualification, so model-drafted text is not released (P-115 item 1, P-118). Needs the
    founder's provider key.
+
+### Codex continuation — Codespace demo repairs, 2026-11-13
+
+The founder asked this session to pick up Claude's work, follow the roadmap/rules and make the existing product
+demonstrable today in a simple GitHub Codespace. This continuation starts at `d06fb86ec`, works **F1 / W1 / D2**,
+and holds only the existing paths below. It does not take another AnA epic slice or another lane's source.
+These holds end at **2026-11-13 22:00 UTC**, or earlier on the publication receipt recorded here.
+
+| Holder | Existing files |
+|---|---|
+| Startup agent | `.devcontainer/post-start.sh`, `scripts/ops/codespaces-startup.test.mjs`, `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md` |
+| Smoke identity agent | `.github/workflows/tier5-browser-smoke.yml`, `tests/schema-contract/tier5-complete-schema.contract.test.ts`, `tests/e2e/authenticated-app-smoke.e2e.spec.ts` |
+| Journey agent | `tests/e2e/golden-customer-journey.e2e.ts` |
+| Keyboard verification agent | `tests/e2e/launch-surface-keyboard.e2e.spec.ts` only; actual visibility/paint checks and positive/negative controls, no product UI/CSS edit |
+| Root | This entry, existing sales-showcase evidence above, Git, the sole full compiler and integration |
+| Rehearsal agent | Disposable local runtime and scratch files only; no repository source |
+
+What already exists, the defect/repair boundaries and red-first checks are recorded in
+`docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`, dated 2026-11-13. No source file, mount, table, tool, model,
+screen or production dependency is added. Current model PQ, independent review, source and filing gates remain.
