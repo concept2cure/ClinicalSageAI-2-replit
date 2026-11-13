@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-13T17:14:42.095Z",
+  "generatedAt": "2026-11-13T21:53:12.108Z",
   "git": {
-    "sha": "6853cb4ce986180228c22e02b497d3f5dc535d1c",
+    "sha": "cef271edbae9022ed1c4728db62ca099a80bcea0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 362297
+        "bytes": 362954
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2603,7 +2603,7 @@
       },
       {
         "file": "server/routes/ectd-compile.ts",
-        "bytes": 107183
+        "bytes": 107141
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2629,7 +2629,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6904
+        "lines": 6911
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2825,7 +2825,7 @@
       },
       {
         "file": "server/routes/ectd-compile.ts",
-        "lines": 2231
+        "lines": 2228
       },
       {
         "file": "server/services/ana/run-control.ts",
