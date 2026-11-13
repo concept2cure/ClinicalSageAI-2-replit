@@ -1,0 +1,51 @@
+# Nine parts of the change broken in turn (2026-11-13); each run is the named test file alone.
+
+M1 a filing project with no program to open is still drawn as a link
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 10 passed (11)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names a project the person cannot open, or one with no p
+
+M2 the row opens by the project number, not the program id
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 10 passed (11)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > opens the filing project from its row, by the program’s 
+
+M3 the work area a row was recorded on is not said
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  2 failed | 9 passed (11)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > says the work area a row was recorded on, beside its fil
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names each filing project of a cross-project finding onc
+
+M4 a finding about several projects shows only its own
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 10 passed (11)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names each filing project of a cross-project finding onc
+
+M5 each named project is its own entry, so a filing project repeats
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 10 passed (11)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names each filing project of a cross-project finding onc
+
+M6, first run: NOT CAUGHT (11 passed). The case "says nothing about the project of a row that carries none" held only a
+row whose project had neither a number nor a name, which both the code and the broken code refuse. Two rows were added
+(a name with no number; a number with a blank name) and the break was run again:
+M6 something that is not a project is drawn as one
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 10 passed (11)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > says nothing about the project of a row that carries non
+
+M7 the findings read names a filing project whether or not the reader can open it
+  file: server/routes/sentinel-routes.ts
+  result: CAUGHT Tests  1 failed | 8 passed (9)
+    × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > asks for the names once, inside the organisation, and names a filin
+
+M8 a finding carries only its own project, not every project it names
+  file: server/routes/sentinel-routes.ts
+  result: CAUGHT Tests  1 failed | 8 passed (9)
+    × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > gives a finding about several projects each of them once, its own f
+
+M9 a failed read of the names sends the findings without them
+  file: server/routes/sentinel-routes.ts
+  result: CAUGHT Tests  1 failed | 8 passed (9)
+    × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > fails the read when the names cannot be read, and sends no finding 
+

@@ -1,0 +1,7 @@
+      Tests  2 failed | 10 passed (12)
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > no other stylesheet keeps a second copy
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > two rules scroll a table: D0’s at ≤640px, and CMC’s named exception at every width
+ Test Files  1 failed (1)
+AssertionError: expected [ Array(1) ] to deeply equal []
+AssertionError: expected [ Array(1) ] to have a length of 2 but got 1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

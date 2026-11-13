@@ -73,12 +73,17 @@
 }
 
 /* One workspace: requester · app · asked · answer. The all-workspaces panel
-   prepends the workspace column. */
-.c2c-v2 .ml-table-requests {
+   prepends the workspace column.
+   Two classes, as licensing-history.css does, so these templates win over the
+   base `.ml-table` declaration regardless of stylesheet order. With one class
+   they tied it, and misc-surfaces-v2.css loads later: the owner's five-cell
+   rows got the base three-column template, wrapped onto two lines, and their
+   columns moved from row to row (running app, 2026-11-12). */
+.c2c-v2 .ml-table.ml-table-requests {
   --ml-cols: minmax(190px, 1.4fr) minmax(170px, 1.1fr) 130px minmax(220px, 1.6fr);
   min-width: 760px;
 }
-.c2c-v2 .ml-table-requests-all {
+.c2c-v2 .ml-table.ml-table-requests-all {
   --ml-cols: minmax(150px, 1fr) minmax(180px, 1.3fr) minmax(150px, 1fr) 130px minmax(210px, 1.5fr);
   min-width: 900px;
 }

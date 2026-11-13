@@ -589,6 +589,38 @@ describe('GET /licensing/tenants/:id', () => {
     const res = await request(app).get(`${SYS}/licensing/tenants/${ORG_HI}`);
     expect(res.status).toBe(404);
   });
+
+  // The rail locks a module outside the launch scope whatever the licence says
+  // (navigation-entitlements applyLaunchScope). With the boundary on, the
+  // console said "Included in their plan" for modules the customer could not
+  // open (running app, 2026-11-12). It must give the rail's answer.
+  it('with the release boundary on, a module outside it reads as the rail does; a launch app keeps its plan verdict', async () => {
+    const prior = process.env.LAUNCH_SCOPE_ENFORCE;
+    process.env.LAUNCH_SCOPE_ENFORCE = 'on';
+    try {
+      const res = await request(app).get(`${SYS}/licensing/tenants/${ORG_A}`);
+      expect(res.status).toBe(200);
+      expect(res.body.launchScope).toEqual({ enforced: true });
+      const v = new Map<string, any>(res.body.modules.map((m: any) => [m.moduleId, m]));
+      // Granted, included and tier-locked fixture modules alike: none is a launch surface.
+      for (const id of [M.enabled, M.std, M.open, M.pro]) {
+        expect(v.get(id), id).toMatchObject({ effective: false, source: 'launch-scope' });
+      }
+      // The grant itself is still reported, so the record is not hidden.
+      expect(v.get(M.enabled)).toMatchObject({ subscriptionState: 'enabled' });
+      // A launch module in the deployed catalog keeps the plan's answer.
+      const vault = v.get('vault');
+      expect(vault, 'the deployed catalog carries the vault launch module').toBeTruthy();
+      expect(vault.source).not.toBe('launch-scope');
+    } finally {
+      if (prior === undefined) delete process.env.LAUNCH_SCOPE_ENFORCE;
+      else process.env.LAUNCH_SCOPE_ENFORCE = prior;
+    }
+    // With it off, the fixture verdicts are the licence's again.
+    const off = await request(app).get(`${SYS}/licensing/tenants/${ORG_A}`);
+    expect(off.body.launchScope).toEqual({ enforced: false });
+    expect(off.body.modules.find((m: any) => m.moduleId === M.std)).toMatchObject({ effective: true, source: 'included' });
+  });
 });
 
 // ─── 3. PATCH /licensing/modules/:moduleId — packaging is not repossession ───

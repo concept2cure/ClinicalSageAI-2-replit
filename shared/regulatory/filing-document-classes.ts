@@ -108,7 +108,12 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   { docType: 'eua_request', packAgency: 'fda', label: 'emergency use authorization request (drug or biologic)', registryIds: ['US_EUA_THERAPEUTIC'] },
   // ── Harmonised clinical and safety documents (ICH) ──
   { docType: 'csr', packAgency: 'ich', label: 'clinical study report', registryIds: ['ICH_CSR'] },
-  { docType: 'protocol', packAgency: 'ich', label: 'clinical trial protocol', registryIds: ['ICH_PROTOCOL'] },
+  // US_PMR (2026-11-12, S12 sweep item 3): a post-marketing requirement or commitment
+  // is authored as its study's protocol. Its registry outline is the protocol's
+  // (blueprint "Post-Marketing Requirement / Commitment Study"), and it was created
+  // as a full NDA only because nothing said what it was. Its status travels in the
+  // annual report and its completed study files as a Module 5 report.
+  { docType: 'protocol', packAgency: 'ich', label: 'clinical trial protocol', registryIds: ['ICH_PROTOCOL', 'US_PMR'] },
   { docType: 'ib', packAgency: 'ich', label: "investigator's brochure", registryIds: ['ICH_IB'] },
   { docType: 'sap', packAgency: 'ich', label: 'statistical analysis plan', registryIds: ['ICH_SAP'] },
   { docType: 'icf', packAgency: 'ich', label: 'informed consent form', registryIds: ['ICH_ICF'] },

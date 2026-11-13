@@ -1,0 +1,5 @@
+ ✓ server/services/sentinel/__tests__/sentinel-over-allocation-pairs.pglite.test.ts > Sentinel over-allocation: a project’s name stays with its id > reads each project once, its name beside its own id 13ms
+ ✓ server/services/sentinel/__tests__/sentinel-over-allocation-pairs.pglite.test.ts > Sentinel over-allocation: a project’s name stays with its id > pairs nothing by position: the query returns no separate list of names or of ids 4ms
+ ✓ server/services/sentinel/__tests__/sentinel-over-allocation-pairs.pglite.test.ts > Sentinel over-allocation: a project’s name stays with its id > keeps only a pair that holds a project number and a name, in the order of the numbers 1ms
+ Test Files  4 passed (4)
+      Tests  22 passed (22)

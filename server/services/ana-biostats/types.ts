@@ -89,6 +89,14 @@ export interface StatisticalInput {
   multiplicityMethod?: 'bonferroni' | 'holm' | 'hochberg' | 'dunnett' | 'none';
   estimandStrategy?: 'treatment_policy' | 'hypothetical' | 'composite' | 'principal_stratum' | 'while_on_treatment';
   missingDataMethod?: 'complete_case' | 'LOCF' | 'MMRM' | 'multiple_imputation' | 'pattern_mixture';
+  /**
+   * The missing-data strategy as the design states it, when it is NOT one of the five methods above
+   * (non-responder imputation, a jump-to-reference analysis, …). The engine has no model of such a
+   * method and computes no power for it; this carries the design's words so that nothing downstream
+   * tells a design which stated its strategy that it stated none (T2-F9, 2026-11-12). Never set
+   * together with `missingDataMethod`.
+   */
+  missingDataStrategyStated?: string;
   expectedMissingRate?: number;
   numberOfMeasurements?: number;
   compoundSymmetryRho?: number;

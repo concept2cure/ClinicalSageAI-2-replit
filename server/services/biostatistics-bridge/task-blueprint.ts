@@ -29,6 +29,7 @@ import {
   placementsForApplication,
   type ApplicationType,
 } from './filing-placement';
+import { PARAMETER_LABELS, vocabPhrase } from '../../../shared/biostat-vocabulary';
 
 export type BlueprintPriority = 'low' | 'medium' | 'high' | 'critical';
 
@@ -163,7 +164,8 @@ export function tasksFromAssessment(ctx: BlueprintContext): TaskBlueprint[] {
 
     // 4. Robustness.
     if (j.fragility.category === 'fragile' || j.fragility.category === 'very_fragile') {
-      const params = j.fragility.sensitiveParameters.map((p) => p.parameter).join(', ') || 'the sensitive parameters';
+      // As a reader says them: the title read "Run sensitivity scenarios on effect_size" (T2-F8).
+      const params = j.fragility.sensitiveParameters.map((p) => vocabPhrase(PARAMETER_LABELS, p.parameter)).join(', ') || 'the sensitive parameters';
       out.push({
         key: 'fragility:sensitivity',
         title: `Run sensitivity scenarios on ${params}`,

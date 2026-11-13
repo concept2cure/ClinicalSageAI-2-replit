@@ -85,3 +85,55 @@ Each step was run in Chromium against the server, not in a simulated DOM. The sc
 | `04-tab-strip-red-green.txt` | Repair #3, measured, then pinned red and green |
 | `05-decisions-red-green.txt` | Repair #5: two owner cases red, then 54/54 |
 | `shots/` | The walk, 1440×900 unless named 390 |
+
+## The same night: an adversarial review, and a second walk by agents
+
+Two workflows checked the work above before testers rely on it.
+
+1. **A review of the four commits** (`922e6519c`, `a683684eb7`, `6fd195ef88`, `fd545f72cf`): four lenses (CSS layout, the audit token, Part 11 and security, docs and tests), then one skeptic per finding told to refute it.
+2. **A walk of the paths not yet exercised, in the running app.** Four walkers ran in parallel. Each had its own owner account (`owner2`–`owner5`, named in `MASTER_ADMIN_EMAILS` and `PLATFORM_ADMIN_EMAILS`) and its own new customer, and restored anything deployment-wide it changed. Then Enforcement was walked alone, because Refusing affects every request. One skeptic re-ran each of the six most severe findings on its own fresh sign-up.
+
+The database had been built at `a9b5af187` and was re-deployed at HEAD first (474/474, a clean replay). As in the first walk, the server ran with `ALLOW_DEV_AUTH=1`, so sign-up skipped the e-mailed confirmation and sign-in skipped the code.
+
+### Fixed in this lane, red first
+
+| Commit | Found | Proof |
+|---|---|---|
+| `d5907d7768` | Decisions showed an owner's access-request answer as raw tokens and ids, among them "Decided by master admin: No" on the owner's own workspace. A regression from `6fd195ef88`, confirmed by the review's skeptic | Reader fixed in `licensing-history.ts`, the requester named by e-mail through a guarded join. Unit 25/26 then 26/26; real DB 54/55 then 55/55. Live: `shots/40-decisions-access-request-readable.png` |
+| `2be04b835e` | (a) The owner's workspace verdict ignored the release boundary: "Included in their plan" with Turn off for 7 modules the customer could not open, and Grant that changed nothing for about 35. (b) At 390px the page scrolled sideways to 509–823px, from absolutely positioned `.ml-vh` labels. (c) The Category filter split 'Submissions' and 'submissions'. (d) The Apply plan outcome vanished in about 200ms. (e) The plan-tier note said the opposite of what happens | Real DB 41/42 then 42/42; client 3 red then 21/21. Live: `shots/41-tenant-verdict-launch-scope.png`, `35-console-390-tenant-after.png` (page 390px) |
+| `cd31e62018` | Subscription & features called CMC, Biostatistics, Risk-based monitoring and Communication "not in this release". The catalog flag read `LAUNCH_MODULE_IDS`; the rail reads `isLaunchSurface` | Real DB 57/58 then 58/58. Live: no "not in this release" on the page (`shots/42-features-in-release-apps.png`) |
+| `46d8ef9d94` | The owner's Access requests table got the base three-column grid, because of a specificity tie. Enterprise requests lost their line breaks | CSS pins red then green. Live: every row's columns at the same x; the message on 7 lines (`shots/36-…`, `37-…`) |
+| `e316f69777` | **Switching to Refusing refused the licensed product to every customer.** The project page, conversations, the admin console, the membership inbox and the bell were refused, because shell surfaces with no catalog row read as "not licensed", and `NEVER_GATED` was skipped under a broader claim | Gate 2 red then 21/21; real DB 136/136; `ci:launch-scope` and `ci:launch-scope-api` green. Live with Refusing on: `/api/chat/threads`, `/api/tenant-users/invitations/mine`, `/api/mdx/notifications/unread-count` and `/api/c2c/projects` answered 200; `/api/cmc/module3-board` answered 403 `MODULE_NOT_LICENSED` |
+| `ec4331a26b` | The enforcement report called requests served while observing "Refused". Its rows kept record ids. "Since this server last restarted" after a manual clear | 2 red then 73/73 |
+
+ESLint warning counts are unchanged per file. Typecheck: 0 errors.
+
+### Handed on, not fixed here
+
+These are in files another session holds, or that another lane edited within 24 hours. Each is named in `.design/claude-convergence/COORDINATION.md` with its file and line:
+
+- **Client administration (`01T2woo…`).** That session holds `module-access-requests.ts`, `surfaces/licensing/**`, `module-subscriptions.ts`, `TenantContext.tsx`, `LicensingSurface.tsx` and `UsageBilling.tsx`.
+  - **S1c**, confirmed by three independent runs. An organisation administrator's approval grants above the plan, and it reverses the owner's turn-off.
+  - **A Free workspace's administrator can turn a launch app off and never back on.**
+  - **The owner's account switches to the newest customer's organisation after a reload.** The switcher cannot undo it (`shots/38-owner-org-switcher.png`); signing out and in can.
+  - Free organisations get Standard seat limits.
+  - "Status: Incomplete" on a Free workspace.
+  - `requester_name` is never stored.
+  - Usage caps nothing enforces.
+  - Decisions' "Not set" for Unrestricted.
+  - The onboarding review's spacing.
+  - A disclosure: `6fd195ef88` edited two files inside that hold without asking.
+- **The F1 readable-text sweep (`011DpxUy…`):** the lock dialog's footer at 390px (`app-v2.css`, edited by that lane today).
+- **RBM:** `rbm-launch-claim.test.ts` is red at HEAD, independently of this lane.
+- **Shell:** "Subscription & billing" opens a page titled "Compare subscriptions".
+
+Journey 10 now warns testers about the account switch and the one-way turn-off, does not have them approve a request above the plan, and adds `ALLOW_DEV_AUTH=1` to the set-up.
+
+### Still owed in this lane
+
+- **The Enforcement console cannot return the mode to "inherited from the deployment".** Once a mode is chosen, a `platform_settings` row stays, and the deployment's `MODULE_ENFORCEMENT` is ignored without notice. The walk left that row behind; it was deleted by hand in the test database. A way back needs a route and a control in `EnforcementModeControl.tsx`, which is held.
+- From the walk, not fixed:
+  - At 1024px the tab strip and the workspace list scroll with no visible cue.
+  - The governed dialog does not return focus on close, and its inputs have no label (`_shared/components/GovernedConfirmDialog.tsx`, shared app-wide).
+  - The admin console calls a module refusal "not an admin" (`AdminAccess.tsx`, held).
+  - The project page calls a licensing refusal "the conversation store didn't respond" (`ProjectHome.tsx`).

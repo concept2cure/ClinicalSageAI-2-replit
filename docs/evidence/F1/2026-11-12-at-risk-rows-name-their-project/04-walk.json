@@ -1,0 +1,194 @@
+{
+ "api": [
+  "500 GET /api/c2c/projects?limit=200"
+ ],
+ "console": [
+  "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+ ],
+ "steps": [
+  {
+   "step": "1 Projects opened, nothing asked",
+   "wholeListReads": 0
+  },
+  {
+   "step": "2 asked: rows and the projects each names",
+   "wholeListReads": 1,
+   "answers": [
+    {
+     "list": "Risks Sentinel found",
+     "rows": [
+      {
+       "text": "Critical · Quality drift / Quality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion ",
+       "projects": [
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+       ]
+      },
+      {
+       "text": "Critical · Quality drift / Quality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion / 0/5 tasks done",
+       "projects": [
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)"
+       ]
+      },
+      {
+       "text": "Critical · Quality drift / Quality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion / 0/6 tasks done",
+       "projects": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+       ]
+      },
+      {
+       "text": "Critical · Quality drift / Quality drift: \"[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\" at 20% task completion ",
+       "projects": [
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+       ]
+      },
+      {
+       "text": "Critical · Quality drift / Quality drift: \"[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)\" at 0% task completion / 0/5 tasks done",
+       "projects": [
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)"
+       ]
+      },
+      {
+       "text": "Critical · Quality drift / Quality drift: \"[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)\" at 0% task completion / 0/6 tasks done",
+       "projects": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+       ]
+      },
+      {
+       "text": "High · Quality drift / Quality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion / 8/26 ta",
+       "projects": [
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+       ]
+      },
+      {
+       "text": "High · Quality drift / Quality drift: \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" at 31% task completion / 8/26 ta",
+       "projects": [
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+       ]
+      },
+      {
+       "text": "Medium · Cross project / Rhea Reviewer is spread across 5 active projects / Resource over-allocation: 10 open tasks across 5 projects. · Found Nov 12",
+       "projects": [
+        "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+       ]
+      },
+      {
+       "text": "Medium · Cross project / Ava Approver is spread across 5 active projects / Resource over-allocation: 12 open tasks across 5 projects. · Found Nov 12",
+       "projects": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+       ]
+      },
+      {
+       "text": "Medium · Cross project / JM Smith is spread across 5 active projects / Resource over-allocation: 19 open tasks across 5 projects. · Found Nov 12",
+       "projects": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+       ]
+      },
+      {
+       "text": "Medium · Deadline risk / 2 overdue tasks in \"Xanomeline TTS Phase 2 (CDISCPILOT01)\" / 2 tasks past due date. 0 are critical priority. · Found Nov 12",
+       "projects": [
+        "Xanomeline TTS Phase 2 (CDISCPILOT01)"
+       ]
+      },
+      {
+       "text": "Medium · Deadline risk / 3 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" / 3 tasks past due date. 0",
+       "projects": [
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+       ]
+      },
+      {
+       "text": "Medium · Cross project / Rhea Reviewer is spread across 5 active projects / Resource over-allocation: 10 open tasks across 5 projects. · Found Nov 9",
+       "projects": [
+        "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+       ]
+      },
+      {
+       "text": "Medium · Cross project / Ava Approver is spread across 5 active projects / Resource over-allocation: 12 open tasks across 5 projects. · Found Nov 9",
+       "projects": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+       ]
+      },
+      {
+       "text": "Medium · Cross project / JM Smith is spread across 5 active projects / Resource over-allocation: 19 open tasks across 5 projects. · Found Nov 9",
+       "projects": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)",
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+       ]
+      },
+      {
+       "text": "Medium · Deadline risk / 2 overdue tasks in \"[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)\" / 2 tasks past due date. 0",
+       "projects": [
+        "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+       ]
+      }
+     ]
+    }
+   ],
+   "alerts": []
+  },
+  {
+   "step": "3 opened a project from its row",
+   "clicked": "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+   "url": "/concept2cure/project-home?program=ec15f653-c98e-4ef0-afaa-4776d9fcc083",
+   "heading": "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+   "pageNamesTheProject": true
+  },
+  {
+   "step": "4 page filtered to one client type",
+   "filter": "Medical device & IVD (1)",
+   "projectsOnThePage": [
+    "[Demo · MDX] NeuroPanel-Dx 510(k)"
+   ],
+   "namedProjects": [
+    "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)",
+    "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+    "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+    "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+    "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+    "[Demo · MDX] NeuroPanel-Dx 510(k)",
+    "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+   ]
+  },
+  {
+   "step": "5 the project list could not be read",
+   "alerts": [
+    "The project list could not be read, so the rows below do not name their projects. The rows themselves are complete."
+   ],
+   "rowsStillListed": [
+    {
+     "list": "Risks Sentinel found",
+     "rows": 17
+    }
+   ],
+   "namedProjects": 0
+  },
+  {
+   "step": "6 at 390 wide",
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "panelOverflows": false
+  }
+ ]
+}

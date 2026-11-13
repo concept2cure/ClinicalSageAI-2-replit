@@ -63,7 +63,12 @@ vi.mock('../../db/withTenantConnection.js', () => ({
   withTenantConnection: async (_o: unknown, fn: (c: unknown) => Promise<unknown>) => fn(h.client),
   withOrganizationTenantConnection: async (_org: number, _caller: string, fn: (c: unknown) => Promise<unknown>) => fn(h.client),
 }));
-vi.mock('../../services/csr-builder.js', () => ({ launchCSRBuildAsync: vi.fn() }));
+// Only the launch is replaced. The module's ICH E3 outline (getICHE3Structure, flattenICHE3Sections) is real:
+// workflow-source-import.ts reads it at load, and a mock without it stopped this suite from loading at all.
+vi.mock('../../services/csr-builder.js', async (original) => ({
+  ...(await original<typeof import('../../services/csr-builder')>()),
+  launchCSRBuildAsync: vi.fn(),
+}));
 vi.mock('../../services/csr/saved-clinical-tables.js', () => ({ readSavedClinicalTables: h.tables }));
 vi.mock('../../services/csr/vault-source-input.js', () => ({ readCsrAdamDatasets: h.adam }));
 vi.mock('../../services/csr/project-scope', async (original) => ({

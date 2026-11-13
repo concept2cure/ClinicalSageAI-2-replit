@@ -1,0 +1,30 @@
+red: tests/regulatory/fda-filings-not-created-as-an-nda.test.ts with the pass outside the US added, on trunk 226fdd7b5, 2026-11-13
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  19 failed | 5 passed (24)
+Passing on trunk (the earlier change's cases and the two controls):
+  us_accel_approval states that it is the application dossier
+  us_rolling states that it is the application dossier
+  a Post-Marketing Requirement is its study protocol: the protocol document class, never an application
+  a filing that is no application and has no document class yet states no pathway
+  the filings already classed keep their class (controls)
+Failing on trunk, all on assertions (expected null to be '<pathway>'):
+  eu_cma states its pathway maa and resolves to maa
+  eu_line_extension states its pathway maa and resolves to maa
+  ca_mf states its pathway dmf and resolves to dmf
+  uk_cta states its pathway cta and resolves to cta
+  au_cta states its pathway cta and resolves to cta
+  kr_ind states its pathway cta and resolves to cta
+  ca_nds states its pathway ctd and resolves to nda
+  uk_ma states its pathway ctd and resolves to nda
+  uk_irp states its pathway ctd and resolves to nda
+  au_cat1 states its pathway ctd and resolves to nda
+  au_cat2 states its pathway ctd and resolves to nda
+  kr_ma_new states its pathway ctd and resolves to nda
+  ca_ands states its pathway anda and resolves to anda
+  kr_ma_generic states its pathway anda and resolves to anda
+  au_biosimilar states its pathway biosimilar and resolves to nda
+  us_supac is stated at today's value until its own answer lands, so the wizard's default has no exception
+  us_priority_review is stated at today's value until its own answer lands, so the wizard's default has no exception
+  us_ea is stated at today's value until its own answer lands, so the wizard's default has no exception
+  us_icsr_15day is stated at today's value until its own answer lands, so the wizard's default has no exception

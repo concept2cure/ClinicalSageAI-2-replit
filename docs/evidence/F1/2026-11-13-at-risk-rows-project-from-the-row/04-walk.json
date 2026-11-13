@@ -1,0 +1,66 @@
+{
+ "api": [],
+ "console": [],
+ "steps": [
+  {
+   "step": "1 asked",
+   "wholeListReads": 0,
+   "lists": [
+    {
+     "list": "Risks Sentinel found",
+     "rows": 18
+    }
+   ],
+   "rowsWithNoProjectLine": 0,
+   "workAreaRows": [
+    {
+     "title": "2 overdue tasks in \"CMC\"",
+     "projectLine": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) (CMC)",
+     "links": [
+      "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+     ]
+    }
+   ],
+   "severalProjects": [
+    {
+     "title": "Rhea Reviewer is spread across 5 active projects",
+     "projectLine": "Xanomeline TTS Phase 2 (CDISCPILOT01) · [Demo · MDX] NeuroPanel-Dx 510(k) · [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) · [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) · [Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)",
+     "links": [
+      "Xanomeline TTS Phase 2 (CDISCPILOT01)",
+      "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+      "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+      "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+     ]
+    },
+    {
+     "title": "Ava Approver is spread across 5 active projects",
+     "projectLine": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · [Demo · MDX] NeuroPanel-Dx 510(k) · [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) · [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) · [Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+     "links": [
+      "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+      "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+      "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+     ]
+    }
+   ],
+   "alerts": []
+  },
+  {
+   "step": "2 opened the filing project from the work area row",
+   "clicked": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+   "url": "/concept2cure/project-home?program=4f29bace-d23c-44e6-992c-6a63c60ed500",
+   "heading": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+  },
+  {
+   "step": "3 at 390 wide",
+   "scrollWidth": 390,
+   "clientWidth": 390
+  },
+  {
+   "step": "4 whole-list reads over the walk",
+   "count": 0
+  }
+ ]
+}

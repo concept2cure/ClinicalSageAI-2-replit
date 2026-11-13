@@ -1,0 +1,7 @@
+      Tests  2 failed | 4 passed (6)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/filingCommitNote.test.ts > the save confirmation and the filing > says nothing about a filing for a Quality controlled document
+ FAIL  server/services/c2c/__tests__/commitSectionControlledDocument.test.ts > commitSectionToFiling: a Quality controlled document > says the document is controlled in Quality, not that it is missing a filing
+ Test Files  2 failed (2)
+AssertionError: expected ' The text is saved in the editor but …' to be '' // Object.is equality
+AssertionError: expected { committed: false, …(1) } to match object { committed: false, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

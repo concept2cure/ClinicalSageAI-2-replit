@@ -1,0 +1,9 @@
+# Red in real data: a finding the analyzer stored on 2026-11-09 in the local stack (organisation 2), read on 2026-11-12.
+# Each affected item's stored label beside the name of the project that id belongs to.
+
+finding 2 "JM Smith is spread across 5 active projects"
+id 3 | stored label: [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) | the project with that id: [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) | correct
+id 5 | stored label: [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) | the project with that id: [Demo · MDX] NeuroPanel-Dx 510(k) | WRONG
+id 6 | stored label: [Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND) | the project with that id: [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) | WRONG
+id 7 | stored label: [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) | the project with that id: [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) | correct
+id 8 | stored label: [Demo · MDX] NeuroPanel-Dx 510(k) | the project with that id: [Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND) | WRONG

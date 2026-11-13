@@ -1,0 +1,10 @@
+      Tests  1 failed | 4 passed (5)
+ FAIL  client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > an account re-read that returns the same access keeps the session; a changed role replaces it
+ Test Files  1 failed (1)
+ × client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > an account re-read that returns the same access keeps the session; a changed role replaces it 18ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 972ms
+AssertionError: the same account re-read retired the governed reads: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

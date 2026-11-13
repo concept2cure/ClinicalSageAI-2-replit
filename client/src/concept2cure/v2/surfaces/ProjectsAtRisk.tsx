@@ -15,6 +15,18 @@
  * empty answer names what was looked at ("No blockers recorded"), never "no
  * risk", and a failed read is said as one. Nothing is read until the person asks.
  *
+ * Each row names its project and opens it (F1, 2026-11-12 and -13). Every row
+ * of the three reads carries the project it was recorded on and that project's
+ * filing project, the one a card on Projects carries, with the program the card
+ * opens (`project`; a finding about several projects carries `projects`). The
+ * server resolves them, and names a filing project only when the person can
+ * open it. So:
+ *   - a row ends with its filing project's name as a link that opens it;
+ *   - a row recorded on a work area inside a project says the work area too;
+ *   - a project the person cannot open, or one with no program to open, is
+ *     named in plain words with no link; a row with no project says nothing.
+ * The names are the server's, read with the rows. The browser matches nothing.
+ *
  * Split out of Projects.tsx, which is at the 100 kB file ceiling.
  */
 import React from 'react';
@@ -22,11 +34,19 @@ import { useLiveData, type DataState } from '../dataConnect';
 import { I } from '../icons';
 import { enumWords } from './projectWords';
 
-interface Finding { finding_id: string; analyzer_type: string; severity: string; title: string; summary?: string | null; created_at?: string | null }
+/** The project a row was recorded on, and its filing project when the person can open it (the server's shape). */
+interface NamedProject { id: number; name: string; root: { id: number; name: string; programId: string | null } | null }
+interface Finding {
+  finding_id: string; analyzer_type: string; severity: string; title: string; summary?: string | null; created_at?: string | null;
+  project?: unknown; projects?: unknown;
+}
 interface Findings { findings: Finding[]; total: number }
-interface Blocker { blockerId: string; severity: string; title: string; nextAction?: string | null; ownerName?: string | null; dueAt?: string | null }
-interface DueWork { work_item_id: string; title: string; owner_name?: string | null; due_at?: string | null }
+interface Blocker { blockerId: string; severity: string; title: string; nextAction?: string | null; ownerName?: string | null; dueAt?: string | null; project?: unknown }
+interface DueWork { work_item_id: string; title: string; owner_name?: string | null; due_at?: string | null; project?: unknown }
 interface DueSoon { data: { canonicalTasks: DueWork[] } }
+
+/** A filing project as Projects opens one: the program's id and the project's name. */
+export interface RiskProject { id: string; title: string }
 
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isFindings = (v: unknown): v is Findings => object(v) && Array.isArray(v.findings) && typeof v.total === 'number';
@@ -43,6 +63,62 @@ function day(iso: string | null | undefined): string | null {
   return d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null;
 }
 const line = (parts: Array<string | null | undefined | false>) => parts.filter(Boolean).join(' · ');
+const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+const count = (v: unknown): number | null => (typeof v === 'number' && Number.isSafeInteger(v) && v > 0 ? v : null);
+
+/** One project as a row carries it, or null for anything that is not one. A root that lacks an id or a name is no root. */
+function namedProject(v: unknown): NamedProject | null {
+  if (!object(v)) return null;
+  const id = count(v.id);
+  const name = text(v.name);
+  if (id === null || !name) return null;
+  const r = object(v.root) ? v.root : null;
+  const rootId = r ? count(r.id) : null;
+  const rootName = r ? text(r.name) : null;
+  return { id, name, root: r && rootId !== null && rootName ? { id: rootId, name: rootName, programId: text(r.programId) } : null };
+}
+/** The projects a row carries: a finding's `projects` when it has them, otherwise the row's one `project`. */
+function rowProjects(row: { project?: unknown; projects?: unknown }): NamedProject[] {
+  const carried = Array.isArray(row.projects) ? row.projects : [row.project];
+  return carried.map(namedProject).filter((p): p is NamedProject => p !== null);
+}
+
+/** A row's projects as the reader meets them: each filing project once, with the work areas of it the row names. */
+interface Place { key: string; name: string; open: RiskProject | null; areas: string[] }
+function places(projects: NamedProject[]): Place[] {
+  const byKey = new Map<string, Place>();
+  for (const p of projects) {
+    const filing = p.root ?? p;
+    const key = `${p.root ? 'filing' : 'own'}:${filing.id}`;
+    const place = byKey.get(key) ?? { key, name: filing.name, areas: [],
+      open: p.root?.programId ? { id: p.root.programId, title: p.root.name } : null };
+    if (p.root && p.root.id !== p.id && !place.areas.includes(p.name)) place.areas.push(p.name);
+    byKey.set(key, place);
+  }
+  return [...byKey.values()];
+}
+
+/** The projects a row belongs to. A filing project the person can open is a link; anything else is said in words. */
+function RowProjects({ of, onOpen }: { of: NamedProject[]; onOpen: (project: RiskProject) => void }) {
+  const shown = places(of);
+  if (shown.length === 0) return null;
+  return (
+    <span className="pj-risk-m">
+      {shown.map((place, i) => {
+        const { open } = place;
+        return (
+          <React.Fragment key={place.key}>
+            {i > 0 && ' · '}
+            {open
+              ? <button type="button" className="ana-work-link" aria-label={`Open ${place.name}`} onClick={() => onOpen(open)}>{place.name}</button>
+              : place.name}
+            {place.areas.length > 0 && ` (${place.areas.join(', ')})`}
+          </React.Fragment>
+        );
+      })}
+    </span>
+  );
+}
 
 /** One engine's answer: reading, failed (said), empty (what was looked at), or its rows. */
 function Answer<T>({ title, read, failed, empty, rows, children }: {
@@ -59,7 +135,9 @@ function Answer<T>({ title, read, failed, empty, rows, children }: {
   );
 }
 
-export function ProjectsAtRisk({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ProjectsAtRisk({ open, onClose, onOpenProject }: {
+  open: boolean; onClose: () => void; onOpenProject: (project: RiskProject) => void;
+}) {
   const findings = useLiveData<Findings>(open ? FINDINGS_URL : null, [open], isFindings);
   const blockers = useLiveData<Blocker[]>(open ? BLOCKERS_URL : null, [open], isBlockers);
   const due = useLiveData<DueSoon>(open ? DUE_SOON_URL : null, [open], isDueSoon);
@@ -87,6 +165,7 @@ export function ProjectsAtRisk({ open, onClose }: { open: boolean; onClose: () =
               <span className="pj-risk-k">{line([enumWords(f.severity), enumWords(f.analyzer_type)])}</span>
               <span className="pj-risk-t">{f.title}</span>
               <span className="pj-risk-m">{line([f.summary, day(f.created_at) && `Found ${day(f.created_at)}`])}</span>
+              <RowProjects of={rowProjects(f)} onOpen={onOpenProject} />
             </li>
           ))}
         </ul>
@@ -99,6 +178,7 @@ export function ProjectsAtRisk({ open, onClose }: { open: boolean; onClose: () =
             <li key={b.blockerId}>
               <span className="pj-risk-t">{line([enumWords(b.severity), b.title])}</span>
               <span className="pj-risk-m">{line([b.nextAction && `Next: ${b.nextAction}`, b.ownerName, day(b.dueAt) && `Due ${day(b.dueAt)}`])}</span>
+              <RowProjects of={rowProjects(b)} onOpen={onOpenProject} />
             </li>
           ))}
         </ul>
@@ -111,6 +191,7 @@ export function ProjectsAtRisk({ open, onClose }: { open: boolean; onClose: () =
             <li key={w.work_item_id}>
               <span className="pj-risk-t">{w.title}</span>
               <span className="pj-risk-m">{line([w.owner_name, day(w.due_at) && `Due ${day(w.due_at)}`])}</span>
+              <RowProjects of={rowProjects(w)} onOpen={onOpenProject} />
             </li>
           ))}
         </ul>
