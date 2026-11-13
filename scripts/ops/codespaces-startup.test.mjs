@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, existsSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { resolve, join } from 'node:path';
+import { resolve, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
+import { docxFixture, pythonCheck } from './codespaces-docx-fixture.mjs';
 const root = resolve(import.meta.dirname, '../..');
 const startup = resolve(root, 'scripts/startup.sh');
 const postStart = resolve(root, '.devcontainer/post-start.sh');
@@ -106,7 +107,7 @@ test('a running app started without a model key this start holds is restarted, n
   assert.match(post, /AnA in the running app: /);
 });
 
-function healthyAppDecision({ current, missingKeys = '' }) {
+function healthyAppDecision({ current, missingKeys = '', docxCurrent = true }) {
   const post = readFileSync(postStart, 'utf8');
   const start = post.indexOf('\nif c2c_app_up; then\n');
   const end = post.indexOf('\nc2c_log "The app is serving.', start);
@@ -116,6 +117,7 @@ function healthyAppDecision({ current, missingKeys = '' }) {
     C2C_PORT=5000
     c2c_app_up() { return 0; }
     c2c_app_current() { return ${current ? 0 : 1}; }
+    c2c_app_docx_current() { return ${docxCurrent ? 0 : 1}; }
     c2c_keys_app_lacks() { printf '%s' "$C2C_TEST_MISSING_KEYS"; }
     c2c_ana_state() { printf ready; }
     c2c_log() { printf '%s\\n' "$*"; }
@@ -163,6 +165,7 @@ async function providerKeyDecision({ running = {}, current = {} }) {
       pgrep() { printf '%s\\n' "$C2C_TEST_PID"; }
       c2c_app_up() { return 0; }
       c2c_app_current() { return 0; }
+      c2c_app_docx_current() { return 0; }
       c2c_ana_state() { printf ready; }
       c2c_log() { printf '%s\\n' "$*"; }
       c2c_stop_app() { printf 'STOP_CALLED\\n'; }
@@ -382,4 +385,178 @@ test('the Codespace app has an attestation signing key of its own, on a new and 
     assert.deepEqual(run.stdout.trim().split('\n'), ['1', 'kept', '1', '1', '600'],
       'minted with the state, kept on a later start, restored to an app.env that lacks it, and still private');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('Codespaces opts in to the existing portfolio after all, caches success, and retries failures', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-portfolio-seed-'));
+  try {
+    const run = spawnSync('bash', ['-c', `
+      source "${postCreate}"
+      C2C_PORT=5000 DEMO_SEED_EMAIL=synthetic-author@example.test
+      npm() { printf '%s\\n' "$*" >> "$C2C_CODESPACE_STATE/calls"; return "$test_npm_rc"; }
+      test_npm_rc=1
+      c2c_seed_portfolio_org version1
+      [[ ! -f "$C2C_CODESPACE_STATE/portfolio-seed.done" ]]
+      test_npm_rc=0
+      c2c_seed_portfolio_org version1
+      [[ "$(cat "$C2C_CODESPACE_STATE/portfolio-seed.done")" == 'version1|synthetic-author@example.test' ]]
+      c2c_seed_portfolio_org version1
+      [[ "$(wc -l < "$C2C_CODESPACE_STATE/calls")" == 2 ]]
+      c2c_seed_portfolio_org version2
+      DEMO_SEED_EMAIL=another-author@example.test
+      c2c_seed_portfolio_org version2
+    `], { cwd: root, encoding: 'utf8', env: { ...process.env, C2C_CODESPACE_STATE: dir } });
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const calls = readFileSync(join(dir, 'calls'), 'utf8').trim().split('\n');
+    assert.equal(calls.length, 4, 'failed run retries, success caches, source and identity changes reseed');
+    for (const call of calls) assert.match(call, /^run --silent demo:seed -- --pack portfolio --base-url http:\/\/127\.0\.0\.1:5000 --email /);
+    assert.match(calls[3], /another-author@example\.test$/); assert.match(run.stdout, /did not finish.*re-runs on the next start/);
+    const post = readFileSync(postStart, 'utf8'), call = post.indexOf('c2c_seed_portfolio_org "$C2C_DEMO_VERSION"');
+    assert.ok(call > post.indexOf('npm run --silent demo:seed -- --pack all'));
+    assert.match(post.slice(post.lastIndexOf('\nif ', call), call), /demo-seed\.done.*C2C_DEMO_VERSION/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('document runtime installs the canonical pins in its own venv and reuses a healthy offline cache', () => {
+  const fixture = docxFixture();
+  try {
+    const first = fixture.run();
+    assert.equal(first.status, 0, first.stdout + first.stderr);
+    assert.match(first.stdout, new RegExp('SELECTED=' + fixture.selected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    const probe = pythonCheck(fixture.selected, 'import docx,lxml.etree,importlib.metadata as m;print(m.version("python-docx"),m.version("lxml"))');
+    assert.equal(probe.status, 0, probe.stderr); assert.equal(probe.stdout.trim(), '1.2.0 6.1.1');
+    const empty = join(fixture.directory, 'empty'); mkdirSync(empty);
+    const cached = fixture.run({ PIP_FIND_LINKS: empty });
+    assert.equal(cached.status, 0, cached.stdout + cached.stderr);
+  } finally { fixture.close(); }
+});
+
+test('document runtime repairs a missing import even when the pinned package metadata still exists', () => {
+  const fixture = docxFixture();
+  try {
+    const first = fixture.run(); assert.equal(first.status, 0, first.stdout + first.stderr);
+    const site = pythonCheck(fixture.selected, 'import sysconfig;print(sysconfig.get_paths()["purelib"])').stdout.trim();
+    rmSync(join(site, 'lxml', 'etree.py')); rmSync(join(site, 'lxml', '__pycache__'), { recursive: true, force: true });
+    assert.equal(pythonCheck(fixture.selected, 'import importlib.metadata as m;assert m.version("lxml")=="6.1.1"').status, 0);
+    assert.notEqual(pythonCheck(fixture.selected, 'import lxml.etree').status, 0);
+    const borrowed = join(fixture.directory, 'borrowed'), empty = join(fixture.directory, 'empty');
+    mkdirSync(join(borrowed, 'lxml'), { recursive: true }); mkdirSync(empty);
+    writeFileSync(join(borrowed, 'lxml', '__init__.py'), ''); writeFileSync(join(borrowed, 'lxml', 'etree.py'), 'BORROWED = True\n');
+    const isolated = fixture.run({ PYTHONPATH: borrowed, PIP_FIND_LINKS: empty });
+    assert.notEqual(isolated.status, 0, 'the probe must not borrow an import from PYTHONPATH');
+    assert.match(isolated.stdout, /NO_VERIFIED_INTERPRETER/);
+    const repaired = fixture.run(); assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
+    assert.equal(pythonCheck(fixture.selected, 'import lxml.etree').status, 0);
+  } finally { fixture.close(); }
+});
+
+test('document runtime follows a changed canonical pin rather than trusting an old cache marker', () => {
+  const fixture = docxFixture();
+  try {
+    const first = fixture.run(); assert.equal(first.status, 0, first.stdout + first.stderr);
+    writeFileSync(fixture.requirements, 'python-docx==1.3.0\nlxml==6.1.1\n');
+    const updated = fixture.run(); assert.equal(updated.status, 0, updated.stdout + updated.stderr);
+    assert.equal(pythonCheck(fixture.selected, 'import importlib.metadata as m;print(m.version("python-docx"))').stdout.trim(), '1.3.0');
+  } finally { fixture.close(); }
+});
+
+test('document runtime refuses incomplete or ambiguous pins without exporting an unverified interpreter', () => {
+  const fixture = docxFixture();
+  try {
+    for (const body of ['python-docx==1.2.0\n', 'python-docx>=1.2.0\nlxml==6.1.1\n', 'python-docx==1.2.0\npython-docx==1.3.0\nlxml==6.1.1\n']) {
+      writeFileSync(fixture.requirements, body);
+      const failed = fixture.run(); assert.notEqual(failed.status, 0);
+      assert.match(failed.stdout, /BLOCKED:.*requirements/);
+      assert.match(failed.stdout, /NO_VERIFIED_INTERPRETER/); assert.doesNotMatch(failed.stdout, /SELECTED=/);
+      assert.equal(existsSync(fixture.selected), false);
+    }
+  } finally { fixture.close(); }
+});
+
+test('document runtime installation failure is explicit and can recover on the next start', () => {
+  const fixture = docxFixture();
+  try {
+    const empty = join(fixture.directory, 'empty'); mkdirSync(empty);
+    const failed = fixture.run({ PIP_FIND_LINKS: empty });
+    assert.notEqual(failed.status, 0); assert.match(failed.stdout, /BLOCKED:/);
+    assert.match(failed.stdout, /NO_VERIFIED_INTERPRETER/); assert.doesNotMatch(failed.stdout, /SELECTED=/);
+    const retried = fixture.run(); assert.equal(retried.status, 0, retried.stdout + retried.stderr);
+    assert.equal(pythonCheck(fixture.selected, 'import docx,lxml.etree').status, 0);
+  } finally { fixture.close(); }
+});
+
+test('document runtime preserves a verified explicit interpreter and refuses a broken override', () => {
+  const fixture = docxFixture();
+  try {
+    const custom = join(fixture.directory, 'custom interpreter');
+    const made = spawnSync('python3', ['-I', '-m', 'venv', custom], { encoding: 'utf8' }); assert.equal(made.status, 0, made.stderr);
+    const python = join(custom, 'bin', 'python');
+    const installed = spawnSync(python, ['-I', '-m', 'pip', 'install', 'python-docx==1.2.0', 'lxml==6.1.1'], { env: fixture.env, encoding: 'utf8' });
+    assert.equal(installed.status, 0, installed.stdout + installed.stderr);
+    const selected = fixture.run({ ANA_DOCX_PYTHON: python }); assert.equal(selected.status, 0, selected.stdout + selected.stderr);
+    assert.ok(selected.stdout.includes('SELECTED=' + python)); assert.equal(existsSync(fixture.selected), false);
+    const named = fixture.run({ ANA_DOCX_PYTHON: 'python', PATH: `${custom}/bin:${fixture.env.PATH}` });
+    assert.equal(named.status, 0, named.stdout + named.stderr); assert.ok(named.stdout.includes('SELECTED=' + python));
+    const relativePython = relative(root, python);
+    const relativeRun = fixture.run({ ANA_DOCX_PYTHON: relativePython });
+    assert.equal(relativeRun.status, 0, relativeRun.stdout + relativeRun.stderr);
+    assert.ok(relativeRun.stdout.includes('SELECTED=' + root + '/' + relativePython));
+    const failed = fixture.run({ ANA_DOCX_PYTHON: join(fixture.directory, 'missing-python') });
+    assert.notEqual(failed.status, 0); assert.match(failed.stdout, /NO_VERIFIED_INTERPRETER/);
+    assert.equal(existsSync(fixture.selected), false, 'a bad explicit setting is not silently replaced');
+  } finally { fixture.close(); }
+});
+
+test('document runtime changes restart a same-commit backend while matching runtime retains it', () => {
+  const changed = healthyAppDecision({ current: true, docxCurrent: false });
+  assert.equal(changed.status, 0, changed.stderr); assert.match(changed.stdout, /STOP_CALLED\nSTART_CALLED/);
+  const current = healthyAppDecision({ current: true, docxCurrent: true });
+  assert.equal(current.status, 0, current.stderr); assert.doesNotMatch(current.stdout, /STOP_CALLED|START_CALLED/);
+});
+
+test('document runtime compares the actual running process interpreter without printing its environment', () => {
+  const post = readFileSync(postStart, 'utf8');
+  const start = post.indexOf('c2c_app_docx_current() {'), end = post.indexOf('\n}\n', start);
+  assert.ok(start >= 0 && end > start);
+  for (const [present, value, expected] of [[true, '/verified/python', 'current'], [true, '/old/python', 'stale'], [false, '', 'stale']]) {
+    const run = spawnSync('bash', ['-c', `
+      set -u
+      C2C_VERIFIED_DOCX_PYTHON=/verified/python
+      if [[ "$C2C_TEST_PRESENT" == 1 ]]; then env ANA_DOCX_PYTHON="$C2C_TEST_VALUE" sleep 30 & else env -u ANA_DOCX_PYTHON sleep 30 & fi
+      pid=$!; trap 'kill "$pid" 2>/dev/null || true' EXIT
+      for _ in $(seq 1 50); do
+        read -r command <"/proc/$pid/comm"; [[ "$command" == sleep ]] && break; sleep .01
+      done
+      C2C_TEST_PROCESS_ID=$pid
+      pgrep() { printf '%s\\n' "$C2C_TEST_PROCESS_ID"; }
+      ${post.slice(start, end + 3)}
+      if c2c_app_docx_current; then printf current; else printf stale; fi
+    `], { cwd: root, env: { ...process.env, C2C_TEST_PRESENT: present ? '1' : '0', C2C_TEST_VALUE: value }, encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr); assert.equal(run.stdout, expected);
+  }
+});
+
+test('document runtime selected before startup cannot be replaced by an unverified app.env value', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'c2c-docx-app-env-'));
+  try {
+    const bin = join(directory, 'bin'); mkdirSync(bin);
+    const sink = join(directory, 'interpreter'), verified = join(directory, 'verified python');
+    writeFileSync(join(directory, 'app.env'), 'ANA_DOCX_PYTHON=/unverified/from-app-env\n');
+    writeFileSync(join(bin, 'npm'), '#!/bin/sh\nprintf "%s\\n" "$ANA_DOCX_PYTHON" "$NODE_ENV" > "$C2C_TEST_DOCX_SINK"\n');
+    chmodSync(join(bin, 'npm'), 0o755);
+    const post = readFileSync(postStart, 'utf8');
+    const start = post.indexOf('c2c_start_app() {'), end = post.indexOf('\n}\n', start);
+    const run = spawnSync('bash', ['-c', `
+      C2C_PORT=5000; C2C_ORIGINS=http://localhost:5000; C2C_UNSET=()
+      C2C_APP_LOG="$C2C_CODESPACE_STATE/app.log"
+      c2c_log() { :; }; c2c_app_up() { return 0; }; c2c_blocked() { return 1; }
+      ${post.slice(start, end + 3)}
+      c2c_start_app
+      for _ in $(seq 1 50); do [[ -s "$C2C_TEST_DOCX_SINK" ]] && break; sleep .02; done
+      test -s "$C2C_TEST_DOCX_SINK"
+    `], { cwd: root, env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, C2C_CODESPACE_STATE: directory,
+      C2C_VERIFIED_DOCX_PYTHON: verified, C2C_TEST_DOCX_SINK: sink }, encoding: 'utf8', timeout: 10000 });
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.deepEqual(readFileSync(sink, 'utf8').trim().split('\n'), [verified, 'development']);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });

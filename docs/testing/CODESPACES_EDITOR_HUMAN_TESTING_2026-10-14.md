@@ -61,7 +61,7 @@ the app on port 5000 in development mode and opens it in your browser.
    reads its secrets when it starts. After adding one, **stop and start** the
    Codespace (Codespaces menu → Stop Current Codespace, then open it again);
    reloading the page is not enough. The start then restarts the app if the
-   running app had no key, and says what the app itself sees for AnA.
+   running app has a missing or changed supplied key, and says what the app itself sees for AnA.
    Do **not** add a `DATABASE_URL` or any other database secret. This Codespace
    uses its own local database, and it does not pass such a secret to the app.
 2. **Create the Codespace on `concept2cure-v2`.** Repository page → **Code** →
@@ -74,14 +74,51 @@ the app on port 5000 in development mode and opens it in your browser.
    itself. If it does not, open **Ports** and click the globe beside port 5000.
    Keep the port **Private**. A restart takes a minute or two, and it applies
    any new migrations first.
-4. **Sign in.** On the sign-in page press **Demo access** (under **Dev only**).
-   It signs you in as `ana.author@concept2cure.pro`, the demo author, in the
-   organisation "Concept2Cure Therapeutics". Two more demo people exist for
-   reviews and approvals: `rhea.reviewer@concept2cure.pro` and
-   `ava.approver@concept2cure.pro`. Their password is `DEMO_SIGNER_PASSWORD`
+4. **Choose the account and person, then sign in.** Under **Dev only**, use
+   **Sign in as** to choose a demo person, then press **Demo access**. The
+   choices are grouped by account and labelled with their scenario roles.
+   When the Lumen account is ready, its lead is the default; it is not Ana
+   Author. Lumen's lead, reviewer and approver use the configured names
+   (fictional defaults: Lumen Lead, Lumen Reviewer and Lumen Approver).
+   The **Concept2Cure Therapeutics (demo)** group has seven people: Ana Author,
+   Rhea Reviewer, Ava Approver, Mo Monitor, Quinn Quality, Sam Statistician
+   and Cal CMC. Choose **Ana Author** in that group for the CDISC CSR study;
+   choose a Lumen person for Lumen's synthetic CSR scenarios. Confirm the
+   signed-in account before opening or recording work. The demo people's
+   password for signing ceremonies is `DEMO_SIGNER_PASSWORD`
    in `~/.concept2cure-codespace/app.env`, in the Codespace's terminal:
    `grep DEMO_SIGNER_PASSWORD ~/.concept2cure-codespace/app.env`.
-5. **See AnA draft a CSR.** **Projects** → **Xanomeline TTS Phase 2
+5. **Open the prepared examples before presenting.** As **Lumen Lead**, open
+   LMN-201, LMN-801 or LMN-301 and its existing synthetic CSR in the one editor.
+   The normal seed supplies their report text; no paid build is needed to show it.
+   As **Ana Author**, choose a fictional sponsor workspace in **Projects**:
+   Varnhollow Oncology, Petrelline Rare Therapeutics, Quillmont Immunology or
+   Halcyra Vaccines. The separate portfolio seed supplies eight CSR scenarios
+   from planning through review comments and handover preparation.
+
+   In a portfolio project, open **Vault** → **[Demo · Portfolio] Synthetic
+   study records** → **Protocol and analysis · SYNTHETIC** or **Study data ·
+   SYNTHETIC**. These hold actual protocol/SAP PDFs and study JSON where relevant.
+   Open the native CSR separately in the project's documents/editor.
+
+   For the finished internal package, choose **Quillmont Immunology (fictional
+   demo)** and open the project ending
+   **QLM-118-101 completed INTERNAL demonstration handover — SYNTHETIC**.
+   Its Vault parent contains **Completed internal handover · SYNTHETIC**:
+   a Word example report, PDF, synthetic study data and a checksum inventory.
+   The project stays visible in the active list for presentation; its internal
+   delivery task is completed after verifying the saved files.
+   Use the existing folder download to collect the four files. This is a completed
+   internal demonstration handover. Its reference files are unapproved examples,
+   separate from the native CSR's scientific review, signatures and regulatory filing.
+
+   Automatic setup runs the portfolio separately after the general demo succeeds.
+   If it needs a retry, run `bash .devcontainer/post-start.sh`; inspect
+   `~/.concept2cure-codespace/portfolio-seed.log`. The pack remains opt-in when
+   using the CLI directly: `npm run demo:seed -- --pack portfolio --base-url
+   http://127.0.0.1:5000 --email ana.author@concept2cure.pro`.
+6. **Prepare a live CSR build before presenting it.** As **Ana Author** in the development
+   organisation, open **Projects** → **Xanomeline TTS Phase 2
    (CDISCPILOT01)** → **Author** in the project's steps → open **CDISCPILOT01
    Clinical Study Report**. In the editor, open **Build from the study's data**.
    The study's datasets are uploaded and approved in Vault, and its tables are
@@ -90,12 +127,24 @@ the app on port 5000 in development mode and opens it in your browser.
    editor. The Codespace never starts a build by itself, so it never spends
    your key without you.
 
+   A full build can take tens of minutes. Prepare it before the meeting and
+   reopen that same CSR for the live demonstration; do not create a different
+   CSR or freeze newer study data and expect the prepared build to follow.
+   Show the project goal and Plan, the Vault's sources, the frozen study data
+   and saved report text. Send the document for review before switching to
+   the independent reviewer. Use the existing review board to record the
+   review; do not approve as the author or bypass qualification, scientific
+   review or signing refusals. See the [CSR demo runbook](../evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md#demo-runbook-for-the-founder)
+   and its current-path note. A missing provider blocks the AnA demonstration;
+   manual editing and honestly labelled synthetic scenarios do not establish
+   real model drafting or a completed regulatory filing.
+
 What the setup did, and where to look when something is wrong:
 
 | Step | Where | Log |
 |---|---|---|
 | Dependencies, PostgreSQL 16 + pgvector, the database, the sign-in accounts | `.devcontainer/post-create.sh` | the creation log; `~/.concept2cure-codespace/provision.log` |
-| Database up, new migrations, the app, demo data, the CSR study | `.devcontainer/post-start.sh` | `/tmp/concept2cure-app.log`; `~/.concept2cure-codespace/{demo-seed,csr-study}.log` |
+| Database up, new migrations, the app, demo data, portfolio, the CSR study | `.devcontainer/post-start.sh` | `/tmp/concept2cure-app.log`; `~/.concept2cure-codespace/{lumen-seed,demo-seed,portfolio-seed,csr-study}.log` |
 
 - **Credentials.** `~/.concept2cure-codespace/` is outside the repository, and
   its files are readable only by you. `owner.env` holds the database owner's
@@ -108,8 +157,9 @@ What the setup did, and where to look when something is wrong:
   `git pull --ff-only origin concept2cure-v2` and
   `bash .devcontainer/post-start.sh`. The start checks the running backend's
   public `/api/version` stamp against the checkout and restarts an older or
-  unverified backend. It also restarts when the running app lacks a key the
-  terminal has. A healthy backend already serving this commit is retained.
+  unverified backend. It also restarts when a supplied key has changed or the
+  verified document Python runtime is missing from that process. A healthy
+  backend already serving this commit and runtime is retained.
   To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
   A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
 - **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.
@@ -237,13 +287,15 @@ current Codespace's `https://<codespace-name>-5000.app.github.dev`, not another
 person's localhost. The existing server binds `0.0.0.0:5000` and recognizes this
 Codespaces origin. No second frontend server or alternate editor is required.
 
-With the development flags above, use **Demo access** under **DEV ONLY** to
-enter the local development account. This bypass is for this private development
-session. The development server's bootstrap creates the account; the schema
-installer does not. A fresh account has a random, non-recoverable password unless
-the operator supplies `DEMO_USER_PASSWORD`, so do not assume a built-in password
-works. This account bootstrap does not populate a project, filing, document or
-submission. Confirm the signed-in organisation before creating work.
+In the automatically prepared Codespace, use **Sign in as** under **DEV ONLY**
+to choose the required account and person before pressing **Demo access**.
+The Lumen lead is the default when that account is ready; Ana Author and the
+CDISC CSR study are in **Concept2Cure Therapeutics (demo)**. The startup scripts
+seed those accounts and their demo scenarios, as described above. This bypass
+is for the private development session only. If following the manual setup
+instead, the development bootstrap creates its configured account; the schema
+installer does not seed projects or people. Do not assume a built-in password
+works. Confirm the signed-in organisation before creating work.
 
 Arrange three roles through existing account/membership controls: an author,
 an independent current colleague who can receive the review assignment, and a

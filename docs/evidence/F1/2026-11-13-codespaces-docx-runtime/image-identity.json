@@ -1,0 +1,44 @@
+{
+  "reference": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "amd64Digest": "sha256:a32008c8fa6eaa28f8974577d28dc83e23e2d0fb939cb7b17ce65ed8a9b13f72",
+  "validation": "Official root filesystem exported and imported as one local layer; public runtime configuration preserved. Direct multi-layer pull exceeded this host vfs disk allowance. Devcontainer features and actual GitHub-hosted forwarding were not built/tested here.",
+  "baseline": {
+    "node": "22.16.0",
+    "python": "3.11.2",
+    "python-docx": null,
+    "lxml": null,
+    "ensurepip": "missing until python3-venv installed"
+  },
+  "freshPostCreate": "exit 0: npm ci, pinned private document venv, PostgreSQL16+pgvector, app_service provisioning and demo people",
+  "startupTests": {
+    "passed": 71,
+    "failed": 0,
+    "skipped": 0
+  },
+  "runtime": {
+    "python-docx": "1.2.0",
+    "lxml": "6.1.1",
+    "wordBytes": 37991,
+    "zipParagraphAndTable": "verified by reopening with selected Python"
+  },
+  "readiness": {
+    "database": "ok",
+    "schema": "ok",
+    "storage": "ok",
+    "ana": "down (no_provider)"
+  },
+  "originChecks": {
+    "forwardedLoginPage": 200,
+    "forwardedDevLogin": 200,
+    "foreignOrigin": 403
+  },
+  "runtimeCredentialChecks": {
+    "forbiddenOwnerCredentialsPresent": false,
+    "connections": [
+      "app_service"
+    ],
+    "verifiedDocxInterpreterPresent": true
+  },
+  "liveProviderCalls": 0,
+  "actualGitHubCodespace": "NOT_EXECUTED"
+}
