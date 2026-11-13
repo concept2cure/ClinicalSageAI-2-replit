@@ -1,0 +1,12 @@
+GET /api/submissions/market-support on the local app (database migrated by deploy-migrate, 474 files), 2026-11-13.
+Each cell is outline state / offer tier for that application type at that agency, with the rule packs this database really holds.
+
+FDA            nda=outline/build_and_sequence  maa=no_outline/not_offered  cta=no_outline/not_offered  anda=outline/build_and_sequence  dmf=outline/author_only  bla=outline/build_and_sequence
+EMA            nda=no_outline/not_offered  maa=outline/author_only  cta=outline/author_only  anda=no_outline/not_offered  dmf=outline/author_only  bla=no_outline/not_offered
+Health Canada  nda=no_outline/not_offered  maa=no_outline/not_offered  cta=no_outline/not_offered  anda=no_outline/not_offered  dmf=outline/author_only  bla=no_outline/not_offered
+MHRA           nda=no_outline/not_offered  maa=no_outline/not_offered  cta=no_outline/not_offered  anda=no_outline/not_offered  dmf=outline/author_only  bla=no_outline/not_offered
+TGA            nda=no_outline/not_offered  maa=no_outline/not_offered  cta=no_outline/not_offered  anda=no_outline/not_offered  dmf=outline/author_only  bla=no_outline/not_offered
+MFDS           nda=no_outline/not_offered  maa=no_outline/not_offered  cta=no_outline/not_offered  anda=no_outline/not_offered  dmf=outline/author_only  bla=no_outline/not_offered
+NMPA           nda=no_outline/not_offered  maa=no_outline/not_offered  cta=no_outline/not_offered  anda=no_outline/not_offered  dmf=outline/author_only  bla=no_outline/not_offered
+
+Reading: 'nda' has an outline at the FDA only. So a filing outside the US that resolved to 'nda' was already refused, whatever it was.
