@@ -198,6 +198,8 @@ this session.
 
 ### Holds on other files (one session per file, plan §4.6)
 
+**Copilot Codespaces handoff, Codex 2026-11-13 (F1; ends on publication or 2026-11-13 23:00 UTC):** holds only `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md`, the Copilot handoff link in `docs/operations/CODESPACES_NEON_OPENAI_RECOVERY.md`, and this continuation's existing design/evidence recovery packet. Link current roadmap, coordination, startup and presenter owners from the guide the devcontainer already opens. Both `.github` instruction files remain unchanged: the normal plan gate requires a founder decision for them, and the exact proposed correction is retained in the recovery design packet. No product, startup, model or credential changes. Root owns Git and normal publication.
+
 **Codespaces demo recovery, Codex 2026-11-13 (F1/L1 D1/D2; ends at the slice publication or 2026-11-13 21:30 UTC, whichever is first):** holds only `.devcontainer/post-start.sh`'s CSR browser-bootstrap/preparation block (not the provider-value comparison/restart lines); a new test-only `scripts/ops/codespaces-csr-browser.test.mjs`; the `codespaces:doctor:test` script in `package.json`; and `scripts/demo/launch-demo/packs/lumen.mjs`'s report/bundle/schedule helpers plus their focused test. The provider-restart owner's `codespaces-startup.test.mjs` is untouched. Inventory `.design/claude-convergence/F1-CODESPACES-DEMO-RECOVERY-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-demo-recovery/`. No model/provider/credential behavior, UI or governed release gate change. Root owns dependency installation, Git and final image/branch checks.
 
 Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race

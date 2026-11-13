@@ -6,6 +6,49 @@ There is no deployment, staging or production prerequisite. All code, tests,
 contracts and non-secret evidence stay in the canonical repository; completed
 increments are committed and pushed directly with the normal hooks, without PRs.
 
+## GitHub Copilot Codespaces handoff
+
+Updated 2026-11-13. This is the existing guide opened by the devcontainer's `openFiles` configuration. Copilot and
+Copilot Chat are already configured in that devcontainer. Copilot works from the Codespace's checked-out files;
+refresh the canonical branch to obtain the published implementation, tests and evidence.
+
+Read [CLAUDE.md](../../CLAUDE.md) and [AGENTS.md](../../AGENTS.md), then the
+[one design plan](../design/ONE_DESIGN_PLAN.md), its [ledger](../design/one-design-plan.json) and
+[current launch decisions](../LAUNCH_DEFINITION_OF_DONE.md). Read the
+[coordination register](../../.design/claude-convergence/COORDINATION.md) after every fetch, check file holds and
+continue an open assigned package. Current root rules and founder decisions govern historical branch, portal
+and registry examples in older instructions.
+
+For an existing Codespace, on `concept2cure-v2`:
+
+```bash
+git branch --show-current
+git pull --ff-only origin concept2cure-v2
+bash .devcontainer/post-start.sh
+```
+
+Preserve local edits. If local commits and upstream have diverged, fetch and merge `origin/concept2cure-v2`,
+resolve conflicts, and commit/push directly to that same branch using the normal hooks and required package
+and existing-owner trailers. The app starts from the canonical checkout through the existing lifecycle hooks.
+Open forwarded port **5000** after startup.
+
+Continue with the [Codespaces operator guide](../operations/CODESPACES_NEON_OPENAI_RECOVERY.md) and
+[Lumen demo runbook](../demo/lumen-showcase.md). The current product begins in a project and uses the shared
+editor. For UI work, use the plan and existing [D0 foundations](../../.design/claude-convergence/D0.md), search
+the existing owners, and check coordination before editing.
+
+The [browser/report recovery evidence](../evidence/F1/2026-11-13-codespaces-demo-recovery/README.md) and
+[integrated showcase evidence](../evidence/DEMO/2026-11-10-sales-showcase/README.md) identify the tested source
+and its limits. Seeded synthetic reports, live model generation, scientific review and model qualification are
+distinct states. A repository push makes tracked work available to Copilot after updating the checkout; it does
+not refresh an already-running app or establish Copilot account sign-in.
+
+Both `.github` Copilot instruction files are founder-controlled plan files. A proposed correction to their stale
+examples is preserved in the [recovery design packet](../../.design/claude-convergence/F1-CODESPACES-DEMO-RECOVERY-2026-11-13.md);
+this handoff follows the current root rules without modifying those protected files.
+
+## Earlier editor continuation references
+
 Updated 2026-10-16 with current-access and specialist-handoff checks under the
 [existing editor continuation contract](../design/AUTHORING_CURRENT_ACCESS_AND_HANDOFF_2026-10-16.md).
 Updated 2026-10-17 with the existing specialist controls and explicit actions in
