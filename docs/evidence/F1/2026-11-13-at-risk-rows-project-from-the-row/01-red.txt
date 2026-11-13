@@ -1,0 +1,40 @@
+# Red: the new cases against trunk at 5e55ea314 (2026-11-13), before the change
+# npx vitest run tests/sentinel-findings-name-projects.test.ts client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > one click reads Sentinel’s open findings, the blockers and the work d
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > an empty register says what was looked at, never "no risk" 60ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > lists the blockers and the due work the server returned 76ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > a failed read is said, never shown as an empty answer 48ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > closes, and asks again on the next click 82ms
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names the filing project of a finding, a blocker and a due item, and makes no other read for i
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > opens the filing project from its row, by the program’s id 74ms
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > says the work area a row was recorded on, beside its filing project 61ms
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names each filing project of a cross-project finding once, and never a label stored beside an 
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > names a project the person cannot open, or one with no program, in words with no link 62ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1) > says nothing about the project of a row that carries none, or carries something that is not o
+ × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > gives a finding its own project, in the shape the blockers and the work due carry 24ms
+ × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > gives a finding about several projects each of them once, its own first, and no item that is not a projec
+ ✓ tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > keeps every field, the order and the total the engine answered 5ms
+ × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > asks for the names once, inside the organisation, and names a filing project only among those the reader 
+ × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > answers null and an empty list for a project the organisation does not hold 4ms
+ × tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > fails the read when the names cannot be read, and sends no finding without them 3ms
+ ✓ tests/sentinel-findings-name-projects.test.ts > GET /api/sentinel/findings: each finding carries the projects it names > asks for no names when there is no finding 2ms
+ × tests/sentinel-findings-name-projects.test.ts > findingNamedProjectIds: the projects a stored finding names > is its own project, then each project among its affected items, once each 1ms
+   → findingNamedProjectIds is not a function
+ × tests/sentinel-findings-name-projects.test.ts > findingNamedProjectIds: the projects a stored finding names > keeps a finding with no project of its own from reading as nameable 1ms
+   → findingNamedProjectIds is not a function
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to deeply equal { id: 1, …(2) }
+AssertionError: expected undefined to deeply equal { id: 1, …(2) }
+AssertionError: expected [] to deeply equal [ { orgId: 99, …(2) } ]
+AssertionError: expected undefined to be null
+AssertionError: expected 200 to be 500 // Object.is equality
+TypeError: findingNamedProjectIds is not a function
+TypeError: findingNamedProjectIds is not a function
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Open RR5 acceptance IND (synthetic)"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Open Vorelinib NDA"
+AssertionError: expected 'Rae Okafor · Due Nov 12' to be 'Vorelinib NDA (CMC)' // Object.is equality
+TestingLibraryElementError: Unable to find an accessible element with the role "button"
+AssertionError: expected 'Next: Request the 6-month pull · Lee …' to be 'Quality' // Object.is equality
+ Test Files  2 failed (2)
+      Tests  12 failed | 8 passed (20)
