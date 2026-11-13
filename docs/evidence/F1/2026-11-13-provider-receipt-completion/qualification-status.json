@@ -1,0 +1,37 @@
+{
+  "base": "2a667bf51ec9d5ff5445728e7026816af7ac393b",
+  "node": "22.23.5",
+  "doctorRed": {
+    "failed": 43,
+    "passedControls": 31
+  },
+  "anaRed": {
+    "failed": 15,
+    "passedControls": 32
+  },
+  "green": {
+    "tests": 173,
+    "passed": 173,
+    "failed": 0,
+    "doctorCases": 74,
+    "anaCases": 47,
+    "existingStartupBrowserNeonCases": 52
+  },
+  "lint": {
+    "errors": 0,
+    "newWarnings": 0,
+    "existingWarnings": 14,
+    "newModulesWarnings": 0
+  },
+  "liveProviderQualified": false,
+  "providerKeyAvailableHere": false,
+  "hostedCodespacesQualified": false,
+  "sha256": {
+    "scripts/ops/codespaces-doctor.mjs": "ded502f981bced2c033f26462553fcf3f1bac06afe88cc4c9468673cbb64a486",
+    "scripts/ops/codespaces-doctor.test.mjs": "ec48bb6aa0285c9c770f2ec77c9b21974bb6b5a1a276cb9a7f153581841d9f69",
+    "scripts/ops/codespaces-provider-receipt.mjs": "c50016860de8f98935f46e17964989faba799af33d61ff9c4902b1199655caca",
+    "scripts/ops/codespaces-doctor-receipt-cases.mjs": "956fe27d871553dce71c53945507dc934b4bed834accc20ff458918c234c09da",
+    "scripts/ops/verify-ana-answers.mjs": "bf094dda1bdbfb481e730e5638571759e5de4c12e082b0a2d622f336e76574c4",
+    "scripts/ops/verify-ana-answers.test.mjs": "07437dc9551a7172e05feea8efb4d18009547cee34aa3ecb766409b6365027b5"
+  }
+}

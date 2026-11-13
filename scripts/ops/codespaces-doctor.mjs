@@ -23,6 +23,8 @@
  * --json                 : machine-readable results (no secrets).
  */
 import { resolve } from 'node:path';
+import { providerTimeout, providerJson, unverifiedProviderResponse, readableOpenAIReply,
+  readableAnthropicReply } from './codespaces-provider-receipt.mjs';
 
 const isLoopback = host => ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host);
 const isNeon = host => host === 'neon.tech' || host.endsWith('.neon.tech');
@@ -199,7 +201,8 @@ export async function checkOpenAI({ env, fetcher, probeUsage = false, timeoutMs 
       'Configure an OPENAI_API_KEY Codespaces secret. A ChatGPT subscription does not automatically provision API credentials.' };
   }
   const url = probeUsage ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/models';
-  const body = probeUsage ? JSON.stringify({ model: 'gpt-4o-mini', input: 'Reply with OK.', max_output_tokens: 8 }) : undefined;
+  const model = 'gpt-4o-mini';
+  const body = probeUsage ? JSON.stringify({ model, input: 'Reply with OK.', max_output_tokens: 8 }) : undefined;
   try {
     const response = await fetcher(url, {
       method: probeUsage ? 'POST' : 'GET',
@@ -207,7 +210,10 @@ export async function checkOpenAI({ env, fetcher, probeUsage = false, timeoutMs 
         ...(probeUsage ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body } : {}), signal: AbortSignal.timeout(timeoutMs),
     });
-    const data = await response.json().catch(() => null);
+    const data = await providerJson(response);
+    const receiptValid = probeUsage ? readableOpenAIReply(data, model)
+      : Array.isArray(data?.data) && data?.error == null;
+    if (response.ok && !receiptValid) return unverifiedProviderResponse('OPENAI', response.status);
     const code = classifyOpenAIResponse(response.status, data);
     return { status: response.ok ? 'passed' : 'blocked', code,
       httpStatus: response.status, billingVerified: response.ok && probeUsage,
@@ -222,7 +228,7 @@ export async function checkOpenAI({ env, fetcher, probeUsage = false, timeoutMs 
         : 'Review OpenAI API project/organization/model permissions; this is not a Concept2Cure regulatory verdict.' };
   } catch (error) {
     // Do not log the raw error: proxy errors can contain URLs, tokens or headers.
-    return { status: 'blocked', code: String(error?.name) === 'TimeoutError'
+    return { status: 'blocked', code: providerTimeout(error)
       ? 'OPENAI_NETWORK_TIMEOUT' : 'OPENAI_NETWORK_FAILURE',
       authenticationVerified: false, billingVerified: false,
       explanation: 'Codespaces could not reach OpenAI. Check outbound networking and DNS.' };
@@ -273,8 +279,9 @@ export async function checkAnthropic({ env, fetcher, timeoutMs = 10000, expected
       const url = 'https://api.anthropic.com/v1/models?limit=100' +
         (after ? '&after_id=' + encodeURIComponent(after) : '');
       response = await fetcher(url, { method: 'GET', headers, signal: AbortSignal.timeout(timeoutMs) });
-      body = await response.json().catch(() => null);
+      body = await providerJson(response);
       if (!response.ok) break;
+      if (!Array.isArray(body?.data) || body?.error != null) return unverifiedProviderResponse('ANTHROPIC', response.status);
       for (const m of Array.isArray(body?.data) ? body.data : []) if (typeof m?.id === 'string') ids.push(m.id);
       if (!body?.has_more || typeof body?.last_id !== 'string') break;
       after = body.last_id;
@@ -312,7 +319,7 @@ export async function checkAnthropic({ env, fetcher, timeoutMs = 10000, expected
               : 'Review Anthropic account/workspace permissions and provider network access.' };
   } catch (error) {
     // Never echo a network/client error containing a credential or URL.
-    return { status: 'blocked', code: String(error?.name) === 'TimeoutError'
+    return { status: 'blocked', code: providerTimeout(error)
       ? 'ANTHROPIC_NETWORK_TIMEOUT' : 'ANTHROPIC_NETWORK_FAILURE',
       authenticationVerified: false, billingVerified: false,
       explanation: 'Codespaces could not query the Anthropic models endpoint; check DNS/networking.' };
@@ -353,11 +360,12 @@ export async function checkAnthropicDrafting({ env, fetcher, models = [], timeou
         body: JSON.stringify({ model, max_tokens: 64, output_config: { effort: 'low' },
           messages: [{ role: 'user', content: 'Reply with the single word OK.' }] }),
       });
-      const body = await response.json().catch(() => null);
+      const body = await providerJson(response);
       if (response.ok) {
+        if (!readableAnthropicReply(body, model)) return unverifiedProviderResponse('ANTHROPIC', response.status);
         return { status: 'passed', code: 'ANTHROPIC_DRAFTING_CALL_ACCEPTED', httpStatus: response.status,
-          model, modelsRefused, authenticationVerified: true, billingVerified: true,
-          explanation: 'One small billable request to ' + model + ' was answered: this key can reach an approved drafting model. ' +
+          model: body.model, modelsRefused, authenticationVerified: true, billingVerified: true,
+          explanation: 'One small billable request to ' + body.model + ' was answered: this key can reach an approved drafting model. ' +
             'This does not qualify the model (PQ) or any draft.' };
       }
       const type = typeof body?.error?.type === 'string' ? body.error.type.toLowerCase() : '';
@@ -380,7 +388,7 @@ export async function checkAnthropicDrafting({ env, fetcher, models = [], timeou
         ') to it. Give the key\'s workspace access to one of them in the Anthropic Console.' };
   } catch (error) {
     // Never echo a network/client error containing a credential or URL.
-    return { status: 'blocked', code: String(error?.name) === 'TimeoutError'
+    return { status: 'blocked', code: providerTimeout(error)
       ? 'ANTHROPIC_NETWORK_TIMEOUT' : 'ANTHROPIC_NETWORK_FAILURE', modelsRefused,
       authenticationVerified: false, billingVerified: false,
       explanation: 'Codespaces could not reach the Anthropic Messages endpoint; check DNS/networking.' };
